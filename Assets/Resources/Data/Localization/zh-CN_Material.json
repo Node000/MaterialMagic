@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "key": "material.none.name", "text": "无" },
+    { "key": "material.fire.name", "text": "火" },
+    { "key": "material.wind.name", "text": "风" },
+    { "key": "material.water.name", "text": "水" },
+    { "key": "material.earth.name", "text": "土" },
+    { "key": "material.wild.name", "text": "万能" }
+  ]
+}

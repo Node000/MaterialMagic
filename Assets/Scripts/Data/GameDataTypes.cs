@@ -1,0 +1,367 @@
+using System;
+using System.Collections.Generic;
+
+public enum LevelType
+{
+    Battle = 0,
+    Event = 1,
+    Shop = 2
+}
+
+public enum MaterialEnum
+{
+    None = 0,
+    Fire = 1,
+    Wind = 2,
+    Water = 3,
+    Earth = 4,
+    Wild = 5
+}
+
+public enum BuffEnum
+{
+    None = 0,
+    Shield = 1,
+    Burning = 2,
+    Weak = 3,
+    Vulnerable = 6,
+    Slow = 7,
+    Arc = 9,
+    SpellPower = 10,
+    BurningNextTurn = 11,
+    ShieldReflect = 12,
+    ExtraDraw = 13,
+    ExtraRefresh = 14,
+    Sturdy = 15,
+    Stable = 16,
+    Disorder = 17
+}
+
+public enum BuffKindEnum
+{
+    Buff = 0,
+    DeBuff = 1,
+    Neutral = 2
+}
+
+public enum MagicMatchRule
+{
+    ExactRecipe = 0,
+    AnyTwoDifferentElements = 1
+}
+
+public enum MagicEffectType
+{
+    None = 0,
+    Damage = 1,
+    GainShield = 2,
+    Heal = 3,
+    ApplyBuff = 4,
+    DrawNextTurn = 5
+}
+
+public enum EnemyIntentType
+{
+    None = 0,
+    Attack = 1,
+    Defend = 2,
+    Special = 3
+}
+
+public enum EnemyActionType
+{
+    None = 0,
+    Attack = 1,
+    GainShield = 2,
+    ApplyBuff = 3,
+    AddPollution = 4,
+    CounterFirstMagic = 5
+}
+
+public enum EventRewardType
+{
+    None = 0,
+    Heal = 1,
+    LoseHealth = 2,
+    GainGold = 3,
+    GainMagic = 4,
+    UpgradeMaterial = 5,
+    RemovePollution = 6,
+    GainRelic = 7
+}
+
+[Serializable]
+public class PlayerStartMaterialData
+{
+    public MaterialEnum material;
+    public int count;
+}
+
+[Serializable]
+public class PlayerStartMagicData
+{
+    public int slotIndex;
+    public int magicId;
+}
+
+[Serializable]
+public class PlayerStartConfigData : IDataRecord
+{
+    public string id;
+    public int maxHealth = 50;
+    public int gold;
+    public int drawCount = 4;
+    public int maxPlayCount = 3;
+    public int magicBookSlotCount = 6;
+    public PlayerStartMaterialData[] initialMaterials = Array.Empty<PlayerStartMaterialData>();
+    public PlayerStartMagicData[] initialMagics = Array.Empty<PlayerStartMagicData>();
+
+    public string Id => id;
+}
+
+[Serializable]
+public class MagicData : IDataRecord, INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public string nameKey;
+    public string descriptionKey;
+    public string iconName;
+    public MaterialEnum element;
+    public string[] tagIds = Array.Empty<string>();
+    public MaterialEnum[] recipe = Array.Empty<MaterialEnum>();
+    public MagicMatchRule matchRule;
+    public MagicEffectType effectType;
+    public int power;
+    public int hitCount;
+    public BuffEnum buffType;
+    public int buffAmount;
+
+    public string Id => id;
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class TagData : IDataRecord
+{
+    public string id;
+    public string nameKey;
+    public string descriptionKey;
+
+    public string Id => id;
+}
+
+[Serializable]
+public class EnemyIntentData
+{
+    public EnemyIntentType intentType;
+    public EnemyActionType actionType;
+    public int value;
+    public BuffEnum buffType;
+    public int buffAmount;
+    public string descriptionKey;
+}
+
+[Serializable]
+public class EnemyIntentGroupData
+{
+    public EnemyIntentData[] intents = Array.Empty<EnemyIntentData>();
+}
+
+[Serializable]
+public class EnemyActionData
+{
+    public EnemyActionType actionType;
+    public int value;
+    public BuffEnum buffType;
+    public int buffAmount;
+    public string descriptionKey;
+}
+
+[Serializable]
+public class EnemyData : IDataRecord, INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public string nameKey;
+    public int maxHealth;
+    public int baseAttack;
+    public string iconName;
+    public EnemyIntentGroupData[] intentLoop = Array.Empty<EnemyIntentGroupData>();
+    public EnemyActionData[] actionLoop = Array.Empty<EnemyActionData>();
+
+    public string Id => id;
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class EventOptionData
+{
+    public string id;
+    public string titleKey;
+    public string recipe;
+    public bool ignoreOrder;
+    public int resultId;
+    public bool isExitOption;
+    public string nextNodeId;
+}
+
+[Serializable]
+public class EventNodeData
+{
+    public string id;
+    public string[] textKeys = Array.Empty<string>();
+    public EventOptionData[] options = Array.Empty<EventOptionData>();
+}
+
+[Serializable]
+public class EventData : IDataRecord, INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public string titleKey;
+    public string startNodeId;
+    public int drawCount;
+    public EventNodeData[] nodes = Array.Empty<EventNodeData>();
+
+    public string Id => id;
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class LevelData : IDataRecord, INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public string titleKey;
+    public LevelType levelType;
+    public int[] enemyIds = Array.Empty<int>();
+    public int rewardPoolId;
+    public int eventPoolId;
+
+    public string Id => id;
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class RewardPoolData : INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public int[] magicIds = Array.Empty<int>();
+
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class ChapterLevelPoolRangeData
+{
+    public int startProgress;
+    public int endProgress;
+    public int[] levelPoolIds = Array.Empty<int>();
+}
+
+[Serializable]
+public class ChapterData : INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public string nameKey;
+    public int levelLength;
+    public int[] levelPoolIds = Array.Empty<int>();
+    public ChapterLevelPoolRangeData[] levelPoolRanges = Array.Empty<ChapterLevelPoolRangeData>();
+    public int[] eventPoolIds = Array.Empty<int>();
+
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class MaterialModel
+{
+    public string instanceId;
+    public MaterialEnum material;
+    public MaterialEnum alternateMaterial;
+    public List<string> enhancementIds = new List<string>();
+    public List<MaterialModifierModel> modifiers = new List<MaterialModifierModel>();
+    public bool isPlayed;
+    public bool isTemporary;
+    public bool isRetained;
+
+    public MaterialModel(string instanceId, MaterialEnum material)
+    {
+        this.instanceId = instanceId;
+        this.material = material;
+    }
+
+    public bool CanActAs(MaterialEnum targetMaterial)
+    {
+        if (targetMaterial == MaterialEnum.None)
+            return material == MaterialEnum.None;
+
+        return material == targetMaterial || alternateMaterial == targetMaterial || material == MaterialEnum.Wild;
+    }
+    public void AddModifier(MaterialModifierModel modifier)
+    {
+        if (modifier == null || modifiers.Contains(modifier))
+            return;
+
+        modifier.model = this;
+        modifiers.Add(modifier);
+        if (modifier is TemporaryModifier)
+            isTemporary = true;
+    }
+
+    public void TriggerOnDraw()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnDraw();
+    }
+
+    public void TriggerOnBegin()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnBegin();
+    }
+
+    public void TriggerOnJoin()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnJoin();
+    }
+
+    public void TriggerOnEnd()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnEnd();
+    }
+
+    public void TriggerOnDiscard()
+    {
+        isPlayed = false;
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+            modifiers[i].OnDiscard();
+    }
+
+    public void TriggerOnInvoke()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnInvoke();
+    }
+
+    public void RemoveModifiers<T>() where T : MaterialModifierModel
+    {
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+        {
+            if (modifiers[i] is T)
+                modifiers.RemoveAt(i);
+        }
+    }
+}
+
+[Serializable]
+public class MaterialCardModel : MaterialModel
+{
+    public MaterialCardModel(string instanceId, MaterialEnum material) : base(instanceId, material)
+    {
+    }
+}

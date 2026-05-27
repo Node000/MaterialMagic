@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "buffType": 2,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 3,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 6,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 7,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 8,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 9,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 10,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 11,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 12,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 13,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 14,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 15,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 16,
+      "iconName": "Sample"
+    },
+    {
+      "buffType": 17,
+      "iconName": "Sample"
+    }
+  ]
+}

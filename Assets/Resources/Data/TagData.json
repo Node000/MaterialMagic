@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "id": "burning",
+      "nameKey": "tag.burning.name",
+      "descriptionKey": "tag.burning.desc"
+    },
+    {
+      "id": "arc",
+      "nameKey": "tag.arc.name",
+      "descriptionKey": "tag.arc.desc"
+    },
+    {
+      "id": "charge",
+      "nameKey": "tag.charge.name",
+      "descriptionKey": "tag.charge.desc"
+    },
+    {
+      "id": "temporary",
+      "nameKey": "tag.temporary.name",
+      "descriptionKey": "tag.temporary.desc"
+    },
+    {
+      "id": "vortex",
+      "nameKey": "tag.vortex.name",
+      "descriptionKey": "tag.vortex.desc"
+    },
+    {
+      "id": "vulnerable",
+      "nameKey": "tag.vulnerable.name",
+      "descriptionKey": "tag.vulnerable.desc"
+    },
+    {
+      "id": "slow",
+      "nameKey": "tag.slow.name",
+      "descriptionKey": "tag.slow.desc"
+    },
+    {
+      "id": "weak",
+      "nameKey": "tag.weak.name",
+      "descriptionKey": "tag.weak.desc"
+    },
+    {
+      "id": "sturdy",
+      "nameKey": "tag.sturdy.name",
+      "descriptionKey": "tag.sturdy.desc"
+    },
+    {
+      "id": "shield_reflect",
+      "nameKey": "tag.shield_reflect.name",
+      "descriptionKey": "tag.shield_reflect.desc"
+    },
+    {
+      "id": "extra_draw",
+      "nameKey": "tag.extra_draw.name",
+      "descriptionKey": "tag.extra_draw.desc"
+    },
+    {
+      "id": "extra_refresh",
+      "nameKey": "tag.extra_refresh.name",
+      "descriptionKey": "tag.extra_refresh.desc"
+    },
+    {
+      "id": "spell_power",
+      "nameKey": "tag.spell_power.name",
+      "descriptionKey": "tag.spell_power.desc"
+    },
+    {
+      "id": "burning_deepen"
+    }
+  ]
+}

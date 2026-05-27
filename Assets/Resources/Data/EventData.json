@@ -1,0 +1,76 @@
+{
+  "items": [
+    {
+      "id": "event_test_crossroad",
+      "titleKey": "event.test_crossroad.title",
+      "startNodeId": "start",
+      "drawCount": 5,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.test_crossroad.start.1",
+            "event.test_crossroad.start.2"
+          ],
+          "options": [
+            {
+              "id": "inspect_rune",
+              "titleKey": "event.test_crossroad.option.inspect",
+              "recipe": "12",
+              "resultId": 0,
+              "nextNodeId": "rune"
+            },
+            {
+              "id": "drink_spring",
+              "titleKey": "event.test_crossroad.option.heal",
+              "recipe": "33",
+              "resultId": 1,
+              "nextNodeId": "spring"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.test_crossroad.option.leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "spring",
+          "textKeys": [
+            "event.test_crossroad.spring.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "rune",
+          "textKeys": [
+            "event.test_crossroad.rune.1",
+            "event.test_crossroad.rune.2"
+          ],
+          "options": [
+            {
+              "id": "strengthen_material",
+              "titleKey": "event.test_crossroad.option.upgrade",
+              "recipe": "24",
+              "resultId": 2,
+              "nextNodeId": "upgrade"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.test_crossroad.option.leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "upgrade",
+          "textKeys": [
+            "event.test_crossroad.upgrade.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 1
+    }
+  ]
+}

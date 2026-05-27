@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "key": "modifier.temporary.name", "text": "临时" },
+    { "key": "modifier.temporary.desc", "text": "回合结束或离开手牌时消失，不会回到抽牌堆。" },
+    { "key": "modifier.charge.name", "text": "电荷" },
+    { "key": "modifier.charge.desc", "text": "进入出牌区时，对随机敌人造成1点伤害。" },
+    { "key": "modifier.vortex.name", "text": "漩涡" },
+    { "key": "modifier.vortex.desc", "text": "进入出牌区时，对随机敌人施加1层随机负面状态；回合结束时额外抽1张素材到出牌区。" }
+  ]
+}

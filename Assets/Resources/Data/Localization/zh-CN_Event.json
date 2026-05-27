@@ -1,0 +1,15 @@
+{
+  "items": [
+    { "key": "event.test_crossroad.title", "text": "岔路口" },
+    { "key": "event.test_crossroad.start.1", "text": "你来到一处被古老符文照亮的岔路口。" },
+    { "key": "event.test_crossroad.start.2", "text": "一眼清泉在石缝间涌动，旁边的残碑仍残留着魔力。" },
+    { "key": "event.test_crossroad.option.inspect", "text": "检查符文" },
+    { "key": "event.test_crossroad.option.heal", "text": "饮用清泉" },
+    { "key": "event.test_crossroad.rune.1", "text": "符文回应了你的素材，石碑上的纹路重新亮起。" },
+    { "key": "event.test_crossroad.rune.2", "text": "你可以继续引导这股力量，让它改变之后抽到的素材。" },
+    { "key": "event.test_crossroad.option.upgrade", "text": "引导魔力" },
+    { "key": "event.test_crossroad.option.leave", "text": "离开" },
+    { "key": "event.test_crossroad.spring.1", "text": "清泉洗去了旅途的疲惫，你恢复了10点生命。" },
+    { "key": "event.test_crossroad.upgrade.1", "text": "魔力融入牌组，你之后每回合会额外抽取1张素材。" }
+  ]
+}

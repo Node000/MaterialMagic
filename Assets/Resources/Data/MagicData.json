@@ -1,0 +1,586 @@
+{
+  "items": [
+    {
+      "id": "magic_ignite",
+      "nameKey": "magic.ignite.name",
+      "descriptionKey": "magic.ignite.desc",
+      "rarity": "Basic",
+      "recipe": [
+        1
+      ],
+      "effectType": 4,
+      "buffType": 2,
+      "buffAmount": 2,
+      "iconName": "Sample",
+      "numericId": 1,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_fireball_art",
+      "nameKey": "magic.fireball_art.name",
+      "descriptionKey": "magic.fireball_art.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        1
+      ],
+      "effectType": 1,
+      "power": 5,
+      "iconName": "Sample",
+      "numericId": 2,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_flame_barrier",
+      "nameKey": "magic.flame_barrier.name",
+      "descriptionKey": "magic.flame_barrier.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        2,
+        4
+      ],
+      "effectType": 2,
+      "power": 9,
+      "iconName": "Sample",
+      "numericId": 3,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_magma",
+      "nameKey": "magic.magma.name",
+      "descriptionKey": "magic.magma.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        4
+      ],
+      "effectType": 4,
+      "buffType": 2,
+      "buffAmount": 3,
+      "iconName": "Sample",
+      "numericId": 4,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_molten",
+      "nameKey": "magic.molten.name",
+      "descriptionKey": "magic.molten.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        1,
+        1
+      ],
+      "effectType": 1,
+      "power": 9,
+      "iconName": "Sample",
+      "numericId": 5,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_explosion",
+      "nameKey": "magic.explosion.name",
+      "descriptionKey": "magic.explosion.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        2
+      ],
+      "effectType": 1,
+      "iconName": "Sample",
+      "numericId": 6,
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ]
+    },
+    {
+      "id": "magic_burning_hand",
+      "nameKey": "magic.burning_hand.name",
+      "descriptionKey": "magic.burning_hand.desc",
+      "rarity": "Rare",
+      "recipe": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "effectType": 4,
+      "buffType": 2,
+      "buffAmount": 8,
+      "iconName": "Sample",
+      "numericId": 7,
+      "element": 1,
+      "tagIds": [
+        "burning",
+        "burning_deepen"
+      ]
+    },
+    {
+      "id": "magic_flame_demon",
+      "nameKey": "magic.flame_demon.name",
+      "descriptionKey": "magic.flame_demon.desc",
+      "rarity": "Common",
+      "recipe": [
+        1,
+        3
+      ],
+      "effectType": 5,
+      "iconName": "Sample",
+      "numericId": 8,
+      "element": 1,
+      "tagIds": [
+        "temporary"
+      ]
+    },
+    {
+      "id": "magic_airflow",
+      "nameKey": "magic.airflow.name",
+      "descriptionKey": "magic.airflow.desc",
+      "rarity": "Basic",
+      "recipe": [
+        2
+      ],
+      "effectType": 1,
+      "power": 3,
+      "iconName": "Sample",
+      "numericId": 9,
+      "element": 2,
+      "tagIds": []
+    },
+    {
+      "id": "magic_wind_blade",
+      "nameKey": "magic.wind_blade.name",
+      "descriptionKey": "magic.wind_blade.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        2
+      ],
+      "effectType": 1,
+      "power": 6,
+      "iconName": "Sample",
+      "numericId": 10,
+      "element": 2,
+      "tagIds": []
+    },
+    {
+      "id": "magic_burning_wind",
+      "nameKey": "magic.burning_wind.name",
+      "descriptionKey": "magic.burning_wind.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        1,
+        3
+      ],
+      "effectType": 1,
+      "power": 4,
+      "iconName": "Sample",
+      "numericId": 11,
+      "element": 2,
+      "tagIds": []
+    },
+    {
+      "id": "magic_lightning",
+      "nameKey": "magic.lightning.name",
+      "descriptionKey": "magic.lightning.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        1
+      ],
+      "effectType": 1,
+      "power": 4,
+      "iconName": "Sample",
+      "numericId": 12,
+      "element": 2,
+      "tagIds": [
+        "arc"
+      ]
+    },
+    {
+      "id": "magic_storm_hand",
+      "nameKey": "magic.storm_hand.name",
+      "descriptionKey": "magic.storm_hand.desc",
+      "rarity": "Rare",
+      "recipe": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "effectType": 4,
+      "buffType": 12,
+      "buffAmount": 1,
+      "iconName": "Sample",
+      "numericId": 13,
+      "element": 2,
+      "tagIds": [
+        "arc"
+      ]
+    },
+    {
+      "id": "magic_current_attachment",
+      "nameKey": "magic.current_attachment.name",
+      "descriptionKey": "magic.current_attachment.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        3
+      ],
+      "effectType": 4,
+      "buffType": 15,
+      "buffAmount": 1,
+      "iconName": "Sample",
+      "numericId": 14,
+      "element": 2,
+      "tagIds": [
+        "spell_power",
+        "charge"
+      ]
+    },
+    {
+      "id": "magic_sandstorm",
+      "nameKey": "magic.sandstorm.name",
+      "descriptionKey": "magic.sandstorm.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        4
+      ],
+      "effectType": 1,
+      "power": 3,
+      "iconName": "Sample",
+      "numericId": 15,
+      "element": 2,
+      "tagIds": [
+        "extra_draw"
+      ]
+    },
+    {
+      "id": "magic_gale",
+      "nameKey": "magic.gale.name",
+      "descriptionKey": "magic.gale.desc",
+      "rarity": "Common",
+      "recipe": [
+        2,
+        2,
+        2
+      ],
+      "effectType": 1,
+      "power": 5,
+      "iconName": "Sample",
+      "numericId": 16,
+      "element": 2,
+      "tagIds": [
+        "extra_draw"
+      ]
+    },
+    {
+      "id": "magic_ice_pick",
+      "nameKey": "magic.ice_pick.name",
+      "descriptionKey": "magic.ice_pick.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        3
+      ],
+      "effectType": 1,
+      "power": 4,
+      "iconName": "Sample",
+      "numericId": 17,
+      "element": 3,
+      "tagIds": [
+        "vulnerable"
+      ]
+    },
+    {
+      "id": "magic_swamp",
+      "nameKey": "magic.swamp.name",
+      "descriptionKey": "magic.swamp.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        4
+      ],
+      "effectType": 4,
+      "buffType": 7,
+      "buffAmount": 2,
+      "iconName": "Sample",
+      "numericId": 18,
+      "element": 3,
+      "tagIds": [
+        "slow",
+        "weak",
+        "extra_refresh"
+      ]
+    },
+    {
+      "id": "magic_poison_fog",
+      "nameKey": "magic.poison_fog.name",
+      "descriptionKey": "magic.poison_fog.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        2
+      ],
+      "effectType": 4,
+      "buffType": 8,
+      "buffAmount": 2,
+      "iconName": "Sample",
+      "numericId": 19,
+      "element": 3,
+      "tagIds": []
+    },
+    {
+      "id": "magic_boiling_rain",
+      "nameKey": "magic.boiling_rain.name",
+      "descriptionKey": "magic.boiling_rain.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        1
+      ],
+      "effectType": 1,
+      "power": 1,
+      "hitCount": 3,
+      "iconName": "Sample",
+      "numericId": 20,
+      "element": 3,
+      "tagIds": []
+    },
+    {
+      "id": "magic_blizzard",
+      "nameKey": "magic.blizzard.name",
+      "descriptionKey": "magic.blizzard.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        3,
+        3
+      ],
+      "effectType": 1,
+      "power": 5,
+      "iconName": "Sample",
+      "numericId": 21,
+      "element": 3,
+      "tagIds": [
+        "weak",
+        "slow",
+        "vulnerable"
+      ]
+    },
+    {
+      "id": "magic_turbid_current",
+      "nameKey": "magic.turbid_current.name",
+      "descriptionKey": "magic.turbid_current.desc",
+      "rarity": "Common",
+      "recipe": [
+        3,
+        2,
+        4
+      ],
+      "effectType": 2,
+      "power": 7,
+      "iconName": "Sample",
+      "numericId": 22,
+      "element": 3,
+      "tagIds": [
+        "vortex"
+      ]
+    },
+    {
+      "id": "magic_tide_hand",
+      "nameKey": "magic.tide_hand.name",
+      "descriptionKey": "magic.tide_hand.desc",
+      "rarity": "Rare",
+      "recipe": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "effectType": 1,
+      "power": 10,
+      "iconName": "Sample",
+      "numericId": 23,
+      "element": 3,
+      "tagIds": []
+    },
+    {
+      "id": "magic_water_corrosion",
+      "nameKey": "magic.water_corrosion.name",
+      "descriptionKey": "magic.water_corrosion.desc",
+      "rarity": "Basic",
+      "recipe": [
+        3
+      ],
+      "effectType": 4,
+      "buffType": 6,
+      "buffAmount": 1,
+      "iconName": "Sample",
+      "numericId": 24,
+      "element": 3,
+      "tagIds": [
+        "vulnerable"
+      ]
+    },
+    {
+      "id": "magic_stone_wall",
+      "nameKey": "magic.stone_wall.name",
+      "descriptionKey": "magic.stone_wall.desc",
+      "rarity": "Basic",
+      "recipe": [
+        4
+      ],
+      "effectType": 2,
+      "power": 4,
+      "iconName": "Sample",
+      "numericId": 25,
+      "element": 4,
+      "tagIds": []
+    },
+    {
+      "id": "magic_rockfall",
+      "nameKey": "magic.rockfall.name",
+      "descriptionKey": "magic.rockfall.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        4
+      ],
+      "effectType": 2,
+      "power": 6,
+      "iconName": "Sample",
+      "numericId": 26,
+      "element": 4,
+      "tagIds": [
+        "sturdy"
+      ]
+    },
+    {
+      "id": "magic_earth_fire",
+      "nameKey": "magic.earth_fire.name",
+      "descriptionKey": "magic.earth_fire.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        1
+      ],
+      "effectType": 1,
+      "power": 3,
+      "iconName": "Sample",
+      "numericId": 27,
+      "element": 4,
+      "tagIds": []
+    },
+    {
+      "id": "magic_petrify",
+      "nameKey": "magic.petrify.name",
+      "descriptionKey": "magic.petrify.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        3
+      ],
+      "effectType": 1,
+      "power": 4,
+      "iconName": "Sample",
+      "numericId": 28,
+      "element": 4,
+      "tagIds": [
+        "weak",
+        "slow"
+      ]
+    },
+    {
+      "id": "magic_floating",
+      "nameKey": "magic.floating.name",
+      "descriptionKey": "magic.floating.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        2
+      ],
+      "effectType": 2,
+      "power": 6,
+      "iconName": "Sample",
+      "numericId": 29,
+      "element": 4,
+      "tagIds": []
+    },
+    {
+      "id": "magic_thorn_bush",
+      "nameKey": "magic.thorn_bush.name",
+      "descriptionKey": "magic.thorn_bush.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        4,
+        4
+      ],
+      "effectType": 2,
+      "power": 10,
+      "iconName": "Sample",
+      "numericId": 30,
+      "element": 4,
+      "tagIds": [
+        "shield_reflect"
+      ]
+    },
+    {
+      "id": "magic_refine",
+      "nameKey": "magic.refine.name",
+      "descriptionKey": "magic.refine.desc",
+      "rarity": "Common",
+      "recipe": [
+        4,
+        1,
+        3
+      ],
+      "effectType": 2,
+      "power": 8,
+      "iconName": "Sample",
+      "numericId": 31,
+      "element": 4,
+      "tagIds": [
+        "extra_draw"
+      ]
+    },
+    {
+      "id": "magic_earth_hand",
+      "nameKey": "magic.earth_hand.name",
+      "descriptionKey": "magic.earth_hand.desc",
+      "rarity": "Rare",
+      "recipe": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "effectType": 2,
+      "power": 5,
+      "iconName": "Sample",
+      "numericId": 32,
+      "element": 4,
+      "tagIds": []
+    }
+  ]
+}

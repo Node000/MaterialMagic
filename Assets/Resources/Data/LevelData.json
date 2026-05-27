@@ -1,0 +1,25 @@
+{
+  "items": [
+    { "id": "level_battle_001", "titleKey": "level.battle_001.title", "levelType": 0, "enemyIds": [1], "numericId": 1, "rewardPoolId": 1 },
+    { "id": "level_battle_002", "titleKey": "level.battle_002.title", "levelType": 0, "enemyIds": [2], "numericId": 2, "rewardPoolId": 1 },
+    { "id": "level_battle_003", "titleKey": "level.battle_003.title", "levelType": 0, "enemyIds": [3], "numericId": 3, "rewardPoolId": 1 },
+    { "id": "level_battle_004", "titleKey": "level.battle_004.title", "levelType": 0, "enemyIds": [4], "numericId": 4, "rewardPoolId": 1 },
+    { "id": "level_battle_005", "titleKey": "level.battle_005.title", "levelType": 0, "enemyIds": [5], "numericId": 5, "rewardPoolId": 1 },
+    { "id": "level_battle_006", "titleKey": "level.battle_006.title", "levelType": 0, "enemyIds": [6], "numericId": 6, "rewardPoolId": 1 },
+    { "id": "level_battle_007", "titleKey": "level.battle_007.title", "levelType": 0, "enemyIds": [1, 3], "numericId": 7, "rewardPoolId": 1 },
+    { "id": "level_battle_008", "titleKey": "level.battle_008.title", "levelType": 0, "enemyIds": [1, 5], "numericId": 8, "rewardPoolId": 1 },
+    { "id": "level_battle_009", "titleKey": "level.battle_009.title", "levelType": 0, "enemyIds": [2, 1], "numericId": 9, "rewardPoolId": 1 },
+    { "id": "level_battle_010", "titleKey": "level.battle_010.title", "levelType": 0, "enemyIds": [3, 3], "numericId": 10, "rewardPoolId": 1 },
+    { "id": "level_battle_011", "titleKey": "level.battle_011.title", "levelType": 0, "enemyIds": [2, 3], "numericId": 11, "rewardPoolId": 1 },
+    { "id": "level_battle_012", "titleKey": "level.battle_012.title", "levelType": 0, "enemyIds": [4, 1], "numericId": 12, "rewardPoolId": 1 },
+    { "id": "level_battle_013", "titleKey": "level.battle_013.title", "levelType": 0, "enemyIds": [5, 2], "numericId": 13, "rewardPoolId": 1 },
+    { "id": "level_battle_014", "titleKey": "level.battle_014.title", "levelType": 0, "enemyIds": [4, 5], "numericId": 14, "rewardPoolId": 1 },
+    { "id": "level_battle_015", "titleKey": "level.battle_015.title", "levelType": 0, "enemyIds": [6, 1], "numericId": 15, "rewardPoolId": 1 },
+    { "id": "level_battle_016", "titleKey": "level.battle_016.title", "levelType": 0, "enemyIds": [6, 3], "numericId": 16, "rewardPoolId": 1 },
+    { "id": "level_battle_017", "titleKey": "level.battle_017.title", "levelType": 0, "enemyIds": [1, 1, 3], "numericId": 17, "rewardPoolId": 1 },
+    { "id": "level_battle_018", "titleKey": "level.battle_018.title", "levelType": 0, "enemyIds": [1, 3, 5], "numericId": 18, "rewardPoolId": 1 },
+    { "id": "level_battle_019", "titleKey": "level.battle_019.title", "levelType": 0, "enemyIds": [2, 3, 5], "numericId": 19, "rewardPoolId": 1 },
+    { "id": "level_battle_020", "titleKey": "level.battle_020.title", "levelType": 0, "enemyIds": [4, 6, 3], "numericId": 20, "rewardPoolId": 1 },
+    { "id": "level_event_001", "titleKey": "level.event_001.title", "levelType": 1, "numericId": 101, "enemyIds": [], "eventPoolId": 1 }
+  ]
+}

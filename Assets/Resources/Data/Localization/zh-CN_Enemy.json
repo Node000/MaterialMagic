@@ -1,0 +1,24 @@
+{
+  "items": [
+    { "key": "enemy.sample_regular.name", "text": "样例敌人（常规）" },
+    { "key": "enemy.sample_high_attack.name", "text": "样例敌人（高攻）" },
+    { "key": "enemy.sample_multi_attack.name", "text": "样例敌人（连击）" },
+    { "key": "enemy.sample_high_health.name", "text": "样例敌人（高血）" },
+    { "key": "enemy.sample_defensive.name", "text": "样例敌人（防御）" },
+    { "key": "enemy.sample_elite.name", "text": "样例敌人（精英）" },
+    { "key": "enemy.action.attack_3", "text": "攻击3" },
+    { "key": "enemy.action.attack_4", "text": "攻击4" },
+    { "key": "enemy.action.attack_5", "text": "攻击5" },
+    { "key": "enemy.action.attack_6", "text": "攻击6" },
+    { "key": "enemy.action.attack_7", "text": "攻击7" },
+    { "key": "enemy.action.attack_8", "text": "攻击8" },
+    { "key": "enemy.action.attack_9", "text": "攻击9" },
+    { "key": "enemy.action.shield_4", "text": "获得4点护盾" },
+    { "key": "enemy.action.shield_5", "text": "获得5点护盾" },
+    { "key": "enemy.action.shield_6", "text": "获得6点护盾" },
+    { "key": "enemy.action.shield_8", "text": "获得8点护盾" },
+    { "key": "enemy.action.shield_10", "text": "获得10点护盾" },
+    { "key": "enemy.action.strengthen_1", "text": "伤害提升1" },
+    { "key": "enemy.action.strengthen_2", "text": "伤害提升2" }
+  ]
+}

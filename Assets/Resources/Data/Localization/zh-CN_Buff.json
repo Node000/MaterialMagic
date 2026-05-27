@@ -1,0 +1,124 @@
+{
+  "items": [
+    {
+      "key": "buff.shield.name",
+      "text": "护盾"
+    },
+    {
+      "key": "buff.shield.desc",
+      "text": "优先抵挡受到的伤害。"
+    },
+    {
+      "key": "buff.burning.name",
+      "text": "燃烧"
+    },
+    {
+      "key": "buff.burning.desc",
+      "text": "回合结束时造成等同层数的伤害，然后层数减半。"
+    },
+    {
+      "key": "buff.weak.name",
+      "text": "虚弱"
+    },
+    {
+      "key": "buff.weak.desc",
+      "text": "每层使攻击下降1，回合结束时层数减半。"
+    },
+    {
+      "key": "buff.vulnerable.name",
+      "text": "易损"
+    },
+    {
+      "key": "buff.vulnerable.desc",
+      "text": "每层使受到伤害+1，回合结束时层数减半。"
+    },
+    {
+      "key": "buff.slow.name",
+      "text": "迟缓"
+    },
+    {
+      "key": "buff.slow.desc",
+      "text": "每层使防御下降1，回合结束时层数减半。"
+    },
+    {
+      "key": "buff.arc.name",
+      "text": "电弧"
+    },
+    {
+      "key": "buff.arc.desc",
+      "text": "每次施法时，该目标受到层数点额外伤害，回合结束时清除。"
+    },
+    {
+      "key": "buff.spell_power.name",
+      "text": "威力增强"
+    },
+    {
+      "key": "buff.spell_power.desc",
+      "text": "法术造成伤害提高层数点，回合结束时清除。"
+    },
+    {
+      "key": "buff.burning_next_turn.name",
+      "text": "下回合燃烧"
+    },
+    {
+      "key": "buff.burning_next_turn.desc",
+      "text": "下回合开始时获得等同层数的燃烧并清除。"
+    },
+    {
+      "key": "buff.shield_reflect.name",
+      "text": "护盾反射"
+    },
+    {
+      "key": "buff.shield_reflect.desc",
+      "text": "反弹被护盾格挡的伤害，回合结束时清除。"
+    },
+    {
+      "key": "buff.extra_draw.name",
+      "text": "额外抽牌"
+    },
+    {
+      "key": "buff.extra_draw.desc",
+      "text": "额外抽等同层数的牌，抽牌后清除。"
+    },
+    {
+      "key": "buff.extra_refresh.name",
+      "text": "额外换牌"
+    },
+    {
+      "key": "buff.extra_refresh.desc",
+      "text": "额外获得等同层数的换牌机会，换牌时层数-1，回合结束时清除。"
+    },
+    {
+      "key": "buff.sturdy.name",
+      "text": "坚固"
+    },
+    {
+      "key": "buff.sturdy.desc",
+      "text": "下回合开始抽牌结束后，所有手牌获得坚固，然后回合结束时移除。"
+    },
+    {
+      "key": "modifier.sturdy.name",
+      "text": "坚固"
+    },
+    {
+      "key": "modifier.sturdy.desc",
+      "text": "以此素材牌触发法术时，获得1点护盾。回合结束时移除此效果。"
+    },
+    {
+      "key": "buff.stable.name",
+      "text": "稳定"
+    },
+    {
+      "key": "buff.stable.desc",
+      "text": "回合结束时层数-1；层数归零后转化为1层【紊乱】。"
+    },
+    {
+      "key": "buff.disorder.name",
+      "text": "紊乱"
+    },
+    {
+      "key": "buff.disorder.desc",
+      "text": "攻击伤害提高层数点；回合结束时受到层数点直接伤害，并使层数+1。"
+    }
+  ]
+}

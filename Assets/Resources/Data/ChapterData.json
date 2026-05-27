@@ -1,0 +1,62 @@
+{
+  "items": [
+    {
+      "numericId": 1,
+      "id": "chapter_001",
+      "nameKey": "chapter.001.name",
+      "levelLength": 21,
+      "levelPoolIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "levelPoolRanges": [
+        {
+          "startProgress": 1,
+          "endProgress": 4,
+          "levelPoolIds": [1, 2, 3]
+        },
+        {
+          "startProgress": 5,
+          "endProgress": 8,
+          "levelPoolIds": [1, 2, 3, 4, 5, 7, 8, 9]
+        },
+        {
+          "startProgress": 9,
+          "endProgress": 14,
+          "levelPoolIds": [7, 8, 9, 10, 11, 12, 13, 14]
+        },
+        {
+          "startProgress": 15,
+          "endProgress": 18,
+          "levelPoolIds": [11, 13, 14, 15, 16, 17, 18, 19]
+        },
+        {
+          "startProgress": 19,
+          "endProgress": 20,
+          "levelPoolIds": [15, 16, 19, 20]
+        }
+      ],
+      "eventPoolIds": [
+        101
+      ]
+    }
+  ]
+}

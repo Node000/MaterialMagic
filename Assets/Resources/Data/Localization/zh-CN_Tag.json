@@ -1,0 +1,30 @@
+{
+  "items": [
+    { "key": "tag.burning.name", "text": "燃烧" },
+    { "key": "tag.burning.desc", "text": "回合结束时造成等同层数的伤害，然后层数减半。" },
+    { "key": "tag.arc.name", "text": "电弧" },
+    { "key": "tag.arc.desc", "text": "每次施法时，该目标受到层数点额外伤害，回合结束时清除。" },
+    { "key": "tag.charge.name", "text": "电荷" },
+    { "key": "tag.charge.desc", "text": "以此素材牌触发法术时，对随机一名敌方施加1层电弧。" },
+    { "key": "tag.temporary.name", "text": "临时" },
+    { "key": "tag.temporary.desc", "text": "回合结束或离开手牌时消失，不会回到抽牌堆。" },
+    { "key": "tag.vortex.name", "text": "漩涡" },
+    { "key": "tag.vortex.desc", "text": "以此素材牌触发法术时，对随机一名敌人随机施加1层虚弱、迟缓或易损；回合结束时失去此效果。" },
+    { "key": "tag.vulnerable.name", "text": "易损" },
+    { "key": "tag.vulnerable.desc", "text": "每层使受到伤害+1，回合结束时层数减半。" },
+    { "key": "tag.slow.name", "text": "迟缓" },
+    { "key": "tag.slow.desc", "text": "每层使防御下降1，回合结束时层数减半。" },
+    { "key": "tag.weak.name", "text": "虚弱" },
+    { "key": "tag.weak.desc", "text": "每层使攻击下降1，回合结束时层数减半。" },
+    { "key": "tag.sturdy.name", "text": "坚固" },
+    { "key": "tag.sturdy.desc", "text": "以此素材牌触发法术时，获得1点护盾。回合结束时移除此效果。" },
+    { "key": "tag.shield_reflect.name", "text": "护盾反射" },
+    { "key": "tag.shield_reflect.desc", "text": "反弹被护盾格挡的伤害，回合结束时清除。" },
+    { "key": "tag.extra_draw.name", "text": "额外抽牌" },
+    { "key": "tag.extra_draw.desc", "text": "额外抽等同层数的牌，抽牌后清除。" },
+    { "key": "tag.extra_refresh.name", "text": "额外换牌" },
+    { "key": "tag.extra_refresh.desc", "text": "额外获得等同层数的换牌机会，换牌时层数-1，回合结束时清除。" },
+    { "key": "tag.spell_power.name", "text": "威力增强" },
+    { "key": "tag.spell_power.desc", "text": "法术造成伤害提高层数点，回合结束时清除。" }
+  ]
+}

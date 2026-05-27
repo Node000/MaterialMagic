@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "id": "default",
+      "maxHealth": 50,
+      "gold": 0,
+      "drawCount": 4,
+      "maxPlayCount": 3,
+      "magicBookSlotCount": 6,
+      "initialMaterials": [
+        {
+          "material": 1,
+          "count": 4
+        },
+        {
+          "material": 2,
+          "count": 4
+        },
+        {
+          "material": 3,
+          "count": 4
+        },
+        {
+          "material": 4,
+          "count": 4
+        }
+      ],
+      "initialMagics": [
+        {
+          "slotIndex": 0,
+          "magicId": 2
+        },
+        {
+          "slotIndex": 1,
+          "magicId": 10
+        },
+        {
+          "slotIndex": 2,
+          "magicId": 17
+        },
+        {
+          "slotIndex": 3,
+          "magicId": 26
+        }
+      ]
+    }
+  ]
+}
