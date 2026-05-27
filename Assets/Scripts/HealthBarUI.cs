@@ -159,7 +159,9 @@ public class HealthBarUI : MonoBehaviour
         float shieldWidth = Mathf.Clamp01(Mathf.Max(0, shield) / totalMax);
         float shieldStart = shield > 0 ? Mathf.Max(0f, healthEnd - shieldWidth) : healthEnd;
         float shieldEnd = healthEnd;
+        bool hasHealth = currentHealth > 0 || shield > 0;
         AnimateHorizontalRange(healthFillImage.GetComponent<RectTransform>(), 0f, healthEnd, fillDuration, instant, ease);
+        SetImageAlpha(healthFillImage, hasHealth ? 1f : 0f);
         if (shieldFillImage != null)
         {
             SetRectHorizontalRange(shieldFillImage.GetComponent<RectTransform>(), shieldStart, shieldEnd);

@@ -276,6 +276,7 @@ public class EventPanelUI : MonoBehaviour
             optionTooltipDescription.text = GetOptionEffectText(option);
 
         optionTooltip.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(optionTooltip);
         optionTooltip.SetAsLastSibling();
         optionTooltip.position = anchor.position + new Vector3(0f, tooltipYOffset, 0f);
         optionTooltip.localScale = tooltipHiddenScale;
@@ -315,6 +316,7 @@ public class EventPanelUI : MonoBehaviour
         optionTooltip.anchorMax = new Vector2(0.5f, 0.5f);
         optionTooltip.pivot = new Vector2(0.5f, 0f);
         optionTooltipCanvasGroup = optionTooltip.GetComponent<CanvasGroup>();
+        PopupLayerUtility.ApplyTo(optionTooltip);
         optionTooltipCanvasGroup.alpha = 0f;
 
         optionTooltipTitle = CreateTooltipText(optionTooltip, "Title", 18, FontStyle.Bold, new Vector2(0f, 24f), new Vector2(280f, 28f));
@@ -326,7 +328,7 @@ public class EventPanelUI : MonoBehaviour
     {
         Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
         text.transform.SetParent(parent, false);
-        text.font = bodyText != null ? bodyText.font : Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.font = bodyText != null ? bodyText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
         text.alignment = TextAnchor.MiddleCenter;

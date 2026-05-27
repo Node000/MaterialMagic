@@ -6,7 +6,10 @@ public enum MaterialModifierDisplayKind
 {
     Temporary,
     Charge,
-    Vortex
+    Vortex,
+    Kindling,
+    Flow,
+    Liquefy
 }
 
 public static class LocalizationKeys
@@ -111,6 +114,12 @@ public static class LocalizationKeys
             return GetModifierKey(MaterialModifierDisplayKind.Charge);
         if (modifier is VortexModifier)
             return GetModifierKey(MaterialModifierDisplayKind.Vortex);
+        if (modifier is KindlingModifier)
+            return GetModifierKey(MaterialModifierDisplayKind.Kindling);
+        if (modifier is FlowModifier)
+            return GetModifierKey(MaterialModifierDisplayKind.Flow);
+        if (modifier is LiquefyModifier)
+            return GetModifierKey(MaterialModifierDisplayKind.Liquefy);
         if (modifier is SturdyModifier)
             return "sturdy";
 
@@ -124,6 +133,9 @@ public static class LocalizationKeys
             case MaterialModifierDisplayKind.Temporary: return "temporary";
             case MaterialModifierDisplayKind.Charge: return "charge";
             case MaterialModifierDisplayKind.Vortex: return "vortex";
+            case MaterialModifierDisplayKind.Kindling: return "kindling";
+            case MaterialModifierDisplayKind.Flow: return "flow";
+            case MaterialModifierDisplayKind.Liquefy: return "liquefy";
             default: return kind.ToString().ToLowerInvariant();
         }
     }

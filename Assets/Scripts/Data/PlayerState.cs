@@ -70,8 +70,9 @@ public class PlayerState
         return state;
     }
 
-    public void DrawCards(int count)
+    public int DrawCards(int count)
     {
+        int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
             if (DrawPile.Count == 0)
@@ -83,8 +84,11 @@ public class PlayerState
             Hand.Add(card);
             card.TriggerOnDraw();
             TriggerAfterDraw(card);
+            drawnCount++;
             GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count}");
         }
+
+        return drawnCount;
     }
 
     public int DrawCardsToPlayZoneTail(int count)
@@ -345,10 +349,52 @@ public class PlayerState
         GameLog.Data("Player clear shield");
     }
 
+    public void ClearBuffs()
+    {
+        buffs.Clear();
+        GameLog.Data("Player clear buffs");
+    }
+
+    public void ClearCombatState()
+    {
+        ClearShield();
+        ClearBuffs();
+        RemoveSturdyModifiers();
+        TemporaryMaterialsNextTurn.Clear();
+    }
+
+    public void RemoveSturdyModifiers()
+    {
+        RemoveSturdyModifiers(Hand);
+        RemoveSturdyModifiers(PlayZone);
+        RemoveSturdyModifiers(DrawPile);
+        RemoveSturdyModifiers(Deck);
+        RemoveSturdyModifiers(TemporaryMaterialsNextTurn);
+    }
+
+    private static void RemoveSturdyModifiers(List<MaterialModel> cards)
+    {
+        for (int i = 0; i < cards.Count; i++)
+            cards[i]?.RemoveModifiers<SturdyModifier>();
+    }
+
     public void ApplySturdyToHand()
     {
         for (int i = 0; i < Hand.Count; i++)
-            Hand[i].AddModifier(new SturdyModifier());
+        {
+            MaterialModel card = Hand[i];
+            bool hasSturdy = false;
+            for (int j = 0; j < card.modifiers.Count; j++)
+            {
+                if (card.modifiers[j] is SturdyModifier)
+                {
+                    hasSturdy = true;
+                    break;
+                }
+            }
+            if (!hasSturdy)
+                card.AddModifier(new SturdyModifier());
+        }
     }
 
     public void TriggerMaterialBegin()
@@ -592,6 +638,34 @@ public class PlayerState
         TriggerAfterDraw(card);
         GameLog.Data($"Add temporary material to hand {DescribeMaterial(card)}");
         return card;
+    }
+
+    public MaterialModel AddDeckMaterial(MaterialEnum material)
+    {
+        if (material == MaterialEnum.None)
+            return null;
+
+        MaterialModel card = new MaterialModel("deck_" + material + "_" + temporaryMaterialIndex++, material);
+        Deck.Add(card);
+        DrawPile.Add(card);
+        GameLog.Data($"Add deck material {DescribeMaterial(card)}");
+        return card;
+    }
+
+    public bool RemoveCardEverywhere(MaterialModel card)
+    {
+        if (card == null)
+            return false;
+
+        bool removed = false;
+        removed |= Deck.Remove(card);
+        removed |= DrawPile.Remove(card);
+        removed |= Hand.Remove(card);
+        removed |= PlayZone.Remove(card);
+        removed |= TemporaryMaterialsNextTurn.Remove(card);
+        if (removed)
+            GameLog.Data($"Remove material card {DescribeMaterial(card)}");
+        return removed;
     }
 
     public MagicModel GetMagicAtSlot(int slotIndex)

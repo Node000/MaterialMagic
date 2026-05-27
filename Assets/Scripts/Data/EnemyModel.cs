@@ -147,6 +147,12 @@ public class EnemyModel
         return consumed;
     }
 
+    public void ClearShield()
+    {
+        Shield = 0;
+        GameLog.Data($"Enemy {Id} clear shield");
+    }
+
     public void AddBuff(BuffEnum buffType, int stack)
     {
         if (buffType == BuffEnum.None || stack <= 0)

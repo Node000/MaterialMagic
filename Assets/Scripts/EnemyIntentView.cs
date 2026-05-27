@@ -106,7 +106,6 @@ public class EnemyIntentView : MonoBehaviour
             sequence.Join(iconImage.DOFade(0f, duration));
         if (valueText != null)
             sequence.Join(valueText.DOFade(0f, duration));
-        sequence.OnComplete(() => gameObject.SetActive(false));
         fadeTween = sequence;
         return sequence;
     }

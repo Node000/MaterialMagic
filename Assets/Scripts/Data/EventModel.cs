@@ -104,6 +104,33 @@ public class EventModel
                 playerState.DrawCount++;
                 GameLog.Data($"Event result player draw count +1 now={playerState.DrawCount}");
                 break;
+            case 101:
+                playerState.AddDeckMaterial(MaterialEnum.Fire);
+                break;
+            case 102:
+                playerState.AddDeckMaterial(MaterialEnum.Wind);
+                break;
+            case 103:
+                playerState.AddDeckMaterial(MaterialEnum.Water);
+                break;
+            case 104:
+                playerState.AddDeckMaterial(MaterialEnum.Earth);
+                break;
+        }
+    }
+
+    public static MaterialModifierModel CreateModifierForResult(int resultId)
+    {
+        switch (resultId)
+        {
+            case 201:
+                return new KindlingModifier();
+            case 202:
+                return new FlowModifier();
+            case 203:
+                return new LiquefyModifier();
+            default:
+                return null;
         }
     }
 

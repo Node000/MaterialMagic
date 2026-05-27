@@ -79,6 +79,16 @@ public class BattleManager
         return target.TakeDamage(damage, source != null ? new CombatantModel(source) : null);
     }
 
+    public void AddBurningToRandomEnemy(int stack)
+    {
+        if (stack <= 0)
+            return;
+
+        EnemyModel target = SelectTargetEnemy();
+        if (target != null)
+            target.AddBuff(BuffEnum.Burning, stack);
+    }
+
     public void AddRandomDebuffToRandomEnemy(int stack)
     {
         if (stack <= 0)

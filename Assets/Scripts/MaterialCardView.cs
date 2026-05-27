@@ -178,7 +178,7 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
         {
             Text tagText = new GameObject("EnhancementTag", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
             tagText.transform.SetParent(enhancementRoot, false);
-            tagText.font = labelText != null ? labelText.font : Resources.GetBuiltinResource<Font>("Arial.ttf");
+            tagText.font = labelText != null ? labelText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             tagText.fontSize = 12;
             tagText.alignment = TextAnchor.MiddleCenter;
             tagText.color = Color.white;
@@ -215,7 +215,7 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         string text = GetMaterialName(materialModel.material);
         if (materialModel.isTemporary)
-            text += "【" + LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary) + "】";
+            text += " " + LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
         return text;
     }
 

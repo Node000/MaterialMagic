@@ -6,6 +6,12 @@ public class SturdyBuffModel : BuffModel
     {
     }
 
+    public override void AfterDraw(CombatantModel self, MaterialModel card)
+    {
+        if (!pendingNextTurn && self?.Player != null)
+            self.Player.ApplySturdyToHand();
+    }
+
     public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (pendingNextTurn)

@@ -53,7 +53,15 @@ public class MaterialListPanelUI : MonoBehaviour
 
     public void ShowModifierTooltip(MaterialCardView cardView, MaterialModel materialModel)
     {
-        if (cardView == null || materialModel == null || materialModel.modifiers.Count == 0)
+        if (cardView == null)
+            return;
+
+        ShowModifierTooltip(cardView.RectTransform, materialModel);
+    }
+
+    public void ShowModifierTooltip(RectTransform anchor, MaterialModel materialModel)
+    {
+        if (anchor == null || materialModel == null || materialModel.modifiers.Count == 0)
             return;
 
         EnsureModifierTooltip();
@@ -62,8 +70,9 @@ public class MaterialListPanelUI : MonoBehaviour
 
         RebuildModifierTooltip(materialModel);
         modifierTooltip.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(modifierTooltip);
         modifierTooltip.SetAsLastSibling();
-        modifierTooltip.position = cardView.RectTransform.position + new Vector3(0f, tooltipYOffset, 0f);
+        modifierTooltip.position = anchor.position + new Vector3(0f, tooltipYOffset, 0f);
         modifierTooltip.localScale = tooltipHiddenScale;
         modifierTooltipCanvasGroup.alpha = 0f;
         modifierTooltipTween?.Kill(false);
@@ -74,6 +83,11 @@ public class MaterialListPanelUI : MonoBehaviour
     }
 
     public void HideModifierTooltip(MaterialCardView cardView)
+    {
+        HideModifierTooltip(cardView != null ? cardView.RectTransform : null);
+    }
+
+    public void HideModifierTooltip(RectTransform anchor)
     {
         if (modifierTooltip == null || !modifierTooltip.gameObject.activeSelf)
             return;
@@ -136,18 +150,66 @@ public class MaterialListPanelUI : MonoBehaviour
 
         int materialCount = 0;
         for (int i = 0; i < owner.PlayerState.Deck.Count; i++)
+            materialCount += CountMaterialRows(owner.PlayerState.Deck[i], material);
+        for (int i = 0; i < owner.PlayerState.Hand.Count; i++)
         {
-            MaterialModel materialModel = owner.PlayerState.Deck[i];
-            if (materialModel != null && materialModel.material == material)
-                materialCount++;
+            MaterialModel materialModel = owner.PlayerState.Hand[i];
+            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+                materialCount += CountMaterialRows(materialModel, material);
+        }
+        for (int i = 0; i < owner.PlayerState.PlayZone.Count; i++)
+        {
+            MaterialModel materialModel = owner.PlayerState.PlayZone[i];
+            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+                materialCount += CountMaterialRows(materialModel, material);
         }
 
         ApplyRowSpacing(row, materialCount);
 
         for (int i = 0; i < owner.PlayerState.Deck.Count; i++)
+            CreateMaterialCardsForRow(row, owner.PlayerState.Deck[i], material);
+        for (int i = 0; i < owner.PlayerState.Hand.Count; i++)
         {
-            MaterialModel materialModel = owner.PlayerState.Deck[i];
-            if (materialModel != null && materialModel.material == material)
+            MaterialModel materialModel = owner.PlayerState.Hand[i];
+            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+                CreateMaterialCardsForRow(row, materialModel, material);
+        }
+        for (int i = 0; i < owner.PlayerState.PlayZone.Count; i++)
+        {
+            MaterialModel materialModel = owner.PlayerState.PlayZone[i];
+            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+                CreateMaterialCardsForRow(row, materialModel, material);
+        }
+    }
+
+    private int CountMaterialRows(MaterialModel materialModel, MaterialEnum material)
+    {
+        if (materialModel == null)
+            return 0;
+
+        int count = materialModel.material == material ? 1 : 0;
+        if (materialModel.alternateMaterial == material)
+            count++;
+        for (int i = 0; i < materialModel.modifiers.Count; i++)
+        {
+            if (materialModel.modifiers[i] != null && materialModel.modifiers[i].CanActAs(material))
+                count++;
+        }
+        return count;
+    }
+
+    private void CreateMaterialCardsForRow(RectTransform row, MaterialModel materialModel, MaterialEnum material)
+    {
+        if (materialModel == null)
+            return;
+
+        if (materialModel.material == material)
+            CreateMaterialCard(row, materialModel);
+        if (materialModel.alternateMaterial == material)
+            CreateMaterialCard(row, materialModel);
+        for (int i = 0; i < materialModel.modifiers.Count; i++)
+        {
+            if (materialModel.modifiers[i] != null && materialModel.modifiers[i].CanActAs(material))
                 CreateMaterialCard(row, materialModel);
         }
     }
@@ -190,6 +252,7 @@ public class MaterialListPanelUI : MonoBehaviour
         modifierTooltip.anchorMax = new Vector2(0.5f, 0.5f);
         modifierTooltip.pivot = new Vector2(0.5f, 0f);
         modifierTooltipCanvasGroup = background.GetComponent<CanvasGroup>();
+        PopupLayerUtility.ApplyTo(modifierTooltip);
         modifierTooltipCanvasGroup.alpha = 0f;
 
         modifierTooltipContent = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter)).GetComponent<RectTransform>();
@@ -235,7 +298,7 @@ public class MaterialListPanelUI : MonoBehaviour
         {
             Text text = new GameObject("ModifierText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
             text.transform.SetParent(modifierTooltipContent, false);
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = 15;
             text.alignment = TextAnchor.UpperLeft;
             text.color = Color.white;

@@ -37,12 +37,13 @@ public class BuffTooltipUI : MonoBehaviour
 
         Text description = UIManager.FindChildComponent<Text>(transform, "Description");
         if (description != null)
-            description.text = display.Description;
+            description.text = buff.GetDesc();
 
         gameObject.SetActive(true);
         transform.localScale = HiddenScale;
         canvasGroup.alpha = 0f;
         transform.position = slot.RectTransform.position + new Vector3(0f, tooltipYOffset, 0f);
+        PopupLayerUtility.ApplyTo((RectTransform)transform);
         transform.SetAsLastSibling();
         tween?.Kill(false);
         Sequence sequence = DOTween.Sequence().SetTarget(this);

@@ -229,6 +229,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         tooltipTween?.Kill(false);
         tagTooltipTween?.Kill(false);
         tooltipRoot.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(tooltipRoot);
         tooltipRoot.localScale = tooltipHiddenScale;
 
         Sequence sequence = DOTween.Sequence().SetTarget(this);
@@ -250,6 +251,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         tagTooltipRoot.sizeDelta = GetTagTooltipSize();
         Vector2 shownPosition = GetTagTooltipShownPosition();
         tagTooltipRoot.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(tagTooltipRoot);
         tagTooltipRoot.SetAsLastSibling();
         tagTooltipCanvasGroup.alpha = 0f;
         tagTooltipRoot.localScale = Vector3.one;
@@ -328,6 +330,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         tagTooltipCanvasGroup = tagTooltipRoot.GetComponent<CanvasGroup>();
         if (tagTooltipCanvasGroup == null)
             tagTooltipCanvasGroup = tagTooltipRoot.gameObject.AddComponent<CanvasGroup>();
+        PopupLayerUtility.ApplyTo(tagTooltipRoot);
         tagTooltipCanvasGroup.alpha = 0f;
         tagTooltipCanvasGroup.blocksRaycasts = false;
         tagTooltipRoot.gameObject.SetActive(false);
@@ -411,9 +414,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             else
                 builder.Append("\n\n");
 
-            builder.Append("<color=#FFE99E>【");
+            builder.Append("<color=#FFE99E>");
             builder.Append(name);
-            builder.Append("】：</color>\n");
+            builder.Append("：</color>\n");
             builder.Append(description);
         }
 

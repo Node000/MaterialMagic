@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -57,6 +58,7 @@ public class RewardPanelUI : MonoBehaviour
     private bool goldClaimed;
     private bool magicClaimed;
     private MagicItemView selectedMagicView;
+    private Tween selectedMagicTween;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -161,7 +163,7 @@ public class RewardPanelUI : MonoBehaviour
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = new Vector2(-230f + i * 230f, 0f);
             rect.sizeDelta = new Vector2(196f, 92f);
-            rect.localScale = Vector3.one;
+            rect.localScale = view == selectedMagicView ? Vector3.one * 1.18f : Vector3.one;
 
             MagicData data = choices[i];
             view.Bind(MagicFactory.Create(data));
@@ -182,11 +184,24 @@ public class RewardPanelUI : MonoBehaviour
 
         selectedMagicView = view;
         owner.SelectPendingRewardMagic(data);
+        RefreshSelectedMagicVisuals();
+    }
+
+    private void RefreshSelectedMagicVisuals()
+    {
+        selectedMagicTween?.Kill(false);
         for (int i = 0; i < rewardMagicViews.Count; i++)
         {
             MagicItemView rewardView = rewardMagicViews[i];
-            if (rewardView != null)
-                rewardView.transform.localScale = rewardView == selectedMagicView ? Vector3.one * 1.18f : Vector3.one;
+            if (rewardView == null)
+                continue;
+
+            Transform rewardTransform = rewardView.transform;
+            rewardTransform.DOKill(false);
+            Vector3 targetScale = rewardView == selectedMagicView ? Vector3.one * 1.24f : Vector3.one;
+            Tween tween = rewardTransform.DOScale(targetScale, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
+            if (rewardView == selectedMagicView)
+                selectedMagicTween = tween;
         }
     }
 
@@ -199,15 +214,25 @@ public class RewardPanelUI : MonoBehaviour
 
     private void HideMagicChoices()
     {
+        selectedMagicTween?.Kill(false);
+        selectedMagicTween = null;
         if (magicChoicePanel != null)
             magicChoicePanel.gameObject.SetActive(false);
 
+        RectTransform rewardParent = (RectTransform)transform;
         for (int i = 0; i < rewardMagicViews.Count; i++)
         {
             if (rewardMagicViews[i] != null)
             {
+                RectTransform rect = (RectTransform)rewardMagicViews[i].transform;
+                rect.SetParent(rewardParent, false);
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(-160f + i * 160f, -18f);
+                rect.sizeDelta = new Vector2(196f, 92f);
+                rect.localScale = Vector3.one;
                 rewardMagicViews[i].gameObject.SetActive(false);
-                rewardMagicViews[i].transform.localScale = Vector3.one;
             }
         }
     }
@@ -347,10 +372,16 @@ public class RewardPanelUI : MonoBehaviour
                     rewardMagicViews.Add(panelViews[i]);
             }
         }
+        rewardMagicViews.Sort(CompareMagicRewardViewNames);
 
         if (endButton == null)
             endButton = UIManager.FindChildComponent<Button>(transform, "EndButton");
         CacheOptionViews();
+    }
+
+    private static int CompareMagicRewardViewNames(MagicItemView left, MagicItemView right)
+    {
+        return string.CompareOrdinal(left != null ? left.name : string.Empty, right != null ? right.name : string.Empty);
     }
 
     private void CacheOptionViews()

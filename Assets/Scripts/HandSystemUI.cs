@@ -276,6 +276,14 @@ public class HandSystemUI : MonoBehaviour
 
 	private bool busy;
 
+	private bool choosingEventCard;
+
+	private EventOptionData pendingChoiceOption;
+
+	private int pendingChoiceCount;
+
+	private readonly List<MaterialModel> pendingChoiceCards = new List<MaterialModel>();
+
 	public PlayerState PlayerState => playerState;
 
 	public bool IsDeckCardConsumedInCurrentBattle(MaterialModel materialModel)
@@ -530,6 +538,18 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().HideBuffTooltip(slot);
 	}
 
+    public void ShowModifierTooltip(HandCardView cardView, MaterialModel materialModel)
+    {
+        if (cardView != null)
+            GetUIManager().MaterialListPanel?.ShowModifierTooltip(cardView.RectTransform, materialModel);
+    }
+
+    public void HideModifierTooltip(HandCardView cardView)
+    {
+        if (cardView != null)
+            GetUIManager().MaterialListPanel?.HideModifierTooltip(cardView.RectTransform);
+    }
+
 	private Image EnsureFocusMarker(RectTransform enemyView)
 	{
 		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
@@ -759,7 +779,7 @@ public class HandSystemUI : MonoBehaviour
 	private Font GetDefaultFont()
 	{
 		Text playerHealthText = GetUIManager().PlayerStatus != null ? UIManager.FindChildComponent<Text>(GetUIManager().PlayerStatus.transform, "HealthText") : null;
-		return playerHealthText != null ? playerHealthText.font : Resources.GetBuiltinResource<Font>("Arial.ttf");
+		return playerHealthText != null ? playerHealthText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 	}
 
 	private RectTransform FindChildRect(Transform root, string name)
@@ -813,6 +833,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 		currentMapNodeIndex = 0;
 		RefreshChapterProgressUI();
+		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		GameLog.Data($"Build map nodes={mapNodes.Count} fixedEvents=8,16");
 	}
 
@@ -1015,8 +1036,13 @@ public class HandSystemUI : MonoBehaviour
 
 	public void OnCardLeftClicked(HandCardView cardView)
 	{
-		if (busy)
+		if (busy && !choosingEventCard)
 		{
+			return;
+		}
+		if (choosingEventCard)
+		{
+			HandleEventCardChoice(cardView);
 			return;
 		}
 		if (cardView.InPlayZone)
@@ -1048,6 +1074,82 @@ public class HandSystemUI : MonoBehaviour
 		{
 			PlayCard(cardView.Card);
 		}
+	}
+
+	private void HandleEventCardChoice(HandCardView cardView)
+	{
+		if (cardView == null || cardView.InPlayZone || !playerState.Hand.Contains(cardView.Card) || pendingChoiceCards.Contains(cardView.Card))
+			return;
+
+		pendingChoiceCards.Add(cardView.Card);
+		cardView.SetSelected(true, instant: false);
+		if (pendingChoiceCards.Count < pendingChoiceCount)
+			return;
+
+		ResolveEventCardChoice();
+	}
+
+	private void ResolveEventCardChoice()
+	{
+		EventOptionData option = pendingChoiceOption;
+		List<MaterialModel> choiceCards = new List<MaterialModel>(pendingChoiceCards);
+		choosingEventCard = false;
+		pendingChoiceOption = null;
+		pendingChoiceCards.Clear();
+		pendingChoiceCount = 0;
+
+		if (option == null)
+		{
+			busy = false;
+			SetButtonsInteractable(interactable: true);
+			return;
+		}
+
+		if (option.resultId == 100)
+		{
+			for (int i = 0; i < choiceCards.Count; i++)
+				playerState.RemoveCardEverywhere(choiceCards[i]);
+		}
+		else
+		{
+			for (int i = 0; i < choiceCards.Count; i++)
+			{
+				MaterialModifierModel modifier = EventModel.CreateModifierForResult(option.resultId);
+				if (modifier != null)
+					choiceCards[i].AddModifier(modifier);
+			}
+		}
+
+		selectedCards.Clear();
+		RefreshStaticUI();
+		RefreshMaterialListPanel();
+		RebuildCards(animateFromCurrent: true);
+		CompleteEventChoiceOption(option);
+	}
+
+	private void CompleteEventChoiceOption(EventOptionData option)
+	{
+		if (currentEvent != null && currentEvent.AdvanceToNextNode(option))
+		{
+			if ((Object)eventPanel != (Object)null)
+				((MonoBehaviour)this).StartCoroutine(CompleteEventChoiceNodeRoutine());
+			else
+			{
+				busy = false;
+				SetButtonsInteractable(interactable: true);
+			}
+		}
+		else
+		{
+			FinishEventLevel();
+		}
+	}
+
+	private IEnumerator CompleteEventChoiceNodeRoutine()
+	{
+		yield return eventPanel.ShowCurrentNodeRoutine();
+		busy = false;
+		SetButtonsInteractable(interactable: true);
 	}
 
 	public void PlaySelectedCardsByInput()
@@ -1115,11 +1217,20 @@ public class HandSystemUI : MonoBehaviour
 				list.Add(handCardView);
 			}
 		}
+		int refreshCount = selectedCards.Count;
+		MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
+		for (int i = 0; i < selectedCards.Count; i++)
+		{
+			if (selectedCards[i] != null)
+				selectedCards[i].TriggerOnRefresh();
+		}
+		MaterialModifierModel.CurrentContext = null;
+		int drawnCount = playerState.DrawCards(refreshCount);
 		List<MaterialModel> list2 = new List<MaterialModel>();
 		int returnedCount = playerState.ReturnHandCardsToDrawPile(selectedCards, list2);
-		GameLog.Data($"Refresh selected cards selected={selectedCards.Count} returned={returnedCount} temporaryRemoved={list2.Count}");
+		GameLog.Data($"Refresh selected cards selected={selectedCards.Count} drawn={drawnCount} returned={returnedCount} temporaryRemoved={list2.Count}");
 		selectedCards.Clear();
-		if (returnedCount == 0 && list2.Count == 0)
+		if (drawnCount == 0 && returnedCount == 0 && list2.Count == 0)
 		{
 			return;
 		}
@@ -1140,7 +1251,6 @@ public class HandSystemUI : MonoBehaviour
 		UpdateLayout();
 		AnimateReturningViews(list, list2, deckPileArea, (TweenCallback)delegate
 		{
-			playerState.DrawCards(returnedCount);
 			RefreshStaticUI();
 			RefreshMaterialListPanel();
 			RebuildCards(animateFromCurrent: true);
@@ -1195,6 +1305,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
 		playerState.EndTurn(removedTemporaryCards);
 		playerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
+        playerState.ClearShield();
 		playerState.TriggerMaterialEnd();
 		MaterialModifierModel.CurrentContext = null;
 		RefreshStaticUI();
@@ -1867,6 +1978,7 @@ public class HandSystemUI : MonoBehaviour
 			float num2 = Mathf.Clamp01((float)Mathf.Max(0, shield) / totalMax);
 			float num3 = (shield > 0) ? Mathf.Max(0f, num - num2) : num;
 			AnimateHorizontalRange(((Component)healthFillImage).GetComponent<RectTransform>(), 0f, num, enemyHealthFillDuration, instant);
+			SetImageAlpha(healthFillImage, (currentHealth > 0 || shield > 0) ? 1f : 0f);
 			if ((Object)shieldFillImage != (Object)null)
 			{
 				SetRectHorizontalRange(((Component)shieldFillImage).GetComponent<RectTransform>(), num3, num);
@@ -1878,6 +1990,7 @@ public class HandSystemUI : MonoBehaviour
                 float end = num;
 				float duration = ((num < rectHorizontalEnd) ? enemyHealthBufferDecreaseDuration : enemyHealthBufferIncreaseDuration);
 				AnimateHorizontalRange(((Component)bufferFillImage).GetComponent<RectTransform>(), 0f, end, duration, instant);
+				SetImageAlpha(bufferFillImage, (currentHealth > 0 || shield > 0) ? 1f : 0f);
 			}
 		}
 	}
@@ -2205,6 +2318,7 @@ public class HandSystemUI : MonoBehaviour
 		List<HandCardView> views = new List<HandCardView>(cardViews);
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
 		playerState.EndTurn(removedTemporaryCards);
+        playerState.ClearCombatState();
 		bool returnDone = false;
 		AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
 		{
@@ -2334,6 +2448,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
 		pendingRewardMagic = null;
+        playerState.ClearCombatState();
 		GetUIManager().HideRewardPanel();
 		GetUIManager().HideSlotSelect();
 		enemyModels.Clear();
@@ -2345,6 +2460,7 @@ public class HandSystemUI : MonoBehaviour
 		if (mapNodes.Count != 0)
 		{
 			int num = currentMapNodeIndex;
+			GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(num);
 			currentMapNodeIndex++;
 			GameLog.Data($"Advance map node index={currentMapNodeIndex + 1}");
 			if (currentMapNodeIndex >= mapNodes.Count)
@@ -2414,7 +2530,11 @@ public class HandSystemUI : MonoBehaviour
 		}
 
 		enemy.EndResolveIntents(playerState);
+        enemy.TriggerOnTurnEnd(opponent);
+        enemy.TriggerAfterTurnEnd(opponent);
+        enemy.ClearShield();
 		RefreshEnemyUI(state, false);
+		yield return PlayPendingEnemyDeaths();
 	}
 
 	private void PlayPlayerDamageFeedbackIfNeeded(int healthBefore, int shieldBefore)

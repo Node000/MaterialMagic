@@ -18,11 +18,12 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween feedbackTween;
-    private MaterialModel card;
+    private Text modifierText;
     private bool selected;
     private bool inPlayZone;
     private bool hovered;
     private float baseZRotation;
+    private MaterialModel card;
 
     public MaterialModel Card => card;
     public bool Selected => selected;
@@ -39,6 +40,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     private void OnDisable()
     {
+        owner?.HideModifierTooltip(this);
         feedbackTween?.Kill(false);
         feedbackTween = null;
     }
@@ -107,29 +109,68 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     {
         hovered = true;
         PlayFeedback(false);
+        owner?.ShowModifierTooltip(this, card);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
         PlayFeedback(false);
+        owner?.HideModifierTooltip(this);
     }
 
     private void RefreshVisual()
     {
         if (labelText != null)
-            labelText.text = GetCardLabel();
+            labelText.text = MaterialCardView.GetMaterialName(card.material);
+
+        EnsureModifierText();
+        if (modifierText != null)
+        {
+            string modifierLabel = GetModifierLabel();
+            modifierText.text = modifierLabel;
+            modifierText.gameObject.SetActive(!string.IsNullOrEmpty(modifierLabel));
+        }
 
         if (iconImage != null)
             iconImage.color = MaterialCardView.GetMaterialColor(card.material);
     }
 
-    private string GetCardLabel()
+    private string GetModifierLabel()
     {
-        string text = MaterialCardView.GetMaterialName(card.material);
+        string text = string.Empty;
         if (card.isTemporary)
-            text += "【" + LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary) + "】";
+            text = LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
+        for (int i = 0; i < card.modifiers.Count; i++)
+        {
+            MaterialModifierModel modifier = card.modifiers[i];
+            if (modifier is TemporaryModifier)
+                continue;
+
+            if (!string.IsNullOrEmpty(text))
+                text += " ";
+            text += LocalizationKeys.GetModifierName(modifier);
+        }
         return text;
+    }
+
+    private void EnsureModifierText()
+    {
+        if (modifierText != null)
+            return;
+
+        modifierText = new GameObject("ModifierTagText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        modifierText.transform.SetParent(transform, false);
+        modifierText.font = labelText != null && labelText.font != null ? labelText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        modifierText.fontSize = 13;
+        modifierText.alignment = TextAnchor.MiddleCenter;
+        modifierText.color = new Color(1f, 0.92f, 0.58f, 1f);
+        modifierText.raycastTarget = false;
+        RectTransform rect = modifierText.rectTransform;
+        rect.anchorMin = new Vector2(0.08f, 0.16f);
+        rect.anchorMax = new Vector2(0.92f, 0.42f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
     }
 
     private void PlayFeedback(bool instant)

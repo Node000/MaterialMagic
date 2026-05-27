@@ -43,7 +43,7 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     {
         StopMotion();
         StopHoverMotion();
-        transform.localScale = originalScale;
+        originalScale = transform.localScale;
         transform.localPosition = originalLocalPosition;
         transform.localEulerAngles = originalLocalEulerAngles;
     }

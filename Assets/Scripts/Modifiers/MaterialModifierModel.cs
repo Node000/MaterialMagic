@@ -28,8 +28,17 @@ public class MaterialModifierModel
     {
     }
 
+    public virtual void OnRefresh()
+    {
+    }
+
     public virtual void OnInvoke()
     {
+    }
+
+    public virtual bool CanActAs(MaterialEnum material)
+    {
+        return false;
     }
 
     protected MaterialModifierContext Context => CurrentContext;

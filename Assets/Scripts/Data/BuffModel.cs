@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 [Serializable]
 public class BuffModel
@@ -83,6 +84,14 @@ public class BuffModel
     protected void HalveStack()
     {
         stack /= 2;
+    }
+
+    public virtual string GetDesc()
+    {
+        string template = LocalizationKeys.GetBuffDescription(buffType);
+        if (string.IsNullOrEmpty(template))
+            return string.Empty;
+        return template.Contains("{0}") ? string.Format(template, stack) : template;
     }
 
     public static BuffModel Create(BuffEnum buffType, int stack)

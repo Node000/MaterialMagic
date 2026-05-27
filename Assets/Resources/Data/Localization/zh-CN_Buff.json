@@ -110,7 +110,7 @@
     },
     {
       "key": "buff.stable.desc",
-      "text": "回合结束时层数-1；层数归零后转化为1层【紊乱】。"
+      "text": "回合结束时层数-1；层数归零后转化为1层紊乱。"
     },
     {
       "key": "buff.disorder.name",

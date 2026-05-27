@@ -20,6 +20,9 @@ public class MapPanelUI : MonoBehaviour
     [SerializeField] private float autoHideDelay = 0.22f;
     [SerializeField] private float viewportMoveDuration = 0.28f;
     [SerializeField] private Ease viewportMoveEase = Ease.OutQuad;
+    [SerializeField] private Vector2 connectionDashSize = new Vector2(18f, 4f);
+    [SerializeField] private float connectionDashGap = 10f;
+    [SerializeField] private Color connectionDashColor = new Color(1f, 1f, 1f, 0.34f);
 
     private const int RunNodeCount = 21;
     private readonly List<RectTransform> nodeViews = new List<RectTransform>();
@@ -29,6 +32,7 @@ public class MapPanelUI : MonoBehaviour
     private RectTransform playerMarker;
     private ScrollRect scrollRect;
     private Vector2 shownPosition;
+    private int displayedNodeIndex;
 
     public float HideDuration => mapHideDuration;
 
@@ -43,10 +47,20 @@ public class MapPanelUI : MonoBehaviour
         this.owner = owner;
         rectTransform = (RectTransform)transform;
         shownPosition = rectTransform.anchoredPosition;
+        displayedNodeIndex = owner != null ? owner.CurrentMapNodeIndex : 0;
         CacheReferences();
-        CreateNodes();
+        CreateNodes(false);
         if (!gameObject.activeSelf)
             gameObject.SetActive(false);
+    }
+
+    public void SetPlayerMarkerNodeIndex(int nodeIndex)
+    {
+        displayedNodeIndex = nodeIndex;
+        CacheReferences();
+        playerMarker = UIManager.FindChildRect(content, "PlayerMarker");
+        if (playerMarker != null)
+            playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
     }
 
     public void Toggle()
@@ -60,7 +74,8 @@ public class MapPanelUI : MonoBehaviour
     public void Show(bool focusCurrentNode, TweenCallback onComplete, bool animateMarker)
     {
         CacheReferences();
-        CreateNodes();
+        DOTween.Kill(this, false);
+        CreateNodes(animateMarker);
         gameObject.SetActive(true);
         rectTransform.DOKill(false);
         rectTransform.anchoredPosition = shownPosition - new Vector2(0f, mapShowMove);
@@ -84,6 +99,7 @@ public class MapPanelUI : MonoBehaviour
             return;
 
         rectTransform.DOKill(false);
+        DOTween.Kill(this, false);
         rectTransform.DOAnchorPos(shownPosition - new Vector2(0f, mapShowMove), mapHideDuration)
             .SetEase(Ease.InQuad)
             .SetTarget(this)
@@ -123,13 +139,14 @@ public class MapPanelUI : MonoBehaviour
             content.sizeDelta = new Vector2(Mathf.Max(1920f, 160f + (RunNodeCount - 1) * 180f + 160f), content.sizeDelta.y);
     }
 
-    private void CreateNodes()
+    private void CreateNodes(bool preserveMarkerPosition)
     {
         nodeViews.Clear();
         if (owner == null || content == null)
             return;
 
         IReadOnlyList<RunMapNodeModel> nodes = owner.MapNodes;
+        CreateConnections(nodes.Count);
         for (int i = 0; i < nodes.Count; i++)
         {
             RectTransform node = UIManager.FindChildRect(content, "MapNode" + (i + 1));
@@ -142,16 +159,20 @@ public class MapPanelUI : MonoBehaviour
             nodeViews.Add(node);
         }
 
-        for (int i = nodes.Count; i < content.childCount; i++)
+        for (int i = 0; i < content.childCount; i++)
         {
             Transform child = content.GetChild(i);
-            if (child.name.StartsWith("MapNode"))
+            if (child.name.StartsWith("MapNode") && !IsActiveMapNode(child.name, nodes.Count))
+                child.gameObject.SetActive(false);
+            if (child.name.StartsWith("MapConnection") && !IsActiveConnection(child.name, nodes.Count - 1))
                 child.gameObject.SetActive(false);
         }
 
         playerMarker = UIManager.FindChildRect(content, "PlayerMarker");
         if (playerMarker == null)
             return;
+
+        bool shouldPreserveMarkerPosition = preserveMarkerPosition;
 
         Text markerText = playerMarker.GetComponent<Text>();
         if (markerText != null)
@@ -164,11 +185,80 @@ public class MapPanelUI : MonoBehaviour
             markerImage.raycastTarget = false;
         }
 
-        playerMarker.anchoredPosition = GetNodePosition(owner.CurrentMapNodeIndex);
+        if (!shouldPreserveMarkerPosition)
+        {
+            displayedNodeIndex = owner.CurrentMapNodeIndex;
+            playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
+        }
+        playerMarker.gameObject.SetActive(true);
         playerMarker.sizeDelta = new Vector2(46f, 46f);
         if (playerMarker.GetComponent<JuicyMotion>() == null)
             playerMarker.gameObject.AddComponent<JuicyMotion>();
         playerMarker.SetAsLastSibling();
+    }
+
+    private void CreateConnections(int nodeCount)
+    {
+        for (int i = 0; i < nodeCount - 1; i++)
+        {
+            RectTransform connection = UIManager.FindChildRect(content, "MapConnection" + (i + 1));
+            if (connection == null)
+                connection = CreateRuntimeConnection(i);
+
+            connection.gameObject.SetActive(true);
+            connection.SetAsFirstSibling();
+            ConfigureConnection(connection, i);
+        }
+    }
+
+    private RectTransform CreateRuntimeConnection(int index)
+    {
+        RectTransform connection = new GameObject("MapConnection" + (index + 1), typeof(RectTransform)).GetComponent<RectTransform>();
+        connection.SetParent(content, false);
+        return connection;
+    }
+
+    private void ConfigureConnection(RectTransform connection, int index)
+    {
+        Vector2 start = GetNodePosition(index);
+        Vector2 end = GetNodePosition(index + 1);
+        float distance = end.x - start.x - 92f;
+        int dashCount = Mathf.Max(1, Mathf.FloorToInt((distance + connectionDashGap) / (connectionDashSize.x + connectionDashGap)));
+        float totalDashWidth = dashCount * connectionDashSize.x + (dashCount - 1) * connectionDashGap;
+        float firstX = (distance - totalDashWidth) * 0.5f;
+
+        connection.anchorMin = new Vector2(0f, 0.5f);
+        connection.anchorMax = new Vector2(0f, 0.5f);
+        connection.pivot = new Vector2(0f, 0.5f);
+        connection.anchoredPosition = new Vector2(start.x + 46f, 0f);
+        connection.sizeDelta = new Vector2(distance, connectionDashSize.y);
+
+        for (int i = 0; i < dashCount; i++)
+        {
+            Image dash = GetOrCreateDash(connection, i);
+            dash.color = connectionDashColor;
+            dash.raycastTarget = false;
+            RectTransform dashRect = dash.rectTransform;
+            dashRect.anchorMin = new Vector2(0f, 0.5f);
+            dashRect.anchorMax = new Vector2(0f, 0.5f);
+            dashRect.pivot = new Vector2(0f, 0.5f);
+            dashRect.anchoredPosition = new Vector2(firstX + i * (connectionDashSize.x + connectionDashGap), 0f);
+            dashRect.sizeDelta = connectionDashSize;
+            dash.gameObject.SetActive(true);
+        }
+
+        for (int i = dashCount; i < connection.childCount; i++)
+            connection.GetChild(i).gameObject.SetActive(false);
+    }
+
+    private Image GetOrCreateDash(RectTransform connection, int index)
+    {
+        while (connection.childCount <= index)
+        {
+            Image dash = new GameObject("Dash" + (connection.childCount + 1), typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            dash.transform.SetParent(connection, false);
+        }
+        return connection.GetChild(index).GetComponent<Image>();
     }
 
     private void ApplyNodeVisual(RectTransform node, RunMapNodeModel nodeModel)
@@ -278,8 +368,31 @@ public class MapPanelUI : MonoBehaviour
         sequence.Append(playerMarker.DOShakeAnchorPos(markerShakeDuration, markerShakeStrength, markerShakeVibrato, 90f, false, true).SetEase(markerShakeEase));
         sequence.AppendInterval(markerMoveDelay);
         sequence.Append(playerMarker.DOAnchorPos(GetNodePosition(owner.CurrentMapNodeIndex), markerMoveDuration).SetEase(markerMoveEase).OnUpdate(UpdateViewportToPlayer));
+        sequence.AppendCallback(() => displayedNodeIndex = owner.CurrentMapNodeIndex);
         sequence.AppendInterval(autoHideDelay);
         sequence.SetTarget(this).OnComplete(onComplete);
+    }
+
+    private static bool IsActiveMapNode(string nodeName, int nodeCount)
+    {
+        if (!nodeName.StartsWith("MapNode"))
+            return false;
+
+        if (!int.TryParse(nodeName.Substring(7), out int nodeNumber))
+            return false;
+
+        return nodeNumber >= 1 && nodeNumber <= nodeCount;
+    }
+
+    private static bool IsActiveConnection(string connectionName, int connectionCount)
+    {
+        if (!connectionName.StartsWith("MapConnection"))
+            return false;
+
+        if (!int.TryParse(connectionName.Substring(13), out int connectionNumber))
+            return false;
+
+        return connectionNumber >= 1 && connectionNumber <= connectionCount;
     }
 
     private void UpdateViewportToPlayer()

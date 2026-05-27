@@ -298,7 +298,16 @@ public class MaterialModel
         if (targetMaterial == MaterialEnum.None)
             return material == MaterialEnum.None;
 
-        return material == targetMaterial || alternateMaterial == targetMaterial || material == MaterialEnum.Wild;
+        if (material == targetMaterial || alternateMaterial == targetMaterial || material == MaterialEnum.Wild)
+            return true;
+
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].CanActAs(targetMaterial))
+                return true;
+        }
+
+        return false;
     }
     public void AddModifier(MaterialModifierModel modifier)
     {
@@ -340,6 +349,12 @@ public class MaterialModel
         isPlayed = false;
         for (int i = modifiers.Count - 1; i >= 0; i--)
             modifiers[i].OnDiscard();
+    }
+
+    public void TriggerOnRefresh()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnRefresh();
     }
 
     public void TriggerOnInvoke()
