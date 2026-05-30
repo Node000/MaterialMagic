@@ -157,7 +157,7 @@ public class LocalizationTable
 public static class LocalizationSystem
 {
     private const string LocalizationRoot = "Data/Localization/";
-    private static readonly string[] SupplementalLanguageTables = { "_Buff", "_Material", "_Modifier", "_Enemy", "_Event", "_Tag" };
+    private static readonly string[] SupplementalLanguageTables = { "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag" };
     private static readonly Dictionary<string, string> TextByKey = new Dictionary<string, string>();
 
     public static string CurrentLanguage { get; private set; } = "zh-CN";

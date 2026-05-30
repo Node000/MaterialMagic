@@ -12,9 +12,6 @@ public class DisorderBuffModel : BuffModel
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
     {
         if (self.IsEnemy && !self.IsDead)
-        {
             self.TakeDirectDamage(stack);
-            AddStack(1);
-        }
     }
 }

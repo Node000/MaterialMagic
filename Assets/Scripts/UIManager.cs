@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private SettingsPanelUI settingsPanelUI;
     [SerializeField] private MaterialListPanelUI materialListPanelUI;
     [SerializeField] private RewardPanelUI rewardPanelUI;
+    [SerializeField] private MagicModifierSelectionPanelUI magicModifierSelectionPanelUI;
     [SerializeField] private SlotSelectPanelUI slotSelectPanelUI;
     [SerializeField] private BuffTooltipUI buffTooltipUI;
     [SerializeField] private PlayerStatusUI playerStatusUI;
@@ -18,12 +19,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private PlayerFeedbackUI playerFeedbackUI;
     [SerializeField] private ChapterProgressUI chapterProgressUI;
     [SerializeField] private TurnBannerUI turnBannerUI;
+    [SerializeField] private RunResultPanelUI runResultPanelUI;
 
     public MapPanelUI MapPanel => mapPanelUI;
     public LevelSelectPanelUI LevelSelectPanel => levelSelectPanelUI;
     public SettingsPanelUI SettingsPanel => settingsPanelUI;
     public MaterialListPanelUI MaterialListPanel => materialListPanelUI;
     public RewardPanelUI RewardPanel => rewardPanelUI;
+    public MagicModifierSelectionPanelUI MagicModifierSelectionPanel => magicModifierSelectionPanelUI;
     public SlotSelectPanelUI SlotSelectPanel => slotSelectPanelUI;
     public BuffTooltipUI BuffTooltip => buffTooltipUI;
     public PlayerStatusUI PlayerStatus => playerStatusUI;
@@ -31,6 +34,7 @@ public class UIManager : MonoBehaviour
     public PlayerFeedbackUI PlayerFeedback => playerFeedbackUI;
     public ChapterProgressUI ChapterProgress => chapterProgressUI;
     public TurnBannerUI TurnBanner => turnBannerUI;
+    public RunResultPanelUI RunResultPanel => runResultPanelUI;
 
     public void Initialize(HandSystemUI owner, Transform root)
     {
@@ -39,6 +43,7 @@ public class UIManager : MonoBehaviour
         settingsPanelUI = GetOrAddPanel<SettingsPanelUI>(root, "SettingsPanel", settingsPanelUI);
         materialListPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "MaterialListPanel", materialListPanelUI);
         rewardPanelUI = GetOrAddPanel<RewardPanelUI>(root, "RewardPanel", rewardPanelUI);
+        magicModifierSelectionPanelUI = GetOrAddPanel<MagicModifierSelectionPanelUI>(root, "MagicModifierSelectionPanel", magicModifierSelectionPanelUI);
         slotSelectPanelUI = GetOrAddPanel<SlotSelectPanelUI>(root, "SlotSelectPanel", slotSelectPanelUI);
         buffTooltipUI = GetOrAddPanel<BuffTooltipUI>(root, "BuffTooltip", buffTooltipUI);
         playerStatusUI = GetOrAddPanelInChildren<PlayerStatusUI>(root, "PlayerStatus", playerStatusUI);
@@ -46,12 +51,14 @@ public class UIManager : MonoBehaviour
         playerFeedbackUI = GetOrAddOnRoot(root, playerFeedbackUI);
         chapterProgressUI = GetOrAddPanelInChildren<ChapterProgressUI>(root, "ChapterProgress", chapterProgressUI);
         turnBannerUI = GetOrAddPanelInChildren<TurnBannerUI>(root, "TurnBanner", turnBannerUI);
+        runResultPanelUI = GetOrAddPanel<RunResultPanelUI>(root, "RunResultPanel", runResultPanelUI);
 
         mapPanelUI?.Initialize(owner);
         levelSelectPanelUI?.Initialize(owner);
         settingsPanelUI?.Initialize(owner);
         materialListPanelUI?.Initialize(owner);
         rewardPanelUI?.Initialize(owner);
+        magicModifierSelectionPanelUI?.Initialize(owner);
         slotSelectPanelUI?.Initialize(owner);
         buffTooltipUI?.Initialize(owner);
         playerStatusUI?.Initialize(owner);
@@ -59,6 +66,7 @@ public class UIManager : MonoBehaviour
         playerFeedbackUI?.Initialize(owner, root);
         chapterProgressUI?.Initialize();
         turnBannerUI?.Initialize();
+        runResultPanelUI?.Initialize(owner);
 
         BindTopBar(root);
     }
@@ -190,6 +198,16 @@ public class UIManager : MonoBehaviour
         slotSelectPanelUI?.Hide();
     }
 
+    public void ShowVictoryPanel()
+    {
+        runResultPanelUI?.ShowVictory();
+    }
+
+    public void ShowDefeatPanel()
+    {
+        runResultPanelUI?.ShowDefeat();
+    }
+
     public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)
     {
         buffTooltipUI?.Show(slot, buff);
@@ -236,6 +254,7 @@ public class UIManager : MonoBehaviour
         {
             LevelType.Shop => Resources.Load<Sprite>("Images/UI/shop"),
             LevelType.Event => null,
+            LevelType.Rest => Resources.Load<Sprite>("Images/UI/shop"),
             _ => Resources.Load<Sprite>("Images/UI/normal"),
         };
     }
@@ -246,6 +265,7 @@ public class UIManager : MonoBehaviour
         {
             LevelType.Shop => "商店",
             LevelType.Event => "事件",
+            LevelType.Rest => "休息",
             _ => "战斗",
         };
     }

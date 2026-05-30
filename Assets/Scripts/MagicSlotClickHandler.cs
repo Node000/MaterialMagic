@@ -14,7 +14,12 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Left)
+        if (eventData.button != PointerEventData.InputButton.Left)
+            return;
+
+        if (owner != null && owner.HasPendingMagicModifier)
+            owner.TryApplyPendingMagicModifier(slotIndex);
+        else
             owner?.TryPlacePendingRewardMagic(slotIndex);
     }
 }

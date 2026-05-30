@@ -6,16 +6,35 @@ public class MagicModel
 
     public MagicData Data { get; }
     public int SlotIndex { get; set; }
+    public List<MagicModifierModel> Modifiers { get; } = new List<MagicModifierModel>();
 
     public string Id => Data.id;
     public int NumericId => Data.numericId;
     public string Name => LocalizationSystem.GetText(Data.nameKey, Data.id);
     public string Description => LocalizationSystem.GetText(Data.descriptionKey, string.Empty);
+    public bool HasModifier => Modifiers.Count > 0;
+    public MagicModifierModel PrimaryModifier => Modifiers.Count > 0 ? Modifiers[0] : null;
 
     public MagicModel(MagicData data, int slotIndex = 0)
     {
         Data = data;
         SlotIndex = slotIndex;
+    }
+
+    public bool CanAddModifier(MagicModifierModel modifier)
+    {
+        return modifier != null && !HasModifier && modifier.CanApplyTo(this);
+    }
+
+    public bool AddModifier(MagicModifierModel modifier)
+    {
+        if (!CanAddModifier(modifier))
+            return false;
+
+        modifier.model = this;
+        Modifiers.Add(modifier);
+        GameLog.Data($"Add magic modifier magic={Id} modifier={modifier.Id}");
+        return true;
     }
 
     public MagicCastResult Cast(PlayerState playerState, EnemyModel enemyModel)
@@ -49,14 +68,19 @@ public class MagicModel
             return result;
 
         MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
-        int castCount = 1;
+        SetModifierContext(playerState, battleManager);
+        int castCount = 1 + GetAdditionalCastCount();
         GameLog.Data($"Cast magic {Id} ({Name}) replayCount={castCount - 1}");
         for (int castIndex = 0; castIndex < castCount; castIndex++)
         {
             EnemyModel target = battleManager.BeginCastTarget();
             GameLog.Data($"Magic {Id} resolve index={castIndex + 1}/{castCount} target={(target != null ? target.Id : "none")}");
+            SetModifierContext(playerState, battleManager);
+            TriggerMagicBeforeCast();
             TriggerInvoke(playerState, target);
             ResolveCast(playerState, battleManager, result);
+            TriggerMagicAfterCast(result);
+            MagicModifierModel.CurrentContext = null;
             battleManager.EndCastTarget();
         }
 
@@ -75,11 +99,14 @@ public class MagicModel
                 for (int i = 0; i < GetHitCount(); i++)
                 {
                     int attackValue = Data.power;
+                    TriggerMagicBeforeAttack(enemyModel, ref attackValue);
                     playerState.TriggerOnAttack(primaryTarget, ref attackValue);
                     if (enemyModel != null)
                     {
                         GameLog.Data($"Magic {Id} damage target={enemyModel.Id} value={attackValue}");
-                        result.enemyDamageHits.Add(enemyModel.TakeDamage(attackValue, caster));
+                        int attackResult = enemyModel.TakeDamage(attackValue, caster);
+                        TriggerMagicAfterAttack(enemyModel, ref attackResult);
+                        result.enemyDamageHits.Add(attackResult);
                     }
                 }
                 break;
@@ -90,7 +117,10 @@ public class MagicModel
                 result.playerHeal += playerState.CurrentHealth - healthBefore;
                 break;
             case MagicEffectType.GainShield:
-                int shieldGain = playerState.GainShield(Data.power);
+                int shieldValue = Data.power;
+                TriggerMagicBeforeGainShield(ref shieldValue);
+                int shieldGain = playerState.GainShield(shieldValue);
+                TriggerMagicAfterGainShield(ref shieldGain);
                 GameLog.Data($"Magic {Id} shield player value={shieldGain}");
                 result.playerShield += shieldGain;
                 TriggerShieldAttack(playerState, battleManager, shieldGain, result);
@@ -113,6 +143,93 @@ public class MagicModel
         playerState.TriggerOnInvoke(primaryTarget);
         if (enemyModel != null)
             enemyModel.TriggerOnInvoke(new CombatantModel(playerState));
+    }
+
+    protected void SetModifierContext(PlayerState playerState, BattleManager battleManager)
+    {
+        MagicModifierModel.CurrentContext = new MagicModifierContext
+        {
+            PlayerState = playerState,
+            BattleManager = battleManager,
+            Magic = this,
+            Targets = battleManager != null ? battleManager.Enemies : null
+        };
+    }
+
+    protected int GetAdditionalCastCount()
+    {
+        int count = 0;
+        for (int i = 0; i < Modifiers.Count; i++)
+            count += Modifiers[i].GetAdditionalCastCount();
+        return count;
+    }
+
+    protected void TriggerMagicBeforeCast()
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].BeforeCast();
+    }
+
+    protected void TriggerMagicAfterCast(MagicCastResult result)
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].AfterCast(result);
+    }
+
+    protected void TriggerMagicBeforeAttack(EnemyModel target, ref int attackValue)
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].BeforeAttack(target, ref attackValue);
+    }
+
+    protected void TriggerMagicAfterAttack(EnemyModel target, ref int attackResult)
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].AfterAttack(target, ref attackResult);
+    }
+
+    protected void TriggerMagicBeforeGainShield(ref int shieldValue)
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].BeforeGainShield(ref shieldValue);
+    }
+
+    protected void TriggerMagicAfterGainShield(ref int shieldGain)
+    {
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].AfterGainShield(ref shieldGain);
+    }
+
+    public void TriggerMagicBattleStart(PlayerState playerState, BattleManager battleManager)
+    {
+        SetModifierContext(playerState, battleManager);
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].OnBattleStart();
+        MagicModifierModel.CurrentContext = null;
+    }
+
+    public void TriggerMagicBattleEnd(PlayerState playerState, BattleManager battleManager)
+    {
+        SetModifierContext(playerState, battleManager);
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].OnBattleEnd();
+        MagicModifierModel.CurrentContext = null;
+    }
+
+    public void TriggerMagicTurnStart(PlayerState playerState, BattleManager battleManager)
+    {
+        SetModifierContext(playerState, battleManager);
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].OnTurnStart();
+        MagicModifierModel.CurrentContext = null;
+    }
+
+    public void TriggerMagicTurnEnd(PlayerState playerState, BattleManager battleManager)
+    {
+        SetModifierContext(playerState, battleManager);
+        for (int i = 0; i < Modifiers.Count; i++)
+            Modifiers[i].OnTurnEnd();
+        MagicModifierModel.CurrentContext = null;
     }
 
     public int GetHitCount()

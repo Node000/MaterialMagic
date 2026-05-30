@@ -5,7 +5,8 @@ public enum LevelType
 {
     Battle = 0,
     Event = 1,
-    Shop = 2
+    Shop = 2,
+    Rest = 3
 }
 
 public enum MaterialEnum
@@ -90,6 +91,15 @@ public enum EventRewardType
     GainRelic = 7
 }
 
+public enum MagicModifierTargetRule
+{
+    None = 0,
+    Any = 1,
+    Element = 2,
+    EffectType = 3,
+    Tag = 4
+}
+
 [Serializable]
 public class PlayerStartMaterialData
 {
@@ -108,6 +118,9 @@ public class PlayerStartMagicData
 public class PlayerStartConfigData : IDataRecord
 {
     public string id;
+    public string displayName;
+    public string texturePath;
+    public string color;
     public int maxHealth = 50;
     public int gold;
     public int drawCount = 4;
@@ -147,6 +160,23 @@ public class TagData : IDataRecord
     public string id;
     public string nameKey;
     public string descriptionKey;
+
+    public string Id => id;
+}
+
+[Serializable]
+public class MagicModifierData : IDataRecord
+{
+    public string id;
+    public string nameKey;
+    public string descriptionKey;
+    public string iconName;
+    public MagicModifierTargetRule targetRule = MagicModifierTargetRule.Any;
+    public MaterialEnum targetElement;
+    public MagicEffectType targetEffectType;
+    public string targetTagId;
+    public int value;
+    public int weight = 1;
 
     public string Id => id;
 }
@@ -204,6 +234,8 @@ public class EventOptionData
     public int resultId;
     public bool isExitOption;
     public string nextNodeId;
+    public int choiceCount;
+    public string[] tagIds = Array.Empty<string>();
 }
 
 [Serializable]
@@ -238,6 +270,8 @@ public class LevelData : IDataRecord, INumericDataRecord
     public int[] enemyIds = Array.Empty<int>();
     public int rewardPoolId;
     public int eventPoolId;
+    public string[] restTextKeys = Array.Empty<string>();
+    public int restHealAmount;
 
     public string Id => id;
     public int NumericId => numericId;
@@ -262,6 +296,13 @@ public class ChapterLevelPoolRangeData
 }
 
 [Serializable]
+public class ChapterFixedLevelData
+{
+    public int levelIndex;
+    public LevelType levelType;
+}
+
+[Serializable]
 public class ChapterData : INumericDataRecord
 {
     public int numericId;
@@ -270,6 +311,7 @@ public class ChapterData : INumericDataRecord
     public int levelLength;
     public int[] levelPoolIds = Array.Empty<int>();
     public ChapterLevelPoolRangeData[] levelPoolRanges = Array.Empty<ChapterLevelPoolRangeData>();
+    public ChapterFixedLevelData[] fixed_level = Array.Empty<ChapterFixedLevelData>();
     public int[] eventPoolIds = Array.Empty<int>();
 
     public int NumericId => numericId;

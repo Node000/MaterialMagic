@@ -8,12 +8,12 @@
       "intentLoop": [
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" } ] },
         { "intents": [ { "intentType": 2, "actionType": 2, "value": 5, "descriptionKey": "enemy.action.shield_5" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
       ],
       "actionLoop": [
         { "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" },
         { "actionType": 2, "value": 5, "descriptionKey": "enemy.action.shield_5" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
       ],
       "iconName": "Sample",
       "numericId": 1
@@ -26,12 +26,12 @@
       "intentLoop": [
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 8, "descriptionKey": "enemy.action.attack_8" } ] },
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" } ] }
       ],
       "actionLoop": [
         { "actionType": 1, "value": 8, "descriptionKey": "enemy.action.attack_8" },
         { "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" }
       ],
       "iconName": "Sample",
       "numericId": 2
@@ -44,12 +44,12 @@
       "intentLoop": [
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 3, "descriptionKey": "enemy.action.attack_3" }, { "intentType": 1, "actionType": 1, "value": 3, "descriptionKey": "enemy.action.attack_3" } ] },
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 4, "descriptionKey": "enemy.action.attack_4" }, { "intentType": 1, "actionType": 1, "value": 4, "descriptionKey": "enemy.action.attack_4" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
       ],
       "actionLoop": [
         { "actionType": 1, "value": 3, "descriptionKey": "enemy.action.attack_3" },
         { "actionType": 1, "value": 4, "descriptionKey": "enemy.action.attack_4" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
       ],
       "iconName": "Sample",
       "numericId": 3
@@ -63,13 +63,13 @@
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" } ] },
         { "intents": [ { "intentType": 2, "actionType": 2, "value": 6, "descriptionKey": "enemy.action.shield_6" } ] },
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 7, "descriptionKey": "enemy.action.attack_7" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
       ],
       "actionLoop": [
         { "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" },
         { "actionType": 2, "value": 6, "descriptionKey": "enemy.action.shield_6" },
         { "actionType": 1, "value": 7, "descriptionKey": "enemy.action.attack_7" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
       ],
       "iconName": "Sample",
       "numericId": 4
@@ -82,12 +82,12 @@
       "intentLoop": [
         { "intents": [ { "intentType": 2, "actionType": 2, "value": 8, "descriptionKey": "enemy.action.shield_8" } ] },
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" }, { "intentType": 2, "actionType": 2, "value": 4, "descriptionKey": "enemy.action.shield_4" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" } ] }
       ],
       "actionLoop": [
         { "actionType": 2, "value": 8, "descriptionKey": "enemy.action.shield_8" },
         { "actionType": 1, "value": 5, "descriptionKey": "enemy.action.attack_5" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 1, "descriptionKey": "enemy.action.strengthen_1" }
       ],
       "iconName": "Sample",
       "numericId": 5
@@ -101,13 +101,13 @@
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 9, "descriptionKey": "enemy.action.attack_9" } ] },
         { "intents": [ { "intentType": 2, "actionType": 2, "value": 10, "descriptionKey": "enemy.action.shield_10" } ] },
         { "intents": [ { "intentType": 1, "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" }, { "intentType": 1, "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" } ] },
-        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 10, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" } ] }
+        { "intents": [ { "intentType": 3, "actionType": 3, "buffType": 17, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" } ] }
       ],
       "actionLoop": [
         { "actionType": 1, "value": 9, "descriptionKey": "enemy.action.attack_9" },
         { "actionType": 2, "value": 10, "descriptionKey": "enemy.action.shield_10" },
         { "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" },
-        { "actionType": 3, "buffType": 10, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" }
+        { "actionType": 3, "buffType": 17, "buffAmount": 2, "descriptionKey": "enemy.action.strengthen_2" }
       ],
       "iconName": "Sample",
       "numericId": 6

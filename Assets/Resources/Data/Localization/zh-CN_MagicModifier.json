@@ -1,0 +1,22 @@
+{
+  "items": [
+    { "key": "ui.magic_modifier.panel.title", "text": "选择法术强化" },
+    { "key": "ui.magic_modifier.panel.hint", "text": "选择一个强化后，点击一个已有法术完成附魔。每个法术只能附魔一次。" },
+    { "key": "ui.magic_modifier.panel.back", "text": "返回" },
+    { "key": "ui.magic_modifier.panel.empty", "text": "暂无可用法术强化" },
+    { "key": "ui.magic_modifier.empty_slot", "text": "这个法术槽是空的！" },
+    { "key": "ui.magic_modifier.already_has_modifier", "text": "这个法术已经有强化了！" },
+    { "key": "ui.magic_modifier.not_applicable", "text": "这个强化不能用于该法术！" },
+    { "key": "magic_modifier.echo_recast.name", "text": "回响" },
+    { "key": "magic_modifier.echo_recast.desc", "text": "此法术每场战斗第一次触发时，额外释放1次" },
+    { "key": "magic_modifier.searing_burning.name", "text": "灼热" },
+    { "key": "magic_modifier.searing_burning.desc", "text": "本法术触发后，额外施加1层【燃烧】" },
+    { "key": "magic_modifier.pioneer_extra_draw.name", "text": "先驱" },
+    { "key": "magic_modifier.pioneer_extra_draw.desc", "text": "若此法术在本回合中触发了2次，下回合额外抽取1张素材" },
+    { "key": "rest.option.study", "text": "研习法术" },
+    { "key": "rest.option.study.effect", "text": "从2个强化中选择1个，附魔到一个法术上" },
+    { "key": "rest.option.deep_study", "text": "深入研习法术" },
+    { "key": "rest.option.deep_study.effect", "text": "从3个强化中选择1个，附魔到一个法术上" },
+    { "key": "rest.default_heal", "text": "你静心休整，恢复了生命。" }
+  ]
+}

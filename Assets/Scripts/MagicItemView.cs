@@ -15,6 +15,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private Text tooltipNameText;
     [SerializeField] private Text tooltipDescriptionText;
     [SerializeField] private Text tooltipEffectText;
+    [SerializeField] private Image modifierMarkerImage;
     [SerializeField] private RectTransform tagTooltipRoot;
     [SerializeField] private Text tagTooltipText;
     [SerializeField] private float tagTooltipXOffset = 12f;
@@ -45,6 +46,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Tween tooltipTween;
     private Tween tagTooltipTween;
     private Tween pulseTween;
+    private Tween modifierMarkerTween;
     private bool warnedMissingBackgroundImage;
 
     public MagicModel Magic => magic;
@@ -71,6 +73,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         HideTooltip(true);
         pulseTween?.Kill(false);
+        modifierMarkerTween?.Kill(false);
     }
 
     private void OnDestroy()
@@ -78,6 +81,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         tooltipTween?.Kill(false);
         tagTooltipTween?.Kill(false);
         pulseTween?.Kill(false);
+        modifierMarkerTween?.Kill(false);
     }
 
     public void Bind(MagicModel magic)
@@ -105,6 +109,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             if (tagTooltipText != null)
                 tagTooltipText.text = string.Empty;
 
+            SetModifierMarkerVisible(false);
             RebuildRecipe();
             return;
         }
@@ -128,11 +133,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             tooltipNameText.text = magic.Name;
 
         if (tooltipDescriptionText != null)
-            tooltipDescriptionText.text = magic.Description;
+            tooltipDescriptionText.text = BuildDescriptionText(magic);
 
         if (tagTooltipText != null)
             tagTooltipText.text = BuildTagTooltipText(magic.Data.tagIds);
 
+        SetModifierMarkerVisible(magic.HasModifier);
         RebuildRecipe();
     }
 
@@ -184,11 +190,68 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 effectText.gameObject.SetActive(false);
         }
 
+        EnsureModifierMarker();
+
         if (backgroundImage == null && !warnedMissingBackgroundImage)
         {
             warnedMissingBackgroundImage = true;
             GameLog.Data($"MagicItemView missing background image on {name}");
         }
+    }
+
+    private string BuildDescriptionText(MagicModel magic)
+    {
+        if (magic == null)
+            return string.Empty;
+
+        if (!magic.HasModifier || magic.PrimaryModifier == null || string.IsNullOrEmpty(magic.PrimaryModifier.Description))
+            return magic.Description;
+
+        return magic.Description + "\n*" + magic.PrimaryModifier.Description;
+    }
+
+    private void EnsureModifierMarker()
+    {
+        if (modifierMarkerImage == null)
+        {
+            Transform existing = transform.Find("ModifierMarker");
+            if (existing != null)
+                modifierMarkerImage = existing.GetComponent<Image>();
+        }
+
+        if (modifierMarkerImage == null)
+        {
+            modifierMarkerImage = new GameObject("ModifierMarker", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            modifierMarkerImage.transform.SetParent(transform, false);
+            modifierMarkerImage.raycastTarget = false;
+            RectTransform rect = modifierMarkerImage.rectTransform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(14f, -14f);
+            rect.sizeDelta = new Vector2(18f, 18f);
+        }
+
+        modifierMarkerImage.color = new Color(1f, 0.88f, 0.38f, 1f);
+        Shader shader = Shader.Find("UI/MagicModifierBreath");
+        if (shader != null && modifierMarkerImage.material == null)
+            modifierMarkerImage.material = new Material(shader);
+    }
+
+    private void SetModifierMarkerVisible(bool visible)
+    {
+        EnsureModifierMarker();
+        if (modifierMarkerImage == null)
+            return;
+
+        modifierMarkerTween?.Kill(false);
+        modifierMarkerImage.gameObject.SetActive(visible);
+        if (!visible)
+            return;
+
+        Color baseColor = modifierMarkerImage.color;
+        modifierMarkerImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.58f);
+        modifierMarkerTween = modifierMarkerImage.DOFade(1f, 0.86f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetTarget(this);
     }
 
     private void RebuildRecipe()

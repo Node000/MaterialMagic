@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
@@ -21,7 +21,7 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private MaterialListPanelUI owner;
     private CanvasGroup canvasGroup;
     private Tween consumedTween;
-    private bool consumed;
+    private bool inactive;
 
     public RectTransform RectTransform => (RectTransform)transform;
     public MaterialModel MaterialModel => materialModel;
@@ -68,11 +68,17 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
     public void Bind(MaterialModel materialModel, bool consumed)
     {
         this.materialModel = materialModel;
-        this.consumed = consumed;
+        this.inactive = consumed;
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
         CacheEnhancementTexts();
         RefreshVisual();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left && !inactive)
+            owner?.OnMaterialCardClicked(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -97,7 +103,7 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         if (frameImage != null)
         {
-            Color frameColor = new Color(0.18f, 0.18f, 0.18f, consumed ? 0.45f : 1f);
+            Color frameColor = new Color(0.18f, 0.18f, 0.18f, inactive ? 0.45f : 1f);
             frameImage.color = frameColor;
             frameImage.raycastTarget = false;
         }
@@ -110,10 +116,10 @@ public class MaterialCardView : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         if (canvasGroup != null)
         {
-            canvasGroup.alpha = consumed ? 0.36f : 1f;
-            canvasGroup.blocksRaycasts = true;
+            canvasGroup.alpha = inactive ? 0.36f : 1f;
+            canvasGroup.blocksRaycasts = !inactive;
             consumedTween?.Kill(false);
-            if (consumed)
+            if (inactive)
             {
                 consumedTween = transform.DOPunchScale(Vector3.one * consumedPunchScale, consumedPunchDuration, consumedPunchVibrato, consumedPunchElasticity).SetTarget(this);
             }

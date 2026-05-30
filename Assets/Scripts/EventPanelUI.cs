@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,6 +27,10 @@ public class EventPanelUI : MonoBehaviour
     [SerializeField] private Ease tooltipHideEase = Ease.InBack;
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
     [SerializeField] private float tooltipYOffset = 58f;
+    [SerializeField] private float tagTooltipXOffset = 12f;
+    [SerializeField] private float tagTooltipSlideDistance = 24f;
+    [SerializeField] private Vector2 tagTooltipSize = new Vector2(250f, 120f);
+    [SerializeField] private float tagTooltipVerticalPadding = 20f;
 
     private RectTransform panel;
     private RectTransform optionArea;
@@ -33,10 +38,14 @@ public class EventPanelUI : MonoBehaviour
     private Text bodyText;
     private Text hintText;
     private RectTransform optionTooltip;
+    private RectTransform optionTagTooltip;
     private CanvasGroup optionTooltipCanvasGroup;
+    private CanvasGroup optionTagTooltipCanvasGroup;
     private Text optionTooltipTitle;
     private Text optionTooltipDescription;
+    private Text optionTagTooltipText;
     private Tween optionTooltipTween;
+    private Tween optionTagTooltipTween;
     private EventModel eventModel;
     private bool typing;
     private bool waitingForClick;
@@ -180,8 +189,16 @@ public class EventPanelUI : MonoBehaviour
                 continue;
 
             RectTransform rect = (RectTransform)optionView.transform;
+            float optionHeight = rect.sizeDelta.y;
+            float optionStep = optionHeight + 14f;
+            float startY = (options.Length - 1) * optionStep * 0.5f;
 
             rect.gameObject.SetActive(true);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, startY - optionStep * i);
+            rect.localRotation = Quaternion.identity;
             Image background = rect.GetComponent<Image>();
             if (background != null)
             {
@@ -243,6 +260,7 @@ public class EventPanelUI : MonoBehaviour
     {
         DOTween.Kill(this);
         optionTooltipTween?.Kill(false);
+        optionTagTooltipTween?.Kill(false);
         ClearOptions();
         if (panel != null)
             panel.gameObject.SetActive(false);
@@ -274,6 +292,8 @@ public class EventPanelUI : MonoBehaviour
             optionTooltipTitle.text = LocalizationSystem.GetText(option.titleKey, option.id);
         if (optionTooltipDescription != null)
             optionTooltipDescription.text = GetOptionEffectText(option);
+        if (optionTagTooltipText != null)
+            optionTagTooltipText.text = BuildOptionTagTooltipText(option);
 
         optionTooltip.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(optionTooltip);
@@ -286,6 +306,7 @@ public class EventPanelUI : MonoBehaviour
         sequence.Join(optionTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
         sequence.Join(optionTooltip.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipShowEase));
         optionTooltipTween = sequence;
+        ShowOptionTagTooltip();
     }
 
     public void HideOptionTooltip()
@@ -294,11 +315,55 @@ public class EventPanelUI : MonoBehaviour
             return;
 
         optionTooltipTween?.Kill(false);
+        optionTagTooltipTween?.Kill(false);
         Sequence sequence = DOTween.Sequence().SetTarget(this);
         sequence.Join(optionTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
         sequence.Join(optionTooltip.DOScale(tooltipHiddenScale, tooltipScaleDuration).SetEase(tooltipHideEase));
         sequence.OnComplete(() => optionTooltip.gameObject.SetActive(false));
         optionTooltipTween = sequence;
+        HideOptionTagTooltip();
+    }
+
+    private void ShowOptionTagTooltip()
+    {
+        if (optionTagTooltip == null || optionTagTooltipCanvasGroup == null || optionTagTooltipText == null || string.IsNullOrEmpty(optionTagTooltipText.text))
+            return;
+
+        optionTagTooltipText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tagTooltipSize.x - 24f);
+        Canvas.ForceUpdateCanvases();
+        optionTagTooltip.sizeDelta = new Vector2(tagTooltipSize.x, optionTagTooltipText.preferredHeight + tagTooltipVerticalPadding);
+        Vector2 shownPosition = GetOptionTagTooltipShownPosition();
+        optionTagTooltip.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(optionTagTooltip);
+        optionTagTooltip.SetAsLastSibling();
+        optionTagTooltipCanvasGroup.alpha = 0f;
+        optionTagTooltip.localScale = Vector3.one;
+        optionTagTooltip.anchoredPosition = shownPosition - new Vector2(tagTooltipSlideDistance, 0f);
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(optionTagTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
+        sequence.Join(optionTagTooltip.DOAnchorPos(shownPosition, tooltipScaleDuration).SetEase(tooltipShowEase));
+        optionTagTooltipTween = sequence;
+    }
+
+    private void HideOptionTagTooltip()
+    {
+        if (optionTagTooltip == null || optionTagTooltipCanvasGroup == null || !optionTagTooltip.gameObject.activeSelf)
+            return;
+
+        Vector2 hiddenPosition = GetOptionTagTooltipShownPosition() - new Vector2(tagTooltipSlideDistance, 0f);
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(optionTagTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
+        sequence.Join(optionTagTooltip.DOAnchorPos(hiddenPosition, tooltipScaleDuration).SetEase(tooltipHideEase));
+        optionTagTooltipTween = sequence.OnComplete(() => optionTagTooltip.gameObject.SetActive(false));
+    }
+
+    private Vector2 GetOptionTagTooltipShownPosition()
+    {
+        if (optionTooltip == null)
+            return Vector2.zero;
+
+        return optionTooltip.anchoredPosition + new Vector2(optionTooltip.sizeDelta.x * (1f - optionTooltip.pivot.x) + tagTooltipXOffset, optionTooltip.sizeDelta.y * (1f - optionTooltip.pivot.y));
     }
 
     private void EnsureOptionTooltip()
@@ -321,7 +386,45 @@ public class EventPanelUI : MonoBehaviour
 
         optionTooltipTitle = CreateTooltipText(optionTooltip, "Title", 18, FontStyle.Bold, new Vector2(0f, 24f), new Vector2(280f, 28f));
         optionTooltipDescription = CreateTooltipText(optionTooltip, "Description", 15, FontStyle.Normal, new Vector2(0f, -12f), new Vector2(280f, 44f));
+        EnsureOptionTagTooltip();
         optionTooltip.gameObject.SetActive(false);
+    }
+
+    private void EnsureOptionTagTooltip()
+    {
+        if (panel == null || optionTooltip == null || optionTagTooltip != null)
+            return;
+
+        optionTagTooltip = new GameObject("OptionTagTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+        optionTagTooltip.SetParent(panel, false);
+        optionTagTooltip.anchorMin = optionTooltip.anchorMin;
+        optionTagTooltip.anchorMax = optionTooltip.anchorMax;
+        optionTagTooltip.pivot = new Vector2(0f, 1f);
+        optionTagTooltip.sizeDelta = tagTooltipSize;
+        Image image = optionTagTooltip.GetComponent<Image>();
+        image.color = new Color(0.03f, 0.03f, 0.04f, 0.96f);
+        image.raycastTarget = false;
+        optionTagTooltipCanvasGroup = optionTagTooltip.GetComponent<CanvasGroup>();
+        optionTagTooltipCanvasGroup.alpha = 0f;
+        optionTagTooltipCanvasGroup.blocksRaycasts = false;
+        PopupLayerUtility.ApplyTo(optionTagTooltip);
+
+        optionTagTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        optionTagTooltipText.transform.SetParent(optionTagTooltip, false);
+        optionTagTooltipText.font = optionTooltipDescription != null && optionTooltipDescription.font != null ? optionTooltipDescription.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        optionTagTooltipText.fontSize = 16;
+        optionTagTooltipText.alignment = TextAnchor.UpperLeft;
+        optionTagTooltipText.color = new Color(1f, 0.88f, 0.58f, 1f);
+        optionTagTooltipText.raycastTarget = false;
+        optionTagTooltipText.supportRichText = true;
+        optionTagTooltipText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        optionTagTooltipText.verticalOverflow = VerticalWrapMode.Overflow;
+        RectTransform textRect = optionTagTooltipText.rectTransform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(12f, 10f);
+        textRect.offsetMax = new Vector2(-12f, -10f);
+        optionTagTooltip.gameObject.SetActive(false);
     }
 
     private Text CreateTooltipText(RectTransform parent, string name, int fontSize, FontStyle fontStyle, Vector2 position, Vector2 size)
@@ -345,14 +448,63 @@ public class EventPanelUI : MonoBehaviour
 
     private static string GetOptionEffectText(EventOptionData option)
     {
-        string recipe = option.isExitOption ? "无" : EventModel.GetRecipeDisplay(option);
         string effect = "无直接效果";
         if (option.resultId == 1)
             effect = "恢复10点生命";
         else if (option.resultId == 2)
             effect = "之后每回合抽牌数+1";
+        else if (option.resultId == 100)
+            effect = "选择并删除" + GetChoiceCountText(option) + "张手牌素材";
+        else if (option.resultId >= 101 && option.resultId <= 104)
+            effect = "获得1张素材牌";
+        else if (option.resultId == 201)
+            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加助燃";
+        else if (option.resultId == 202)
+            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加流转";
+        else if (option.resultId == 203)
+            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加液化";
+        else if (option.resultId == 301)
+            effect = LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个法术上");
+        else if (option.resultId == 302)
+            effect = LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个法术上");
 
-        return "需要：" + recipe + "\n效果：" + effect;
+        return "效果：" + effect;
+    }
+
+    private static string GetChoiceCountText(EventOptionData option)
+    {
+        return option != null && option.choiceCount > 0 ? option.choiceCount.ToString() : "1";
+    }
+
+    private static string BuildOptionTagTooltipText(EventOptionData option)
+    {
+        if (option == null || option.tagIds == null || option.tagIds.Length == 0)
+            return string.Empty;
+
+        StringBuilder builder = null;
+        for (int i = 0; i < option.tagIds.Length; i++)
+        {
+            string tagId = option.tagIds[i];
+            if (string.IsNullOrEmpty(tagId))
+                continue;
+
+            string name = LocalizationSystem.GetText("modifier." + tagId + ".name", string.Empty);
+            string description = LocalizationSystem.GetText("modifier." + tagId + ".desc", string.Empty);
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(description))
+                continue;
+
+            if (builder == null)
+                builder = new StringBuilder();
+            else
+                builder.Append("\n\n");
+
+            builder.Append("<color=#FFE99E>");
+            builder.Append(name);
+            builder.Append("：</color>\n");
+            builder.Append(description);
+        }
+
+        return builder != null ? builder.ToString() : string.Empty;
     }
 
     private static void BuildRecipeIcons(RectTransform recipeRoot, EventOptionData option)

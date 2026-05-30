@@ -71,6 +71,213 @@
         }
       ],
       "numericId": 1
+    },
+    {
+      "id": "event_material_trade",
+      "titleKey": "event.material_trade.title",
+      "startNodeId": "start",
+      "drawCount": 5,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.material_trade.start.1",
+            "event.material_trade.start.2"
+          ],
+          "options": [
+            {
+              "id": "remove_material",
+              "titleKey": "event.material_trade.option.remove_material",
+              "recipe": "14",
+              "resultId": 100,
+              "nextNodeId": "remove_material",
+              "choiceCount": 1
+            },
+            {
+              "id": "go_gain",
+              "titleKey": "event.material_trade.option.go_gain",
+              "recipe": "23",
+              "ignoreOrder": true,
+              "resultId": 0,
+              "nextNodeId": "gain_select"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.test_crossroad.option.leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "gain_select",
+          "textKeys": [
+            "event.material_trade.gain_select.1"
+          ],
+          "options": [
+            {
+              "id": "gain_fire_material",
+              "titleKey": "event.test_crossroad.option.gain_fire",
+              "recipe": "1",
+              "resultId": 101,
+              "nextNodeId": "gain_fire"
+            },
+            {
+              "id": "gain_wind_material",
+              "titleKey": "event.test_crossroad.option.gain_wind",
+              "recipe": "2",
+              "resultId": 102,
+              "nextNodeId": "gain_wind"
+            }
+          ]
+        },
+        {
+          "id": "gain_select_more",
+          "textKeys": [
+            "event.material_trade.gain_select.1"
+          ],
+          "options": [
+            {
+              "id": "gain_water_material",
+              "titleKey": "event.test_crossroad.option.gain_water",
+              "recipe": "3",
+              "resultId": 103,
+              "nextNodeId": "gain_water"
+            },
+            {
+              "id": "gain_earth_material",
+              "titleKey": "event.test_crossroad.option.gain_earth",
+              "recipe": "4",
+              "resultId": 104,
+              "nextNodeId": "gain_earth"
+            }
+          ]
+        },
+        {
+          "id": "remove_material",
+          "textKeys": [
+            "event.test_crossroad.remove_material.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "gain_fire",
+          "textKeys": [
+            "event.test_crossroad.gain_fire.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "gain_wind",
+          "textKeys": [
+            "event.test_crossroad.gain_wind.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "gain_water",
+          "textKeys": [
+            "event.test_crossroad.gain_water.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "gain_earth",
+          "textKeys": [
+            "event.test_crossroad.gain_earth.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 2
+    },
+    {
+      "id": "event_modifier_shrine",
+      "titleKey": "event.modifier_shrine.title",
+      "startNodeId": "start",
+      "drawCount": 5,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.modifier_shrine.start.1",
+            "event.modifier_shrine.start.2"
+          ],
+          "options": [
+            {
+              "id": "add_kindling_modifier",
+              "titleKey": "event.test_crossroad.option.kindling",
+              "recipe": "13",
+              "ignoreOrder": true,
+              "resultId": 201,
+              "nextNodeId": "kindling",
+              "choiceCount": 1,
+              "tagIds": ["kindling"]
+            },
+            {
+              "id": "go_more",
+              "titleKey": "event.modifier_shrine.option.more",
+              "recipe": "24",
+              "ignoreOrder": true,
+              "resultId": 0,
+              "nextNodeId": "more"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.test_crossroad.option.leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "more",
+          "textKeys": [
+            "event.modifier_shrine.more.1"
+          ],
+          "options": [
+            {
+              "id": "add_flow_modifier_two",
+              "titleKey": "event.test_crossroad.option.flow_two",
+              "recipe": "22",
+              "resultId": 202,
+              "nextNodeId": "flow",
+              "choiceCount": 2,
+              "tagIds": ["flow"]
+            },
+            {
+              "id": "add_liquefy_modifier",
+              "titleKey": "event.test_crossroad.option.liquefy",
+              "recipe": "34",
+              "ignoreOrder": true,
+              "resultId": 203,
+              "nextNodeId": "liquefy",
+              "choiceCount": 1,
+              "tagIds": ["liquefy"]
+            }
+          ]
+        },
+        {
+          "id": "kindling",
+          "textKeys": [
+            "event.test_crossroad.kindling.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "flow",
+          "textKeys": [
+            "event.test_crossroad.flow.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "liquefy",
+          "textKeys": [
+            "event.test_crossroad.liquefy.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 3
     }
   ]
 }

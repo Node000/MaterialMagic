@@ -266,11 +266,15 @@ public class HandSystemUI : MonoBehaviour
 
 	private MagicData pendingRewardMagic;
 
+	private MagicModifierData pendingMagicModifier;
+
 	private EventModel currentEvent;
 
 	private EventPanelUI eventPanel;
 
 	private bool refreshUsedThisTurn;
+
+	private bool suppressEnemyIntentRefresh;
 
 	private int currentMapNodeIndex;
 
@@ -283,6 +287,14 @@ public class HandSystemUI : MonoBehaviour
 	private int pendingChoiceCount;
 
 	private readonly List<MaterialModel> pendingChoiceCards = new List<MaterialModel>();
+
+	private bool runEnded;
+
+	private const int RestStudyResultId = 301;
+
+	private const int RestDeepStudyResultId = 302;
+
+	private const float RestDefaultHealRatio = 0.3f;
 
 	public PlayerState PlayerState => playerState;
 
@@ -312,12 +324,7 @@ public class HandSystemUI : MonoBehaviour
 			CreateLevelSelectPanel();
 			return;
 		}
-		Text text = FindChildComponent<Text>(((Component)this).transform, "RunCompleteText");
-		if ((Object)(object)text != (Object)null)
-		{
-			text.text = "Debug路线完成";
-			((Component)text).gameObject.SetActive(true);
-		}
+		ShowVictoryPanel();
 	}
 
 	private void CreateLevelSelectPanel()
@@ -358,6 +365,11 @@ public class HandSystemUI : MonoBehaviour
 		return GetLevels(LevelType.Event);
 	}
 
+	private List<LevelData> GetRestLevels()
+	{
+		return GetLevels(LevelType.Rest);
+	}
+
 	private UIManager GetUIManager()
 	{
 		if ((Object)(object)uiManager == (Object)null)
@@ -379,9 +391,14 @@ public class HandSystemUI : MonoBehaviour
 			mapNodes[currentMapNodeIndex].selectedLevel = level;
 			GetUIManager().MapPanel?.RefreshNodeVisual(currentMapNodeIndex);
 		}
+        SaveRunProgress();
 		if (level.levelType == LevelType.Event)
 		{
 			StartEventLevel(level);
+		}
+		else if (level.levelType == LevelType.Rest)
+		{
+			StartRestLevel(level);
 		}
 		else
 		{
@@ -413,6 +430,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			battleManager.SetEnemies(enemyModels);
 			CreateEnemyViews();
+            TriggerMagicBattleStart();
 			BeginPlayerTurn(playerState.DrawCount);
 			ResetMagicHighlights();
 			busy = false;
@@ -427,8 +445,12 @@ public class HandSystemUI : MonoBehaviour
 		CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
 		battleManager.ResetContinuousCastCount();
 		UpdateContinuousCastCounter(0, instant: true);
+		suppressEnemyIntentRefresh = false;
+		RefreshEnemyUI();
+        playerState.ClearShield();
 		playerState.TriggerOnTurnStart(opponent);
 		playerState.TriggerAfterTurnStart(opponent);
+        TriggerMagicTurnStart();
         int extraDraw = playerState.GetBuffStack(BuffEnum.ExtraDraw);
         playerState.DrawCards(drawCount + extraDraw);
         if (extraDraw > 0)
@@ -440,6 +462,34 @@ public class HandSystemUI : MonoBehaviour
 		RefreshStaticUI();
 		RefreshMaterialListPanel();
 		RebuildCards(animateFromCurrent: true);
+	}
+
+	private void StartRestLevel(LevelData level)
+	{
+		GameLog.Data("Start rest level=" + level.id);
+		ResetBattleDeckState();
+		currentLevel = level;
+		HideMapPanel();
+		HideLevelSelectPanelAnimated();
+		enemyModels.Clear();
+		battleManager.ClearEnemies();
+		enemyViewStates.Clear();
+		if ((Object)enemyArea != (Object)null)
+		{
+			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
+				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
+		}
+
+		if ((Object)eventPanel != (Object)null)
+			eventPanel.Close();
+		eventPanel = ((Component)this).gameObject.AddComponent<EventPanelUI>();
+		Transform transform = ((Component)this).transform;
+		eventPanel.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawRestOptionsHand);
+		currentEvent = CreateRestEventModel(level);
+		eventPanel.Bind(currentEvent);
+		refreshUsedThisTurn = false;
+		busy = false;
+		SetButtonsInteractable(interactable: true);
 	}
 
 	private void StartEventLevel(LevelData level)
@@ -460,11 +510,16 @@ public class HandSystemUI : MonoBehaviour
 		HideMapPanel();
 		HideLevelSelectPanelAnimated();
 		EventData eventData = null;
-		using (IEnumerator<EventData> enumerator = GameDataDatabase.EventData.Values.GetEnumerator())
+		if (level.eventPoolId > 0)
+			GameDataDatabase.TryGetEventData(level.eventPoolId, out eventData);
+		if (eventData == null)
 		{
-			if (enumerator.MoveNext())
+			using (IEnumerator<EventData> enumerator = GameDataDatabase.EventData.Values.GetEnumerator())
 			{
-				eventData = enumerator.Current;
+				if (enumerator.MoveNext())
+				{
+					eventData = enumerator.Current;
+				}
 			}
 		}
 		if (eventData == null)
@@ -511,6 +566,62 @@ public class HandSystemUI : MonoBehaviour
 		RefreshMaterialListPanel();
 		RebuildCards(animateFromCurrent: true);
 	}
+
+    private EventModel CreateRestEventModel(LevelData level)
+    {
+        EventOptionData study = new EventOptionData
+        {
+            id = "study_magic",
+            titleKey = "rest.option.study",
+            recipe = CreateRandomRecipe(1),
+            resultId = RestStudyResultId
+        };
+        EventOptionData deepStudy = new EventOptionData
+        {
+            id = "deep_study_magic",
+            titleKey = "rest.option.deep_study",
+            recipe = CreateRandomRecipe(2),
+            resultId = RestDeepStudyResultId
+        };
+        EventData data = new EventData
+        {
+            id = level != null ? level.id : "rest",
+            titleKey = level != null ? level.titleKey : "level.rest_001.title",
+            startNodeId = "start",
+            drawCount = playerState != null ? playerState.DrawCount : 5,
+            nodes = new[]
+            {
+                new EventNodeData
+                {
+                    id = "start",
+                    textKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>(),
+                    options = new[] { study, deepStudy }
+                }
+            }
+        };
+        return new EventModel(data);
+    }
+
+    private string CreateRandomRecipe(int length)
+    {
+        char[] recipe = new char[Mathf.Max(1, length)];
+        for (int i = 0; i < recipe.Length; i++)
+            recipe[i] = (char)('0' + Random.Range(1, 5));
+        return new string(recipe);
+    }
+
+    private void DrawRestOptionsHand()
+    {
+        if (playerState == null)
+            return;
+
+        GameLog.Data($"Draw rest options hand count={playerState.DrawCount}");
+        refreshUsedThisTurn = false;
+        playerState.DrawCards(playerState.DrawCount);
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+    }
 
 	public void OnEnemyLeftClicked(EnemyModel enemy)
 	{
@@ -802,39 +913,53 @@ public class HandSystemUI : MonoBehaviour
 	{
 		mapNodes.Clear();
 		ChapterData chapter = GetActiveChapter();
-		LevelData eventLevel = GetEventLevelForChapter(chapter);
+		List<LevelData> eventLevels = GetEventLevelsForChapter(chapter);
 		int chapterLength = GetActiveChapterLength();
 		for (int i = 0; i < chapterLength; i++)
 		{
-			List<LevelData> battleLevels = GetBattleLevelsForProgress(chapter, i + 1);
-			if (battleLevels.Count == 0)
-				battleLevels = GetBattleLevels();
-			if (battleLevels.Count == 0)
+			List<LevelData> candidateLevels = GetLevelsForProgress(chapter, i + 1);
+			if (candidateLevels.Count == 0)
+				candidateLevels = GetBattleLevels();
+			if (candidateLevels.Count == 0)
 				return;
 
 			RunMapNodeModel mapNodeModel = new RunMapNodeModel();
-			if ((i == 7 || i == 15) && eventLevel != null)
+			LevelData fixedLevel = GetFixedLevelForProgress(chapter, i + 1);
+			if (fixedLevel != null)
 			{
-				mapNodeModel.leftLevel = eventLevel;
-				mapNodeModel.rightLevel = eventLevel;
+				mapNodeModel.leftLevel = fixedLevel;
+				mapNodeModel.rightLevel = fixedLevel;
 				mapNodeModel.fixedSingleChoice = true;
-			}
-			else if (i == 0 && eventLevel != null)
-			{
-				mapNodeModel.leftLevel = battleLevels[Random.Range(0, battleLevels.Count)];
-				mapNodeModel.rightLevel = eventLevel;
 			}
 			else
 			{
-				mapNodeModel.leftLevel = battleLevels[Random.Range(0, battleLevels.Count)];
-				mapNodeModel.rightLevel = battleLevels[Random.Range(0, battleLevels.Count)];
+				mapNodeModel.leftLevel = candidateLevels[Random.Range(0, candidateLevels.Count)];
+				mapNodeModel.rightLevel = candidateLevels[Random.Range(0, candidateLevels.Count)];
 			}
 			mapNodes.Add(mapNodeModel);
 		}
 		currentMapNodeIndex = 0;
 		RefreshChapterProgressUI();
 		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
-		GameLog.Data($"Build map nodes={mapNodes.Count} fixedEvents=8,16");
+		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
+	}
+
+	private LevelData GetFixedLevelForProgress(ChapterData chapter, int progress)
+	{
+		if (chapter == null || chapter.fixed_level == null)
+			return null;
+
+		for (int i = 0; i < chapter.fixed_level.Length; i++)
+		{
+			ChapterFixedLevelData fixedLevel = chapter.fixed_level[i];
+			if (fixedLevel == null || fixedLevel.levelIndex != progress)
+				continue;
+
+			List<LevelData> levels = GetLevels(fixedLevel.levelType);
+			return levels.Count > 0 ? levels[Random.Range(0, levels.Count)] : null;
+		}
+
+		return null;
 	}
 
 	private ChapterData GetActiveChapter()
@@ -859,7 +984,7 @@ public class HandSystemUI : MonoBehaviour
 		return chapter != null && chapter.levelLength > 0 ? chapter.levelLength : RunNodeCount;
 	}
 
-	private List<LevelData> GetBattleLevelsForProgress(ChapterData chapter, int progress)
+	private List<LevelData> GetLevelsForProgress(ChapterData chapter, int progress)
 	{
 		int[] poolIds = GetLevelPoolIdsForProgress(chapter, progress);
 		if (poolIds == null || poolIds.Length == 0)
@@ -868,7 +993,7 @@ public class HandSystemUI : MonoBehaviour
 		List<LevelData> levels = new List<LevelData>();
 		for (int i = 0; i < poolIds.Length; i++)
 		{
-			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && level.levelType == LevelType.Battle)
+			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Event || level.levelType == LevelType.Rest))
 				levels.Add(level);
 		}
 		return levels;
@@ -892,19 +1017,21 @@ public class HandSystemUI : MonoBehaviour
 		return chapter.levelPoolIds;
 	}
 
-	private LevelData GetEventLevelForChapter(ChapterData chapter)
+	private List<LevelData> GetEventLevelsForChapter(ChapterData chapter)
 	{
+		List<LevelData> eventLevels = new List<LevelData>();
 		if (chapter != null && chapter.eventPoolIds != null && chapter.eventPoolIds.Length > 0)
 		{
 			for (int i = 0; i < chapter.eventPoolIds.Length; i++)
 			{
 				if (GameDataDatabase.TryGetLevelData(chapter.eventPoolIds[i], out LevelData level) && level.levelType == LevelType.Event)
-					return level;
+					eventLevels.Add(level);
 			}
 		}
 
-		List<LevelData> eventLevels = GetEventLevels();
-		return eventLevels.Count > 0 ? eventLevels[0] : null;
+		if (eventLevels.Count == 0)
+			eventLevels.AddRange(GetEventLevels());
+		return eventLevels;
 	}
 
 	private void RefreshChapterProgressUI()
@@ -958,19 +1085,50 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0054: Expected O, but got Unknown
 		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0084: Expected O, but got Unknown
-		playerState = PlayerState.CreateDefault();
+        RunSaveData saveData = null;
+        bool continueSavedRun = PlayerState.ContinueSavedRun && !RunSaveSystem.ConsumeForceNewRun();
+        if (continueSavedRun)
+            saveData = RunSaveSystem.LoadCurrentRun();
+        PlayerState.ContinueSavedRun = false;
+
+		playerState = saveData != null ? RunSaveSystem.CreatePlayer(saveData) : PlayerState.CreateDefault();
 		battleManager = new BattleManager(playerState);
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
 		GetUIManager();
 		EnsureMaterialListButton();
 			CreateTopBar();
-		BuildDebugMap();
+        if (saveData != null)
+        {
+            activeChapter = null;
+            if (saveData.chapterNumericId > 0)
+                GameDataDatabase.TryGetChapterData(saveData.chapterNumericId, out activeChapter);
+            RunSaveSystem.RestoreMapNodes(saveData, mapNodes);
+            currentMapNodeIndex = Mathf.Clamp(saveData.currentMapNodeIndex, 0, Mathf.Max(0, mapNodes.Count - 1));
+            RefreshChapterProgressUI();
+            GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
+        }
+        else
+        {
+		    BuildDebugMap();
+        }
 		CreateMagicViews();
 		CreateParticleCaster();
 		InitializePlayerUiComponents();
 		RebuildCards(animateFromCurrent: true);
-		ShowLevelSelect();
+        SaveRunProgress();
+        if (RunSaveSystem.ShouldAutoStartSavedNode(saveData))
+        {
+            LevelData savedLevel = RunSaveSystem.GetSavedCurrentLevel(saveData);
+            if (savedLevel != null)
+                StartLevel(savedLevel);
+            else
+                ShowLevelSelect();
+        }
+        else
+        {
+		    ShowLevelSelect();
+        }
 	}
 
 	private void InitializePlayerUiComponents()
@@ -988,7 +1146,11 @@ public class HandSystemUI : MonoBehaviour
 			PlaySelectedCardsByInput();
 		}
 
-		if (currentEvent != null && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
+		if (currentLevel != null && currentLevel.levelType == LevelType.Rest && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
+		{
+			FinishRestLevel();
+		}
+		else if (currentEvent != null && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
 		{
 			FinishEventLevel();
 		}
@@ -1008,6 +1170,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00d8: Expected O, but got Unknown
 		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ea: Expected O, but got Unknown
+        SaveRunProgress();
 		((UnityEvent)refreshButton.onClick).RemoveListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).RemoveListener(new UnityAction(EndTurn));
 		if ((Object)(object)deckPileArea != (Object)null)
@@ -1078,8 +1241,15 @@ public class HandSystemUI : MonoBehaviour
 
 	private void HandleEventCardChoice(HandCardView cardView)
 	{
-		if (cardView == null || cardView.InPlayZone || !playerState.Hand.Contains(cardView.Card) || pendingChoiceCards.Contains(cardView.Card))
+		if (cardView == null || cardView.InPlayZone || !playerState.Hand.Contains(cardView.Card))
 			return;
+
+		if (pendingChoiceCards.Contains(cardView.Card))
+		{
+			pendingChoiceCards.Remove(cardView.Card);
+			cardView.SetSelected(false, instant: false);
+			return;
+		}
 
 		pendingChoiceCards.Add(cardView.Card);
 		cardView.SetSelected(true, instant: false);
@@ -1123,7 +1293,28 @@ public class HandSystemUI : MonoBehaviour
 		selectedCards.Clear();
 		RefreshStaticUI();
 		RefreshMaterialListPanel();
+		((MonoBehaviour)this).StartCoroutine(FinishEventCardChoiceRoutine(option));
+	}
+
+	private IEnumerator FinishEventCardChoiceRoutine(EventOptionData option)
+	{
+		List<HandCardView> views = new List<HandCardView>();
+		for (int i = 0; i < cardViews.Count; i++)
+			views.Add(cardViews[i]);
+
+		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
+		playerState.EndTurn(removedTemporaryCards);
+		RefreshStaticUI();
+		bool returnDone = false;
+		AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+		{
+			returnDone = true;
+		});
+		while (!returnDone)
+			yield return null;
+
 		RebuildCards(animateFromCurrent: true);
+		refreshUsedThisTurn = false;
 		CompleteEventChoiceOption(option);
 	}
 
@@ -1217,20 +1408,10 @@ public class HandSystemUI : MonoBehaviour
 				list.Add(handCardView);
 			}
 		}
-		int refreshCount = selectedCards.Count;
-		MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
-		for (int i = 0; i < selectedCards.Count; i++)
-		{
-			if (selectedCards[i] != null)
-				selectedCards[i].TriggerOnRefresh();
-		}
-		MaterialModifierModel.CurrentContext = null;
-		int drawnCount = playerState.DrawCards(refreshCount);
 		List<MaterialModel> list2 = new List<MaterialModel>();
-		int returnedCount = playerState.ReturnHandCardsToDrawPile(selectedCards, list2);
-		GameLog.Data($"Refresh selected cards selected={selectedCards.Count} drawn={drawnCount} returned={returnedCount} temporaryRemoved={list2.Count}");
+		PlayerState.RefreshHandResult refreshResult = playerState.RefreshHandCards(selectedCards, list2, battleManager);
 		selectedCards.Clear();
-		if (drawnCount == 0 && returnedCount == 0 && list2.Count == 0)
+		if (refreshResult.DrawnCount == 0 && refreshResult.ReturnedCount == 0 && list2.Count == 0)
 		{
 			return;
 		}
@@ -1261,11 +1442,18 @@ public class HandSystemUI : MonoBehaviour
 
 	private void EndTurn()
 	{
+		if (runEnded)
+			return;
+
 		if (!busy)
 		{
 			GameLog.Data((currentEvent != null) ? "Click end turn in event" : "Click end turn in battle");
 			selectedCards.Clear();
-			if (currentEvent != null)
+			if (currentLevel != null && currentLevel.levelType == LevelType.Rest)
+			{
+				((MonoBehaviour)this).StartCoroutine(ResolveRestEndTurnRoutine());
+			}
+			else if (currentEvent != null)
 			{
 				((MonoBehaviour)this).StartCoroutine(ResolveEventEndTurnRoutine());
 			}
@@ -1303,9 +1491,9 @@ public class HandSystemUI : MonoBehaviour
 		int playerShieldBefore = playerState.Shield;
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
 		playerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
+        TriggerMagicTurnEnd();
 		playerState.EndTurn(removedTemporaryCards);
 		playerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
-        playerState.ClearShield();
 		playerState.TriggerMaterialEnd();
 		MaterialModifierModel.CurrentContext = null;
 		RefreshStaticUI();
@@ -1336,6 +1524,8 @@ public class HandSystemUI : MonoBehaviour
 				yield return new WaitForSeconds(enemyBetweenDelay);
 		}
 		RefreshStaticUI();
+		if (CheckPlayerDefeated())
+			yield break;
 		GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
 		RefreshStaticUI();
 		RefreshEnemyUI();
@@ -1353,6 +1543,53 @@ public class HandSystemUI : MonoBehaviour
 		busy = false;
 		SetButtonsInteractable(interactable: true);
 	}
+
+	private IEnumerator ResolveRestEndTurnRoutine()
+    {
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        List<MaterialModel> playSnapshot = new List<MaterialModel>(playerState.PlayZone);
+        EventOptionData matchedOption = null;
+        bool matched = currentEvent != null && currentEvent.TryGetMatchedOption(playSnapshot, out matchedOption);
+        GameLog.Data(string.Format("Resolve rest end turn matched={0} option={1}", matched, (matchedOption != null) ? matchedOption.id : "none"));
+        if (matched && (Object)eventPanel != (Object)null)
+        {
+            yield return eventPanel.PlayOptionChosen(matchedOption);
+            RectTransform matchedOptionRect = eventPanel.MatchedOptionRect;
+            for (int i = 0; i < playSnapshot.Count; i++)
+            {
+                HandCardView handCardView = FindView(playSnapshot[i]);
+                if ((Object)handCardView != (Object)null && (Object)matchedOptionRect != (Object)null)
+                    PlayMaterialFillParticle(handCardView, matchedOptionRect, playSnapshot[i].material);
+            }
+            yield return (object)new WaitForSeconds(GetParticleArrivalWait());
+        }
+
+        List<HandCardView> views = new List<HandCardView>();
+        for (int i = 0; i < cardViews.Count; i++)
+            views.Add(cardViews[i]);
+        List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
+        playerState.EndTurn(removedTemporaryCards);
+        RefreshStaticUI();
+        bool returnDone = false;
+        AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+        {
+            returnDone = true;
+        });
+        while (!returnDone)
+            yield return null;
+
+        RebuildCards(animateFromCurrent: true);
+        refreshUsedThisTurn = false;
+        if (matched && matchedOption != null && (matchedOption.resultId == RestStudyResultId || matchedOption.resultId == RestDeepStudyResultId))
+        {
+            ShowMagicModifierSelection(matchedOption.resultId == RestDeepStudyResultId ? 3 : 2);
+            yield break;
+        }
+
+        ApplyRestDefaultHeal();
+        FinishRestLevel();
+    }
 
 	private IEnumerator ResolveEventEndTurnRoutine()
 	{
@@ -1381,6 +1618,11 @@ public class HandSystemUI : MonoBehaviour
 			GameLog.Data($"Event option selected id={matchedOption.id} result={matchedOption.resultId}");
 			RefreshStaticUI();
 		}
+        if (matched && IsCardChoiceEventResult(matchedOption.resultId))
+        {
+            StartEventCardChoice(matchedOption);
+            yield break;
+        }
 		List<HandCardView> list = new List<HandCardView>();
 		for (int j = 0; j < cardViews.Count; j++)
 		{
@@ -1427,6 +1669,48 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
+	private bool IsCardChoiceEventResult(int resultId)
+	{
+		return resultId == 100 || EventModel.CreateModifierForResult(resultId) != null;
+	}
+
+	private void StartEventCardChoice(EventOptionData option)
+	{
+		pendingChoiceOption = option;
+		pendingChoiceCount = option != null && option.choiceCount > 0 ? option.choiceCount : 1;
+		pendingChoiceCards.Clear();
+		selectedCards.Clear();
+		choosingEventCard = true;
+		MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
+		if ((Object)panel != (Object)null)
+		{
+			panel.BeginSelection(pendingChoiceCount, IsEventChoiceSelectable, OnEventMaterialListSelectionCompleted);
+		}
+		else
+		{
+			RefreshMaterialListPanel();
+			RebuildCards(animateFromCurrent: true);
+		}
+		SetButtonsInteractable(interactable: false);
+	}
+
+	private bool IsEventChoiceSelectable(MaterialModel materialModel)
+	{
+		return materialModel != null && playerState != null && playerState.Hand.Contains(materialModel);
+	}
+
+	private void OnEventMaterialListSelectionCompleted(IReadOnlyList<MaterialModel> materials)
+	{
+		pendingChoiceCards.Clear();
+		for (int i = 0; materials != null && i < materials.Count; i++)
+		{
+			if (IsEventChoiceSelectable(materials[i]))
+				pendingChoiceCards.Add(materials[i]);
+		}
+		if (pendingChoiceCards.Count >= pendingChoiceCount)
+			ResolveEventCardChoice();
+	}
+
 	private void FinishEventLevel()
 	{
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
@@ -1437,8 +1721,18 @@ public class HandSystemUI : MonoBehaviour
 			eventPanel = null;
 		}
 		currentEvent = null;
-		playerState.DrawCount++;
-		GameLog.Data($"Finish event level draw count reward +1 now={playerState.DrawCount}");
+		GameLog.Data("Finish event level");
+		FinishReward();
+	}
+
+	private void FinishRestLevel()
+	{
+		if ((Object)eventPanel != (Object)null)
+		{
+			eventPanel.Close();
+			eventPanel = null;
+		}
+		GameLog.Data("Finish rest level");
 		FinishReward();
 	}
 
@@ -2313,6 +2607,7 @@ public class HandSystemUI : MonoBehaviour
 	private IEnumerator FinishBattleRoutine()
 	{
 		yield return PlayPendingEnemyDeaths();
+        TriggerMagicBattleEnd();
 		ResetMagicHighlights();
 		GetUIManager().PlayArea?.HideResolveIndicator();
 		List<HandCardView> views = new List<HandCardView>(cardViews);
@@ -2340,8 +2635,109 @@ public class HandSystemUI : MonoBehaviour
 		busy = true;
 		currentEvent = null;
 		SetButtonsInteractable(interactable: false);
+        SaveRunProgress();
 		GetUIManager().ShowRewardPanel();
 	}
+
+    private void SaveRunProgress()
+    {
+        if (!runEnded)
+            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused)
+            SaveRunProgress();
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveRunProgress();
+    }
+
+    private void ShowMagicModifierSelection(int choiceCount)
+    {
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        pendingMagicModifier = null;
+        GetUIManager().MagicModifierSelectionPanel?.Show(GetMagicModifierChoices(choiceCount), FinishRestLevel);
+    }
+
+    private List<MagicModifierData> GetMagicModifierChoices(int count)
+    {
+        List<MagicModifierData> pool = new List<MagicModifierData>();
+        foreach (MagicModifierData data in GameDataDatabase.MagicModifierData.Values)
+        {
+            if (data != null && data.weight != 0 && CanAnyMagicAcceptModifier(data))
+                pool.Add(data);
+        }
+
+        List<MagicModifierData> result = new List<MagicModifierData>();
+        int attempts = 0;
+        while (result.Count < count && pool.Count > 0 && attempts < 40)
+        {
+            attempts++;
+            MagicModifierData data = pool[Random.Range(0, pool.Count)];
+            if (!result.Contains(data))
+                result.Add(data);
+        }
+        return result;
+    }
+
+    private bool CanAnyMagicAcceptModifier(MagicModifierData data)
+    {
+        MagicModifierModel modifier = MagicModifierFactory.Create(data);
+        if (modifier == null || playerState == null)
+            return false;
+
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+        {
+            MagicModel magic = playerState.MagicBook[i];
+            if (magic != null && magic.CanAddModifier(modifier))
+                return true;
+        }
+        return false;
+    }
+
+    private void ApplyRestDefaultHeal()
+    {
+        int healAmount = Mathf.Max(1, Mathf.CeilToInt(playerState.MaxHealth * RestDefaultHealRatio));
+        int healthBefore = playerState.CurrentHealth;
+        playerState.Heal(healAmount);
+        int healed = playerState.CurrentHealth - healthBefore;
+        if (healed > 0)
+        {
+            PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
+            ShowPlayerFloatingText("+" + healed, new Color(0.25f, 1f, 0.38f, 1f));
+        }
+        RefreshStaticUI();
+        GameLog.Data($"Rest default heal amount={healed}");
+    }
+
+    private void TriggerMagicBattleStart()
+    {
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+            playerState.MagicBook[i]?.TriggerMagicBattleStart(playerState, battleManager);
+    }
+
+    private void TriggerMagicBattleEnd()
+    {
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+            playerState.MagicBook[i]?.TriggerMagicBattleEnd(playerState, battleManager);
+    }
+
+    private void TriggerMagicTurnStart()
+    {
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+            playerState.MagicBook[i]?.TriggerMagicTurnStart(playerState, battleManager);
+    }
+
+    private void TriggerMagicTurnEnd()
+    {
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+            playerState.MagicBook[i]?.TriggerMagicTurnEnd(playerState, battleManager);
+    }
 
 	private void ResetBattleDeckState()
 	{
@@ -2412,7 +2808,14 @@ public class HandSystemUI : MonoBehaviour
 		pendingRewardMagic = rewardMagic;
 	}
 
+    public void SelectPendingMagicModifier(MagicModifierData modifierData)
+    {
+        pendingMagicModifier = modifierData;
+    }
+
 	public bool HasPendingRewardMagic => pendingRewardMagic != null;
+
+    public bool HasPendingMagicModifier => pendingMagicModifier != null;
 
 	public bool TryPlacePendingRewardMagic(int slotIndex)
 	{
@@ -2425,6 +2828,37 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
 		return true;
 	}
+
+    public bool TryApplyPendingMagicModifier(int slotIndex)
+    {
+        if (pendingMagicModifier == null)
+            return false;
+
+        MagicModel magic = playerState.GetMagicAtSlot(slotIndex);
+        MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
+        if (magic == null)
+        {
+            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.empty_slot", "这个法术槽是空的！"));
+            return false;
+        }
+        if (magic.HasModifier)
+        {
+            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.already_has_modifier", "这个法术已经有强化了！"));
+            return false;
+        }
+
+        MagicModifierModel modifier = MagicModifierFactory.Create(pendingMagicModifier);
+        if (modifier == null || !magic.AddModifier(modifier))
+        {
+            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.not_applicable", "这个强化不能用于该法术！"));
+            return false;
+        }
+
+        pendingMagicModifier = null;
+        CreateMagicViews();
+        panel?.CompleteSelection();
+        return true;
+    }
 
 	public void ShowSlotSelect(MagicData rewardMagic)
 	{
@@ -2448,9 +2882,11 @@ public class HandSystemUI : MonoBehaviour
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
 		pendingRewardMagic = null;
+        pendingMagicModifier = null;
         playerState.ClearCombatState();
 		GetUIManager().HideRewardPanel();
 		GetUIManager().HideSlotSelect();
+        GetUIManager().MagicModifierSelectionPanel?.Hide();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -2463,11 +2899,13 @@ public class HandSystemUI : MonoBehaviour
 			GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(num);
 			currentMapNodeIndex++;
 			GameLog.Data($"Advance map node index={currentMapNodeIndex + 1}");
+			RefreshChapterProgressUI();
 			if (currentMapNodeIndex >= mapNodes.Count)
 			{
-				currentMapNodeIndex = mapNodes.Count - 1;
+				ShowVictoryPanel();
+				return;
 			}
-			RefreshChapterProgressUI();
+            SaveRunProgress();
 			ShowLevelSelectAfterMapAdvance(num != currentMapNodeIndex);
 		}
 	}
@@ -2494,7 +2932,9 @@ public class HandSystemUI : MonoBehaviour
 	private IEnumerator ResolveEnemyIntentsRoutine(EnemyModel enemy)
 	{
 		EnemyViewState state = FindEnemyViewState(enemy);
+		suppressEnemyIntentRefresh = true;
 		CombatantModel opponent = new CombatantModel(playerState);
+        enemy.ClearShield();
 		enemy.TriggerOnTurnStart(opponent);
 		enemy.TriggerAfterTurnStart(opponent);
 		enemy.BeginResolveIntents(playerState);
@@ -2532,7 +2972,6 @@ public class HandSystemUI : MonoBehaviour
 		enemy.EndResolveIntents(playerState);
         enemy.TriggerOnTurnEnd(opponent);
         enemy.TriggerAfterTurnEnd(opponent);
-        enemy.ClearShield();
 		RefreshEnemyUI(state, false);
 		yield return PlayPendingEnemyDeaths();
 	}
@@ -2639,6 +3078,45 @@ public class HandSystemUI : MonoBehaviour
 			}
 		}
 		return null;
+	}
+
+	private bool CheckPlayerDefeated()
+	{
+		if (playerState == null || playerState.CurrentHealth > 0)
+			return false;
+
+		ShowDefeatPanel();
+		return true;
+	}
+
+	private void ShowVictoryPanel()
+	{
+		ShowRunResultPanel(true);
+	}
+
+	private void ShowDefeatPanel()
+	{
+		ShowRunResultPanel(false);
+	}
+
+	private void ShowRunResultPanel(bool victory)
+	{
+		if (runEnded)
+			return;
+
+        RunSaveSystem.ClearCurrentRun();
+		runEnded = true;
+		busy = true;
+		SetButtonsInteractable(interactable: false);
+		ResetMagicHighlights();
+		GetUIManager().HideLevelSelect();
+		GetUIManager().HideMapPanel();
+		GetUIManager().HideRewardPanel();
+		GetUIManager().HideSlotSelect();
+		if (victory)
+			GetUIManager().ShowVictoryPanel();
+		else
+			GetUIManager().ShowDefeatPanel();
 	}
 
 	private bool AllEnemiesDead()
@@ -2889,7 +3367,7 @@ public class HandSystemUI : MonoBehaviour
 			((Component)floatingText).transform.SetParent((Transform)val, false);
 			floatingText.text = text;
 			floatingText.font = GetDefaultFont();
-			floatingText.fontSize = floatingTextFontSize;
+			floatingText.fontSize = floatingTextFontSize * 3;
 			floatingText.fontStyle = (FontStyle)1;
 			floatingText.alignment = (TextAnchor)4;
 			floatingText.raycastTarget = false;
@@ -2898,7 +3376,7 @@ public class HandSystemUI : MonoBehaviour
 			component.anchorMin = anchor.anchorMin;
 			component.anchorMax = anchor.anchorMax;
 			component.pivot = new Vector2(0.5f, 0.5f);
-			component.sizeDelta = floatingTextSize;
+			component.sizeDelta = floatingTextSize * 3f;
 			component.anchoredPosition = anchor.anchoredPosition + floatingTextStartOffset;
 			((Transform)component).localScale = Vector3.one;
 			Sequence obj = DOTween.Sequence();
@@ -2969,7 +3447,8 @@ public class HandSystemUI : MonoBehaviour
 		{
 			((Component)state.focusMarker).gameObject.SetActive(battleManager != null && battleManager.FocusTarget == state.model);
 		}
-		RebuildEnemyIntentViews(state);
+		if (!suppressEnemyIntentRefresh)
+			RebuildEnemyIntentViews(state);
 		Tween healthNumberTween = state.healthNumberTween;
 		if (healthNumberTween != null)
 		{
@@ -3006,7 +3485,7 @@ public class HandSystemUI : MonoBehaviour
 			Vector2 position = new Vector2((i - (intents.Count - 1) * 0.5f) * intentSpacing, 38f);
 			view.SetBaseAnchoredPosition(position);
 			rect.localScale = Vector3.one * 1.5f;
-			view.Bind(intents[i], phaseStart + i, totalIntentCount);
+			view.Bind(state.model, intents[i], phaseStart + i, totalIntentCount);
 		}
 	}
 
@@ -3129,16 +3608,21 @@ public class HandSystemUI : MonoBehaviour
 			{
 				text += " + ";
 			}
-			text += GetIntentDisplayValue(currentIntents[i]);
+            text += GetIntentDisplayValue(model, currentIntents[i]);
+
 		}
 		return text;
 	}
 
-	private static string GetIntentDisplayValue(EnemyIntentData intent)
+	private static string GetIntentDisplayValue(EnemyModel model, EnemyIntentData intent)
 	{
 		if (intent == null)
 		{
 			return string.Empty;
+		}
+		if (intent.actionType == EnemyActionType.Attack)
+		{
+			return (model != null ? model.GetIntentAttackValue(intent) : intent.value).ToString();
 		}
 		if (intent.value > 0)
 		{

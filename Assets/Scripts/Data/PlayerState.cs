@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 public class PlayerState
 {
+    public static string SelectedStartConfigId { get; set; } = "balanced";
+    public static bool ContinueSavedRun { get; set; }
+
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
 
     private int temporaryMaterialIndex;
@@ -32,7 +35,8 @@ public class PlayerState
 
     public static PlayerState CreateDefault()
     {
-        return CreateFromConfig("default");
+        string configId = string.IsNullOrEmpty(SelectedStartConfigId) ? "balanced" : SelectedStartConfigId;
+        return CreateFromConfig(configId);
     }
 
     public static PlayerState CreateFromConfig(string configId)
@@ -147,6 +151,18 @@ public class PlayerState
         return true;
     }
 
+    public readonly struct RefreshHandResult
+    {
+        public readonly int DrawnCount;
+        public readonly int ReturnedCount;
+
+        public RefreshHandResult(int drawnCount, int returnedCount)
+        {
+            DrawnCount = drawnCount;
+            ReturnedCount = returnedCount;
+        }
+    }
+
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards)
     {
         return ReturnHandCardsToDrawPile(cards, null);
@@ -184,6 +200,31 @@ public class PlayerState
         }
 
         return returnedCount;
+    }
+
+    public RefreshHandResult RefreshHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
+        return RefreshHandCards(cards, removedTemporaryCards, null);
+    }
+
+    public RefreshHandResult RefreshHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
+    {
+        if (cards == null || cards.Count == 0)
+            return new RefreshHandResult(0, 0);
+
+        int refreshCount = cards.Count;
+        MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = this, BattleManager = battleManager };
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (cards[i] != null)
+                cards[i].TriggerOnRefresh();
+        }
+        MaterialModifierModel.CurrentContext = null;
+
+        int drawnCount = DrawCards(refreshCount);
+        int returnedCount = ReturnHandCardsToDrawPile(cards, removedTemporaryCards);
+        GameLog.Data($"Refresh hand cards selected={cards.Count} drawn={drawnCount} returned={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
+        return new RefreshHandResult(drawnCount, returnedCount);
     }
 
     public void ReturnPlayZoneCardsToDrawPile()
@@ -492,8 +533,9 @@ public class PlayerState
             return;
 
         CombatantModel self = new CombatantModel(this);
-        foreach (BuffModel buff in buffs.Values)
-            buff.OnAttack(self, target, ref attackValue);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].OnAttack(self, target, ref attackValue);
     }
 
     public void TriggerAfterAttack(CombatantModel attacker, ref int attackResult)
@@ -502,8 +544,9 @@ public class PlayerState
             return;
 
         CombatantModel self = new CombatantModel(this);
-        foreach (BuffModel buff in buffs.Values)
-            buff.AfterAttack(self, attacker, ref attackResult);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].AfterAttack(self, attacker, ref attackResult);
     }
 
     public void TriggerOnTurnEnd(CombatantModel opponent)
@@ -527,23 +570,32 @@ public class PlayerState
             return;
 
         CombatantModel self = new CombatantModel(this);
-        List<BuffEnum> expiredBuffs = null;
-        foreach (BuffModel buff in buffs.Values)
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        List<BuffModel> expiredBuffs = null;
+        for (int i = 0; i < snapshot.Count; i++)
         {
+            BuffModel buff = snapshot[i];
+            if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
+                continue;
+
             trigger(buff, self, opponent);
-            if (buff.stack <= 0)
+            if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out currentBuff) && ReferenceEquals(currentBuff, buff))
             {
                 if (expiredBuffs == null)
-                    expiredBuffs = new List<BuffEnum>();
+                    expiredBuffs = new List<BuffModel>();
                 buff.OnExpire(self, opponent);
-                expiredBuffs.Add(buff.buffType);
+                expiredBuffs.Add(buff);
             }
         }
 
         if (expiredBuffs != null)
         {
             for (int i = 0; i < expiredBuffs.Count; i++)
-                buffs.Remove(expiredBuffs[i]);
+            {
+                BuffModel buff = expiredBuffs[i];
+                if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) && ReferenceEquals(currentBuff, buff))
+                    buffs.Remove(buff.buffType);
+            }
         }
     }
 

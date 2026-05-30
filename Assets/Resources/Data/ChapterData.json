@@ -4,7 +4,7 @@
       "numericId": 1,
       "id": "chapter_001",
       "nameKey": "chapter.001.name",
-      "levelLength": 21,
+      "levelLength": 20,
       "levelPoolIds": [
         1,
         2,
@@ -25,7 +25,11 @@
         17,
         18,
         19,
-        20
+        20,
+        101,
+        102,
+        103,
+        201
       ],
       "levelPoolRanges": [
         {
@@ -35,27 +39,30 @@
         },
         {
           "startProgress": 5,
-          "endProgress": 8,
-          "levelPoolIds": [1, 2, 3, 4, 5, 7, 8, 9]
+          "endProgress": 9,
+          "levelPoolIds": [1, 2, 3, 4, 5, 6, 101, 102]
         },
         {
-          "startProgress": 9,
-          "endProgress": 14,
-          "levelPoolIds": [7, 8, 9, 10, 11, 12, 13, 14]
+          "startProgress": 10,
+          "endProgress": 16,
+          "levelPoolIds": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 102, 103, 201]
         },
         {
-          "startProgress": 15,
-          "endProgress": 18,
-          "levelPoolIds": [11, 13, 14, 15, 16, 17, 18, 19]
+          "startProgress": 17,
+          "endProgress": 19,
+          "levelPoolIds": [17, 18, 19]
         },
         {
-          "startProgress": 19,
+          "startProgress": 20,
           "endProgress": 20,
-          "levelPoolIds": [15, 16, 19, 20]
+          "levelPoolIds": [20]
         }
       ],
+      "fixed_level": [],
       "eventPoolIds": [
-        101
+        101,
+        102,
+        103
       ]
     }
   ]

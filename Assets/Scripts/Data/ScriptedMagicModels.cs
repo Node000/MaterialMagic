@@ -72,9 +72,11 @@ public abstract class ScriptedMagicModel : MagicModel
         CombatantModel targetCombatant = new CombatantModel(target);
         CombatantModel caster = new CombatantModel(playerState);
         int attackValue = damage;
+        TriggerMagicBeforeAttack(target, ref attackValue);
         playerState.TriggerOnAttack(targetCombatant, ref attackValue);
         GameLog.Data($"Scripted magic {Id} damage target={target.Id} value={attackValue}");
         int attackResult = target.TakeDamage(attackValue, caster);
+        TriggerMagicAfterAttack(target, ref attackResult);
         result.enemyDamageHits.Add(attackResult);
     }
 
@@ -197,7 +199,10 @@ public abstract class ScriptedMagicModel : MagicModel
 
     protected void GainShield(PlayerState playerState, BattleManager battleManager, int amount, MagicCastResult result)
     {
-        int shieldGain = playerState.GainShield(amount);
+        int shieldValue = amount;
+        TriggerMagicBeforeGainShield(ref shieldValue);
+        int shieldGain = playerState.GainShield(shieldValue);
+        TriggerMagicAfterGainShield(ref shieldGain);
         GameLog.Data($"Scripted magic {Id} gain shield={shieldGain}");
         result.playerShield += shieldGain;
         TriggerShieldAttack(playerState, battleManager, shieldGain, result);

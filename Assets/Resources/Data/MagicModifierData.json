@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "id": "echo_recast",
+      "nameKey": "magic_modifier.echo_recast.name",
+      "descriptionKey": "magic_modifier.echo_recast.desc",
+      "targetRule": 1,
+      "value": 1,
+      "weight": 1
+    },
+    {
+      "id": "searing_burning",
+      "nameKey": "magic_modifier.searing_burning.name",
+      "descriptionKey": "magic_modifier.searing_burning.desc",
+      "targetRule": 1,
+      "value": 1,
+      "weight": 1
+    },
+    {
+      "id": "pioneer_extra_draw",
+      "nameKey": "magic_modifier.pioneer_extra_draw.name",
+      "descriptionKey": "magic_modifier.pioneer_extra_draw.desc",
+      "targetRule": 1,
+      "value": 1,
+      "weight": 1
+    }
+  ]
+}

@@ -145,9 +145,11 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 targetScale = originalScale * (1f + scaleAmount);
         }
 
-        hoverTween = DOTween.Sequence()
-            .Join(transform.DOLocalRotate(targetRotation, hoverTiltDuration).SetEase(Ease.OutBack))
-            .Join(transform.DOScale(targetScale, hoverTiltDuration).SetEase(Ease.OutBack));
+        Sequence sequence = DOTween.Sequence();
+        if (hoverTiltAngle > 0f)
+            sequence.Join(transform.DOLocalRotate(targetRotation, hoverTiltDuration).SetEase(Ease.OutBack));
+        sequence.Join(transform.DOScale(targetScale, hoverTiltDuration).SetEase(Ease.OutBack));
+        hoverTween = sequence;
     }
 
     private void StopHoverMotion()

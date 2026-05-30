@@ -223,6 +223,16 @@ public class EnemyModel
         return Data.intentLoop[ActionIndex % Data.intentLoop.Length];
     }
 
+    public int GetIntentAttackValue(EnemyIntentData intent, PlayerState playerState = null)
+    {
+        if (intent == null || intent.actionType != EnemyActionType.Attack)
+            return 0;
+
+        int attackValue = intent.value;
+        TriggerOnAttack(playerState != null ? new CombatantModel(playerState) : null, ref attackValue);
+        return attackValue;
+    }
+
     private void ResolveIntent(EnemyIntentData intent, PlayerState playerState)
     {
         if (intent == null)
@@ -231,8 +241,7 @@ public class EnemyModel
         switch (intent.actionType)
         {
             case EnemyActionType.Attack:
-                int attackValue = intent.value;
-                TriggerOnAttack(new CombatantModel(playerState), ref attackValue);
+                int attackValue = GetIntentAttackValue(intent, playerState);
                 GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
                 playerState.TakeDamage(attackValue, new CombatantModel(this));
                 break;
@@ -276,8 +285,9 @@ public class EnemyModel
             return;
 
         CombatantModel self = new CombatantModel(this);
-        foreach (BuffModel buff in buffs.Values)
-            buff.OnAttack(self, target, ref attackValue);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].OnAttack(self, target, ref attackValue);
     }
 
     public void TriggerAfterAttack(CombatantModel attacker, ref int attackResult)
@@ -286,8 +296,9 @@ public class EnemyModel
             return;
 
         CombatantModel self = new CombatantModel(this);
-        foreach (BuffModel buff in buffs.Values)
-            buff.AfterAttack(self, attacker, ref attackResult);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].AfterAttack(self, attacker, ref attackResult);
     }
 
     public void TriggerOnTurnEnd(CombatantModel opponent)
@@ -311,23 +322,32 @@ public class EnemyModel
             return;
 
         CombatantModel self = new CombatantModel(this);
-        List<BuffEnum> expiredBuffs = null;
-        foreach (BuffModel buff in buffs.Values)
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        List<BuffModel> expiredBuffs = null;
+        for (int i = 0; i < snapshot.Count; i++)
         {
+            BuffModel buff = snapshot[i];
+            if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
+                continue;
+
             trigger(buff, self, opponent);
-            if (buff.stack <= 0)
+            if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out currentBuff) && ReferenceEquals(currentBuff, buff))
             {
                 if (expiredBuffs == null)
-                    expiredBuffs = new List<BuffEnum>();
+                    expiredBuffs = new List<BuffModel>();
                 buff.OnExpire(self, opponent);
-                expiredBuffs.Add(buff.buffType);
+                expiredBuffs.Add(buff);
             }
         }
 
         if (expiredBuffs != null)
         {
             for (int i = 0; i < expiredBuffs.Count; i++)
-                buffs.Remove(expiredBuffs[i]);
+            {
+                BuffModel buff = expiredBuffs[i];
+                if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) && ReferenceEquals(currentBuff, buff))
+                    buffs.Remove(buff.buffType);
+            }
         }
     }
 

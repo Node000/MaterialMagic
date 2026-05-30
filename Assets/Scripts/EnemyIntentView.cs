@@ -41,7 +41,17 @@ public class EnemyIntentView : MonoBehaviour
         rectTransform.anchoredPosition = baseAnchoredPosition + Vector2.up * (Mathf.Sin(Time.time * floatFrequency + phase) * floatAmplitude);
     }
 
+    public void Bind(EnemyModel enemy, EnemyIntentData intent, int phaseIndex, int phaseCount)
+    {
+        Bind(intent, phaseIndex, phaseCount, enemy != null ? enemy.GetIntentAttackValue(intent) : 0);
+    }
+
     public void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount)
+    {
+        Bind(intent, phaseIndex, phaseCount, 0);
+    }
+
+    private void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount, int attackValue)
     {
         CacheReferences();
         phase = phaseCount > 0 ? phaseIndex * Mathf.PI * 2f / phaseCount : 0f;
@@ -62,7 +72,7 @@ public class EnemyIntentView : MonoBehaviour
             Color textColor = valueText.color;
             textColor.a = 1f;
             valueText.color = textColor;
-            valueText.text = GetIntentDisplayValue(intent);
+            valueText.text = GetIntentDisplayValue(intent, attackValue);
             valueText.raycastTarget = false;
             valueText.canvasRenderer.SetAlpha(1f);
         }
@@ -168,10 +178,12 @@ public class EnemyIntentView : MonoBehaviour
         }
     }
 
-    private static string GetIntentDisplayValue(EnemyIntentData intent)
+    private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue)
     {
         if (intent == null)
             return string.Empty;
+        if (intent.actionType == EnemyActionType.Attack)
+            return attackValue.ToString();
         if (intent.value > 0)
             return intent.value.ToString();
         if (intent.buffAmount > 0)

@@ -92,6 +92,7 @@ public static class GameDataDatabase
     private static Dictionary<int, RewardPoolData> rewardPoolData;
     private static Dictionary<int, ChapterData> chapterData;
     private static Dictionary<string, TagData> tagData;
+    private static Dictionary<string, MagicModifierData> magicModifierData;
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
 
     public static IReadOnlyDictionary<int, MagicData> MagicData => magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData");
@@ -101,7 +102,8 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");
     public static IReadOnlyDictionary<int, ChapterData> ChapterData => chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
-    public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("PlayerStartConfig");
+    public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
+    public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
 
     public static bool TryGetMagicData(int id, out MagicData data)
     {
@@ -138,6 +140,11 @@ public static class GameDataDatabase
         return TagData.TryGetValue(id, out data);
     }
 
+    public static bool TryGetMagicModifierData(string id, out MagicModifierData data)
+    {
+        return MagicModifierData.TryGetValue(id, out data);
+    }
+
     public static bool TryGetPlayerStartConfigData(string id, out PlayerStartConfigData data)
     {
         return PlayerStartConfigData.TryGetValue(id, out data);
@@ -152,6 +159,7 @@ public static class GameDataDatabase
         rewardPoolData = null;
         chapterData = null;
         tagData = null;
+        magicModifierData = null;
         playerStartConfigData = null;
         GameDataReader.ClearCache();
     }

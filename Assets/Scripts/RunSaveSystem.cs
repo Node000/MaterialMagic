@@ -1,0 +1,410 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+[Serializable]
+public class RunSaveData
+{
+    public int version = 1;
+    public int slotIndex = 1;
+    public string runId;
+    public string createdAtUtc;
+    public string lastSavedAtUtc;
+    public string startConfigId;
+    public string runState;
+    public int chapterNumericId;
+    public int currentMapNodeIndex;
+    public int victoryCount;
+    public float totalPlaySeconds;
+    public string lastPlayedAtUtc;
+    public RunMapNodeSaveData[] mapNodes = Array.Empty<RunMapNodeSaveData>();
+    public PlayerSaveData player;
+    public CurrentNodeSaveData currentNode;
+}
+
+[Serializable]
+public class RunMapNodeSaveData
+{
+    public int leftLevelId;
+    public int rightLevelId;
+    public int selectedLevelId;
+    public bool fixedSingleChoice;
+}
+
+[Serializable]
+public class CurrentNodeSaveData
+{
+    public int levelId;
+}
+
+[Serializable]
+public class PlayerSaveData
+{
+    public int maxHealth;
+    public int currentHealth;
+    public int gold;
+    public int drawCount;
+    public int maxPlayCount;
+    public int magicBookSlotCount;
+    public MaterialCardSaveData[] deck = Array.Empty<MaterialCardSaveData>();
+    public MagicSlotSaveData[] magicBook = Array.Empty<MagicSlotSaveData>();
+}
+
+[Serializable]
+public class MaterialCardSaveData
+{
+    public string instanceId;
+    public int material;
+    public int alternateMaterial;
+    public string[] enhancementIds = Array.Empty<string>();
+    public string[] modifierIds = Array.Empty<string>();
+    public bool isTemporary;
+    public bool isRetained;
+}
+
+[Serializable]
+public class MagicSlotSaveData
+{
+    public int slotIndex;
+    public int magicNumericId;
+    public string modifierId;
+}
+
+public static class RunSaveSystem
+{
+    private const int CurrentVersion = 1;
+    private const string MapSelectionState = "MapSelection";
+    private const string BeforeNodeState = "BeforeNode";
+    private static bool forceNewRun;
+    private static int currentSlotIndex = 1;
+
+    private static string SaveDirectory => Path.Combine(Application.persistentDataPath, "Save");
+    public static string SaveFolderPath => SaveDirectory;
+    public static int CurrentSlotIndex => currentSlotIndex;
+    private static string RunSavePath => GetRunSavePath(currentSlotIndex);
+
+    public static void SelectSlot(int slotIndex)
+    {
+        currentSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
+    }
+
+    public static string GetRunSavePath(int slotIndex)
+    {
+        return Path.Combine(SaveDirectory, $"run_slot_{Mathf.Clamp(slotIndex, 1, 3)}.json");
+    }
+
+    public static RunSaveData LoadRun(int slotIndex)
+    {
+        string path = GetRunSavePath(slotIndex);
+        if (!File.Exists(path))
+            return null;
+
+        string json = File.ReadAllText(path);
+        if (string.IsNullOrEmpty(json))
+            return null;
+
+        return JsonUtility.FromJson<RunSaveData>(json);
+    }
+
+    public static bool HasRun(int slotIndex)
+    {
+        return File.Exists(GetRunSavePath(slotIndex));
+    }
+
+    public static void BeginNewRun()
+    {
+        forceNewRun = true;
+        ClearCurrentRun();
+    }
+
+    public static bool ConsumeForceNewRun()
+    {
+        bool value = forceNewRun;
+        forceNewRun = false;
+        return value;
+    }
+
+    public static bool HasCurrentRun()
+    {
+        return File.Exists(RunSavePath);
+    }
+
+    public static void RecordVictoryAndClearCurrentRun()
+    {
+        RunSaveData data = LoadCurrentRun();
+        if (data != null)
+        {
+            data.victoryCount++;
+            SaveSummaryOnly(data);
+        }
+        ClearCurrentRun();
+    }
+
+    private static void SaveSummaryOnly(RunSaveData data)
+    {
+        Directory.CreateDirectory(SaveDirectory);
+        string path = Path.Combine(SaveDirectory, $"summary_slot_{currentSlotIndex}.json");
+        File.WriteAllText(path, JsonUtility.ToJson(data, true));
+    }
+
+    public static RunSaveData LoadSummary(int slotIndex)
+    {
+        RunSaveData run = LoadRun(slotIndex);
+        if (run != null)
+            return run;
+        string path = Path.Combine(SaveDirectory, $"summary_slot_{Mathf.Clamp(slotIndex, 1, 3)}.json");
+        if (!File.Exists(path))
+            return null;
+        return JsonUtility.FromJson<RunSaveData>(File.ReadAllText(path));
+    }
+
+    public static void ClearCurrentRun()
+    {
+        if (File.Exists(RunSavePath))
+            File.Delete(RunSavePath);
+    }
+
+    public static RunSaveData LoadCurrentRun()
+    {
+        return LoadRun(currentSlotIndex);
+    }
+
+    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
+    {
+        if (player == null || mapNodes == null || mapNodes.Count == 0)
+            return;
+
+        RunSaveData previousData = LoadCurrentRun();
+        string now = DateTime.UtcNow.ToString("o");
+        RunSaveData data = new RunSaveData
+        {
+            version = CurrentVersion,
+            slotIndex = currentSlotIndex,
+            runId = previousData != null && !string.IsNullOrEmpty(previousData.runId) ? previousData.runId : Guid.NewGuid().ToString("N"),
+            createdAtUtc = previousData != null && !string.IsNullOrEmpty(previousData.createdAtUtc) ? previousData.createdAtUtc : now,
+            lastSavedAtUtc = now,
+            lastPlayedAtUtc = now,
+            victoryCount = previousData != null ? previousData.victoryCount : 0,
+            totalPlaySeconds = previousData != null ? previousData.totalPlaySeconds + Time.realtimeSinceStartup : Time.realtimeSinceStartup,
+            startConfigId = PlayerState.SelectedStartConfigId,
+            runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
+            chapterNumericId = chapter != null ? chapter.numericId : 0,
+            currentMapNodeIndex = currentMapNodeIndex,
+            mapNodes = ExportMapNodes(mapNodes),
+            player = ExportPlayer(player),
+            currentNode = currentLevel != null ? new CurrentNodeSaveData { levelId = currentLevel.numericId } : null
+        };
+
+        Directory.CreateDirectory(SaveDirectory);
+        string tempPath = RunSavePath + ".tmp";
+        File.WriteAllText(tempPath, JsonUtility.ToJson(data, true));
+        if (File.Exists(RunSavePath))
+            File.Delete(RunSavePath);
+        File.Move(tempPath, RunSavePath);
+        GameLog.Data($"Save run state={data.runState} node={currentMapNodeIndex + 1}");
+    }
+
+    public static PlayerState CreatePlayer(RunSaveData save)
+    {
+        PlayerSaveData playerData = save != null ? save.player : null;
+        if (playerData == null)
+            return PlayerState.CreateDefault();
+
+        PlayerState player = new PlayerState(playerData.maxHealth, playerData.gold);
+        if (playerData.currentHealth < playerData.maxHealth)
+            player.TakeDirectDamage(playerData.maxHealth - playerData.currentHealth);
+        player.DrawCount = playerData.drawCount;
+        player.MaxPlayCount = playerData.maxPlayCount;
+        player.MagicBookSlotCount = playerData.magicBookSlotCount;
+        player.Deck.Clear();
+        player.DrawPile.Clear();
+        player.Hand.Clear();
+        player.PlayZone.Clear();
+        player.MagicBook.Clear();
+
+        for (int i = 0; playerData.deck != null && i < playerData.deck.Length; i++)
+        {
+            MaterialModel card = CreateMaterial(playerData.deck[i]);
+            if (card != null)
+                player.Deck.Add(card);
+        }
+
+        player.DrawPile.AddRange(player.Deck);
+
+        for (int i = 0; playerData.magicBook != null && i < playerData.magicBook.Length; i++)
+        {
+            MagicSlotSaveData slot = playerData.magicBook[i];
+            if (slot == null || !GameDataDatabase.TryGetMagicData(slot.magicNumericId, out MagicData data))
+                continue;
+
+            MagicModel magic = MagicFactory.Create(data, slot.slotIndex);
+            if (!string.IsNullOrEmpty(slot.modifierId) && GameDataDatabase.TryGetMagicModifierData(slot.modifierId, out MagicModifierData modifierData))
+                magic.AddModifier(MagicModifierFactory.Create(modifierData));
+            player.SetMagicAtSlot(magic, slot.slotIndex);
+        }
+
+        return player;
+    }
+
+    public static void RestoreMapNodes(RunSaveData save, List<RunMapNodeModel> target)
+    {
+        target.Clear();
+        for (int i = 0; save != null && save.mapNodes != null && i < save.mapNodes.Length; i++)
+        {
+            RunMapNodeSaveData nodeData = save.mapNodes[i];
+            RunMapNodeModel node = new RunMapNodeModel
+            {
+                fixedSingleChoice = nodeData.fixedSingleChoice,
+                leftLevel = GetLevel(nodeData.leftLevelId),
+                rightLevel = GetLevel(nodeData.rightLevelId),
+                selectedLevel = GetLevel(nodeData.selectedLevelId)
+            };
+            target.Add(node);
+        }
+    }
+
+    public static bool ShouldAutoStartSavedNode(RunSaveData save)
+    {
+        return save != null && save.runState == BeforeNodeState && save.currentNode != null && save.currentNode.levelId > 0;
+    }
+
+    public static LevelData GetSavedCurrentLevel(RunSaveData save)
+    {
+        return save != null && save.currentNode != null ? GetLevel(save.currentNode.levelId) : null;
+    }
+
+    private static RunMapNodeSaveData[] ExportMapNodes(IReadOnlyList<RunMapNodeModel> mapNodes)
+    {
+        RunMapNodeSaveData[] results = new RunMapNodeSaveData[mapNodes.Count];
+        for (int i = 0; i < mapNodes.Count; i++)
+        {
+            RunMapNodeModel node = mapNodes[i];
+            results[i] = new RunMapNodeSaveData
+            {
+                leftLevelId = node.leftLevel != null ? node.leftLevel.numericId : 0,
+                rightLevelId = node.rightLevel != null ? node.rightLevel.numericId : 0,
+                selectedLevelId = node.selectedLevel != null ? node.selectedLevel.numericId : 0,
+                fixedSingleChoice = node.fixedSingleChoice
+            };
+        }
+        return results;
+    }
+
+    private static PlayerSaveData ExportPlayer(PlayerState player)
+    {
+        PlayerSaveData data = new PlayerSaveData
+        {
+            maxHealth = player.MaxHealth,
+            currentHealth = player.CurrentHealth,
+            gold = player.Gold,
+            drawCount = player.DrawCount,
+            maxPlayCount = player.MaxPlayCount,
+            magicBookSlotCount = player.MagicBookSlotCount,
+            deck = ExportDeck(player.Deck),
+            magicBook = ExportMagicBook(player.MagicBook)
+        };
+        return data;
+    }
+
+    private static MaterialCardSaveData[] ExportDeck(IReadOnlyList<MaterialModel> deck)
+    {
+        MaterialCardSaveData[] results = new MaterialCardSaveData[deck.Count];
+        for (int i = 0; i < deck.Count; i++)
+        {
+            MaterialModel card = deck[i];
+            results[i] = new MaterialCardSaveData
+            {
+                instanceId = card.instanceId,
+                material = (int)card.material,
+                alternateMaterial = (int)card.alternateMaterial,
+                enhancementIds = card.enhancementIds.ToArray(),
+                modifierIds = ExportMaterialModifiers(card.modifiers),
+                isTemporary = card.isTemporary,
+                isRetained = card.isRetained
+            };
+        }
+        return results;
+    }
+
+    private static MagicSlotSaveData[] ExportMagicBook(IReadOnlyList<MagicModel> magicBook)
+    {
+        MagicSlotSaveData[] results = new MagicSlotSaveData[magicBook.Count];
+        for (int i = 0; i < magicBook.Count; i++)
+        {
+            MagicModel magic = magicBook[i];
+            results[i] = new MagicSlotSaveData
+            {
+                slotIndex = magic.SlotIndex,
+                magicNumericId = magic.NumericId,
+                modifierId = magic.PrimaryModifier != null ? magic.PrimaryModifier.Id : string.Empty
+            };
+        }
+        return results;
+    }
+
+    private static string[] ExportMaterialModifiers(IReadOnlyList<MaterialModifierModel> modifiers)
+    {
+        List<string> ids = new List<string>();
+        for (int i = 0; modifiers != null && i < modifiers.Count; i++)
+        {
+            string id = GetMaterialModifierId(modifiers[i]);
+            if (!string.IsNullOrEmpty(id))
+                ids.Add(id);
+        }
+        return ids.ToArray();
+    }
+
+    private static MaterialModel CreateMaterial(MaterialCardSaveData data)
+    {
+        if (data == null)
+            return null;
+
+        MaterialModel card = new MaterialModel(data.instanceId, (MaterialEnum)data.material)
+        {
+            alternateMaterial = (MaterialEnum)data.alternateMaterial,
+            isRetained = data.isRetained
+        };
+        if (data.enhancementIds != null)
+            card.enhancementIds.AddRange(data.enhancementIds);
+        for (int i = 0; data.modifierIds != null && i < data.modifierIds.Length; i++)
+        {
+            MaterialModifierModel modifier = CreateMaterialModifier(data.modifierIds[i]);
+            if (modifier != null)
+                card.AddModifier(modifier);
+        }
+        if (data.isTemporary && !card.isTemporary)
+            card.AddModifier(new TemporaryModifier());
+        return card;
+    }
+
+    private static LevelData GetLevel(int id)
+    {
+        return id > 0 && GameDataDatabase.TryGetLevelData(id, out LevelData level) ? level : null;
+    }
+
+    private static string GetMaterialModifierId(MaterialModifierModel modifier)
+    {
+        if (modifier is KindlingModifier) return "kindling";
+        if (modifier is FlowModifier) return "flow";
+        if (modifier is LiquefyModifier) return "liquefy";
+        if (modifier is ChargeModifier) return "charge";
+        if (modifier is VortexModifier) return "vortex";
+        if (modifier is TemporaryModifier) return "temporary";
+        return string.Empty;
+    }
+
+    private static MaterialModifierModel CreateMaterialModifier(string id)
+    {
+        switch (id)
+        {
+            case "kindling": return new KindlingModifier();
+            case "flow": return new FlowModifier();
+            case "liquefy": return new LiquefyModifier();
+            case "charge": return new ChargeModifier();
+            case "vortex": return new VortexModifier();
+            case "temporary": return new TemporaryModifier();
+            default: return null;
+        }
+    }
+}

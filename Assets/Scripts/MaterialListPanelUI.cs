@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -26,6 +27,11 @@ public class MaterialListPanelUI : MonoBehaviour
     private CanvasGroup modifierTooltipCanvasGroup;
     private Tween modifierTooltipTween;
     private readonly List<Text> modifierTooltipTexts = new List<Text>();
+    private readonly List<MaterialModel> selectedMaterials = new List<MaterialModel>();
+    private Predicate<MaterialModel> selectionPredicate;
+    private Action<IReadOnlyList<MaterialModel>> selectionCompleted;
+    private int selectionCount;
+    private bool selectionLocked;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -36,10 +42,49 @@ public class MaterialListPanelUI : MonoBehaviour
 
     public void Toggle()
     {
+        if (selectionLocked)
+            return;
+
         bool show = !gameObject.activeSelf;
         gameObject.SetActive(show);
         if (show)
             Refresh();
+        else
+            ClearSelectionMode();
+    }
+
+    public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted)
+    {
+        selectionCount = Mathf.Max(1, count);
+        selectionPredicate = predicate;
+        selectionCompleted = onCompleted;
+        selectionLocked = true;
+        selectedMaterials.Clear();
+        gameObject.SetActive(true);
+        Refresh();
+    }
+
+    public void OnMaterialCardClicked(MaterialCardView cardView)
+    {
+        if (selectionCompleted == null || cardView == null || cardView.MaterialModel == null)
+            return;
+
+        MaterialModel materialModel = cardView.MaterialModel;
+        if (selectionPredicate != null && !selectionPredicate(materialModel))
+            return;
+
+        if (selectedMaterials.Contains(materialModel))
+            return;
+
+        selectedMaterials.Add(materialModel);
+        if (selectedMaterials.Count < selectionCount)
+            return;
+
+        Action<IReadOnlyList<MaterialModel>> completed = selectionCompleted;
+        List<MaterialModel> result = new List<MaterialModel>(selectedMaterials);
+        ClearSelectionMode();
+        gameObject.SetActive(false);
+        completed(result);
     }
 
     public void Refresh()
@@ -105,6 +150,8 @@ public class MaterialListPanelUI : MonoBehaviour
         modifierTooltipTween?.Kill(false);
         if (modifierTooltip != null)
             modifierTooltip.gameObject.SetActive(false);
+        if (!selectionLocked)
+            ClearSelectionMode();
     }
 
     private void OnDestroy()
@@ -119,7 +166,14 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         closeButton.onClick.RemoveAllListeners();
-        closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+        closeButton.onClick.AddListener(() =>
+        {
+            if (selectionLocked)
+                return;
+
+            ClearSelectionMode();
+            gameObject.SetActive(false);
+        });
     }
 
     private void CacheReferences()
@@ -222,7 +276,8 @@ public class MaterialListPanelUI : MonoBehaviour
         if (view != null)
         {
             view.Initialize(this);
-            view.Bind(materialModel, IsConsumedInCurrentBattle(materialModel));
+            bool inactive = selectionCompleted != null ? !IsSelectableInCurrentSelection(materialModel) : IsConsumedInCurrentBattle(materialModel);
+            view.Bind(materialModel, inactive);
         }
 
         JuicyMotion motion = cardRect.GetComponent<JuicyMotion>();
@@ -234,6 +289,20 @@ public class MaterialListPanelUI : MonoBehaviour
     private bool IsConsumedInCurrentBattle(MaterialModel materialModel)
     {
         return owner != null && owner.IsDeckCardConsumedInCurrentBattle(materialModel);
+    }
+
+    private bool IsSelectableInCurrentSelection(MaterialModel materialModel)
+    {
+        return selectionCompleted == null || (materialModel != null && (selectionPredicate == null || selectionPredicate(materialModel)));
+    }
+
+    private void ClearSelectionMode()
+    {
+        selectionPredicate = null;
+        selectionCompleted = null;
+        selectionLocked = false;
+        selectionCount = 0;
+        selectedMaterials.Clear();
     }
 
     private void EnsureModifierTooltip()

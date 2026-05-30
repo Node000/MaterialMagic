@@ -32,6 +32,26 @@ public class EventModel
             CurrentNode = data.nodes[0];
     }
 
+    public static EventModel CreateTextOnly(string id, string titleKey, string[] textKeys)
+    {
+        EventData data = new EventData
+        {
+            id = id,
+            titleKey = titleKey,
+            startNodeId = "start",
+            nodes = new[]
+            {
+                new EventNodeData
+                {
+                    id = "start",
+                    textKeys = textKeys != null && textKeys.Length > 0 ? textKeys : Array.Empty<string>(),
+                    options = Array.Empty<EventOptionData>()
+                }
+            }
+        };
+        return new EventModel(data);
+    }
+
     public bool TryGetMatchedOption(IReadOnlyList<MaterialModel> sequence, out EventOptionData option)
     {
         option = null;

@@ -10,10 +10,6 @@ public class MapPanelUI : MonoBehaviour
     [SerializeField] private float mapShowMove = 38f;
     [SerializeField] private float mapShowDuration = 0.28f;
     [SerializeField] private float mapHideDuration = 0.22f;
-    [SerializeField] private float markerShakeDuration = 0.34f;
-    [SerializeField] private Vector2 markerShakeStrength = new Vector2(12f, 6f);
-    [SerializeField] private int markerShakeVibrato = 12;
-    [SerializeField] private Ease markerShakeEase = Ease.OutQuad;
     [SerializeField] private float markerMoveDelay = 0.18f;
     [SerializeField] private float markerMoveDuration = 0.55f;
     [SerializeField] private Ease markerMoveEase = Ease.OutQuad;
@@ -24,7 +20,7 @@ public class MapPanelUI : MonoBehaviour
     [SerializeField] private float connectionDashGap = 10f;
     [SerializeField] private Color connectionDashColor = new Color(1f, 1f, 1f, 0.34f);
 
-    private const int RunNodeCount = 21;
+    private const int RunNodeCount = 10;
     private readonly List<RectTransform> nodeViews = new List<RectTransform>();
     private HandSystemUI owner;
     private RectTransform rectTransform;
@@ -76,6 +72,9 @@ public class MapPanelUI : MonoBehaviour
         CacheReferences();
         DOTween.Kill(this, false);
         CreateNodes(animateMarker);
+        if (animateMarker && playerMarker != null)
+            playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
+
         gameObject.SetActive(true);
         rectTransform.DOKill(false);
         rectTransform.anchoredPosition = shownPosition - new Vector2(0f, mapShowMove);
@@ -136,7 +135,10 @@ public class MapPanelUI : MonoBehaviour
         }
 
         if (content != null)
-            content.sizeDelta = new Vector2(Mathf.Max(1920f, 160f + (RunNodeCount - 1) * 180f + 160f), content.sizeDelta.y);
+        {
+            int nodeCount = owner != null && owner.MapNodes != null && owner.MapNodes.Count > 0 ? owner.MapNodes.Count : RunNodeCount;
+            content.sizeDelta = new Vector2(Mathf.Max(1920f, 160f + (nodeCount - 1) * 180f + 160f), content.sizeDelta.y);
+        }
     }
 
     private void CreateNodes(bool preserveMarkerPosition)
@@ -265,22 +267,23 @@ public class MapPanelUI : MonoBehaviour
     {
         if (nodeModel.fixedSingleChoice)
         {
-            SetNodeIcon(node, "LeftIcon", nodeModel.leftLevel.levelType, GetChoiceColor(nodeModel, nodeModel.leftLevel));
-            Image leftIcon = UIManager.FindChildComponent<Image>(node, "LeftIcon");
-            if (leftIcon != null)
+            SetSlashVisible(node, false);
+            SetIconVisible(node, "LeftIcon", false);
+            SetIconVisible(node, "RightIcon", false);
+            Image centerIcon = GetOrCreateMapIcon(node, "CenterIcon", Vector2.zero);
+            if (centerIcon != null)
             {
-                RectTransform leftRect = leftIcon.GetComponent<RectTransform>();
-                leftRect.anchoredPosition = Vector2.zero;
-                leftRect.sizeDelta = new Vector2(42f, 42f);
+                RectTransform centerRect = centerIcon.GetComponent<RectTransform>();
+                centerRect.anchoredPosition = Vector2.zero;
+                centerRect.sizeDelta = new Vector2(42f, 42f);
             }
-
-            Image rightIcon = UIManager.FindChildComponent<Image>(node, "RightIcon");
-            if (rightIcon != null)
-                rightIcon.gameObject.SetActive(false);
+            SetNodeIcon(node, "CenterIcon", nodeModel.leftLevel.levelType, GetChoiceColor(nodeModel, nodeModel.leftLevel));
             return;
         }
 
-        Image left = UIManager.FindChildComponent<Image>(node, "LeftIcon");
+        SetSlashVisible(node, true);
+        SetIconVisible(node, "CenterIcon", false);
+        Image left = GetOrCreateMapIcon(node, "LeftIcon", new Vector2(-18f, 18f));
         if (left != null)
         {
             left.gameObject.SetActive(true);
@@ -289,7 +292,7 @@ public class MapPanelUI : MonoBehaviour
             leftRect.sizeDelta = new Vector2(32f, 32f);
         }
 
-        Image right = UIManager.FindChildComponent<Image>(node, "RightIcon");
+        Image right = GetOrCreateMapIcon(node, "RightIcon", new Vector2(18f, -18f));
         if (right != null)
         {
             right.gameObject.SetActive(true);
@@ -312,21 +315,95 @@ public class MapPanelUI : MonoBehaviour
         rect.anchorMax = new Vector2(0f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.sizeDelta = new Vector2(92f, 92f);
+        CreateSlash(rect);
         CreateMapIcon(rect, "LeftIcon", new Vector2(-18f, 18f));
         CreateMapIcon(rect, "RightIcon", new Vector2(18f, -18f));
+        CreateMapIcon(rect, "CenterIcon", Vector2.zero).gameObject.SetActive(false);
         return rect;
     }
 
-    private static void CreateMapIcon(RectTransform parent, string name, Vector2 position)
+    private static void CreateSlash(RectTransform parent)
+    {
+        Image slash = new GameObject("Slash", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+        slash.transform.SetParent(parent, false);
+        slash.color = new Color(0.85f, 0.85f, 0.9f, 0.78f);
+        slash.raycastTarget = false;
+        RectTransform rect = slash.rectTransform;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(4f, 118f);
+        rect.localEulerAngles = new Vector3(0f, 0f, -45f);
+    }
+
+    private static void SetSlashVisible(RectTransform node, bool visible)
+    {
+        Transform slash = node != null ? node.Find("Slash") : null;
+        if (slash == null)
+        {
+            if (!visible || node == null)
+                return;
+            CreateSlash(node);
+            slash = node.Find("Slash");
+        }
+
+        RectTransform slashRect = slash as RectTransform;
+        if (slashRect != null)
+        {
+            slashRect.SetAsFirstSibling();
+            slashRect.anchorMin = new Vector2(0.5f, 0.5f);
+            slashRect.anchorMax = new Vector2(0.5f, 0.5f);
+            slashRect.pivot = new Vector2(0.5f, 0.5f);
+            slashRect.anchoredPosition = Vector2.zero;
+            slashRect.sizeDelta = new Vector2(4f, 118f);
+            slashRect.localEulerAngles = new Vector3(0f, 0f, -45f);
+        }
+        Image slashImage = slash.GetComponent<Image>();
+        if (slashImage != null)
+        {
+            slashImage.color = new Color(0.85f, 0.85f, 0.9f, 0.78f);
+            slashImage.raycastTarget = false;
+        }
+        slash.gameObject.SetActive(visible);
+    }
+
+    private static Image CreateMapIcon(RectTransform parent, string name, Vector2 position)
     {
         Image icon = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
         icon.transform.SetParent(parent, false);
+        ConfigureMapIcon(icon, position);
+        return icon;
+    }
+
+    private static Image GetOrCreateMapIcon(RectTransform parent, string name, Vector2 position)
+    {
+        Image icon = UIManager.FindChildComponent<Image>(parent, name);
+        if (icon == null && parent != null)
+            icon = CreateMapIcon(parent, name, position);
+        else if (icon != null)
+            ConfigureMapIcon(icon, position);
+        return icon;
+    }
+
+    private static void ConfigureMapIcon(Image icon, Vector2 position)
+    {
+        if (icon == null)
+            return;
+
         RectTransform rect = icon.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = position;
         rect.sizeDelta = new Vector2(32f, 32f);
+    }
+
+    private static void SetIconVisible(RectTransform node, string iconName, bool visible)
+    {
+        Image icon = UIManager.FindChildComponent<Image>(node, iconName);
+        if (icon != null)
+            icon.gameObject.SetActive(visible);
     }
 
     private Color GetChoiceColor(RunMapNodeModel nodeModel, LevelData level)
@@ -343,6 +420,7 @@ public class MapPanelUI : MonoBehaviour
         if (icon == null)
             return;
 
+        icon.gameObject.SetActive(true);
         icon.sprite = UIManager.LoadLevelTypeSprite(type);
         icon.color = icon.sprite != null ? color : new Color(color.r * 0.7f, color.g * 0.7f, color.b * 0.75f, color.a * 0.25f);
         icon.preserveAspect = true;
@@ -365,10 +443,13 @@ public class MapPanelUI : MonoBehaviour
 
         playerMarker.DOKill(false);
         Sequence sequence = DOTween.Sequence();
-        sequence.Append(playerMarker.DOShakeAnchorPos(markerShakeDuration, markerShakeStrength, markerShakeVibrato, 90f, false, true).SetEase(markerShakeEase));
         sequence.AppendInterval(markerMoveDelay);
         sequence.Append(playerMarker.DOAnchorPos(GetNodePosition(owner.CurrentMapNodeIndex), markerMoveDuration).SetEase(markerMoveEase).OnUpdate(UpdateViewportToPlayer));
-        sequence.AppendCallback(() => displayedNodeIndex = owner.CurrentMapNodeIndex);
+        sequence.AppendCallback(() =>
+        {
+            displayedNodeIndex = owner.CurrentMapNodeIndex;
+            playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
+        });
         sequence.AppendInterval(autoHideDelay);
         sequence.SetTarget(this).OnComplete(onComplete);
     }
