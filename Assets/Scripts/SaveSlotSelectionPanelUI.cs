@@ -6,6 +6,7 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
 {
     [SerializeField] private Button[] slotButtons = Array.Empty<Button>();
     [SerializeField] private Text[] slotTexts = Array.Empty<Text>();
+    [SerializeField] private Button[] deleteButtons = Array.Empty<Button>();
     [SerializeField] private Button closeButton;
 
     private Action<int> onSlotSelected;
@@ -50,6 +51,13 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
             }
         }
 
+        if (deleteButtons == null || deleteButtons.Length < 3)
+        {
+            deleteButtons = new Button[3];
+            for (int i = 0; i < 3; i++)
+                deleteButtons[i] = transform.Find("DeleteSlot" + (i + 1))?.GetComponent<Button>();
+        }
+
         if (closeButton == null)
             closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
     }
@@ -59,11 +67,21 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
         for (int i = 0; i < slotButtons.Length; i++)
         {
             int index = i;
-            if (slotButtons[i] == null || slotButtons[i] == closeButton)
+            if (slotButtons[i] == null || slotButtons[i] == closeButton || IsDeleteButton(slotButtons[i]))
                 continue;
 
             slotButtons[i].onClick.RemoveAllListeners();
             slotButtons[i].onClick.AddListener(() => SelectSlot(index + 1));
+        }
+
+        for (int i = 0; i < deleteButtons.Length; i++)
+        {
+            int slotIndex = i + 1;
+            if (deleteButtons[i] == null)
+                continue;
+
+            deleteButtons[i].onClick.RemoveAllListeners();
+            deleteButtons[i].onClick.AddListener(() => DeleteSlot(slotIndex));
         }
 
         if (closeButton != null)
@@ -77,6 +95,24 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
     {
         onSlotSelected?.Invoke(slotIndex);
         Hide();
+    }
+
+    private void DeleteSlot(int slotIndex)
+    {
+        RunSaveSystem.ClearSlot(slotIndex);
+        if (RunSaveSystem.CurrentSlotIndex == slotIndex)
+            onSlotSelected?.Invoke(slotIndex);
+        Refresh();
+    }
+
+    private bool IsDeleteButton(Button button)
+    {
+        for (int i = 0; i < deleteButtons.Length; i++)
+        {
+            if (deleteButtons[i] == button)
+                return true;
+        }
+        return false;
     }
 
     private void Refresh()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public enum RewardOptionKind
@@ -58,7 +59,11 @@ public class RewardPanelUI : MonoBehaviour
     private bool goldClaimed;
     private bool magicClaimed;
     private MagicItemView selectedMagicView;
+    private MagicItemView hoveredMagicView;
     private Tween selectedMagicTween;
+
+    private const float SelectedMagicScale = 1.24f;
+    private const float HoverMagicScaleBonus = 0.08f;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -75,6 +80,7 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimed = false;
         magicClaimed = false;
         selectedMagicView = null;
+        hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
         gameObject.SetActive(true);
         Text title = UIManager.FindChildComponent<Text>(transform, "Title");
@@ -88,6 +94,7 @@ public class RewardPanelUI : MonoBehaviour
         CacheReferences();
         HideMagicChoices();
         RefreshOptions();
+        owner.GetUIManager().TutorialManager?.OnRewardPanelShown();
     }
 
     public void Hide()
@@ -140,6 +147,7 @@ public class RewardPanelUI : MonoBehaviour
         if (magicClaimed)
             return;
 
+        owner.GetUIManager().TutorialManager?.OnMagicRewardChoicesShown();
         EnsureMagicChoicePanel();
         magicChoicePanel.gameObject.SetActive(true);
         magicChoicePanel.SetAsLastSibling();
@@ -163,7 +171,8 @@ public class RewardPanelUI : MonoBehaviour
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = new Vector2(-230f + i * 230f, 0f);
             rect.sizeDelta = new Vector2(196f, 92f);
-            rect.localScale = view == selectedMagicView ? Vector3.one * 1.18f : Vector3.one;
+            rect.localScale = GetRewardMagicTargetScale(view);
+            UIManager.RemoveJuicyMotion(view.transform);
 
             MagicData data = choices[i];
             view.Bind(MagicFactory.Create(data));
@@ -173,7 +182,7 @@ public class RewardPanelUI : MonoBehaviour
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => SelectMagicReward(data, view));
             }
-            UIManager.AddJuicyMotion(view.transform);
+            ConfigureMagicChoiceHover(view);
         }
     }
 
@@ -198,16 +207,50 @@ public class RewardPanelUI : MonoBehaviour
 
             Transform rewardTransform = rewardView.transform;
             rewardTransform.DOKill(false);
-            Vector3 targetScale = rewardView == selectedMagicView ? Vector3.one * 1.24f : Vector3.one;
-            Tween tween = rewardTransform.DOScale(targetScale, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
+            Tween tween = rewardTransform.DOScale(GetRewardMagicTargetScale(rewardView), 0.16f).SetEase(Ease.OutBack).SetTarget(this);
             if (rewardView == selectedMagicView)
                 selectedMagicTween = tween;
         }
     }
 
+    private void OnRewardMagicHoverChanged(MagicItemView view, bool hovering)
+    {
+        if (hovering)
+            hoveredMagicView = view;
+        else if (hoveredMagicView == view)
+            hoveredMagicView = null;
+
+        RefreshSelectedMagicVisuals();
+    }
+
+    private Vector3 GetRewardMagicTargetScale(MagicItemView view)
+    {
+        float scale = view == selectedMagicView ? SelectedMagicScale : 1f;
+        if (view == hoveredMagicView)
+            scale += HoverMagicScaleBonus;
+        return Vector3.one * scale;
+    }
+
+    private void ConfigureMagicChoiceHover(MagicItemView view)
+    {
+        EventTrigger trigger = view.GetComponent<EventTrigger>();
+        if (trigger == null)
+            trigger = view.gameObject.AddComponent<EventTrigger>();
+
+        trigger.triggers.Clear();
+        EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => OnRewardMagicHoverChanged(view, true));
+        trigger.triggers.Add(enter);
+
+        EventTrigger.Entry exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => OnRewardMagicHoverChanged(view, false));
+        trigger.triggers.Add(exit);
+    }
+
     private void ReturnFromMagicChoices()
     {
         selectedMagicView = null;
+        hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
         HideMagicChoices();
     }
@@ -216,6 +259,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         selectedMagicTween?.Kill(false);
         selectedMagicTween = null;
+        hoveredMagicView = null;
         if (magicChoicePanel != null)
             magicChoicePanel.gameObject.SetActive(false);
 

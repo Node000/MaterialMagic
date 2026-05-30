@@ -56,7 +56,16 @@ public class MapPanelUI : MonoBehaviour
         CacheReferences();
         playerMarker = UIManager.FindChildRect(content, "PlayerMarker");
         if (playerMarker != null)
+        {
+            playerMarker.DOKill(false);
             playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
+        }
+    }
+
+    public void SyncPlayerMarkerToCurrentNode()
+    {
+        SetPlayerMarkerNodeIndex(owner != null ? owner.CurrentMapNodeIndex : displayedNodeIndex);
+        UpdateViewportToPlayer(true);
     }
 
     public void Toggle()
@@ -64,13 +73,20 @@ public class MapPanelUI : MonoBehaviour
         if (gameObject.activeSelf)
             Hide();
         else
-            Show(false, null, false);
+            Show(false, null, false, true);
     }
 
     public void Show(bool focusCurrentNode, TweenCallback onComplete, bool animateMarker)
     {
+        Show(focusCurrentNode, onComplete, animateMarker, false);
+    }
+
+    private void Show(bool focusCurrentNode, TweenCallback onComplete, bool animateMarker, bool syncMarkerToCurrentNode)
+    {
         CacheReferences();
         DOTween.Kill(this, false);
+        if (syncMarkerToCurrentNode)
+            SetPlayerMarkerNodeIndex(owner != null ? owner.CurrentMapNodeIndex : displayedNodeIndex);
         CreateNodes(animateMarker);
         if (animateMarker && playerMarker != null)
             playerMarker.anchoredPosition = GetNodePosition(displayedNodeIndex);
@@ -79,7 +95,7 @@ public class MapPanelUI : MonoBehaviour
         rectTransform.DOKill(false);
         rectTransform.anchoredPosition = shownPosition - new Vector2(0f, mapShowMove);
         Tween showTween = rectTransform.DOAnchorPos(shownPosition, mapShowDuration).SetEase(Ease.OutQuad).SetTarget(this);
-        UpdateViewportToPlayer();
+        UpdateViewportToPlayer(false);
         if (!focusCurrentNode)
         {
             onComplete?.Invoke();
@@ -444,7 +460,7 @@ public class MapPanelUI : MonoBehaviour
         playerMarker.DOKill(false);
         Sequence sequence = DOTween.Sequence();
         sequence.AppendInterval(markerMoveDelay);
-        sequence.Append(playerMarker.DOAnchorPos(GetNodePosition(owner.CurrentMapNodeIndex), markerMoveDuration).SetEase(markerMoveEase).OnUpdate(UpdateViewportToPlayer));
+        sequence.Append(playerMarker.DOAnchorPos(GetNodePosition(owner.CurrentMapNodeIndex), markerMoveDuration).SetEase(markerMoveEase).OnUpdate(() => UpdateViewportToPlayer(false)));
         sequence.AppendCallback(() =>
         {
             displayedNodeIndex = owner.CurrentMapNodeIndex;
@@ -476,7 +492,7 @@ public class MapPanelUI : MonoBehaviour
         return connectionNumber >= 1 && connectionNumber <= connectionCount;
     }
 
-    private void UpdateViewportToPlayer()
+    private void UpdateViewportToPlayer(bool instant)
     {
         if (scrollRect == null || content == null || playerMarker == null || scrollRect.viewport == null)
             return;
@@ -490,6 +506,13 @@ public class MapPanelUI : MonoBehaviour
 
         float markerX = playerMarker.anchoredPosition.x;
         float targetX = Mathf.Clamp(markerX - scrollRect.viewport.rect.width * 0.5f, 0f, scrollableWidth);
+        if (instant)
+        {
+            content.DOKill(false);
+            content.anchoredPosition = new Vector2(-targetX, content.anchoredPosition.y);
+            return;
+        }
+
         content.DOAnchorPosX(-targetX, viewportMoveDuration).SetEase(viewportMoveEase).SetTarget(this);
     }
 }

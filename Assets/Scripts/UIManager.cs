@@ -20,6 +20,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private ChapterProgressUI chapterProgressUI;
     [SerializeField] private TurnBannerUI turnBannerUI;
     [SerializeField] private RunResultPanelUI runResultPanelUI;
+    [SerializeField] private TutorialManagerUI tutorialManagerUI;
 
     public MapPanelUI MapPanel => mapPanelUI;
     public LevelSelectPanelUI LevelSelectPanel => levelSelectPanelUI;
@@ -35,6 +36,7 @@ public class UIManager : MonoBehaviour
     public ChapterProgressUI ChapterProgress => chapterProgressUI;
     public TurnBannerUI TurnBanner => turnBannerUI;
     public RunResultPanelUI RunResultPanel => runResultPanelUI;
+    public TutorialManagerUI TutorialManager => tutorialManagerUI;
 
     public void Initialize(HandSystemUI owner, Transform root)
     {
@@ -52,6 +54,7 @@ public class UIManager : MonoBehaviour
         chapterProgressUI = GetOrAddPanelInChildren<ChapterProgressUI>(root, "ChapterProgress", chapterProgressUI);
         turnBannerUI = GetOrAddPanelInChildren<TurnBannerUI>(root, "TurnBanner", turnBannerUI);
         runResultPanelUI = GetOrAddPanel<RunResultPanelUI>(root, "RunResultPanel", runResultPanelUI);
+        tutorialManagerUI = GetOrAddPanelInChildren<TutorialManagerUI>(root, "TutorialRoot", tutorialManagerUI);
 
         mapPanelUI?.Initialize(owner);
         levelSelectPanelUI?.Initialize(owner);
@@ -67,6 +70,7 @@ public class UIManager : MonoBehaviour
         chapterProgressUI?.Initialize();
         turnBannerUI?.Initialize();
         runResultPanelUI?.Initialize(owner);
+        tutorialManagerUI?.Initialize(owner);
 
         BindTopBar(root);
     }
@@ -141,6 +145,11 @@ public class UIManager : MonoBehaviour
         }
 
         mapPanelUI.Show(focusCurrentNode, onComplete, animateMarker);
+    }
+
+    public void SyncMapPanelToCurrentNode()
+    {
+        mapPanelUI?.SyncPlayerMarkerToCurrentNode();
     }
 
     public void HideMapPanel()

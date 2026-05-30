@@ -16,6 +16,8 @@ public class RunSaveData
     public int chapterNumericId;
     public int currentMapNodeIndex;
     public int victoryCount;
+    public bool tutorialCompleted;
+    public bool tutorialEventShown;
     public float totalPlaySeconds;
     public string lastPlayedAtUtc;
     public RunMapNodeSaveData[] mapNodes = Array.Empty<RunMapNodeSaveData>();
@@ -118,6 +120,34 @@ public static class RunSaveSystem
         ClearCurrentRun();
     }
 
+    public static bool IsTutorialCompleted()
+    {
+        RunSaveData data = LoadSummary(currentSlotIndex);
+        return data != null && data.tutorialCompleted;
+    }
+
+    public static bool IsTutorialEventShown()
+    {
+        RunSaveData data = LoadSummary(currentSlotIndex);
+        return data != null && data.tutorialEventShown;
+    }
+
+    public static void SetTutorialCompleted(bool completed)
+    {
+        RunSaveData data = LoadSummary(currentSlotIndex) ?? CreateEmptySlotData();
+        data.tutorialCompleted = completed;
+        if (!completed)
+            data.tutorialEventShown = false;
+        SaveSummaryOnly(data);
+    }
+
+    public static void SetTutorialEventShown(bool shown)
+    {
+        RunSaveData data = LoadSummary(currentSlotIndex) ?? CreateEmptySlotData();
+        data.tutorialEventShown = shown;
+        SaveSummaryOnly(data);
+    }
+
     public static bool ConsumeForceNewRun()
     {
         bool value = forceNewRun;
@@ -159,6 +189,18 @@ public static class RunSaveSystem
         return JsonUtility.FromJson<RunSaveData>(File.ReadAllText(path));
     }
 
+    public static void ClearSlot(int slotIndex)
+    {
+        int clampedSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
+        string runPath = GetRunSavePath(clampedSlotIndex);
+        if (File.Exists(runPath))
+            File.Delete(runPath);
+
+        string summaryPath = Path.Combine(SaveDirectory, $"summary_slot_{clampedSlotIndex}.json");
+        if (File.Exists(summaryPath))
+            File.Delete(summaryPath);
+    }
+
     public static void ClearCurrentRun()
     {
         if (File.Exists(RunSavePath))
@@ -186,6 +228,8 @@ public static class RunSaveSystem
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,
             victoryCount = previousData != null ? previousData.victoryCount : 0,
+            tutorialCompleted = previousData != null && previousData.tutorialCompleted,
+            tutorialEventShown = previousData != null && previousData.tutorialEventShown,
             totalPlaySeconds = previousData != null ? previousData.totalPlaySeconds + Time.realtimeSinceStartup : Time.realtimeSinceStartup,
             startConfigId = PlayerState.SelectedStartConfigId,
             runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
@@ -272,6 +316,22 @@ public static class RunSaveSystem
     public static LevelData GetSavedCurrentLevel(RunSaveData save)
     {
         return save != null && save.currentNode != null ? GetLevel(save.currentNode.levelId) : null;
+    }
+
+    private static RunSaveData CreateEmptySlotData()
+    {
+        string now = DateTime.UtcNow.ToString("o");
+        return new RunSaveData
+        {
+            version = CurrentVersion,
+            slotIndex = currentSlotIndex,
+            runId = Guid.NewGuid().ToString("N"),
+            createdAtUtc = now,
+            lastSavedAtUtc = now,
+            lastPlayedAtUtc = now,
+            runState = MapSelectionState,
+            startConfigId = PlayerState.SelectedStartConfigId
+        };
     }
 
     private static RunMapNodeSaveData[] ExportMapNodes(IReadOnlyList<RunMapNodeModel> mapNodes)

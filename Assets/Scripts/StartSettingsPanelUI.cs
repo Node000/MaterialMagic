@@ -43,7 +43,7 @@ public class StartSettingsPanelUI : MonoBehaviour
 
     public void Show()
     {
-        if (panelRect == null)
+        if (panelRect == null || gameObject.activeSelf)
             return;
 
         InitializeSliders();

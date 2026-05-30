@@ -29,28 +29,39 @@
         101,
         102,
         103,
+        104,
         201
       ],
       "levelPoolRanges": [
         {
           "startProgress": 1,
-          "endProgress": 4,
+          "endProgress": 1,
           "levelPoolIds": [1, 2, 3]
         },
         {
-          "startProgress": 5,
-          "endProgress": 9,
-          "levelPoolIds": [1, 2, 3, 4, 5, 6, 101, 102]
+          "startProgress": 2,
+          "endProgress": 5,
+          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201]
         },
         {
-          "startProgress": 10,
-          "endProgress": 16,
-          "levelPoolIds": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 102, 103, 201]
+          "startProgress": 6,
+          "endProgress": 6,
+          "levelPoolIds": [104]
         },
         {
-          "startProgress": 17,
+          "startProgress": 7,
+          "endProgress": 13,
+          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201]
+        },
+        {
+          "startProgress": 14,
+          "endProgress": 14,
+          "levelPoolIds": [104]
+        },
+        {
+          "startProgress": 15,
           "endProgress": 19,
-          "levelPoolIds": [17, 18, 19]
+          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201]
         },
         {
           "startProgress": 20,
@@ -62,7 +73,8 @@
       "eventPoolIds": [
         101,
         102,
-        103
+        103,
+        104
       ]
     }
   ]

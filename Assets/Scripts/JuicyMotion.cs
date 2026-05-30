@@ -21,7 +21,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private float motionDuration = 0.25f;
 
     private Vector3 originalScale;
-    private Vector3 originalLocalPosition;
     private Vector3 originalLocalEulerAngles;
     private Sequence motionSequence;
     private Tween hoverTween;
@@ -29,7 +28,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private void Awake()
     {
         originalScale = transform.localScale;
-        originalLocalPosition = transform.localPosition;
         originalLocalEulerAngles = transform.localEulerAngles;
     }
 
@@ -44,7 +42,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         StopMotion();
         StopHoverMotion();
         originalScale = transform.localScale;
-        transform.localPosition = originalLocalPosition;
         transform.localEulerAngles = originalLocalEulerAngles;
     }
 
@@ -83,7 +80,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         StopMotion();
 
         transform.localScale = originalScale;
-        transform.localPosition = originalLocalPosition;
 
         motionSequence = DOTween.Sequence();
         motionSequence.Join(transform.DOPunchScale(originalScale * scaleAmount, motionDuration, 8, elasticity));
@@ -94,7 +90,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         motionSequence.OnComplete(() =>
         {
             transform.localScale = originalScale;
-            transform.localPosition = originalLocalPosition;
             motionSequence = null;
             if (loopOnEnable && isActiveAndEnabled)
                 PlayLoop();
@@ -105,7 +100,6 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     {
         StopMotion();
         transform.localScale = originalScale;
-        transform.localPosition = originalLocalPosition;
         transform.localEulerAngles = originalLocalEulerAngles;
         motionSequence = DOTween.Sequence();
         if (loopTilt && hoverTiltAngle > 0f)

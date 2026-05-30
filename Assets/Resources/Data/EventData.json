@@ -278,6 +278,29 @@
         }
       ],
       "numericId": 3
+    },
+    {
+      "id": "event_draw_training",
+      "titleKey": "event.draw_training.title",
+      "startNodeId": "start",
+      "drawCount": 0,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.draw_training.start.1"
+          ],
+          "options": [
+            {
+              "id": "increase_draw_count",
+              "titleKey": "event.draw_training.option.increase_draw",
+              "isExitOption": true,
+              "resultId": 2
+            }
+          ]
+        }
+      ],
+      "numericId": 4
     }
   ]
 }
