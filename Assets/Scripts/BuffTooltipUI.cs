@@ -1,6 +1,7 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class BuffTooltipUI : MonoBehaviour
 {
@@ -31,11 +32,11 @@ public class BuffTooltipUI : MonoBehaviour
             return;
 
         BuffDisplayData display = BuffDisplayDatabase.Get(buff.buffType);
-        Text title = UIManager.FindChildComponent<Text>(transform, "Title");
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
             title.text = display.Name + (buff.stack > 0 ? "  " + buff.stack : string.Empty);
 
-        Text description = UIManager.FindChildComponent<Text>(transform, "Description");
+        TMP_Text description = UIManager.FindChildComponent<TMP_Text>(transform, "Description");
         if (description != null)
             description.text = buff.GetDesc();
 

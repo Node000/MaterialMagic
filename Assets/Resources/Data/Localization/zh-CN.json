@@ -2,7 +2,7 @@
   "items": [
     {
       "key": "magic.ignite.name",
-      "text": "点燃"
+      "text": "更好的上"
     },
     {
       "key": "magic.ignite.desc",
@@ -10,7 +10,7 @@
     },
     {
       "key": "magic.fireball_art.name",
-      "text": "火球术"
+      "text": "火酒"
     },
     {
       "key": "magic.fireball_art.desc",
@@ -18,7 +18,7 @@
     },
     {
       "key": "magic.flame_barrier.name",
-      "text": "火焰屏障"
+      "text": "焰"
     },
     {
       "key": "magic.flame_barrier.desc",
@@ -26,7 +26,7 @@
     },
     {
       "key": "magic.magma.name",
-      "text": "岩浆术"
+      "text": "火鸡面"
     },
     {
       "key": "magic.magma.desc",
@@ -34,7 +34,7 @@
     },
     {
       "key": "magic.molten.name",
-      "text": "熔融术"
+      "text": "魔鬼椒"
     },
     {
       "key": "magic.molten.desc",
@@ -42,7 +42,7 @@
     },
     {
       "key": "magic.explosion.name",
-      "text": "爆燃"
+      "text": "油桶"
     },
     {
       "key": "magic.explosion.desc",
@@ -50,7 +50,7 @@
     },
     {
       "key": "magic.burning_hand.name",
-      "text": "灼燃之手"
+      "text": "热枕之心"
     },
     {
       "key": "magic.burning_hand.desc",
@@ -58,7 +58,7 @@
     },
     {
       "key": "magic.flame_demon.name",
-      "text": "火焰魔术"
+      "text": "融化的心"
     },
     {
       "key": "magic.flame_demon.desc",
@@ -66,7 +66,7 @@
     },
     {
       "key": "magic.airflow.name",
-      "text": "气流术"
+      "text": "更好的左"
     },
     {
       "key": "magic.airflow.desc",
@@ -74,7 +74,7 @@
     },
     {
       "key": "magic.wind_blade.name",
-      "text": "风刃术"
+      "text": "风车"
     },
     {
       "key": "magic.wind_blade.desc",
@@ -82,7 +82,7 @@
     },
     {
       "key": "magic.burning_wind.name",
-      "text": "焚风术"
+      "text": "冰淇淋"
     },
     {
       "key": "magic.burning_wind.desc",
@@ -90,7 +90,7 @@
     },
     {
       "key": "magic.lightning.name",
-      "text": "闪电术"
+      "text": "闪电"
     },
     {
       "key": "magic.lightning.desc",
@@ -98,7 +98,7 @@
     },
     {
       "key": "magic.storm_hand.name",
-      "text": "风暴之手"
+      "text": "雷神"
     },
     {
       "key": "magic.storm_hand.desc",
@@ -106,7 +106,7 @@
     },
     {
       "key": "magic.current_attachment.name",
-      "text": "电流附着"
+      "text": "台式机"
     },
     {
       "key": "magic.current_attachment.desc",
@@ -114,7 +114,7 @@
     },
     {
       "key": "magic.sandstorm.name",
-      "text": "砂暴术"
+      "text": "亮闪闪"
     },
     {
       "key": "magic.sandstorm.desc",
@@ -122,7 +122,7 @@
     },
     {
       "key": "magic.gale.name",
-      "text": "飓风"
+      "text": "叶子"
     },
     {
       "key": "magic.gale.desc",
@@ -130,7 +130,7 @@
     },
     {
       "key": "magic.ice_pick.name",
-      "text": "冰锥术"
+      "text": "棒冰"
     },
     {
       "key": "magic.ice_pick.desc",
@@ -138,7 +138,7 @@
     },
     {
       "key": "magic.swamp.name",
-      "text": "沼泽术"
+      "text": "苍蝇"
     },
     {
       "key": "magic.swamp.desc",
@@ -146,7 +146,7 @@
     },
     {
       "key": "magic.poison_fog.name",
-      "text": "毒雾"
+      "text": "雪球"
     },
     {
       "key": "magic.poison_fog.desc",
@@ -154,7 +154,7 @@
     },
     {
       "key": "magic.boiling_rain.name",
-      "text": "沸雨术"
+      "text": "热水壶"
     },
     {
       "key": "magic.boiling_rain.desc",
@@ -162,7 +162,7 @@
     },
     {
       "key": "magic.blizzard.name",
-      "text": "暴风雪"
+      "text": "十一月雨"
     },
     {
       "key": "magic.blizzard.desc",
@@ -170,7 +170,7 @@
     },
     {
       "key": "magic.turbid_current.name",
-      "text": "浊流"
+      "text": "涡流"
     },
     {
       "key": "magic.turbid_current.desc",
@@ -178,7 +178,7 @@
     },
     {
       "key": "magic.tide_hand.name",
-      "text": "潮汐之手"
+      "text": "洒水"
     },
     {
       "key": "magic.tide_hand.desc",
@@ -186,7 +186,7 @@
     },
     {
       "key": "magic.water_corrosion.name",
-      "text": "水蚀"
+      "text": "更好的下"
     },
     {
       "key": "magic.water_corrosion.desc",
@@ -194,7 +194,7 @@
     },
     {
       "key": "magic.stone_wall.name",
-      "text": "石墙"
+      "text": "更好的右"
     },
     {
       "key": "magic.stone_wall.desc",
@@ -202,7 +202,7 @@
     },
     {
       "key": "magic.rockfall.name",
-      "text": "岩壁"
+      "text": "垃圾桶"
     },
     {
       "key": "magic.rockfall.desc",
@@ -210,7 +210,7 @@
     },
     {
       "key": "magic.earth_fire.name",
-      "text": "地火"
+      "text": "汽油"
     },
     {
       "key": "magic.earth_fire.desc",
@@ -218,7 +218,7 @@
     },
     {
       "key": "magic.petrify.name",
-      "text": "石化术"
+      "text": "热狗陷阱"
     },
     {
       "key": "magic.petrify.desc",
@@ -226,7 +226,7 @@
     },
     {
       "key": "magic.floating.name",
-      "text": "浮空术"
+      "text": "羽翼"
     },
     {
       "key": "magic.floating.desc",
@@ -234,7 +234,7 @@
     },
     {
       "key": "magic.thorn_bush.name",
-      "text": "荆棘壁垒"
+      "text": "尖刺"
     },
     {
       "key": "magic.thorn_bush.desc",
@@ -242,7 +242,7 @@
     },
     {
       "key": "magic.refine.name",
-      "text": "精炼"
+      "text": "假钻石"
     },
     {
       "key": "magic.refine.desc",
@@ -250,7 +250,7 @@
     },
     {
       "key": "magic.earth_hand.name",
-      "text": "大地之手"
+      "text": "手"
     },
     {
       "key": "magic.earth_hand.desc",
@@ -339,6 +339,14 @@
     {
       "key": "level.battle_020.title",
       "text": "战斗 20"
+    },
+    {
+      "key": "level.reward_001.title",
+      "text": "奖励关卡"
+    },
+    {
+      "key": "level.shop_001.title",
+      "text": "商店"
     }
   ]
 }

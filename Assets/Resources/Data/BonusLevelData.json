@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "numericId": 301,
+      "id": "bonus_reward_001",
+      "radius": 2,
+      "drawCount": 5,
+      "rewards": [
+        { "rewardType": 1, "rewardName": "金币", "amount": 1, "texturePath": "Images/UI/大点" },
+        { "rewardType": 1, "rewardName": "金币", "amount": 2, "texturePath": "Images/UI/大点" },
+        { "rewardType": 2, "rewardName": "生命值", "amount": 2, "texturePath": "Images/UI/大点" },
+        { "rewardType": 2, "rewardName": "生命值", "amount": 3, "texturePath": "Images/UI/大点" }
+      ]
+    }
+  ]
+}

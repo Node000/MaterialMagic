@@ -1,10 +1,13 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class SlotSelectPanelUI : MonoBehaviour
 {
     private HandSystemUI owner;
     private MagicData pendingRewardMagic;
+    private Action<int> slotChosen;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -14,12 +17,19 @@ public class SlotSelectPanelUI : MonoBehaviour
 
     public void Show(MagicData rewardMagic)
     {
+        Show(rewardMagic, null);
+    }
+
+    public void Show(MagicData rewardMagic, Action<int> onSlotChosen)
+    {
         if (owner == null || rewardMagic == null)
             return;
 
         pendingRewardMagic = rewardMagic;
+        slotChosen = onSlotChosen;
         gameObject.SetActive(true);
-        Text title = UIManager.FindChildComponent<Text>(transform, "Title");
+        transform.SetAsLastSibling();
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
             title.text = "选择要填入的法术槽";
 
@@ -32,7 +42,7 @@ public class SlotSelectPanelUI : MonoBehaviour
             button.gameObject.SetActive(true);
             int slotIndex = i;
             MagicModel magic = owner.PlayerState.GetMagicAtSlot(i);
-            Text text = UIManager.FindChildComponent<Text>(button.transform, "Text");
+            TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
             if (text != null)
                 text.text = magic != null ? i + 1 + ": " + magic.Name : i + 1 + ": 空槽";
 
@@ -43,6 +53,8 @@ public class SlotSelectPanelUI : MonoBehaviour
 
     public void Hide()
     {
+        pendingRewardMagic = null;
+        slotChosen = null;
         gameObject.SetActive(false);
     }
 
@@ -51,8 +63,14 @@ public class SlotSelectPanelUI : MonoBehaviour
         if (pendingRewardMagic == null)
             return;
 
-        owner.SetRewardMagicAtSlot(pendingRewardMagic, slotIndex);
+        MagicData rewardMagic = pendingRewardMagic;
+        Action<int> chosen = slotChosen;
         pendingRewardMagic = null;
+        slotChosen = null;
+        if (chosen != null)
+            chosen(slotIndex);
+        else
+            owner.SetRewardMagicAtSlot(rewardMagic, slotIndex);
         Hide();
     }
 }

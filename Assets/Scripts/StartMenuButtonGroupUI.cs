@@ -4,6 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class StartMenuButtonGroupUI : MonoBehaviour
 {
@@ -35,8 +36,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     private readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
     private PointerEventData pointerEventData;
     private Canvas rootCanvas;
-    private Text startButtonText;
-    private Text exitButtonText;
+    private TMP_Text startButtonText;
+    private TMP_Text exitButtonText;
     private Image startButtonImage;
     private string originalStartText;
     private string originalExitText;
@@ -58,8 +59,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         settingsButton.onClick.AddListener(HandleSettingsClicked);
         exitButton.onClick.AddListener(HandleExitClicked);
 
-        startButtonText = startButton.GetComponentInChildren<Text>(true);
-        exitButtonText = exitButton.GetComponentInChildren<Text>(true);
+        startButtonText = startButton.GetComponentInChildren<TMP_Text>(true);
+        exitButtonText = exitButton.GetComponentInChildren<TMP_Text>(true);
         startButtonImage = startButton.GetComponent<Image>();
         originalStartText = startButtonText != null ? startButtonText.text : "开始游戏";
         originalExitText = exitButtonText != null ? exitButtonText.text : "退出游戏";

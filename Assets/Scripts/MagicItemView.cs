@@ -4,20 +4,30 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private Image backgroundImage;
-    [SerializeField] private Text magicNameText;
+    [SerializeField] private TMP_Text magicNameText;
     [SerializeField] private RectTransform recipeRoot;
     [SerializeField] private RectTransform tooltipRoot;
-    [SerializeField] private Text tooltipNameText;
-    [SerializeField] private Text tooltipDescriptionText;
-    [SerializeField] private Text tooltipEffectText;
+    [SerializeField] private TMP_Text tooltipNameText;
+    [SerializeField] private TMP_Text tooltipDescriptionText;
+    [SerializeField] private TMP_Text tooltipEffectText;
     [SerializeField] private Image modifierMarkerImage;
+    [Header("背景颜色")]
+    [SerializeField] private Color UpBackgroundColor = new Color(0.9f, 0.22f, 0.12f, 1f);
+    [SerializeField] private Color LeftBackgroundColor = new Color(0.25f, 0.85f, 0.45f, 1f);
+    [SerializeField] private Color DownBackgroundColor = new Color(0.2f, 0.5f, 1f, 1f);
+    [SerializeField] private Color RightBackgroundColor = new Color(0.62f, 0.42f, 0.2f, 1f);
+    [Header("施法序列")]
+    [SerializeField] private Vector2 recipeIconSize = new Vector2(36f, 36f);
+    [SerializeField] private Vector2 recipeIconSpacing = new Vector2(22f, 22f);
+    [SerializeField] private Vector2 recipeIconPadding = Vector2.zero;
     [SerializeField] private RectTransform tagTooltipRoot;
-    [SerializeField] private Text tagTooltipText;
+    [SerializeField] private TMP_Text tagTooltipText;
     [SerializeField] private float tagTooltipXOffset = 12f;
     [SerializeField] private float tagTooltipSlideDistance = 28f;
     [SerializeField] private Vector2 tagTooltipSize = new Vector2(230f, 120f);
@@ -181,7 +191,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             backgroundImage = GetComponent<Image>();
 
         if (tagTooltipText != null)
-            tagTooltipText.supportRichText = true;
+            tagTooltipText.richText = true;
 
         if (tooltipRoot != null)
         {
@@ -268,9 +278,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         for (int i = 0; i < magic.Data.recipe.Length; i++)
         {
-            Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
             block.transform.SetParent(recipeRoot, false);
-            block.color = MaterialCardView.GetMaterialColor(magic.Data.recipe[i]);
+            Sprite materialSprite = MaterialCardView.GetMaterialIcon(magic.Data.recipe[i]);
+            block.sprite = materialSprite;
+            block.preserveAspect = true;
+            block.color = GetRecipeIconColor(magic.Data.recipe[i]);
             SetBlockAlpha(block, 0.35f);
             recipeBlocks.Add(block);
 
@@ -278,8 +291,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             blockRect.anchorMin = new Vector2(0f, 1f);
             blockRect.anchorMax = new Vector2(0f, 1f);
             blockRect.pivot = new Vector2(0f, 1f);
-            blockRect.anchoredPosition = new Vector2((i % 4) * 22f, -(i / 4) * 22f);
-            blockRect.sizeDelta = new Vector2(18f, 18f);
+            blockRect.anchoredPosition = new Vector2(recipeIconPadding.x + (i % 4) * recipeIconSpacing.x, -recipeIconPadding.y - (i / 4) * recipeIconSpacing.y);
+            blockRect.sizeDelta = recipeIconSize;
         }
     }
 
@@ -402,21 +415,21 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         {
             Transform textTransform = tagTooltipRoot.Find("Text");
             if (textTransform != null)
-                tagTooltipText = textTransform.GetComponent<Text>();
+                tagTooltipText = textTransform.GetComponent<TMP_Text>();
         }
 
         if (tagTooltipText == null)
         {
-            tagTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+            tagTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
             tagTooltipText.transform.SetParent(tagTooltipRoot, false);
-            tagTooltipText.font = tooltipDescriptionText != null && tooltipDescriptionText.font != null ? tooltipDescriptionText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            tagTooltipText.font = tooltipDescriptionText != null && tooltipDescriptionText.font != null ? tooltipDescriptionText.font : UIManager.GetDefaultTMPFont();
             tagTooltipText.fontSize = 16;
-            tagTooltipText.alignment = TextAnchor.UpperLeft;
+            tagTooltipText.alignment = TextAlignmentOptions.TopLeft;
             tagTooltipText.color = new Color(1f, 0.88f, 0.58f, 1f);
             tagTooltipText.raycastTarget = false;
-            tagTooltipText.supportRichText = true;
-            tagTooltipText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            tagTooltipText.verticalOverflow = VerticalWrapMode.Overflow;
+            tagTooltipText.richText = true;
+            tagTooltipText.enableWordWrapping = true;
+            tagTooltipText.overflowMode = TextOverflowModes.Overflow;
             RectTransform textRect = (RectTransform)tagTooltipText.transform;
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -442,16 +455,39 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         return new Vector2(tagTooltipSize.x, height);
     }
 
-    private static Color GetMagicElementColor(MaterialEnum element)
+    private Color GetRecipeIconColor(MaterialEnum material)
     {
-        return element != MaterialEnum.None ? MaterialCardView.GetMaterialColor(element) : Color.gray;
+        return Color.white;
     }
 
-    private static Color GetMagicBackgroundColor(MaterialEnum element)
+    private Color GetMagicElementColor(MaterialEnum element)
+    {
+        return element != MaterialEnum.None ? GetMaterialColor(element) : Color.gray;
+    }
+
+    public Color GetMaterialColor(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return UpBackgroundColor;
+            case MaterialEnum.Wind:
+                return LeftBackgroundColor;
+            case MaterialEnum.Water:
+                return DownBackgroundColor;
+            case MaterialEnum.Earth:
+                return RightBackgroundColor;
+            case MaterialEnum.Wild:
+                return new Color(0.8f, 0.45f, 1f, 1f);
+            default:
+                return Color.gray;
+        }
+    }
+    private Color GetMagicBackgroundColor(MaterialEnum element)
     {
         Color color = GetMagicElementColor(element);
         color = Color.Lerp(new Color(0.08f, 0.08f, 0.12f, 0.86f), color, 0.42f);
-        color.a = 0.86f;
+        color.a = 1;
         return color;
     }
 
@@ -496,6 +532,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private static void SetBlockAlpha(Image block, float alpha)
     {
+        CanvasGroup canvasGroup = block.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = alpha;
+            return;
+        }
+
         Color color = block.color;
         color.a = alpha;
         block.color = color;

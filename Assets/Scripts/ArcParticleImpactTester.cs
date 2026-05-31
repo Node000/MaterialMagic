@@ -15,6 +15,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
     [SerializeField] private Vector2 startSpread = new Vector2(32f, 12f);
     [SerializeField] private Vector2 targetSpread = new Vector2(26f, 14f);
     [SerializeField] private float projectileSize = 18f;
+    [SerializeField] private float magicProjectileSize = 56f;
     [SerializeField] private float trailWidth = 10f;
     [SerializeField] private Color projectileColor = new Color(1f, 0.55f, 0.12f, 1f);
     [SerializeField] private Color trailColor = new Color(1f, 0.36f, 0.08f, 0.55f);
@@ -53,6 +54,16 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
 
     public void PlayBurst(RectTransform from, RectTransform to, int count, Color color)
     {
+        PlayBurst(from, to, count, color, null);
+    }
+
+    private void PlayBurst(RectTransform from, RectTransform to, int count, Color color, Sprite projectileSprite)
+    {
+        PlayBurst(from, to, count, color, projectileSprite, projectileSize);
+    }
+
+    private void PlayBurst(RectTransform from, RectTransform to, int count, Color color, Sprite projectileSprite, float visualSize)
+    {
         if (from == null || to == null)
             return;
 
@@ -60,7 +71,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         projectileColor = color;
         trailColor = new Color(color.r, color.g, color.b, 0.55f);
         impactColor = new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.18f), Mathf.Min(1f, color.b + 0.18f), 0.85f);
-        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount));
+        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize)));
     }
 
     public void PlayMaterialFill(RectTransform from, RectTransform magicView, MaterialEnum material)
@@ -68,14 +79,15 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         PlayBurst(from, magicView, 1, MaterialCardView.GetMaterialColor(material));
     }
 
+
     public void PlayCast(MagicModel magic, RectTransform from, RectTransform target, SpellEffectTarget targetType)
     {
         if (magic == null)
             return;
 
-        int count = magic.Data.recipe != null && magic.Data.recipe.Length > 0 ? magic.Data.recipe.Length : 1;
+        Sprite icon = LoadMagicIcon(magic.Data.iconName);
         Color color = magic.Data.recipe != null && magic.Data.recipe.Length > 0 ? MaterialCardView.GetMaterialColor(magic.Data.recipe[0]) : Color.white;
-        PlayBurst(from, target, count, color);
+        PlayBurst(from, target, 1, color, icon, icon != null ? magicProjectileSize : projectileSize);
     }
 
     public void SetTestPlayback(bool playOnStart, bool loop)
@@ -120,11 +132,11 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         routine = null;
     }
 
-    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count)
+    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count, Sprite projectileSprite, float visualSize)
     {
         for (int i = 0; i < count; i++)
         {
-            LaunchProjectile(start, end, i, count);
+            LaunchProjectile(start, end, i, count, projectileSprite, visualSize);
             yield return new WaitForSeconds(launchInterval);
         }
     }
@@ -134,12 +146,12 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         if (startPoint == null || targetPoint == null)
             return;
 
-        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount);
+        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount, null, projectileSize);
     }
 
-    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count)
+    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, float visualSize)
     {
-        RectTransform projectile = CreateImage("ArcProjectile", projectileSize, projectileColor);
+        RectTransform projectile = CreateImage("ArcProjectile", visualSize, projectileSprite != null ? Color.white : projectileColor, projectileSprite);
         RectTransform trail = CreateImage("ArcTrail", trailWidth, trailColor);
         trail.pivot = new Vector2(0f, 0.5f);
         trail.sizeDelta = new Vector2(1f, trailWidth);
@@ -166,14 +178,14 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
             {
                 trail.gameObject.SetActive(true);
                 trail.anchoredPosition = lastPosition;
-                trail.sizeDelta = new Vector2(delta.magnitude + projectileSize * 0.4f, trailWidth);
+                trail.sizeDelta = new Vector2(delta.magnitude + visualSize * 0.4f, trailWidth);
                 trail.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
             }
 
             lastPosition = position;
         }, 1f, travelDuration).SetEase(Ease.InOutSine).SetTarget(this).OnComplete(() =>
         {
-            SpawnImpact(end);
+            SpawnImpact(end, projectileSprite, visualSize);
             effectObjects.Remove(projectile.gameObject);
             effectObjects.Remove(trail.gameObject);
             Destroy(projectile.gameObject);
@@ -182,6 +194,11 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
     }
 
     private RectTransform CreateImage(string objectName, float size, Color color)
+    {
+        return CreateImage(objectName, size, color, null);
+    }
+
+    private RectTransform CreateImage(string objectName, float size, Color color, Sprite sprite)
     {
         GameObject instance = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         instance.transform.SetParent(transform, false);
@@ -194,20 +211,23 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         rect.sizeDelta = new Vector2(size, size);
 
         Image image = instance.GetComponent<Image>();
+        image.sprite = sprite;
+        image.preserveAspect = sprite != null;
         image.color = color;
         image.raycastTarget = false;
 
         return rect;
     }
 
-    private void SpawnImpact(Vector2 position)
+    private void SpawnImpact(Vector2 position, Sprite projectileSprite, float visualSize)
     {
-        RectTransform impact = CreateImage("ArcImpact", projectileSize * 1.25f, impactColor);
+        RectTransform impact = CreateImage("ArcImpact", visualSize * 1.15f, projectileSprite != null ? Color.white : impactColor, projectileSprite);
         impact.anchoredPosition = position;
 
         CanvasGroup canvasGroup = impact.gameObject.AddComponent<CanvasGroup>();
+        float impactScale = projectileSprite != null ? 1.45f : 2.8f;
         Sequence sequence = DOTween.Sequence();
-        sequence.Join(impact.DOScale(Vector3.one * 2.8f, 0.15f).SetEase(Ease.OutCubic));
+        sequence.Join(impact.DOScale(Vector3.one * impactScale, 0.15f).SetEase(Ease.OutCubic));
         sequence.Join(canvasGroup.DOFade(0f, 0.15f));
         sequence.SetTarget(this);
         sequence.OnComplete(() =>
@@ -215,6 +235,14 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
             effectObjects.Remove(impact.gameObject);
             Destroy(impact.gameObject);
         });
+    }
+
+    private static Sprite LoadMagicIcon(string iconName)
+    {
+        if (string.IsNullOrEmpty(iconName))
+            return null;
+
+        return Resources.Load<Sprite>("Images/Magics/" + iconName);
     }
 
     private Vector2 GetLocalCenter(RectTransform rectTransform)

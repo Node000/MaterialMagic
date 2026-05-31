@@ -2,12 +2,13 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
-    [SerializeField] private Text labelText;
+    [SerializeField] private TMP_Text labelText;
     [SerializeField] private RectTransform enhancementRoot;
     [Header("动画参数")]
     [SerializeField] private float consumedPunchScale = 0.035f;
@@ -16,7 +17,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private float consumedPunchElasticity = 0.45f;
 
     private readonly Color emptyEnhancementColor = new Color(0.08f, 0.08f, 0.1f, 0.82f);
-    private readonly System.Collections.Generic.List<Text> enhancementTexts = new System.Collections.Generic.List<Text>();
+    private readonly System.Collections.Generic.List<TMP_Text> enhancementTexts = new System.Collections.Generic.List<TMP_Text>();
     private MaterialModel materialModel;
     private MaterialListPanelUI owner;
     private CanvasGroup canvasGroup;
@@ -47,7 +48,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         consumedTween?.Kill(false);
     }
 
-    public void Initialize(Image frameImage, Image iconImage, Text labelText, RectTransform enhancementRoot)
+    public void Initialize(Image frameImage, Image iconImage, TMP_Text labelText, RectTransform enhancementRoot)
     {
         this.frameImage = frameImage;
         this.iconImage = iconImage;
@@ -90,7 +91,24 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     {
         owner?.HideModifierTooltip(this);
     }
-
+    public static Color GetMaterialColor(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return new Color(0.9f, 0.22f, 0.12f, 1f);
+            case MaterialEnum.Wind:
+                return new Color(0.25f, 0.85f, 0.45f, 1f);
+            case MaterialEnum.Water:
+                return new Color(0.2f, 0.5f, 1f, 1f);
+            case MaterialEnum.Earth:
+                return new Color(0.62f, 0.42f, 0.2f, 1f);
+            case MaterialEnum.Wild:
+                return new Color(0.8f, 0.45f, 1f, 1f);
+            default:
+                return Color.gray;
+        }
+    }
     private void RefreshVisual()
     {
         MaterialEnum material = materialModel != null ? materialModel.material : MaterialEnum.None;
@@ -99,7 +117,12 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             labelText.text = GetCardLabel(materialModel);
 
         if (iconImage != null)
-            iconImage.color = GetMaterialColor(material);
+        {
+            Sprite sprite = GetMaterialIcon(material);
+            iconImage.sprite = sprite;
+            iconImage.color = Color.white ;
+            iconImage.preserveAspect = true;
+        }
 
         if (frameImage != null)
         {
@@ -151,14 +174,14 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         int tagIndex = 0;
         for (int i = 0; i < materialModel.enhancementIds.Count; i++)
         {
-            Text tagText = GetEnhancementText(tagIndex++);
+            TMP_Text tagText = GetEnhancementText(tagIndex++);
             tagText.gameObject.SetActive(true);
             tagText.text = materialModel.enhancementIds[i];
         }
 
         for (int i = 0; i < materialModel.modifiers.Count; i++)
         {
-            Text tagText = GetEnhancementText(tagIndex++);
+            TMP_Text tagText = GetEnhancementText(tagIndex++);
             tagText.gameObject.SetActive(true);
             tagText.text = LocalizationKeys.GetModifierName(materialModel.modifiers[i]);
         }
@@ -172,21 +195,21 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
         for (int i = 0; i < enhancementRoot.childCount; i++)
         {
-            Text text = enhancementRoot.GetChild(i).GetComponent<Text>();
+            TMP_Text text = enhancementRoot.GetChild(i).GetComponent<TMP_Text>();
             if (text != null)
                 enhancementTexts.Add(text);
         }
     }
 
-    private Text GetEnhancementText(int index)
+    private TMP_Text GetEnhancementText(int index)
     {
         while (enhancementTexts.Count <= index)
         {
-            Text tagText = new GameObject("EnhancementTag", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+            TMP_Text tagText = new GameObject("EnhancementTag", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
             tagText.transform.SetParent(enhancementRoot, false);
-            tagText.font = labelText != null ? labelText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            tagText.font = labelText != null && labelText.font != null ? labelText.font : UIManager.GetDefaultTMPFont();
             tagText.fontSize = 12;
-            tagText.alignment = TextAnchor.MiddleCenter;
+            tagText.alignment = TextAlignmentOptions.Center;
             tagText.color = Color.white;
             tagText.raycastTarget = false;
             RectTransform rect = tagText.GetComponent<RectTransform>();
@@ -225,27 +248,39 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         return text;
     }
 
+    private static readonly System.Collections.Generic.Dictionary<MaterialEnum, Sprite> materialIconCache = new System.Collections.Generic.Dictionary<MaterialEnum, Sprite>();
+
     public static string GetMaterialName(MaterialEnum material)
     {
         return LocalizationKeys.GetMaterialName(material);
     }
 
-    public static Color GetMaterialColor(MaterialEnum material)
+    public static Sprite GetMaterialIcon(MaterialEnum material)
+    {
+        if (materialIconCache.TryGetValue(material, out Sprite sprite))
+            return sprite;
+
+        string path = GetMaterialIconPath(material);
+        sprite = !string.IsNullOrEmpty(path) ? Resources.Load<Sprite>(path) : null;
+        materialIconCache[material] = sprite;
+        return sprite;
+    }
+
+    private static string GetMaterialIconPath(MaterialEnum material)
     {
         switch (material)
         {
             case MaterialEnum.Fire:
-                return new Color(0.9f, 0.22f, 0.12f, 1f);
+                return "Images/UI/1";
             case MaterialEnum.Wind:
-                return new Color(0.25f, 0.85f, 0.45f, 1f);
+                return "Images/UI/3";
             case MaterialEnum.Water:
-                return new Color(0.2f, 0.5f, 1f, 1f);
+                return "Images/UI/2";
             case MaterialEnum.Earth:
-                return new Color(0.62f, 0.42f, 0.2f, 1f);
-            case MaterialEnum.Wild:
-                return new Color(0.8f, 0.45f, 1f, 1f);
+                return "Images/UI/4";
             default:
-                return Color.gray;
+                return null;
         }
     }
+
 }

@@ -4,6 +4,7 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class MapPanelUI : MonoBehaviour
 {
@@ -192,7 +193,7 @@ public class MapPanelUI : MonoBehaviour
 
         bool shouldPreserveMarkerPosition = preserveMarkerPosition;
 
-        Text markerText = playerMarker.GetComponent<Text>();
+        TMP_Text markerText = playerMarker.GetComponent<TMP_Text>();
         if (markerText != null)
             markerText.enabled = false;
 

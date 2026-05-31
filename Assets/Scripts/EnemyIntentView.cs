@@ -1,11 +1,12 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class EnemyIntentView : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
-    [SerializeField] private Text valueText;
+    [SerializeField] private TMP_Text valueText;
     [SerializeField] private Image rippleImage;
     [SerializeField] private float floatAmplitude = 4f;
     [SerializeField] private float floatFrequency = 1.15f;
@@ -115,7 +116,7 @@ public class EnemyIntentView : MonoBehaviour
         if (iconImage != null)
             sequence.Join(iconImage.DOFade(0f, duration));
         if (valueText != null)
-            sequence.Join(valueText.DOFade(0f, duration));
+            sequence.Join(DOTween.ToAlpha(() => valueText.color, color => valueText.color = color, 0f, duration));
         fadeTween = sequence;
         return sequence;
     }
@@ -130,7 +131,7 @@ public class EnemyIntentView : MonoBehaviour
         if (iconImage == null)
             iconImage = UIManager.FindChildComponent<Image>(transform, "Icon");
         if (valueText == null)
-            valueText = UIManager.FindChildComponent<Text>(transform, "ValueText");
+            valueText = UIManager.FindChildComponent<TMP_Text>(transform, "ValueText");
         if (rippleImage == null)
             rippleImage = UIManager.FindChildComponent<Image>(transform, "Ripple");
     }

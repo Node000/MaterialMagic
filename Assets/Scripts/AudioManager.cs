@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 
 public class AudioManager : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioMixer audioMixer;
     [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip startMenuMusic;
+    [SerializeField] private AudioClip gameplayMusic;
+    [SerializeField] private AudioClip battleMusic;
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
 
@@ -18,6 +22,7 @@ public class AudioManager : MonoBehaviour
     private const string SfxVolumeKey = "SfxVolume";
     private const string MusicMixerParameter = "MusicVolume";
     private const string SfxMixerParameter = "SfxVolume";
+    private const string StartSceneName = "StartScene";
 
     private void Awake()
     {
@@ -29,8 +34,20 @@ public class AudioManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        SceneManager.sceneLoaded += HandleSceneLoaded;
         EnsureAudioSources();
         LoadVolumes();
+        PlaySceneMusic(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this)
+            return;
+
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        Instance = null;
     }
 
     public void SetMusicVolume(float value)
@@ -51,12 +68,65 @@ public class AudioManager : MonoBehaviour
             sfxSource.volume = SfxVolume;
     }
 
+    public void PlayStartSceneMusic()
+    {
+        PlayMusic(startMenuMusic);
+    }
+
+    public void PlayGameplayMusic()
+    {
+        PlayMusic(gameplayMusic);
+    }
+
+    public void PlayBattleMusic()
+    {
+        PlayMusic(battleMusic);
+    }
+
     public void PlaySfx(AudioClip clip)
     {
         if (clip == null || sfxSource == null)
             return;
 
-        sfxSource.PlayOneShot(clip, SfxVolume);
+        sfxSource.PlayOneShot(clip);
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        PlaySceneMusic(scene.name);
+    }
+
+    private void PlaySceneMusic(string sceneName)
+    {
+        if (sceneName == StartSceneName)
+            PlayStartSceneMusic();
+        else
+            PlayGameplayMusic();
+    }
+
+    private void PlayMusic(AudioClip clip)
+    {
+        if (musicSource == null)
+            return;
+
+        if (clip == null)
+        {
+            musicSource.Stop();
+            musicSource.clip = null;
+            return;
+        }
+
+        if (musicSource.clip == clip)
+        {
+            if (!musicSource.isPlaying)
+                musicSource.Play();
+            return;
+        }
+
+        musicSource.clip = clip;
+        musicSource.loop = true;
+        musicSource.volume = MusicVolume;
+        musicSource.Play();
     }
 
     private void EnsureAudioSources()

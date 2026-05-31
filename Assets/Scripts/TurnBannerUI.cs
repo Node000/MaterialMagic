@@ -1,10 +1,11 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class TurnBannerUI : MonoBehaviour
 {
-    [SerializeField] private Text bannerText;
+    [SerializeField] private TMP_Text bannerText;
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private float fadeDuration = 0.16f;
     [SerializeField] private float holdDuration = 0.48f;
@@ -56,9 +57,9 @@ public class TurnBannerUI : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
         if (bannerText == null)
-            bannerText = UIManager.FindChildComponent<Text>(transform, "Text");
+            bannerText = UIManager.FindChildComponent<TMP_Text>(transform, "Text");
         if (bannerText == null)
-            bannerText = GetComponentInChildren<Text>(true);
+            bannerText = GetComponentInChildren<TMP_Text>(true);
     }
 
     private void OnDestroy()

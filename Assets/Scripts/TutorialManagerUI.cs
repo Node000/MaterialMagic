@@ -22,6 +22,8 @@ public class TutorialManagerUI : MonoBehaviour
     [SerializeField] private RectTransform stepsRoot;
     [SerializeField] private TutorialCutoutMaskUI cutoutMask;
 
+    private const bool TutorialTemporarilyDisabled = true;
+
     private readonly Dictionary<TutorialStep, GameObject> stepObjects = new Dictionary<TutorialStep, GameObject>();
     private TutorialStep currentStep;
     private bool mainTutorialRunning;
@@ -31,9 +33,9 @@ public class TutorialManagerUI : MonoBehaviour
     public TutorialStep CurrentStep => currentStep;
     public bool MainTutorialRunning => mainTutorialRunning;
     public bool TutorialBattleRunning => tutorialBattleRunning;
-    public bool IsCompleted => RunSaveSystem.IsTutorialCompleted();
-    private static bool IsTutorialCompleted => RunSaveSystem.IsTutorialCompleted();
-    private static bool IsEventTutorialShown => RunSaveSystem.IsTutorialEventShown();
+    public bool IsCompleted => IsTutorialCompleted;
+    private static bool IsTutorialCompleted => TutorialTemporarilyDisabled || RunSaveSystem.IsTutorialCompleted();
+    private static bool IsEventTutorialShown => TutorialTemporarilyDisabled || RunSaveSystem.IsTutorialEventShown();
 
     public void Initialize(HandSystemUI owner)
     {

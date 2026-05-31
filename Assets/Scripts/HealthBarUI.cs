@@ -2,10 +2,11 @@ using System;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class HealthBarUI : MonoBehaviour
 {
-    [SerializeField] private Text healthText;
+    [SerializeField] private TMP_Text healthText;
     [SerializeField] private Image healthFill;
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
@@ -20,14 +21,14 @@ public class HealthBarUI : MonoBehaviour
     private int displayedHealth;
     private Tween healthNumberTween;
 
-    public Text HealthText => healthText;
+    public TMP_Text HealthText => healthText;
     public Image HealthFill => healthFill;
     public Image HealthBufferFill => healthBufferFill;
     public Image ShieldFill => shieldFill;
     public int DisplayedHealth => displayedHealth;
     public Tween HealthNumberTween => healthNumberTween;
 
-    public void Initialize(Text text, Image fill, float labelWidth, int currentHealth)
+    public void Initialize(TMP_Text text, Image fill, float labelWidth, int currentHealth)
     {
         healthText = text;
         healthFill = fill;
@@ -121,17 +122,17 @@ public class HealthBarUI : MonoBehaviour
             shieldFill.transform.SetSiblingIndex(2);
     }
 
-    public static void SetupHealthText(Text text)
+    public static void SetupHealthText(TMP_Text text)
     {
         if (text == null)
             return;
 
-        text.alignment = TextAnchor.MiddleCenter;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.alignment = TextAlignmentOptions.Center;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
     }
 
-    public static void PositionHealthTextLeftOfBar(Text text, RectTransform barBack, float width)
+    public static void PositionHealthTextLeftOfBar(TMP_Text text, RectTransform barBack, float width)
     {
         if (text == null || barBack == null)
             return;
@@ -216,12 +217,12 @@ public class HealthBarUI : MonoBehaviour
         rect.DOAnchorMax(new Vector2(end, 1f), duration).SetEase(ease);
     }
 
-    public static Tween UpdateHealthText(Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget)
+    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget)
     {
         return UpdateHealthText(text, displayedHealth, targetHealth, instant, setDisplayedHealth, tweenTarget, 0.35f, Ease.OutQuad);
     }
 
-    public static Tween UpdateHealthText(Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget, float duration, Ease ease)
+    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget, float duration, Ease ease)
     {
         if (text == null)
             return null;

@@ -24,6 +24,8 @@
     { "id": "level_event_002", "titleKey": "level.event_002.title", "levelType": 1, "numericId": 102, "enemyIds": [], "eventPoolId": 2 },
     { "id": "level_event_003", "titleKey": "level.event_003.title", "levelType": 1, "numericId": 103, "enemyIds": [], "eventPoolId": 3 },
     { "id": "level_event_draw_training", "titleKey": "event.draw_training.title", "levelType": 1, "numericId": 104, "enemyIds": [], "eventPoolId": 4 },
+    { "id": "level_reward_001", "titleKey": "level.reward_001.title", "levelType": 4, "numericId": 301, "enemyIds": [], "bonusLevelId": 301 },
+    { "id": "level_shop_001", "titleKey": "level.shop_001.title", "levelType": 2, "numericId": 401, "enemyIds": [] },
     { "id": "level_rest_001", "titleKey": "level.rest_001.title", "levelType": 3, "numericId": 201, "enemyIds": [], "restHealAmount": 12, "restTextKeys": ["rest.001.1", "rest.001.2"] }
   ]
 }

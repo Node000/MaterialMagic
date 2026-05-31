@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class LevelSelectPanelUI : MonoBehaviour
 {
@@ -32,7 +33,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         RunMapNodeModel nodeModel = nodes[currentNodeIndex];
         gameObject.SetActive(true);
         transform.localScale = Vector3.one;
-        Text title = UIManager.FindChildComponent<Text>(transform, "Title");
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
             title.text = "选择下一关";
 
@@ -97,7 +98,7 @@ public class LevelSelectPanelUI : MonoBehaviour
             return;
 
         button.gameObject.SetActive(true);
-        Text text = UIManager.FindChildComponent<Text>(button.transform, "Text");
+        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
         if (text != null)
             text.text = UIManager.GetLevelTypeName(level.levelType);
 

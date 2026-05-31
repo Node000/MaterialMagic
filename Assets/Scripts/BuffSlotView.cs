@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using DG.Tweening;
 using System;
+using TMPro;
 
 public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
 {
@@ -25,7 +26,7 @@ public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
 public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image iconImage;
-    [SerializeField] private Text stackText;
+    [SerializeField] private TMP_Text stackText;
 
     private BuffModel buff;
     private HandSystemUI owner;
@@ -54,7 +55,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         rectTransform = (RectTransform)transform;
     }
 
-    public void Initialize(Image iconImage, Text stackText)
+    public void Initialize(Image iconImage, TMP_Text stackText)
     {
         this.iconImage = iconImage;
         this.stackText = stackText;

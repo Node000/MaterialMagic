@@ -9,6 +9,7 @@ using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using TMPro;
 
 public class HandSystemUI : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class HandSystemUI : MonoBehaviour
 
 		public Image shieldFill;
 
-		public Text healthText;
+		public TMP_Text healthText;
 
 		public RectTransform buffRoot;
 
@@ -77,7 +78,7 @@ public class HandSystemUI : MonoBehaviour
 	private Button endTurnButton;
 
 	[SerializeField]
-	private Text deckCountText;
+	private TMP_Text deckCountText;
 
 	[SerializeField]
 	private float cardSpacing = 118f;
@@ -263,7 +264,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private Image enemyShieldFill;
 
-	private Text enemyHealthText;
+	private TMP_Text enemyHealthText;
 
 	private int displayedEnemyHealth;
 
@@ -359,6 +360,8 @@ public class HandSystemUI : MonoBehaviour
 
 	private const int RunNodeCount = 21;
 
+	private const int DebugRewardLevelNumericId = 301;
+
 	private const int FirstFixedEventNodeIndex = 7;
 
 	private const int SecondFixedEventNodeIndex = 15;
@@ -379,7 +382,12 @@ public class HandSystemUI : MonoBehaviour
 	private void CreateLevelSelectPanel()
 	{
 		GetUIManager().ShowLevelSelect(mapNodes, currentMapNodeIndex);
-		TutorialManager?.OnLevelSelectShown(currentMapNodeIndex);
+		RunMapNodeModel currentNode = currentMapNodeIndex >= 0 && currentMapNodeIndex < mapNodes.Count ? mapNodes[currentMapNodeIndex] : null;
+		bool hasDebugRewardOption = currentNode != null &&
+			((currentNode.leftLevel != null && currentNode.leftLevel.numericId == DebugRewardLevelNumericId) ||
+			(currentNode.rightLevel != null && currentNode.rightLevel.numericId == DebugRewardLevelNumericId));
+		if (!hasDebugRewardOption)
+			TutorialManager?.OnLevelSelectShown(currentMapNodeIndex);
 	}
 
 	private void HideLevelSelectPanel()
@@ -447,9 +455,17 @@ public class HandSystemUI : MonoBehaviour
 		{
 			StartEventLevel(level);
 		}
+		else if (level.levelType == LevelType.Shop)
+		{
+			StartShopLevel(level);
+		}
 		else if (level.levelType == LevelType.Rest)
 		{
 			StartRestLevel(level);
+		}
+		else if (level.levelType == LevelType.Reward)
+		{
+			StartRewardLevel(level);
 		}
 		else
 		{
@@ -462,6 +478,8 @@ public class HandSystemUI : MonoBehaviour
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0056: Expected O, but got Unknown
 		GameLog.Data("Start battle level=" + level.id + " enemies=" + string.Join(",", level.enemyIds));
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayBattleMusic();
 		currentLevel = level;
 		currentEvent = null;
 		refreshUsedThisTurn = false;
@@ -528,9 +546,49 @@ public class HandSystemUI : MonoBehaviour
 		RebuildCards(animateFromCurrent: true);
 	}
 
+	private void StartShopLevel(LevelData level)
+	{
+		GameLog.Data("Start shop level=" + level.id);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
+		ResetBattleDeckState();
+		currentLevel = level;
+		currentEvent = null;
+		pendingRewardMagic = null;
+        pendingMagicModifier = null;
+		HideMapPanel();
+		HideLevelSelectPanelAnimated();
+        GetUIManager().HideRewardPanel();
+        GetUIManager().RewardGridPanel?.Hide();
+        GetUIManager().HideSlotSelect();
+        GetUIManager().MagicModifierSelectionPanel?.Hide();
+		enemyModels.Clear();
+		battleManager.ClearEnemies();
+		enemyViewStates.Clear();
+		if ((Object)enemyArea != (Object)null)
+		{
+			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
+				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
+		}
+		if ((Object)eventPanel != (Object)null)
+		{
+			eventPanel.Close();
+			eventPanel = null;
+		}
+		RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+		RefreshMaterialListPanel();
+		GetUIManager().ShowShopPanel(level);
+		refreshUsedThisTurn = false;
+		busy = true;
+		SetButtonsInteractable(interactable: false);
+	}
+
 	private void StartRestLevel(LevelData level)
 	{
 		GameLog.Data("Start rest level=" + level.id);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
 		HideMapPanel();
@@ -556,6 +614,50 @@ public class HandSystemUI : MonoBehaviour
 		SetButtonsInteractable(interactable: true);
 	}
 
+	private void StartRewardLevel(LevelData level)
+	{
+		GameLog.Data("Start reward level=" + level.id);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
+		ResetBattleDeckState();
+		currentLevel = level;
+		currentEvent = null;
+		HideMapPanel();
+		HideLevelSelectPanelAnimated();
+		enemyModels.Clear();
+		battleManager.ClearEnemies();
+		enemyViewStates.Clear();
+		if ((Object)enemyArea != (Object)null)
+		{
+			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
+				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
+		}
+		if ((Object)eventPanel != (Object)null)
+		{
+			eventPanel.Close();
+			eventPanel = null;
+		}
+
+		BonusLevelData bonusData = GetBonusLevelData(level);
+		GetUIManager().RewardGridPanel?.ShowNewGrid(bonusData, playerState);
+		refreshUsedThisTurn = false;
+		playerState.DrawCards(bonusData != null && bonusData.drawCount > 0 ? bonusData.drawCount : 5);
+		RefreshStaticUI();
+		RefreshMaterialListPanel();
+		RebuildCards(animateFromCurrent: true);
+		busy = false;
+		SetButtonsInteractable(interactable: true);
+	}
+
+	private BonusLevelData GetBonusLevelData(LevelData level)
+	{
+		if (level != null && level.bonusLevelId > 0 && GameDataDatabase.TryGetBonusLevelData(level.bonusLevelId, out BonusLevelData bonusData))
+			return bonusData;
+		if (level != null && GameDataDatabase.TryGetBonusLevelData(level.numericId, out bonusData))
+			return bonusData;
+		return null;
+	}
+
 	private void StartEventLevel(LevelData level)
 	{
 		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
@@ -569,6 +671,8 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
 		//IL_014c: Expected O, but got Unknown
 		GameLog.Data("Start event level=" + level.id);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
 		HideMapPanel();
@@ -933,18 +1037,18 @@ public class HandSystemUI : MonoBehaviour
 		component4.anchorMax = Vector2.one;
 		component4.offsetMin = new Vector2(3f, 3f);
 		component4.offsetMax = new Vector2(-3f, -3f);
-		Text component5 = new GameObject("StackText", new Type[3]
+		TMP_Text component5 = new GameObject("StackText", new Type[3]
 		{
 			typeof(RectTransform),
 			typeof(CanvasRenderer),
-			typeof(Text)
-		}).GetComponent<Text>();
+			typeof(TextMeshProUGUI)
+		}).GetComponent<TMP_Text>();
 		((Component)component5).transform.SetParent((Transform)component2, false);
 		component5.font = GetDefaultFont();
 		component5.fontSize = 12;
-		component5.fontStyle = (FontStyle)1;
+		component5.fontStyle = FontStyles.Bold;
 		component5.color = Color.white;
-		component5.alignment = (TextAnchor)8;
+		component5.alignment = TextAlignmentOptions.BottomRight;
 		component5.raycastTarget = false;
 		RectTransform component6 = ((Component)component5).GetComponent<RectTransform>();
 		component6.anchorMin = Vector2.zero;
@@ -955,10 +1059,10 @@ public class HandSystemUI : MonoBehaviour
 		return component2;
 	}
 
-	private Font GetDefaultFont()
+	private TMP_FontAsset GetDefaultFont()
 	{
-		Text playerHealthText = GetUIManager().PlayerStatus != null ? UIManager.FindChildComponent<Text>(GetUIManager().PlayerStatus.transform, "HealthText") : null;
-		return playerHealthText != null ? playerHealthText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+		TMP_Text playerHealthText = GetUIManager().PlayerStatus != null ? UIManager.FindChildComponent<TMP_Text>(GetUIManager().PlayerStatus.transform, "HealthText") : null;
+		return playerHealthText != null && playerHealthText.font != null ? playerHealthText.font : UIManager.GetDefaultTMPFont();
 	}
 
 	private RectTransform FindChildRect(Transform root, string name)
@@ -992,6 +1096,13 @@ public class HandSystemUI : MonoBehaviour
 				return;
 
 			RunMapNodeModel mapNodeModel = new RunMapNodeModel();
+			if (i == 0 && GameDataDatabase.TryGetLevelData(DebugRewardLevelNumericId, out LevelData debugRewardLevel))
+			{
+				mapNodeModel.leftLevel = ChooseRandomMapLevel(candidateLevels);
+				mapNodeModel.rightLevel = debugRewardLevel;
+				mapNodes.Add(mapNodeModel);
+				continue;
+			}
 			if (i == 0 && TutorialManager != null && TutorialManager.ShouldForceFirstNodeBattles())
 			{
 				List<LevelData> battleLevels = GetBattleLevels();
@@ -1011,8 +1122,8 @@ public class HandSystemUI : MonoBehaviour
 			}
 			else
 			{
-				mapNodeModel.leftLevel = candidateLevels[Random.Range(0, candidateLevels.Count)];
-				mapNodeModel.rightLevel = candidateLevels[Random.Range(0, candidateLevels.Count)];
+				mapNodeModel.leftLevel = ChooseRandomMapLevel(candidateLevels);
+				mapNodeModel.rightLevel = ChooseRandomMapLevel(candidateLevels);
 			}
 			mapNodes.Add(mapNodeModel);
 		}
@@ -1020,6 +1131,41 @@ public class HandSystemUI : MonoBehaviour
 		RefreshChapterProgressUI();
 		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
+	}
+
+	private LevelData ChooseRandomMapLevel(List<LevelData> levels)
+	{
+		if (levels == null || levels.Count == 0)
+			return null;
+
+		EconomyConfigData economy = GameDataDatabase.GetDefaultEconomyConfig();
+		int totalWeight = 0;
+		for (int i = 0; i < levels.Count; i++)
+			totalWeight += GetMapLevelWeight(levels[i], economy);
+
+		if (totalWeight <= 0)
+			return levels[Random.Range(0, levels.Count)];
+
+		int roll = Random.Range(0, totalWeight);
+		for (int i = 0; i < levels.Count; i++)
+		{
+			int weight = GetMapLevelWeight(levels[i], economy);
+			if (weight <= 0)
+				continue;
+			if (roll < weight)
+				return levels[i];
+			roll -= weight;
+		}
+		return levels[levels.Count - 1];
+	}
+
+	private int GetMapLevelWeight(LevelData level, EconomyConfigData economy)
+	{
+		if (level == null)
+			return 0;
+
+		int weight = level.levelType == LevelType.Shop ? economy?.shopMapLevelWeight ?? 1 : economy?.defaultMapLevelWeight ?? 1;
+		return Mathf.Max(0, weight);
 	}
 
 	private LevelData GetFixedLevelForProgress(ChapterData chapter, int progress)
@@ -1071,7 +1217,7 @@ public class HandSystemUI : MonoBehaviour
 		List<LevelData> levels = new List<LevelData>();
 		for (int i = 0; i < poolIds.Length; i++)
 		{
-			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Event || level.levelType == LevelType.Rest))
+			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Event || level.levelType == LevelType.Shop || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
 				levels.Add(level);
 		}
 		return levels;
@@ -1553,6 +1699,10 @@ public class HandSystemUI : MonoBehaviour
 			{
 				((MonoBehaviour)this).StartCoroutine(ResolveRestEndTurnRoutine());
 			}
+			else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
+			{
+				((MonoBehaviour)this).StartCoroutine(ResolveRewardEndTurnRoutine());
+			}
 			else if (currentEvent != null)
 			{
 				((MonoBehaviour)this).StartCoroutine(ResolveEventEndTurnRoutine());
@@ -1691,6 +1841,38 @@ public class HandSystemUI : MonoBehaviour
         FinishRestLevel();
     }
 
+    private IEnumerator ResolveRewardEndTurnRoutine()
+    {
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        List<MaterialModel> playSnapshot = new List<MaterialModel>(playerState.PlayZone);
+        RewardGridPanelUI panel = GetUIManager().RewardGridPanel;
+        if (panel != null)
+            yield return panel.ResolvePathRoutine(playSnapshot, playerState);
+
+        List<HandCardView> views = new List<HandCardView>();
+        for (int i = 0; i < cardViews.Count; i++)
+            views.Add(cardViews[i]);
+
+        List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
+        playerState.EndTurn(removedTemporaryCards);
+        RefreshStaticUI();
+        bool returnDone = false;
+        AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+        {
+            returnDone = true;
+        });
+        while (!returnDone)
+            yield return null;
+
+        RebuildCards(animateFromCurrent: true);
+        refreshUsedThisTurn = false;
+        if (CheckPlayerDefeated())
+            yield break;
+
+        FinishRewardLevel();
+    }
+
 	private IEnumerator ResolveEventEndTurnRoutine()
 	{
 		busy = true;
@@ -1811,6 +1993,13 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if (pendingChoiceCards.Count >= pendingChoiceCount)
 			ResolveEventCardChoice();
+	}
+
+	private void FinishRewardLevel()
+	{
+		GetUIManager().RewardGridPanel?.Hide();
+		GameLog.Data("Finish reward grid level");
+		FinishReward();
 	}
 
 	private void FinishEventLevel()
@@ -2216,7 +2405,7 @@ public class HandSystemUI : MonoBehaviour
 		Transform val = ((Transform)enemyView).Find("HealthText");
 		if ((Object)val != (Object)null)
 		{
-			enemyHealthText = ((Component)val).GetComponent<Text>();
+			enemyHealthText = ((Component)val).GetComponent<TMP_Text>();
 		}
 		SetupHealthText(enemyHealthText);
 		if ((Object)enemyHealthFill == (Object)null)
@@ -2302,19 +2491,19 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private static void SetupHealthText(Text text)
+	private static void SetupHealthText(TMP_Text text)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
 		if (!((Object)text == (Object)null))
 		{
-			text.alignment = (TextAnchor)5;
-			text.horizontalOverflow = (HorizontalWrapMode)1;
-			text.verticalOverflow = (VerticalWrapMode)1;
+			text.alignment = TextAlignmentOptions.MidlineRight;
+			text.enableWordWrapping = false;
+			text.overflowMode = TextOverflowModes.Overflow;
 		}
 	}
 
-	private static void PositionHealthTextLeftOfBar(Text text, RectTransform barBack, float width)
+	private static void PositionHealthTextLeftOfBar(TMP_Text text, RectTransform barBack, float width)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
@@ -2443,7 +2632,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private Tween UpdateHealthText(Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth)
+	private Tween UpdateHealthText(TMP_Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth)
 	{
 		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0026: Expected O, but got Unknown
@@ -2786,6 +2975,8 @@ public class HandSystemUI : MonoBehaviour
 	{
 		yield return PlayPendingEnemyDeaths();
         TriggerMagicBattleEnd();
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
 		ResetMagicHighlights();
 		GetUIManager().PlayArea?.HideResolveIndicator();
 		List<HandCardView> views = new List<HandCardView>(cardViews);
@@ -3075,6 +3266,55 @@ public class HandSystemUI : MonoBehaviour
 		TutorialManager?.OnRewardMagicEquipped(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
 	}
 
+    public bool TrySpendShopGold(int amount)
+    {
+        if (playerState == null || amount < 0 || playerState.Gold < amount)
+            return false;
+
+        playerState.AddGold(-amount);
+        RefreshStaticUI();
+        SaveRunProgress();
+        return true;
+    }
+
+    public void SetShopMagicAtSlot(MagicData magicData, int slotIndex)
+    {
+        if (magicData == null)
+            return;
+
+        playerState.SetMagicAtSlot(MagicFactory.Create(magicData, slotIndex), slotIndex);
+        CreateMagicViews();
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    public void AddShopMaterial(MaterialEnum material)
+    {
+        if (material == MaterialEnum.None)
+            return;
+
+        playerState.AddDeckMaterial(material);
+        RefreshMaterialListPanel();
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    public bool RemoveShopMaterial(MaterialModel material)
+    {
+        if (material == null || playerState == null)
+            return false;
+
+        bool removed = playerState.RemoveCardEverywhere(material);
+        if (removed)
+        {
+            RefreshMaterialListPanel();
+            RebuildCards(animateFromCurrent: true);
+            RefreshStaticUI();
+            SaveRunProgress();
+        }
+        return removed;
+    }
+
 	public void FinishReward()
 	{
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
@@ -3085,6 +3325,8 @@ public class HandSystemUI : MonoBehaviour
         pendingMagicModifier = null;
         playerState.ClearCombatState();
 		GetUIManager().HideRewardPanel();
+        GetUIManager().HideShopPanel();
+		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
 		enemyModels.Clear();
@@ -3309,9 +3551,12 @@ public class HandSystemUI : MonoBehaviour
 		busy = true;
 		SetButtonsInteractable(interactable: false);
 		ResetMagicHighlights();
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayGameplayMusic();
 		GetUIManager().HideLevelSelect();
 		GetUIManager().HideMapPanel();
 		GetUIManager().HideRewardPanel();
+		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
 		if (victory)
 			GetUIManager().ShowVictoryPanel();
@@ -3558,18 +3803,18 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform val = (RectTransform)((parent is RectTransform) ? parent : null);
 		if (!((Object)val == (Object)null))
 		{
-			Text floatingText = new GameObject("FloatingText", new Type[3]
+			TMP_Text floatingText = new GameObject("FloatingText", new Type[3]
 			{
 				typeof(RectTransform),
 				typeof(CanvasRenderer),
-				typeof(Text)
-			}).GetComponent<Text>();
+				typeof(TextMeshProUGUI)
+			}).GetComponent<TMP_Text>();
 			((Component)floatingText).transform.SetParent((Transform)val, false);
 			floatingText.text = text;
 			floatingText.font = GetDefaultFont();
 			floatingText.fontSize = floatingTextFontSize * 3;
-			floatingText.fontStyle = (FontStyle)1;
-			floatingText.alignment = (TextAnchor)4;
+			floatingText.fontStyle = FontStyles.Bold;
+			floatingText.alignment = TextAlignmentOptions.Center;
 			floatingText.raycastTarget = false;
 			floatingText.color = color;
 			RectTransform component = ((Component)floatingText).GetComponent<RectTransform>();
@@ -3581,7 +3826,7 @@ public class HandSystemUI : MonoBehaviour
 			((Transform)component).localScale = Vector3.one;
 			Sequence obj = DOTween.Sequence();
 			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector2, Vector2, VectorOptions>>(component.DOAnchorPos(component.anchoredPosition + new Vector2(0f, floatingTextYOffset), floatingTextDuration), floatingTextMoveEase));
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Color, Color, ColorOptions>>(floatingText.DOFade(0f, floatingTextDuration), floatingTextFadeEase));
+			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Color, Color, ColorOptions>>(DOTween.ToAlpha(() => floatingText.color, c => floatingText.color = c, 0f, floatingTextDuration), floatingTextFadeEase));
 			TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
 			TweenSettingsExtensions.OnComplete<Sequence>(obj, (TweenCallback)delegate
 			{
@@ -3625,7 +3870,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return;
 		}
-		Text[] componentsInChildren = ((Component)state.viewRect).GetComponentsInChildren<Text>(true);
+		TMP_Text[] componentsInChildren = ((Component)state.viewRect).GetComponentsInChildren<TMP_Text>(true);
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
 			if (((Object)componentsInChildren[i]).name == "NameText")
@@ -3737,13 +3982,13 @@ public class HandSystemUI : MonoBehaviour
 		iconRect.anchoredPosition = Vector2.zero;
 		iconRect.sizeDelta = new Vector2(28f, 28f);
 
-		Text valueText = new GameObject("ValueText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+		TMP_Text valueText = new GameObject("ValueText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
 		valueText.transform.SetParent(rect, false);
 		valueText.font = GetDefaultFont();
 		valueText.fontSize = 16;
-		valueText.fontStyle = FontStyle.Bold;
+		valueText.fontStyle = FontStyles.Bold;
 		valueText.color = Color.white;
-		valueText.alignment = TextAnchor.MiddleCenter;
+		valueText.alignment = TextAlignmentOptions.Center;
 		valueText.raycastTarget = false;
 		RectTransform textRect = valueText.rectTransform;
 		textRect.anchorMin = new Vector2(0.5f, 0.5f);

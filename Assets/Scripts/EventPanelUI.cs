@@ -5,6 +5,7 @@ using System.Text;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class EventPanelUI : MonoBehaviour
 {
@@ -34,16 +35,16 @@ public class EventPanelUI : MonoBehaviour
 
     private RectTransform panel;
     private RectTransform optionArea;
-    private Text titleText;
-    private Text bodyText;
-    private Text hintText;
+    private TMP_Text titleText;
+    private TMP_Text bodyText;
+    private TMP_Text hintText;
     private RectTransform optionTooltip;
     private RectTransform optionTagTooltip;
     private CanvasGroup optionTooltipCanvasGroup;
     private CanvasGroup optionTagTooltipCanvasGroup;
-    private Text optionTooltipTitle;
-    private Text optionTooltipDescription;
-    private Text optionTagTooltipText;
+    private TMP_Text optionTooltipTitle;
+    private TMP_Text optionTooltipDescription;
+    private TMP_Text optionTagTooltipText;
     private Tween optionTooltipTween;
     private Tween optionTagTooltipTween;
     private EventModel eventModel;
@@ -58,7 +59,7 @@ public class EventPanelUI : MonoBehaviour
     public EventOptionData[] CurrentOptions => eventModel != null ? eventModel.CurrentOptions : System.Array.Empty<EventOptionData>();
     public RectTransform MatchedOptionRect { get; private set; }
 
-    public void Initialize(RectTransform parent, Font font, Action optionsShown = null)
+    public void Initialize(RectTransform parent, TMP_FontAsset font, Action optionsShown = null)
     {
         this.optionsShown = optionsShown;
         Transform panelTransform = parent.Find("EventPanel");
@@ -207,10 +208,10 @@ public class EventPanelUI : MonoBehaviour
             }
             optionView.Bind(this, option);
             rect.localScale = Vector3.zero;
-            Text recipeText = optionView.RecipeText;
+            TMP_Text recipeText = optionView.RecipeText;
             if (recipeText != null)
                 BuildRecipeIcons(recipeText.rectTransform, option);
-            Text optionText = optionView.OptionText;
+            TMP_Text optionText = optionView.OptionText;
             if (optionText != null)
                 optionText.text = LocalizationSystem.GetText(option.titleKey, option.id);
             rect.DOScale(Vector3.one, optionShowDuration).SetDelay(i * optionShowDelayStep).SetEase(optionShowEase).SetTarget(this);
@@ -384,8 +385,8 @@ public class EventPanelUI : MonoBehaviour
         PopupLayerUtility.ApplyTo(optionTooltip);
         optionTooltipCanvasGroup.alpha = 0f;
 
-        optionTooltipTitle = CreateTooltipText(optionTooltip, "Title", 18, FontStyle.Bold, new Vector2(0f, 24f), new Vector2(280f, 28f));
-        optionTooltipDescription = CreateTooltipText(optionTooltip, "Description", 15, FontStyle.Normal, new Vector2(0f, -12f), new Vector2(280f, 44f));
+        optionTooltipTitle = CreateTooltipText(optionTooltip, "Title", 18, FontStyles.Bold, new Vector2(0f, 24f), new Vector2(280f, 28f));
+        optionTooltipDescription = CreateTooltipText(optionTooltip, "Description", 15, FontStyles.Normal, new Vector2(0f, -12f), new Vector2(280f, 44f));
         EnsureOptionTagTooltip();
         optionTooltip.gameObject.SetActive(false);
     }
@@ -409,16 +410,16 @@ public class EventPanelUI : MonoBehaviour
         optionTagTooltipCanvasGroup.blocksRaycasts = false;
         PopupLayerUtility.ApplyTo(optionTagTooltip);
 
-        optionTagTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        optionTagTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
         optionTagTooltipText.transform.SetParent(optionTagTooltip, false);
-        optionTagTooltipText.font = optionTooltipDescription != null && optionTooltipDescription.font != null ? optionTooltipDescription.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        optionTagTooltipText.font = optionTooltipDescription != null && optionTooltipDescription.font != null ? optionTooltipDescription.font : UIManager.GetDefaultTMPFont();
         optionTagTooltipText.fontSize = 16;
-        optionTagTooltipText.alignment = TextAnchor.UpperLeft;
+        optionTagTooltipText.alignment = TextAlignmentOptions.TopLeft;
         optionTagTooltipText.color = new Color(1f, 0.88f, 0.58f, 1f);
         optionTagTooltipText.raycastTarget = false;
-        optionTagTooltipText.supportRichText = true;
-        optionTagTooltipText.horizontalOverflow = HorizontalWrapMode.Wrap;
-        optionTagTooltipText.verticalOverflow = VerticalWrapMode.Overflow;
+        optionTagTooltipText.richText = true;
+        optionTagTooltipText.enableWordWrapping = true;
+        optionTagTooltipText.overflowMode = TextOverflowModes.Overflow;
         RectTransform textRect = optionTagTooltipText.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
@@ -427,14 +428,14 @@ public class EventPanelUI : MonoBehaviour
         optionTagTooltip.gameObject.SetActive(false);
     }
 
-    private Text CreateTooltipText(RectTransform parent, string name, int fontSize, FontStyle fontStyle, Vector2 position, Vector2 size)
+    private TMP_Text CreateTooltipText(RectTransform parent, string name, int fontSize, FontStyles fontStyle, Vector2 position, Vector2 size)
     {
-        Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        TMP_Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
         text.transform.SetParent(parent, false);
-        text.font = bodyText != null ? bodyText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.font = bodyText != null && bodyText.font != null ? bodyText.font : UIManager.GetDefaultTMPFont();
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
-        text.alignment = TextAnchor.MiddleCenter;
+        text.alignment = TextAlignmentOptions.Center;
         text.color = Color.white;
         text.raycastTarget = false;
         RectTransform rect = text.rectTransform;
@@ -509,7 +510,7 @@ public class EventPanelUI : MonoBehaviour
 
     private static void BuildRecipeIcons(RectTransform recipeRoot, EventOptionData option)
     {
-        Text recipeText = recipeRoot.GetComponent<Text>();
+        TMP_Text recipeText = recipeRoot.GetComponent<TMP_Text>();
         if (recipeText != null)
             recipeText.text = string.Empty;
 
@@ -525,20 +526,23 @@ public class EventPanelUI : MonoBehaviour
         {
             Image icon = new GameObject("MaterialIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             icon.transform.SetParent(recipeRoot, false);
-            icon.color = MaterialCardView.GetMaterialColor(materials[i]);
+            Sprite sprite = MaterialCardView.GetMaterialIcon(materials[i]);
+            icon.sprite = sprite;
+            icon.preserveAspect = true;
+            icon.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(materials[i]);
             icon.raycastTarget = false;
             RectTransform iconRect = icon.rectTransform;
             iconRect.anchorMin = new Vector2(0.5f, 0.5f);
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.pivot = new Vector2(0.5f, 0.5f);
             iconRect.anchoredPosition = new Vector2(startX + spacing * i, 0f);
-            iconRect.sizeDelta = new Vector2(24f, 24f);
+            iconRect.sizeDelta = new Vector2(48f, 48f);
         }
     }
 
-    private static Text FindText(RectTransform root, string name)
+    private static TMP_Text FindText(RectTransform root, string name)
     {
         Transform child = root.Find(name);
-        return child != null ? child.GetComponent<Text>() : null;
+        return child != null ? child.GetComponent<TMP_Text>() : null;
     }
 }

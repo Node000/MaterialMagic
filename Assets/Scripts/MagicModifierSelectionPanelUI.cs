@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class MagicModifierSelectionPanelUI : MonoBehaviour
 {
     private readonly List<Button> optionButtons = new List<Button>();
-    private readonly List<Text> optionTexts = new List<Text>();
+    private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
 
     private HandSystemUI owner;
     private RectTransform panel;
     private RectTransform optionRoot;
-    private Text titleText;
-    private Text hintText;
+    private TMP_Text titleText;
+    private TMP_Text hintText;
     private Button backButton;
     private RectTransform popupRoot;
-    private Text popupText;
+    private TMP_Text popupText;
     private CanvasGroup popupCanvasGroup;
     private Tween popupTween;
     private MagicModifierData selectedModifier;
@@ -95,8 +96,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     private void CacheReferences()
     {
-        titleText = titleText != null ? titleText : UIManager.FindChildComponent<Text>(transform, "Title");
-        hintText = hintText != null ? hintText : UIManager.FindChildComponent<Text>(transform, "Hint");
+        titleText = titleText != null ? titleText : UIManager.FindChildComponent<TMP_Text>(transform, "Title");
+        hintText = hintText != null ? hintText : UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         optionRoot = optionRoot != null ? optionRoot : UIManager.FindChildRect(transform, "OptionArea");
         backButton = backButton != null ? backButton : UIManager.FindChildComponent<Button>(transform, "BackButton");
         if (optionRoot == null)
@@ -105,7 +106,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         {
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(CompleteSelection);
-            Text backText = UIManager.FindChildComponent<Text>(backButton.transform, "Text");
+            TMP_Text backText = UIManager.FindChildComponent<TMP_Text>(backButton.transform, "Text");
             if (backText != null)
                 backText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.back", "返回");
         }
@@ -191,15 +192,15 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         rect.anchoredPosition = new Vector2((index - 1) * 230f, 0f);
         rect.sizeDelta = new Vector2(210f, 112f);
 
-        Text text = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        TMP_Text text = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
         text.transform.SetParent(rect, false);
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.font = UIManager.GetDefaultTMPFont();
         text.fontSize = 16;
-        text.alignment = TextAnchor.MiddleCenter;
+        text.alignment = TextAlignmentOptions.Center;
         text.color = Color.white;
         text.raycastTarget = false;
-        text.horizontalOverflow = HorizontalWrapMode.Wrap;
-        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.enableWordWrapping = true;
+        text.overflowMode = TextOverflowModes.Overflow;
         RectTransform textRect = text.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
@@ -234,15 +235,15 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         popupCanvasGroup = popupRoot.GetComponent<CanvasGroup>();
         if (popupCanvasGroup == null)
             popupCanvasGroup = popupRoot.gameObject.AddComponent<CanvasGroup>();
-        popupText = popupText != null ? popupText : UIManager.FindChildComponent<Text>(popupRoot, "Text");
+        popupText = popupText != null ? popupText : UIManager.FindChildComponent<TMP_Text>(popupRoot, "Text");
         if (popupText == null)
         {
-            popupText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+            popupText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
             popupText.transform.SetParent(popupRoot, false);
-            popupText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            popupText.font = UIManager.GetDefaultTMPFont();
             popupText.fontSize = 18;
-            popupText.fontStyle = FontStyle.Bold;
-            popupText.alignment = TextAnchor.MiddleCenter;
+            popupText.fontStyle = FontStyles.Bold;
+            popupText.alignment = TextAlignmentOptions.Center;
             popupText.color = new Color(1f, 0.86f, 0.56f, 1f);
             popupText.raycastTarget = false;
             RectTransform rect = popupText.rectTransform;

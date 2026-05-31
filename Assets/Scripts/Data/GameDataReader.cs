@@ -90,7 +90,9 @@ public static class GameDataDatabase
     private static Dictionary<int, EventData> eventData;
     private static Dictionary<int, LevelData> levelData;
     private static Dictionary<int, RewardPoolData> rewardPoolData;
+    private static Dictionary<int, BonusLevelData> bonusLevelData;
     private static Dictionary<int, ChapterData> chapterData;
+    private static Dictionary<int, EconomyConfigData> economyConfigData;
     private static Dictionary<string, TagData> tagData;
     private static Dictionary<string, MagicModifierData> magicModifierData;
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
@@ -100,7 +102,9 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, EventData> EventData => eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData");
     public static IReadOnlyDictionary<int, LevelData> LevelData => levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData");
     public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");
+    public static IReadOnlyDictionary<int, BonusLevelData> BonusLevelData => bonusLevelData ??= GameDataReader.LoadNumericDictionary<BonusLevelData>("BonusLevelData");
     public static IReadOnlyDictionary<int, ChapterData> ChapterData => chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData");
+    public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
     public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
     public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
@@ -130,9 +134,32 @@ public static class GameDataDatabase
         return RewardPoolData.TryGetValue(id, out data);
     }
 
+    public static bool TryGetBonusLevelData(int id, out BonusLevelData data)
+    {
+        return BonusLevelData.TryGetValue(id, out data);
+    }
+
     public static bool TryGetChapterData(int id, out ChapterData data)
     {
         return ChapterData.TryGetValue(id, out data);
+    }
+
+    public static bool TryGetEconomyConfigData(int id, out EconomyConfigData data)
+    {
+        return EconomyConfigData.TryGetValue(id, out data);
+    }
+
+    public static EconomyConfigData GetDefaultEconomyConfig()
+    {
+        if (TryGetEconomyConfigData(1, out EconomyConfigData data))
+            return data;
+
+        foreach (EconomyConfigData value in EconomyConfigData.Values)
+        {
+            if (value != null)
+                return value;
+        }
+        return null;
     }
 
     public static bool TryGetTagData(string id, out TagData data)
@@ -157,7 +184,9 @@ public static class GameDataDatabase
         eventData = null;
         levelData = null;
         rewardPoolData = null;
+        bonusLevelData = null;
         chapterData = null;
+        economyConfigData = null;
         tagData = null;
         magicModifierData = null;
         playerStartConfigData = null;

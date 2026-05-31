@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    private static TMP_FontAsset cachedDefaultTMPFont;
+
     [SerializeField] private MapPanelUI mapPanelUI;
     [SerializeField] private LevelSelectPanelUI levelSelectPanelUI;
     [SerializeField] private SettingsPanelUI settingsPanelUI;
     [SerializeField] private MaterialListPanelUI materialListPanelUI;
     [SerializeField] private RewardPanelUI rewardPanelUI;
+    [SerializeField] private RewardGridPanelUI rewardGridPanelUI;
+    [SerializeField] private ShopPanelUI shopPanelUI;
     [SerializeField] private MagicModifierSelectionPanelUI magicModifierSelectionPanelUI;
     [SerializeField] private SlotSelectPanelUI slotSelectPanelUI;
     [SerializeField] private BuffTooltipUI buffTooltipUI;
@@ -27,6 +32,8 @@ public class UIManager : MonoBehaviour
     public SettingsPanelUI SettingsPanel => settingsPanelUI;
     public MaterialListPanelUI MaterialListPanel => materialListPanelUI;
     public RewardPanelUI RewardPanel => rewardPanelUI;
+    public RewardGridPanelUI RewardGridPanel => rewardGridPanelUI;
+    public ShopPanelUI ShopPanel => shopPanelUI;
     public MagicModifierSelectionPanelUI MagicModifierSelectionPanel => magicModifierSelectionPanelUI;
     public SlotSelectPanelUI SlotSelectPanel => slotSelectPanelUI;
     public BuffTooltipUI BuffTooltip => buffTooltipUI;
@@ -45,6 +52,8 @@ public class UIManager : MonoBehaviour
         settingsPanelUI = GetOrAddPanel<SettingsPanelUI>(root, "SettingsPanel", settingsPanelUI);
         materialListPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "MaterialListPanel", materialListPanelUI);
         rewardPanelUI = GetOrAddPanel<RewardPanelUI>(root, "RewardPanel", rewardPanelUI);
+        rewardGridPanelUI = GetOrAddPanel<RewardGridPanelUI>(root, "RewardGridPanel", rewardGridPanelUI);
+        shopPanelUI = GetOrAddPanel<ShopPanelUI>(root, "ShopPanel", shopPanelUI);
         magicModifierSelectionPanelUI = GetOrAddPanel<MagicModifierSelectionPanelUI>(root, "MagicModifierSelectionPanel", magicModifierSelectionPanelUI);
         slotSelectPanelUI = GetOrAddPanel<SlotSelectPanelUI>(root, "SlotSelectPanel", slotSelectPanelUI);
         buffTooltipUI = GetOrAddPanel<BuffTooltipUI>(root, "BuffTooltip", buffTooltipUI);
@@ -61,6 +70,8 @@ public class UIManager : MonoBehaviour
         settingsPanelUI?.Initialize(owner);
         materialListPanelUI?.Initialize(owner);
         rewardPanelUI?.Initialize(owner);
+        rewardGridPanelUI?.Initialize(owner);
+        shopPanelUI?.Initialize(owner);
         magicModifierSelectionPanelUI?.Initialize(owner);
         slotSelectPanelUI?.Initialize(owner);
         buffTooltipUI?.Initialize(owner);
@@ -197,9 +208,24 @@ public class UIManager : MonoBehaviour
         rewardPanelUI?.Hide();
     }
 
+    public void ShowShopPanel(LevelData level)
+    {
+        shopPanelUI?.Show(level);
+    }
+
+    public void HideShopPanel()
+    {
+        shopPanelUI?.Hide();
+    }
+
     public void ShowSlotSelect(MagicData rewardMagic)
     {
         slotSelectPanelUI?.Show(rewardMagic);
+    }
+
+    public void ShowSlotSelect(MagicData rewardMagic, Action<int> onSlotChosen)
+    {
+        slotSelectPanelUI?.Show(rewardMagic, onSlotChosen);
     }
 
     public void HideSlotSelect()
@@ -257,6 +283,13 @@ public class UIManager : MonoBehaviour
         return child != null ? child.GetComponent<T>() : null;
     }
 
+    internal static TMP_FontAsset GetDefaultTMPFont()
+    {
+        if (cachedDefaultTMPFont == null)
+            cachedDefaultTMPFont = Resources.Load<TMP_FontAsset>("Fonts/FZG_CN SDF");
+        return cachedDefaultTMPFont;
+    }
+
     internal static Sprite LoadLevelTypeSprite(LevelType type)
     {
         return type switch
@@ -264,6 +297,7 @@ public class UIManager : MonoBehaviour
             LevelType.Shop => Resources.Load<Sprite>("Images/UI/shop"),
             LevelType.Event => null,
             LevelType.Rest => Resources.Load<Sprite>("Images/UI/shop"),
+            LevelType.Reward => null,
             _ => Resources.Load<Sprite>("Images/UI/normal"),
         };
     }
@@ -275,6 +309,7 @@ public class UIManager : MonoBehaviour
             LevelType.Shop => "商店",
             LevelType.Event => "事件",
             LevelType.Rest => "休息",
+            LevelType.Reward => "奖励",
             _ => "战斗",
         };
     }

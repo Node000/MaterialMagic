@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "numericId": 1,
+      "id": "default",
+      "shopSpellPrice": 4,
+      "shopMaterialPrice": 7,
+      "shopRemoveMaterialPrice": 7,
+      "battleGoldMin": 1,
+      "battleGoldMax": 2,
+      "eliteBattleGoldMin": 4,
+      "eliteBattleGoldMax": 5,
+      "defaultMapLevelWeight": 4,
+      "shopMapLevelWeight": 1,
+      "shopMagicRewardPoolId": 1,
+      "shopMaterialPool": [1, 2, 3, 4]
+    }
+  ]
+}

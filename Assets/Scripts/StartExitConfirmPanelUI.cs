@@ -1,11 +1,12 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StartExitConfirmPanelUI : MonoBehaviour
 {
     [SerializeField] private RectTransform panelRect;
-    [SerializeField] private Text promptText;
+    [SerializeField] private TMP_Text promptText;
     [SerializeField] private string prompt = "是否退出游戏？";
     [SerializeField] private Vector2 shownPosition = new Vector2(280f, -220f);
     [SerializeField] private Vector2 hiddenPosition = new Vector2(-620f, -220f);
@@ -70,6 +71,6 @@ public class StartExitConfirmPanelUI : MonoBehaviour
         if (panelRect == null)
             panelRect = transform as RectTransform;
         if (promptText == null)
-            promptText = transform.Find("Text")?.GetComponent<Text>();
+            promptText = transform.Find("Text")?.GetComponent<TMP_Text>();
     }
 }

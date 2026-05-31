@@ -1,12 +1,13 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayAreaUI : MonoBehaviour
 {
     [SerializeField] private RectTransform resolveIndicator;
     [SerializeField] private RectTransform continuousCastCounterRect;
-    [SerializeField] private Text continuousCastCounterText;
+    [SerializeField] private TMP_Text continuousCastCounterText;
 
     [SerializeField] private float counterPunchDuration = 0.24f;
     [SerializeField] private float counterPunchScale = 0.55f;
@@ -120,6 +121,6 @@ public class PlayAreaUI : MonoBehaviour
         if (continuousCastCounterRect == null)
             continuousCastCounterRect = UIManager.FindChildRect(transform, "ContinuousCastCounter");
         if (continuousCastCounterText == null && continuousCastCounterRect != null)
-            continuousCastCounterText = continuousCastCounterRect.GetComponent<Text>();
+            continuousCastCounterText = continuousCastCounterRect.GetComponent<TMP_Text>();
     }
 }

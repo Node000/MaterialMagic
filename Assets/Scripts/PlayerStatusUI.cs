@@ -1,10 +1,11 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayerStatusUI : MonoBehaviour
 {
-    [SerializeField] private Text healthText;
+    [SerializeField] private TMP_Text healthText;
     [SerializeField] private Image healthFill;
     [SerializeField] private RectTransform buffRoot;
 
@@ -12,7 +13,7 @@ public class PlayerStatusUI : MonoBehaviour
     private HandSystemUI owner;
 
     public RectTransform BuffRoot => buffRoot;
-    public Text HealthText => healthText;
+    public TMP_Text HealthText => healthText;
     public Image HealthFill => healthFill;
 
     public void Initialize(HandSystemUI owner)
@@ -46,7 +47,7 @@ public class PlayerStatusUI : MonoBehaviour
     private void CacheReferences()
     {
         if (healthText == null)
-            healthText = UIManager.FindChildComponent<Text>(transform, "HealthText");
+            healthText = UIManager.FindChildComponent<TMP_Text>(transform, "HealthText");
         if (healthFill == null)
             healthFill = UIManager.FindChildComponent<Image>(transform, "HealthBarBack/HealthFill");
         if (buffRoot == null)

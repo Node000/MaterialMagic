@@ -2,12 +2,13 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
-    [SerializeField] private Text labelText;
+    [SerializeField] private TMP_Text labelText;
     [SerializeField] private float selectedScale = 1.15f;
     [SerializeField] private float hoverTilt = 7f;
     [SerializeField] private float feedbackDuration = 0.18f;
@@ -18,7 +19,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween feedbackTween;
-    private Text modifierText;
+    private TMP_Text modifierText;
     private bool selected;
     private bool inPlayZone;
     private bool hovered;
@@ -133,7 +134,12 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         }
 
         if (iconImage != null)
-            iconImage.color = MaterialCardView.GetMaterialColor(card.material);
+        {
+            Sprite sprite = MaterialCardView.GetMaterialIcon(card.material);
+            iconImage.sprite = sprite;
+            iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(card.material);
+            iconImage.preserveAspect = true;
+        }
     }
 
     private string GetModifierLabel()
@@ -159,11 +165,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if (modifierText != null)
             return;
 
-        modifierText = new GameObject("ModifierTagText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+        modifierText = new GameObject("ModifierTagText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
         modifierText.transform.SetParent(transform, false);
-        modifierText.font = labelText != null && labelText.font != null ? labelText.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        modifierText.font = labelText != null && labelText.font != null ? labelText.font : UIManager.GetDefaultTMPFont();
         modifierText.fontSize = 13;
-        modifierText.alignment = TextAnchor.MiddleCenter;
+        modifierText.alignment = TextAlignmentOptions.Center;
         modifierText.color = new Color(1f, 0.92f, 0.58f, 1f);
         modifierText.raycastTarget = false;
         RectTransform rect = modifierText.rectTransform;

@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ChapterProgressUI : MonoBehaviour
 {
-    [SerializeField] private Text progressText;
+    [SerializeField] private TMP_Text progressText;
 
     public void Initialize()
     {
@@ -20,6 +21,6 @@ public class ChapterProgressUI : MonoBehaviour
     private void CacheReferences()
     {
         if (progressText == null)
-            progressText = GetComponent<Text>();
+            progressText = GetComponent<TMP_Text>();
     }
 }

@@ -1,11 +1,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class SaveSlotSelectionPanelUI : MonoBehaviour
 {
     [SerializeField] private Button[] slotButtons = Array.Empty<Button>();
-    [SerializeField] private Text[] slotTexts = Array.Empty<Text>();
+    [SerializeField] private TMP_Text[] slotTexts = Array.Empty<TMP_Text>();
     [SerializeField] private Button[] deleteButtons = Array.Empty<Button>();
     [SerializeField] private Button closeButton;
 
@@ -43,11 +44,11 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
 
         if (slotTexts == null || slotTexts.Length < 3)
         {
-            slotTexts = new Text[3];
+            slotTexts = new TMP_Text[3];
             for (int i = 0; i < 3; i++)
             {
                 Transform slot = transform.Find("Slot" + (i + 1));
-                slotTexts[i] = slot != null ? slot.GetComponentInChildren<Text>(true) : null;
+                slotTexts[i] = slot != null ? slot.GetComponentInChildren<TMP_Text>(true) : null;
             }
         }
 
@@ -119,7 +120,7 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
     {
         for (int i = 0; i < 3; i++)
         {
-            Text text = i < slotTexts.Length ? slotTexts[i] : null;
+            TMP_Text text = i < slotTexts.Length ? slotTexts[i] : null;
             if (text == null)
                 continue;
 

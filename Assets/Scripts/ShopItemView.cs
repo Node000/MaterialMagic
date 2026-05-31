@@ -1,0 +1,170 @@
+using System;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+public class ShopItemView : MonoBehaviour
+{
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text priceText;
+    [SerializeField] private TMP_Text stateText;
+    [SerializeField] private RectTransform visualRoot;
+    [SerializeField] private Button button;
+    [SerializeField] private Image backgroundImage;
+
+    private Action<ShopOffer> clicked;
+    private ShopOffer offer;
+    private MagicItemView magicView;
+    private MaterialCardView materialView;
+    private TMP_Text removeText;
+
+    public void Bind(ShopPanelUI panel, ShopOffer offer, bool canAfford, bool canUse, Action<ShopOffer> clicked)
+    {
+        this.offer = offer;
+        this.clicked = clicked;
+        CacheReferences();
+        ClearVisual();
+
+        if (titleText != null)
+            titleText.text = GetTitle(offer);
+        if (priceText != null)
+            priceText.text = offer.price + " 金币";
+        if (stateText != null)
+            stateText.text = GetStateText(offer, canAfford, canUse);
+        if (backgroundImage != null)
+            backgroundImage.color = offer.purchased ? new Color(0.035f, 0.035f, 0.045f, 0.82f) : new Color(0.08f, 0.08f, 0.12f, 0.96f);
+
+        CreateVisual(panel, offer);
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(OnClicked);
+            button.interactable = !offer.purchased && canUse;
+        }
+    }
+
+    private void CacheReferences()
+    {
+        if (button == null)
+            button = GetComponent<Button>();
+        if (backgroundImage == null)
+            backgroundImage = GetComponent<Image>();
+        if (titleText == null)
+            titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
+        if (priceText == null)
+            priceText = UIManager.FindChildComponent<TMP_Text>(transform, "Price");
+        if (stateText == null)
+            stateText = UIManager.FindChildComponent<TMP_Text>(transform, "State");
+        if (visualRoot == null)
+            visualRoot = UIManager.FindChildRect(transform, "VisualRoot");
+    }
+
+    private void ClearVisual()
+    {
+        if (visualRoot == null)
+            return;
+
+        for (int i = visualRoot.childCount - 1; i >= 0; i--)
+            Destroy(visualRoot.GetChild(i).gameObject);
+        magicView = null;
+        materialView = null;
+        removeText = null;
+    }
+
+    private void CreateVisual(ShopPanelUI panel, ShopOffer offer)
+    {
+        if (visualRoot == null || offer == null)
+            return;
+
+        switch (offer.kind)
+        {
+            case ShopItemKind.Magic:
+                if (panel.MagicViewPrefab != null && offer.magicData != null)
+                {
+                    RectTransform rect = Instantiate(panel.MagicViewPrefab, visualRoot);
+                    rect.gameObject.SetActive(true);
+                    rect.anchorMin = new Vector2(0.5f, 0.5f);
+                    rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = Vector2.zero;
+                    rect.sizeDelta = new Vector2(196f, 92f);
+                    magicView = rect.GetComponent<MagicItemView>();
+                    magicView?.Bind(MagicFactory.Create(offer.magicData));
+                }
+                break;
+            case ShopItemKind.Material:
+                if (panel.MaterialCardPrefab != null)
+                {
+                    RectTransform rect = Instantiate(panel.MaterialCardPrefab, visualRoot);
+                    rect.gameObject.SetActive(true);
+                    rect.anchorMin = new Vector2(0.5f, 0.5f);
+                    rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = Vector2.zero;
+                    rect.sizeDelta = new Vector2(82f, 118f);
+                    materialView = rect.GetComponent<MaterialCardView>();
+                    materialView?.Bind(new MaterialModel("shop_preview_" + offer.material, offer.material));
+                    JuicyMotion motion = rect.GetComponent<JuicyMotion>();
+                    if (motion != null)
+                        motion.enabled = false;
+                    DisableChildRaycasts(rect);
+                }
+                break;
+            case ShopItemKind.RemoveMaterial:
+                removeText = new GameObject("RemoveText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+                removeText.transform.SetParent(visualRoot, false);
+                removeText.font = UIManager.GetDefaultTMPFont();
+                removeText.fontSize = 26;
+                removeText.fontStyle = FontStyles.Bold;
+                removeText.alignment = TextAlignmentOptions.Center;
+                removeText.color = new Color(1f, 0.62f, 0.46f, 1f);
+                removeText.raycastTarget = false;
+                removeText.text = "删牌";
+                RectTransform textRect = removeText.rectTransform;
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = Vector2.zero;
+                textRect.offsetMax = Vector2.zero;
+                break;
+        }
+    }
+
+    private static void DisableChildRaycasts(RectTransform root)
+    {
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+    }
+
+    private void OnClicked()
+    {
+        clicked?.Invoke(offer);
+    }
+
+    private static string GetTitle(ShopOffer offer)
+    {
+        if (offer == null)
+            return string.Empty;
+
+        switch (offer.kind)
+        {
+            case ShopItemKind.Magic:
+                return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "法术";
+            case ShopItemKind.Material:
+                return LocalizationKeys.GetMaterialName(offer.material) + "素材";
+            case ShopItemKind.RemoveMaterial:
+                return "删素材";
+            default:
+                return string.Empty;
+        }
+    }
+
+    private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse)
+    {
+        if (offer != null && offer.purchased)
+            return "已购买";
+        if (!canUse)
+            return "不可用";
+        return canAfford ? "点击购买" : "金币不足";
+    }
+}

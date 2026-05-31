@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class MaterialListPanelUI : MonoBehaviour
 {
@@ -26,7 +27,7 @@ public class MaterialListPanelUI : MonoBehaviour
     private RectTransform modifierTooltipContent;
     private CanvasGroup modifierTooltipCanvasGroup;
     private Tween modifierTooltipTween;
-    private readonly List<Text> modifierTooltipTexts = new List<Text>();
+    private readonly List<TMP_Text> modifierTooltipTexts = new List<TMP_Text>();
     private readonly List<MaterialModel> selectedMaterials = new List<MaterialModel>();
     private Predicate<MaterialModel> selectionPredicate;
     private Action<IReadOnlyList<MaterialModel>> selectionCompleted;
@@ -349,7 +350,7 @@ public class MaterialListPanelUI : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            Text text = GetModifierTooltipText(i);
+            TMP_Text text = GetModifierTooltipText(i);
             MaterialModifierModel modifier = materialModel.modifiers[i];
             string description = LocalizationKeys.GetModifierDescription(modifier);
             text.text = string.IsNullOrEmpty(description)
@@ -361,15 +362,15 @@ public class MaterialListPanelUI : MonoBehaviour
         modifierTooltip.sizeDelta = new Vector2(modifierTooltip.sizeDelta.x, height);
     }
 
-    private Text GetModifierTooltipText(int index)
+    private TMP_Text GetModifierTooltipText(int index)
     {
         while (modifierTooltipTexts.Count <= index)
         {
-            Text text = new GameObject("ModifierText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
+            TMP_Text text = new GameObject("ModifierText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
             text.transform.SetParent(modifierTooltipContent, false);
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIManager.GetDefaultTMPFont();
             text.fontSize = 15;
-            text.alignment = TextAnchor.UpperLeft;
+            text.alignment = TextAlignmentOptions.TopLeft;
             text.color = Color.white;
             text.raycastTarget = false;
             RectTransform rect = text.GetComponent<RectTransform>();
@@ -377,7 +378,7 @@ public class MaterialListPanelUI : MonoBehaviour
             modifierTooltipTexts.Add(text);
         }
 
-        Text result = modifierTooltipTexts[index];
+        TMP_Text result = modifierTooltipTexts[index];
         result.gameObject.SetActive(true);
         return result;
     }

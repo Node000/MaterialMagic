@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StartConfigBookmarkUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rectTransform;
     [SerializeField] private Image backgroundImage;
     [SerializeField] private Image textureImage;
-    [SerializeField] private Text nameText;
-    [SerializeField] private Text healthText;
+    [SerializeField] private TMP_Text nameText;
+    [SerializeField] private TMP_Text healthText;
     [SerializeField] private RectTransform magicRoot;
     [SerializeField] private RectTransform materialRoot;
     [SerializeField] private MagicItemView magicViewPrefab;
@@ -171,7 +172,7 @@ public class StartConfigBookmarkUI : MonoBehaviour
             cardRect.anchoredPosition = new Vector2(0f, 0f);
             card.Bind(new MaterialModel(data.material + "_preview", data.material));
 
-            Text countText = CreateCountText(itemRect);
+            TMP_Text countText = CreateCountText(itemRect);
             countText.text = "×" + data.count;
             materialItems.Add(item);
         }
@@ -190,9 +191,9 @@ public class StartConfigBookmarkUI : MonoBehaviour
         return null;
     }
 
-    private static Text CreateCountText(RectTransform parent)
+    private static TMP_Text CreateCountText(RectTransform parent)
     {
-        GameObject textObject = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        GameObject textObject = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         textObject.transform.SetParent(parent, false);
         RectTransform rect = textObject.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(1f, 0.5f);
@@ -201,11 +202,11 @@ public class StartConfigBookmarkUI : MonoBehaviour
         rect.anchoredPosition = new Vector2(0f, -6f);
         rect.sizeDelta = new Vector2(52f, 28f);
 
-        Text text = textObject.GetComponent<Text>();
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        TMP_Text text = textObject.GetComponent<TMP_Text>();
+        text.font = UIManager.GetDefaultTMPFont();
         text.fontSize = 22;
-        text.fontStyle = FontStyle.Bold;
-        text.alignment = TextAnchor.MiddleRight;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.MidlineRight;
         text.color = new Color(1f, 0.94f, 0.7f, 1f);
         text.raycastTarget = false;
         return text;

@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class RunResultPanelUI : MonoBehaviour
 {
     [SerializeField] private string startSceneName = "StartScene";
 
-    private Text titleText;
-    private Text bodyText;
+    private TMP_Text titleText;
+    private TMP_Text bodyText;
     private Button returnButton;
 
     public void Initialize(HandSystemUI owner)
@@ -40,9 +41,9 @@ public class RunResultPanelUI : MonoBehaviour
     private void CacheReferences()
     {
         if (titleText == null)
-            titleText = UIManager.FindChildComponent<Text>(transform, "Title");
+            titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (bodyText == null)
-            bodyText = UIManager.FindChildComponent<Text>(transform, "Body");
+            bodyText = UIManager.FindChildComponent<TMP_Text>(transform, "Body");
         if (returnButton == null)
             returnButton = UIManager.FindChildComponent<Button>(transform, "ReturnStartButton");
 

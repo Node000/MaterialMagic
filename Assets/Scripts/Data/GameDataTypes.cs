@@ -6,7 +6,28 @@ public enum LevelType
     Battle = 0,
     Event = 1,
     Shop = 2,
-    Rest = 3
+    Rest = 3,
+    Reward = 4
+}
+
+[Serializable]
+public class EconomyConfigData : INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public int shopSpellPrice = 4;
+    public int shopMaterialPrice = 7;
+    public int shopRemoveMaterialPrice = 7;
+    public int battleGoldMin = 1;
+    public int battleGoldMax = 2;
+    public int eliteBattleGoldMin = 4;
+    public int eliteBattleGoldMax = 5;
+    public int defaultMapLevelWeight = 4;
+    public int shopMapLevelWeight = 1;
+    public int shopMagicRewardPoolId = 1;
+    public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
+
+    public int NumericId => numericId;
 }
 
 public enum MaterialEnum
@@ -89,6 +110,13 @@ public enum EventRewardType
     UpgradeMaterial = 5,
     RemovePollution = 6,
     GainRelic = 7
+}
+
+public enum BonusRewardType
+{
+    None = 0,
+    Gold = 1,
+    Heal = 2
 }
 
 public enum MagicModifierTargetRule
@@ -270,6 +298,7 @@ public class LevelData : IDataRecord, INumericDataRecord
     public int[] enemyIds = Array.Empty<int>();
     public int rewardPoolId;
     public int eventPoolId;
+    public int bonusLevelId;
     public string[] restTextKeys = Array.Empty<string>();
     public int restHealAmount;
 
@@ -284,6 +313,28 @@ public class RewardPoolData : INumericDataRecord
     public string id;
     public int[] magicIds = Array.Empty<int>();
 
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class BonusRewardData
+{
+    public BonusRewardType rewardType;
+    public string rewardName;
+    public int amount;
+    public string texturePath;
+}
+
+[Serializable]
+public class BonusLevelData : IDataRecord, INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public int radius = 2;
+    public int drawCount = 5;
+    public BonusRewardData[] rewards = Array.Empty<BonusRewardData>();
+
+    public string Id => id;
     public int NumericId => numericId;
 }
 

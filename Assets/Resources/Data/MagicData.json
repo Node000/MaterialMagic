@@ -11,7 +11,7 @@
       "effectType": 4,
       "buffType": 2,
       "buffAmount": 2,
-      "iconName": "Sample",
+      "iconName": "5",
       "numericId": 1,
       "element": 1,
       "tagIds": [
@@ -29,7 +29,7 @@
       ],
       "effectType": 1,
       "power": 5,
-      "iconName": "Sample",
+      "iconName": "6",
       "numericId": 2,
       "element": 1,
       "tagIds": [
@@ -48,7 +48,7 @@
       ],
       "effectType": 2,
       "power": 9,
-      "iconName": "Sample",
+      "iconName": "7",
       "numericId": 3,
       "element": 1,
       "tagIds": [
@@ -67,7 +67,7 @@
       "effectType": 4,
       "buffType": 2,
       "buffAmount": 3,
-      "iconName": "Sample",
+      "iconName": "8",
       "numericId": 4,
       "element": 1,
       "tagIds": [
@@ -86,7 +86,7 @@
       ],
       "effectType": 1,
       "power": 9,
-      "iconName": "Sample",
+      "iconName": "9",
       "numericId": 5,
       "element": 1,
       "tagIds": [
@@ -103,7 +103,7 @@
         2
       ],
       "effectType": 1,
-      "iconName": "Sample",
+      "iconName": "10",
       "numericId": 6,
       "element": 1,
       "tagIds": [
@@ -124,7 +124,7 @@
       "effectType": 4,
       "buffType": 2,
       "buffAmount": 8,
-      "iconName": "Sample",
+      "iconName": "11",
       "numericId": 7,
       "element": 1,
       "tagIds": [
@@ -142,7 +142,7 @@
         3
       ],
       "effectType": 5,
-      "iconName": "Sample",
+      "iconName": "12",
       "numericId": 8,
       "element": 1,
       "tagIds": [
@@ -159,7 +159,7 @@
       ],
       "effectType": 1,
       "power": 3,
-      "iconName": "Sample",
+      "iconName": "13",
       "numericId": 9,
       "element": 2,
       "tagIds": []
@@ -175,7 +175,7 @@
       ],
       "effectType": 1,
       "power": 6,
-      "iconName": "Sample",
+      "iconName": "14",
       "numericId": 10,
       "element": 2,
       "tagIds": []
@@ -192,7 +192,7 @@
       ],
       "effectType": 1,
       "power": 4,
-      "iconName": "Sample",
+      "iconName": "15",
       "numericId": 11,
       "element": 2,
       "tagIds": []
@@ -208,7 +208,7 @@
       ],
       "effectType": 1,
       "power": 4,
-      "iconName": "Sample",
+      "iconName": "16",
       "numericId": 12,
       "element": 2,
       "tagIds": [
@@ -229,7 +229,7 @@
       "effectType": 4,
       "buffType": 12,
       "buffAmount": 1,
-      "iconName": "Sample",
+      "iconName": "17",
       "numericId": 13,
       "element": 2,
       "tagIds": [
@@ -248,7 +248,7 @@
       "effectType": 4,
       "buffType": 15,
       "buffAmount": 1,
-      "iconName": "Sample",
+      "iconName": "18",
       "numericId": 14,
       "element": 2,
       "tagIds": [
@@ -267,7 +267,7 @@
       ],
       "effectType": 1,
       "power": 3,
-      "iconName": "Sample",
+      "iconName": "19",
       "numericId": 15,
       "element": 2,
       "tagIds": [
@@ -286,7 +286,7 @@
       ],
       "effectType": 1,
       "power": 5,
-      "iconName": "Sample",
+      "iconName": "20",
       "numericId": 16,
       "element": 2,
       "tagIds": [
@@ -304,7 +304,7 @@
       ],
       "effectType": 1,
       "power": 4,
-      "iconName": "Sample",
+      "iconName": "21",
       "numericId": 17,
       "element": 3,
       "tagIds": [
@@ -323,7 +323,7 @@
       "effectType": 4,
       "buffType": 7,
       "buffAmount": 2,
-      "iconName": "Sample",
+      "iconName": "22",
       "numericId": 18,
       "element": 3,
       "tagIds": [
@@ -344,7 +344,7 @@
       "effectType": 4,
       "buffType": 8,
       "buffAmount": 2,
-      "iconName": "Sample",
+      "iconName": "23",
       "numericId": 19,
       "element": 3,
       "tagIds": []
@@ -361,7 +361,7 @@
       "effectType": 1,
       "power": 1,
       "hitCount": 3,
-      "iconName": "Sample",
+      "iconName": "24",
       "numericId": 20,
       "element": 3,
       "tagIds": []
@@ -378,7 +378,7 @@
       ],
       "effectType": 1,
       "power": 5,
-      "iconName": "Sample",
+      "iconName": "25",
       "numericId": 21,
       "element": 3,
       "tagIds": [
@@ -399,7 +399,7 @@
       ],
       "effectType": 2,
       "power": 7,
-      "iconName": "Sample",
+      "iconName": "26",
       "numericId": 22,
       "element": 3,
       "tagIds": [
@@ -419,7 +419,7 @@
       ],
       "effectType": 1,
       "power": 10,
-      "iconName": "Sample",
+      "iconName": "27",
       "numericId": 23,
       "element": 3,
       "tagIds": []
@@ -435,7 +435,7 @@
       "effectType": 4,
       "buffType": 6,
       "buffAmount": 1,
-      "iconName": "Sample",
+      "iconName": "28",
       "numericId": 24,
       "element": 3,
       "tagIds": [
@@ -452,7 +452,7 @@
       ],
       "effectType": 2,
       "power": 4,
-      "iconName": "Sample",
+      "iconName": "29",
       "numericId": 25,
       "element": 4,
       "tagIds": []
@@ -468,7 +468,7 @@
       ],
       "effectType": 2,
       "power": 6,
-      "iconName": "Sample",
+      "iconName": "30",
       "numericId": 26,
       "element": 4,
       "tagIds": [
@@ -486,7 +486,7 @@
       ],
       "effectType": 1,
       "power": 3,
-      "iconName": "Sample",
+      "iconName": "31",
       "numericId": 27,
       "element": 4,
       "tagIds": []
@@ -502,7 +502,7 @@
       ],
       "effectType": 1,
       "power": 4,
-      "iconName": "Sample",
+      "iconName": "32",
       "numericId": 28,
       "element": 4,
       "tagIds": [
@@ -521,7 +521,7 @@
       ],
       "effectType": 2,
       "power": 6,
-      "iconName": "Sample",
+      "iconName": "33",
       "numericId": 29,
       "element": 4,
       "tagIds": []
@@ -538,7 +538,7 @@
       ],
       "effectType": 2,
       "power": 10,
-      "iconName": "Sample",
+      "iconName": "34",
       "numericId": 30,
       "element": 4,
       "tagIds": [
@@ -557,7 +557,7 @@
       ],
       "effectType": 2,
       "power": 8,
-      "iconName": "Sample",
+      "iconName": "35",
       "numericId": 31,
       "element": 4,
       "tagIds": [
@@ -577,7 +577,7 @@
       ],
       "effectType": 2,
       "power": 5,
-      "iconName": "Sample",
+      "iconName": "36",
       "numericId": 32,
       "element": 4,
       "tagIds": []
