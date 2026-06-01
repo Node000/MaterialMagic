@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PlayerIdleFloat
+  m_Name: PlayerMagicSelection
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -138,9 +138,9 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 21300000, guid: efffa2826e427b24286cbf328f65c415, type: 3}
+      value: {fileID: 21300000, guid: fc2bf35d215471543ad1a7fe85e34141, type: 3}
     - time: 1.2
-      value: {fileID: 21300000, guid: efffa2826e427b24286cbf328f65c415, type: 3}
+      value: {fileID: 21300000, guid: fc2bf35d215471543ad1a7fe85e34141, type: 3}
     attribute: m_Sprite
     path: PlayerSprite
     classID: 114
@@ -190,8 +190,8 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: 21300000, guid: efffa2826e427b24286cbf328f65c415, type: 3}
-    - {fileID: 21300000, guid: efffa2826e427b24286cbf328f65c415, type: 3}
+    - {fileID: 21300000, guid: fc2bf35d215471543ad1a7fe85e34141, type: 3}
+    - {fileID: 21300000, guid: fc2bf35d215471543ad1a7fe85e34141, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
