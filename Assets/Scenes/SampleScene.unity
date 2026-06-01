@@ -1015,6 +1015,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot1
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
+      objectReference: {fileID: 0}
+    - target: {fileID: 6213850469525854393, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_UseGraphicAlpha
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10733,6 +10741,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot4
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11805,6 +11817,10 @@ PrefabInstance:
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -17841,6 +17857,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot2
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -22133,6 +22153,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot5
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -23262,8 +23286,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -5.39, y: 0}
-  m_SizeDelta: {x: 1080, y: 720}
+  m_AnchoredPosition: {x: 177, y: 98}
+  m_SizeDelta: {x: 1468.81, y: 979.2}
   m_Pivot: {x: 0.62917066, y: 0.22873989}
 --- !u!114 &1844637160
 MonoBehaviour:
@@ -23353,7 +23377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.52385175, g: 0.5384895, b: 0.6855345, a: 1}
+  m_Color: {r: 0.8666667, g: 0.15294118, b: 0.39215687, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25651,6 +25675,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot3
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 21.900002
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -27354,7 +27382,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.54901963, g: 0.33333334, b: 0.13333334, a: 1}
+  m_Color: {r: 0.899371, g: 0.082018025, b: 0.31842443, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
