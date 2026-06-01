@@ -55,6 +55,9 @@ public class HandSystemUI : MonoBehaviour
 	private RectTransform deckPileArea;
 
 	[SerializeField]
+	private RectTransform discardPileArea;
+
+	[SerializeField]
 	private RectTransform magicBookArea;
 
 	[SerializeField]
@@ -83,6 +86,9 @@ public class HandSystemUI : MonoBehaviour
 
 	[SerializeField]
 	private TMP_Text deckCountText;
+
+	[SerializeField]
+	private TMP_Text discardCountText;
 
 	[Header("Buff栏参数")]
 	[SerializeField]
@@ -365,6 +371,10 @@ public class HandSystemUI : MonoBehaviour
     private const int EnemyDeathShardRows = 4;
 
     private const float EnemyDeathExplosionDistance = 120f;
+
+    private const int DiscardShuffleAnimationMaxCards = 18;
+
+    private const float DiscardShuffleAnimationStagger = 0.035f;
 
     private const string EnemyDeathExplosionMaterialPath = "Materials/Style/Sprite/M_Sprite_FragmentExplosion_Default";
 
@@ -1422,12 +1432,13 @@ public class HandSystemUI : MonoBehaviour
 
 		playerState = saveData != null ? RunSaveSystem.CreatePlayer(saveData) : PlayerState.CreateDefault();
         playerState.BuffAdded += OnPlayerBuffAdded;
+        playerState.DiscardPileShuffledIntoDrawPile += OnDiscardPileShuffledIntoDrawPile;
 		battleManager = BattleManager.Create(playerState);
         battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
 		GetUIManager();
-		EnsureMaterialListButton();
+		EnsurePileButtons();
 			CreateTopBar();
         if (saveData != null)
         {
@@ -1512,7 +1523,10 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00ea: Expected O, but got Unknown
         SaveRunProgress();
         if (playerState != null)
+        {
             playerState.BuffAdded -= OnPlayerBuffAdded;
+            playerState.DiscardPileShuffledIntoDrawPile -= OnDiscardPileShuffledIntoDrawPile;
+        }
         if (battleManager != null)
         {
             battleManager.EnemyAdded -= OnBattleEnemyAdded;
@@ -1526,6 +1540,14 @@ public class HandSystemUI : MonoBehaviour
 			if ((Object)(object)component != (Object)null)
 			{
 				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
+			}
+		}
+		if ((Object)(object)discardPileArea != (Object)null)
+		{
+			Button component = ((Component)discardPileArea).GetComponent<Button>();
+			if ((Object)(object)component != (Object)null)
+			{
+				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleDiscardPilePanel));
 			}
 		}
 		DOTween.Kill((object)this, false);
@@ -1655,7 +1677,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.EndTurn(removedTemporaryCards);
 		RefreshStaticUI();
 		bool returnDone = false;
-		AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+		AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
 		{
 			returnDone = true;
 		});
@@ -1952,7 +1974,7 @@ public class HandSystemUI : MonoBehaviour
         playerState.EndTurn(removedTemporaryCards);
         RefreshStaticUI();
         bool returnDone = false;
-        AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+        AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
         {
             returnDone = true;
         });
@@ -1988,7 +2010,7 @@ public class HandSystemUI : MonoBehaviour
         playerState.EndTurn(removedTemporaryCards);
         RefreshStaticUI();
         bool returnDone = false;
-        AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+        AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
         {
             returnDone = true;
         });
@@ -2053,7 +2075,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.EndTurn(removedTemporaryCards);
 		RefreshStaticUI();
 		bool returnDone = false;
-		AnimateReturningViews(list, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+		AnimateReturningViews(list, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
 		{
 			returnDone = true;
 		});
@@ -2764,30 +2786,42 @@ public class HandSystemUI : MonoBehaviour
 		RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
 		if ((Object)(object)deckCountText != (Object)null)
 		{
-			deckCountText.text = "素材列表";
+			deckCountText.text = playerState != null ? $"抽牌堆\n{playerState.DrawPile.Count}" : "抽牌堆";
+		}
+		if ((Object)(object)discardCountText != (Object)null)
+		{
+			discardCountText.text = playerState != null ? $"弃牌堆\n{playerState.DiscardPile.Count}" : "弃牌堆";
 		}
         RefreshPlayerAnimationState();
 	}
 
-	private void EnsureMaterialListButton()
+	private void EnsurePileButtons()
 	{
-		if (deckPileArea == null)
-		{
+		BindPileButton(deckPileArea, ToggleMaterialListPanel);
+		BindPileButton(discardPileArea, ToggleDiscardPilePanel);
+	}
+
+	private void BindPileButton(RectTransform pileArea, UnityAction action)
+	{
+		if (pileArea == null)
 			return;
-		}
-		Button button = deckPileArea.GetComponent<Button>();
+
+		Button button = pileArea.GetComponent<Button>();
 		if (button == null)
-		{
-			button = deckPileArea.gameObject.AddComponent<Button>();
-		}
-		button.onClick.RemoveListener(ToggleMaterialListPanel);
-		button.onClick.AddListener(ToggleMaterialListPanel);
-		AddJuicyMotion((Transform)(object)deckPileArea);
+			button = pileArea.gameObject.AddComponent<Button>();
+		button.onClick.RemoveListener(action);
+		button.onClick.AddListener(action);
+		AddJuicyMotion((Transform)(object)pileArea);
 	}
 
 	private void ToggleMaterialListPanel()
 	{
 		GetUIManager().ToggleMaterialListPanel();
+	}
+
+	private void ToggleDiscardPilePanel()
+	{
+		GetUIManager().ToggleDiscardPilePanel();
 	}
 
 	private void RefreshMaterialListPanel()
@@ -3657,7 +3691,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.EndTurn(removedTemporaryCards);
         playerState.ClearCombatState();
 		bool returnDone = false;
-		AnimateReturningViews(views, removedTemporaryCards, deckPileArea, (TweenCallback)delegate
+		AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
 		{
 			returnDone = true;
 		});
@@ -5048,6 +5082,57 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
+    private void OnDiscardPileShuffledIntoDrawPile(IReadOnlyList<MaterialModel> cards)
+    {
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        PlayDiscardPileShuffleAnimation(cards);
+    }
+
+    private void PlayDiscardPileShuffleAnimation(IReadOnlyList<MaterialModel> cards)
+    {
+        RectTransform sourceArea = GetDiscardPileArea();
+        RectTransform animationRoot = transform as RectTransform;
+        if (cards == null || cards.Count == 0 || cardPrefab == null || deckPileArea == null || sourceArea == null || animationRoot == null)
+            return;
+
+        int count = Mathf.Min(cards.Count, DiscardShuffleAnimationMaxCards);
+        Vector3 sourcePosition = GetAreaCenterWorldPosition(sourceArea);
+        Vector3 targetPosition = GetAreaCenterWorldPosition(deckPileArea);
+        Vector3 sourceScale = GetScaleRelativeToParent(sourceArea, animationRoot);
+        Vector3 targetScale = GetScaleRelativeToParent(deckPileArea, animationRoot);
+        Vector2 sourceSize = sourceArea.rect.size;
+        Vector2 targetSize = deckPileArea.rect.size;
+
+        for (int i = 0; i < count; i++)
+        {
+            RectTransform clone = Object.Instantiate(cardPrefab, animationRoot);
+            clone.gameObject.SetActive(true);
+            clone.SetAsLastSibling();
+            HandCardView view = clone.GetComponent<HandCardView>();
+            if (view != null)
+                view.Bind(cards[i], false);
+            UIManager.RemoveJuicyMotion(clone.transform);
+            DisableGraphicRaycasts(clone);
+
+            clone.position = sourcePosition;
+            clone.rotation = sourceArea.rotation;
+            clone.localScale = sourceScale;
+            clone.sizeDelta = sourceSize;
+            RectTransform animatedClone = clone;
+            Sequence sequence = DOTween.Sequence().SetTarget(this).SetDelay(i * DiscardShuffleAnimationStagger);
+            sequence.Join(animatedClone.DOMove(targetPosition, layoutDuration).SetEase(layoutEase));
+            sequence.Join(animatedClone.DORotateQuaternion(deckPileArea.rotation, layoutDuration).SetEase(layoutEase));
+            sequence.Join(animatedClone.DOScale(targetScale, layoutDuration).SetEase(layoutEase));
+            sequence.Join(animatedClone.DOSizeDelta(targetSize, layoutDuration).SetEase(layoutEase));
+            sequence.OnComplete(() =>
+            {
+                if (animatedClone != null)
+                    Object.Destroy(animatedClone.gameObject);
+            });
+        }
+    }
+
 	private IEnumerator PlayMagicAcquireAnimation(MagicData magicData, int slotIndex, RectTransform sourceRect)
     {
         RectTransform targetRect = GetMagicSlotRect(slotIndex);
@@ -5420,7 +5505,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private RectTransform GetDiscardPileArea()
 	{
-		return deckPileArea;
+		return discardPileArea != null ? discardPileArea : deckPileArea;
 	}
 
 	private static Vector3 GetAreaCenterWorldPosition(RectTransform area)

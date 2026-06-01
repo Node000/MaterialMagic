@@ -208,7 +208,12 @@ public class UIManager : MonoBehaviour
 
     public void ToggleMaterialListPanel()
     {
-        materialListPanelUI?.Toggle();
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.DrawPile);
+    }
+
+    public void ToggleDiscardPilePanel()
+    {
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.DiscardPile);
     }
 
     public void RefreshMaterialListPanel()

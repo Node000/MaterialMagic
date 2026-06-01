@@ -9,6 +9,7 @@ public class PlayerState
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
 
     public event System.Action<BuffEnum, int> BuffAdded;
+    public event System.Action<IReadOnlyList<MaterialModel>> DiscardPileShuffledIntoDrawPile;
 
     private int temporaryMaterialIndex;
 
@@ -129,8 +130,10 @@ public class PlayerState
         if (DiscardPile.Count == 0)
             return false;
 
-        DrawPile.AddRange(DiscardPile);
+        List<MaterialModel> shuffledCards = new List<MaterialModel>(DiscardPile);
+        DrawPile.AddRange(shuffledCards);
         DiscardPile.Clear();
+        DiscardPileShuffledIntoDrawPile?.Invoke(shuffledCards);
         GameLog.Data($"Shuffle discard pile into draw pile. drawPile={DrawPile.Count}");
         return true;
     }

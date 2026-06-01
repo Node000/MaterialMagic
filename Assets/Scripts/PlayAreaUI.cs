@@ -31,12 +31,9 @@ public class PlayAreaUI : MonoBehaviour
         CacheReferences();
         if (resolveIndicator != null)
         {
-            Image image = resolveIndicator.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = new Color(1f, 0.86f, 0.18f, 1f);
-                image.raycastTarget = false;
-            }
+            Graphic graphic = resolveIndicator.GetComponent<Graphic>();
+            if (graphic != null)
+                graphic.raycastTarget = false;
             resolveIndicator.gameObject.SetActive(false);
         }
         UpdateContinuousCastCounter(0, true);
@@ -130,6 +127,8 @@ public class PlayAreaUI : MonoBehaviour
 
     private void CacheReferences()
     {
+        if (resolveIndicator == null)
+            resolveIndicator = UIManager.FindChildRect(transform, "CastRange");
         if (resolveIndicator == null)
             resolveIndicator = UIManager.FindChildRect(transform, "ResolveIndicator");
         if (continuousCastCounterRect == null)

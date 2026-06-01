@@ -1,64 +1,64 @@
 {
   "items": [
     {
+      "buffType": 1,
+      "iconName": "DefaultBuff"
+    },
+    {
       "buffType": 2,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 3,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 6,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 7,
-      "iconName": "Sample"
-    },
-    {
-      "buffType": 8,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 9,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 10,
-      "iconName": "Sample"
+      "iconName": "AttackUP"
     },
     {
       "buffType": 11,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 12,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 13,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 14,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 15,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 16,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 17,
-      "iconName": "Sample"
+      "iconName": "DefaultBuff"
     },
     {
       "buffType": 18,
-      "iconName": "Sample"
+      "iconName": "DefendUP"
     }
   ]
 }

@@ -10,6 +10,8 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private StartMenuButtonGroupUI buttonGroupUI;
     [SerializeField] private StartConfigSelectionUI startConfigSelectionUI;
     [SerializeField] private SaveSlotSelectionPanelUI saveSlotSelectionPanelUI;
+    [SerializeField] private StartTutorialPanelUI tutorialPanelUI;
+    [SerializeField] private Button tutorialButton;
     [SerializeField] private Button changeSaveButton;
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
     [SerializeField] private StartExitConfirmPanelUI exitConfirmPanelUI;
@@ -28,6 +30,8 @@ public class StartMenuUI : MonoBehaviour
         buttonGroupUI.SettingsClicked += OpenSettings;
         buttonGroupUI.ExitClicked += ExitGame;
         startConfigSelectionUI.ConfigSelected += SelectConfig;
+        if (tutorialButton != null)
+            tutorialButton.onClick.AddListener(OpenTutorial);
         if (changeSaveButton != null)
             changeSaveButton.onClick.AddListener(OpenSaveSlotSelection);
         settingsPanelUI.Hidden += HandleSettingsHidden;
@@ -44,6 +48,8 @@ public class StartMenuUI : MonoBehaviour
         }
         if (startConfigSelectionUI != null)
             startConfigSelectionUI.ConfigSelected -= SelectConfig;
+        if (tutorialButton != null)
+            tutorialButton.onClick.RemoveListener(OpenTutorial);
         if (changeSaveButton != null)
             changeSaveButton.onClick.RemoveListener(OpenSaveSlotSelection);
         if (settingsPanelUI != null)
@@ -52,7 +58,7 @@ public class StartMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if ((selectingStartConfig || confirmingExit || settingsPanelUI.IsShowing || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
+        if ((selectingStartConfig || confirmingExit || settingsPanelUI.IsShowing || (tutorialPanelUI != null && tutorialPanelUI.IsShowing) || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
             HideAllPanels();
     }
 
@@ -64,6 +70,10 @@ public class StartMenuUI : MonoBehaviour
             startConfigSelectionUI = GetComponentInChildren<StartConfigSelectionUI>(true);
         if (saveSlotSelectionPanelUI == null)
             saveSlotSelectionPanelUI = GetComponentInChildren<SaveSlotSelectionPanelUI>(true);
+        if (tutorialPanelUI == null)
+            tutorialPanelUI = GetComponentInChildren<StartTutorialPanelUI>(true);
+        if (tutorialButton == null)
+            tutorialButton = transform.Find("TutorialButton")?.GetComponent<Button>();
         if (changeSaveButton == null)
             changeSaveButton = transform.Find("ChangeSaveButton")?.GetComponent<Button>();
         if (settingsPanelUI == null)
@@ -89,6 +99,7 @@ public class StartMenuUI : MonoBehaviour
     {
         HideStartConfigSelection();
         HideExitConfirm();
+        HideTutorial();
         settingsPanelUI.Hide();
         saveSlotSelectionPanelUI.Show(SelectSaveSlot);
     }
@@ -127,6 +138,7 @@ public class StartMenuUI : MonoBehaviour
         selectedConfig = null;
         buttonGroupUI.SetStartConfigMode(true);
         HideExitConfirm();
+        HideTutorial();
         settingsPanelUI.Hide();
         saveSlotSelectionPanelUI.Hide();
         startConfigSelectionUI.Show();
@@ -152,9 +164,28 @@ public class StartMenuUI : MonoBehaviour
     {
         HideStartConfigSelection();
         HideExitConfirm();
+        HideTutorial();
         saveSlotSelectionPanelUI.Hide();
         buttonGroupUI.SetSettingsMode(true);
         settingsPanelUI.Show();
+    }
+
+    private void OpenTutorial()
+    {
+        if (tutorialPanelUI == null)
+            return;
+
+        HideStartConfigSelection();
+        HideExitConfirm();
+        saveSlotSelectionPanelUI.Hide();
+        settingsPanelUI.Hide();
+        tutorialPanelUI.Show();
+    }
+
+    private void HideTutorial()
+    {
+        if (tutorialPanelUI != null)
+            tutorialPanelUI.Hide();
     }
 
     private void HandleSettingsHidden()
@@ -170,6 +201,7 @@ public class StartMenuUI : MonoBehaviour
             HideStartConfigSelection();
             saveSlotSelectionPanelUI.Hide();
             settingsPanelUI.Hide();
+            HideTutorial();
             ShowExitConfirm();
             return;
         }
@@ -203,8 +235,9 @@ public class StartMenuUI : MonoBehaviour
         HideStartConfigSelection();
         saveSlotSelectionPanelUI.Hide();
         settingsPanelUI.Hide();
+        HideTutorial();
         HideExitConfirm();
-        if (!selectingStartConfig && !confirmingExit && !settingsPanelUI.IsShowing)
+        if (!selectingStartConfig && !confirmingExit && !settingsPanelUI.IsShowing && (tutorialPanelUI == null || !tutorialPanelUI.IsShowing))
             buttonGroupUI.ClearActiveOption();
     }
 
@@ -222,9 +255,11 @@ public class StartMenuUI : MonoBehaviour
         {
             Transform hit = raycastResults[i].gameObject.transform;
             if (buttonGroupUI.Contains(hit) ||
+                (tutorialButton != null && hit.IsChildOf(tutorialButton.transform)) ||
                 (changeSaveButton != null && hit.IsChildOf(changeSaveButton.transform)) ||
                 startConfigSelectionUI.Contains(hit) ||
                 (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.Contains(hit)) ||
+                (tutorialPanelUI != null && tutorialPanelUI.Contains(hit)) ||
                 exitConfirmPanelUI.Contains(hit) ||
                 settingsPanelUI.Contains(hit))
                 return false;

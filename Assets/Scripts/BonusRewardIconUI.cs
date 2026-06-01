@@ -34,7 +34,10 @@ public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerEx
         }
 
         if (amountText != null)
-            amountText.text = rewardData.amount > 1 ? rewardData.amount.ToString() : string.Empty;
+        {
+            amountText.text = string.Empty;
+            amountText.gameObject.SetActive(false);
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)

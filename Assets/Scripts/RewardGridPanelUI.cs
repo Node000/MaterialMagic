@@ -378,7 +378,7 @@ public class RewardGridPanelUI : MonoBehaviour
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = Vector2.zero;
-        float size = Mathf.Clamp(cellSize * 0.72f, 20f, 36f);
+        float size = Mathf.Clamp(cellSize * 1.44f, 40f, 72f);
         rect.sizeDelta = new Vector2(size, size);
         icon.Bind(this, rewardData);
         return icon;
@@ -401,19 +401,6 @@ public class RewardGridPanelUI : MonoBehaviour
         iconRect.offsetMax = Vector2.zero;
         iconImageObject.GetComponent<Image>().raycastTarget = false;
 
-        GameObject amountObject = new GameObject("AmountText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        amountObject.transform.SetParent(iconObject.transform, false);
-        RectTransform amountRect = amountObject.GetComponent<RectTransform>();
-        amountRect.anchorMin = new Vector2(0f, 0f);
-        amountRect.anchorMax = new Vector2(1f, 0.45f);
-        amountRect.offsetMin = Vector2.zero;
-        amountRect.offsetMax = Vector2.zero;
-        TMP_Text text = amountObject.GetComponent<TMP_Text>();
-        text.font = GetDefaultFont();
-        text.fontSize = 12;
-        text.alignment = TextAlignmentOptions.Center;
-        text.color = Color.white;
-        text.raycastTarget = false;
         return iconObject.GetComponent<BonusRewardIconUI>();
     }
 

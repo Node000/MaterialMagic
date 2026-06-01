@@ -9,13 +9,12 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text labelText;
-    [SerializeField] private float selectedScale = 1.15f;
-    [SerializeField] private float hoverTilt = 7f;
+    [SerializeField] private SpringLineHighlightUI springHighlight;
+    [SerializeField] private float selectedScale = 1f;
+    [SerializeField] private float hoverTilt = 0f;
     [SerializeField] private float feedbackDuration = 0.18f;
     [SerializeField] private Ease feedbackEase = Ease.OutBack;
 
-    private readonly Color selectedFrameColor = new Color(1f, 0.86f, 0.2f, 1f);
-    private readonly Color normalFrameColor = new Color(0.18f, 0.18f, 0.18f, 1f);
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween feedbackTween;
@@ -34,6 +33,10 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
+        CacheSpringHighlight();
+        SetFrameTransparent();
+        RefreshSpringHighlight();
+
         JuicyMotion juicyMotion = GetComponent<JuicyMotion>();
         if (juicyMotion != null)
             juicyMotion.enabled = false;
@@ -41,6 +44,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     private void OnDisable()
     {
+        hovered = false;
+        RefreshSpringHighlight();
         owner?.HideModifierTooltip(this);
         feedbackTween?.Kill(false);
         feedbackTween = null;
@@ -80,8 +85,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void SetSelected(bool value, bool instant)
     {
         selected = value;
-        if (frameImage != null)
-            frameImage.color = selected ? selectedFrameColor : normalFrameColor;
+        SetFrameTransparent();
+        RefreshSpringHighlight();
 
         PlayFeedback(instant);
     }
@@ -109,6 +114,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void OnPointerEnter(PointerEventData eventData)
     {
         hovered = true;
+        RefreshSpringHighlight();
         PlayFeedback(false);
         owner?.ShowModifierTooltip(this, card);
     }
@@ -116,12 +122,15 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
+        RefreshSpringHighlight();
         PlayFeedback(false);
         owner?.HideModifierTooltip(this);
     }
 
     private void RefreshVisual()
     {
+        SetFrameTransparent();
+
         if (labelText != null)
             labelText.text = MaterialCardView.GetMaterialName(card.material);
 
@@ -140,6 +149,28 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(card.material);
             iconImage.preserveAspect = true;
         }
+    }
+
+    private void CacheSpringHighlight()
+    {
+        if (springHighlight == null)
+            springHighlight = GetComponentInChildren<SpringLineHighlightUI>(true);
+
+        if (springHighlight != null)
+            springHighlight.raycastTarget = false;
+    }
+
+    private void SetFrameTransparent()
+    {
+        if (frameImage != null)
+            frameImage.color = Color.clear;
+    }
+
+    private void RefreshSpringHighlight()
+    {
+        CacheSpringHighlight();
+        if (springHighlight != null)
+            springHighlight.gameObject.SetActive(selected || hovered);
     }
 
     private string GetModifierLabel()

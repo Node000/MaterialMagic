@@ -7,6 +7,13 @@ using TMPro;
 
 public class MaterialListPanelUI : MonoBehaviour
 {
+    public enum DisplayMode
+    {
+        FullDeck,
+        DrawPile,
+        DiscardPile
+    }
+
     [SerializeField] private RectTransform waterMaterialRow;
     [SerializeField] private RectTransform fireMaterialRow;
     [SerializeField] private RectTransform windMaterialRow;
@@ -14,6 +21,9 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private RectTransform materialCardPrefab;
     [SerializeField] private float materialRowMinSpacing = 16f;
     [SerializeField] private float materialRowMaxSpacing = 140f;
+    [SerializeField] private float compactMaterialRowMinSpacing = 4f;
+    [SerializeField] private float compactMaterialRowMaxSpacing = 72f;
+    [SerializeField] private float compactMaterialCardScale = 0.72f;
     [Header("动画参数")]
     [SerializeField] private float tooltipFadeDuration = 0.12f;
     [SerializeField] private float tooltipScaleDuration = 0.18f;
@@ -23,6 +33,7 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private float tooltipYOffset = 72f;
 
     private HandSystemUI owner;
+    private TMP_Text titleText;
     private RectTransform modifierTooltip;
     private RectTransform modifierTooltipContent;
     private CanvasGroup modifierTooltipCanvasGroup;
@@ -33,6 +44,7 @@ public class MaterialListPanelUI : MonoBehaviour
     private Action<IReadOnlyList<MaterialModel>> selectionCompleted;
     private int selectionCount;
     private bool selectionLocked;
+    private DisplayMode displayMode = DisplayMode.DrawPile;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -43,15 +55,24 @@ public class MaterialListPanelUI : MonoBehaviour
 
     public void Toggle()
     {
+        Toggle(DisplayMode.DrawPile);
+    }
+
+    public void Toggle(DisplayMode mode)
+    {
         if (selectionLocked)
             return;
 
-        bool show = !gameObject.activeSelf;
-        gameObject.SetActive(show);
-        if (show)
-            Refresh();
-        else
+        if (gameObject.activeSelf && displayMode == mode)
+        {
             ClearSelectionMode();
+            gameObject.SetActive(false);
+            return;
+        }
+
+        displayMode = mode;
+        gameObject.SetActive(true);
+        Refresh();
     }
 
     public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted)
@@ -60,6 +81,7 @@ public class MaterialListPanelUI : MonoBehaviour
         selectionPredicate = predicate;
         selectionCompleted = onCompleted;
         selectionLocked = true;
+        displayMode = DisplayMode.FullDeck;
         selectedMaterials.Clear();
         gameObject.SetActive(true);
         Refresh();
@@ -91,6 +113,7 @@ public class MaterialListPanelUI : MonoBehaviour
     public void Refresh()
     {
         CacheReferences();
+        RefreshTitle();
         RefreshRow(waterMaterialRow, MaterialEnum.Water);
         RefreshRow(fireMaterialRow, MaterialEnum.Fire);
         RefreshRow(windMaterialRow, MaterialEnum.Wind);
@@ -187,11 +210,38 @@ public class MaterialListPanelUI : MonoBehaviour
             windMaterialRow = UIManager.FindChildRect(transform, "WindRow");
         if (earthMaterialRow == null)
             earthMaterialRow = UIManager.FindChildRect(transform, "EarthRow");
+        if (titleText == null)
+            titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (materialCardPrefab == null)
         {
             PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
             if (library != null)
                 materialCardPrefab = library.MaterialCardPrefab;
+        }
+    }
+
+    private void RefreshTitle()
+    {
+        if (titleText == null)
+            return;
+
+        if (selectionCompleted != null)
+        {
+            titleText.text = "选择素材";
+            return;
+        }
+
+        switch (displayMode)
+        {
+            case DisplayMode.DiscardPile:
+                titleText.text = "弃牌堆";
+                break;
+            case DisplayMode.DrawPile:
+                titleText.text = "抽牌堆";
+                break;
+            default:
+                titleText.text = "素材列表";
+                break;
         }
     }
 
@@ -203,36 +253,75 @@ public class MaterialListPanelUI : MonoBehaviour
         for (int i = row.childCount - 1; i >= 0; i--)
             Destroy(row.GetChild(i).gameObject);
 
-        int materialCount = 0;
-        for (int i = 0; i < owner.PlayerState.Deck.Count; i++)
-            materialCount += CountMaterialRows(owner.PlayerState.Deck[i], material);
-        for (int i = 0; i < owner.PlayerState.Hand.Count; i++)
-        {
-            MaterialModel materialModel = owner.PlayerState.Hand[i];
-            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
-                materialCount += CountMaterialRows(materialModel, material);
-        }
-        for (int i = 0; i < owner.PlayerState.PlayZone.Count; i++)
-        {
-            MaterialModel materialModel = owner.PlayerState.PlayZone[i];
-            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
-                materialCount += CountMaterialRows(materialModel, material);
-        }
-
+        int materialCount = CountMaterialsForDisplay(material);
         ApplyRowSpacing(row, materialCount);
+        CreateMaterialCardsForDisplay(row, material);
+    }
 
-        for (int i = 0; i < owner.PlayerState.Deck.Count; i++)
-            CreateMaterialCardsForRow(row, owner.PlayerState.Deck[i], material);
-        for (int i = 0; i < owner.PlayerState.Hand.Count; i++)
+    private int CountMaterialsForDisplay(MaterialEnum material)
+    {
+        PlayerState state = owner.PlayerState;
+        int count = 0;
+        if (selectionCompleted == null && displayMode == DisplayMode.DrawPile)
         {
-            MaterialModel materialModel = owner.PlayerState.Hand[i];
-            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+            for (int i = 0; i < state.DrawPile.Count; i++)
+                count += CountMaterialRows(state.DrawPile[i], material);
+            return count;
+        }
+
+        if (selectionCompleted == null && displayMode == DisplayMode.DiscardPile)
+        {
+            for (int i = 0; i < state.DiscardPile.Count; i++)
+                count += CountMaterialRows(state.DiscardPile[i], material);
+            return count;
+        }
+
+        for (int i = 0; i < state.Deck.Count; i++)
+            count += CountMaterialRows(state.Deck[i], material);
+        for (int i = 0; i < state.Hand.Count; i++)
+        {
+            MaterialModel materialModel = state.Hand[i];
+            if (materialModel != null && !state.Deck.Contains(materialModel))
+                count += CountMaterialRows(materialModel, material);
+        }
+        for (int i = 0; i < state.PlayZone.Count; i++)
+        {
+            MaterialModel materialModel = state.PlayZone[i];
+            if (materialModel != null && !state.Deck.Contains(materialModel))
+                count += CountMaterialRows(materialModel, material);
+        }
+        return count;
+    }
+
+    private void CreateMaterialCardsForDisplay(RectTransform row, MaterialEnum material)
+    {
+        PlayerState state = owner.PlayerState;
+        if (selectionCompleted == null && displayMode == DisplayMode.DrawPile)
+        {
+            for (int i = 0; i < state.DrawPile.Count; i++)
+                CreateMaterialCardsForRow(row, state.DrawPile[i], material);
+            return;
+        }
+
+        if (selectionCompleted == null && displayMode == DisplayMode.DiscardPile)
+        {
+            for (int i = 0; i < state.DiscardPile.Count; i++)
+                CreateMaterialCardsForRow(row, state.DiscardPile[i], material);
+            return;
+        }
+
+        for (int i = 0; i < state.Deck.Count; i++)
+            CreateMaterialCardsForRow(row, state.Deck[i], material);
+        for (int i = 0; i < state.Hand.Count; i++)
+        {
+            MaterialModel materialModel = state.Hand[i];
+            if (materialModel != null && !state.Deck.Contains(materialModel))
                 CreateMaterialCardsForRow(row, materialModel, material);
         }
-        for (int i = 0; i < owner.PlayerState.PlayZone.Count; i++)
+        for (int i = 0; i < state.PlayZone.Count; i++)
         {
-            MaterialModel materialModel = owner.PlayerState.PlayZone[i];
-            if (materialModel != null && !owner.PlayerState.Deck.Contains(materialModel))
+            MaterialModel materialModel = state.PlayZone[i];
+            if (materialModel != null && !state.Deck.Contains(materialModel))
                 CreateMaterialCardsForRow(row, materialModel, material);
         }
     }
@@ -273,11 +362,12 @@ public class MaterialListPanelUI : MonoBehaviour
     {
         RectTransform cardRect = Instantiate(materialCardPrefab, parent);
         cardRect.gameObject.SetActive(true);
+        ApplyCardDisplaySize(cardRect);
         MaterialCardView view = cardRect.GetComponent<MaterialCardView>();
         if (view != null)
         {
             view.Initialize(this);
-            bool inactive = selectionCompleted != null ? !IsSelectableInCurrentSelection(materialModel) : IsConsumedInCurrentBattle(materialModel);
+            bool inactive = selectionCompleted != null ? !IsSelectableInCurrentSelection(materialModel) : displayMode == DisplayMode.FullDeck && IsConsumedInCurrentBattle(materialModel);
             view.Bind(materialModel, inactive);
         }
 
@@ -285,6 +375,24 @@ public class MaterialListPanelUI : MonoBehaviour
         if (motion == null)
             motion = cardRect.gameObject.AddComponent<JuicyMotion>();
         motion.enabled = true;
+    }
+
+    private void ApplyCardDisplaySize(RectTransform cardRect)
+    {
+        if (cardRect == null || !IsCompactDisplay())
+            return;
+
+        float scale = Mathf.Clamp(compactMaterialCardScale, 0.4f, 1f);
+        Vector2 prefabSize = materialCardPrefab.rect.size;
+        if (prefabSize.x <= 0f || prefabSize.y <= 0f)
+            prefabSize = materialCardPrefab.sizeDelta;
+        cardRect.sizeDelta = prefabSize * scale;
+        cardRect.localScale = Vector3.one;
+    }
+
+    private bool IsCompactDisplay()
+    {
+        return selectionCompleted == null && displayMode != DisplayMode.FullDeck;
     }
 
     private bool IsConsumedInCurrentBattle(MaterialModel materialModel)
@@ -386,10 +494,26 @@ public class MaterialListPanelUI : MonoBehaviour
     private void ApplyRowSpacing(RectTransform row, int materialCount)
     {
         HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-        if (layout == null || materialCount <= 1 || materialCardPrefab == null)
+        if (layout == null || materialCardPrefab == null)
             return;
 
-        float availableSpacing = (row.rect.width - materialCardPrefab.rect.width * materialCount) / (materialCount - 1);
-        layout.spacing = Mathf.Clamp(availableSpacing, materialRowMinSpacing, materialRowMaxSpacing);
+        float minSpacing = IsCompactDisplay() ? compactMaterialRowMinSpacing : materialRowMinSpacing;
+        if (materialCount <= 1)
+        {
+            layout.spacing = minSpacing;
+            return;
+        }
+
+        float maxSpacing = IsCompactDisplay() ? compactMaterialRowMaxSpacing : materialRowMaxSpacing;
+        float availableSpacing = (row.rect.width - GetCardDisplayWidth() * materialCount) / (materialCount - 1);
+        layout.spacing = Mathf.Clamp(availableSpacing, minSpacing, maxSpacing);
+    }
+
+    private float GetCardDisplayWidth()
+    {
+        float width = materialCardPrefab.rect.width;
+        if (width <= 0f)
+            width = materialCardPrefab.sizeDelta.x;
+        return IsCompactDisplay() ? width * Mathf.Clamp(compactMaterialCardScale, 0.4f, 1f) : width;
     }
 }
