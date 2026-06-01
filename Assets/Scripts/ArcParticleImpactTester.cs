@@ -5,7 +5,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ArcParticleImpactTester : MonoBehaviour, ISpellCastImpactEffect
+public class ArcParticleImpactTester : MonoBehaviour, ISpellCastMultiTargetImpactEffect
 {
     [SerializeField] private RectTransform startPoint;
     [SerializeField] private RectTransform targetPoint;
@@ -16,6 +16,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastImpactEffect
     [SerializeField] private Vector2 startSpread = new Vector2(32f, 12f);
     [SerializeField] private Vector2 targetSpread = new Vector2(26f, 14f);
     [SerializeField] private float projectileSize = 18f;
+    [SerializeField] private float materialFillProjectileScale = 2.5f;
     [SerializeField] private float magicProjectileSize = 56f;
     [SerializeField] private float trailWidth = 10f;
     [SerializeField] private Color projectileColor = new Color(1f, 0.55f, 0.12f, 1f);
@@ -81,7 +82,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastImpactEffect
     public void PlayMaterialFill(RectTransform from, RectTransform magicView, MaterialEnum material)
     {
         Sprite icon = MaterialCardView.GetMaterialIcon(material);
-        PlayBurst(from, magicView, 1, Color.white, icon, projectileSize);
+        PlayBurst(from, magicView, 1, Color.white, icon, projectileSize * materialFillProjectileScale);
     }
 
 
@@ -95,9 +96,39 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastImpactEffect
         if (magic == null)
             return;
 
-        Sprite icon = LoadMagicIcon(magic.Data.iconName);
-        Color color = magic.Data.recipe != null && magic.Data.recipe.Length > 0 ? MaterialCardView.GetMaterialColor(magic.Data.recipe[0]) : Color.white;
-        PlayBurst(from, target, 1, color, icon, icon != null ? magicProjectileSize : projectileSize, onImpact);
+        GetCastVisual(magic, out Sprite icon, out Color color, out float visualSize);
+        PlayBurst(from, target, 1, color, icon, visualSize, onImpact);
+    }
+
+    public void PlayCast(MagicModel magic, RectTransform from, IReadOnlyList<RectTransform> targets, SpellEffectTarget targetType, Action onImpact)
+    {
+        if (magic == null || targets == null)
+            return;
+
+        int lastTargetIndex = -1;
+        for (int i = 0; i < targets.Count; i++)
+        {
+            if (targets[i] != null)
+                lastTargetIndex = i;
+        }
+
+        if (lastTargetIndex < 0)
+            return;
+
+        GetCastVisual(magic, out Sprite icon, out Color color, out float visualSize);
+        for (int i = 0; i < targets.Count; i++)
+        {
+            RectTransform target = targets[i];
+            if (target != null)
+                PlayBurst(from, target, 1, color, icon, visualSize, i == lastTargetIndex ? onImpact : null);
+        }
+    }
+
+    private void GetCastVisual(MagicModel magic, out Sprite icon, out Color color, out float visualSize)
+    {
+        icon = LoadMagicIcon(magic.Data.iconName);
+        color = magic.Data.recipe != null && magic.Data.recipe.Length > 0 ? MaterialCardView.GetMaterialColor(magic.Data.recipe[0]) : Color.white;
+        visualSize = icon != null ? magicProjectileSize : projectileSize;
     }
 
     public void SetTestPlayback(bool playOnStart, bool loop)

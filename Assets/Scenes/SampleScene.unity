@@ -1069,6 +1069,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot1
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1994,6 +2002,7 @@ MonoBehaviour:
   healthBufferFill: {fileID: 319798117}
   shieldFill: {fileID: 1126419254}
   textWidth: 72
+  healthTextFontSize: 30
   healthFillDuration: 0.35
   healthBufferDecreaseDuration: 0.55
   healthBufferIncreaseDuration: 0.35
@@ -3760,7 +3769,10 @@ MonoBehaviour:
   resultText: {fileID: 0}
   rewardIconPrefab: {fileID: 2227460982758621779, guid: ac0370f346cee9742b8e8633d6395feb, type: 3}
   panelOpenDuration: 0.28
+  panelCloseDuration: 0.24
   panelOpenEase: 9
+  panelCloseEase: 8
+  panelSlideOffset: {x: 28, y: -28}
   cellPopupStartDelay: 0.12
   cellPopupInterval: 0.06
   cellPopupDuration: 0.32
@@ -5999,8 +6011,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 10
@@ -10031,6 +10043,8 @@ MonoBehaviour:
   refreshButton: {fileID: 1455452032}
   endTurnButton: {fileID: 774212259}
   deckCountText: {fileID: 605282455}
+  buffSlotSize: 42
+  buffSlotSpacing: 6
   cardSpacing: 118
   playCardSpacing: 118
   layoutDuration: 0.45
@@ -10069,6 +10083,7 @@ MonoBehaviour:
   enemyHealthBufferDecreaseDuration: 0.55
   enemyHealthBufferIncreaseDuration: 0.35
   enemyHealthTextDuration: 0.35
+  enemyHealthTextFontSize: 18
   enemyHealthEase: 6
   levelSelectAfterMapHideExtraDelay: 0.06
   levelSelectAfterMapHideFallbackDelay: 0.28
@@ -10784,6 +10799,14 @@ PrefabInstance:
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -11704,6 +11727,14 @@ PrefabInstance:
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -13267,7 +13298,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -38}
-  m_SizeDelta: {x: 205, y: 78}
+  m_SizeDelta: {x: 234, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1099119136
 MonoBehaviour:
@@ -13289,8 +13320,8 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 36, y: 36}
-  m_Spacing: {x: 5, y: 5}
+  m_CellSize: {x: 42, y: 42}
+  m_Spacing: {x: 6, y: 6}
   m_Constraint: 1
   m_ConstraintCount: 5
 --- !u!1 &1103832539
@@ -17311,6 +17342,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot2
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -21130,6 +21169,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot5
       objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
+      objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -24299,6 +24346,14 @@ PrefabInstance:
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 7.4000015
+      objectReference: {fileID: 0}
+    - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.299999
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x

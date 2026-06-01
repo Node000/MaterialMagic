@@ -84,6 +84,13 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private TMP_Text deckCountText;
 
+	[Header("Buff栏参数")]
+	[SerializeField]
+	private float buffSlotSize = 42f;
+
+	[SerializeField]
+	private float buffSlotSpacing = 6f;
+
 	[SerializeField]
 	private float cardSpacing = 118f;
 
@@ -141,6 +148,16 @@ public class HandSystemUI : MonoBehaviour
 
 	[SerializeField]
 	private float postMagicResolveDelay = 0.11f;
+
+    [Header("玩家施法音效")]
+    [SerializeField]
+    private float playerCastSwingPitchBase = 1f;
+
+    [SerializeField]
+    private float playerCastSwingPitchIncrease = 0.08f;
+
+    [SerializeField]
+    private float playerCastSwingPitchMax = 1.45f;
 
 	[SerializeField]
 	private float enemyDeathScaleDuration = 0.35f;
@@ -200,6 +217,9 @@ public class HandSystemUI : MonoBehaviour
 
 	[SerializeField]
 	private float enemyHealthTextDuration = 0.35f;
+
+	[SerializeField]
+	private float enemyHealthTextFontSize = 18f;
 
 	[SerializeField]
 	private Ease enemyHealthEase = Ease.OutQuad;
@@ -264,6 +284,10 @@ public class HandSystemUI : MonoBehaviour
 	private MagicModel pendingCastParticleMagic;
 
 	private RectTransform pendingCastParticleTarget;
+
+    private readonly List<RectTransform> pendingCastParticleTargets = new List<RectTransform>();
+
+    private readonly List<RectTransform> castParticleTargetBuffer = new List<RectTransform>();
 
 	private Action pendingCastParticleImpactHandler;
 
@@ -330,7 +354,9 @@ public class HandSystemUI : MonoBehaviour
 
     private const int BuffRootColumnCount = 5;
 
-    private static readonly Vector2 BuffRootSize = new Vector2(205f, 78f);
+    private const int BuffRootRowCount = 2;
+
+    private const float EnemyHealthTextWidth = 56f;
 
     private const int EnemyDeathShardColumns = 5;
 
@@ -954,21 +980,27 @@ public class HandSystemUI : MonoBehaviour
 		return val2;
 	}
 
-	private static void ConfigureBuffRootLayout(RectTransform root)
+	private void ConfigureBuffRootLayout(RectTransform root)
 	{
 		if ((Object)root == (Object)null)
 			return;
 
-		root.sizeDelta = BuffRootSize;
+		float slotSize = BuffSlotSize;
+		float slotSpacing = BuffSlotSpacing;
+		root.sizeDelta = new Vector2(slotSize * BuffRootColumnCount + slotSpacing * (BuffRootColumnCount - 1), slotSize * BuffRootRowCount + slotSpacing * (BuffRootRowCount - 1));
 		GridLayoutGroup grid = ((Component)root).GetComponent<GridLayoutGroup>();
 		if ((Object)grid == (Object)null)
 			return;
 
-		grid.cellSize = new Vector2(BuffSlotView.LayoutSize, BuffSlotView.LayoutSize);
-		grid.spacing = new Vector2(BuffSlotView.LayoutSpacing, BuffSlotView.LayoutSpacing);
+		grid.cellSize = new Vector2(slotSize, slotSize);
+		grid.spacing = new Vector2(slotSpacing, slotSpacing);
 		grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
 		grid.constraintCount = BuffRootColumnCount;
 	}
+
+	private float BuffSlotSize => Mathf.Max(1f, buffSlotSize);
+
+	private float BuffSlotSpacing => Mathf.Max(0f, buffSlotSpacing);
 
 	private void RefreshBuffRoot(RectTransform root, IReadOnlyDictionary<BuffEnum, BuffModel> buffs, CombatantModel owner)
 	{
@@ -990,6 +1022,7 @@ public class HandSystemUI : MonoBehaviour
 
 				((Transform)slot.RectTransform).SetSiblingIndex(num);
 				((Component)slot).gameObject.SetActive(true);
+				slot.SetLayoutSize(BuffSlotSize);
 				slot.Bind(value, this);
 				num++;
 			}
@@ -1049,7 +1082,10 @@ public class HandSystemUI : MonoBehaviour
 		{
 			val = CreateRuntimeBuffSlot(parent);
 		}
-		return ((Component)val).GetComponent<BuffSlotView>();
+		BuffSlotView slot = ((Component)val).GetComponent<BuffSlotView>();
+		if ((Object)slot != (Object)null)
+			slot.SetLayoutSize(BuffSlotSize);
+		return slot;
 	}
 
 	private RectTransform CreateRuntimeBuffSlot(RectTransform parent)
@@ -1084,7 +1120,7 @@ public class HandSystemUI : MonoBehaviour
 		((Component)component).transform.SetParent((Transform)parent, false);
 		component.color = new Color(0.08f, 0.08f, 0.1f, 0.86f);
 		RectTransform component2 = ((Component)component).GetComponent<RectTransform>();
-		component2.sizeDelta = new Vector2(BuffSlotView.LayoutSize, BuffSlotView.LayoutSize);
+		component2.sizeDelta = new Vector2(BuffSlotSize, BuffSlotSize);
 		Image component3 = new GameObject("Icon", new Type[3]
 		{
 			typeof(RectTransform),
@@ -1096,8 +1132,9 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform component4 = ((Component)component3).GetComponent<RectTransform>();
 		component4.anchorMin = Vector2.zero;
 		component4.anchorMax = Vector2.one;
-		component4.offsetMin = new Vector2(3f, 3f);
-		component4.offsetMax = new Vector2(-3f, -3f);
+		float iconPadding = Mathf.Max(2f, BuffSlotSize * 0.08f);
+		component4.offsetMin = new Vector2(iconPadding, iconPadding);
+		component4.offsetMax = new Vector2(-iconPadding, -iconPadding);
 		TMP_Text component5 = new GameObject("StackText", new Type[3]
 		{
 			typeof(RectTransform),
@@ -1106,7 +1143,7 @@ public class HandSystemUI : MonoBehaviour
 		}).GetComponent<TMP_Text>();
 		((Component)component5).transform.SetParent((Transform)component2, false);
 		component5.font = GetDefaultFont();
-		component5.fontSize = 18;
+		component5.fontSize = Mathf.Max(12f, BuffSlotSize * 0.5f);
 		component5.fontStyle = FontStyles.Bold;
 		component5.color = Color.white;
 		component5.alignment = TextAlignmentOptions.BottomRight;
@@ -2534,7 +2571,7 @@ public class HandSystemUI : MonoBehaviour
 			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
 			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
 			SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
-			HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, 38f);
+			HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
 		}
 	}
 
@@ -2615,13 +2652,13 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private static void SetupHealthText(TMP_Text text)
+	private void SetupHealthText(TMP_Text text)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
 		if (!((Object)text == (Object)null))
 		{
-			HealthBarUI.SetupHealthText(text);
+			HealthBarUI.SetupHealthText(text, enemyHealthTextFontSize);
 		}
 	}
 
@@ -3066,17 +3103,46 @@ public class HandSystemUI : MonoBehaviour
 		return true;
 	}
 
+    private void PlayPlayerCastSwingSfx(int continuousCastCount)
+    {
+        if (AudioManager.Instance == null)
+            return;
+
+        if (continuousCastCount <= 0)
+            continuousCastCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+
+        float pitch = playerCastSwingPitchBase + Mathf.Max(0, continuousCastCount - 1) * playerCastSwingPitchIncrease;
+        pitch = Mathf.Min(pitch, playerCastSwingPitchMax);
+        AudioManager.Instance.PlaySfx(GameSfxId.PlayerCastSwing, pitch);
+    }
+
 	private void QueueCastParticle(MagicModel magic, RectTransform target, Action onImpact)
 	{
 		pendingCastParticleMagic = magic;
 		pendingCastParticleTarget = target;
+        pendingCastParticleTargets.Clear();
 		pendingCastParticleImpactHandler = onImpact;
 	}
+
+    private void QueueCastParticles(MagicModel magic, IReadOnlyList<RectTransform> targets, Action onImpact)
+    {
+        pendingCastParticleMagic = magic;
+        pendingCastParticleTarget = null;
+        pendingCastParticleTargets.Clear();
+        for (int i = 0; targets != null && i < targets.Count; i++)
+        {
+            RectTransform target = targets[i];
+            if ((Object)target != (Object)null)
+                pendingCastParticleTargets.Add(target);
+        }
+        pendingCastParticleImpactHandler = onImpact;
+    }
 
 	private void HandleCastReleaseFrame()
 	{
 		int shakeCount = pendingCastShakeCount;
 		pendingCastShakeCount = 0;
+        PlayPlayerCastSwingSfx(shakeCount);
 		PlayCastScreenShake(shakeCount);
 		PlayPendingCastParticle();
 	}
@@ -3096,13 +3162,17 @@ public class HandSystemUI : MonoBehaviour
 	{
 		MagicModel magic = pendingCastParticleMagic;
 		RectTransform target = pendingCastParticleTarget;
+        int targetCount = pendingCastParticleTargets.Count;
 		Action onImpact = pendingCastParticleImpactHandler;
 		pendingCastParticleMagic = null;
 		pendingCastParticleTarget = null;
 		pendingCastParticleImpactHandler = null;
 
-		if (spellCastEffect == null || magic == null || (Object)target == (Object)null)
+		if (spellCastEffect == null || magic == null || ((Object)target == (Object)null && targetCount <= 0))
+        {
+            pendingCastParticleTargets.Clear();
 			return;
+        }
 
 		if ((Object)spellParticleEmitter == (Object)null)
 		{
@@ -3110,9 +3180,37 @@ public class HandSystemUI : MonoBehaviour
 			spellParticleEmitter = ((Object)(object)emitter != (Object)null) ? (RectTransform)emitter : null;
 		}
 		RectTransform from = (Object)spellParticleEmitter != (Object)null ? spellParticleEmitter : target;
-		ISpellCastImpactEffect impactEffect = spellCastEffect as ISpellCastImpactEffect;
-		if (impactEffect != null)
-			impactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
+        if ((Object)from == (Object)null && targetCount > 0)
+            from = pendingCastParticleTargets[0];
+        if ((Object)from == (Object)null)
+        {
+            pendingCastParticleTargets.Clear();
+            return;
+        }
+
+        if (targetCount > 0)
+        {
+            ISpellCastMultiTargetImpactEffect multiTargetEffect = spellCastEffect as ISpellCastMultiTargetImpactEffect;
+            if (multiTargetEffect != null)
+            {
+                multiTargetEffect.PlayCast(magic, from, pendingCastParticleTargets, SpellEffectTarget.Enemy, onImpact);
+            }
+            else
+            {
+                target = pendingCastParticleTargets[0];
+                ISpellCastImpactEffect impactEffect = spellCastEffect as ISpellCastImpactEffect;
+                if (impactEffect != null)
+                    impactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
+                else
+                    spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+            }
+            pendingCastParticleTargets.Clear();
+            return;
+        }
+
+		ISpellCastImpactEffect singleImpactEffect = spellCastEffect as ISpellCastImpactEffect;
+		if (singleImpactEffect != null)
+			singleImpactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
 		else
 			spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
 	}
@@ -3166,6 +3264,8 @@ public class HandSystemUI : MonoBehaviour
 
 		pendingCastParticleMagic = null;
 		pendingCastParticleTarget = null;
+        pendingCastParticleTargets.Clear();
+        castParticleTargetBuffer.Clear();
 		pendingCastParticleImpactHandler = null;
 		pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 0;
 		if (!magicView.Magic.Data.playPlayerCastAnimation)
@@ -3176,18 +3276,36 @@ public class HandSystemUI : MonoBehaviour
 
 		bool animationStarted = PlayPlayerCastAnimation();
 		float releaseWait = GetCastReleaseWait();
-		if (GetMagicEffectTargetType(magicView.Magic) != SpellEffectTarget.Enemy)
+		if (!magicView.Magic.CastParticleTargetsAllEnemies && GetMagicEffectTargetType(magicView.Magic) != SpellEffectTarget.Enemy)
 		{
 			return releaseWait;
 		}
 
-		RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
-		if (spellCastEffect == null || (Object)magicEffectTarget == (Object)null)
+		if (spellCastEffect == null)
 		{
 			return releaseWait;
 		}
 
-		QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
+        if (magicView.Magic.CastParticleTargetsAllEnemies)
+        {
+            CollectAliveEnemyTargetRects(castParticleTargetBuffer);
+            if (castParticleTargetBuffer.Count == 0)
+            {
+                return releaseWait;
+            }
+
+            QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
+        }
+        else
+        {
+			RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
+			if ((Object)magicEffectTarget == (Object)null)
+			{
+				return releaseWait;
+			}
+
+			QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
+        }
 		if (!animationStarted)
 		{
 			HandleCastReleaseFrame();
@@ -3817,6 +3935,20 @@ public class HandSystemUI : MonoBehaviour
 		EnemyModel firstAliveEnemy = GetFirstAliveEnemy();
 		return FindEnemyViewState(firstAliveEnemy)?.viewRect;
 	}
+
+    private void CollectAliveEnemyTargetRects(List<RectTransform> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+        for (int i = 0; i < enemyViewStates.Count; i++)
+        {
+            EnemyViewState state = enemyViewStates[i];
+            if (state != null && state.model != null && !state.model.IsDead && (Object)state.viewRect != (Object)null)
+                results.Add(state.viewRect);
+        }
+    }
 
 	private EnemyViewState FindEnemyViewState(EnemyModel model)
 	{

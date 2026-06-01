@@ -11,6 +11,7 @@ public class HealthBarUI : MonoBehaviour
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
     [SerializeField] private float textWidth = 72f;
+    [SerializeField] private float healthTextFontSize = 30f;
     [Header("动画参数")]
     [SerializeField] private float healthFillDuration = 0.35f;
     [SerializeField] private float healthBufferDecreaseDuration = 0.55f;
@@ -40,7 +41,7 @@ public class HealthBarUI : MonoBehaviour
 
     public void Setup(int currentHealth, int maxHealth, int shield, bool instant)
     {
-        SetupHealthText(healthText);
+        SetupHealthText(healthText, healthTextFontSize);
         if (healthFill == null)
             return;
 
@@ -146,7 +147,7 @@ public class HealthBarUI : MonoBehaviour
             shieldFill.transform.SetSiblingIndex(2);
     }
 
-    public static void SetupHealthText(TMP_Text text)
+    public static void SetupHealthText(TMP_Text text, float fontSize = 0f)
     {
         if (text == null)
             return;
@@ -155,6 +156,8 @@ public class HealthBarUI : MonoBehaviour
         text.enableWordWrapping = false;
         text.overflowMode = TextOverflowModes.Overflow;
         text.fontStyle = FontStyles.Bold;
+        if (fontSize > 0f)
+            text.fontSize = fontSize;
         SetHealthTextColor(text, false);
         EnsureWhiteOutline(text);
         text.raycastTarget = false;

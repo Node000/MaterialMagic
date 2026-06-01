@@ -14,6 +14,7 @@ public class MagicModel
     public string Description => LocalizationSystem.GetText(Data.descriptionKey, string.Empty);
     public bool HasModifier => Modifiers.Count > 0;
     public MagicModifierModel PrimaryModifier => Modifiers.Count > 0 ? Modifiers[0] : null;
+    public virtual bool CastParticleTargetsAllEnemies => false;
 
     public MagicModel(MagicData data, int slotIndex = 0)
     {

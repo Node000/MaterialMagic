@@ -22,8 +22,8 @@
       "baseAttack": 6,
       "initialBuffs": [],
       "intentLoop": [
-        { "intents": [ { "intentType": 2, "actionType": 2, "value": 10, "descriptionKey": "enemy.action.shield_10" }, { "intentType": 1, "actionType": 1, "value": 6, "descriptionKey": "enemy.action.attack_6" } ] },
-        { "intents": [ { "intentType": 1, "actionType": 1, "value": 10, "descriptionKey": "enemy.action.attack_10" }, { "intentType": 2, "actionType": 2, "value": 6, "descriptionKey": "enemy.action.shield_6" } ] }
+        { "intents": [ { "intentType": 2, "actionType": 2, "value": 7, "descriptionKey": "enemy.action.shield_8" }, { "intentType": 1, "actionType": 1, "value": 3, "descriptionKey": "enemy.action.attack_4" } ] },
+        { "intents": [ { "intentType": 1, "actionType": 1, "value": 7, "descriptionKey": "enemy.action.attack_8" }, { "intentType": 2, "actionType": 2, "value": 3, "descriptionKey": "enemy.action.shield_4" } ] }
       ],
       "actionLoop": [],
       "iconName": "Sample",

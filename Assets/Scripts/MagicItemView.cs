@@ -102,7 +102,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             CacheMissingReferences();
 
             if (iconImage != null)
-                iconImage.color = new Color(0.12f, 0.12f, 0.16f, 0.45f);
+                iconImage.gameObject.SetActive(false);
 
             if (backgroundImage != null)
                 backgroundImage.color = emptyBackgroundColor;
@@ -129,6 +129,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         if (iconImage != null)
         {
+            iconImage.gameObject.SetActive(true);
             iconImage.sprite = LoadMagicIcon(magic.Data.iconName);
             iconImage.color = iconImage.sprite != null ? Color.white : GetMagicElementColor(magic.Data.element);
         }
@@ -155,7 +156,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void ResetRecipeHighlights()
     {
         for (int i = 0; i < recipeBlocks.Count; i++)
-            SetBlockAlpha(recipeBlocks[i], 0.35f);
+            SetBlockOpaque(recipeBlocks[i]);
     }
 
     public void HighlightRecipeSlot(int slotIndex)
@@ -163,7 +164,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (slotIndex < 0 || slotIndex >= recipeBlocks.Count)
             return;
 
-        SetBlockAlpha(recipeBlocks[slotIndex], 1f);
+        SetBlockOpaque(recipeBlocks[slotIndex]);
         recipeBlocks[slotIndex].transform.DOKill(false);
         recipeBlocks[slotIndex].transform.DOPunchScale(Vector3.one * recipeHighlightPunchScale, recipeHighlightDuration, recipeHighlightVibrato, recipeHighlightElasticity).SetTarget(this);
     }
@@ -278,13 +279,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         for (int i = 0; i < magic.Data.recipe.Length; i++)
         {
-            Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
+            Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             block.transform.SetParent(recipeRoot, false);
             Sprite materialSprite = MaterialCardView.GetMaterialIcon(magic.Data.recipe[i]);
             block.sprite = materialSprite;
             block.preserveAspect = true;
             block.color = GetRecipeIconColor(magic.Data.recipe[i]);
-            SetBlockAlpha(block, 0.35f);
+            SetBlockOpaque(block);
             recipeBlocks.Add(block);
 
             RectTransform blockRect = (RectTransform)block.transform;
@@ -530,17 +531,14 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         return Resources.Load<Sprite>("Images/Magics/" + iconName);
     }
 
-    private static void SetBlockAlpha(Image block, float alpha)
+    private static void SetBlockOpaque(Image block)
     {
         CanvasGroup canvasGroup = block.GetComponent<CanvasGroup>();
         if (canvasGroup != null)
-        {
-            canvasGroup.alpha = alpha;
-            return;
-        }
+            canvasGroup.alpha = 1f;
 
         Color color = block.color;
-        color.a = alpha;
+        color.a = 1f;
         block.color = color;
     }
 }
