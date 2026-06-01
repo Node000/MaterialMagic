@@ -11,6 +11,7 @@ public enum JaggedWaveHighlightMode
 [AddComponentMenu("UI/Jagged Wave Highlight")]
 public class JaggedWaveHighlightUI : MaskableGraphic
 {
+
     [Header("模式")]
     [SerializeField] private JaggedWaveHighlightMode mode = JaggedWaveHighlightMode.Jagged;
 
@@ -47,7 +48,7 @@ public class JaggedWaveHighlightUI : MaskableGraphic
     [SerializeField] private bool showOnlyOnTargetHover = true;
     [SerializeField] private bool visibleOnStart;
     [SerializeField] private bool followHoverTargetRect = true;
-    [SerializeField] private bool hideWithSetActive = true;
+    [SerializeField] private bool hideWithSetActive;
     [SerializeField] private bool disableOtherGraphics = true;
 
     private readonly List<Vector2> points = new List<Vector2>(400);
@@ -65,6 +66,10 @@ public class JaggedWaveHighlightUI : MaskableGraphic
         base.Awake();
         cachedRectTransform = rectTransform;
         raycastTarget = false;
+
+        if (!Application.isPlaying)
+            return;
+
         ConfigureSameObjectGraphics();
         RegisterHoverTarget();
         if (showOnlyOnTargetHover && hoverTarget != null)
@@ -89,6 +94,9 @@ public class JaggedWaveHighlightUI : MaskableGraphic
 
     private void LateUpdate()
     {
+        if (!Application.isPlaying)
+            return;
+
         if (followHoverTargetRect && hoverTarget != null)
             AlignToHoverTarget();
     }
@@ -173,14 +181,15 @@ public class JaggedWaveHighlightUI : MaskableGraphic
         }
 
         hoverTarget = target;
-        RegisterHoverTarget();
+        if (Application.isPlaying)
+            RegisterHoverTarget();
         if (followHoverTargetRect && hoverTarget != null)
             AlignToHoverTarget();
     }
 
     internal void SetHoverVisibleFromTarget(RectTransform target, bool visible)
     {
-        if (target != hoverTarget)
+        if (!Application.isPlaying || target != hoverTarget)
             return;
 
         if (visible && followHoverTargetRect)
@@ -190,7 +199,7 @@ public class JaggedWaveHighlightUI : MaskableGraphic
 
     private void RegisterHoverTarget()
     {
-        if (!showOnlyOnTargetHover || hoverTarget == null)
+        if (!Application.isPlaying || !showOnlyOnTargetHover || hoverTarget == null)
             return;
 
         hoverRelay = hoverTarget.GetComponent<HoverHighlightTargetRelayUI>();
@@ -204,6 +213,9 @@ public class JaggedWaveHighlightUI : MaskableGraphic
 
     private void SetHoverVisible(bool visible)
     {
+        if (!Application.isPlaying)
+            return;
+
         if (hideWithSetActive)
         {
             if (gameObject.activeSelf != visible)
