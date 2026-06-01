@@ -934,7 +934,7 @@ public class HandSystemUI : MonoBehaviour
 			}).GetComponent<Image>();
 			((Component)image).transform.SetParent((Transform)enemyView, false);
 		}
-		image.color = new Color(1f, 0.08f, 0.06f, 0.92f);
+		image.color = new Color(1f, 0.08f, 0.06f, 1f);
 		image.raycastTarget = false;
 		RectTransform component = ((Component)image).GetComponent<RectTransform>();
 		component.anchorMin = new Vector2(0.5f, 0.5f);
@@ -1118,7 +1118,7 @@ public class HandSystemUI : MonoBehaviour
 			typeof(BuffSlotView)
 		}).GetComponent<Image>();
 		((Component)component).transform.SetParent((Transform)parent, false);
-		component.color = new Color(0.08f, 0.08f, 0.1f, 0.86f);
+		component.color = new Color(0.08f, 0.08f, 0.1f, 1f);
 		RectTransform component2 = ((Component)component).GetComponent<RectTransform>();
 		component2.sizeDelta = new Vector2(BuffSlotSize, BuffSlotSize);
 		Image component3 = new GameObject("Icon", new Type[3]
@@ -3909,7 +3909,7 @@ public class HandSystemUI : MonoBehaviour
 		Image icon = new GameObject("DefendBurst", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
 		icon.transform.SetParent(state.viewRect, false);
 		icon.sprite = Resources.Load<Sprite>("Images/UI/defend");
-		icon.color = new Color(0.35f, 0.65f, 1f, 0.9f);
+		icon.color = new Color(0.35f, 0.65f, 1f, 1f);
 		icon.raycastTarget = false;
 		RectTransform rect = icon.rectTransform;
 		rect.anchorMin = new Vector2(0.5f, 0.5f);

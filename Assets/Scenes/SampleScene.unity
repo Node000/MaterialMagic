@@ -10064,6 +10064,9 @@ MonoBehaviour:
   materialCardPunchVibrato: 6
   materialCardPunchElasticity: 0.6
   postMagicResolveDelay: 0.11
+  playerCastSwingPitchBase: 1
+  playerCastSwingPitchIncrease: 0.08
+  playerCastSwingPitchMax: 1.45
   enemyDeathScaleDuration: 0.35
   enemyDeathScaleEase: 26
   enemyDeathExplosionDuration: 0.7
@@ -23292,6 +23295,7 @@ MonoBehaviour:
   startSpread: {x: 32, y: 12}
   targetSpread: {x: 26, y: 14}
   projectileSize: 18
+  materialFillProjectileScale: 2.5
   magicProjectileSize: 56
   trailWidth: 10
   projectileColor: {r: 1, g: 0.55, b: 0.12, a: 1}

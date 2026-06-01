@@ -390,7 +390,7 @@ public class RewardGridPanelUI : MonoBehaviour
         iconObject.transform.SetParent(parent, false);
         Image background = iconObject.GetComponent<Image>();
         background.raycastTarget = true;
-        background.color = new Color(1f, 1f, 1f, 0.08f);
+        background.color = new Color(1f, 1f, 1f, 1f);
 
         GameObject iconImageObject = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         iconImageObject.transform.SetParent(iconObject.transform, false);
@@ -647,7 +647,7 @@ public class RewardGridPanelUI : MonoBehaviour
     private static void RefreshCell(RewardCell cell)
     {
         if (cell.Background != null)
-            cell.Background.color = cell.Collected ? new Color(0.08f, 0.07f, 0.12f, 0.74f) : new Color(0.16f, 0.11f, 0.22f, 0.9f);
+            cell.Background.color = cell.Collected ? new Color(0.08f, 0.07f, 0.12f, 1f) : new Color(0.16f, 0.11f, 0.22f, 1f);
         if (cell.Icon != null)
             cell.Icon.gameObject.SetActive(!cell.Collected);
     }
@@ -694,7 +694,7 @@ public class RewardGridPanelUI : MonoBehaviour
         Image image = new GameObject("RewardTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
         Transform tooltipParent = transform.parent != null ? transform.parent : transform;
         image.transform.SetParent(tooltipParent, false);
-        image.color = new Color(0.03f, 0.025f, 0.06f, 0.96f);
+        image.color = new Color(0.03f, 0.025f, 0.06f, 1f);
         image.raycastTarget = false;
         rewardTooltip = image.rectTransform;
         rewardTooltip.sizeDelta = new Vector2(180f, 66f);

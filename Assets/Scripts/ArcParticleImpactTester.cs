@@ -20,8 +20,8 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastMultiTargetImpac
     [SerializeField] private float magicProjectileSize = 56f;
     [SerializeField] private float trailWidth = 10f;
     [SerializeField] private Color projectileColor = new Color(1f, 0.55f, 0.12f, 1f);
-    [SerializeField] private Color trailColor = new Color(1f, 0.36f, 0.08f, 0.55f);
-    [SerializeField] private Color impactColor = new Color(1f, 0.86f, 0.18f, 0.85f);
+    [SerializeField] private Color trailColor = new Color(1f, 0.36f, 0.08f, 1f);
+    [SerializeField] private Color impactColor = new Color(1f, 0.86f, 0.18f, 1f);
     [SerializeField] private bool playOnStart = true;
     [SerializeField] private bool loop;
     [SerializeField] private float loopDelay = 0.53f;
@@ -74,8 +74,8 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastMultiTargetImpac
 
         projectileCount = Mathf.Max(1, count);
         projectileColor = color;
-        trailColor = new Color(color.r, color.g, color.b, 0.55f);
-        impactColor = new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.18f), Mathf.Min(1f, color.b + 0.18f), 0.85f);
+        trailColor = new Color(color.r, color.g, color.b, 1f);
+        impactColor = new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.18f), Mathf.Min(1f, color.b + 0.18f), 1f);
         StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize), onImpact));
     }
 
@@ -253,6 +253,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastMultiTargetImpac
         rect.sizeDelta = new Vector2(size, size);
 
         Image image = instance.GetComponent<Image>();
+        color.a = 1f;
         image.sprite = sprite;
         image.preserveAspect = sprite != null;
         image.color = color;

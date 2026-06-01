@@ -7,7 +7,7 @@ public class TutorialCutoutMaskUI : Graphic
     [SerializeField] private RectTransform target;
     [SerializeField] private Vector2 padding = new Vector2(18f, 18f);
     [SerializeField] private float borderThickness = 4f;
-    [SerializeField] private Color borderColor = new Color(1f, 0.84f, 0.16f, 0.88f);
+    [SerializeField] private Color borderColor = new Color(1f, 0.84f, 0.16f, 1f);
 
     private readonly Vector3[] worldCorners = new Vector3[4];
     private readonly List<RectTransform> reusableTargets = new List<RectTransform>();
@@ -87,7 +87,9 @@ public class TutorialCutoutMaskUI : Graphic
 
     private void AddBorderMesh(VertexHelper vh, Rect hole)
     {
-        Color32 lineColor = borderColor;
+        Color line = borderColor;
+        line.a = 1f;
+        Color32 lineColor = line;
         float t = Mathf.Max(1f, borderThickness);
         AddQuad(vh, new Rect(hole.xMin - t, hole.yMax, hole.width + t * 2f, t), lineColor);
         AddQuad(vh, new Rect(hole.xMin - t, hole.yMin - t, hole.width + t * 2f, t), lineColor);

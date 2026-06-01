@@ -314,7 +314,7 @@ public class MaterialListPanelUI : MonoBehaviour
         Transform parent = transform.parent != null ? transform.parent : transform;
         Image background = new GameObject("MaterialModifierTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
         background.transform.SetParent(parent, false);
-        background.color = new Color(0.055f, 0.05f, 0.065f, 0.94f);
+        background.color = new Color(0.055f, 0.05f, 0.065f, 1f);
         background.raycastTarget = false;
         modifierTooltip = background.rectTransform;
         modifierTooltip.sizeDelta = new Vector2(330f, 92f);

@@ -153,7 +153,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         if (icon != null)
         {
             icon.sprite = UIManager.LoadLevelTypeSprite(level.levelType);
-            icon.color = icon.sprite != null ? Color.white : new Color(0.7f, 0.7f, 0.75f, 0.25f);
+            icon.color = icon.sprite != null ? Color.white : new Color(0.7f, 0.7f, 0.75f, 1f);
         }
 
         button.onClick.RemoveAllListeners();

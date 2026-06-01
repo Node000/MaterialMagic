@@ -369,7 +369,7 @@ public class EventPanelUI : MonoBehaviour
             Image background = rect.GetComponent<Image>();
             if (background != null)
             {
-                background.color = new Color(0.08f, 0.08f, 0.12f, 0.96f);
+                background.color = new Color(0.08f, 0.08f, 0.12f, 1f);
                 background.raycastTarget = true;
             }
             optionView.Bind(this, option);
@@ -575,7 +575,7 @@ public class EventPanelUI : MonoBehaviour
 
         Image image = new GameObject("OptionTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
         image.transform.SetParent(panel, false);
-        image.color = new Color(0.035f, 0.035f, 0.055f, 0.96f);
+        image.color = new Color(0.035f, 0.035f, 0.055f, 1f);
         image.raycastTarget = false;
         optionTooltip = image.rectTransform;
         optionTooltip.sizeDelta = new Vector2(320f, 92f);
@@ -604,7 +604,7 @@ public class EventPanelUI : MonoBehaviour
         optionTagTooltip.pivot = new Vector2(0f, 1f);
         optionTagTooltip.sizeDelta = tagTooltipSize;
         Image image = optionTagTooltip.GetComponent<Image>();
-        image.color = new Color(0.03f, 0.03f, 0.04f, 0.96f);
+        image.color = new Color(0.03f, 0.03f, 0.04f, 1f);
         image.raycastTarget = false;
         optionTagTooltipCanvasGroup = optionTagTooltip.GetComponent<CanvasGroup>();
         optionTagTooltipCanvasGroup.alpha = 0f;

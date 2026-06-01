@@ -34,7 +34,7 @@ public class PlayAreaUI : MonoBehaviour
             Image image = resolveIndicator.GetComponent<Image>();
             if (image != null)
             {
-                image.color = new Color(1f, 0.86f, 0.18f, 0.18f);
+                image.color = new Color(1f, 0.86f, 0.18f, 1f);
                 image.raycastTarget = false;
             }
             resolveIndicator.gameObject.SetActive(false);

@@ -66,6 +66,7 @@ public class StartConfigBookmarkUI : MonoBehaviour
         Color color = Color.white;
         if (!string.IsNullOrEmpty(config.color))
             ColorUtility.TryParseHtmlString(config.color, out color);
+        color.a = 1f;
         if (backgroundImage != null)
             backgroundImage.color = color;
 

@@ -326,7 +326,7 @@ public class RewardPanelUI : MonoBehaviour
         magicChoicePanel.anchoredPosition = sourceRect.anchoredPosition;
         magicChoicePanel.sizeDelta = sourceRect.sizeDelta;
         magicChoicePanel.localScale = Vector3.one;
-        panelImage.color = new Color(0.02f, 0.02f, 0.04f, 0.98f);
+        panelImage.color = new Color(0.02f, 0.02f, 0.04f, 1f);
         panelImage.raycastTarget = true;
 
         TMP_Text title = CreatePanelText(magicChoicePanel, "Title", "选择一个法术", 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
@@ -375,7 +375,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         Image image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(JuicyMotion)).GetComponent<Image>();
         image.transform.SetParent(parent, false);
-        image.color = new Color(0.09f, 0.09f, 0.14f, 0.96f);
+        image.color = new Color(0.09f, 0.09f, 0.14f, 1f);
         RectTransform rect = image.rectTransform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -406,7 +406,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         Image image = new GameObject("RewardOption" + index, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(RewardOptionView), typeof(JuicyMotion)).GetComponent<Image>();
         image.transform.SetParent(parent, false);
-        image.color = new Color(0.08f, 0.08f, 0.12f, 0.96f);
+        image.color = new Color(0.08f, 0.08f, 0.12f, 1f);
         RectTransform rect = image.rectTransform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);

@@ -55,6 +55,7 @@ public class AudioManager : MonoBehaviour
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
+    public AudioSource MusicSource => musicSource;
 
     private readonly List<AudioSource> pitchedSfxSources = new List<AudioSource>();
 

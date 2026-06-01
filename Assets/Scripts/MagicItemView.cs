@@ -48,7 +48,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private float castPulseElasticity = 0.65f;
 
     private readonly List<Image> recipeBlocks = new List<Image>();
-    private readonly Color emptyBackgroundColor = new Color(0.08f, 0.08f, 0.12f, 0.86f);
+    private readonly Color emptyBackgroundColor = new Color(0.08f, 0.08f, 0.12f, 1f);
     private readonly Color tooltipTitleColor = new Color(1f, 0.92f, 0.62f, 1f);
     private MagicModel magic;
     private CanvasGroup tooltipCanvasGroup;
@@ -261,7 +261,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             return;
 
         Color baseColor = modifierMarkerImage.color;
-        modifierMarkerImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.58f);
+        modifierMarkerImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
         modifierMarkerTween = modifierMarkerImage.DOFade(1f, 0.86f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetTarget(this);
     }
 
@@ -400,7 +400,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             tagTooltipRoot.pivot = new Vector2(0f, 1f);
             tagTooltipRoot.sizeDelta = tagTooltipSize;
             Image image = tagTooltipRoot.GetComponent<Image>();
-            image.color = new Color(0.03f, 0.03f, 0.04f, 0.96f);
+            image.color = new Color(0.03f, 0.03f, 0.04f, 1f);
             image.raycastTarget = false;
         }
 
@@ -487,7 +487,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Color GetMagicBackgroundColor(MaterialEnum element)
     {
         Color color = GetMagicElementColor(element);
-        color = Color.Lerp(new Color(0.08f, 0.08f, 0.12f, 0.86f), color, 0.42f);
+        color = Color.Lerp(new Color(0.08f, 0.08f, 0.12f, 1f), color, 0.42f);
         color.a = 1;
         return color;
     }

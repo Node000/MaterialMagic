@@ -19,7 +19,7 @@ public class MapPanelUI : MonoBehaviour
     [SerializeField] private Ease viewportMoveEase = Ease.OutQuad;
     [SerializeField] private Vector2 connectionDashSize = new Vector2(18f, 4f);
     [SerializeField] private float connectionDashGap = 10f;
-    [SerializeField] private Color connectionDashColor = new Color(1f, 1f, 1f, 0.34f);
+    [SerializeField] private Color connectionDashColor = new Color(1f, 1f, 1f, 1f);
 
     private const int RunNodeCount = 10;
     private readonly List<RectTransform> nodeViews = new List<RectTransform>();
@@ -200,7 +200,7 @@ public class MapPanelUI : MonoBehaviour
         Image markerImage = playerMarker.GetComponent<Image>();
         if (markerImage != null)
         {
-            markerImage.color = new Color(1f, 0.86f, 0.18f, 0.95f);
+            markerImage.color = new Color(1f, 0.86f, 0.18f, 1f);
             markerImage.raycastTarget = false;
         }
 
@@ -252,10 +252,12 @@ public class MapPanelUI : MonoBehaviour
         connection.anchoredPosition = new Vector2(start.x + 46f, 0f);
         connection.sizeDelta = new Vector2(distance, connectionDashSize.y);
 
+        Color dashColor = connectionDashColor;
+        dashColor.a = 1f;
         for (int i = 0; i < dashCount; i++)
         {
             Image dash = GetOrCreateDash(connection, i);
-            dash.color = connectionDashColor;
+            dash.color = dashColor;
             dash.raycastTarget = false;
             RectTransform dashRect = dash.rectTransform;
             dashRect.anchorMin = new Vector2(0f, 0.5f);
@@ -343,7 +345,7 @@ public class MapPanelUI : MonoBehaviour
     {
         Image slash = new GameObject("Slash", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
         slash.transform.SetParent(parent, false);
-        slash.color = new Color(0.85f, 0.85f, 0.9f, 0.78f);
+        slash.color = new Color(0.85f, 0.85f, 0.9f, 1f);
         slash.raycastTarget = false;
         RectTransform rect = slash.rectTransform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -379,7 +381,7 @@ public class MapPanelUI : MonoBehaviour
         Image slashImage = slash.GetComponent<Image>();
         if (slashImage != null)
         {
-            slashImage.color = new Color(0.85f, 0.85f, 0.9f, 0.78f);
+            slashImage.color = new Color(0.85f, 0.85f, 0.9f, 1f);
             slashImage.raycastTarget = false;
         }
         slash.gameObject.SetActive(visible);
@@ -428,7 +430,7 @@ public class MapPanelUI : MonoBehaviour
         if (nodeModel.selectedLevel == null)
             return Color.white;
 
-        return nodeModel.selectedLevel == level ? Color.white : new Color(0.58f, 0.58f, 0.58f, 0.55f);
+        return nodeModel.selectedLevel == level ? Color.white : new Color(0.58f, 0.58f, 0.58f, 1f);
     }
 
     private void SetNodeIcon(RectTransform node, string iconName, LevelType type, Color color)
@@ -439,7 +441,7 @@ public class MapPanelUI : MonoBehaviour
 
         icon.gameObject.SetActive(true);
         icon.sprite = UIManager.LoadLevelTypeSprite(type);
-        icon.color = icon.sprite != null ? color : new Color(color.r * 0.7f, color.g * 0.7f, color.b * 0.75f, color.a * 0.25f);
+        icon.color = icon.sprite != null ? color : new Color(color.r * 0.7f, color.g * 0.7f, color.b * 0.75f, 1f);
         icon.preserveAspect = true;
         icon.raycastTarget = false;
     }

@@ -16,7 +16,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private int consumedPunchVibrato = 4;
     [SerializeField] private float consumedPunchElasticity = 0.45f;
 
-    private readonly Color emptyEnhancementColor = new Color(0.08f, 0.08f, 0.1f, 0.82f);
+    private readonly Color emptyEnhancementColor = new Color(0.08f, 0.08f, 0.1f, 1f);
     private readonly System.Collections.Generic.List<TMP_Text> enhancementTexts = new System.Collections.Generic.List<TMP_Text>();
     private MaterialModel materialModel;
     private MaterialListPanelUI owner;
@@ -126,7 +126,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
         if (frameImage != null)
         {
-            Color frameColor = new Color(0.18f, 0.18f, 0.18f, inactive ? 0.45f : 1f);
+            Color frameColor = new Color(0.18f, 0.18f, 0.18f, 1f);
             frameImage.color = frameColor;
             frameImage.raycastTarget = false;
         }
@@ -139,7 +139,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
         if (canvasGroup != null)
         {
-            canvasGroup.alpha = inactive ? 0.36f : 1f;
+            canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = !inactive;
             consumedTween?.Kill(false);
             if (inactive)
