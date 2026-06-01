@@ -281,7 +281,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         {
             Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             block.transform.SetParent(recipeRoot, false);
-            Sprite materialSprite = MaterialCardView.GetMaterialIcon(magic.Data.recipe[i]);
+            Sprite materialSprite = GetRecipeIcon(magic.Data.recipe[i]);
             block.sprite = materialSprite;
             block.preserveAspect = true;
             block.color = GetRecipeIconColor(magic.Data.recipe[i]);
@@ -454,6 +454,36 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         float height = tagTooltipText.preferredHeight + tagTooltipVerticalPadding;
         return new Vector2(tagTooltipSize.x, height);
+    }
+
+    private static readonly Dictionary<MaterialEnum, Sprite> recipeIconCache = new Dictionary<MaterialEnum, Sprite>();
+
+    private static Sprite GetRecipeIcon(MaterialEnum material)
+    {
+        if (recipeIconCache.TryGetValue(material, out Sprite sprite))
+            return sprite;
+
+        string path = GetRecipeIconPath(material);
+        sprite = !string.IsNullOrEmpty(path) ? Resources.Load<Sprite>(path) : null;
+        recipeIconCache[material] = sprite;
+        return sprite;
+    }
+
+    private static string GetRecipeIconPath(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return "Images/UI/up";
+            case MaterialEnum.Wind:
+                return "Images/UI/down";
+            case MaterialEnum.Water:
+                return "Images/UI/left";
+            case MaterialEnum.Earth:
+                return "Images/UI/right";
+            default:
+                return null;
+        }
     }
 
     private Color GetRecipeIconColor(MaterialEnum material)
