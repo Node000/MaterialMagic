@@ -265,6 +265,7 @@ public static class RunSaveSystem
         player.MagicBookSlotCount = playerData.magicBookSlotCount;
         player.Deck.Clear();
         player.DrawPile.Clear();
+        player.DiscardPile.Clear();
         player.Hand.Clear();
         player.PlayZone.Clear();
         player.MagicBook.Clear();

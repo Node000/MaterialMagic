@@ -21,6 +21,10 @@ public class JaggedWaveHighlightUI : MaskableGraphic
     [SerializeField, Min(0f)] private float lineSpacing = 7f;
     [SerializeField, Min(0f)] private float inset = 4f;
 
+    [Header("填充")]
+    [SerializeField] private bool fillEnabled;
+    [SerializeField] private Color fillColor = Color.white;
+
     [Header("锯齿波形")]
     [SerializeField, Range(1, 80)] private int teethPerSide = 18;
     [SerializeField, Min(0f)] private float amplitude = 6f;
@@ -144,6 +148,10 @@ public class JaggedWaveHighlightUI : MaskableGraphic
                 AddSpectrumRectPoints(lineRect, linePhase);
             else
                 AddJaggedRectPoints(lineRect, GetAnimatedAmplitude(i), linePhase);
+
+            if (fillEnabled && i == 0)
+                AddFilledShape(vh, points, lineRect.center, fillColor);
+
             AddClosedStroke(vh, points, lineWidth, lineColor);
         }
     }
@@ -411,6 +419,25 @@ public class JaggedWaveHighlightUI : MaskableGraphic
         return Mathf.Clamp01(edgeDistance);
     }
 
+    private void AddFilledShape(VertexHelper vh, List<Vector2> shapePoints, Vector2 center, Color32 shapeFillColor)
+    {
+        int pointCount = shapePoints.Count;
+        if (pointCount < 3)
+            return;
+
+        int centerIndex = vh.currentVertCount;
+        vh.AddVert(center, shapeFillColor, Vector2.zero);
+        for (int i = 0; i < pointCount; i++)
+            vh.AddVert(shapePoints[i], shapeFillColor, Vector2.zero);
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            int current = centerIndex + 1 + i;
+            int next = centerIndex + 1 + ((i + 1) % pointCount);
+            vh.AddTriangle(centerIndex, current, next);
+        }
+    }
+
     private void AddClosedStroke(VertexHelper vh, List<Vector2> strokePoints, float width, Color32 lineColor)
     {
         int pointCount = strokePoints.Count;
@@ -450,6 +477,7 @@ public class JaggedWaveHighlightUI : MaskableGraphic
         lineWidth = Mathf.Max(0.5f, lineWidth);
         lineSpacing = Mathf.Max(0f, lineSpacing);
         inset = Mathf.Max(0f, inset);
+        fillColor.a = Mathf.Clamp01(fillColor.a);
         amplitude = Mathf.Max(0f, amplitude);
         teethPerSide = Mathf.Clamp(teethPerSide, 1, 80);
         pulseAmount = Mathf.Clamp01(pulseAmount);

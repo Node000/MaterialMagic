@@ -1,48 +1,408 @@
 {
   "items": [
-    { "key": "event.test_crossroad.title", "text": "岔路口" },
-    { "key": "event.material_trade.title", "text": "素材集市" },
-    { "key": "event.modifier_shrine.title", "text": "附魔祭坛" },
-    { "key": "event.draw_training.title", "text": "更多素材！" },
-    { "key": "level.rest_001.title", "text": "休息营地" },
-    { "key": "event.test_crossroad.start.1", "text": "你来到一处被古老符文照亮的岔路口。" },
-    { "key": "event.test_crossroad.start.2", "text": "一眼清泉在石缝间涌动，旁边的残碑仍残留着魔力。" },
-    { "key": "event.test_crossroad.option.inspect", "text": "检查符文" },
-    { "key": "event.test_crossroad.option.heal", "text": "饮用清泉" },
-    { "key": "event.test_crossroad.option.remove_material", "text": "献出一张素材" },
-    { "key": "event.material_trade.start.1", "text": "一名旅行商人摊开素材匣，匣中元素互相碰撞。" },
-    { "key": "event.material_trade.start.2", "text": "他愿意替你处理多余素材，也能给你一枚新素材。" },
-    { "key": "event.material_trade.option.remove_material", "text": "删去一张素材" },
-    { "key": "event.material_trade.option.go_gain", "text": "挑选新素材" },
-    { "key": "event.material_trade.gain_select.1", "text": "商人推来几枚元素核心，等待你做出选择。" },
-    { "key": "event.test_crossroad.rune.1", "text": "符文回应了你的素材，石碑上的纹路重新亮起。" },
-    { "key": "event.test_crossroad.rune.2", "text": "你可以继续引导这股力量，让它改变之后抽到的素材。" },
-    { "key": "event.test_crossroad.option.upgrade", "text": "引导魔力" },
-    { "key": "event.test_crossroad.option.gain_fire", "text": "取走火素材" },
-    { "key": "event.test_crossroad.option.gain_wind", "text": "取走风素材" },
-    { "key": "event.test_crossroad.option.gain_water", "text": "取走水素材" },
-    { "key": "event.test_crossroad.option.gain_earth", "text": "取走土素材" },
-    { "key": "event.test_crossroad.option.kindling", "text": "烙印助燃" },
-    { "key": "event.test_crossroad.option.flow_two", "text": "烙印流转" },
-    { "key": "event.test_crossroad.option.liquefy", "text": "烙印液化" },
-    { "key": "event.modifier_shrine.start.1", "text": "你发现一座低声震动的附魔祭坛。" },
-    { "key": "event.modifier_shrine.start.2", "text": "祭坛能把不同性质的咒纹刻进素材。" },
-    { "key": "event.modifier_shrine.option.more", "text": "查看其他咒纹" },
-    { "key": "event.modifier_shrine.more.1", "text": "祭坛背面的符号缓慢翻转，露出另外两种咒纹。" },
-    { "key": "event.draw_training.start.1", "text": "你在试炼记录中整理上一段战斗的咒文经验，下一轮开始你能更快抽取素材。" },
-    { "key": "event.draw_training.option.increase_draw", "text": "抽牌数量+1" },
-    { "key": "rest.001.1", "text": "你在避风的岩壁下点起一小簇营火。" },
-    { "key": "rest.001.2", "text": "温暖驱散了疲惫，你恢复了一些生命值。" },
-    { "key": "event.test_crossroad.option.leave", "text": "离开" },
-    { "key": "event.test_crossroad.spring.1", "text": "清泉洗去了旅途的疲惫，你恢复了10点生命。" },
-    { "key": "event.test_crossroad.remove_material.1", "text": "你将一张素材投入石缝，符文短暂闪烁后归于平静。" },
-    { "key": "event.test_crossroad.upgrade.1", "text": "魔力融入牌组，你之后每回合会额外抽取1张素材。" },
-    { "key": "event.test_crossroad.gain_fire.1", "text": "一枚温热的火素材落入你的素材序列。" },
-    { "key": "event.test_crossroad.gain_wind.1", "text": "一枚轻盈的风素材落入你的素材序列。" },
-    { "key": "event.test_crossroad.gain_water.1", "text": "一枚澄澈的水素材落入你的素材序列。" },
-    { "key": "event.test_crossroad.gain_earth.1", "text": "一枚厚重的土素材落入你的素材序列。" },
-    { "key": "event.test_crossroad.kindling.1", "text": "素材表面浮现出助燃印记。" },
-    { "key": "event.test_crossroad.flow.1", "text": "素材表面浮现出流转印记。" },
-    { "key": "event.test_crossroad.liquefy.1", "text": "素材边缘泛起水光，也可作为水素材使用。" }
+    {
+      "key": "event.test_crossroad.title",
+      "text": "岔路口"
+    },
+    {
+      "key": "event.material_trade.title",
+      "text": "素材集市"
+    },
+    {
+      "key": "event.modifier_shrine.title",
+      "text": "附魔祭坛"
+    },
+    {
+      "key": "event.draw_training.title",
+      "text": "更多素材！"
+    },
+    {
+      "key": "level.rest_001.title",
+      "text": "休息营地"
+    },
+    {
+      "key": "event.test_crossroad.start.1",
+      "text": "你来到一处被古老符文照亮的岔路口。"
+    },
+    {
+      "key": "event.test_crossroad.start.2",
+      "text": "一眼清泉在石缝间涌动，旁边的残碑仍残留着魔力。"
+    },
+    {
+      "key": "event.test_crossroad.option.inspect",
+      "text": "检查符文"
+    },
+    {
+      "key": "event.test_crossroad.option.heal",
+      "text": "饮用清泉"
+    },
+    {
+      "key": "event.test_crossroad.option.remove_material",
+      "text": "献出一张素材"
+    },
+    {
+      "key": "event.material_trade.start.1",
+      "text": "一名旅行商人摊开素材匣，匣中元素互相碰撞。"
+    },
+    {
+      "key": "event.material_trade.start.2",
+      "text": "他愿意替你处理多余素材，也能给你一枚新素材。"
+    },
+    {
+      "key": "event.material_trade.option.remove_material",
+      "text": "删去一张素材"
+    },
+    {
+      "key": "event.material_trade.option.go_gain",
+      "text": "挑选新素材"
+    },
+    {
+      "key": "event.material_trade.gain_select.1",
+      "text": "商人推来几枚元素核心，等待你做出选择。"
+    },
+    {
+      "key": "event.test_crossroad.rune.1",
+      "text": "符文回应了你的素材，石碑上的纹路重新亮起。"
+    },
+    {
+      "key": "event.test_crossroad.rune.2",
+      "text": "你可以继续引导这股力量，让它改变之后抽到的素材。"
+    },
+    {
+      "key": "event.test_crossroad.option.upgrade",
+      "text": "引导魔力"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_fire",
+      "text": "取走火素材"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_wind",
+      "text": "取走风素材"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_water",
+      "text": "取走水素材"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_earth",
+      "text": "取走土素材"
+    },
+    {
+      "key": "event.test_crossroad.option.kindling",
+      "text": "烙印助燃"
+    },
+    {
+      "key": "event.test_crossroad.option.flow_two",
+      "text": "烙印流转"
+    },
+    {
+      "key": "event.test_crossroad.option.liquefy",
+      "text": "烙印液化"
+    },
+    {
+      "key": "event.modifier_shrine.start.1",
+      "text": "你发现一座低声震动的附魔祭坛。"
+    },
+    {
+      "key": "event.modifier_shrine.start.2",
+      "text": "祭坛能把不同性质的咒纹刻进素材。"
+    },
+    {
+      "key": "event.modifier_shrine.option.more",
+      "text": "查看其他咒纹"
+    },
+    {
+      "key": "event.modifier_shrine.more.1",
+      "text": "祭坛背面的符号缓慢翻转，露出另外两种咒纹。"
+    },
+    {
+      "key": "event.draw_training.start.1",
+      "text": "你在试炼记录中整理上一段战斗的咒文经验，下一轮开始你能更快抽取素材。"
+    },
+    {
+      "key": "event.draw_training.option.increase_draw",
+      "text": "抽牌数量+1"
+    },
+    {
+      "key": "rest.001.1",
+      "text": "你在避风的岩壁下点起一小簇营火。"
+    },
+    {
+      "key": "rest.001.2",
+      "text": "温暖驱散了疲惫，你恢复了一些生命值。"
+    },
+    {
+      "key": "event.test_crossroad.option.leave",
+      "text": "离开"
+    },
+    {
+      "key": "event.test_crossroad.spring.1",
+      "text": "清泉洗去了旅途的疲惫，你恢复了10点生命。"
+    },
+    {
+      "key": "event.test_crossroad.remove_material.1",
+      "text": "你将一张素材投入石缝，符文短暂闪烁后归于平静。"
+    },
+    {
+      "key": "event.test_crossroad.upgrade.1",
+      "text": "魔力融入牌组，你之后每回合会额外抽取1张素材。"
+    },
+    {
+      "key": "event.test_crossroad.gain_fire.1",
+      "text": "一枚温热的火素材落入你的素材序列。"
+    },
+    {
+      "key": "event.test_crossroad.gain_wind.1",
+      "text": "一枚轻盈的风素材落入你的素材序列。"
+    },
+    {
+      "key": "event.test_crossroad.gain_water.1",
+      "text": "一枚澄澈的水素材落入你的素材序列。"
+    },
+    {
+      "key": "event.test_crossroad.gain_earth.1",
+      "text": "一枚厚重的土素材落入你的素材序列。"
+    },
+    {
+      "key": "event.test_crossroad.kindling.1",
+      "text": "素材表面浮现出助燃印记。"
+    },
+    {
+      "key": "event.test_crossroad.flow.1",
+      "text": "素材表面浮现出流转印记。"
+    },
+    {
+      "key": "event.test_crossroad.liquefy.1",
+      "text": "素材边缘泛起水光，也可作为水素材使用。"
+    },
+    {
+      "key": "event.common.option.leave",
+      "text": "离开"
+    },
+    {
+      "key": "event.midnight_convenience.title",
+      "text": "午夜便利店"
+    },
+    {
+      "key": "event.midnight_convenience.start.1",
+      "text": "凌晨两点，粉色霓虹把便利店门口照得像过曝的梦。"
+    },
+    {
+      "key": "event.midnight_convenience.start.2",
+      "text": "货架上只剩三样东西，扫码枪还在自言自语。"
+    },
+    {
+      "key": "event.midnight_convenience.option.biscuit",
+      "text": "压缩饼干"
+    },
+    {
+      "key": "event.midnight_convenience.option.energy_drink",
+      "text": "能量饮料"
+    },
+    {
+      "key": "event.midnight_convenience.option.mint",
+      "text": "薄荷糖"
+    },
+    {
+      "key": "event.midnight_convenience.biscuit.1",
+      "text": "饼干像服务器机箱里的灰尘，但热量很扎实。你恢复了生命值。"
+    },
+    {
+      "key": "event.midnight_convenience.energy_drink.1",
+      "text": "饮料把一段多余记忆冲掉了。选择一张素材，把它从牌组里删除。"
+    },
+    {
+      "key": "event.midnight_convenience.mint.1",
+      "text": "薄荷味在舌尖炸开，一个新法术广告弹了出来。"
+    },
+    {
+      "key": "event.midnight_convenience.leave.1",
+      "text": "你没有结账。门口感应器小声说了一句“欢迎下次光临”。"
+    },
+    {
+      "key": "event.capsule_machine.title",
+      "text": "扭蛋机"
+    },
+    {
+      "key": "event.capsule_machine.start.1",
+      "text": "一台旧扭蛋机卡在巷子尽头，透明外壳里漂着彩色噪点。"
+    },
+    {
+      "key": "event.capsule_machine.start.2",
+      "text": "投币口在闪，旁边贴着“中奖率由心情决定”。"
+    },
+    {
+      "key": "event.capsule_machine.option.insert_coin",
+      "text": "投币"
+    },
+    {
+      "key": "event.capsule_machine.option.smash_open",
+      "text": "砸开它"
+    },
+    {
+      "key": "event.capsule_machine.insert_coin.1",
+      "text": "扭蛋滚出来三次，里面是同一种素材的复制品。"
+    },
+    {
+      "key": "event.capsule_machine.smash_open.1",
+      "text": "塑料外壳碎了一地。你受了伤，但从机器肚子里掏出一张素材。"
+    },
+    {
+      "key": "event.capsule_machine.leave.1",
+      "text": "你盯着它看了一会儿，决定不和随机数对视。"
+    },
+    {
+      "key": "event.anonymous_forum.title",
+      "text": "匿名论坛"
+    },
+    {
+      "key": "event.anonymous_forum.start.1",
+      "text": "你刷到一个匿名论坛，头像全是默认图标，帖子却像活物一样刷新。"
+    },
+    {
+      "key": "event.anonymous_forum.start.2",
+      "text": "热帖标题闪烁着：“来都来了，说点什么吧。”"
+    },
+    {
+      "key": "event.anonymous_forum.option.argue",
+      "text": "抬杠"
+    },
+    {
+      "key": "event.anonymous_forum.option.post",
+      "text": "发帖"
+    },
+    {
+      "key": "event.anonymous_forum.argue.1",
+      "text": "你赢了一场没有观众的争论，顺手删掉一张不顺眼的素材，并恢复生命值。"
+    },
+    {
+      "key": "event.anonymous_forum.post.1",
+      "text": "帖子发出后，评论区反噬了你的精神值，但也给了你一次法术强化。"
+    },
+    {
+      "key": "event.anonymous_forum.leave.1",
+      "text": "你关掉页面。后台仍然弹出“有人回复了你”。"
+    },
+    {
+      "key": "event.coffee_or_cola.title",
+      "text": "咖啡还是可乐？"
+    },
+    {
+      "key": "event.coffee_or_cola.start.1",
+      "text": "自动贩卖机的屏幕裂成两半，一边是咖啡，一边是可乐。"
+    },
+    {
+      "key": "event.coffee_or_cola.start.2",
+      "text": "它问你：“清醒，还是更清醒？”"
+    },
+    {
+      "key": "event.coffee_or_cola.option.all",
+      "text": "我全都要"
+    },
+    {
+      "key": "event.coffee_or_cola.option.coffee",
+      "text": "咖啡"
+    },
+    {
+      "key": "event.coffee_or_cola.option.cola",
+      "text": "可乐"
+    },
+    {
+      "key": "event.coffee_or_cola.all.1",
+      "text": "你把两罐混在一起喝了。味道很危险，但生命值和上限都提高了。"
+    },
+    {
+      "key": "event.coffee_or_cola.coffee.1",
+      "text": "苦味把你拉回现实。你恢复了生命值。"
+    },
+    {
+      "key": "event.coffee_or_cola.cola.1",
+      "text": "气泡在血管里跑圈。你的生命上限提高了。"
+    },
+    {
+      "key": "event.coffee_or_cola.leave.1",
+      "text": "你按了退币键。机器吐出一声廉价的叹息。"
+    },
+    {
+      "key": "event.limited_sale.title",
+      "text": "限时特惠！"
+    },
+    {
+      "key": "event.limited_sale.start.1",
+      "text": "商场大屏把你的脸识别成“潜在冲动消费者”。"
+    },
+    {
+      "key": "event.limited_sale.start.2",
+      "text": "弹窗一层叠一层：只有现在，错过再等永远。"
+    },
+    {
+      "key": "event.limited_sale.option.clothes",
+      "text": "好看的衣服"
+    },
+    {
+      "key": "event.limited_sale.option.weapon",
+      "text": "好看的武器"
+    },
+    {
+      "key": "event.limited_sale.option.no_buy",
+      "text": "不买"
+    },
+    {
+      "key": "event.limited_sale.clothes.1",
+      "text": "新衣服像护甲一样贴合。你的生命上限提高了。"
+    },
+    {
+      "key": "event.limited_sale.weapon.1",
+      "text": "武器只是贴纸，但贴纸真的改变了你的法术。"
+    },
+    {
+      "key": "event.limited_sale.no_buy.1",
+      "text": "你成功抵抗消费主义。系统反而给了你2金币当作留存奖励。"
+    },
+    {
+      "key": "event.promo_link.title",
+      "text": "推广链接"
+    },
+    {
+      "key": "event.promo_link.start.1",
+      "text": "一个弹窗追着你跑：“分享给朋友，立刻获得奖励！”"
+    },
+    {
+      "key": "event.promo_link.start.2",
+      "text": "下面的小字写着：本活动可能造成轻微社死或生命流失。"
+    },
+    {
+      "key": "event.promo_link.option.share",
+      "text": "分享链接"
+    },
+    {
+      "key": "event.promo_link.option.share_again",
+      "text": "继续分享链接"
+    },
+    {
+      "key": "event.promo_link.repeat.1",
+      "text": "链接已经发出，金币到账。弹窗变得更兴奋了：要不要再分享一次？"
+    },
+    {
+      "key": "event.promo_link.leave.1",
+      "text": "你关掉弹窗。它在关闭动画里还试图说服你。"
+    },
+    {
+      "key": "event.traffic_growth.title",
+      "text": "流量增长"
+    },
+    {
+      "key": "event.traffic_growth.start.1",
+      "text": "数据曲线突然暴涨，像一条霓虹色的蛇咬住了你的回合。"
+    },
+    {
+      "key": "event.traffic_growth.option.accept",
+      "text": "抽牌数+1"
+    },
+    {
+      "key": "event.traffic_growth.growth.1",
+      "text": "你学会了更快抓取素材。之后每回合抽牌数+1。"
+    }
   ]
 }

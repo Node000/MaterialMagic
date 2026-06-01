@@ -782,10 +782,10 @@ public class RewardGridPanelUI : MonoBehaviour
             drawCount = 5,
             rewards = new[]
             {
-                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 1, texturePath = "Images/UI/大点" },
-                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 2, texturePath = "Images/UI/大点" },
-                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 2, texturePath = "Images/UI/大点" },
-                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 3, texturePath = "Images/UI/大点" }
+                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 1, texturePath = "Images/Bonus/coin1" },
+                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 2, texturePath = "Images/Bonus/coin2" },
+                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 2, texturePath = "Images/Bonus/pill1" },
+                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 3, texturePath = "Images/Bonus/pill2" }
             }
         };
     }

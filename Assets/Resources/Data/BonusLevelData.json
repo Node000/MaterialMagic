@@ -6,10 +6,10 @@
       "radius": 2,
       "drawCount": 5,
       "rewards": [
-        { "rewardType": 1, "rewardName": "金币", "amount": 1, "texturePath": "Images/UI/大点" },
-        { "rewardType": 1, "rewardName": "金币", "amount": 2, "texturePath": "Images/UI/大点" },
-        { "rewardType": 2, "rewardName": "生命值", "amount": 2, "texturePath": "Images/UI/大点" },
-        { "rewardType": 2, "rewardName": "生命值", "amount": 3, "texturePath": "Images/UI/大点" }
+        { "rewardType": 1, "rewardName": "金币", "amount": 1, "texturePath": "Images/Bonus/coin1" },
+        { "rewardType": 1, "rewardName": "金币", "amount": 2, "texturePath": "Images/Bonus/coin2" },
+        { "rewardType": 2, "rewardName": "生命值", "amount": 2, "texturePath": "Images/Bonus/pill1" },
+        { "rewardType": 2, "rewardName": "生命值", "amount": 3, "texturePath": "Images/Bonus/pill2" }
       ]
     }
   ]

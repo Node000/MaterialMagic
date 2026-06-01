@@ -65,12 +65,13 @@ public class EventPanelUI : MonoBehaviour
     private EventModel eventModel;
     private bool typing;
     private bool waitingForClick;
+    private bool waitingForFinalNodeClick;
     private bool showingOptions;
     private string fullText;
     private Action optionsShown;
 
     public bool ShowingOptions => showingOptions;
-    public bool WaitingForFinalClick => waitingForClick && !typing && !showingOptions && eventModel != null && eventModel.CurrentOptions.Length == 0;
+    public bool WaitingForFinalClick => waitingForFinalNodeClick && waitingForClick && !typing && !showingOptions && eventModel != null && eventModel.CurrentOptions.Length == 0;
     public EventOptionData[] CurrentOptions => eventModel != null ? eventModel.CurrentOptions : System.Array.Empty<EventOptionData>();
     public RectTransform MatchedOptionRect { get; private set; }
 
@@ -114,6 +115,7 @@ public class EventPanelUI : MonoBehaviour
         eventModel = model;
         typing = false;
         waitingForClick = false;
+        waitingForFinalNodeClick = false;
         showingOptions = false;
         StopAllCoroutines();
         SetPanelActive(true);
@@ -282,7 +284,12 @@ public class EventPanelUI : MonoBehaviour
         }
 
         if (waitingForClick)
+        {
+            if (waitingForFinalNodeClick)
+                return;
+
             waitingForClick = false;
+        }
     }
 
     public IEnumerator ShowCurrentNodeRoutine()
@@ -291,6 +298,7 @@ public class EventPanelUI : MonoBehaviour
             yield break;
 
         showingOptions = false;
+        waitingForFinalNodeClick = false;
         ClearOptions();
         string[] texts = eventModel.CurrentTexts;
         if (texts == null || texts.Length == 0)
@@ -302,6 +310,7 @@ public class EventPanelUI : MonoBehaviour
             if (i < texts.Length - 1)
             {
                 waitingForClick = true;
+                waitingForFinalNodeClick = false;
                 while (waitingForClick)
                     yield return null;
             }
@@ -310,7 +319,10 @@ public class EventPanelUI : MonoBehaviour
         if (eventModel.CurrentOptions.Length > 0)
             ShowOptions();
         else
+        {
+            waitingForFinalNodeClick = true;
             waitingForClick = true;
+        }
     }
 
     private IEnumerator TypeText(string text)
@@ -434,6 +446,7 @@ public class EventPanelUI : MonoBehaviour
         eventModel = null;
         typing = false;
         waitingForClick = false;
+        waitingForFinalNodeClick = false;
         showingOptions = false;
         if (panel == null || !panel.gameObject.activeSelf)
         {
@@ -650,6 +663,21 @@ public class EventPanelUI : MonoBehaviour
 
     private static string GetOptionEffectText(EventOptionData option)
     {
+        if (option != null && option.effects != null && option.effects.Length > 0)
+        {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < option.effects.Length; i++)
+            {
+                string effectText = GetEffectDataText(option.effects[i], option);
+                if (string.IsNullOrEmpty(effectText))
+                    continue;
+                if (builder.Length > 0)
+                    builder.Append("；");
+                builder.Append(effectText);
+            }
+            return "效果：" + (builder.Length > 0 ? builder.ToString() : "无直接效果");
+        }
+
         string effect = "无直接效果";
         if (option.resultId == 1)
             effect = "恢复10点生命";
@@ -671,6 +699,59 @@ public class EventPanelUI : MonoBehaviour
             effect = LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个法术上");
 
         return "效果：" + effect;
+    }
+
+    private static string GetEffectDataText(EventEffectData effect, EventOptionData option)
+    {
+        if (effect == null)
+            return string.Empty;
+
+        switch (effect.rewardType)
+        {
+            case EventRewardType.Heal:
+                return "恢复" + GetEffectAmountText(effect, 10) + "点生命";
+            case EventRewardType.LoseHealth:
+                return "失去" + GetEffectAmountText(effect, 1) + "点生命" + (effect.escalatePerUse > 0 ? "，每次+" + effect.escalatePerUse : string.Empty);
+            case EventRewardType.GainGold:
+                return "获得" + GetEffectAmountText(effect, 1) + "金币";
+            case EventRewardType.GainMagic:
+                return "获得一次法术奖励";
+            case EventRewardType.GainMagicModifier:
+                return "获得一次法术强化";
+            case EventRewardType.IncreaseMaxHealth:
+                return "生命上限+" + GetEffectAmountText(effect, 5);
+            case EventRewardType.GainMaterial:
+                return "获得" + GetEffectCountText(effect, 1) + "张素材牌";
+            case EventRewardType.GainRandomMaterial:
+                return "获得" + GetEffectCountText(effect, 1) + "张随机素材牌";
+            case EventRewardType.GainSameRandomMaterials:
+                return "获得随机同种素材牌x" + GetEffectCountText(effect, 1);
+            case EventRewardType.IncreaseDrawCount:
+                return "抽牌数+" + GetEffectAmountText(effect, 1);
+            case EventRewardType.RemoveMaterial:
+                return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张素材牌";
+            default:
+                return string.Empty;
+        }
+    }
+
+    private static string GetEffectAmountText(EventEffectData effect, int defaultAmount)
+    {
+        return (effect != null && effect.amount != 0 ? effect.amount : defaultAmount).ToString();
+    }
+
+    private static string GetEffectCountText(EventEffectData effect, int defaultCount)
+    {
+        return (effect != null && effect.count > 0 ? effect.count : defaultCount).ToString();
+    }
+
+    private static string GetEffectChoiceCountText(EventEffectData effect, EventOptionData option, int defaultCount)
+    {
+        if (effect != null && effect.choiceCount > 0)
+            return effect.choiceCount.ToString();
+        if (option != null && option.choiceCount > 0)
+            return option.choiceCount.ToString();
+        return defaultCount.ToString();
     }
 
     private static string GetChoiceCountText(EventOptionData option)

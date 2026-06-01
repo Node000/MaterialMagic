@@ -3,7 +3,10 @@ using System.Collections.Generic;
 
 public class EventModel
 {
+    private const string ImplicitDefaultEndNodeId = "default_end";
     private readonly Dictionary<string, EventNodeData> nodes = new Dictionary<string, EventNodeData>();
+    private readonly Dictionary<string, int> optionResolveCounts = new Dictionary<string, int>();
+    private EventOptionData defaultEndOption;
 
     public EventData Data { get; }
     public EventNodeData CurrentNode { get; private set; }
@@ -30,6 +33,8 @@ public class EventModel
             CurrentNode = startNode;
         else if (data.nodes != null && data.nodes.Length > 0)
             CurrentNode = data.nodes[0];
+
+        RandomizeRecipes();
     }
 
     public static EventModel CreateTextOnly(string id, string titleKey, string[] textKeys)
@@ -87,6 +92,48 @@ public class EventModel
         return false;
     }
 
+    public bool TryGetDefaultEndOption(out EventOptionData option)
+    {
+        option = null;
+        if (CurrentNode == null || CurrentOptions.Length == 0)
+            return false;
+
+        string nodeId = GetDefaultEndNodeId();
+        if (string.IsNullOrEmpty(nodeId) || CurrentNode.id == nodeId || !nodes.ContainsKey(nodeId))
+            return false;
+
+        if (defaultEndOption == null || defaultEndOption.nextNodeId != nodeId)
+        {
+            defaultEndOption = new EventOptionData
+            {
+                id = "default_end",
+                isExitOption = true,
+                nextNodeId = nodeId
+            };
+        }
+
+        option = defaultEndOption;
+        return true;
+    }
+
+    public void MarkOptionResolved(EventOptionData option)
+    {
+        if (option == null || string.IsNullOrEmpty(option.id))
+            return;
+
+        optionResolveCounts.TryGetValue(option.id, out int count);
+        optionResolveCounts[option.id] = count + 1;
+    }
+
+    public int GetOptionResolveCount(EventOptionData option)
+    {
+        if (option == null || string.IsNullOrEmpty(option.id))
+            return 0;
+
+        optionResolveCounts.TryGetValue(option.id, out int count);
+        return count;
+    }
+
     public bool IsOptionMatch(EventOptionData option, IReadOnlyList<MaterialModel> sequence)
     {
         MaterialEnum[] recipe = ParseRecipe(option != null ? option.recipe : null);
@@ -97,6 +144,19 @@ public class EventModel
             return IsOrderedMatch(recipe, sequence);
 
         return IsUnorderedMatch(recipe, sequence);
+    }
+
+    public bool TryAdvanceToNextNode()
+    {
+        if (CurrentNode == null || string.IsNullOrEmpty(CurrentNode.nextNodeId))
+            return false;
+
+        if (!nodes.TryGetValue(CurrentNode.nextNodeId, out EventNodeData nextNode))
+            return false;
+
+        CurrentNode = nextNode;
+        GameLog.Data($"Event {Id} advance node={nextNode.id}");
+        return true;
     }
 
     public bool AdvanceToNextNode(EventOptionData option)
@@ -187,6 +247,42 @@ public class EventModel
         }
 
         return result;
+    }
+
+    private void RandomizeRecipes()
+    {
+        if (Data.nodes == null)
+            return;
+
+        for (int nodeIndex = 0; nodeIndex < Data.nodes.Length; nodeIndex++)
+        {
+            EventNodeData node = Data.nodes[nodeIndex];
+            if (node == null || node.options == null)
+                continue;
+
+            for (int optionIndex = 0; optionIndex < node.options.Length; optionIndex++)
+            {
+                EventOptionData option = node.options[optionIndex];
+                if (option != null && option.randomRecipeLength > 0)
+                    option.recipe = CreateRandomRecipe(option.randomRecipeLength);
+            }
+        }
+    }
+
+    private static string CreateRandomRecipe(int length)
+    {
+        char[] recipe = new char[Math.Max(1, length)];
+        for (int i = 0; i < recipe.Length; i++)
+            recipe[i] = (char)('0' + UnityEngine.Random.Range(1, 5));
+        return new string(recipe);
+    }
+
+    private string GetDefaultEndNodeId()
+    {
+        if (!string.IsNullOrEmpty(Data.defaultEndNodeId))
+            return Data.defaultEndNodeId;
+
+        return nodes.ContainsKey(ImplicitDefaultEndNodeId) ? ImplicitDefaultEndNodeId : null;
     }
 
     private static bool IsOrderedMatch(MaterialEnum[] recipe, IReadOnlyList<MaterialModel> sequence)

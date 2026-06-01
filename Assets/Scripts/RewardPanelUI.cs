@@ -65,6 +65,8 @@ public class RewardPanelUI : MonoBehaviour
     private MagicItemView hoveredMagicView;
     private Tween selectedMagicTween;
     private int currentGoldReward;
+    private bool magicOnlyMode;
+    private Action magicOnlyCompleted;
 
     private const float SelectedMagicScale = 1.24f;
     private const float HoverMagicScaleBonus = 0.08f;
@@ -81,6 +83,8 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null)
             return;
 
+        magicOnlyMode = false;
+        magicOnlyCompleted = null;
         goldClaimed = false;
         goldClaimInProgress = false;
         magicClaimed = false;
@@ -103,6 +107,34 @@ public class RewardPanelUI : MonoBehaviour
         owner.GetUIManager().TutorialManager?.OnRewardPanelShown();
     }
 
+    public void ShowMagicOnly(Action completed)
+    {
+        if (owner == null)
+            return;
+
+        magicOnlyMode = true;
+        magicOnlyCompleted = completed;
+        goldClaimed = true;
+        goldClaimInProgress = false;
+        magicClaimed = false;
+        currentGoldReward = 0;
+        selectedMagicView = null;
+        hoveredMagicView = null;
+        owner.SelectPendingRewardMagic(null);
+        gameObject.SetActive(true);
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
+        if (title != null)
+            title.text = "法术奖励";
+
+        TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
+        if (hint != null)
+            hint.text = "选择一个法术后，点击场景中的法术槽覆盖。";
+
+        CacheReferences();
+        HideMagicChoices();
+        RefreshOptions();
+    }
+
     public void Hide()
     {
         owner?.SelectPendingRewardMagic(null);
@@ -117,28 +149,55 @@ public class RewardPanelUI : MonoBehaviour
         magicClaimed = true;
         owner?.SelectPendingRewardMagic(null);
         HideMagicChoices();
+        if (magicOnlyMode)
+        {
+            CompleteMagicOnlyReward();
+            return;
+        }
         RefreshOptions();
+    }
+
+    private void CompleteMagicOnlyReward()
+    {
+        Action completed = magicOnlyCompleted;
+        magicOnlyMode = false;
+        magicOnlyCompleted = null;
+        owner?.SelectPendingRewardMagic(null);
+        HideMagicChoices();
+        gameObject.SetActive(false);
+        completed?.Invoke();
     }
 
     private void RefreshOptions()
     {
-        EnsureOptionCount(2);
+        EnsureOptionCount(magicOnlyMode ? 1 : 2);
         int index = 0;
-        if (!goldClaimed && !goldClaimInProgress)
-            optionViews[index++].Bind("获得金币 +" + currentGoldReward, ClaimGoldReward);
-        if (!magicClaimed)
-            optionViews[index++].Bind("获得法术", ShowMagicChoices);
+        if (magicOnlyMode)
+        {
+            if (!magicClaimed)
+                optionViews[index++].Bind("获得法术", ShowMagicChoices);
+        }
+        else
+        {
+            if (!goldClaimed && !goldClaimInProgress)
+                optionViews[index++].Bind("获得金币 +" + currentGoldReward, ClaimGoldReward);
+            if (!magicClaimed)
+                optionViews[index++].Bind("获得法术", ShowMagicChoices);
+        }
         for (int i = index; i < optionViews.Count; i++)
             optionViews[i].Hide();
 
         if (endButton != null)
         {
             endButton.onClick.RemoveAllListeners();
-            endButton.onClick.AddListener(owner.FinishReward);
+            if (magicOnlyMode)
+                endButton.onClick.AddListener(CompleteMagicOnlyReward);
+            else
+                endButton.onClick.AddListener(owner.FinishReward);
             endButton.interactable = !goldClaimInProgress;
             TMP_Text text = UIManager.FindChildComponent<TMP_Text>(endButton.transform, "Text");
             if (text != null)
-                text.text = "离开";
+                text.text = magicOnlyMode ? "跳过" : "离开";
         }
     }
 

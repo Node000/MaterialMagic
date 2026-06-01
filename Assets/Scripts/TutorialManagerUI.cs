@@ -246,6 +246,7 @@ public class TutorialManagerUI : MonoBehaviour
         playerState.Hand.Clear();
         playerState.PlayZone.Clear();
         playerState.DrawPile.Clear();
+        playerState.DiscardPile.Clear();
         for (int i = 0; i < materials.Length; i++)
             playerState.Hand.Add(new MaterialModel(Guid.NewGuid().ToString("N"), materials[i]));
     }

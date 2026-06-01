@@ -211,7 +211,9 @@
               "resultId": 201,
               "nextNodeId": "kindling",
               "choiceCount": 1,
-              "tagIds": ["kindling"]
+              "tagIds": [
+                "kindling"
+              ]
             },
             {
               "id": "go_more",
@@ -241,7 +243,9 @@
               "resultId": 202,
               "nextNodeId": "flow",
               "choiceCount": 2,
-              "tagIds": ["flow"]
+              "tagIds": [
+                "flow"
+              ]
             },
             {
               "id": "add_liquefy_modifier",
@@ -251,7 +255,9 @@
               "resultId": 203,
               "nextNodeId": "liquefy",
               "choiceCount": 1,
-              "tagIds": ["liquefy"]
+              "tagIds": [
+                "liquefy"
+              ]
             }
           ]
         },
@@ -301,6 +307,539 @@
         }
       ],
       "numericId": 4
+    },
+    {
+      "id": "event_midnight_convenience",
+      "titleKey": "event.midnight_convenience.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.midnight_convenience.start.1",
+            "event.midnight_convenience.start.2"
+          ],
+          "options": [
+            {
+              "id": "compressed_biscuit",
+              "titleKey": "event.midnight_convenience.option.biscuit",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 10
+                }
+              ],
+              "nextNodeId": "biscuit"
+            },
+            {
+              "id": "energy_drink",
+              "titleKey": "event.midnight_convenience.option.energy_drink",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 14,
+                  "choiceCount": 1
+                }
+              ],
+              "nextNodeId": "energy_drink"
+            },
+            {
+              "id": "mint_candy",
+              "titleKey": "event.midnight_convenience.option.mint",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "mint"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "biscuit",
+          "textKeys": [
+            "event.midnight_convenience.biscuit.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "energy_drink",
+          "textKeys": [
+            "event.midnight_convenience.energy_drink.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "mint",
+          "textKeys": [
+            "event.midnight_convenience.mint.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.midnight_convenience.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 101
+    },
+    {
+      "id": "event_capsule_machine",
+      "titleKey": "event.capsule_machine.title",
+      "startNodeId": "start",
+      "drawCount": 4,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.capsule_machine.start.1",
+            "event.capsule_machine.start.2"
+          ],
+          "options": [
+            {
+              "id": "insert_coin",
+              "titleKey": "event.capsule_machine.option.insert_coin",
+              "randomRecipeLength": 3,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 12,
+                  "count": 3
+                }
+              ],
+              "nextNodeId": "insert_coin"
+            },
+            {
+              "id": "smash_open",
+              "titleKey": "event.capsule_machine.option.smash_open",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 4
+                },
+                {
+                  "rewardType": 11,
+                  "count": 1
+                }
+              ],
+              "nextNodeId": "smash_open"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "insert_coin",
+          "textKeys": [
+            "event.capsule_machine.insert_coin.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "smash_open",
+          "textKeys": [
+            "event.capsule_machine.smash_open.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.capsule_machine.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 102
+    },
+    {
+      "id": "event_anonymous_forum",
+      "titleKey": "event.anonymous_forum.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.anonymous_forum.start.1",
+            "event.anonymous_forum.start.2"
+          ],
+          "options": [
+            {
+              "id": "argue",
+              "titleKey": "event.anonymous_forum.option.argue",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 14,
+                  "choiceCount": 1
+                },
+                {
+                  "rewardType": 1,
+                  "amount": 10
+                }
+              ],
+              "nextNodeId": "argue"
+            },
+            {
+              "id": "post_thread",
+              "titleKey": "event.anonymous_forum.option.post",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 3
+                },
+                {
+                  "rewardType": 8,
+                  "choiceCount": 2
+                }
+              ],
+              "nextNodeId": "post"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "argue",
+          "textKeys": [
+            "event.anonymous_forum.argue.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "post",
+          "textKeys": [
+            "event.anonymous_forum.post.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.anonymous_forum.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 103
+    },
+    {
+      "id": "event_coffee_or_cola",
+      "titleKey": "event.coffee_or_cola.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.coffee_or_cola.start.1",
+            "event.coffee_or_cola.start.2"
+          ],
+          "options": [
+            {
+              "id": "all_in",
+              "titleKey": "event.coffee_or_cola.option.all",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 10
+                },
+                {
+                  "rewardType": 9,
+                  "amount": 5
+                }
+              ],
+              "nextNodeId": "all_in"
+            },
+            {
+              "id": "coffee",
+              "titleKey": "event.coffee_or_cola.option.coffee",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 10
+                }
+              ],
+              "nextNodeId": "coffee"
+            },
+            {
+              "id": "cola",
+              "titleKey": "event.coffee_or_cola.option.cola",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 9,
+                  "amount": 5
+                }
+              ],
+              "nextNodeId": "cola"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "all_in",
+          "textKeys": [
+            "event.coffee_or_cola.all.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "coffee",
+          "textKeys": [
+            "event.coffee_or_cola.coffee.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "cola",
+          "textKeys": [
+            "event.coffee_or_cola.cola.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.coffee_or_cola.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 104
+    },
+    {
+      "id": "event_limited_sale",
+      "titleKey": "event.limited_sale.title",
+      "startNodeId": "start",
+      "drawCount": 4,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.limited_sale.start.1",
+            "event.limited_sale.start.2"
+          ],
+          "options": [
+            {
+              "id": "pretty_clothes",
+              "titleKey": "event.limited_sale.option.clothes",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 9,
+                  "amount": 5
+                }
+              ],
+              "nextNodeId": "clothes"
+            },
+            {
+              "id": "pretty_weapon",
+              "titleKey": "event.limited_sale.option.weapon",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 8,
+                  "choiceCount": 2
+                }
+              ],
+              "nextNodeId": "weapon"
+            },
+            {
+              "id": "no_buy",
+              "titleKey": "event.limited_sale.option.no_buy",
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "no_buy",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "clothes",
+          "textKeys": [
+            "event.limited_sale.clothes.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "weapon",
+          "textKeys": [
+            "event.limited_sale.weapon.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "no_buy",
+          "textKeys": [
+            "event.limited_sale.no_buy.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 105
+    },
+    {
+      "id": "event_promo_link",
+      "titleKey": "event.promo_link.title",
+      "startNodeId": "start",
+      "drawCount": 4,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.promo_link.start.1",
+            "event.promo_link.start.2"
+          ],
+          "options": [
+            {
+              "id": "share_link",
+              "titleKey": "event.promo_link.option.share",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 3,
+                  "escalatePerUse": 1
+                },
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "repeat"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "repeat",
+          "textKeys": [
+            "event.promo_link.repeat.1"
+          ],
+          "options": [
+            {
+              "id": "share_link",
+              "titleKey": "event.promo_link.option.share_again",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 3,
+                  "escalatePerUse": 1
+                },
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "repeat"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.promo_link.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 106
+    },
+    {
+      "id": "event_traffic_growth",
+      "titleKey": "event.traffic_growth.title",
+      "startNodeId": "start",
+      "drawCount": 0,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.traffic_growth.start.1"
+          ],
+          "options": [
+            {
+              "id": "accept_growth",
+              "titleKey": "event.traffic_growth.option.accept",
+              "effects": [
+                {
+                  "rewardType": 13,
+                  "amount": 1
+                }
+              ],
+              "nextNodeId": "growth",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "growth",
+          "textKeys": [
+            "event.traffic_growth.growth.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 107
     }
   ]
 }

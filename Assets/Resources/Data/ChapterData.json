@@ -27,6 +27,8 @@
         102,
         103,
         104,
+        105,
+        106,
         201,
         301,
         401
@@ -35,40 +37,115 @@
         {
           "startProgress": 1,
           "endProgress": 1,
-          "levelPoolIds": [1, 2, 3]
+          "levelPoolIds": [
+            1,
+            2,
+            3
+          ]
         },
         {
           "startProgress": 2,
           "endProgress": 3,
-          "levelPoolIds": [1, 2, 3, 101, 102, 103, 104, 201, 301, 401]
+          "levelPoolIds": [
+            1,
+            2,
+            3,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            201,
+            301,
+            401
+          ]
         },
         {
           "startProgress": 4,
           "endProgress": 5,
-          "levelPoolIds": [4, 5, 101, 102, 103, 104, 201, 301, 401]
+          "levelPoolIds": [
+            4,
+            5,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            201,
+            301,
+            401
+          ]
         },
         {
           "startProgress": 6,
           "endProgress": 12,
-          "levelPoolIds": [6, 7, 8, 9, 101, 102, 103, 104, 201, 301, 401]
+          "levelPoolIds": [
+            6,
+            7,
+            8,
+            9,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            201,
+            301,
+            401
+          ]
         },
         {
           "startProgress": 13,
           "endProgress": 20,
-          "levelPoolIds": [10, 11, 12, 13, 14, 15, 16, 101, 102, 103, 104, 201, 301, 401]
+          "levelPoolIds": [
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            201,
+            301,
+            401
+          ]
         },
         {
           "startProgress": 21,
           "endProgress": 21,
-          "levelPoolIds": [17]
+          "levelPoolIds": [
+            17
+          ]
         }
       ],
-      "fixed_level": [],
+      "fixed_level": [
+        {
+          "levelIndex": 4,
+          "levelId": 107,
+          "levelType": 1
+        },
+        {
+          "levelIndex": 12,
+          "levelId": 107,
+          "levelType": 1
+        }
+      ],
       "eventPoolIds": [
         101,
         102,
         103,
-        104
+        104,
+        105,
+        106
       ]
     }
   ]

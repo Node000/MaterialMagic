@@ -8,6 +8,8 @@ public class PlayerState
 
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
 
+    public event System.Action<BuffEnum, int> BuffAdded;
+
     private int temporaryMaterialIndex;
 
     public int MaxHealth { get; private set; }
@@ -21,6 +23,7 @@ public class PlayerState
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
     public List<MaterialModel> DrawPile { get; } = new List<MaterialModel>();
+    public List<MaterialModel> DiscardPile { get; } = new List<MaterialModel>();
     public List<MaterialModel> Hand { get; } = new List<MaterialModel>();
     public List<MaterialModel> PlayZone { get; } = new List<MaterialModel>();
     public List<MagicModel> MagicBook { get; } = new List<MagicModel>();
@@ -80,7 +83,7 @@ public class PlayerState
         int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
-            if (DrawPile.Count == 0)
+            if (!EnsureDrawPileHasCards())
                 break;
 
             int randomIndex = Random.Range(0, DrawPile.Count);
@@ -90,7 +93,7 @@ public class PlayerState
             card.TriggerOnDraw();
             TriggerAfterDraw(card);
             drawnCount++;
-            GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count}");
+            GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
         }
 
         return drawnCount;
@@ -101,7 +104,7 @@ public class PlayerState
         int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
-            if (DrawPile.Count == 0)
+            if (!EnsureDrawPileHasCards())
                 break;
 
             int randomIndex = Random.Range(0, DrawPile.Count);
@@ -112,10 +115,24 @@ public class PlayerState
             card.TriggerOnDraw();
             TriggerAfterDraw(card);
             drawnCount++;
-            GameLog.Data($"Draw card {DescribeMaterial(card)} to play zone. playZone={PlayZone.Count} drawPile={DrawPile.Count}");
+            GameLog.Data($"Draw card {DescribeMaterial(card)} to play zone. playZone={PlayZone.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
         }
 
         return drawnCount;
+    }
+
+    private bool EnsureDrawPileHasCards()
+    {
+        if (DrawPile.Count > 0)
+            return true;
+
+        if (DiscardPile.Count == 0)
+            return false;
+
+        DrawPile.AddRange(DiscardPile);
+        DiscardPile.Clear();
+        GameLog.Data($"Shuffle discard pile into draw pile. drawPile={DrawPile.Count}");
+        return true;
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
@@ -166,15 +183,25 @@ public class PlayerState
 
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards)
     {
-        return ReturnHandCardsToDrawPile(cards, null);
+        return ReturnHandCardsToDiscardPile(cards, null);
     }
 
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
+        return ReturnHandCardsToDiscardPile(cards, removedTemporaryCards);
+    }
+
+    public int ReturnHandCardsToDiscardPile(IReadOnlyList<MaterialModel> cards)
+    {
+        return ReturnHandCardsToDiscardPile(cards, null);
+    }
+
+    public int ReturnHandCardsToDiscardPile(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
         if (cards == null)
             return 0;
 
-        int returnedCount = 0;
+        int discardedCount = 0;
         for (int i = 0; i < cards.Count; i++)
         {
             MaterialModel card = cards[i];
@@ -195,12 +222,12 @@ public class PlayerState
                 continue;
             }
 
-            DrawPile.Insert(0, card);
-            returnedCount++;
-            GameLog.Data($"Refresh returns card {DescribeMaterial(card)} to draw pile. hand={Hand.Count} drawPile={DrawPile.Count}");
+            DiscardPile.Add(card);
+            discardedCount++;
+            GameLog.Data($"Refresh discards card {DescribeMaterial(card)}. hand={Hand.Count} discardPile={DiscardPile.Count}");
         }
 
-        return returnedCount;
+        return discardedCount;
     }
 
     public RefreshHandResult RefreshHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
@@ -222,18 +249,28 @@ public class PlayerState
         }
         MaterialModifierModel.CurrentContext = null;
 
+        int discardedCount = ReturnHandCardsToDiscardPile(cards, removedTemporaryCards);
         int drawnCount = DrawCards(refreshCount);
-        int returnedCount = ReturnHandCardsToDrawPile(cards, removedTemporaryCards);
-        GameLog.Data($"Refresh hand cards selected={cards.Count} drawn={drawnCount} returned={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
-        return new RefreshHandResult(drawnCount, returnedCount);
+        GameLog.Data($"Refresh hand cards selected={cards.Count} drawn={drawnCount} discarded={discardedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
+        return new RefreshHandResult(drawnCount, discardedCount);
     }
 
     public void ReturnPlayZoneCardsToDrawPile()
     {
-        ReturnPlayZoneCardsToDrawPile(null);
+        ReturnPlayZoneCardsToDiscardPile(null);
     }
 
     public void ReturnPlayZoneCardsToDrawPile(List<MaterialModel> removedTemporaryCards)
+    {
+        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+    }
+
+    public void ReturnPlayZoneCardsToDiscardPile()
+    {
+        ReturnPlayZoneCardsToDiscardPile(null);
+    }
+
+    public void ReturnPlayZoneCardsToDiscardPile(List<MaterialModel> removedTemporaryCards)
     {
         if (PlayZone.Count == 0)
             return;
@@ -250,8 +287,8 @@ public class PlayerState
             }
             else
             {
-                DrawPile.Insert(0, card);
-                GameLog.Data($"Return play zone card {DescribeMaterial(card)} to draw pile. drawPile={DrawPile.Count}");
+                DiscardPile.Add(card);
+                GameLog.Data($"Return play zone card {DescribeMaterial(card)} to discard pile. discardPile={DiscardPile.Count}");
             }
         }
 
@@ -285,8 +322,8 @@ public class PlayerState
                     }
                     else
                     {
-                        DrawPile.Insert(0, card);
-                        GameLog.Data($"End turn returns hand card {DescribeMaterial(card)} to draw pile. drawPile={DrawPile.Count}");
+                        DiscardPile.Add(card);
+                        GameLog.Data($"End turn discards hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
                     }
                 }
 
@@ -294,7 +331,7 @@ public class PlayerState
             }
         }
 
-        ReturnPlayZoneCardsToDrawPile(removedTemporaryCards);
+        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
         KeepHandOnEndTurn = false;
     }
 
@@ -370,6 +407,18 @@ public class PlayerState
         GameLog.Data($"Player heal amount={amount} hp={CurrentHealth}/{MaxHealth}");
     }
 
+    public void IncreaseMaxHealth(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        MaxHealth += amount;
+        CurrentHealth += amount;
+        if (CurrentHealth > MaxHealth)
+            CurrentHealth = MaxHealth;
+        GameLog.Data($"Player max health change={amount} hp={CurrentHealth}/{MaxHealth}");
+    }
+
     public int GainShield(int amount)
     {
         if (amount <= 0)
@@ -421,6 +470,7 @@ public class PlayerState
         RemoveSturdyModifiers(Hand);
         RemoveSturdyModifiers(PlayZone);
         RemoveSturdyModifiers(DrawPile);
+        RemoveSturdyModifiers(DiscardPile);
         RemoveSturdyModifiers(Deck);
         RemoveSturdyModifiers(TemporaryMaterialsNextTurn);
     }
@@ -480,6 +530,7 @@ public class PlayerState
         else
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
         GameLog.Data($"Player add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
+        BuffAdded?.Invoke(buffType, stack);
     }
 
     public int GetBuffStack(BuffEnum buffType)
@@ -626,10 +677,20 @@ public class PlayerState
 
     public bool ReturnLeftmostHandCardToDrawPile()
     {
-        return ReturnLeftmostHandCardToDrawPile(null);
+        return ReturnLeftmostHandCardToDiscardPile(null);
     }
 
     public bool ReturnLeftmostHandCardToDrawPile(List<MaterialModel> removedTemporaryCards)
+    {
+        return ReturnLeftmostHandCardToDiscardPile(removedTemporaryCards);
+    }
+
+    public bool ReturnLeftmostHandCardToDiscardPile()
+    {
+        return ReturnLeftmostHandCardToDiscardPile(null);
+    }
+
+    public bool ReturnLeftmostHandCardToDiscardPile(List<MaterialModel> removedTemporaryCards)
     {
         if (Hand.Count == 0)
             return false;
@@ -644,8 +705,8 @@ public class PlayerState
         }
         else
         {
-            DrawPile.Insert(0, card);
-            GameLog.Data($"Return leftmost hand card {DescribeMaterial(card)} to draw pile");
+            DiscardPile.Add(card);
+            GameLog.Data($"Discard leftmost hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
         }
         return true;
     }
@@ -735,6 +796,7 @@ public class PlayerState
         bool removed = false;
         removed |= Deck.Remove(card);
         removed |= DrawPile.Remove(card);
+        removed |= DiscardPile.Remove(card);
         removed |= Hand.Remove(card);
         removed |= PlayZone.Remove(card);
         removed |= TemporaryMaterialsNextTurn.Remove(card);

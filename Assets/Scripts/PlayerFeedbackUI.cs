@@ -10,6 +10,8 @@ public class PlayerFeedbackUI : MonoBehaviour
     [SerializeField] private Image playerSpriteFeedbackImage;
     [SerializeField] private RectTransform playerFloatingTextTarget;
 
+    private PlayerCastAnimatorUI playerCastAnimator;
+
     [SerializeField] private float damageShakeDuration = 0.28f;
     [SerializeField] private Vector2 damageShakeStrength = new Vector2(10f, 4f);
     [SerializeField] private int damageShakeVibrato = 14;
@@ -99,6 +101,9 @@ public class PlayerFeedbackUI : MonoBehaviour
     {
         UpdateVignetteRange(playerState);
         PlayCornerFeedback(color);
+        if (playerCastAnimator == null)
+            CachePlayerCastAnimator(transform);
+        playerCastAnimator?.PlayHit();
         PlayPlayerSpriteHitFeedback();
         RectTransform shakeTarget = damageShakeTarget != null ? damageShakeTarget : playerVirtualTarget;
         if (shakeTarget == null)
@@ -177,7 +182,18 @@ public class PlayerFeedbackUI : MonoBehaviour
             castShakeTarget = root as RectTransform;
         if (playerVignetteFeedback == null)
             playerVignetteFeedback = UIManager.FindChildComponent<Image>(root, "PlayerVignetteFeedback");
+        CachePlayerCastAnimator(root);
         CachePlayerSpriteFeedbackTarget(root);
+    }
+
+    private void CachePlayerCastAnimator(Transform root)
+    {
+        if (playerCastAnimator != null)
+            return;
+
+        Transform playerAnimator = UIManager.FindChildRecursive(root, "PlayerCastAnimator");
+        if (playerAnimator != null)
+            playerCastAnimator = playerAnimator.GetComponent<PlayerCastAnimatorUI>();
     }
 
     private void CachePlayerSpriteFeedbackTarget(Transform root)

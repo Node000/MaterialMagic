@@ -122,7 +122,14 @@ public enum EventRewardType
     GainMagic = 4,
     UpgradeMaterial = 5,
     RemovePollution = 6,
-    GainRelic = 7
+    GainRelic = 7,
+    GainMagicModifier = 8,
+    IncreaseMaxHealth = 9,
+    GainMaterial = 10,
+    GainRandomMaterial = 11,
+    GainSameRandomMaterials = 12,
+    IncreaseDrawCount = 13,
+    RemoveMaterial = 14
 }
 
 public enum BonusRewardType
@@ -270,17 +277,30 @@ public class EnemyData : IDataRecord, INumericDataRecord
 }
 
 [Serializable]
+public class EventEffectData
+{
+    public EventRewardType rewardType;
+    public int amount;
+    public int count;
+    public int choiceCount;
+    public int escalatePerUse;
+    public MaterialEnum material;
+}
+
+[Serializable]
 public class EventOptionData
 {
     public string id;
     public string titleKey;
     public string recipe;
+    public int randomRecipeLength;
     public bool ignoreOrder;
     public int resultId;
     public bool isExitOption;
     public string nextNodeId;
     public int choiceCount;
     public string[] tagIds = Array.Empty<string>();
+    public EventEffectData[] effects = Array.Empty<EventEffectData>();
 }
 
 [Serializable]
@@ -288,6 +308,7 @@ public class EventNodeData
 {
     public string id;
     public string[] textKeys = Array.Empty<string>();
+    public string nextNodeId;
     public EventOptionData[] options = Array.Empty<EventOptionData>();
 }
 
@@ -298,7 +319,8 @@ public class EventData : IDataRecord, INumericDataRecord
     public string id;
     public string titleKey;
     public string startNodeId;
-    public int drawCount;
+    public string defaultEndNodeId;
+    public int drawCount = -1;
     public EventNodeData[] nodes = Array.Empty<EventNodeData>();
 
     public string Id => id;
@@ -376,6 +398,7 @@ public class ChapterLevelPoolRangeData
 public class ChapterFixedLevelData
 {
     public int levelIndex;
+    public int levelId;
     public LevelType levelType;
 }
 

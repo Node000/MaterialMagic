@@ -237,6 +237,8 @@ public class HandSystemUI : MonoBehaviour
 
 	private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
 
+	private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
+
 	private readonly List<MaterialModel> selectedCards = new List<MaterialModel>();
 
 	private readonly HashSet<HandCardView> newCardViews = new HashSet<HandCardView>();
@@ -801,7 +803,7 @@ public class HandSystemUI : MonoBehaviour
 			return;
 		}
 
-		int drawCount = currentEvent.Data.drawCount > 0 ? currentEvent.Data.drawCount : playerState.DrawCount;
+		int drawCount = currentEvent.Data.drawCount >= 0 ? currentEvent.Data.drawCount : playerState.DrawCount;
 		GameLog.Data($"Draw event options hand count={drawCount}");
 		refreshUsedThisTurn = false;
 		playerState.DrawCards(drawCount);
@@ -1277,6 +1279,9 @@ public class HandSystemUI : MonoBehaviour
 			if (fixedLevel == null || fixedLevel.levelIndex != progress)
 				continue;
 
+			if (fixedLevel.levelId > 0 && GameDataDatabase.TryGetLevelData(fixedLevel.levelId, out LevelData configuredLevel))
+				return configuredLevel;
+
 			List<LevelData> levels = GetLevels(fixedLevel.levelType);
 			return levels.Count > 0 ? levels[Random.Range(0, levels.Count)] : null;
 		}
@@ -1416,6 +1421,7 @@ public class HandSystemUI : MonoBehaviour
         runStartRealtime = Time.realtimeSinceStartup;
 
 		playerState = saveData != null ? RunSaveSystem.CreatePlayer(saveData) : PlayerState.CreateDefault();
+        playerState.BuffAdded += OnPlayerBuffAdded;
 		battleManager = BattleManager.Create(playerState);
         battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
@@ -1479,7 +1485,14 @@ public class HandSystemUI : MonoBehaviour
 		}
 		else if (currentEvent != null && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
 		{
-			FinishEventLevel();
+			if (currentEvent.TryAdvanceToNextNode())
+			{
+				StartCoroutine(CompleteEventChoiceNodeRoutine());
+			}
+			else
+			{
+				FinishEventLevel();
+			}
 		}
 	}
 
@@ -1498,6 +1511,8 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ea: Expected O, but got Unknown
         SaveRunProgress();
+        if (playerState != null)
+            playerState.BuffAdded -= OnPlayerBuffAdded;
         if (battleManager != null)
         {
             battleManager.EnemyAdded -= OnBattleEnemyAdded;
@@ -1544,6 +1559,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			if (playerState.TryMovePlayCardToHand(cardView.Card))
 			{
+                RefreshPlayerAnimationState();
 				RebuildCards(animateFromCurrent: true);
 			}
 			return;
@@ -1561,6 +1577,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			selectedCards.Remove(cardView.Card);
 		}
+        RefreshPlayerAnimationState();
 	}
 
 	public void OnCardPlayRequested(HandCardView cardView)
@@ -1700,6 +1717,7 @@ public class HandSystemUI : MonoBehaviour
 			}
 		}
 		selectedCards.Clear();
+        RefreshPlayerAnimationState();
 		if (flag)
 		{
 			RebuildCards(animateFromCurrent: true);
@@ -1714,6 +1732,7 @@ public class HandSystemUI : MonoBehaviour
 		if (playerState.TryMoveHandCardToPlay(card))
 		{
 			selectedCards.Remove(card);
+            RefreshPlayerAnimationState();
 			RebuildCards(animateFromCurrent: true);
 		}
 	}
@@ -1751,7 +1770,7 @@ public class HandSystemUI : MonoBehaviour
 		PlayerState.RefreshHandResult refreshResult;
 		if (TutorialManager != null && TutorialManager.ShouldForceRefreshEarth(out MaterialEnum forcedMaterial))
 		{
-			playerState.ReturnHandCardsToDrawPile(selectedCards, list2);
+			playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
 			playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), forcedMaterial));
 			refreshResult = new PlayerState.RefreshHandResult(1, 1);
 		}
@@ -1760,6 +1779,7 @@ public class HandSystemUI : MonoBehaviour
 			refreshResult = playerState.RefreshHandCards(selectedCards, list2, battleManager);
 		}
 		selectedCards.Clear();
+        RefreshPlayerAnimationState();
 		if (refreshResult.DrawnCount == 0 && refreshResult.ReturnedCount == 0 && list2.Count == 0)
 		{
 			return;
@@ -1779,7 +1799,7 @@ public class HandSystemUI : MonoBehaviour
 		SetButtonsInteractable(interactable: false);
 		RefreshStaticUI();
 		UpdateLayout();
-		AnimateReturningViews(list, list2, deckPileArea, (TweenCallback)delegate
+		AnimateReturningViews(list, list2, GetDiscardPileArea(), (TweenCallback)delegate
 		{
 			RefreshStaticUI();
 			RefreshMaterialListPanel();
@@ -1802,6 +1822,7 @@ public class HandSystemUI : MonoBehaviour
 
 			GameLog.Data((currentEvent != null) ? "Click end turn in event" : "Click end turn in battle");
 			selectedCards.Clear();
+            RefreshPlayerAnimationState();
 			if (currentLevel != null && currentLevel.levelType == LevelType.Rest)
 			{
 				((MonoBehaviour)this).StartCoroutine(ResolveRestEndTurnRoutine());
@@ -1993,34 +2014,41 @@ public class HandSystemUI : MonoBehaviour
 			TutorialManager?.OnEventOptionResolved();
 		if (!matched && currentEvent != null)
 			matched = currentEvent.TryGetExitOption(out matchedOption);
+		if (!matched && currentEvent != null)
+			matched = currentEvent.TryGetDefaultEndOption(out matchedOption);
 		GameLog.Data(string.Format("Resolve event end turn matched={0} option={1}", matched, (matchedOption != null) ? matchedOption.id : "none"));
+
+		RectTransform matchedOptionRect = null;
 		if (matched && (Object)eventPanel != (Object)null)
 		{
 			yield return eventPanel.PlayOptionChosen(matchedOption);
-			RectTransform matchedOptionRect = eventPanel.MatchedOptionRect;
+			matchedOptionRect = eventPanel.MatchedOptionRect;
 			for (int i = 0; i < playSnapshot.Count; i++)
 			{
 				HandCardView handCardView = FindView(playSnapshot[i]);
 				if ((Object)handCardView != (Object)null && (Object)matchedOptionRect != (Object)null)
-				{
 					PlayMaterialFillParticle(handCardView, matchedOptionRect, playSnapshot[i].material);
-				}
 			}
 			yield return (object)new WaitForSeconds(GetParticleArrivalWait());
-			currentEvent.ResolveResult(matchedOption.resultId, playerState);
-			GameLog.Data($"Event option selected id={matchedOption.id} result={matchedOption.resultId}");
-			RefreshStaticUI();
 		}
-        if (matched && IsCardChoiceEventResult(matchedOption.resultId))
-        {
-            StartEventCardChoice(matchedOption);
-            yield break;
-        }
+
+		if (matched && !HasEventEffects(matchedOption) && IsCardChoiceEventResult(matchedOption.resultId))
+		{
+			StartEventCardChoice(matchedOption);
+			yield break;
+		}
+
+		if (matched)
+		{
+			yield return ResolveEventOptionEffectsRoutine(matchedOption, matchedOptionRect, deferred: false);
+			if (CheckPlayerDefeated())
+				yield break;
+		}
+
 		List<HandCardView> list = new List<HandCardView>();
 		for (int j = 0; j < cardViews.Count; j++)
-		{
 			list.Add(cardViews[j]);
-		}
+
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
 		playerState.EndTurn(removedTemporaryCards);
 		RefreshStaticUI();
@@ -2030,36 +2058,271 @@ public class HandSystemUI : MonoBehaviour
 			returnDone = true;
 		});
 		while (!returnDone)
-		{
 			yield return null;
-		}
+
 		RebuildCards(animateFromCurrent: true);
 		refreshUsedThisTurn = false;
 		if (!matched)
 		{
-			if ((Object)eventPanel != (Object)null && eventPanel.WaitingForFinalClick)
-			{
-				FinishEventLevel();
-			}
-			else
-			{
-				busy = false;
-				SetButtonsInteractable(interactable: true);
-			}
-		}
-		else if (currentEvent.AdvanceToNextNode(matchedOption))
-		{
-			if ((Object)eventPanel != (Object)null)
-			{
-				yield return eventPanel.ShowCurrentNodeRoutine();
-			}
-			busy = false;
-			SetButtonsInteractable(interactable: true);
-		}
-		else
-		{
 			FinishEventLevel();
+			yield break;
 		}
+
+		currentEvent?.MarkOptionResolved(matchedOption);
+		yield return ResolveEventOptionEffectsRoutine(matchedOption, matchedOptionRect, deferred: true);
+		if (CheckPlayerDefeated())
+			yield break;
+
+		CompleteEventChoiceOption(matchedOption);
+	}
+
+	private IEnumerator ResolveEventOptionEffectsRoutine(EventOptionData option, RectTransform sourceRect, bool deferred)
+	{
+		if (option == null)
+			yield break;
+
+		if (!HasEventEffects(option))
+		{
+			if (!deferred && option.resultId != 0)
+			{
+				currentEvent.ResolveResult(option.resultId, playerState);
+				GameLog.Data($"Event option selected id={option.id} result={option.resultId}");
+				RefreshStaticUI();
+				SaveRunProgress();
+			}
+			yield break;
+		}
+
+		for (int i = 0; i < option.effects.Length; i++)
+		{
+			EventEffectData effect = option.effects[i];
+			if (effect == null || IsDeferredEventEffect(effect.rewardType) != deferred)
+				continue;
+
+			yield return ResolveEventEffectRoutine(effect, option, sourceRect);
+			if (CheckPlayerDefeated())
+				yield break;
+		}
+	}
+
+	private IEnumerator ResolveEventEffectRoutine(EventEffectData effect, EventOptionData option, RectTransform sourceRect)
+	{
+		switch (effect.rewardType)
+		{
+			case EventRewardType.Heal:
+				ApplyEventHeal(GetEventEffectAmount(effect, 10));
+				break;
+			case EventRewardType.LoseHealth:
+				ApplyEventLoseHealth(option, effect);
+				break;
+			case EventRewardType.GainGold:
+				yield return GainGoldAnimated(GetEventEffectAmount(effect, 1), GetEventEffectSourceRect(sourceRect));
+				break;
+			case EventRewardType.GainMagic:
+				yield return ShowEventMagicRewardRoutine();
+				break;
+			case EventRewardType.GainMagicModifier:
+				yield return ShowEventMagicModifierRoutine(GetEventEffectChoiceCount(effect, option, 2));
+				break;
+			case EventRewardType.IncreaseMaxHealth:
+				ApplyEventIncreaseMaxHealth(GetEventEffectAmount(effect, 5));
+				break;
+			case EventRewardType.GainMaterial:
+				AddEventMaterial(effect.material != MaterialEnum.None ? effect.material : GetRandomBasicMaterial(), GetEventEffectCount(effect, 1));
+				break;
+			case EventRewardType.GainRandomMaterial:
+				AddEventRandomMaterials(GetEventEffectCount(effect, 1));
+				break;
+			case EventRewardType.GainSameRandomMaterials:
+				AddEventMaterial(GetRandomBasicMaterial(), GetEventEffectCount(effect, 1));
+				break;
+			case EventRewardType.IncreaseDrawCount:
+				ApplyEventIncreaseDrawCount(GetEventEffectAmount(effect, 1));
+				break;
+			case EventRewardType.RemoveMaterial:
+				yield return RemoveEventMaterialsRoutine(GetEventEffectChoiceCount(effect, option, 1));
+				break;
+		}
+	}
+
+	private bool HasEventEffects(EventOptionData option)
+	{
+		return option != null && option.effects != null && option.effects.Length > 0;
+	}
+
+	private bool IsDeferredEventEffect(EventRewardType rewardType)
+	{
+		return rewardType == EventRewardType.GainMagic || rewardType == EventRewardType.GainMagicModifier;
+	}
+
+	private int GetEventEffectAmount(EventEffectData effect, int defaultAmount)
+	{
+		return effect != null && effect.amount != 0 ? effect.amount : defaultAmount;
+	}
+
+	private int GetEventEffectCount(EventEffectData effect, int defaultCount)
+	{
+		return effect != null && effect.count > 0 ? effect.count : defaultCount;
+	}
+
+	private int GetEventEffectChoiceCount(EventEffectData effect, EventOptionData option, int defaultCount)
+	{
+		if (effect != null && effect.choiceCount > 0)
+			return effect.choiceCount;
+		if (option != null && option.choiceCount > 0)
+			return option.choiceCount;
+		return defaultCount;
+	}
+
+	private RectTransform GetEventEffectSourceRect(RectTransform sourceRect)
+	{
+		if ((Object)sourceRect != (Object)null)
+			return sourceRect;
+
+		return transform as RectTransform;
+	}
+
+	private void ApplyEventHeal(int amount)
+	{
+		int healthBefore = playerState.CurrentHealth;
+		playerState.Heal(amount);
+		int healed = playerState.CurrentHealth - healthBefore;
+		if (healed > 0)
+		{
+			PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
+			ShowPlayerFloatingText("+" + healed, FloatingTextType.Heal);
+		}
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private void ApplyEventLoseHealth(EventOptionData option, EventEffectData effect)
+	{
+		int damage = GetEventEffectAmount(effect, 1);
+		if (effect != null && effect.escalatePerUse != 0 && currentEvent != null)
+			damage += currentEvent.GetOptionResolveCount(option) * effect.escalatePerUse;
+
+		int healthBefore = playerState.CurrentHealth;
+		playerState.TakeDirectDamage(damage);
+		int damageTaken = healthBefore - playerState.CurrentHealth;
+		if (damageTaken > 0)
+		{
+			GetUIManager().PlayerFeedback?.PlayDamageFeedback(new Color(0.95f, 0.05f, 0.02f, 0.72f), playerState);
+			ShowPlayerFloatingText("-" + damageTaken, FloatingTextType.Damage);
+		}
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private void ApplyEventIncreaseMaxHealth(int amount)
+	{
+		playerState.IncreaseMaxHealth(amount);
+		PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
+		ShowPlayerFloatingText("+" + amount + "上限", FloatingTextType.Heal);
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private void ApplyEventIncreaseDrawCount(int amount)
+	{
+		playerState.DrawCount += amount;
+		GameLog.Data($"Event result player draw count +{amount} now={playerState.DrawCount}");
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private void AddEventRandomMaterials(int count)
+	{
+		for (int i = 0; i < count; i++)
+			AddEventMaterial(GetRandomBasicMaterial(), 1);
+	}
+
+	private void AddEventMaterial(MaterialEnum material, int count)
+	{
+		if (material == MaterialEnum.None || count <= 0)
+			return;
+
+		for (int i = 0; i < count; i++)
+			playerState.AddDeckMaterial(material);
+		RefreshMaterialListPanel();
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private MaterialEnum GetRandomBasicMaterial()
+	{
+		return (MaterialEnum)Random.Range((int)MaterialEnum.Fire, (int)MaterialEnum.Earth + 1);
+	}
+
+	private IEnumerator RemoveEventMaterialsRoutine(int choiceCount)
+	{
+		MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
+		if ((Object)panel == (Object)null || playerState == null)
+			yield break;
+
+		int selectableCount = 0;
+		for (int i = 0; i < playerState.Deck.Count; i++)
+		{
+			if (playerState.Deck[i] != null)
+				selectableCount++;
+		}
+		if (selectableCount == 0)
+			yield break;
+
+		int targetCount = Mathf.Clamp(choiceCount, 1, selectableCount);
+		bool completed = false;
+		List<MaterialModel> selectedMaterials = new List<MaterialModel>();
+		panel.BeginSelection(targetCount, IsEventRemoveMaterialSelectable, delegate(IReadOnlyList<MaterialModel> materials)
+		{
+			selectedMaterials.Clear();
+			for (int i = 0; materials != null && i < materials.Count; i++)
+			{
+				if (IsEventRemoveMaterialSelectable(materials[i]))
+					selectedMaterials.Add(materials[i]);
+			}
+			completed = true;
+		});
+
+		while (!completed)
+			yield return null;
+
+		for (int i = 0; i < selectedMaterials.Count; i++)
+			playerState.RemoveCardEverywhere(selectedMaterials[i]);
+		RefreshMaterialListPanel();
+		RebuildCards(animateFromCurrent: true);
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private bool IsEventRemoveMaterialSelectable(MaterialModel materialModel)
+	{
+		return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel);
+	}
+
+	private IEnumerator ShowEventMagicRewardRoutine()
+	{
+		RewardPanelUI panel = GetUIManager().RewardPanel;
+		if ((Object)panel == (Object)null)
+			yield break;
+
+		bool completed = false;
+		panel.ShowMagicOnly(delegate { completed = true; });
+		while (!completed)
+			yield return null;
+
+		RefreshStaticUI();
+		SaveRunProgress();
+	}
+
+	private IEnumerator ShowEventMagicModifierRoutine(int choiceCount)
+	{
+		bool completed = false;
+		ShowMagicModifierSelection(choiceCount, delegate { completed = true; });
+		while (!completed)
+			yield return null;
+
+		RefreshStaticUI();
+		SaveRunProgress();
 	}
 
 	private bool IsCardChoiceEventResult(int resultId)
@@ -2073,6 +2336,7 @@ public class HandSystemUI : MonoBehaviour
 		pendingChoiceCount = option != null && option.choiceCount > 0 ? option.choiceCount : 1;
 		pendingChoiceCards.Clear();
 		selectedCards.Clear();
+        RefreshPlayerAnimationState();
 		choosingEventCard = true;
 		MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
 		if ((Object)panel != (Object)null)
@@ -2158,63 +2422,79 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().PlayArea.ShowResolveIndicator();
 		for (int roundStart = 0; roundStart < cards.Count; roundStart++)
 		{
-			ResetMagicHighlights();
-			MagicItemView matchedMagicView = FindCastableMagicFromLeft(cards, roundStart);
-			if ((Object)matchedMagicView == (Object)null)
+			CollectCastableMagicsByRecipeLength(cards, roundStart);
+			if (castableMagicViews.Count == 0)
 			{
 				continue;
 			}
-			int matchLength = GetRecipeLength(matchedMagicView.Magic);
-			MoveIndicatorToCardRange(cards, roundStart, matchLength, roundStart == 0);
-			yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
-			for (int i = 0; i < matchLength; i++)
+			for (int matchedIndex = 0; matchedIndex < castableMagicViews.Count; matchedIndex++)
 			{
-				HandCardView handCardView = FindView(cards[roundStart + i]);
-				if ((Object)handCardView != (Object)null)
+				ResetMagicHighlights();
+				MagicItemView matchedMagicView = castableMagicViews[matchedIndex];
+				int matchLength = GetRecipeLength(matchedMagicView.Magic);
+				MoveIndicatorToCardRange(cards, roundStart, matchLength, roundStart == 0 && matchedIndex == 0);
+				yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
+				for (int i = 0; i < matchLength; i++)
 				{
-					TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
-					PlayMaterialFillParticle(handCardView, matchedMagicView, cards[roundStart + i].material);
+					HandCardView handCardView = FindView(cards[roundStart + i]);
+					if ((Object)handCardView != (Object)null)
+					{
+						TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
+						PlayMaterialFillParticle(handCardView, matchedMagicView, cards[roundStart + i].material);
+					}
 				}
+				yield return (object)new WaitForSeconds(GetParticleArrivalWait());
+				for (int j = 0; j < matchLength; j++)
+				{
+					cards[roundStart + j].TriggerOnInvoke();
+					matchedMagicView.HighlightRecipeSlot(j);
+				}
+				EnemyModel targetEnemy = battleManager.BeginCastTarget();
+				bool castImpactReached = false;
+				float castVisualFallbackWait = PlayMagicCastParticle(matchedMagicView, targetEnemy, () => castImpactReached = true);
+				float castVisualWaitTime = 0f;
+				while (!castImpactReached && castVisualWaitTime < castVisualFallbackWait)
+				{
+					castVisualWaitTime += Time.deltaTime;
+					yield return null;
+				}
+				matchedMagicView.PulseCast();
+				GameLog.Data($"Resolve magic from play zone magic={matchedMagicView.Magic.Id} start={roundStart} length={matchLength}");
+				CastMagic(matchedMagicView.Magic);
+				yield return PlayPendingEnemyDeaths();
+				if (AllEnemiesDead())
+				{
+					yield break;
+				}
+				yield return (object)new WaitForSeconds(postMagicResolveDelay);
+				ResetMagicHighlights();
 			}
-			yield return (object)new WaitForSeconds(GetParticleArrivalWait());
-            for (int j = 0; j < matchLength; j++)
-            {
-                cards[roundStart + j].TriggerOnInvoke();
-                matchedMagicView.HighlightRecipeSlot(j);
-            }
-            EnemyModel targetEnemy = battleManager.BeginCastTarget();
-            bool castImpactReached = false;
-            float castVisualFallbackWait = PlayMagicCastParticle(matchedMagicView, targetEnemy, () => castImpactReached = true);
-            float castVisualWaitTime = 0f;
-            while (!castImpactReached && castVisualWaitTime < castVisualFallbackWait)
-            {
-                castVisualWaitTime += Time.deltaTime;
-                yield return null;
-            }
-			matchedMagicView.PulseCast();
-			GameLog.Data($"Resolve magic from play zone magic={matchedMagicView.Magic.Id} start={roundStart} length={matchLength}");
-			CastMagic(matchedMagicView.Magic);
-			yield return PlayPendingEnemyDeaths();
-			if (AllEnemiesDead())
-			{
-				yield break;
-			}
-			yield return (object)new WaitForSeconds(postMagicResolveDelay);
-			ResetMagicHighlights();
 		}
 	}
 
-	private MagicItemView FindCastableMagicFromLeft(List<MaterialModel> cards, int startIndex)
+	private void CollectCastableMagicsByRecipeLength(List<MaterialModel> cards, int startIndex)
 	{
+		castableMagicViews.Clear();
 		for (int i = 0; i < magicViews.Count; i++)
 		{
 			MagicItemView magicItemView = magicViews[i];
-			if (magicItemView.Magic != null && magicItemView.Magic.IsMatch(cards, startIndex))
+			MagicModel magic = magicItemView.Magic;
+			if (magic == null || !magic.IsMatch(cards, startIndex))
 			{
-				return magicItemView;
+				continue;
 			}
+			int recipeLength = GetRecipeLength(magic);
+			int insertIndex = castableMagicViews.Count;
+			for (int j = 0; j < castableMagicViews.Count; j++)
+			{
+				if (recipeLength < GetRecipeLength(castableMagicViews[j].Magic))
+				{
+					insertIndex = j;
+					break;
+				}
+			}
+			castableMagicViews.Insert(insertIndex, magicItemView);
 		}
-		return null;
 	}
 
 	private static int GetRecipeLength(MagicModel magic)
@@ -2486,6 +2766,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			deckCountText.text = "素材列表";
 		}
+        RefreshPlayerAnimationState();
 	}
 
 	private void EnsureMaterialListButton()
@@ -2873,8 +3154,9 @@ public class HandSystemUI : MonoBehaviour
 				MagicSlotClickHandler clickHandler = ((Component)componentsInChildren[i]).GetComponent<MagicSlotClickHandler>();
 				if (clickHandler == null)
 					clickHandler = ((Component)componentsInChildren[i]).gameObject.AddComponent<MagicSlotClickHandler>();
-				clickHandler.Bind(this, i);
-				componentsInChildren[i].Bind(playerState.GetMagicAtSlot(i));
+                clickHandler.Bind(this, i);
+                componentsInChildren[i].Bind(playerState.GetMagicAtSlot(i));
+
 				magicViews.Add(componentsInChildren[i]);
 			}
 		}
@@ -3083,14 +3365,59 @@ public class HandSystemUI : MonoBehaviour
 
 	private void CreatePlayerCastAnimator()
 	{
-		Transform target = ((Component)this).transform.Find("PlayerCastAnimator");
+		Transform target = ((Component)this).transform.Find("PlayerArea/PlayerCastAnimator");
+		if ((Object)(object)target == (Object)null)
+			target = ((Component)this).transform.Find("PlayerCastAnimator");
 		playerCastAnimator = ((Object)(object)target != (Object)null) ? ((Component)target).GetComponent<PlayerCastAnimatorUI>() : null;
 		if (!((Object)playerCastAnimator == (Object)null))
 		{
-			playerCastAnimator.Initialize();
-			playerCastAnimator.SetReleaseHandler(HandleCastReleaseFrame);
-		}
-	}
+            playerCastAnimator.Initialize();
+            playerCastAnimator.SetReleaseHandler(HandleCastReleaseFrame);
+            RegisterPlayerAnimationHoverRelays();
+            RefreshPlayerAnimationState();
+        }
+    }
+
+    private void RegisterPlayerAnimationHoverRelays()
+    {
+        if ((Object)playerCastAnimator == (Object)null)
+            return;
+
+        if ((Object)endTurnButton != (Object)null)
+            BindPlayerAnimationHoverRelay(((Component)endTurnButton).transform);
+    }
+
+    private void BindPlayerAnimationHoverRelay(Transform target)
+    {
+        if ((Object)target == (Object)null)
+            return;
+
+        PlayerAnimationHoverRelayUI relay = ((Component)target).GetComponent<PlayerAnimationHoverRelayUI>();
+        if ((Object)relay == (Object)null)
+            relay = ((Component)target).gameObject.AddComponent<PlayerAnimationHoverRelayUI>();
+        relay.Bind(playerCastAnimator);
+    }
+
+    private void RefreshPlayerAnimationState()
+    {
+        if ((Object)playerCastAnimator == (Object)null)
+            return;
+
+        bool hasMaterialInPlayZone = playerState != null && playerState.PlayZone.Count > 0;
+        playerCastAnimator.SetMagicSelectionActive(selectedCards.Count > 0 || hasMaterialInPlayZone);
+    }
+
+    private void OnPlayerBuffAdded(BuffEnum buffType, int stack)
+    {
+        if (stack <= 0 || BuffModel.GetKind(buffType) != BuffKindEnum.DeBuff)
+            return;
+
+        if ((Object)playerCastAnimator == (Object)null)
+            CreatePlayerCastAnimator();
+        if ((Object)playerCastAnimator != (Object)null)
+            playerCastAnimator.PlayNegativeStatus();
+    }
+
 
 	private bool PlayPlayerCastAnimation()
 	{
@@ -3371,12 +3698,17 @@ public class HandSystemUI : MonoBehaviour
         SaveRunProgress();
     }
 
-    private void ShowMagicModifierSelection(int choiceCount)
+    private void ShowMagicModifierSelection(int choiceCount, Action completed = null)
     {
         busy = true;
         SetButtonsInteractable(interactable: false);
         pendingMagicModifier = null;
-        GetUIManager().MagicModifierSelectionPanel?.Show(GetMagicModifierChoices(choiceCount), FinishRestLevel);
+        Action onCompleted = completed ?? FinishRestLevel;
+        MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
+        if (panel != null)
+            panel.Show(GetMagicModifierChoices(choiceCount), onCompleted);
+        else
+            onCompleted?.Invoke();
     }
 
     private List<MagicModifierData> GetMagicModifierChoices(int count)
@@ -3460,6 +3792,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.Hand.Clear();
 		playerState.PlayZone.Clear();
 		playerState.DrawPile.Clear();
+        playerState.DiscardPile.Clear();
 		playerState.DrawPile.AddRange(playerState.Deck);
 		RefreshMaterialListPanel();
 	}
@@ -3470,6 +3803,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.Hand.Clear();
 		playerState.PlayZone.Clear();
 		playerState.DrawPile.Clear();
+        playerState.DiscardPile.Clear();
 		playerState.DrawPile.AddRange(playerState.Deck);
 		RefreshMaterialListPanel();
 	}
@@ -3539,6 +3873,7 @@ public class HandSystemUI : MonoBehaviour
 	public void SelectPendingRewardMagic(MagicData rewardMagic)
 	{
 		pendingRewardMagic = rewardMagic;
+        RefreshPlayerAnimationState();
         if (rewardMagic != null)
             ClearPendingShopMagic();
 		if (rewardMagic != null)
@@ -3549,6 +3884,7 @@ public class HandSystemUI : MonoBehaviour
     {
         pendingShopMagic = magicData;
         pendingShopMagicSlotChosen = onSlotChosen;
+        RefreshPlayerAnimationState();
         if (magicData != null)
             pendingRewardMagic = null;
     }
@@ -3557,6 +3893,7 @@ public class HandSystemUI : MonoBehaviour
     {
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
+        RefreshPlayerAnimationState();
     }
 
     public bool TryPlacePendingShopMagic(int slotIndex)
@@ -3573,6 +3910,7 @@ public class HandSystemUI : MonoBehaviour
     public void SelectPendingMagicModifier(MagicModifierData modifierData)
     {
         pendingMagicModifier = modifierData;
+        RefreshPlayerAnimationState();
     }
 
 	public bool HasPendingRewardMagic => pendingRewardMagic != null;
@@ -3589,6 +3927,7 @@ public class HandSystemUI : MonoBehaviour
         MagicData rewardMagic = pendingRewardMagic;
         RectTransform sourceRect = GetUIManager().RewardPanel != null ? GetUIManager().RewardPanel.SelectedMagicRect : null;
         pendingRewardMagic = null;
+        RefreshPlayerAnimationState();
         StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
 		return true;
 	}
@@ -3619,6 +3958,7 @@ public class HandSystemUI : MonoBehaviour
         }
 
         pendingMagicModifier = null;
+        RefreshPlayerAnimationState();
         CreateMagicViews();
         panel?.CompleteSelection();
         return true;
@@ -4354,7 +4694,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private void ShowFloatingText(RectTransform anchor, string text, FloatingTextType type, bool blocked = false)
+	private void ShowFloatingText(RectTransform anchor, string text, FloatingTextType type, bool blocked = false, float durationMultiplier = 1f)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
@@ -4394,13 +4734,13 @@ public class HandSystemUI : MonoBehaviour
 			targetText.alignment = TextAlignmentOptions.Center;
 			targetText.raycastTarget = false;
 		}
-		floatingText.Play(text, type, blocked, floatingTextYOffset, floatingTextDuration, floatingTextMoveEase, floatingTextFadeEase);
+		floatingText.Play(text, type, blocked, floatingTextYOffset, floatingTextDuration * durationMultiplier, floatingTextMoveEase, floatingTextFadeEase);
 	}
 
 	private void ShowPlayerFloatingText(string text, FloatingTextType type, bool blocked = false)
 	{
 		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		ShowFloatingText(GetUIManager().PlayerFeedback?.PlayerFloatingTextTarget, text, type, blocked);
+		ShowFloatingText(GetUIManager().PlayerFeedback?.PlayerFloatingTextTarget, text, type, blocked, 2f);
 	}
 
 	private void PlayPlayerCornerFeedback(Color color)
@@ -5073,6 +5413,8 @@ public class HandSystemUI : MonoBehaviour
 		if ((Object)endTurnButton != (Object)null)
 		{
 			endTurnButton.interactable = interactable;
+            if (!interactable && (Object)playerCastAnimator != (Object)null)
+                playerCastAnimator.ClearEndTurnHover();
 		}
 	}
 

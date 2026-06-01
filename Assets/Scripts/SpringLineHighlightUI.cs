@@ -22,6 +22,10 @@ public class SpringLineHighlightUI : MaskableGraphic
     [SerializeField, Min(0f)] private float lineSpacing = 4f;
     [SerializeField, Range(2f, 12f)] private float roundedRectSharpness = 5f;
 
+    [Header("填充")]
+    [SerializeField] private bool fillEnabled;
+    [SerializeField] private Color fillColor = Color.white;
+
     [Header("弹簧线")]
     [SerializeField, Min(0f)] private float wobbleAmplitude = 8f;
     [SerializeField, Range(1, 32)] private int waveCount = 7;
@@ -153,6 +157,9 @@ public class SpringLineHighlightUI : MaskableGraphic
                 continue;
 
             BuildLoopPoints(loopRect, i);
+            if (fillEnabled && i == 0)
+                AddFilledShape(vh, points, loopRect.center, fillColor);
+
             AddClosedStroke(vh, points, lineWidth, lineColor);
         }
     }
@@ -292,6 +299,25 @@ public class SpringLineHighlightUI : MaskableGraphic
         return Mathf.Sign(value) * Mathf.Pow(Mathf.Abs(value), exponent);
     }
 
+    private void AddFilledShape(VertexHelper vh, List<Vector2> shapePoints, Vector2 center, Color32 shapeFillColor)
+    {
+        int pointCount = shapePoints.Count;
+        if (pointCount < 3)
+            return;
+
+        int centerIndex = vh.currentVertCount;
+        vh.AddVert(center, shapeFillColor, Vector2.zero);
+        for (int i = 0; i < pointCount; i++)
+            vh.AddVert(shapePoints[i], shapeFillColor, Vector2.zero);
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            int current = centerIndex + 1 + i;
+            int next = centerIndex + 1 + ((i + 1) % pointCount);
+            vh.AddTriangle(centerIndex, current, next);
+        }
+    }
+
     private void AddClosedStroke(VertexHelper vh, List<Vector2> strokePoints, float width, Color32 lineColor)
     {
         int pointCount = strokePoints.Count;
@@ -332,6 +358,7 @@ public class SpringLineHighlightUI : MaskableGraphic
         lineWidth = Mathf.Max(0.5f, lineWidth);
         lineSpacing = Mathf.Max(0f, lineSpacing);
         roundedRectSharpness = Mathf.Clamp(roundedRectSharpness, 2f, 12f);
+        fillColor.a = Mathf.Clamp01(fillColor.a);
         wobbleAmplitude = Mathf.Max(0f, wobbleAmplitude);
         waveCount = Mathf.Clamp(waveCount, 1, 32);
         scribbleAmount = Mathf.Max(0f, scribbleAmount);
