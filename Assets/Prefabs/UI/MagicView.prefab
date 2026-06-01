@@ -180,11 +180,11 @@ MonoBehaviour:
   tooltipDescriptionText: {fileID: 1802210053773372698}
   tooltipEffectText: {fileID: 2675315260679234447}
   modifierMarkerImage: {fileID: 3061875667698673557}
-  UpBackgroundColor: {r: 0.9, g: 0.22, b: 0.12, a: 1}
-  LeftBackgroundColor: {r: 0.25, g: 0.85, b: 0.45, a: 1}
-  DownBackgroundColor: {r: 0.2, g: 0.5, b: 1, a: 1}
-  RightBackgroundColor: {r: 0.62, g: 0.42, b: 0.2, a: 1}
-  recipeIconSize: {x: 36, y: 36}
+  UpBackgroundColor: {r: 0.106918216, g: 0.106918216, b: 0.106918216, a: 1}
+  LeftBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
+  DownBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
+  RightBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
+  recipeIconSize: {x: 48, y: 48}
   recipeIconSpacing: {x: 22, y: 22}
   recipeIconPadding: {x: 0, y: 0}
   tagTooltipRoot: {fileID: 0}
@@ -694,8 +694,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.0000019073486, y: 3.5}
+  m_SizeDelta: {x: 51.2384, y: 51.2384}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4638253090931446379
 CanvasRenderer:
