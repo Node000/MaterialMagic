@@ -23,8 +23,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private PlayAreaUI playAreaUI;
     [SerializeField] private PlayerFeedbackUI playerFeedbackUI;
     [SerializeField] private ChapterProgressUI chapterProgressUI;
+    [SerializeField] private GoldDisplayUI goldDisplayUI;
     [SerializeField] private TurnBannerUI turnBannerUI;
     [SerializeField] private RunResultPanelUI runResultPanelUI;
+    [SerializeField] private RunResultPanelUI victoryResultPanelUI;
+    [SerializeField] private RunResultPanelUI defeatResultPanelUI;
     [SerializeField] private TutorialManagerUI tutorialManagerUI;
 
     public MapPanelUI MapPanel => mapPanelUI;
@@ -41,8 +44,11 @@ public class UIManager : MonoBehaviour
     public PlayAreaUI PlayArea => playAreaUI;
     public PlayerFeedbackUI PlayerFeedback => playerFeedbackUI;
     public ChapterProgressUI ChapterProgress => chapterProgressUI;
+    public GoldDisplayUI GoldDisplay => goldDisplayUI;
     public TurnBannerUI TurnBanner => turnBannerUI;
     public RunResultPanelUI RunResultPanel => runResultPanelUI;
+    public RunResultPanelUI VictoryResultPanel => victoryResultPanelUI != null ? victoryResultPanelUI : runResultPanelUI;
+    public RunResultPanelUI DefeatResultPanel => defeatResultPanelUI != null ? defeatResultPanelUI : runResultPanelUI;
     public TutorialManagerUI TutorialManager => tutorialManagerUI;
 
     public void Initialize(HandSystemUI owner, Transform root)
@@ -61,8 +67,11 @@ public class UIManager : MonoBehaviour
         playAreaUI = GetOrAddPanelInChildren<PlayAreaUI>(root, "PlayArea", playAreaUI);
         playerFeedbackUI = GetOrAddOnRoot(root, playerFeedbackUI);
         chapterProgressUI = GetOrAddPanelInChildren<ChapterProgressUI>(root, "ChapterProgress", chapterProgressUI);
+        goldDisplayUI = GetOrAddPanelInChildren<GoldDisplayUI>(root, "GoldDisplay", goldDisplayUI);
         turnBannerUI = GetOrAddPanelInChildren<TurnBannerUI>(root, "TurnBanner", turnBannerUI);
         runResultPanelUI = GetOrAddPanel<RunResultPanelUI>(root, "RunResultPanel", runResultPanelUI);
+        victoryResultPanelUI = GetOrAddPanel<RunResultPanelUI>(root, "VictoryResultPanel", victoryResultPanelUI);
+        defeatResultPanelUI = GetOrAddPanel<RunResultPanelUI>(root, "DefeatResultPanel", defeatResultPanelUI);
         tutorialManagerUI = GetOrAddPanelInChildren<TutorialManagerUI>(root, "TutorialRoot", tutorialManagerUI);
 
         mapPanelUI?.Initialize(owner);
@@ -79,8 +88,11 @@ public class UIManager : MonoBehaviour
         playAreaUI?.Initialize(owner);
         playerFeedbackUI?.Initialize(owner, root);
         chapterProgressUI?.Initialize();
+        goldDisplayUI?.Initialize();
         turnBannerUI?.Initialize();
         runResultPanelUI?.Initialize(owner);
+        victoryResultPanelUI?.Initialize(owner);
+        defeatResultPanelUI?.Initialize(owner);
         tutorialManagerUI?.Initialize(owner);
 
         BindTopBar(root);
@@ -178,9 +190,15 @@ public class UIManager : MonoBehaviour
         levelSelectPanelUI?.Hide();
     }
 
-    public void HideLevelSelectAnimated()
+    public void HideLevelSelectAnimated(Action onComplete = null)
     {
-        levelSelectPanelUI?.HideAnimated();
+        if (levelSelectPanelUI == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        levelSelectPanelUI.HideAnimated(onComplete);
     }
 
     public void ToggleSettingsPanel()
@@ -233,14 +251,22 @@ public class UIManager : MonoBehaviour
         slotSelectPanelUI?.Hide();
     }
 
-    public void ShowVictoryPanel()
+    public void ShowVictoryPanel(float playSeconds, IReadOnlyList<string> magicNames)
     {
-        runResultPanelUI?.ShowVictory();
+        RunResultPanelUI panel = VictoryResultPanel;
+        RunResultPanelUI otherPanel = DefeatResultPanel;
+        if (otherPanel != null && otherPanel != panel)
+            otherPanel.Hide();
+        panel?.ShowVictory(playSeconds, magicNames);
     }
 
-    public void ShowDefeatPanel()
+    public void ShowDefeatPanel(string defeatingEnemyName = null)
     {
-        runResultPanelUI?.ShowDefeat();
+        RunResultPanelUI panel = DefeatResultPanel;
+        RunResultPanelUI otherPanel = VictoryResultPanel;
+        if (otherPanel != null && otherPanel != panel)
+            otherPanel.Hide();
+        panel?.ShowDefeat(defeatingEnemyName);
     }
 
     public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)

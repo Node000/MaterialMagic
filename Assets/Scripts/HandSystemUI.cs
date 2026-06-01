@@ -8,6 +8,7 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using TMPro;
 
@@ -69,6 +70,9 @@ public class HandSystemUI : MonoBehaviour
 	private RectTransform enemyViewPrefab;
 
 	[SerializeField]
+	private RectTransform floatingTextPrefab;
+
+	[SerializeField]
 	private RectTransform buffSlotPrefab;
 
 	[SerializeField]
@@ -79,6 +83,13 @@ public class HandSystemUI : MonoBehaviour
 
 	[SerializeField]
 	private TMP_Text deckCountText;
+
+	[Header("Buff栏参数")]
+	[SerializeField]
+	private float buffSlotSize = 42f;
+
+	[SerializeField]
+	private float buffSlotSpacing = 6f;
 
 	[SerializeField]
 	private float cardSpacing = 118f;
@@ -138,6 +149,16 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float postMagicResolveDelay = 0.11f;
 
+    [Header("玩家施法音效")]
+    [SerializeField]
+    private float playerCastSwingPitchBase = 1f;
+
+    [SerializeField]
+    private float playerCastSwingPitchIncrease = 0.08f;
+
+    [SerializeField]
+    private float playerCastSwingPitchMax = 1.45f;
+
 	[SerializeField]
 	private float enemyDeathScaleDuration = 0.35f;
 
@@ -145,7 +166,8 @@ public class HandSystemUI : MonoBehaviour
 	private Ease enemyDeathScaleEase = Ease.InBack;
 
 	[SerializeField]
-	private float enemyDissolveDuration = 0.7f;
+	[FormerlySerializedAs("enemyDissolveDuration")]
+	private float enemyDeathExplosionDuration = 0.7f;
 
 	[SerializeField]
 	private float enemyHitShakeDuration = 0.28f;
@@ -197,6 +219,9 @@ public class HandSystemUI : MonoBehaviour
 	private float enemyHealthTextDuration = 0.35f;
 
 	[SerializeField]
+	private float enemyHealthTextFontSize = 18f;
+
+	[SerializeField]
 	private Ease enemyHealthEase = Ease.OutQuad;
 
 	[SerializeField]
@@ -234,7 +259,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private LevelData currentLevel;
 
-	private Material enemyDissolveMaterialTemplate;
+	private Material enemyDeathExplosionMaterialTemplate;
 
 	private Material temporaryCardDissolveMaterialTemplate;
 
@@ -260,6 +285,14 @@ public class HandSystemUI : MonoBehaviour
 
 	private RectTransform pendingCastParticleTarget;
 
+    private readonly List<RectTransform> pendingCastParticleTargets = new List<RectTransform>();
+
+    private readonly List<RectTransform> castParticleTargetBuffer = new List<RectTransform>();
+
+	private Action pendingCastParticleImpactHandler;
+
+	private int pendingCastShakeCount;
+
 	private Image enemyHealthBufferFill;
 
 	private Image enemyShieldFill;
@@ -274,6 +307,10 @@ public class HandSystemUI : MonoBehaviour
 	private ChapterData activeChapter;
 
 	private MagicData pendingRewardMagic;
+
+    private MagicData pendingShopMagic;
+
+    private Action<int> pendingShopMagicSlotChosen;
 
 	private MagicModifierData pendingMagicModifier;
 
@@ -299,6 +336,10 @@ public class HandSystemUI : MonoBehaviour
 
 	private bool runEnded;
 
+    private float loadedRunPlaySeconds;
+
+    private float runStartRealtime;
+
 	private TutorialManagerUI TutorialManager => GetUIManager().TutorialManager;
 
 	private const int RestStudyResultId = 301;
@@ -306,6 +347,24 @@ public class HandSystemUI : MonoBehaviour
 	private const int RestDeepStudyResultId = 302;
 
 	private const float RestDefaultHealRatio = 0.3f;
+
+    private const float AcquireMagicAnimationDuration = 0.42f;
+
+    private const float AcquireMaterialAnimationDuration = 0.42f;
+
+    private const int BuffRootColumnCount = 5;
+
+    private const int BuffRootRowCount = 2;
+
+    private const float EnemyHealthTextWidth = 56f;
+
+    private const int EnemyDeathShardColumns = 5;
+
+    private const int EnemyDeathShardRows = 4;
+
+    private const float EnemyDeathExplosionDistance = 120f;
+
+    private const string EnemyDeathExplosionMaterialPath = "Materials/Style/Sprite/M_Sprite_FragmentExplosion_Default";
 
 	public PlayerState PlayerState => playerState;
 
@@ -395,9 +454,9 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().HideLevelSelect();
 	}
 
-	private void HideLevelSelectPanelAnimated()
+	private void HideLevelSelectPanelAnimated(Action onComplete = null)
 	{
-		GetUIManager().HideLevelSelectAnimated();
+		GetUIManager().HideLevelSelectAnimated(onComplete);
 	}
 
 	private List<LevelData> GetLevels(LevelType type)
@@ -451,6 +510,14 @@ public class HandSystemUI : MonoBehaviour
 			GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		}
         SaveRunProgress();
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        HideMapPanel();
+        HideLevelSelectPanelAnimated(() => StartLevelAfterSelectClosed(level));
+	}
+
+    private void StartLevelAfterSelectClosed(LevelData level)
+    {
 		if (level.levelType == LevelType.Event)
 		{
 			StartEventLevel(level);
@@ -477,7 +544,8 @@ public class HandSystemUI : MonoBehaviour
 	{
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0056: Expected O, but got Unknown
-		GameLog.Data("Start battle level=" + level.id + " enemies=" + string.Join(",", level.enemyIds));
+		int configuredEnemyCount = level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
+		GameLog.Data("Start battle level=" + level.id + " enemies=" + configuredEnemyCount);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayBattleMusic();
 		currentLevel = level;
@@ -485,29 +553,31 @@ public class HandSystemUI : MonoBehaviour
 		refreshUsedThisTurn = false;
 		ResetBattleDeckState();
 		HideMapPanel();
-		HideLevelSelectPanelAnimated();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
+        ClearEnemyViews();
 		bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(currentMapNodeIndex);
 		if (tutorialBattle)
 		{
-			enemyModels.Add(TutorialManager.CreateTutorialEnemy());
+			battleManager.SpawnEnemy(TutorialManager.CreateTutorialEnemy());
 			TutorialManager.BeginTutorialBattle();
 		}
-		else
+		else if (level.enemies != null && level.enemies.Length > 0)
+		{
+			for (int i = 0; i < level.enemies.Length; i++)
+			{
+				battleManager.SpawnEnemy(level.enemies[i]);
+			}
+		}
+		else if (level.enemyIds != null)
 		{
 			for (int i = 0; i < level.enemyIds.Length; i++)
 			{
-				if (GameDataDatabase.TryGetEnemyData(level.enemyIds[i], out var data))
-				{
-					enemyModels.Add(EnemyFactory.Create(data));
-				}
+				battleManager.SpawnEnemy(level.enemyIds[i]);
 			}
 		}
-		if (enemyModels.Count != 0)
+		if (battleManager.Enemies.Count != 0)
 		{
-			battleManager.SetEnemies(enemyModels);
-			CreateEnemyViews();
             TriggerMagicBattleStart();
 			BeginPlayerTurn(playerState.DrawCount);
 			ResetMagicHighlights();
@@ -521,8 +591,7 @@ public class HandSystemUI : MonoBehaviour
 		GameLog.Data($"Begin player turn drawCount={drawCount} extra={playerState.GetBuffStack(BuffEnum.ExtraDraw)}");
 		GetUIManager().TurnBanner?.Show("你的回合");
 		CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
-		battleManager.ResetContinuousCastCount();
-		UpdateContinuousCastCounter(0, instant: true);
+		ResetContinuousCastCounterUI();
 		suppressEnemyIntentRefresh = false;
 		RefreshEnemyUI();
         playerState.ClearShield();
@@ -555,9 +624,10 @@ public class HandSystemUI : MonoBehaviour
 		currentLevel = level;
 		currentEvent = null;
 		pendingRewardMagic = null;
+        pendingShopMagic = null;
+        pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
 		HideMapPanel();
-		HideLevelSelectPanelAnimated();
         GetUIManager().HideRewardPanel();
         GetUIManager().RewardGridPanel?.Hide();
         GetUIManager().HideSlotSelect();
@@ -584,6 +654,14 @@ public class HandSystemUI : MonoBehaviour
 		SetButtonsInteractable(interactable: false);
 	}
 
+	private EventPanelUI GetOrCreateEventPanel()
+	{
+		EventPanelUI panel = GetComponent<EventPanelUI>();
+		if (panel == null)
+			panel = gameObject.AddComponent<EventPanelUI>();
+		return panel;
+	}
+
 	private void StartRestLevel(LevelData level)
 	{
 		GameLog.Data("Start rest level=" + level.id);
@@ -592,7 +670,6 @@ public class HandSystemUI : MonoBehaviour
 		ResetBattleDeckState();
 		currentLevel = level;
 		HideMapPanel();
-		HideLevelSelectPanelAnimated();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -604,7 +681,7 @@ public class HandSystemUI : MonoBehaviour
 
 		if ((Object)eventPanel != (Object)null)
 			eventPanel.Close();
-		eventPanel = ((Component)this).gameObject.AddComponent<EventPanelUI>();
+		eventPanel = GetOrCreateEventPanel();
 		Transform transform = ((Component)this).transform;
 		eventPanel.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawRestOptionsHand);
 		currentEvent = CreateRestEventModel(level);
@@ -623,7 +700,6 @@ public class HandSystemUI : MonoBehaviour
 		currentLevel = level;
 		currentEvent = null;
 		HideMapPanel();
-		HideLevelSelectPanelAnimated();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -676,7 +752,6 @@ public class HandSystemUI : MonoBehaviour
 		ResetBattleDeckState();
 		currentLevel = level;
 		HideMapPanel();
-		HideLevelSelectPanelAnimated();
 		EventData eventData = null;
 		if (level.eventPoolId > 0)
 			GameDataDatabase.TryGetEventData(level.eventPoolId, out eventData);
@@ -699,7 +774,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			eventPanel.Close();
 		}
-		eventPanel = ((Component)this).gameObject.AddComponent<EventPanelUI>();
+		eventPanel = GetOrCreateEventPanel();
 		EventPanelUI eventPanelUI = eventPanel;
 		Transform transform = ((Component)this).transform;
 		eventPanelUI.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawEventOptionsHand);
@@ -901,14 +976,31 @@ public class HandSystemUI : MonoBehaviour
 		val2.anchorMax = new Vector2(0.5f, 0.5f);
 		val2.pivot = new Vector2(0.5f, 0.5f);
 		val2.anchoredPosition = anchoredPosition;
-		val2.sizeDelta = new Vector2(150f, 54f);
-		GridLayoutGroup component = ((Component)val2).GetComponent<GridLayoutGroup>();
-		component.cellSize = new Vector2(26f, 26f);
-		component.spacing = new Vector2(4f, 3f);
-		component.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-		component.constraintCount = 5;
+		ConfigureBuffRootLayout(val2);
 		return val2;
 	}
+
+	private void ConfigureBuffRootLayout(RectTransform root)
+	{
+		if ((Object)root == (Object)null)
+			return;
+
+		float slotSize = BuffSlotSize;
+		float slotSpacing = BuffSlotSpacing;
+		root.sizeDelta = new Vector2(slotSize * BuffRootColumnCount + slotSpacing * (BuffRootColumnCount - 1), slotSize * BuffRootRowCount + slotSpacing * (BuffRootRowCount - 1));
+		GridLayoutGroup grid = ((Component)root).GetComponent<GridLayoutGroup>();
+		if ((Object)grid == (Object)null)
+			return;
+
+		grid.cellSize = new Vector2(slotSize, slotSize);
+		grid.spacing = new Vector2(slotSpacing, slotSpacing);
+		grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+		grid.constraintCount = BuffRootColumnCount;
+	}
+
+	private float BuffSlotSize => Mathf.Max(1f, buffSlotSize);
+
+	private float BuffSlotSpacing => Mathf.Max(0f, buffSlotSpacing);
 
 	private void RefreshBuffRoot(RectTransform root, IReadOnlyDictionary<BuffEnum, BuffModel> buffs, CombatantModel owner)
 	{
@@ -918,6 +1010,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return;
 		}
+		ConfigureBuffRootLayout(root);
 		int num = 0;
 		foreach (BuffModel value in buffs.Values)
 		{
@@ -929,6 +1022,7 @@ public class HandSystemUI : MonoBehaviour
 
 				((Transform)slot.RectTransform).SetSiblingIndex(num);
 				((Component)slot).gameObject.SetActive(true);
+				slot.SetLayoutSize(BuffSlotSize);
 				slot.Bind(value, this);
 				num++;
 			}
@@ -988,7 +1082,10 @@ public class HandSystemUI : MonoBehaviour
 		{
 			val = CreateRuntimeBuffSlot(parent);
 		}
-		return ((Component)val).GetComponent<BuffSlotView>();
+		BuffSlotView slot = ((Component)val).GetComponent<BuffSlotView>();
+		if ((Object)slot != (Object)null)
+			slot.SetLayoutSize(BuffSlotSize);
+		return slot;
 	}
 
 	private RectTransform CreateRuntimeBuffSlot(RectTransform parent)
@@ -1023,7 +1120,7 @@ public class HandSystemUI : MonoBehaviour
 		((Component)component).transform.SetParent((Transform)parent, false);
 		component.color = new Color(0.08f, 0.08f, 0.1f, 0.86f);
 		RectTransform component2 = ((Component)component).GetComponent<RectTransform>();
-		component2.sizeDelta = new Vector2(26f, 26f);
+		component2.sizeDelta = new Vector2(BuffSlotSize, BuffSlotSize);
 		Image component3 = new GameObject("Icon", new Type[3]
 		{
 			typeof(RectTransform),
@@ -1035,8 +1132,9 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform component4 = ((Component)component3).GetComponent<RectTransform>();
 		component4.anchorMin = Vector2.zero;
 		component4.anchorMax = Vector2.one;
-		component4.offsetMin = new Vector2(3f, 3f);
-		component4.offsetMax = new Vector2(-3f, -3f);
+		float iconPadding = Mathf.Max(2f, BuffSlotSize * 0.08f);
+		component4.offsetMin = new Vector2(iconPadding, iconPadding);
+		component4.offsetMax = new Vector2(-iconPadding, -iconPadding);
 		TMP_Text component5 = new GameObject("StackText", new Type[3]
 		{
 			typeof(RectTransform),
@@ -1045,7 +1143,7 @@ public class HandSystemUI : MonoBehaviour
 		}).GetComponent<TMP_Text>();
 		((Component)component5).transform.SetParent((Transform)component2, false);
 		component5.font = GetDefaultFont();
-		component5.fontSize = 12;
+		component5.fontSize = Mathf.Max(12f, BuffSlotSize * 0.5f);
 		component5.fontStyle = FontStyles.Bold;
 		component5.color = Color.white;
 		component5.alignment = TextAlignmentOptions.BottomRight;
@@ -1314,9 +1412,12 @@ public class HandSystemUI : MonoBehaviour
         if (continueSavedRun)
             saveData = RunSaveSystem.LoadCurrentRun();
         PlayerState.ContinueSavedRun = false;
+        loadedRunPlaySeconds = saveData != null ? Mathf.Max(0f, saveData.totalPlaySeconds) : 0f;
+        runStartRealtime = Time.realtimeSinceStartup;
 
 		playerState = saveData != null ? RunSaveSystem.CreatePlayer(saveData) : PlayerState.CreateDefault();
-		battleManager = new BattleManager(playerState);
+		battleManager = BattleManager.Create(playerState);
+        battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
 		GetUIManager();
@@ -1359,9 +1460,10 @@ public class HandSystemUI : MonoBehaviour
 	private void InitializePlayerUiComponents()
 	{
 		UIManager manager = GetUIManager();
-		manager.PlayerStatus?.Setup(playerState, true);
-		playerBuffRoot = manager.PlayerStatus?.BuffRoot;
-		manager.PlayArea?.UpdateContinuousCastCounter(0, true);
+        manager.PlayerStatus?.Setup(playerState, true);
+        playerBuffRoot = manager.PlayerStatus?.BuffRoot;
+        manager.GoldDisplay?.SetGold(playerState.Gold, true);
+        manager.PlayArea?.UpdateContinuousCastCounter(0, true);
 	}
 
 	private void Update()
@@ -1396,6 +1498,11 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ea: Expected O, but got Unknown
         SaveRunProgress();
+        if (battleManager != null)
+        {
+            battleManager.EnemyAdded -= OnBattleEnemyAdded;
+            BattleManager.ClearInstance(battleManager);
+        }
 		((UnityEvent)refreshButton.onClick).RemoveListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).RemoveListener(new UnityAction(EndTurn));
 		if ((Object)(object)deckPileArea != (Object)null)
@@ -1726,6 +1833,7 @@ public class HandSystemUI : MonoBehaviour
 		{
 			yield return PlayResolveAnimation(list);
 			GetUIManager().PlayArea?.HideResolveIndicator();
+			ResetContinuousCastCounterUI();
 			if (AllEnemiesDead())
 			{
 				yield return FinishBattleRoutine();
@@ -1757,7 +1865,8 @@ public class HandSystemUI : MonoBehaviour
 			yield return null;
 		}
 		bool enemyTurnBannerShown = false;
-		for (int num = 0; num < enemyModels.Count; num++)
+		int enemyTurnCount = enemyModels.Count;
+		for (int num = 0; num < enemyTurnCount; num++)
 		{
 			EnemyModel enemy = enemyModels[num];
 			if (enemy.IsDead)
@@ -1980,7 +2089,13 @@ public class HandSystemUI : MonoBehaviour
 
 	private bool IsEventChoiceSelectable(MaterialModel materialModel)
 	{
-		return materialModel != null && playerState != null && playerState.Hand.Contains(materialModel);
+        if (materialModel == null || playerState == null)
+            return false;
+
+        if (pendingChoiceOption != null && pendingChoiceOption.resultId == 100)
+            return playerState.Deck.Contains(materialModel);
+
+		return playerState.Hand.Contains(materialModel);
 	}
 
 	private void OnEventMaterialListSelectionCompleted(IReadOnlyList<MaterialModel> materials)
@@ -1997,10 +2112,17 @@ public class HandSystemUI : MonoBehaviour
 
 	private void FinishRewardLevel()
 	{
-		GetUIManager().RewardGridPanel?.Hide();
+		StartCoroutine(FinishRewardLevelRoutine());
+	}
+
+    private IEnumerator FinishRewardLevelRoutine()
+    {
+        RewardGridPanelUI rewardGridPanel = GetUIManager().RewardGridPanel;
+        if (rewardGridPanel != null)
+            yield return rewardGridPanel.HideRoutine();
 		GameLog.Data("Finish reward grid level");
 		FinishReward();
-	}
+    }
 
 	private void FinishEventLevel()
 	{
@@ -2061,16 +2183,21 @@ public class HandSystemUI : MonoBehaviour
                 matchedMagicView.HighlightRecipeSlot(j);
             }
             EnemyModel targetEnemy = battleManager.BeginCastTarget();
-            float castVisualWait = PlayMagicCastParticle(matchedMagicView, targetEnemy);
-			yield return (object)new WaitForSeconds(castVisualWait);
+            bool castImpactReached = false;
+            float castVisualFallbackWait = PlayMagicCastParticle(matchedMagicView, targetEnemy, () => castImpactReached = true);
+            float castVisualWaitTime = 0f;
+            while (!castImpactReached && castVisualWaitTime < castVisualFallbackWait)
+            {
+                castVisualWaitTime += Time.deltaTime;
+                yield return null;
+            }
 			matchedMagicView.PulseCast();
 			GameLog.Data($"Resolve magic from play zone magic={matchedMagicView.Magic.Id} start={roundStart} length={matchLength}");
 			CastMagic(matchedMagicView.Magic);
 			yield return PlayPendingEnemyDeaths();
 			if (AllEnemiesDead())
 			{
-				yield return FinishBattleRoutine();
-				break;
+				yield break;
 			}
 			yield return (object)new WaitForSeconds(postMagicResolveDelay);
 			ResetMagicHighlights();
@@ -2113,6 +2240,16 @@ public class HandSystemUI : MonoBehaviour
 			return 0.43f;
 		}
 		return arcParticleImpactTester.BurstDuration;
+	}
+
+	private float GetCastParticleImpactStartWait()
+	{
+		ArcParticleImpactTester arcParticleImpactTester = spellCastEffect as ArcParticleImpactTester;
+		if (!((Object)arcParticleImpactTester != (Object)null))
+		{
+			return 0.43f;
+		}
+		return arcParticleImpactTester.SingleProjectileImpactDelay;
 	}
 
 	private void RebuildCards(bool animateFromCurrent)
@@ -2343,6 +2480,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
 		//IL_004e: Expected O, but got Unknown
 		GetUIManager().PlayerStatus?.Refresh(playerState, false);
+        GetUIManager().GoldDisplay?.SetGold(playerState.Gold, true);
 		RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
 		if ((Object)(object)deckCountText != (Object)null)
 		{
@@ -2407,6 +2545,14 @@ public class HandSystemUI : MonoBehaviour
 		{
 			enemyHealthText = ((Component)val).GetComponent<TMP_Text>();
 		}
+		Transform shieldTextTransform = ((Transform)enemyView).Find("ShieldText");
+		if ((Object)shieldTextTransform != (Object)null)
+		{
+			TMP_Text shieldText = ((Component)shieldTextTransform).GetComponent<TMP_Text>();
+			if ((Object)shieldText != (Object)null)
+				shieldText.text = string.Empty;
+			((Component)shieldTextTransform).gameObject.SetActive(false);
+		}
 		SetupHealthText(enemyHealthText);
 		if ((Object)enemyHealthFill == (Object)null)
 		{
@@ -2424,12 +2570,8 @@ public class HandSystemUI : MonoBehaviour
 			SetupFillImage(enemyHealthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
 			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
 			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
-			if ((Object)enemyShieldFill != (Object)null)
-			{
-				enemyShieldFill.type = Image.Type.Simple;
-			}
 			SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
-			PositionHealthTextLeftOfBar(enemyHealthText, val2, 34f);
+			HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
 		}
 	}
 
@@ -2444,11 +2586,31 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = ((Transform)parent).Find(name);
 		Image image = (((Object)val != (Object)null) ? ((Component)val).GetComponent<Image>() : null);
-		if ((Object)image == (Object)null)
+		bool flag = (Object)image == (Object)null;
+		if (flag)
 		{
-			return null;
+			image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+			((Component)image).transform.SetParent((Transform)parent, false);
 		}
 		((Component)image).transform.SetParent((Transform)parent, false);
+		Image parentImage = ((Component)parent).GetComponent<Image>();
+		if ((Object)parentImage != (Object)null)
+		{
+			if (flag)
+			{
+				image.sprite = parentImage.sprite;
+				image.type = parentImage.type;
+				image.fillCenter = parentImage.fillCenter;
+				image.preserveAspect = parentImage.preserveAspect;
+				image.material = parentImage.material;
+				image.maskable = parentImage.maskable;
+				image.pixelsPerUnitMultiplier = parentImage.pixelsPerUnitMultiplier;
+			}
+			else if ((Object)image.sprite == (Object)null)
+			{
+				image.sprite = parentImage.sprite;
+			}
+		}
 		SetupFillImage(image, color, siblingIndex);
 		return image;
 	}
@@ -2462,7 +2624,6 @@ public class HandSystemUI : MonoBehaviour
 		{
 			image.color = color;
 			image.raycastTarget = false;
-			image.type = Image.Type.Simple;
 			image.fillAmount = 1f;
 			((Component)image).transform.SetSiblingIndex(siblingIndex);
 			SetRectHorizontalRange(((Component)image).GetComponent<RectTransform>(), 0f, 1f);
@@ -2491,15 +2652,13 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private static void SetupHealthText(TMP_Text text)
+	private void SetupHealthText(TMP_Text text)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
 		if (!((Object)text == (Object)null))
 		{
-			text.alignment = TextAlignmentOptions.MidlineRight;
-			text.enableWordWrapping = false;
-			text.overflowMode = TextOverflowModes.Overflow;
+			HealthBarUI.SetupHealthText(text, enemyHealthTextFontSize);
 		}
 	}
 
@@ -2542,7 +2701,8 @@ public class HandSystemUI : MonoBehaviour
 		{
 			TweenExtensions.Kill(val, false);
 		}
-		enemyHealthNumberTween = UpdateHealthText(enemyHealthText, displayedEnemyHealth, enemyModel.CurrentHealth, instant, delegate(int value)
+		HealthBarUI.SetHealthTextColor(enemyHealthText, enemyModel.Shield > 0);
+		enemyHealthNumberTween = UpdateHealthText(enemyHealthText, displayedEnemyHealth, HealthBarUI.GetHealthTextValue(enemyModel.CurrentHealth, enemyModel.Shield), instant, delegate(int value)
 		{
 			displayedEnemyHealth = value;
 		});
@@ -2720,6 +2880,76 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
+	private void OnBattleEnemyAdded(EnemyModel enemy)
+    {
+        if (enemy == null || enemyModels.Contains(enemy))
+            return;
+
+        enemyModels.Add(enemy);
+        if ((Object)enemyArea == (Object)null || (Object)enemyViewPrefab == (Object)null)
+            return;
+
+        CreateEnemyView(enemy, enemyViewStates.Count, enemyModels.Count);
+        LayoutEnemyViews();
+        RefreshEnemyUI((RectTransform)null, true);
+    }
+
+    private void ClearEnemyViews()
+    {
+        for (int i = 0; i < enemyViewStates.Count; i++)
+        {
+            Tween healthNumberTween = enemyViewStates[i].healthNumberTween;
+            if (healthNumberTween != null)
+                TweenExtensions.Kill(healthNumberTween, false);
+        }
+        enemyViewStates.Clear();
+        enemyModel = null;
+        enemyViewRect = null;
+        enemyHealthFill = null;
+        enemyIntentIcon = null;
+        enemyBodyImage = null;
+        if ((Object)enemyArea != (Object)null)
+        {
+            for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
+                Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
+        }
+    }
+
+    private void LayoutEnemyViews()
+    {
+        int visibleCount = 0;
+        int automaticPositionCount = 0;
+        for (int i = 0; i < enemyViewStates.Count; i++)
+        {
+            EnemyViewState state = enemyViewStates[i];
+            if (state == null || (Object)state.viewRect == (Object)null || !((Component)state.viewRect).gameObject.activeSelf)
+                continue;
+
+            visibleCount++;
+            if (state.model == null || !state.model.HasSpawnPosition)
+                automaticPositionCount++;
+        }
+
+        int automaticPositionIndex = 0;
+        for (int i = 0; i < enemyViewStates.Count; i++)
+        {
+            EnemyViewState state = enemyViewStates[i];
+            if (state == null || (Object)state.viewRect == (Object)null || !((Component)state.viewRect).gameObject.activeSelf)
+                continue;
+
+            if (state.model != null && state.model.HasSpawnPosition)
+            {
+                state.viewRect.anchoredPosition = new Vector2(state.model.SpawnPositionX, state.model.SpawnPositionY);
+            }
+            else
+            {
+                state.viewRect.anchoredPosition = new Vector2(((float)automaticPositionIndex - (float)(automaticPositionCount - 1) * 0.5f) * 250f, 0f);
+                automaticPositionIndex++;
+            }
+            ((Transform)state.viewRect).localScale = visibleCount >= 3 ? Vector3.one * 0.88f : Vector3.one;
+        }
+    }
+
 	private void CreateEnemyViews()
 	{
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
@@ -2730,17 +2960,14 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0054: Expected O, but got Unknown
 		if (!((Object)enemyArea == (Object)null) && !((Object)enemyViewPrefab == (Object)null))
 		{
-			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-			{
-				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
-			}
-			enemyViewStates.Clear();
+            ClearEnemyViews();
 			int count = enemyModels.Count;
 			for (int i = 0; i < count; i++)
 			{
 				CreateEnemyView(enemyModels[i], i, count);
 			}
 			enemyModel = GetFirstAliveEnemy();
+            LayoutEnemyViews();
 			RefreshEnemyUI((RectTransform)null, true);
 		}
 	}
@@ -2767,8 +2994,13 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform val = Object.Instantiate<RectTransform>(enemyViewPrefab, (Transform)enemyArea);
 		((Component)val).gameObject.SetActive(true);
-		AddJuicyMotion((Transform)val);
-		val.anchoredPosition = new Vector2(((float)index - (float)(count - 1) * 0.5f) * 250f, 0f);
+        AddJuicyMotion((Transform)val);
+        JuicyMotion enemyMotion = ((Component)val).GetComponent<JuicyMotion>();
+        if ((Object)enemyMotion != (Object)null)
+            enemyMotion.SetHoverTiltAngle(0f);
+		val.anchoredPosition = model.HasSpawnPosition
+			? new Vector2(model.SpawnPositionX, model.SpawnPositionY)
+			: new Vector2(((float)index - (float)(count - 1) * 0.5f) * 250f, 0f);
 		((Transform)val).localScale = ((count >= 3) ? (Vector3.one * 0.88f) : Vector3.one);
 		EnemyViewState enemyViewState = new EnemyViewState();
 		enemyViewState.model = model;
@@ -2810,8 +3042,8 @@ public class HandSystemUI : MonoBehaviour
 		CreateEnemyHealthView(val);
 		enemyViewState.healthBufferFill = enemyHealthBufferFill;
 		enemyViewState.shieldFill = enemyShieldFill;
-		enemyViewState.healthText = enemyHealthText;
-		enemyViewState.displayedHealth = model.CurrentHealth;
+        enemyViewState.healthText = enemyHealthText;
+        enemyViewState.displayedHealth = HealthBarUI.GetHealthTextValue(model.CurrentHealth, model.Shield);
 		EnemyViewClickHandler enemyViewClickHandler = ((Component)val).GetComponent<EnemyViewClickHandler>();
 		if ((Object)enemyViewClickHandler == (Object)null)
 		{
@@ -2856,7 +3088,7 @@ public class HandSystemUI : MonoBehaviour
 		if (!((Object)playerCastAnimator == (Object)null))
 		{
 			playerCastAnimator.Initialize();
-			playerCastAnimator.SetReleaseHandler(PlayPendingCastParticle);
+			playerCastAnimator.SetReleaseHandler(HandleCastReleaseFrame);
 		}
 	}
 
@@ -2871,21 +3103,76 @@ public class HandSystemUI : MonoBehaviour
 		return true;
 	}
 
-	private void QueueCastParticle(MagicModel magic, RectTransform target)
+    private void PlayPlayerCastSwingSfx(int continuousCastCount)
+    {
+        if (AudioManager.Instance == null)
+            return;
+
+        if (continuousCastCount <= 0)
+            continuousCastCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+
+        float pitch = playerCastSwingPitchBase + Mathf.Max(0, continuousCastCount - 1) * playerCastSwingPitchIncrease;
+        pitch = Mathf.Min(pitch, playerCastSwingPitchMax);
+        AudioManager.Instance.PlaySfx(GameSfxId.PlayerCastSwing, pitch);
+    }
+
+	private void QueueCastParticle(MagicModel magic, RectTransform target, Action onImpact)
 	{
 		pendingCastParticleMagic = magic;
 		pendingCastParticleTarget = target;
+        pendingCastParticleTargets.Clear();
+		pendingCastParticleImpactHandler = onImpact;
+	}
+
+    private void QueueCastParticles(MagicModel magic, IReadOnlyList<RectTransform> targets, Action onImpact)
+    {
+        pendingCastParticleMagic = magic;
+        pendingCastParticleTarget = null;
+        pendingCastParticleTargets.Clear();
+        for (int i = 0; targets != null && i < targets.Count; i++)
+        {
+            RectTransform target = targets[i];
+            if ((Object)target != (Object)null)
+                pendingCastParticleTargets.Add(target);
+        }
+        pendingCastParticleImpactHandler = onImpact;
+    }
+
+	private void HandleCastReleaseFrame()
+	{
+		int shakeCount = pendingCastShakeCount;
+		pendingCastShakeCount = 0;
+        PlayPlayerCastSwingSfx(shakeCount);
+		PlayCastScreenShake(shakeCount);
+		PlayPendingCastParticle();
+	}
+
+	private void PlayCastScreenShake(int continuousCastCount)
+	{
+		if (battleManager == null)
+			return;
+
+		if (continuousCastCount <= 0)
+			continuousCastCount = battleManager.ContinuousCastCount;
+
+		GetUIManager().PlayerFeedback?.PlayCastScreenShake(continuousCastCount);
 	}
 
 	private void PlayPendingCastParticle()
 	{
 		MagicModel magic = pendingCastParticleMagic;
 		RectTransform target = pendingCastParticleTarget;
+        int targetCount = pendingCastParticleTargets.Count;
+		Action onImpact = pendingCastParticleImpactHandler;
 		pendingCastParticleMagic = null;
 		pendingCastParticleTarget = null;
+		pendingCastParticleImpactHandler = null;
 
-		if (spellCastEffect == null || magic == null || (Object)target == (Object)null)
+		if (spellCastEffect == null || magic == null || ((Object)target == (Object)null && targetCount <= 0))
+        {
+            pendingCastParticleTargets.Clear();
 			return;
+        }
 
 		if ((Object)spellParticleEmitter == (Object)null)
 		{
@@ -2893,7 +3180,39 @@ public class HandSystemUI : MonoBehaviour
 			spellParticleEmitter = ((Object)(object)emitter != (Object)null) ? (RectTransform)emitter : null;
 		}
 		RectTransform from = (Object)spellParticleEmitter != (Object)null ? spellParticleEmitter : target;
-		spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+        if ((Object)from == (Object)null && targetCount > 0)
+            from = pendingCastParticleTargets[0];
+        if ((Object)from == (Object)null)
+        {
+            pendingCastParticleTargets.Clear();
+            return;
+        }
+
+        if (targetCount > 0)
+        {
+            ISpellCastMultiTargetImpactEffect multiTargetEffect = spellCastEffect as ISpellCastMultiTargetImpactEffect;
+            if (multiTargetEffect != null)
+            {
+                multiTargetEffect.PlayCast(magic, from, pendingCastParticleTargets, SpellEffectTarget.Enemy, onImpact);
+            }
+            else
+            {
+                target = pendingCastParticleTargets[0];
+                ISpellCastImpactEffect impactEffect = spellCastEffect as ISpellCastImpactEffect;
+                if (impactEffect != null)
+                    impactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
+                else
+                    spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+            }
+            pendingCastParticleTargets.Clear();
+            return;
+        }
+
+		ISpellCastImpactEffect singleImpactEffect = spellCastEffect as ISpellCastImpactEffect;
+		if (singleImpactEffect != null)
+			singleImpactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
+		else
+			spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
 	}
 
 	private float GetCastReleaseWait()
@@ -2914,11 +3233,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
 		if (spellCastEffect != null && !((Object)cardView == (Object)null) && !((Object)target == (Object)null))
 		{
-			ArcParticleImpactTester arcParticleImpactTester = spellCastEffect as ArcParticleImpactTester;
-			if ((Object)arcParticleImpactTester != (Object)null)
-			{
-				arcParticleImpactTester.PlayBurst(cardView.RectTransform, target, 1, MaterialCardView.GetMaterialColor(material));
-			}
+			spellCastEffect.PlayMaterialFill(cardView.RectTransform, target, material);
 		}
 	}
 
@@ -2934,7 +3249,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private float PlayMagicCastParticle(MagicItemView magicView, EnemyModel targetEnemy)
+	private float PlayMagicCastParticle(MagicItemView magicView, EnemyModel targetEnemy, Action onImpact)
 	{
 		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0014: Expected O, but got Unknown
@@ -2949,32 +3264,63 @@ public class HandSystemUI : MonoBehaviour
 
 		pendingCastParticleMagic = null;
 		pendingCastParticleTarget = null;
+        pendingCastParticleTargets.Clear();
+        castParticleTargetBuffer.Clear();
+		pendingCastParticleImpactHandler = null;
+		pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 0;
+		if (!magicView.Magic.Data.playPlayerCastAnimation)
+		{
+			pendingCastShakeCount = 0;
+			return 0f;
+		}
+
 		bool animationStarted = PlayPlayerCastAnimation();
 		float releaseWait = GetCastReleaseWait();
-		if (GetMagicEffectTargetType(magicView.Magic) != SpellEffectTarget.Enemy)
+		if (!magicView.Magic.CastParticleTargetsAllEnemies && GetMagicEffectTargetType(magicView.Magic) != SpellEffectTarget.Enemy)
 		{
 			return releaseWait;
 		}
 
-		RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
-		if (spellCastEffect == null || (Object)magicEffectTarget == (Object)null)
+		if (spellCastEffect == null)
 		{
 			return releaseWait;
 		}
 
-		QueueCastParticle(magicView.Magic, magicEffectTarget);
+        if (magicView.Magic.CastParticleTargetsAllEnemies)
+        {
+            CollectAliveEnemyTargetRects(castParticleTargetBuffer);
+            if (castParticleTargetBuffer.Count == 0)
+            {
+                return releaseWait;
+            }
+
+            QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
+        }
+        else
+        {
+			RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
+			if ((Object)magicEffectTarget == (Object)null)
+			{
+				return releaseWait;
+			}
+
+			QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
+        }
 		if (!animationStarted)
 		{
-			PlayPendingCastParticle();
-			return GetParticleArrivalWait();
+			HandleCastReleaseFrame();
+			return GetCastParticleImpactStartWait();
 		}
-		return releaseWait + GetParticleArrivalWait();
+		return releaseWait + GetCastParticleImpactStartWait();
 	}
 
 	private IEnumerator FinishBattleRoutine()
 	{
+		HideContinuousCastCounterUI();
 		yield return PlayPendingEnemyDeaths();
         TriggerMagicBattleEnd();
+        if (battleManager != null)
+            battleManager.ResetContinuousCastCount();
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
 		ResetMagicHighlights();
@@ -3011,7 +3357,7 @@ public class HandSystemUI : MonoBehaviour
     private void SaveRunProgress()
     {
         if (!runEnded)
-            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
+            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds());
     }
 
     private void OnApplicationPause(bool paused)
@@ -3078,7 +3424,7 @@ public class HandSystemUI : MonoBehaviour
         if (healed > 0)
         {
             PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
-            ShowPlayerFloatingText("+" + healed, new Color(0.25f, 1f, 0.38f, 1f));
+            ShowPlayerFloatingText("+" + healed, FloatingTextType.Heal);
         }
         RefreshStaticUI();
         GameLog.Data($"Rest default heal amount={healed}");
@@ -3193,9 +3539,36 @@ public class HandSystemUI : MonoBehaviour
 	public void SelectPendingRewardMagic(MagicData rewardMagic)
 	{
 		pendingRewardMagic = rewardMagic;
+        if (rewardMagic != null)
+            ClearPendingShopMagic();
 		if (rewardMagic != null)
 			TutorialManager?.OnRewardMagicSelected();
 	}
+
+    public void SelectPendingShopMagic(MagicData magicData, Action<int> onSlotChosen)
+    {
+        pendingShopMagic = magicData;
+        pendingShopMagicSlotChosen = onSlotChosen;
+        if (magicData != null)
+            pendingRewardMagic = null;
+    }
+
+    public void ClearPendingShopMagic()
+    {
+        pendingShopMagic = null;
+        pendingShopMagicSlotChosen = null;
+    }
+
+    public bool TryPlacePendingShopMagic(int slotIndex)
+    {
+        if (pendingShopMagic == null)
+            return false;
+
+        Action<int> slotChosen = pendingShopMagicSlotChosen;
+        ClearPendingShopMagic();
+        slotChosen?.Invoke(slotIndex);
+        return true;
+    }
 
     public void SelectPendingMagicModifier(MagicModifierData modifierData)
     {
@@ -3204,6 +3577,8 @@ public class HandSystemUI : MonoBehaviour
 
 	public bool HasPendingRewardMagic => pendingRewardMagic != null;
 
+    public bool HasPendingShopMagic => pendingShopMagic != null;
+
     public bool HasPendingMagicModifier => pendingMagicModifier != null;
 
 	public bool TryPlacePendingRewardMagic(int slotIndex)
@@ -3211,11 +3586,10 @@ public class HandSystemUI : MonoBehaviour
 		if (pendingRewardMagic == null)
 			return false;
 
-		playerState.SetMagicAtSlot(MagicFactory.Create(pendingRewardMagic, slotIndex), slotIndex);
-		pendingRewardMagic = null;
-		CreateMagicViews();
-		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
-		TutorialManager?.OnRewardMagicEquipped(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
+        MagicData rewardMagic = pendingRewardMagic;
+        RectTransform sourceRect = GetUIManager().RewardPanel != null ? GetUIManager().RewardPanel.SelectedMagicRect : null;
+        pendingRewardMagic = null;
+        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
 		return true;
 	}
 
@@ -3266,6 +3640,21 @@ public class HandSystemUI : MonoBehaviour
 		TutorialManager?.OnRewardMagicEquipped(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
 	}
 
+    public IEnumerator GainGoldAnimated(int amount, RectTransform sourceRect)
+    {
+        if (amount <= 0 || playerState == null)
+            yield break;
+
+        GoldDisplayUI goldDisplay = GetUIManager().GoldDisplay;
+        if (goldDisplay != null)
+            yield return goldDisplay.PlayGain(amount, sourceRect, () => playerState.AddGold(1), () => playerState.Gold);
+        else
+            playerState.AddGold(amount);
+
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
     public bool TrySpendShopGold(int amount)
     {
         if (playerState == null || amount < 0 || playerState.Gold < amount)
@@ -3286,6 +3675,36 @@ public class HandSystemUI : MonoBehaviour
         CreateMagicViews();
         RefreshStaticUI();
         SaveRunProgress();
+    }
+
+    public void SetShopMagicAtSlotAnimated(MagicData magicData, int slotIndex, RectTransform sourceRect, Action onComplete)
+    {
+        StartCoroutine(SetShopMagicAtSlotAnimatedRoutine(magicData, slotIndex, sourceRect, onComplete));
+    }
+
+    private IEnumerator SetShopMagicAtSlotAnimatedRoutine(MagicData magicData, int slotIndex, RectTransform sourceRect, Action onComplete)
+    {
+        yield return PlayMagicAcquireAnimation(magicData, slotIndex, sourceRect);
+        SetShopMagicAtSlot(magicData, slotIndex);
+        onComplete?.Invoke();
+    }
+
+    public void AddShopMaterialAnimated(MaterialEnum material, RectTransform sourceRect, Action onComplete)
+    {
+        StartCoroutine(AddShopMaterialAnimatedRoutine(material, sourceRect, onComplete));
+    }
+
+    private IEnumerator AddShopMaterialAnimatedRoutine(MaterialEnum material, RectTransform sourceRect, Action onComplete)
+    {
+        yield return PlayMaterialAcquireAnimation(material, sourceRect);
+        AddShopMaterial(material);
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator SetRewardMagicAtSlotAnimatedRoutine(MagicData rewardMagic, int slotIndex, RectTransform sourceRect)
+    {
+        yield return PlayMagicAcquireAnimation(rewardMagic, slotIndex, sourceRect);
+        SetRewardMagicAtSlot(rewardMagic, slotIndex);
     }
 
     public void AddShopMaterial(MaterialEnum material)
@@ -3322,6 +3741,8 @@ public class HandSystemUI : MonoBehaviour
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
 		pendingRewardMagic = null;
+        pendingShopMagic = null;
+        pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
         playerState.ClearCombatState();
 		GetUIManager().HideRewardPanel();
@@ -3401,8 +3822,10 @@ public class HandSystemUI : MonoBehaviour
 			yield return PlayEnemyIntentPerformance(state, enemy.CurrentIntents[i]);
 			int playerHealthBefore = playerState.CurrentHealth;
 			int playerShieldBefore = playerState.Shield;
+			int enemyShieldBefore = enemy.Shield;
 			enemy.ResolveCurrentIntentAt(i, playerState);
 			PlayPlayerDamageFeedbackIfNeeded(playerHealthBefore, playerShieldBefore);
+			PlayEnemyShieldFeedbackIfNeeded(state, enemy, enemyShieldBefore);
 			RefreshStaticUI();
 			RefreshEnemyUI(state, false);
 			Tween fadeOut = intentView != null ? intentView.PlayFadeOut(enemyIntentFadeOutDuration) : null;
@@ -3425,14 +3848,28 @@ public class HandSystemUI : MonoBehaviour
 		if (healthDelta < 0)
 		{
 			GetUIManager().PlayerFeedback?.PlayDamageFeedback(new Color(0.95f, 0.05f, 0.02f, 0.72f), playerState);
-			ShowPlayerFloatingText(healthDelta.ToString(), new Color(1f, 0.25f, 0.18f, 1f));
+			ShowPlayerFloatingText(healthDelta.ToString(), FloatingTextType.Damage);
 		}
 		else if (shieldDelta < 0)
 		{
 			PlayPlayerCornerFeedback(new Color(0.1f, 0.45f, 1f, 0.58f));
-			ShowPlayerFloatingText("BLOCKED", new Color(0.45f, 0.75f, 1f, 1f));
+			ShowPlayerFloatingText("BLOCK", FloatingTextType.Damage, true);
 		}
 		GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
+	}
+
+	private void PlayEnemyShieldFeedbackIfNeeded(EnemyViewState state, EnemyModel enemy, int shieldBefore)
+	{
+		if (state == null || enemy == null)
+		{
+			return;
+		}
+
+		int shieldDelta = enemy.Shield - shieldBefore;
+		if (shieldDelta > 0)
+		{
+			ShowFloatingText(state.viewRect, "+" + shieldDelta, FloatingTextType.Shield);
+		}
 	}
 
 	private IEnumerator PlayEnemyIntentPerformance(EnemyViewState state, EnemyIntentData intent)
@@ -3440,7 +3877,7 @@ public class HandSystemUI : MonoBehaviour
 		if (state == null || intent == null)
 			yield break;
 
-		if (intent.intentType == EnemyIntentType.Attack)
+		if (intent.intentType == EnemyIntentType.Attack || intent.actionType == EnemyActionType.AttackAll)
 		{
 			yield return PlayEnemyAttackPerformance(state);
 		}
@@ -3490,14 +3927,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private EnemyModel GetFirstAliveEnemy()
 	{
-		for (int i = 0; i < enemyModels.Count; i++)
-		{
-			if (!enemyModels[i].IsDead)
-			{
-				return enemyModels[i];
-			}
-		}
-		return null;
+        return battleManager != null ? battleManager.GetFirstAliveEnemy() : null;
 	}
 
 	private RectTransform GetAliveEnemyTargetRect()
@@ -3505,6 +3935,20 @@ public class HandSystemUI : MonoBehaviour
 		EnemyModel firstAliveEnemy = GetFirstAliveEnemy();
 		return FindEnemyViewState(firstAliveEnemy)?.viewRect;
 	}
+
+    private void CollectAliveEnemyTargetRects(List<RectTransform> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+        for (int i = 0; i < enemyViewStates.Count; i++)
+        {
+            EnemyViewState state = enemyViewStates[i];
+            if (state != null && state.model != null && !state.model.IsDead && (Object)state.viewRect != (Object)null)
+                results.Add(state.viewRect);
+        }
+    }
 
 	private EnemyViewState FindEnemyViewState(EnemyModel model)
 	{
@@ -3546,7 +3990,12 @@ public class HandSystemUI : MonoBehaviour
 		if (runEnded)
 			return;
 
-        RunSaveSystem.ClearCurrentRun();
+        float playSeconds = victory ? GetCurrentRunPlaySeconds() : 0f;
+        List<string> magicNames = victory ? GetVictoryMagicNames() : null;
+        if (victory)
+            RunSaveSystem.RecordVictoryAndClearCurrentRun(playSeconds);
+        else
+            RunSaveSystem.ClearCurrentRun();
 		runEnded = true;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -3558,36 +4007,42 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().HideRewardPanel();
 		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
+		ResetContinuousCastCounterUI();
 		if (victory)
-			GetUIManager().ShowVictoryPanel();
+			GetUIManager().ShowVictoryPanel(playSeconds, magicNames);
 		else
-			GetUIManager().ShowDefeatPanel();
+			GetUIManager().ShowDefeatPanel(playerState?.LastDamageSourceEnemy?.Name);
 	}
+
+    private float GetCurrentRunPlaySeconds()
+    {
+        return loadedRunPlaySeconds + Mathf.Max(0f, Time.realtimeSinceStartup - runStartRealtime);
+    }
+
+    private List<string> GetVictoryMagicNames()
+    {
+        List<string> names = new List<string>();
+        if (playerState == null)
+            return names;
+
+        int slotCount = Mathf.Min(6, playerState.MagicBookSlotCount);
+        for (int i = 0; i < slotCount; i++)
+        {
+            MagicModel magic = playerState.GetMagicAtSlot(i);
+            if (magic != null && !string.IsNullOrEmpty(magic.Name))
+                names.Add(magic.Name);
+        }
+        return names;
+    }
 
 	private bool AllEnemiesDead()
 	{
-		if (enemyModels.Count == 0)
-		{
-			return false;
-		}
-		for (int i = 0; i < enemyModels.Count; i++)
-		{
-			if (!enemyModels[i].IsDead)
-			{
-				return false;
-			}
-		}
-		return true;
+        return battleManager != null && battleManager.AllEnemiesDead();
 	}
 
 	private bool HasAliveEnemyAfter(int index)
 	{
-		for (int i = index + 1; i < enemyModels.Count; i++)
-		{
-			if (!enemyModels[i].IsDead)
-				return true;
-		}
-		return false;
+        return battleManager != null && battleManager.HasAliveEnemyAfter(index);
 	}
 
 	private IEnumerator PlayPendingEnemyDeaths()
@@ -3601,54 +4056,176 @@ public class HandSystemUI : MonoBehaviour
 				EnemyViewState enemyViewState = FindEnemyViewState(enemyModel);
 				if (enemyViewState != null)
 				{
-					yield return PlayEnemyDissolve(enemyViewState);
+					yield return PlayEnemyExplosion(enemyViewState);
 				}
 			}
 		}
 	}
 
-	private IEnumerator PlayEnemyDissolve(EnemyViewState state)
+	private IEnumerator PlayEnemyExplosion(EnemyViewState state)
 	{
-		if ((Object)state.bodyImage == (Object)null)
+		if ((Object)state.viewRect == (Object)null || (Object)state.bodyImage == (Object)null)
 		{
 			yield break;
 		}
-		EnsureEnemyDissolveMaterial();
-		Material material = ((!((Object)enemyDissolveMaterialTemplate != (Object)null)) ? ((Material)null) : new Material(enemyDissolveMaterialTemplate));
-		if ((Object)material == (Object)null)
+
+		EnsureEnemyDeathExplosionMaterial();
+		if ((Object)enemyDeathExplosionMaterialTemplate == (Object)null)
 		{
 			TweenSettingsExtensions.SetTarget<TweenerCore<Vector3, Vector3, VectorOptions>>(TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOScale((Transform)state.viewRect, 0f, enemyDeathScaleDuration), enemyDeathScaleEase), (object)this);
 			yield return (object)new WaitForSeconds(enemyDeathScaleDuration);
 			((Component)state.viewRect).gameObject.SetActive(false);
+            LayoutEnemyViews();
 			yield break;
 		}
-		state.bodyImage.material = material;
+
+		Image sourceImage = state.bodyImage;
+		RectTransform sourceRect = sourceImage.rectTransform;
+		Transform shardParent = ((Transform)sourceRect).parent;
+		Sprite sourceSprite = sourceImage.sprite;
+		Vector4 spriteUv = new Vector4(0f, 0f, 1f, 1f);
+		if ((Object)sourceSprite != (Object)null)
+		{
+			Vector4 outerUv = UnityEngine.Sprites.DataUtility.GetOuterUV(sourceSprite);
+			spriteUv = new Vector4(outerUv.x, outerUv.y, outerUv.z - outerUv.x, outerUv.w - outerUv.y);
+		}
+
+		Vector2 bodySize = sourceRect.rect.size;
+		if (bodySize.x <= 0f || bodySize.y <= 0f)
+		{
+			bodySize = sourceRect.sizeDelta;
+		}
+		bodySize.x = Mathf.Max(1f, Mathf.Abs(bodySize.x));
+		bodySize.y = Mathf.Max(1f, Mathf.Abs(bodySize.y));
+
+		int shardCount = EnemyDeathShardColumns * EnemyDeathShardRows;
+		RectTransform[] shardRects = new RectTransform[shardCount];
+		Material[] shardMaterials = new Material[shardCount];
+		Vector2[] startPositions = new Vector2[shardCount];
+		Vector2[] targetPositions = new Vector2[shardCount];
+		float[] startRotations = new float[shardCount];
+		float[] targetRotations = new float[shardCount];
+		Vector3[] startScales = new Vector3[shardCount];
+		Vector3[] targetScales = new Vector3[shardCount];
+		Vector2 shardSize = new Vector2(bodySize.x / EnemyDeathShardColumns, bodySize.y / EnemyDeathShardRows);
+		Vector2 sourceAnchoredPosition = sourceRect.anchoredPosition;
+		Vector3 sourceScale = ((Transform)sourceRect).localScale;
+		float sourceRotation = ((Transform)sourceRect).localEulerAngles.z;
+		int sourceSiblingIndex = ((Transform)sourceRect).GetSiblingIndex();
+		int index = 0;
+
+		for (int row = 0; row < EnemyDeathShardRows; row++)
+		{
+			for (int column = 0; column < EnemyDeathShardColumns; column++)
+			{
+				GameObject shardObject = new GameObject("BodyShard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+				RectTransform shardRect = (RectTransform)shardObject.transform;
+				shardRect.SetParent(shardParent, false);
+				shardRect.SetSiblingIndex(sourceSiblingIndex + 1 + index);
+				shardRect.anchorMin = sourceRect.anchorMin;
+				shardRect.anchorMax = sourceRect.anchorMax;
+				shardRect.pivot = new Vector2(0.5f, 0.5f);
+				shardRect.sizeDelta = shardSize;
+				((Transform)shardRect).localScale = sourceScale;
+				((Transform)shardRect).localRotation = ((Transform)sourceRect).localRotation;
+
+				float normalizedX = (column + 0.5f) / EnemyDeathShardColumns;
+				float normalizedY = (row + 0.5f) / EnemyDeathShardRows;
+				Vector2 offset = new Vector2(normalizedX * bodySize.x - sourceRect.pivot.x * bodySize.x, normalizedY * bodySize.y - sourceRect.pivot.y * bodySize.y);
+				Vector2 startPosition = sourceAnchoredPosition + offset;
+				shardRect.anchoredPosition = startPosition;
+
+				Material shardMaterial = new Material(enemyDeathExplosionMaterialTemplate);
+				shardMaterial.SetFloat("_Explosion", 0f);
+				shardMaterial.SetFloat("_ShardIndex", index);
+				shardMaterial.SetVector("_ShardRect", new Vector4((float)column / EnemyDeathShardColumns, (float)row / EnemyDeathShardRows, 1f / EnemyDeathShardColumns, 1f / EnemyDeathShardRows));
+				shardMaterial.SetVector("_SpriteUV", spriteUv);
+
+				Image shardImage = shardObject.GetComponent<Image>();
+				shardImage.sprite = sourceSprite;
+				shardImage.color = sourceImage.color;
+				shardImage.type = Image.Type.Simple;
+				shardImage.preserveAspect = false;
+				shardImage.raycastTarget = false;
+				shardImage.maskable = sourceImage.maskable;
+				shardImage.material = shardMaterial;
+
+				Vector2 direction = offset;
+				if (direction.sqrMagnitude < 0.01f)
+				{
+					direction = Random.insideUnitCircle;
+				}
+				if (direction.sqrMagnitude < 0.01f)
+				{
+					direction = Vector2.up;
+				}
+				direction.Normalize();
+				Vector2 scatter = direction * Random.Range(EnemyDeathExplosionDistance * 0.62f, EnemyDeathExplosionDistance);
+				scatter += Random.insideUnitCircle * 26f;
+
+				shardRects[index] = shardRect;
+				shardMaterials[index] = shardMaterial;
+				startPositions[index] = startPosition;
+				targetPositions[index] = startPosition + scatter;
+				startRotations[index] = sourceRotation;
+				targetRotations[index] = sourceRotation + Random.Range(-170f, 170f);
+				startScales[index] = sourceScale;
+				targetScales[index] = sourceScale * Random.Range(0.82f, 1.12f);
+				index++;
+			}
+		}
+
+		sourceImage.enabled = false;
+		float duration = Mathf.Max(0.01f, enemyDeathExplosionDuration);
 		float t = 0f;
-		while (t < enemyDissolveDuration)
+		while (t < duration)
 		{
 			t += Time.deltaTime;
-			float num = Mathf.Clamp01(t / enemyDissolveDuration);
-			material.SetFloat("_Dissolve", num);
+			float progress = Mathf.Clamp01(t / duration);
+			float scatterProgress = 1f - Mathf.Pow(1f - progress, 3f);
+			for (int i = 0; i < shardCount; i++)
+			{
+				RectTransform shardRect = shardRects[i];
+				if ((Object)shardRect == (Object)null)
+				{
+					continue;
+				}
+				shardRect.anchoredPosition = Vector2.LerpUnclamped(startPositions[i], targetPositions[i], scatterProgress);
+				((Transform)shardRect).localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpUnclamped(startRotations[i], targetRotations[i], scatterProgress));
+				((Transform)shardRect).localScale = Vector3.LerpUnclamped(startScales[i], targetScales[i], scatterProgress);
+				shardMaterials[i].SetFloat("_Explosion", progress);
+			}
 			yield return null;
 		}
+
+		for (int i = 0; i < shardCount; i++)
+		{
+			if ((Object)shardRects[i] != (Object)null)
+			{
+				Object.Destroy((Object)((Component)shardRects[i]).gameObject);
+			}
+			if ((Object)shardMaterials[i] != (Object)null)
+			{
+				Object.Destroy((Object)shardMaterials[i]);
+			}
+		}
+
 		((Component)state.viewRect).gameObject.SetActive(false);
-		Object.Destroy((Object)material);
+        LayoutEnemyViews();
 	}
 
-	private void EnsureEnemyDissolveMaterial()
+	private void EnsureEnemyDeathExplosionMaterial()
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Expected O, but got Unknown
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Expected O, but got Unknown
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Expected O, but got Unknown
-		if (!((Object)enemyDissolveMaterialTemplate != (Object)null))
+		if (!((Object)enemyDeathExplosionMaterialTemplate != (Object)null))
 		{
-			Shader val = Shader.Find("UI/ParticleDissolve");
-			if ((Object)val != (Object)null)
+			enemyDeathExplosionMaterialTemplate = Resources.Load<Material>(EnemyDeathExplosionMaterialPath);
+			if (!((Object)enemyDeathExplosionMaterialTemplate != (Object)null))
 			{
-				enemyDissolveMaterialTemplate = new Material(val);
+				Shader shader = Shader.Find("Style/Sprite/FragmentExplosion");
+				if ((Object)shader != (Object)null)
+				{
+					enemyDeathExplosionMaterialTemplate = new Material(shader);
+				}
 			}
 		}
 	}
@@ -3683,18 +4260,17 @@ public class HandSystemUI : MonoBehaviour
 				enemyModel = firstAliveEnemy;
 				magicEnemyTargets.Clear();
 				EnemyModel focusTarget = battleManager.FocusTarget;
-				battleManager.SetEnemies(enemyModels);
 				battleManager.SetFocusTarget(focusTarget);
-				EnemyModel targetEnemy = battleManager.BeginCastTarget();
+				battleManager.BeginCastTarget();
 				int count = battleManager.RegisterMagicCast();
 				UpdateContinuousCastCounter(count, instant: false);
 				MagicCastResult result = magic.Cast(playerState, battleManager);
-				PlayMagicCastFeedback(result, targetEnemy);
+				PlayMagicCastFeedback(result);
 			}
 		}
 	}
 
-	private void PlayMagicCastFeedback(MagicCastResult result, EnemyModel targetEnemy)
+	private void PlayMagicCastFeedback(MagicCastResult result)
 	{
 		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
@@ -3704,18 +4280,18 @@ public class HandSystemUI : MonoBehaviour
 		{
 			for (int i = 0; i < result.enemyDamageHits.Count; i++)
 			{
-				PlayEnemyDamageFeedback(targetEnemy, result.enemyDamageHits[i]);
+				PlayEnemyDamageFeedback(result.enemyDamageHits[i]);
 			}
 			if (result.playerHeal > 0)
 			{
 				PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
-				ShowPlayerFloatingText("+" + result.playerHeal, new Color(0.25f, 1f, 0.38f, 1f));
+				ShowPlayerFloatingText("+" + result.playerHeal, FloatingTextType.Heal);
 				RefreshStaticUI();
 			}
 			if (result.playerShield > 0)
 			{
 				PlayPlayerCornerFeedback(new Color(0.1f, 0.45f, 1f, 0.5f));
-				ShowPlayerFloatingText("+" + result.playerShield, new Color(0.45f, 0.75f, 1f, 1f));
+				ShowPlayerFloatingText("+" + result.playerShield, FloatingTextType.Shield);
 				RefreshStaticUI();
 			}
 			if (result.enemyBuffApplied)
@@ -3725,18 +4301,30 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private void PlayEnemyDamageFeedback(EnemyModel targetEnemy, int damage)
+	private void PlayEnemyDamageFeedback(MagicDamageHitResult hit)
 	{
 		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		if (damage > 0 && targetEnemy != null)
+		if (hit == null || hit.target == null)
 		{
-			EnemyViewState enemyViewState = FindEnemyViewState(targetEnemy);
-			if (enemyViewState != null)
-			{
-				PlayEnemyHitFeedback(enemyViewState);
-				ShowFloatingText(enemyViewState.viewRect, "-" + damage, new Color(1f, 0.22f, 0.14f, 1f));
-				RefreshEnemyUI();
-			}
+			return;
+		}
+
+		EnemyViewState enemyViewState = FindEnemyViewState(hit.target);
+		if (enemyViewState == null)
+		{
+			return;
+		}
+
+		if (hit.healthDamage > 0)
+		{
+			PlayEnemyHitFeedback(enemyViewState);
+			ShowFloatingText(enemyViewState.viewRect, "-" + hit.healthDamage, FloatingTextType.Damage);
+			RefreshEnemyUI();
+		}
+		else if (hit.FullyBlocked)
+		{
+			ShowFloatingText(enemyViewState.viewRect, "BLOCK", FloatingTextType.Damage, true);
+			RefreshEnemyUI();
 		}
 	}
 
@@ -3766,81 +4354,53 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	private void ShowFloatingText(RectTransform anchor, string text, Color color)
+	private void ShowFloatingText(RectTransform anchor, string text, FloatingTextType type, bool blocked = false)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Expected O, but got Unknown
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Expected O, but got Unknown
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0166: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0187: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ad: Expected O, but got Unknown
-		//IL_01ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d4: Expected O, but got Unknown
-		//IL_01e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ee: Expected O, but got Unknown
-		if ((Object)anchor == (Object)null)
+		if ((Object)anchor == (Object)null || (Object)floatingTextPrefab == (Object)null)
 		{
 			return;
 		}
 		Transform parent = ((Transform)anchor).parent;
 		RectTransform val = (RectTransform)((parent is RectTransform) ? parent : null);
-		if (!((Object)val == (Object)null))
+		if ((Object)val == (Object)null)
 		{
-			TMP_Text floatingText = new GameObject("FloatingText", new Type[3]
-			{
-				typeof(RectTransform),
-				typeof(CanvasRenderer),
-				typeof(TextMeshProUGUI)
-			}).GetComponent<TMP_Text>();
-			((Component)floatingText).transform.SetParent((Transform)val, false);
-			floatingText.text = text;
-			floatingText.font = GetDefaultFont();
-			floatingText.fontSize = floatingTextFontSize * 3;
-			floatingText.fontStyle = FontStyles.Bold;
-			floatingText.alignment = TextAlignmentOptions.Center;
-			floatingText.raycastTarget = false;
-			floatingText.color = color;
-			RectTransform component = ((Component)floatingText).GetComponent<RectTransform>();
-			component.anchorMin = anchor.anchorMin;
-			component.anchorMax = anchor.anchorMax;
-			component.pivot = new Vector2(0.5f, 0.5f);
-			component.sizeDelta = floatingTextSize * 3f;
-			component.anchoredPosition = anchor.anchoredPosition + floatingTextStartOffset;
-			((Transform)component).localScale = Vector3.one;
-			Sequence obj = DOTween.Sequence();
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector2, Vector2, VectorOptions>>(component.DOAnchorPos(component.anchoredPosition + new Vector2(0f, floatingTextYOffset), floatingTextDuration), floatingTextMoveEase));
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Color, Color, ColorOptions>>(DOTween.ToAlpha(() => floatingText.color, c => floatingText.color = c, 0f, floatingTextDuration), floatingTextFadeEase));
-			TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
-			TweenSettingsExtensions.OnComplete<Sequence>(obj, (TweenCallback)delegate
-			{
-				//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-				//IL_0015: Expected O, but got Unknown
-				Object.Destroy((Object)((Component)floatingText).gameObject);
-			});
+			return;
 		}
+
+		RectTransform component = Object.Instantiate(floatingTextPrefab, (Transform)val, false);
+		component.anchorMin = anchor.anchorMin;
+		component.anchorMax = anchor.anchorMax;
+		component.pivot = new Vector2(0.5f, 0.5f);
+		component.sizeDelta = floatingTextSize * 3f;
+		component.anchoredPosition = anchor.anchoredPosition + floatingTextStartOffset;
+		((Transform)component).localScale = Vector3.one;
+
+		FloatingTextUI floatingText = ((Component)component).GetComponent<FloatingTextUI>();
+		if (floatingText == null)
+		{
+			Object.Destroy((Object)((Component)component).gameObject);
+			return;
+		}
+
+		TMP_Text targetText = floatingText.Text;
+		if (targetText != null)
+		{
+			if (targetText.font == null)
+				targetText.font = GetDefaultFont();
+			targetText.fontSize = floatingTextFontSize * 3;
+			targetText.fontStyle = FontStyles.Bold;
+			targetText.alignment = TextAlignmentOptions.Center;
+			targetText.raycastTarget = false;
+		}
+		floatingText.Play(text, type, blocked, floatingTextYOffset, floatingTextDuration, floatingTextMoveEase, floatingTextFadeEase);
 	}
 
-	private void ShowPlayerFloatingText(string text, Color color)
+	private void ShowPlayerFloatingText(string text, FloatingTextType type, bool blocked = false)
 	{
 		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		ShowFloatingText(GetUIManager().PlayerFeedback?.PlayerVirtualTarget, text, color);
+		ShowFloatingText(GetUIManager().PlayerFeedback?.PlayerFloatingTextTarget, text, type, blocked);
 	}
 
 	private void PlayPlayerCornerFeedback(Color color)
@@ -3877,10 +4437,6 @@ public class HandSystemUI : MonoBehaviour
 			{
 				componentsInChildren[i].text = state.model.Name;
 			}
-			else if (((Object)componentsInChildren[i]).name == "HealthText")
-			{
-				componentsInChildren[i].text = state.model.CurrentHealth + " / " + state.model.Data.maxHealth;
-			}
 		}
 		if ((Object)state.intentIcon != (Object)null)
 		{
@@ -3899,7 +4455,8 @@ public class HandSystemUI : MonoBehaviour
 		{
 			TweenExtensions.Kill(healthNumberTween, false);
 		}
-		state.healthNumberTween = UpdateHealthText(state.healthText, state.displayedHealth, state.model.CurrentHealth, instant, delegate(int value)
+		HealthBarUI.SetHealthTextColor(state.healthText, state.model.Shield > 0);
+		state.healthNumberTween = UpdateHealthText(state.healthText, state.displayedHealth, HealthBarUI.GetHealthTextValue(state.model.CurrentHealth, state.model.Shield), instant, delegate(int value)
 		{
 			state.displayedHealth = value;
 		});
@@ -3930,7 +4487,7 @@ public class HandSystemUI : MonoBehaviour
 			Vector2 position = new Vector2((i - (intents.Count - 1) * 0.5f) * intentSpacing, 38f);
 			view.SetBaseAnchoredPosition(position);
 			rect.localScale = Vector3.one * 1.5f;
-			view.Bind(state.model, intents[i], phaseStart + i, totalIntentCount);
+			view.Bind(state.model, intents[i], playerState, phaseStart + i, totalIntentCount);
 		}
 	}
 
@@ -4059,23 +4616,31 @@ public class HandSystemUI : MonoBehaviour
 		return text;
 	}
 
-	private static string GetIntentDisplayValue(EnemyModel model, EnemyIntentData intent)
+	private string GetIntentDisplayValue(EnemyModel model, EnemyIntentData intent)
 	{
 		if (intent == null)
 		{
 			return string.Empty;
 		}
-		if (intent.actionType == EnemyActionType.Attack)
+		if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
 		{
-			return (model != null ? model.GetIntentAttackValue(intent) : intent.value).ToString();
+			return (model != null ? model.GetIntentAttackValue(intent, playerState) : intent.value).ToString();
+		}
+		if (intent.actionType == EnemyActionType.GainShield)
+		{
+			return (model != null ? model.GetIntentShieldValue(intent) : intent.value).ToString();
+		}
+		if (intent.actionType == EnemyActionType.Summon)
+		{
+			return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
+		}
+		if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff)
+		{
+			return string.Empty;
 		}
 		if (intent.value > 0)
 		{
 			return intent.value.ToString();
-		}
-		if (intent.buffAmount > 0)
-		{
-			return intent.buffAmount.ToString();
 		}
 		return LocalizationSystem.GetText(intent.descriptionKey, string.Empty);
 	}
@@ -4101,7 +4666,9 @@ public class HandSystemUI : MonoBehaviour
 		{
 			EnemyIntentType.Attack => new Color(0.95f, 0.18f, 0.14f, 1f), 
 			EnemyIntentType.Defend => new Color(0.25f, 0.55f, 1f, 1f), 
-			EnemyIntentType.Special => new Color(0.75f, 0.35f, 1f, 1f), 
+			EnemyIntentType.ApplyBuff => new Color(0.75f, 0.35f, 1f, 1f),
+			EnemyIntentType.ApplyDebuff => new Color(0.25f, 0.8f, 0.35f, 1f),
+			EnemyIntentType.Summon => new Color(1f, 0.62f, 0.16f, 1f),
 			_ => Color.gray, 
 		});
 	}
@@ -4109,6 +4676,18 @@ public class HandSystemUI : MonoBehaviour
 	private void UpdateContinuousCastCounter(int count, bool instant)
 	{
 		GetUIManager().PlayArea?.UpdateContinuousCastCounter(count, instant);
+	}
+
+	private void HideContinuousCastCounterUI()
+	{
+		UpdateContinuousCastCounter(0, true);
+	}
+
+	private void ResetContinuousCastCounterUI()
+	{
+		if (battleManager != null)
+			battleManager.ResetContinuousCastCount();
+		HideContinuousCastCounterUI();
 	}
 
 	private void MoveIndicatorToCardRange(List<MaterialModel> cards, int startIndex, int count, bool instant)
@@ -4128,6 +4707,109 @@ public class HandSystemUI : MonoBehaviour
 			magicViews[i].ResetRecipeHighlights();
 		}
 	}
+
+	private IEnumerator PlayMagicAcquireAnimation(MagicData magicData, int slotIndex, RectTransform sourceRect)
+    {
+        RectTransform targetRect = GetMagicSlotRect(slotIndex);
+        RectTransform animationRoot = transform as RectTransform;
+        if (magicData == null || sourceRect == null || targetRect == null || magicViewPrefab == null || animationRoot == null)
+            yield break;
+
+        RectTransform clone = Object.Instantiate(magicViewPrefab, animationRoot);
+        clone.gameObject.SetActive(true);
+        clone.SetAsLastSibling();
+        MagicItemView view = clone.GetComponent<MagicItemView>();
+        if (view != null)
+            view.Bind(MagicFactory.Create(magicData, slotIndex));
+        UIManager.RemoveJuicyMotion(clone.transform);
+        DisableGraphicRaycasts(clone);
+
+        yield return PlayAcquireRectAnimation(clone, sourceRect, GetAreaCenterWorldPosition(targetRect), targetRect.rotation, GetScaleRelativeToParent(targetRect, animationRoot), targetRect.rect.size, AcquireMagicAnimationDuration);
+        if (clone != null)
+            Object.Destroy(clone.gameObject);
+    }
+
+    private IEnumerator PlayMaterialAcquireAnimation(MaterialEnum material, RectTransform sourceRect)
+    {
+        RectTransform animationRoot = transform as RectTransform;
+        RectTransform materialPrefab = GetShopMaterialCardPrefab();
+        if (material == MaterialEnum.None || sourceRect == null || materialPrefab == null || deckPileArea == null || animationRoot == null)
+            yield break;
+
+        RectTransform clone = Object.Instantiate(materialPrefab, animationRoot);
+        clone.gameObject.SetActive(true);
+        clone.SetAsLastSibling();
+        MaterialCardView view = clone.GetComponent<MaterialCardView>();
+        if (view != null)
+            view.Bind(new MaterialModel("shop_fly_" + material, material));
+        UIManager.RemoveJuicyMotion(clone.transform);
+        DisableGraphicRaycasts(clone);
+
+        yield return PlayAcquireRectAnimation(clone, sourceRect, GetAreaCenterWorldPosition(deckPileArea), deckPileArea.rotation, GetScaleRelativeToParent(deckPileArea, animationRoot), deckPileArea.rect.size, AcquireMaterialAnimationDuration);
+        if (clone != null)
+            Object.Destroy(clone.gameObject);
+    }
+
+    private RectTransform GetShopMaterialCardPrefab()
+    {
+        RectTransform prefab = GetUIManager().ShopPanel != null ? GetUIManager().ShopPanel.MaterialCardPrefab : null;
+        if (prefab != null)
+            return prefab;
+
+        PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
+        return library != null ? library.MaterialCardPrefab : null;
+    }
+
+    private IEnumerator PlayAcquireRectAnimation(RectTransform clone, RectTransform sourceRect, Vector3 targetWorldPosition, Quaternion targetWorldRotation, Vector3 targetLocalScale, Vector2 targetSize, float duration)
+    {
+        if (clone == null || sourceRect == null)
+            yield break;
+
+        RectTransform animationRoot = clone.parent as RectTransform;
+        clone.position = sourceRect.position;
+        clone.rotation = sourceRect.rotation;
+        clone.localScale = GetScaleRelativeToParent(sourceRect, animationRoot);
+        clone.sizeDelta = sourceRect.rect.size;
+        sourceRect.gameObject.SetActive(false);
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(clone.DOMove(targetWorldPosition, duration).SetEase(Ease.OutCubic));
+        sequence.Join(clone.DORotateQuaternion(targetWorldRotation, duration).SetEase(Ease.OutCubic));
+        sequence.Join(clone.DOScale(targetLocalScale, duration).SetEase(Ease.OutCubic));
+        sequence.Join(clone.DOSizeDelta(targetSize, duration).SetEase(Ease.OutCubic));
+        yield return sequence.WaitForCompletion();
+    }
+
+    private RectTransform GetMagicSlotRect(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= magicViews.Count || magicViews[slotIndex] == null)
+            return null;
+
+        return magicViews[slotIndex].transform as RectTransform;
+    }
+
+    private static Vector3 GetScaleRelativeToParent(RectTransform rect, RectTransform parent)
+    {
+        if (rect == null)
+            return Vector3.one;
+
+        Vector3 scale = rect.lossyScale;
+        Vector3 parentScale = parent != null ? parent.lossyScale : Vector3.one;
+        return new Vector3(
+            parentScale.x != 0f ? scale.x / parentScale.x : rect.localScale.x,
+            parentScale.y != 0f ? scale.y / parentScale.y : rect.localScale.y,
+            parentScale.z != 0f ? scale.z / parentScale.z : rect.localScale.z);
+    }
+
+    private static void DisableGraphicRaycasts(RectTransform root)
+    {
+        if (root == null)
+            return;
+
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+    }
 
 	private void AnimateViewsToDeck(List<HandCardView> views, TweenCallback onComplete)
 	{

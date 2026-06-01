@@ -56,7 +56,8 @@ public enum BuffEnum
     ExtraRefresh = 14,
     Sturdy = 15,
     Stable = 16,
-    Disorder = 17
+    Disorder = 17,
+    DefensePower = 18
 }
 
 public enum BuffKindEnum
@@ -64,6 +65,13 @@ public enum BuffKindEnum
     Buff = 0,
     DeBuff = 1,
     Neutral = 2
+}
+
+[Serializable]
+public class BuffStackData
+{
+    public BuffEnum buffType;
+    public int stack;
 }
 
 public enum MagicMatchRule
@@ -87,7 +95,9 @@ public enum EnemyIntentType
     None = 0,
     Attack = 1,
     Defend = 2,
-    Special = 3
+    ApplyBuff = 3,
+    ApplyDebuff = 4,
+    Summon = 5
 }
 
 public enum EnemyActionType
@@ -97,7 +107,10 @@ public enum EnemyActionType
     GainShield = 2,
     ApplyBuff = 3,
     AddPollution = 4,
-    CounterFirstMagic = 5
+    CounterFirstMagic = 5,
+    ApplyDebuff = 6,
+    Summon = 7,
+    AttackAll = 8
 }
 
 public enum EventRewardType
@@ -177,6 +190,7 @@ public class MagicData : IDataRecord, INumericDataRecord
     public int hitCount;
     public BuffEnum buffType;
     public int buffAmount;
+    public bool playPlayerCastAnimation = true;
 
     public string Id => id;
     public int NumericId => numericId;
@@ -215,8 +229,9 @@ public class EnemyIntentData
     public EnemyIntentType intentType;
     public EnemyActionType actionType;
     public int value;
-    public BuffEnum buffType;
-    public int buffAmount;
+    public int summonEnemyId;
+    public int summonCount = 1;
+    public BuffStackData[] buffs = Array.Empty<BuffStackData>();
     public string descriptionKey;
 }
 
@@ -231,8 +246,9 @@ public class EnemyActionData
 {
     public EnemyActionType actionType;
     public int value;
-    public BuffEnum buffType;
-    public int buffAmount;
+    public int summonEnemyId;
+    public int summonCount = 1;
+    public BuffStackData[] buffs = Array.Empty<BuffStackData>();
     public string descriptionKey;
 }
 
@@ -244,6 +260,7 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public string nameKey;
     public int maxHealth;
     public int baseAttack;
+    public BuffStackData[] initialBuffs = Array.Empty<BuffStackData>();
     public string iconName;
     public EnemyIntentGroupData[] intentLoop = Array.Empty<EnemyIntentGroupData>();
     public EnemyActionData[] actionLoop = Array.Empty<EnemyActionData>();
@@ -289,12 +306,21 @@ public class EventData : IDataRecord, INumericDataRecord
 }
 
 [Serializable]
+public class LevelEnemyData
+{
+    public int enemyId;
+    public float x;
+    public float y;
+}
+
+[Serializable]
 public class LevelData : IDataRecord, INumericDataRecord
 {
     public int numericId;
     public string id;
     public string titleKey;
     public LevelType levelType;
+    public LevelEnemyData[] enemies = Array.Empty<LevelEnemyData>();
     public int[] enemyIds = Array.Empty<int>();
     public int rewardPoolId;
     public int eventPoolId;

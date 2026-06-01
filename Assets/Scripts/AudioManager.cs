@@ -1,6 +1,33 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+
+public enum GameSfxId
+{
+    None = 0,
+    CardPlay = 1,
+    CardReturnToHand = 2,
+    CardRefresh = 3,
+    ButtonClick = 4,
+    EnemyAttack = 5,
+    NegativeStatusApply = 6,
+    PositiveStatusApply = 7,
+    PlayerCastSwing = 8
+}
+
+[Serializable]
+public class GameSfxClipEntry
+{
+    public GameSfxId id;
+    public AudioClip clip;
+
+    public GameSfxClipEntry(GameSfxId id)
+    {
+        this.id = id;
+    }
+}
 
 public class AudioManager : MonoBehaviour
 {
@@ -12,17 +39,33 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip startMenuMusic;
     [SerializeField] private AudioClip gameplayMusic;
     [SerializeField] private AudioClip battleMusic;
+    [SerializeField] private GameSfxClipEntry[] gameSfxClips =
+    {
+        new GameSfxClipEntry(GameSfxId.CardPlay),
+        new GameSfxClipEntry(GameSfxId.CardReturnToHand),
+        new GameSfxClipEntry(GameSfxId.CardRefresh),
+        new GameSfxClipEntry(GameSfxId.ButtonClick),
+        new GameSfxClipEntry(GameSfxId.EnemyAttack),
+        new GameSfxClipEntry(GameSfxId.NegativeStatusApply),
+        new GameSfxClipEntry(GameSfxId.PositiveStatusApply),
+        new GameSfxClipEntry(GameSfxId.PlayerCastSwing)
+    };
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
 
+    private readonly List<AudioSource> pitchedSfxSources = new List<AudioSource>();
+
     private const string MusicVolumeKey = "MusicVolume";
     private const string SfxVolumeKey = "SfxVolume";
     private const string MusicMixerParameter = "MusicVolume";
     private const string SfxMixerParameter = "SfxVolume";
     private const string StartSceneName = "StartScene";
+    private const float MinimumSfxPitch = 0.1f;
+    private const float MaximumSfxPitch = 3f;
+    private const int MaxPitchedSfxSources = 4;
 
     private void Awake()
     {
@@ -36,6 +79,7 @@ public class AudioManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+        EnsureSfxClipEntries();
         EnsureAudioSources();
         LoadVolumes();
         PlaySceneMusic(SceneManager.GetActiveScene().name);
@@ -48,6 +92,11 @@ public class AudioManager : MonoBehaviour
 
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         Instance = null;
+    }
+
+    private void OnValidate()
+    {
+        EnsureSfxClipEntries();
     }
 
     public void SetMusicVolume(float value)
@@ -66,6 +115,11 @@ public class AudioManager : MonoBehaviour
         ApplyMixerVolume(SfxMixerParameter, SfxVolume);
         if (sfxSource != null)
             sfxSource.volume = SfxVolume;
+        for (int i = 0; i < pitchedSfxSources.Count; i++)
+        {
+            if (pitchedSfxSources[i] != null)
+                pitchedSfxSources[i].volume = SfxVolume;
+        }
     }
 
     public void PlayStartSceneMusic()
@@ -89,6 +143,46 @@ public class AudioManager : MonoBehaviour
             return;
 
         sfxSource.PlayOneShot(clip);
+    }
+
+    public void PlaySfx(AudioClip clip, float pitch)
+    {
+        if (clip == null)
+            return;
+
+        AudioSource source = GetPitchedSfxSource();
+        if (source == null)
+            return;
+
+        source.clip = clip;
+        source.pitch = Mathf.Clamp(pitch, MinimumSfxPitch, MaximumSfxPitch);
+        source.volume = SfxVolume;
+        source.Play();
+    }
+
+    public void PlaySfx(GameSfxId id)
+    {
+        PlaySfx(GetSfxClip(id));
+    }
+
+    public void PlaySfx(GameSfxId id, float pitch)
+    {
+        PlaySfx(GetSfxClip(id), pitch);
+    }
+
+    public AudioClip GetSfxClip(GameSfxId id)
+    {
+        if (id == GameSfxId.None || gameSfxClips == null)
+            return null;
+
+        for (int i = 0; i < gameSfxClips.Length; i++)
+        {
+            GameSfxClipEntry entry = gameSfxClips[i];
+            if (entry != null && entry.id == id)
+                return entry.clip;
+        }
+
+        return null;
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -141,8 +235,46 @@ public class AudioManager : MonoBehaviour
         if (sfxSource == null)
         {
             sfxSource = gameObject.AddComponent<AudioSource>();
-            sfxSource.loop = false;
-            sfxSource.playOnAwake = false;
+        }
+
+        ConfigureSfxSource(sfxSource);
+    }
+
+    private AudioSource GetPitchedSfxSource()
+    {
+        EnsureAudioSources();
+
+        for (int i = 0; i < pitchedSfxSources.Count; i++)
+        {
+            AudioSource source = pitchedSfxSources[i];
+            if (source != null && !source.isPlaying)
+                return source;
+        }
+
+        if (pitchedSfxSources.Count < MaxPitchedSfxSources)
+        {
+            AudioSource source = gameObject.AddComponent<AudioSource>();
+            ConfigureSfxSource(source);
+            pitchedSfxSources.Add(source);
+            return source;
+        }
+
+        return pitchedSfxSources.Count > 0 ? pitchedSfxSources[0] : null;
+    }
+
+    private void ConfigureSfxSource(AudioSource source)
+    {
+        if (source == null)
+            return;
+
+        source.loop = false;
+        source.playOnAwake = false;
+        source.volume = SfxVolume;
+        source.pitch = 1f;
+        if (sfxSource != null && source != sfxSource)
+        {
+            source.outputAudioMixerGroup = sfxSource.outputAudioMixerGroup;
+            source.spatialBlend = sfxSource.spatialBlend;
         }
     }
 
@@ -151,6 +283,43 @@ public class AudioManager : MonoBehaviour
         SetMusicVolume(PlayerPrefs.GetFloat(MusicVolumeKey, defaultMusicVolume));
         SetSfxVolume(PlayerPrefs.GetFloat(SfxVolumeKey, defaultSfxVolume));
         PlayerPrefs.Save();
+    }
+
+    private void EnsureSfxClipEntries()
+    {
+        EnsureSfxClipEntry(GameSfxId.CardPlay);
+        EnsureSfxClipEntry(GameSfxId.CardReturnToHand);
+        EnsureSfxClipEntry(GameSfxId.CardRefresh);
+        EnsureSfxClipEntry(GameSfxId.ButtonClick);
+        EnsureSfxClipEntry(GameSfxId.EnemyAttack);
+        EnsureSfxClipEntry(GameSfxId.NegativeStatusApply);
+        EnsureSfxClipEntry(GameSfxId.PositiveStatusApply);
+        EnsureSfxClipEntry(GameSfxId.PlayerCastSwing);
+    }
+
+    private void EnsureSfxClipEntry(GameSfxId id)
+    {
+        if (HasSfxClipEntry(id))
+            return;
+
+        int length = gameSfxClips != null ? gameSfxClips.Length : 0;
+        Array.Resize(ref gameSfxClips, length + 1);
+        gameSfxClips[length] = new GameSfxClipEntry(id);
+    }
+
+    private bool HasSfxClipEntry(GameSfxId id)
+    {
+        if (gameSfxClips == null)
+            return false;
+
+        for (int i = 0; i < gameSfxClips.Length; i++)
+        {
+            GameSfxClipEntry entry = gameSfxClips[i];
+            if (entry != null && entry.id == id)
+                return true;
+        }
+
+        return false;
     }
 
     private void ApplyMixerVolume(string parameterName, float value)

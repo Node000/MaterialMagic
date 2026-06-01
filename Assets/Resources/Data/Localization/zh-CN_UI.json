@@ -1,0 +1,16 @@
+{
+  "items": [
+    { "key": "ui.run_result.victory.title", "text": "胜利" },
+    { "key": "ui.run_result.victory.body", "text": "你花费了{0}，通过了全部的关卡\n你携带的东西有{1}\n真是一场令人喜悦的胜利\n现在，该休息一会儿了" },
+    { "key": "ui.run_result.victory.return_button", "text": "结束" },
+    { "key": "ui.run_result.victory.magic_separator", "text": "、" },
+    { "key": "ui.run_result.victory.empty_magic_list", "text": "无" },
+    { "key": "ui.run_result.defeat.title", "text": "游戏结束" },
+    { "key": "ui.run_result.defeat.body", "text": "你到达了，最后被{0}击败。\n显然，你的精神已经非常疲惫。\n现在该睡觉了" },
+    { "key": "ui.run_result.defeat.return_button", "text": "结束" },
+    { "key": "ui.run_result.unknown_enemy", "text": "未知敌人" },
+    { "key": "ui.run_result.time.hours_minutes_seconds", "text": "{0}小时{1}分钟{2}秒" },
+    { "key": "ui.run_result.time.minutes_seconds", "text": "{0}分钟{1}秒" },
+    { "key": "ui.run_result.time.seconds", "text": "{0}秒" }
+  ]
+}

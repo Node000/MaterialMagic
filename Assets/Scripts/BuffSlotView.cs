@@ -32,6 +32,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween motionTween;
+    private float visualSize = DefaultVisualSize;
 
     private const float AddDuration = 0.22f;
     private const float StackUpDuration = 0.12f;
@@ -44,6 +45,14 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private static readonly Vector3 StackSmallScale = Vector3.one * 0.9f;
     private static readonly Vector3 RemoveLargeScale = Vector3.one * 1.12f;
     private static readonly Vector3 HiddenScale = Vector3.zero;
+    private const float DefaultVisualSize = 42f;
+    private const float IconPaddingRatio = 0.08f;
+    private const float MinIconPadding = 2f;
+    private const float StackFontSizeRatio = 0.5f;
+    private const float MinStackFontSize = 12f;
+
+    public const float LayoutSize = DefaultVisualSize;
+    public const float LayoutSpacing = 6f;
 
     public BuffEnum BuffType => buff != null ? buff.buffType : BuffEnum.None;
     public int Stack => buff != null ? buff.stack : 0;
@@ -53,12 +62,62 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
+        CacheCurrentSize();
+        ApplyVisualSizing();
     }
 
     public void Initialize(Image iconImage, TMP_Text stackText)
     {
         this.iconImage = iconImage;
         this.stackText = stackText;
+        CacheCurrentSize();
+        ApplyVisualSizing();
+    }
+
+    public void SetLayoutSize(float size)
+    {
+        visualSize = Mathf.Max(1f, size);
+        ApplyVisualSizing();
+    }
+
+    private void CacheCurrentSize()
+    {
+        RectTransform rect = RectTransform;
+        float size = Mathf.Max(Mathf.Abs(rect.sizeDelta.x), Mathf.Abs(rect.sizeDelta.y));
+        if (size > 0f)
+            visualSize = size;
+    }
+
+    private void ApplyVisualSizing()
+    {
+        RectTransform.sizeDelta = new Vector2(visualSize, visualSize);
+
+        if (iconImage != null)
+        {
+            RectTransform iconRect = iconImage.rectTransform;
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            float iconPadding = Mathf.Max(MinIconPadding, visualSize * IconPaddingRatio);
+            iconRect.offsetMin = new Vector2(iconPadding, iconPadding);
+            iconRect.offsetMax = new Vector2(-iconPadding, -iconPadding);
+            iconImage.raycastTarget = false;
+        }
+
+        if (stackText != null)
+        {
+            stackText.fontSize = Mathf.Max(MinStackFontSize, visualSize * StackFontSizeRatio);
+            stackText.fontStyle = FontStyles.Bold;
+            stackText.alignment = TextAlignmentOptions.BottomRight;
+            stackText.enableWordWrapping = false;
+            stackText.overflowMode = TextOverflowModes.Overflow;
+            stackText.raycastTarget = false;
+
+            RectTransform stackRect = stackText.rectTransform;
+            stackRect.anchorMin = Vector2.zero;
+            stackRect.anchorMax = Vector2.one;
+            stackRect.offsetMin = Vector2.zero;
+            stackRect.offsetMax = new Vector2(-2f, -1f);
+        }
     }
 
     public void Bind(BuffModel buff, HandSystemUI owner)
@@ -130,6 +189,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void OnDisable()
     {
         KillMotion();
+        owner?.HideBuffTooltip(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)

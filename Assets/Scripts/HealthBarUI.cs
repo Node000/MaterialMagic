@@ -11,6 +11,7 @@ public class HealthBarUI : MonoBehaviour
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
     [SerializeField] private float textWidth = 72f;
+    [SerializeField] private float healthTextFontSize = 30f;
     [Header("动画参数")]
     [SerializeField] private float healthFillDuration = 0.35f;
     [SerializeField] private float healthBufferDecreaseDuration = 0.55f;
@@ -40,7 +41,7 @@ public class HealthBarUI : MonoBehaviour
 
     public void Setup(int currentHealth, int maxHealth, int shield, bool instant)
     {
-        SetupHealthText(healthText);
+        SetupHealthText(healthText, healthTextFontSize);
         if (healthFill == null)
             return;
 
@@ -60,15 +61,17 @@ public class HealthBarUI : MonoBehaviour
         SetupFillImage(healthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
         CacheLayers();
         SetHealthLayerOrder(healthBufferFill, healthFill, shieldFill);
-        PositionHealthTextLeftOfBar(healthText, barBack, textWidth);
+        PositionHealthTextRightOfBar(healthText, barBack, textWidth);
         UpdateValue(currentHealth, maxHealth, shield, instant);
     }
 
     public void UpdateValue(int currentHealth, int maxHealth, int shield, bool instant)
     {
         UpdateHealthBar(healthFill, healthBufferFill, shieldFill, currentHealth, maxHealth, shield, instant, healthFillDuration, healthBufferDecreaseDuration, healthBufferIncreaseDuration, healthEase);
+        int totalHealthTextValue = GetHealthTextValue(currentHealth, shield);
+        SetHealthTextColor(healthText, shield > 0);
         healthNumberTween?.Kill(false);
-        healthNumberTween = UpdateHealthText(healthText, displayedHealth, currentHealth, instant, value => displayedHealth = value, this, healthTextDuration, healthEase);
+        healthNumberTween = UpdateHealthText(healthText, displayedHealth, totalHealthTextValue, instant, value => displayedHealth = value, this, healthTextDuration, healthEase);
     }
 
     private void CacheLayers()
@@ -92,10 +95,32 @@ public class HealthBarUI : MonoBehaviour
     {
         Transform child = parent.Find(name);
         Image image = child != null ? child.GetComponent<Image>() : null;
-        if (image == null)
-            return null;
+        bool created = image == null;
+        if (created)
+        {
+            image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            image.transform.SetParent(parent, false);
+        }
 
         image.transform.SetParent(parent, false);
+        Image parentImage = parent.GetComponent<Image>();
+        if (parentImage != null)
+        {
+            if (created)
+            {
+                image.sprite = parentImage.sprite;
+                image.type = parentImage.type;
+                image.fillCenter = parentImage.fillCenter;
+                image.preserveAspect = parentImage.preserveAspect;
+                image.material = parentImage.material;
+                image.maskable = parentImage.maskable;
+                image.pixelsPerUnitMultiplier = parentImage.pixelsPerUnitMultiplier;
+            }
+            else if (image.sprite == null)
+            {
+                image.sprite = parentImage.sprite;
+            }
+        }
         SetupFillImage(image, color, siblingIndex);
         return image;
     }
@@ -122,14 +147,61 @@ public class HealthBarUI : MonoBehaviour
             shieldFill.transform.SetSiblingIndex(2);
     }
 
-    public static void SetupHealthText(TMP_Text text)
+    public static void SetupHealthText(TMP_Text text, float fontSize = 0f)
     {
         if (text == null)
             return;
 
-        text.alignment = TextAlignmentOptions.Center;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
         text.enableWordWrapping = false;
         text.overflowMode = TextOverflowModes.Overflow;
+        text.fontStyle = FontStyles.Bold;
+        if (fontSize > 0f)
+            text.fontSize = fontSize;
+        SetHealthTextColor(text, false);
+        EnsureWhiteOutline(text);
+        text.raycastTarget = false;
+    }
+
+    public static int GetHealthTextValue(int currentHealth, int shield)
+    {
+        return Mathf.Max(0, currentHealth) + Mathf.Max(0, shield);
+    }
+
+    public static void SetHealthTextColor(TMP_Text text, bool shielded)
+    {
+        if (text == null)
+            return;
+
+        text.color = shielded ? new Color(0.25f, 0.55f, 1f, 1f) : new Color(0.95f, 0.08f, 0.04f, 1f);
+    }
+
+    private static void EnsureWhiteOutline(TMP_Text text)
+    {
+        Material material = text.fontSharedMaterial;
+        if (material != null && material.HasProperty("_OutlineColor") && material.HasProperty("_OutlineWidth"))
+        {
+            Color outlineColor = material.GetColor("_OutlineColor");
+            float outlineWidth = material.GetFloat("_OutlineWidth");
+            if (outlineColor == Color.white && Mathf.Approximately(outlineWidth, 0.18f))
+                return;
+        }
+
+        text.outlineColor = Color.white;
+        text.outlineWidth = 0.18f;
+    }
+
+    public static void PositionHealthTextRightOfBar(TMP_Text text, RectTransform barBack, float width)
+    {
+        if (text == null || barBack == null)
+            return;
+
+        RectTransform rect = text.GetComponent<RectTransform>();
+        rect.anchorMin = barBack.anchorMin;
+        rect.anchorMax = barBack.anchorMin;
+        rect.pivot = new Vector2(0f, 0.5f);
+        rect.sizeDelta = new Vector2(width, barBack.rect.height + 10f);
+        rect.anchoredPosition = barBack.anchoredPosition + new Vector2(barBack.rect.width * (1f - barBack.pivot.x) + 8f, 0f);
     }
 
     public static void PositionHealthTextLeftOfBar(TMP_Text text, RectTransform barBack, float width)

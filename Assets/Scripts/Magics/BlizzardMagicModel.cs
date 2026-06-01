@@ -1,6 +1,8 @@
 public class BlizzardMagicModel : ScriptedMagicModel
 {
     public BlizzardMagicModel(MagicData data, int slotIndex = 0) : base(data, slotIndex) { }
+    public override bool CastParticleTargetsAllEnemies => true;
+
     protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         AddBuffAll(battleManager, BuffEnum.Vulnerable, 1, result);

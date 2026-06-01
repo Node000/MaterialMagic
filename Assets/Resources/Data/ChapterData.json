@@ -4,7 +4,7 @@
       "numericId": 1,
       "id": "chapter_001",
       "nameKey": "chapter.001.name",
-      "levelLength": 20,
+      "levelLength": 21,
       "levelPoolIds": [
         1,
         2,
@@ -23,9 +23,6 @@
         15,
         16,
         17,
-        18,
-        19,
-        20,
         101,
         102,
         103,
@@ -42,33 +39,28 @@
         },
         {
           "startProgress": 2,
+          "endProgress": 3,
+          "levelPoolIds": [1, 2, 3, 101, 102, 103, 104, 201, 301, 401]
+        },
+        {
+          "startProgress": 4,
           "endProgress": 5,
-          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201, 301, 401]
+          "levelPoolIds": [4, 5, 101, 102, 103, 104, 201, 301, 401]
         },
         {
           "startProgress": 6,
-          "endProgress": 6,
-          "levelPoolIds": [104]
+          "endProgress": 12,
+          "levelPoolIds": [6, 7, 8, 9, 101, 102, 103, 104, 201, 301, 401]
         },
         {
-          "startProgress": 7,
-          "endProgress": 13,
-          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201, 301, 401]
-        },
-        {
-          "startProgress": 14,
-          "endProgress": 14,
-          "levelPoolIds": [104]
-        },
-        {
-          "startProgress": 15,
-          "endProgress": 19,
-          "levelPoolIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 102, 103, 201, 301, 401]
-        },
-        {
-          "startProgress": 20,
+          "startProgress": 13,
           "endProgress": 20,
-          "levelPoolIds": [20]
+          "levelPoolIds": [10, 11, 12, 13, 14, 15, 16, 101, 102, 103, 104, 201, 301, 401]
+        },
+        {
+          "startProgress": 21,
+          "endProgress": 21,
+          "levelPoolIds": [17]
         }
       ],
       "fixed_level": [],

@@ -50,11 +50,11 @@
     },
     {
       "key": "buff.spell_power.name",
-      "text": "威力增强"
+      "text": "伤害提升"
     },
     {
       "key": "buff.spell_power.desc",
-      "text": "法术造成伤害提高层数点，回合结束时清除。"
+      "text": "每层使攻击和法术造成伤害提高1；玩家回合结束时清除，敌人获得后持续生效。"
     },
     {
       "key": "buff.burning_next_turn.name",
@@ -119,6 +119,14 @@
     {
       "key": "buff.disorder.desc",
       "text": "攻击伤害提高层数点；回合结束时受到层数点直接伤害。"
+    },
+    {
+      "key": "buff.defense_power.name",
+      "text": "防御提升"
+    },
+    {
+      "key": "buff.defense_power.desc",
+      "text": "每层使获得护盾量提高1；玩家回合结束时清除，敌人获得后持续生效。"
     }
   ]
 }

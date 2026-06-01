@@ -1030,6 +1030,21 @@ MonoBehaviour:
   startMenuMusic: {fileID: 0}
   gameplayMusic: {fileID: 0}
   battleMusic: {fileID: 0}
+  gameSfxClips:
+  - id: 1
+    clip: {fileID: 0}
+  - id: 2
+    clip: {fileID: 0}
+  - id: 3
+    clip: {fileID: 0}
+  - id: 4
+    clip: {fileID: 0}
+  - id: 5
+    clip: {fileID: 0}
+  - id: 6
+    clip: {fileID: 0}
+  - id: 7
+    clip: {fileID: 0}
   defaultMusicVolume: 0.8
   defaultSfxVolume: 0.8
 --- !u!4 &311232527

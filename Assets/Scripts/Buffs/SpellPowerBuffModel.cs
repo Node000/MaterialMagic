@@ -11,6 +11,7 @@ public class SpellPowerBuffModel : BuffModel
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
     {
-        stack = 0;
+        if (self.IsPlayer)
+            stack = 0;
     }
 }

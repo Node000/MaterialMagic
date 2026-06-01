@@ -18,7 +18,10 @@ public class ShopItemView : MonoBehaviour
     private MaterialCardView materialView;
     private TMP_Text removeText;
 
-    public void Bind(ShopPanelUI panel, ShopOffer offer, bool canAfford, bool canUse, Action<ShopOffer> clicked)
+    public RectTransform MagicVisualRect => magicView != null ? magicView.transform as RectTransform : null;
+    public RectTransform MaterialVisualRect => materialView != null ? materialView.transform as RectTransform : null;
+
+    public void Bind(ShopPanelUI panel, ShopOffer offer, bool canAfford, bool canUse, bool selected, Action<ShopOffer> clicked)
     {
         this.offer = offer;
         this.clicked = clicked;
@@ -30,9 +33,10 @@ public class ShopItemView : MonoBehaviour
         if (priceText != null)
             priceText.text = offer.price + " 金币";
         if (stateText != null)
-            stateText.text = GetStateText(offer, canAfford, canUse);
+            stateText.text = GetStateText(offer, canAfford, canUse, selected);
         if (backgroundImage != null)
-            backgroundImage.color = offer.purchased ? new Color(0.035f, 0.035f, 0.045f, 0.82f) : new Color(0.08f, 0.08f, 0.12f, 0.96f);
+            backgroundImage.color = selected ? new Color(0.16f, 0.12f, 0.2f, 0.98f) : offer.purchased ? new Color(0.035f, 0.035f, 0.045f, 0.82f) : new Color(0.08f, 0.08f, 0.12f, 0.96f);
+        transform.localScale = selected ? Vector3.one * 1.1f : Vector3.one;
 
         CreateVisual(panel, offer);
         if (button != null)
@@ -159,10 +163,12 @@ public class ShopItemView : MonoBehaviour
         }
     }
 
-    private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse)
+    private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse, bool selected)
     {
         if (offer != null && offer.purchased)
             return "已购买";
+        if (selected)
+            return "点击法术槽购买";
         if (!canUse)
             return "不可用";
         return canAfford ? "点击购买" : "金币不足";

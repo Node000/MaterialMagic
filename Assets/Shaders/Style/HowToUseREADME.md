@@ -9,14 +9,16 @@
 
 ## 浮动文字
 
-当前项目主要使用 legacy `UnityEngine.UI.Text`，所以 `Text_FloatAccent` 按 legacy UI Text 设计：
+当前战斗飘字使用 TMP 预制体，而不是运行时直接 new Text 对象：
 
-- 普通伤害：`Assets/Materials/Style/Text/M_Text_FloatAccent_Damage.mat`
-- 暴击：`Assets/Materials/Style/Text/M_Text_FloatAccent_Crit.mat`
-- 治疗：`Assets/Materials/Style/Text/M_Text_FloatAccent_Heal.mat`
-- Debuff：`Assets/Materials/Style/Text/M_Text_FloatAccent_Debuff.mat`
+- 预制体：`Assets/Prefabs/UI/FloatingText.prefab`
+- 字体：`Assets/Resources/Fonts/FZG_CN SDF.asset`
+- TMP 材质：`Assets/Materials/Style/Text/M_TMP_FloatingText_Default.mat`
+- 类型：伤害飘字、护盾飘字、回血飘字；伤害被护盾完全挡住时显示 `BLOCK`。
 
-文字位移、缩放、淡出仍应由脚本/动画完成，Shader 只负责增强描边、Glow、闪白和轻 RGB 分离。
+`UI/Text_FloatAccent.shader` 仍保留给 legacy `UnityEngine.UI.Text`，但它不是 TMP SDF Shader，不能直接复用到当前飘字。TMP 飘字复用的是同一套颜色/描边/阴影设计，并通过 TMP Distance Field 材质实现。
+
+文字位移、缩放、淡出仍应由脚本/动画完成，Shader/材质只负责增强描边、阴影和可读性。
 
 ## 敌人/角色 Image 或 Sprite
 

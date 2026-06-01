@@ -75,9 +75,13 @@ public abstract class ScriptedMagicModel : MagicModel
         TriggerMagicBeforeAttack(target, ref attackValue);
         playerState.TriggerOnAttack(targetCombatant, ref attackValue);
         GameLog.Data($"Scripted magic {Id} damage target={target.Id} value={attackValue}");
+        int shieldBefore = target.Shield;
         int attackResult = target.TakeDamage(attackValue, caster);
+        int shieldBlocked = shieldBefore - target.Shield;
+        if (shieldBlocked < 0)
+            shieldBlocked = 0;
         TriggerMagicAfterAttack(target, ref attackResult);
-        result.enemyDamageHits.Add(attackResult);
+        result.AddEnemyDamageHit(target, attackResult, shieldBlocked);
     }
 
     protected void DamageTarget(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)

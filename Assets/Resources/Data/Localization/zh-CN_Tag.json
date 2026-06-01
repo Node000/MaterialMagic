@@ -24,7 +24,9 @@
     { "key": "tag.extra_draw.desc",       "text": "额外抽等同层数的牌，抽牌后清除。" },
     { "key": "tag.extra_refresh.name", "text": "额外换牌" },
     { "key": "tag.extra_refresh.desc",       "text": "额外获得等同层数的换牌机会，换牌时层数-1，回合结束时清除。" },
-    { "key": "tag.spell_power.name", "text": "威力增强" },
-    { "key": "tag.spell_power.desc",       "text": "法术造成伤害提高层数点，回合结束时清除。" }
+    { "key": "tag.spell_power.name", "text": "伤害提升" },
+    { "key": "tag.spell_power.desc",       "text": "每层使攻击和法术造成伤害提高1，回合结束时清除。" },
+    { "key": "tag.defense_power.name", "text": "防御提升" },
+    { "key": "tag.defense_power.desc",       "text": "每层使获得护盾量提高1，回合结束时清除。" }
   ]
 }

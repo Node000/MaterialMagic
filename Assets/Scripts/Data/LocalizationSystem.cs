@@ -95,6 +95,7 @@ public static class LocalizationKeys
             case BuffEnum.Slow: return "slow";
             case BuffEnum.Arc: return "arc";
             case BuffEnum.SpellPower: return "spell_power";
+            case BuffEnum.DefensePower: return "defense_power";
             case BuffEnum.BurningNextTurn: return "burning_next_turn";
             case BuffEnum.ShieldReflect: return "shield_reflect";
             case BuffEnum.ExtraDraw: return "extra_draw";
@@ -157,7 +158,7 @@ public class LocalizationTable
 public static class LocalizationSystem
 {
     private const string LocalizationRoot = "Data/Localization/";
-    private static readonly string[] SupplementalLanguageTables = { "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag" };
+    private static readonly string[] SupplementalLanguageTables = { "_UI", "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag" };
     private static readonly Dictionary<string, string> TextByKey = new Dictionary<string, string>();
 
     public static string CurrentLanguage { get; private set; } = "zh-CN";

@@ -75,6 +75,11 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         Play();
     }
 
+    public void SetHoverTiltAngle(float angle)
+    {
+        hoverTiltAngle = angle;
+    }
+
     public void Play()
     {
         StopMotion();

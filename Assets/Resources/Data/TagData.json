@@ -66,6 +66,11 @@
       "descriptionKey": "tag.spell_power.desc"
     },
     {
+      "id": "defense_power",
+      "nameKey": "tag.defense_power.name",
+      "descriptionKey": "tag.defense_power.desc"
+    },
+    {
       "id": "burning_deepen"
     }
   ]

@@ -14,6 +14,7 @@ public class MagicModel
     public string Description => LocalizationSystem.GetText(Data.descriptionKey, string.Empty);
     public bool HasModifier => Modifiers.Count > 0;
     public MagicModifierModel PrimaryModifier => Modifiers.Count > 0 ? Modifiers[0] : null;
+    public virtual bool CastParticleTargetsAllEnemies => false;
 
     public MagicModel(MagicData data, int slotIndex = 0)
     {
@@ -104,9 +105,13 @@ public class MagicModel
                     if (enemyModel != null)
                     {
                         GameLog.Data($"Magic {Id} damage target={enemyModel.Id} value={attackValue}");
+                        int shieldBefore = enemyModel.Shield;
                         int attackResult = enemyModel.TakeDamage(attackValue, caster);
+                        int shieldBlocked = shieldBefore - enemyModel.Shield;
+                        if (shieldBlocked < 0)
+                            shieldBlocked = 0;
                         TriggerMagicAfterAttack(enemyModel, ref attackResult);
-                        result.enemyDamageHits.Add(attackResult);
+                        result.AddEnemyDamageHit(enemyModel, attackResult, shieldBlocked);
                     }
                 }
                 break;
@@ -269,7 +274,12 @@ public class MagicModel
             if (target == null || target.IsDead)
                 continue;
 
-            result.enemyDamageHits.Add(target.TakeDamage(damage, caster));
+            int shieldBefore = target.Shield;
+            int attackResult = target.TakeDamage(damage, caster);
+            int shieldBlocked = shieldBefore - target.Shield;
+            if (shieldBlocked < 0)
+                shieldBlocked = 0;
+            result.AddEnemyDamageHit(target, attackResult, shieldBlocked);
         }
     }
 
@@ -294,12 +304,33 @@ public class MagicModel
     }
 }
 
+public class MagicDamageHitResult
+{
+    public EnemyModel target;
+    public int healthDamage;
+    public int shieldDamage;
+
+    public bool FullyBlocked => healthDamage <= 0 && shieldDamage > 0;
+
+    public MagicDamageHitResult(EnemyModel target, int healthDamage, int shieldDamage)
+    {
+        this.target = target;
+        this.healthDamage = healthDamage;
+        this.shieldDamage = shieldDamage;
+    }
+}
+
 public class MagicCastResult
 {
-    public readonly List<int> enemyDamageHits = new List<int>();
+    public readonly List<MagicDamageHitResult> enemyDamageHits = new List<MagicDamageHitResult>();
     public int playerHeal;
     public int playerShield;
     public bool enemyBuffApplied;
+
+    public void AddEnemyDamageHit(EnemyModel target, int healthDamage, int shieldDamage)
+    {
+        enemyDamageHits.Add(new MagicDamageHitResult(target, healthDamage, shieldDamage));
+    }
 }
 
 public class MagicTriggerModel
