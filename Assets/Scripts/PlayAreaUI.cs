@@ -20,6 +20,10 @@ public class PlayAreaUI : MonoBehaviour
     [SerializeField] private float counterPunchElasticity = 0.7f;
     [SerializeField] private Ease resolveIndicatorEase = Ease.OutQuad;
 
+    private Sequence continuousCastCounterSequence;
+    private Vector2 continuousCastCounterBasePosition;
+    private bool continuousCastCounterBasePositionCached;
+
     public RectTransform ResolveIndicator => resolveIndicator;
 
     public void Initialize(HandSystemUI owner)
@@ -57,30 +61,40 @@ public class PlayAreaUI : MonoBehaviour
             return;
 
         bool visible = count > 0;
+        continuousCastCounterSequence?.Kill(false);
+        continuousCastCounterSequence = null;
+        continuousCastCounterRect.DOKill(false);
+        if (!continuousCastCounterBasePositionCached)
+        {
+            continuousCastCounterBasePosition = continuousCastCounterRect.anchoredPosition;
+            continuousCastCounterBasePositionCached = true;
+        }
+        continuousCastCounterRect.anchoredPosition = continuousCastCounterBasePosition;
+        continuousCastCounterRect.localScale = Vector3.one;
+        continuousCastCounterRect.localEulerAngles = Vector3.zero;
         continuousCastCounterRect.gameObject.SetActive(visible);
         if (!visible)
             return;
 
         continuousCastCounterText.text = "x" + count;
-        continuousCastCounterRect.DOKill(false);
-        continuousCastCounterRect.localScale = Vector3.one;
-        continuousCastCounterRect.localEulerAngles = Vector3.zero;
         if (!instant)
         {
             float tiltProgress = Mathf.Clamp01(count / (float)Mathf.Max(1, counterMaxEffectCastCount));
             float tilt = counterMaxTiltAngle * tiltProgress;
-            Sequence sequence = DOTween.Sequence().SetTarget(this);
-            sequence.Join(continuousCastCounterRect.DOPunchScale(Vector3.one * counterPunchScale, counterPunchDuration, counterPunchVibrato, counterPunchElasticity));
-            sequence.Join(continuousCastCounterRect.DOPunchRotation(Vector3.forward * -tilt, counterPunchDuration, counterPunchVibrato, counterPunchElasticity));
+            continuousCastCounterSequence = DOTween.Sequence().SetTarget(continuousCastCounterRect);
+            continuousCastCounterSequence.Join(continuousCastCounterRect.DOPunchScale(Vector3.one * counterPunchScale, counterPunchDuration, counterPunchVibrato, counterPunchElasticity));
+            continuousCastCounterSequence.Join(continuousCastCounterRect.DOPunchRotation(Vector3.forward * -tilt, counterPunchDuration, counterPunchVibrato, counterPunchElasticity));
             if (count >= counterShakeStartCastCount)
             {
                 float shakeProgress = Mathf.InverseLerp(counterShakeStartCastCount, counterMaxEffectCastCount, count);
-                sequence.Join(continuousCastCounterRect.DOShakeAnchorPos(counterPunchDuration, counterMaxShakeStrength * shakeProgress, counterShakeVibrato, 90f, false, true));
+                continuousCastCounterSequence.Join(continuousCastCounterRect.DOShakeAnchorPos(counterPunchDuration, counterMaxShakeStrength * shakeProgress, counterShakeVibrato, 90f, false, true));
             }
-            sequence.OnComplete(() =>
+            continuousCastCounterSequence.OnComplete(() =>
             {
+                continuousCastCounterRect.anchoredPosition = continuousCastCounterBasePosition;
                 continuousCastCounterRect.localEulerAngles = Vector3.zero;
                 continuousCastCounterRect.localScale = Vector3.one;
+                continuousCastCounterSequence = null;
             });
         }
     }

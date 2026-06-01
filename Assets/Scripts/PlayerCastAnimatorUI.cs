@@ -11,8 +11,17 @@ public class PlayerCastAnimatorUI : MonoBehaviour
     private int idleStateHash;
     private int castStateHash;
     private Action releaseHandler;
+    private float resolvedCastReleaseDelay = -1f;
 
-    public float CastReleaseDelay => castReleaseDelay;
+    public float CastReleaseDelay
+    {
+        get
+        {
+            if (resolvedCastReleaseDelay < 0f)
+                resolvedCastReleaseDelay = ResolveCastReleaseDelay();
+            return resolvedCastReleaseDelay;
+        }
+    }
 
     private void Awake()
     {
@@ -26,6 +35,7 @@ public class PlayerCastAnimatorUI : MonoBehaviour
 
         idleStateHash = Animator.StringToHash(idleStateName);
         castStateHash = Animator.StringToHash(castStateName);
+        resolvedCastReleaseDelay = -1f;
         PlayIdle();
     }
 
@@ -47,6 +57,28 @@ public class PlayerCastAnimatorUI : MonoBehaviour
     public void OnCastReleaseFrame()
     {
         releaseHandler?.Invoke();
+    }
+
+    private float ResolveCastReleaseDelay()
+    {
+        if (animator != null && animator.runtimeAnimatorController != null)
+        {
+            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+            float releaseDelay = -1f;
+            for (int i = 0; i < clips.Length; i++)
+            {
+                AnimationEvent[] events = clips[i].events;
+                for (int j = 0; j < events.Length; j++)
+                {
+                    if (events[j].functionName == nameof(OnCastReleaseFrame) && (releaseDelay < 0f || events[j].time < releaseDelay))
+                        releaseDelay = events[j].time;
+                }
+            }
+            if (releaseDelay >= 0f)
+                return releaseDelay;
+        }
+
+        return castReleaseDelay;
     }
 
     private void PlayIdle()

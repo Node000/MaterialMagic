@@ -53,6 +53,10 @@ public class BuffModel
     {
     }
 
+    public virtual void OnGainShield(CombatantModel self, ref int shieldValue)
+    {
+    }
+
     public virtual void OnTurnEnd(CombatantModel self, CombatantModel opponent)
     {
     }
@@ -112,6 +116,8 @@ public class BuffModel
                 return new BurningNextTurnBuffModel(stack);
             case BuffEnum.SpellPower:
                 return new SpellPowerBuffModel(stack);
+            case BuffEnum.DefensePower:
+                return new DefensePowerBuffModel(stack);
             case BuffEnum.ShieldReflect:
                 return new ShieldReflectBuffModel(stack);
             case BuffEnum.ExtraDraw:
@@ -141,6 +147,7 @@ public class BuffModel
             case BuffEnum.BurningNextTurn:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
+            case BuffEnum.DefensePower:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:

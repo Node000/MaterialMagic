@@ -25,6 +25,7 @@ public class PlayerState
     public List<MaterialModel> PlayZone { get; } = new List<MaterialModel>();
     public List<MagicModel> MagicBook { get; } = new List<MagicModel>();
     public IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
+    public EnemyModel LastDamageSourceEnemy { get; private set; }
 
     public PlayerState(int maxHealth = 50, int gold = 0)
     {
@@ -324,7 +325,10 @@ public class PlayerState
         CurrentHealth -= remainingDamage;
         if (CurrentHealth < 0)
             CurrentHealth = 0;
-        GameLog.Data($"Player take damage raw={damage} finalHealthDamage={healthBefore - CurrentHealth} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
+        int healthDamage = healthBefore - CurrentHealth;
+        if (healthDamage > 0)
+            LastDamageSourceEnemy = attacker != null && attacker.IsEnemy ? attacker.Enemy : null;
+        GameLog.Data($"Player take damage raw={damage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
 
         if (blockedDamage > 0 && GetBuffStack(BuffEnum.ShieldReflect) > 0)
             attacker?.TakeDamage(blockedDamage);
@@ -332,7 +336,7 @@ public class PlayerState
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(attacker);
 
-        return healthBefore - CurrentHealth;
+        return healthDamage;
     }
 
     public int TakeDirectDamage(int damage)
@@ -344,12 +348,15 @@ public class PlayerState
         CurrentHealth -= damage;
         if (CurrentHealth < 0)
             CurrentHealth = 0;
+        int healthDamage = healthBefore - CurrentHealth;
+        if (healthDamage > 0)
+            LastDamageSourceEnemy = null;
         GameLog.Data($"Player take direct damage={damage} hp={CurrentHealth}/{MaxHealth}");
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(null);
 
-        return healthBefore - CurrentHealth;
+        return healthDamage;
     }
 
     public void Heal(int amount)
@@ -368,9 +375,14 @@ public class PlayerState
         if (amount <= 0)
             return 0;
 
-        Shield += amount;
-        GameLog.Data($"Player gain shield={amount} shield={Shield}");
-        return amount;
+        int shieldValue = amount;
+        TriggerOnGainShield(ref shieldValue);
+        if (shieldValue <= 0)
+            return 0;
+
+        Shield += shieldValue;
+        GameLog.Data($"Player gain shield={shieldValue} shield={Shield}");
+        return shieldValue;
     }
 
     public int ConsumeShield(int amount)
@@ -547,6 +559,17 @@ public class PlayerState
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
             snapshot[i].AfterAttack(self, attacker, ref attackResult);
+    }
+
+    public void TriggerOnGainShield(ref int shieldValue)
+    {
+        if (buffs.Count == 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].OnGainShield(self, ref shieldValue);
     }
 
     public void TriggerOnTurnEnd(CombatantModel opponent)

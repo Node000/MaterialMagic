@@ -160,12 +160,14 @@ public static class RunSaveSystem
         return File.Exists(RunSavePath);
     }
 
-    public static void RecordVictoryAndClearCurrentRun()
+    public static void RecordVictoryAndClearCurrentRun(float playSeconds = -1f)
     {
         RunSaveData data = LoadCurrentRun();
         if (data != null)
         {
             data.victoryCount++;
+            if (playSeconds >= 0f)
+                data.totalPlaySeconds = playSeconds;
             SaveSummaryOnly(data);
         }
         ClearCurrentRun();
@@ -212,7 +214,7 @@ public static class RunSaveSystem
         return LoadRun(currentSlotIndex);
     }
 
-    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
+    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f)
     {
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
@@ -230,7 +232,7 @@ public static class RunSaveSystem
             victoryCount = previousData != null ? previousData.victoryCount : 0,
             tutorialCompleted = previousData != null && previousData.tutorialCompleted,
             tutorialEventShown = previousData != null && previousData.tutorialEventShown,
-            totalPlaySeconds = previousData != null ? previousData.totalPlaySeconds + Time.realtimeSinceStartup : Time.realtimeSinceStartup,
+            totalPlaySeconds = playSeconds >= 0f ? playSeconds : (previousData != null ? previousData.totalPlaySeconds : 0f),
             startConfigId = PlayerState.SelectedStartConfigId,
             runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
             chapterNumericId = chapter != null ? chapter.numericId : 0,

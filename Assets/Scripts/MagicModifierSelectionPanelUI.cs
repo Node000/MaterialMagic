@@ -54,13 +54,16 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         if (hintText != null)
             hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.hint", "选择一个强化后，点击一个已有法术完成附魔。每个法术只能附魔一次。");
 
-        EnsureOptionCount(Mathf.Max(1, currentChoices.Count));
         RefreshOptions();
     }
 
     public void Hide()
     {
         selectedModifier = null;
+        popupTween?.Kill(false);
+        popupTween = null;
+        if (popupRoot != null)
+            popupRoot.gameObject.SetActive(false);
         gameObject.SetActive(false);
     }
 
@@ -96,12 +99,13 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     private void CacheReferences()
     {
+        if (panel == null)
+            panel = (RectTransform)transform;
         titleText = titleText != null ? titleText : UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         hintText = hintText != null ? hintText : UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         optionRoot = optionRoot != null ? optionRoot : UIManager.FindChildRect(transform, "OptionArea");
         backButton = backButton != null ? backButton : UIManager.FindChildComponent<Button>(transform, "BackButton");
-        if (optionRoot == null)
-            optionRoot = CreateRect("OptionArea", panel, new Vector2(0f, -10f), new Vector2(700f, 150f));
+        CacheOptionReferences();
         if (backButton != null)
         {
             backButton.onClick.RemoveAllListeners();
@@ -110,31 +114,37 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             if (backText != null)
                 backText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.back", "返回");
         }
-        EnsurePopup();
+        CachePopupReferences();
     }
 
     private void RefreshOptions()
     {
+        if (optionButtons.Count == 0)
+            return;
+
         if (currentChoices.Count == 0)
         {
             optionButtons[0].gameObject.SetActive(true);
             optionButtons[0].interactable = false;
-            optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用法术强化");
+            if (optionTexts[0] != null)
+                optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用法术强化");
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
         }
 
+        int visibleCount = Mathf.Min(currentChoices.Count, optionButtons.Count);
         for (int i = 0; i < optionButtons.Count; i++)
         {
-            bool visible = i < currentChoices.Count;
+            bool visible = i < visibleCount;
             optionButtons[i].gameObject.SetActive(visible);
             if (!visible)
                 continue;
 
             MagicModifierData data = currentChoices[i];
             optionButtons[i].interactable = true;
-            optionTexts[i].text = BuildOptionText(data);
+            if (optionTexts[i] != null)
+                optionTexts[i].text = BuildOptionText(data);
             int index = i;
             optionButtons[i].onClick.RemoveAllListeners();
             optionButtons[i].onClick.AddListener(() => SelectOption(index));
@@ -174,44 +184,25 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             option.DOScale(scale, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
     }
 
-    private void EnsureOptionCount(int count)
+    private void CacheOptionReferences()
     {
-        while (optionButtons.Count < count)
-            CreateOption(optionButtons.Count);
+        optionButtons.Clear();
+        optionTexts.Clear();
+        if (optionRoot == null)
+            return;
+
+        for (int i = 0; i < optionRoot.childCount; i++)
+        {
+            Button button = optionRoot.GetChild(i).GetComponent<Button>();
+            if (button == null)
+                continue;
+
+            optionButtons.Add(button);
+            optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
+        }
     }
 
-    private void CreateOption(int index)
-    {
-        Image image = new GameObject("ModifierOption" + index, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(JuicyMotion)).GetComponent<Image>();
-        image.transform.SetParent(optionRoot, false);
-        image.color = new Color(0.08f, 0.08f, 0.12f, 0.96f);
-        RectTransform rect = image.rectTransform;
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2((index - 1) * 230f, 0f);
-        rect.sizeDelta = new Vector2(210f, 112f);
-
-        TMP_Text text = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-        text.transform.SetParent(rect, false);
-        text.font = UIManager.GetDefaultTMPFont();
-        text.fontSize = 16;
-        text.alignment = TextAlignmentOptions.Center;
-        text.color = Color.white;
-        text.raycastTarget = false;
-        text.enableWordWrapping = true;
-        text.overflowMode = TextOverflowModes.Overflow;
-        RectTransform textRect = text.rectTransform;
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(10f, 8f);
-        textRect.offsetMax = new Vector2(-10f, -8f);
-
-        optionButtons.Add(image.GetComponent<Button>());
-        optionTexts.Add(text);
-    }
-
-    private void EnsurePopup()
+    private void CachePopupReferences()
     {
         if (popupRoot == null)
         {
@@ -219,52 +210,12 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             popupRoot = existing as RectTransform;
         }
         if (popupRoot == null)
-        {
-            Image image = new GameObject("Popup", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
-            image.transform.SetParent(transform, false);
-            image.color = new Color(0.03f, 0.03f, 0.04f, 0.98f);
-            image.raycastTarget = false;
-            popupRoot = image.rectTransform;
-            popupRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            popupRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            popupRoot.pivot = new Vector2(0.5f, 0.5f);
-            popupRoot.anchoredPosition = new Vector2(0f, -148f);
-            popupRoot.sizeDelta = new Vector2(320f, 54f);
-        }
+            return;
 
         popupCanvasGroup = popupRoot.GetComponent<CanvasGroup>();
-        if (popupCanvasGroup == null)
-            popupCanvasGroup = popupRoot.gameObject.AddComponent<CanvasGroup>();
         popupText = popupText != null ? popupText : UIManager.FindChildComponent<TMP_Text>(popupRoot, "Text");
-        if (popupText == null)
-        {
-            popupText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-            popupText.transform.SetParent(popupRoot, false);
-            popupText.font = UIManager.GetDefaultTMPFont();
-            popupText.fontSize = 18;
-            popupText.fontStyle = FontStyles.Bold;
-            popupText.alignment = TextAlignmentOptions.Center;
-            popupText.color = new Color(1f, 0.86f, 0.56f, 1f);
-            popupText.raycastTarget = false;
-            RectTransform rect = popupText.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-        }
-        popupCanvasGroup.alpha = 0f;
+        if (popupCanvasGroup != null)
+            popupCanvasGroup.alpha = 0f;
         popupRoot.gameObject.SetActive(false);
-    }
-
-    private static RectTransform CreateRect(string name, RectTransform parent, Vector2 anchoredPosition, Vector2 size)
-    {
-        RectTransform rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = size;
-        return rect;
     }
 }

@@ -4,9 +4,11 @@ public class SlowBuffModel : BuffModel
     {
     }
 
-    public override void AfterGetAction(CombatantModel self, CombatantModel opponent)
+    public override void OnGainShield(CombatantModel self, ref int shieldValue)
     {
-        self.ConsumeShield(stack);
+        shieldValue -= stack;
+        if (shieldValue < 0)
+            shieldValue = 0;
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

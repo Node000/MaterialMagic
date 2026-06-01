@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -16,8 +17,11 @@ public class RewardGridPanelUI : MonoBehaviour
     }
 
     private const float StepDelay = 0.16f;
+    private const float MarkerMoveDuration = 0.32f;
+    private const Ease MarkerMoveEase = Ease.InOutSine;
     private const float CellSpacing = 8f;
     private const float DefaultGridSide = 350f;
+    private const string PanelContentRootName = "PanelContent";
 
     [SerializeField] private RectTransform gridRoot;
     [SerializeField] private RectTransform playerMarker;
@@ -25,9 +29,26 @@ public class RewardGridPanelUI : MonoBehaviour
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private TMP_Text resultText;
     [SerializeField] private BonusRewardIconUI rewardIconPrefab;
+    [SerializeField] private float panelOpenDuration = 0.28f;
+    [SerializeField] private float panelCloseDuration = 0.24f;
+    [SerializeField] private Ease panelOpenEase = Ease.OutCubic;
+    [SerializeField] private Ease panelCloseEase = Ease.InCubic;
+    [SerializeField] private Vector2 panelSlideOffset = new Vector2(28f, -28f);
+    [SerializeField] private float cellPopupStartDelay = 0.08f;
+    [SerializeField] private float cellPopupInterval = 0.06f;
+    [SerializeField] private float cellPopupDuration = 0.32f;
+    [SerializeField] private float cellPopupOvershootScale = 1.16f;
 
     private readonly List<RewardCell> cells = new List<RewardCell>();
+    private readonly List<Tween> cellPopupTweens = new List<Tween>();
 
+    private HandSystemUI owner;
+    private Tween markerMoveTween;
+    private Sequence panelTransitionSequence;
+    private RectMask2D panelMask;
+    private RectTransform panelContentRoot;
+    private Image panelContentBackground;
+    private bool panelContentConfigured;
     private BonusLevelData currentData;
     private RectTransform rewardTooltip;
     private CanvasGroup rewardTooltipCanvasGroup;
@@ -37,11 +58,15 @@ public class RewardGridPanelUI : MonoBehaviour
     private int centerIndex = 2;
     private int playerX = 2;
     private int playerY = 2;
+    private bool panelOpenStateCached;
+    private Vector2 panelOriginalAnchoredPosition;
+    private Vector4 panelOriginalPadding;
 
     public int DrawCount => currentData != null && currentData.drawCount > 0 ? currentData.drawCount : 5;
 
     public void Initialize(HandSystemUI owner)
     {
+        this.owner = owner;
         CacheReferences();
         gameObject.SetActive(false);
     }
@@ -62,6 +87,8 @@ public class RewardGridPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         RefreshAllCells();
         MoveMarkerToCurrentCell(false);
+        PlayOpenAnimation();
+        PlayCellPopupAnimation();
     }
 
     public void ShowNewGrid(PlayerState playerState)
@@ -71,8 +98,48 @@ public class RewardGridPanelUI : MonoBehaviour
 
     public void Hide()
     {
+        HideAnimated();
+    }
+
+    public IEnumerator HideRoutine()
+    {
+        Tween tween = HideAnimated();
+        if (tween != null)
+            yield return tween.WaitForCompletion();
+    }
+
+    private Tween HideAnimated()
+    {
+        if (!gameObject.activeInHierarchy)
+        {
+            HideImmediate();
+            return null;
+        }
+
+        markerMoveTween?.Kill(false);
+        markerMoveTween = null;
+        KillCellPopupTweens();
         HideRewardTooltip();
-        gameObject.SetActive(false);
+        return PlayCloseAnimation();
+    }
+
+    private void HideImmediate()
+    {
+        markerMoveTween?.Kill(false);
+        markerMoveTween = null;
+        KillPanelTransition(true);
+        KillCellPopupTweens();
+        HideRewardTooltip();
+        if (gameObject.activeSelf)
+            gameObject.SetActive(false);
+    }
+
+    private void OnDisable()
+    {
+        markerMoveTween?.Kill(false);
+        markerMoveTween = null;
+        KillPanelTransition(true);
+        KillCellPopupTweens();
     }
 
     public IEnumerator ResolvePathRoutine(IReadOnlyList<MaterialModel> pathCards, PlayerState playerState)
@@ -101,8 +168,11 @@ public class RewardGridPanelUI : MonoBehaviour
 
             playerX = nextX;
             playerY = nextY;
-            ApplyCellReward(playerX, playerY, playerState);
-            MoveMarkerToCurrentCell(true);
+            Tween moveTween = MoveMarkerToCurrentCell(true);
+            if (moveTween != null)
+                yield return moveTween.WaitForCompletion();
+
+            yield return ApplyCellRewardRoutine(playerX, playerY, playerState);
             yield return new WaitForSeconds(StepDelay);
         }
     }
@@ -138,16 +208,119 @@ public class RewardGridPanelUI : MonoBehaviour
 
     private void CacheReferences()
     {
+        EnsurePanelContentRoot();
         if (gridRoot == null)
-            gridRoot = UIManager.FindChildRect(transform, "GridRoot");
+            gridRoot = FindPanelChildRect("GridRoot");
         if (playerMarker == null)
-            playerMarker = UIManager.FindChildRect(transform, "PlayerMarker");
+            playerMarker = FindPanelChildRect("PlayerMarker");
         if (titleText == null)
-            titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
+            titleText = FindPanelChildComponent<TMP_Text>("Title");
         if (hintText == null)
-            hintText = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
+            hintText = FindPanelChildComponent<TMP_Text>("Hint");
         if (resultText == null)
-            resultText = UIManager.FindChildComponent<TMP_Text>(transform, "ResultText");
+            resultText = FindPanelChildComponent<TMP_Text>("ResultText");
+    }
+
+    private void EnsurePanelContentRoot()
+    {
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        if (panelMask == null)
+        {
+            panelMask = GetComponent<RectMask2D>();
+            if (panelMask == null)
+                panelMask = gameObject.AddComponent<RectMask2D>();
+        }
+
+        if (panelContentRoot == null)
+        {
+            Transform existing = transform.Find(PanelContentRootName);
+            panelContentRoot = existing as RectTransform;
+        }
+
+        if (panelContentRoot == null)
+        {
+            GameObject contentObject = new GameObject(PanelContentRootName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            panelContentRoot = contentObject.GetComponent<RectTransform>();
+            panelContentRoot.SetParent(transform, false);
+        }
+
+        panelContentRoot.anchorMin = Vector2.zero;
+        panelContentRoot.anchorMax = Vector2.one;
+        panelContentRoot.offsetMin = Vector2.zero;
+        panelContentRoot.offsetMax = Vector2.zero;
+        panelContentRoot.pivot = panelRect.pivot;
+        panelContentRoot.localScale = Vector3.one;
+        panelContentRoot.localRotation = Quaternion.identity;
+        panelContentRoot.SetAsFirstSibling();
+
+        Image blockerImage = GetComponent<Image>();
+        if (panelContentBackground == null)
+            panelContentBackground = panelContentRoot.GetComponent<Image>();
+        if (panelContentBackground == null)
+            panelContentBackground = panelContentRoot.gameObject.AddComponent<Image>();
+
+        if (!panelContentConfigured && blockerImage != null)
+        {
+            CopyImage(blockerImage, panelContentBackground);
+            Color blockerColor = blockerImage.color;
+            blockerColor.a = 0f;
+            blockerImage.color = blockerColor;
+            blockerImage.raycastTarget = true;
+            panelContentConfigured = true;
+        }
+        panelContentBackground.raycastTarget = false;
+
+        List<Transform> childrenToMove = null;
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (child == panelContentRoot || child == rewardTooltip)
+                continue;
+
+            if (childrenToMove == null)
+                childrenToMove = new List<Transform>();
+            childrenToMove.Add(child);
+        }
+
+        if (childrenToMove == null)
+            return;
+
+        for (int i = 0; i < childrenToMove.Count; i++)
+            childrenToMove[i].SetParent(panelContentRoot, false);
+    }
+
+    private static void CopyImage(Image source, Image target)
+    {
+        target.sprite = source.sprite;
+        target.type = source.type;
+        target.preserveAspect = source.preserveAspect;
+        target.fillCenter = source.fillCenter;
+        target.fillMethod = source.fillMethod;
+        target.fillAmount = source.fillAmount;
+        target.fillClockwise = source.fillClockwise;
+        target.fillOrigin = source.fillOrigin;
+        target.pixelsPerUnitMultiplier = source.pixelsPerUnitMultiplier;
+        target.material = source.material;
+        target.color = source.color;
+    }
+
+    private RectTransform FindPanelChildRect(string objectName)
+    {
+        Transform child = transform.Find(objectName);
+        if (child == null && panelContentRoot != null)
+            child = panelContentRoot.Find(objectName);
+        return child as RectTransform;
+    }
+
+    private T FindPanelChildComponent<T>(string objectName) where T : Component
+    {
+        Transform child = transform.Find(objectName);
+        if (child == null && panelContentRoot != null)
+            child = panelContentRoot.Find(objectName);
+        return child != null ? child.GetComponent<T>() : null;
     }
 
     private void BuildGrid()
@@ -155,6 +328,7 @@ public class RewardGridPanelUI : MonoBehaviour
         if (gridRoot == null)
             return;
 
+        KillCellPopupTweens();
         ClearGridChildren();
         cells.Clear();
         int radius = Mathf.Max(1, currentData.radius);
@@ -264,29 +438,34 @@ public class RewardGridPanelUI : MonoBehaviour
         return rewards[UnityEngine.Random.Range(0, rewards.Length)];
     }
 
-    private void ApplyCellReward(int x, int y, PlayerState playerState)
+    private IEnumerator ApplyCellRewardRoutine(int x, int y, PlayerState playerState)
     {
         int index = GetIndex(x, y);
         if (index < 0 || index >= cells.Count)
-            return;
+            yield break;
 
         RewardCell cell = cells[index];
         if (cell.Collected || cell.Reward == null)
-            return;
+            yield break;
 
         cell.Collected = true;
-        ApplyReward(cell.Reward, playerState);
+        yield return ApplyRewardRoutine(cell, playerState);
         AppendResult(GetRewardSummary(cell.Reward));
         RefreshCell(cell);
         HideRewardTooltip();
     }
 
-    private static void ApplyReward(BonusRewardData rewardData, PlayerState playerState)
+    private IEnumerator ApplyRewardRoutine(RewardCell cell, PlayerState playerState)
     {
+        BonusRewardData rewardData = cell.Reward;
         switch (rewardData.rewardType)
         {
             case BonusRewardType.Gold:
-                playerState.AddGold(rewardData.amount);
+                RectTransform sourceRect = cell.Icon != null ? cell.Icon.RectTransform : cell.Rect;
+                if (owner != null)
+                    yield return owner.GainGoldAnimated(rewardData.amount, sourceRect);
+                else
+                    playerState.AddGold(rewardData.amount);
                 break;
             case BonusRewardType.Heal:
                 playerState.Heal(rewardData.amount);
@@ -300,6 +479,171 @@ public class RewardGridPanelUI : MonoBehaviour
             RefreshCell(cells[i]);
     }
 
+    private void PlayOpenAnimation()
+    {
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        EnsurePanelContentRoot();
+        KillPanelTransition(true);
+        panelOriginalAnchoredPosition = panelRect.anchoredPosition;
+        panelOriginalPadding = panelMask != null ? panelMask.padding : Vector4.zero;
+        panelOpenStateCached = true;
+
+        Vector2 panelSize = GetPanelSize(panelRect);
+        Vector4 startPadding = new Vector4(0f, panelSize.y, panelSize.x, 0f);
+        panelRect.anchoredPosition = panelOriginalAnchoredPosition - panelSlideOffset;
+        if (panelMask != null)
+            panelMask.padding = startPadding;
+
+        float duration = Mathf.Max(0.01f, panelOpenDuration);
+        panelTransitionSequence = DOTween.Sequence().SetTarget(this);
+        panelTransitionSequence.Join(panelRect.DOAnchorPos(panelOriginalAnchoredPosition, duration).SetEase(panelOpenEase));
+        if (panelMask != null)
+        {
+            panelTransitionSequence.Join(DOVirtual.Float(0f, 1f, duration, value =>
+            {
+                panelMask.padding = Vector4.LerpUnclamped(startPadding, Vector4.zero, value);
+            }).SetEase(panelOpenEase));
+        }
+        panelTransitionSequence.OnComplete(() =>
+        {
+            panelTransitionSequence = null;
+            RestorePanelTransitionState();
+        });
+    }
+
+    private Tween PlayCloseAnimation()
+    {
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect == null)
+            return null;
+
+        EnsurePanelContentRoot();
+        Vector2 basePosition = panelOpenStateCached ? panelOriginalAnchoredPosition : panelRect.anchoredPosition;
+        Vector4 startPadding = panelMask != null ? panelMask.padding : Vector4.zero;
+        KillPanelTransition(false);
+        panelOriginalAnchoredPosition = basePosition;
+        panelOriginalPadding = Vector4.zero;
+        panelOpenStateCached = true;
+
+        Vector2 panelSize = GetPanelSize(panelRect);
+        Vector4 targetPadding = new Vector4(panelSize.x, 0f, 0f, panelSize.y);
+        Vector2 targetPosition = basePosition + panelSlideOffset;
+        float duration = Mathf.Max(0.01f, panelCloseDuration);
+
+        panelTransitionSequence = DOTween.Sequence().SetTarget(this);
+        panelTransitionSequence.Join(panelRect.DOAnchorPos(targetPosition, duration).SetEase(panelCloseEase));
+        if (panelMask != null)
+        {
+            panelTransitionSequence.Join(DOVirtual.Float(0f, 1f, duration, value =>
+            {
+                panelMask.padding = Vector4.LerpUnclamped(startPadding, targetPadding, value);
+            }).SetEase(panelCloseEase));
+        }
+        panelTransitionSequence.OnComplete(() =>
+        {
+            panelTransitionSequence = null;
+            RestorePanelTransitionState();
+            gameObject.SetActive(false);
+        });
+        return panelTransitionSequence;
+    }
+
+    private void KillPanelTransition(bool restoreState)
+    {
+        if (panelTransitionSequence != null)
+        {
+            panelTransitionSequence.Kill(false);
+            panelTransitionSequence = null;
+        }
+
+        if (restoreState)
+            RestorePanelTransitionState();
+    }
+
+    private void RestorePanelTransitionState()
+    {
+        if (!panelOpenStateCached)
+            return;
+
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect != null)
+            panelRect.anchoredPosition = panelOriginalAnchoredPosition;
+        if (panelMask != null)
+            panelMask.padding = panelOriginalPadding;
+
+        panelOpenStateCached = false;
+    }
+
+    private static Vector2 GetPanelSize(RectTransform rect)
+    {
+        Vector2 size = rect.rect.size;
+        if (size.x <= 1f)
+            size.x = rect.sizeDelta.x;
+        if (size.y <= 1f)
+            size.y = rect.sizeDelta.y;
+        size.x = Mathf.Max(1f, size.x);
+        size.y = Mathf.Max(1f, size.y);
+        return size;
+    }
+
+    private void PlayCellPopupAnimation()
+    {
+        KillCellPopupTweens();
+        if (cells.Count == 0)
+            return;
+
+        float duration = Mathf.Max(0.01f, cellPopupDuration);
+        float firstStepDuration = duration * 0.64f;
+        float secondStepDuration = duration - firstStepDuration;
+        float interval = Mathf.Max(0f, cellPopupInterval);
+        float startDelay = Mathf.Max(0f, panelOpenDuration) + Mathf.Max(0f, cellPopupStartDelay);
+        float overshootScale = Mathf.Max(1f, cellPopupOvershootScale);
+
+        for (int i = 0; i < cells.Count; i++)
+        {
+            RectTransform cellRect = cells[i].Rect;
+            if (cellRect == null)
+                continue;
+
+            int y = i / gridSize;
+            int x = i - y * gridSize;
+            int rowFromTop = gridSize - 1 - y;
+            float delay = startDelay + (x + rowFromTop) * interval;
+            cellRect.localScale = Vector3.zero;
+
+            Sequence sequence = DOTween.Sequence().SetTarget(this);
+            sequence.SetDelay(delay);
+            sequence.Append(cellRect.DOScale(Vector3.one * overshootScale, firstStepDuration).SetEase(Ease.OutCubic));
+            sequence.Append(cellRect.DOScale(Vector3.one, secondStepDuration).SetEase(Ease.InOutSine));
+            sequence.OnKill(() =>
+            {
+                if (cellRect != null)
+                    cellRect.localScale = Vector3.one;
+            });
+            cellPopupTweens.Add(sequence);
+        }
+    }
+
+    private void KillCellPopupTweens()
+    {
+        for (int i = 0; i < cellPopupTweens.Count; i++)
+        {
+            Tween tween = cellPopupTweens[i];
+            if (tween != null && tween.IsActive())
+                tween.Kill(false);
+        }
+        cellPopupTweens.Clear();
+
+        for (int i = 0; i < cells.Count; i++)
+        {
+            if (cells[i].Rect != null)
+                cells[i].Rect.localScale = Vector3.one;
+        }
+    }
+
     private static void RefreshCell(RewardCell cell)
     {
         if (cell.Background != null)
@@ -308,19 +652,22 @@ public class RewardGridPanelUI : MonoBehaviour
             cell.Icon.gameObject.SetActive(!cell.Collected);
     }
 
-    private void MoveMarkerToCurrentCell(bool animate)
+    private Tween MoveMarkerToCurrentCell(bool animate)
     {
         if (playerMarker == null || gridRoot == null)
-            return;
+            return null;
 
         Vector2 target = GetCellAnchoredPosition(playerX, playerY);
-        if (!animate)
+        markerMoveTween?.Kill(false);
+        markerMoveTween = null;
+        if (!animate || !gameObject.activeInHierarchy)
         {
             playerMarker.anchoredPosition = target;
-            return;
+            return null;
         }
 
-        playerMarker.anchoredPosition = target;
+        markerMoveTween = playerMarker.DOAnchorPos(target, MarkerMoveDuration).SetEase(MarkerMoveEase).SetTarget(this);
+        return markerMoveTween;
     }
 
     private Vector2 GetCellAnchoredPosition(int x, int y)
@@ -345,7 +692,8 @@ public class RewardGridPanelUI : MonoBehaviour
             return;
 
         Image image = new GameObject("RewardTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<Image>();
-        image.transform.SetParent(transform, false);
+        Transform tooltipParent = transform.parent != null ? transform.parent : transform;
+        image.transform.SetParent(tooltipParent, false);
         image.color = new Color(0.03f, 0.025f, 0.06f, 0.96f);
         image.raycastTarget = false;
         rewardTooltip = image.rectTransform;

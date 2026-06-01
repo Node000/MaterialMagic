@@ -1,9 +1,15 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BattleManager
 {
     private readonly List<EnemyModel> enemies = new List<EnemyModel>();
+
+    public static BattleManager Instance { get; private set; }
+
+    public event Action<EnemyModel> EnemyAdded;
 
     public PlayerState PlayerState { get; private set; }
     public IReadOnlyList<EnemyModel> Enemies => enemies;
@@ -14,6 +20,19 @@ public class BattleManager
     public BattleManager(PlayerState playerState)
     {
         PlayerState = playerState;
+    }
+
+    public static BattleManager Create(PlayerState playerState)
+    {
+        BattleManager manager = new BattleManager(playerState);
+        Instance = manager;
+        return manager;
+    }
+
+    public static void ClearInstance(BattleManager manager)
+    {
+        if (ReferenceEquals(Instance, manager))
+            Instance = null;
     }
 
     public void SetEnemies(IEnumerable<EnemyModel> enemyModels)
@@ -30,16 +49,60 @@ public class BattleManager
         }
     }
 
+    public EnemyModel SpawnEnemy(int enemyId)
+    {
+        return GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data) ? SpawnEnemy(data) : null;
+    }
+
+    public EnemyModel SpawnEnemy(LevelEnemyData placement)
+    {
+        if (placement == null)
+            return null;
+
+        return GameDataDatabase.TryGetEnemyData(placement.enemyId, out EnemyData data) ? SpawnEnemy(data, placement.x, placement.y) : null;
+    }
+
+    public EnemyModel SpawnEnemy(EnemyData data)
+    {
+        return data != null ? SpawnEnemy(EnemyFactory.Create(data)) : null;
+    }
+
+    public EnemyModel SpawnEnemy(EnemyData data, float x, float y)
+    {
+        if (data == null)
+            return null;
+
+        EnemyModel enemy = EnemyFactory.Create(data);
+        if (enemy != null)
+            enemy.SetSpawnPosition(x, y);
+        return SpawnEnemy(enemy);
+    }
+
+    public EnemyModel SpawnEnemy(EnemyModel enemy)
+    {
+        if (enemy == null)
+            return null;
+
+        if (!enemies.Contains(enemy))
+        {
+            enemies.Add(enemy);
+            EnemyAdded?.Invoke(enemy);
+        }
+
+        return enemy;
+    }
+
     public void AddEnemy(EnemyModel enemy)
     {
-        if (enemy != null)
-            enemies.Add(enemy);
+        SpawnEnemy(enemy);
     }
 
     public void ClearEnemies()
     {
         enemies.Clear();
         FocusTarget = null;
+        CurrentCastTarget = null;
+        ContinuousCastCount = 0;
     }
 
     public void SetFocusTarget(EnemyModel enemy)
@@ -170,6 +233,30 @@ public class BattleManager
             if (enemy != null && !enemy.IsDead)
                 results.Add(new CombatantModel(enemy));
         }
+    }
+
+    public EnemyModel GetFirstAliveEnemy()
+    {
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                return enemy;
+        }
+
+        return null;
+    }
+
+    public bool HasAliveEnemyAfter(int index)
+    {
+        for (int i = index + 1; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                return true;
+        }
+
+        return false;
     }
 
     public bool AllEnemiesDead()

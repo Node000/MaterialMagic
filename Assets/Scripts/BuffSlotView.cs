@@ -44,6 +44,12 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private static readonly Vector3 StackSmallScale = Vector3.one * 0.9f;
     private static readonly Vector3 RemoveLargeScale = Vector3.one * 1.12f;
     private static readonly Vector3 HiddenScale = Vector3.zero;
+    private const float VisualSize = 36f;
+    private const float IconPadding = 3f;
+    private const float StackFontSize = 18f;
+
+    public const float LayoutSize = VisualSize;
+    public const float LayoutSpacing = 5f;
 
     public BuffEnum BuffType => buff != null ? buff.buffType : BuffEnum.None;
     public int Stack => buff != null ? buff.stack : 0;
@@ -53,12 +59,45 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
+        ApplyVisualSizing();
     }
 
     public void Initialize(Image iconImage, TMP_Text stackText)
     {
         this.iconImage = iconImage;
         this.stackText = stackText;
+        ApplyVisualSizing();
+    }
+
+    private void ApplyVisualSizing()
+    {
+        RectTransform.sizeDelta = new Vector2(VisualSize, VisualSize);
+
+        if (iconImage != null)
+        {
+            RectTransform iconRect = iconImage.rectTransform;
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.offsetMin = new Vector2(IconPadding, IconPadding);
+            iconRect.offsetMax = new Vector2(-IconPadding, -IconPadding);
+            iconImage.raycastTarget = false;
+        }
+
+        if (stackText != null)
+        {
+            stackText.fontSize = StackFontSize;
+            stackText.fontStyle = FontStyles.Bold;
+            stackText.alignment = TextAlignmentOptions.BottomRight;
+            stackText.enableWordWrapping = false;
+            stackText.overflowMode = TextOverflowModes.Overflow;
+            stackText.raycastTarget = false;
+
+            RectTransform stackRect = stackText.rectTransform;
+            stackRect.anchorMin = Vector2.zero;
+            stackRect.anchorMax = Vector2.one;
+            stackRect.offsetMin = Vector2.zero;
+            stackRect.offsetMax = new Vector2(-2f, -1f);
+        }
     }
 
     public void Bind(BuffModel buff, HandSystemUI owner)

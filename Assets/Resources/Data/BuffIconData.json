@@ -55,6 +55,10 @@
     {
       "buffType": 17,
       "iconName": "Sample"
+    },
+    {
+      "buffType": 18,
+      "iconName": "Sample"
     }
   ]
 }

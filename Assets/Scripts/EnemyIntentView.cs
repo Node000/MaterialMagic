@@ -44,7 +44,20 @@ public class EnemyIntentView : MonoBehaviour
 
     public void Bind(EnemyModel enemy, EnemyIntentData intent, int phaseIndex, int phaseCount)
     {
-        Bind(intent, phaseIndex, phaseCount, enemy != null ? enemy.GetIntentAttackValue(intent) : 0);
+        Bind(enemy, intent, null, phaseIndex, phaseCount);
+    }
+
+    public void Bind(EnemyModel enemy, EnemyIntentData intent, PlayerState playerState, int phaseIndex, int phaseCount)
+    {
+        int intentValue = 0;
+        if (enemy != null && intent != null)
+        {
+            if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
+                intentValue = enemy.GetIntentAttackValue(intent, playerState);
+            else if (intent.actionType == EnemyActionType.GainShield)
+                intentValue = enemy.GetIntentShieldValue(intent);
+        }
+        Bind(intent, phaseIndex, phaseCount, intentValue);
     }
 
     public void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount)
@@ -160,7 +173,9 @@ public class EnemyIntentView : MonoBehaviour
         {
             case EnemyIntentType.Attack: return Resources.Load<Sprite>("Images/UI/attack");
             case EnemyIntentType.Defend: return Resources.Load<Sprite>("Images/UI/defend");
-            case EnemyIntentType.Special: return Resources.Load<Sprite>("Images/UI/mixed");
+            case EnemyIntentType.ApplyBuff: return Resources.Load<Sprite>("Images/UI/mixed");
+            case EnemyIntentType.ApplyDebuff: return Resources.Load<Sprite>("Images/UI/mixed");
+            case EnemyIntentType.Summon: return Resources.Load<Sprite>("Images/UI/mixed");
             default: return Resources.Load<Sprite>("Images/UI/mixed");
         }
     }
@@ -174,7 +189,9 @@ public class EnemyIntentView : MonoBehaviour
         {
             case EnemyIntentType.Attack: return new Color(0.95f, 0.18f, 0.14f, 1f);
             case EnemyIntentType.Defend: return new Color(0.25f, 0.55f, 1f, 1f);
-            case EnemyIntentType.Special: return new Color(0.75f, 0.35f, 1f, 1f);
+            case EnemyIntentType.ApplyBuff: return new Color(0.75f, 0.35f, 1f, 1f);
+            case EnemyIntentType.ApplyDebuff: return new Color(0.25f, 0.8f, 0.35f, 1f);
+            case EnemyIntentType.Summon: return new Color(1f, 0.62f, 0.16f, 1f);
             default: return Color.gray;
         }
     }
@@ -183,12 +200,14 @@ public class EnemyIntentView : MonoBehaviour
     {
         if (intent == null)
             return string.Empty;
-        if (intent.actionType == EnemyActionType.Attack)
+        if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll || intent.actionType == EnemyActionType.GainShield)
             return attackValue.ToString();
+        if (intent.actionType == EnemyActionType.Summon)
+            return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
+        if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff)
+            return string.Empty;
         if (intent.value > 0)
             return intent.value.ToString();
-        if (intent.buffAmount > 0)
-            return intent.buffAmount.ToString();
         return LocalizationSystem.GetText(intent.descriptionKey, string.Empty);
     }
 

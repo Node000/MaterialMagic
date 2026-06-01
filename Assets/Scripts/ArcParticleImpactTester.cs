@@ -1,10 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
+public class ArcParticleImpactTester : MonoBehaviour, ISpellCastImpactEffect
 {
     [SerializeField] private RectTransform startPoint;
     [SerializeField] private RectTransform targetPoint;
@@ -24,10 +25,13 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
     [SerializeField] private bool loop;
     [SerializeField] private float loopDelay = 0.53f;
 
+    private const float ImpactFadeDuration = 0.15f;
+
     private readonly List<GameObject> effectObjects = new List<GameObject>();
     private Coroutine routine;
 
-    public float BurstDuration => travelDuration + Mathf.Max(0, projectileCount - 1) * launchInterval + 0.15f;
+    public float BurstDuration => travelDuration + Mathf.Max(0, projectileCount - 1) * launchInterval + ImpactFadeDuration;
+    public float SingleProjectileImpactDelay => travelDuration;
 
     private void Start()
     {
@@ -62,7 +66,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         PlayBurst(from, to, count, color, projectileSprite, projectileSize);
     }
 
-    private void PlayBurst(RectTransform from, RectTransform to, int count, Color color, Sprite projectileSprite, float visualSize)
+    private void PlayBurst(RectTransform from, RectTransform to, int count, Color color, Sprite projectileSprite, float visualSize, Action onImpact = null)
     {
         if (from == null || to == null)
             return;
@@ -71,23 +75,29 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         projectileColor = color;
         trailColor = new Color(color.r, color.g, color.b, 0.55f);
         impactColor = new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.18f), Mathf.Min(1f, color.b + 0.18f), 0.85f);
-        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize)));
+        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize), onImpact));
     }
 
     public void PlayMaterialFill(RectTransform from, RectTransform magicView, MaterialEnum material)
     {
-        PlayBurst(from, magicView, 1, MaterialCardView.GetMaterialColor(material));
+        Sprite icon = MaterialCardView.GetMaterialIcon(material);
+        PlayBurst(from, magicView, 1, Color.white, icon, projectileSize);
     }
 
 
     public void PlayCast(MagicModel magic, RectTransform from, RectTransform target, SpellEffectTarget targetType)
+    {
+        PlayCast(magic, from, target, targetType, null);
+    }
+
+    public void PlayCast(MagicModel magic, RectTransform from, RectTransform target, SpellEffectTarget targetType, Action onImpact)
     {
         if (magic == null)
             return;
 
         Sprite icon = LoadMagicIcon(magic.Data.iconName);
         Color color = magic.Data.recipe != null && magic.Data.recipe.Length > 0 ? MaterialCardView.GetMaterialColor(magic.Data.recipe[0]) : Color.white;
-        PlayBurst(from, target, 1, color, icon, icon != null ? magicProjectileSize : projectileSize);
+        PlayBurst(from, target, 1, color, icon, icon != null ? magicProjectileSize : projectileSize, onImpact);
     }
 
     public void SetTestPlayback(bool playOnStart, bool loop)
@@ -132,11 +142,11 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         routine = null;
     }
 
-    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count, Sprite projectileSprite, float visualSize)
+    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count, Sprite projectileSprite, float visualSize, Action onImpact)
     {
         for (int i = 0; i < count; i++)
         {
-            LaunchProjectile(start, end, i, count, projectileSprite, visualSize);
+            LaunchProjectile(start, end, i, count, projectileSprite, visualSize, i == count - 1 ? onImpact : null);
             yield return new WaitForSeconds(launchInterval);
         }
     }
@@ -146,10 +156,10 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         if (startPoint == null || targetPoint == null)
             return;
 
-        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount, null, projectileSize);
+        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount, null, projectileSize, null);
     }
 
-    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, float visualSize)
+    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, float visualSize, Action onImpact)
     {
         RectTransform projectile = CreateImage("ArcProjectile", visualSize, projectileSprite != null ? Color.white : projectileColor, projectileSprite);
         RectTransform trail = CreateImage("ArcTrail", trailWidth, trailColor);
@@ -185,6 +195,7 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
             lastPosition = position;
         }, 1f, travelDuration).SetEase(Ease.InOutSine).SetTarget(this).OnComplete(() =>
         {
+            onImpact?.Invoke();
             SpawnImpact(end, projectileSprite, visualSize);
             effectObjects.Remove(projectile.gameObject);
             effectObjects.Remove(trail.gameObject);
@@ -227,8 +238,8 @@ public class ArcParticleImpactTester : MonoBehaviour, ISpellCastEffect
         CanvasGroup canvasGroup = impact.gameObject.AddComponent<CanvasGroup>();
         float impactScale = projectileSprite != null ? 1.45f : 2.8f;
         Sequence sequence = DOTween.Sequence();
-        sequence.Join(impact.DOScale(Vector3.one * impactScale, 0.15f).SetEase(Ease.OutCubic));
-        sequence.Join(canvasGroup.DOFade(0f, 0.15f));
+        sequence.Join(impact.DOScale(Vector3.one * impactScale, ImpactFadeDuration).SetEase(Ease.OutCubic));
+        sequence.Join(canvasGroup.DOFade(0f, ImpactFadeDuration));
         sequence.SetTarget(this);
         sequence.OnComplete(() =>
         {

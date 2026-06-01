@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -58,6 +59,7 @@ public class RewardPanelUI : MonoBehaviour
     private RectTransform magicChoiceContent;
     private Button magicChoiceBackButton;
     private bool goldClaimed;
+    private bool goldClaimInProgress;
     private bool magicClaimed;
     private MagicItemView selectedMagicView;
     private MagicItemView hoveredMagicView;
@@ -80,6 +82,7 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         goldClaimed = false;
+        goldClaimInProgress = false;
         magicClaimed = false;
         currentGoldReward = RollBattleGoldReward();
         selectedMagicView = null;
@@ -107,6 +110,8 @@ public class RewardPanelUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public RectTransform SelectedMagicRect => selectedMagicView != null ? selectedMagicView.transform as RectTransform : null;
+
     public void CompleteMagicRewardSelection()
     {
         magicClaimed = true;
@@ -119,7 +124,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         EnsureOptionCount(2);
         int index = 0;
-        if (!goldClaimed)
+        if (!goldClaimed && !goldClaimInProgress)
             optionViews[index++].Bind("获得金币 +" + currentGoldReward, ClaimGoldReward);
         if (!magicClaimed)
             optionViews[index++].Bind("获得法术", ShowMagicChoices);
@@ -130,6 +135,7 @@ public class RewardPanelUI : MonoBehaviour
         {
             endButton.onClick.RemoveAllListeners();
             endButton.onClick.AddListener(owner.FinishReward);
+            endButton.interactable = !goldClaimInProgress;
             TMP_Text text = UIManager.FindChildComponent<TMP_Text>(endButton.transform, "Text");
             if (text != null)
                 text.text = "离开";
@@ -138,10 +144,20 @@ public class RewardPanelUI : MonoBehaviour
 
     private void ClaimGoldReward()
     {
-        if (goldClaimed)
+        if (goldClaimed || goldClaimInProgress)
             return;
-        owner.PlayerState.AddGold(currentGoldReward);
+        StartCoroutine(ClaimGoldRewardRoutine());
+    }
+
+    private IEnumerator ClaimGoldRewardRoutine()
+    {
+        goldClaimInProgress = true;
+        if (endButton != null)
+            endButton.interactable = false;
+        RectTransform sourceRect = optionViews.Count > 0 ? optionViews[0].transform as RectTransform : transform as RectTransform;
+        yield return owner.GainGoldAnimated(currentGoldReward, sourceRect);
         goldClaimed = true;
+        goldClaimInProgress = false;
         RefreshOptions();
     }
 

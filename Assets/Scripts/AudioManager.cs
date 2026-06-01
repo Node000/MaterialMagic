@@ -1,6 +1,31 @@
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+
+public enum GameSfxId
+{
+    None = 0,
+    CardPlay = 1,
+    CardReturnToHand = 2,
+    CardRefresh = 3,
+    ButtonClick = 4,
+    EnemyAttack = 5,
+    NegativeStatusApply = 6,
+    PositiveStatusApply = 7
+}
+
+[Serializable]
+public class GameSfxClipEntry
+{
+    public GameSfxId id;
+    public AudioClip clip;
+
+    public GameSfxClipEntry(GameSfxId id)
+    {
+        this.id = id;
+    }
+}
 
 public class AudioManager : MonoBehaviour
 {
@@ -12,6 +37,16 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip startMenuMusic;
     [SerializeField] private AudioClip gameplayMusic;
     [SerializeField] private AudioClip battleMusic;
+    [SerializeField] private GameSfxClipEntry[] gameSfxClips =
+    {
+        new GameSfxClipEntry(GameSfxId.CardPlay),
+        new GameSfxClipEntry(GameSfxId.CardReturnToHand),
+        new GameSfxClipEntry(GameSfxId.CardRefresh),
+        new GameSfxClipEntry(GameSfxId.ButtonClick),
+        new GameSfxClipEntry(GameSfxId.EnemyAttack),
+        new GameSfxClipEntry(GameSfxId.NegativeStatusApply),
+        new GameSfxClipEntry(GameSfxId.PositiveStatusApply)
+    };
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
 
@@ -89,6 +124,26 @@ public class AudioManager : MonoBehaviour
             return;
 
         sfxSource.PlayOneShot(clip);
+    }
+
+    public void PlaySfx(GameSfxId id)
+    {
+        PlaySfx(GetSfxClip(id));
+    }
+
+    public AudioClip GetSfxClip(GameSfxId id)
+    {
+        if (id == GameSfxId.None || gameSfxClips == null)
+            return null;
+
+        for (int i = 0; i < gameSfxClips.Length; i++)
+        {
+            GameSfxClipEntry entry = gameSfxClips[i];
+            if (entry != null && entry.id == id)
+                return entry.clip;
+        }
+
+        return null;
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)

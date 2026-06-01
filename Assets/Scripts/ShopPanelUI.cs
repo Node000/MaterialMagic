@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -30,6 +31,19 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private TMP_Text goldText;
     [SerializeField] private TMP_Text messageText;
     [SerializeField] private Button leaveButton;
+    [SerializeField] private RectTransform revealMask;
+    [SerializeField] private RectTransform contentRoot;
+    [Header("开关动画")]
+    [SerializeField] private float panelRevealDuration = 0.22f;
+    [SerializeField] private Ease panelRevealEase = Ease.OutCubic;
+    [SerializeField] private float panelHideDuration = 0.18f;
+    [SerializeField] private Ease panelHideEase = Ease.InCubic;
+    [SerializeField] private Vector2 panelOpenMoveOffset = new Vector2(-36f, 36f);
+    [SerializeField] private Vector2 panelCloseMoveOffset = new Vector2(36f, -36f);
+    [Header("商品槽弹出")]
+    [SerializeField] private float itemPopDelayStep = 0.045f;
+    [SerializeField] private float itemPopDuration = 0.28f;
+    [SerializeField] private Ease itemPopEase = Ease.OutBack;
 
     private readonly List<ShopItemView> itemViews = new List<ShopItemView>();
     private readonly List<ShopOffer> offers = new List<ShopOffer>();
@@ -37,7 +51,12 @@ public class ShopPanelUI : MonoBehaviour
     private readonly List<MaterialEnum> materialPool = new List<MaterialEnum>();
     private HandSystemUI owner;
     private EconomyConfigData config;
+    private ShopOffer selectedMagicOffer;
     private bool waitingForSelection;
+    private bool purchaseInProgress;
+    private Vector2 panelOpenPosition;
+    private Vector2 panelSize;
+    private bool hasPanelLayout;
 
     public RectTransform MagicViewPrefab => magicViewPrefab;
     public RectTransform MaterialCardPrefab => materialCardPrefab;
@@ -56,41 +75,66 @@ public class ShopPanelUI : MonoBehaviour
 
         CacheReferences();
         config = GameDataDatabase.GetDefaultEconomyConfig() ?? new EconomyConfigData();
+        selectedMagicOffer = null;
         waitingForSelection = false;
+        purchaseInProgress = false;
+        owner.ClearPendingShopMagic();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
 
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, "商店");
         if (hintText != null)
-            hintText.text = "每件商品只能购买一次。法术购买后选择一个法术槽覆盖。";
+            hintText.text = "每件商品只能购买一次。法术购买后点击已有法术槽完成覆盖。";
         if (messageText != null)
             messageText.text = string.Empty;
 
         BuildOffers();
         BindLeaveButton();
         Refresh();
+        PlayOpenAnimation();
     }
 
     public void Hide()
     {
-        gameObject.SetActive(false);
+        owner?.ClearPendingShopMagic();
+        selectedMagicOffer = null;
+        waitingForSelection = false;
+        purchaseInProgress = false;
+        if (leaveButton != null)
+            leaveButton.interactable = false;
+
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        PlayCloseAnimation();
     }
 
     private void CacheReferences()
     {
+        if (revealMask == null)
+            revealMask = FindChildRectRecursive(transform, "RevealMask");
+        if (contentRoot == null)
+            contentRoot = FindChildRectRecursive(revealMask != null ? revealMask : transform, "Content");
+
+        Transform searchRoot = contentRoot != null ? contentRoot : transform;
         if (itemRoot == null)
-            itemRoot = UIManager.FindChildRect(transform, "ItemRoot");
+            itemRoot = FindChildRectRecursive(searchRoot, "ItemRoot");
         if (titleText == null)
-            titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
+            titleText = FindChildComponentRecursive<TMP_Text>(searchRoot, "Title");
         if (hintText == null)
-            hintText = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
+            hintText = FindChildComponentRecursive<TMP_Text>(searchRoot, "Hint");
         if (goldText == null)
-            goldText = UIManager.FindChildComponent<TMP_Text>(transform, "GoldText");
+            goldText = FindChildComponentRecursive<TMP_Text>(searchRoot, "GoldText");
+        if (goldText != null)
+            goldText.gameObject.SetActive(false);
         if (messageText == null)
-            messageText = UIManager.FindChildComponent<TMP_Text>(transform, "MessageText");
+            messageText = FindChildComponentRecursive<TMP_Text>(searchRoot, "MessageText");
         if (leaveButton == null)
-            leaveButton = UIManager.FindChildComponent<Button>(transform, "LeaveButton");
+            leaveButton = FindChildComponentRecursive<Button>(searchRoot, "LeaveButton");
         if (materialCardPrefab == null)
         {
             PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
@@ -116,6 +160,36 @@ public class ShopPanelUI : MonoBehaviour
     private static int CompareItemViewNames(ShopItemView left, ShopItemView right)
     {
         return string.CompareOrdinal(left != null ? left.name : string.Empty, right != null ? right.name : string.Empty);
+    }
+
+    private static RectTransform FindChildRectRecursive(Transform root, string name)
+    {
+        Transform child = FindChildRecursive(root, name);
+        return child as RectTransform;
+    }
+
+    private static T FindChildComponentRecursive<T>(Transform root, string name) where T : Component
+    {
+        Transform child = FindChildRecursive(root, name);
+        return child != null ? child.GetComponent<T>() : null;
+    }
+
+    private static Transform FindChildRecursive(Transform root, string name)
+    {
+        if (root == null)
+            return null;
+
+        Transform direct = root.Find(name);
+        if (direct != null)
+            return direct;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildRecursive(root.GetChild(i), name);
+            if (found != null)
+                return found;
+        }
+        return null;
     }
 
     private void BindLeaveButton()
@@ -216,10 +290,10 @@ public class ShopPanelUI : MonoBehaviour
     private void Refresh()
     {
         CacheReferences();
-        if (goldText != null && owner.PlayerState != null)
-            goldText.text = "金币：" + owner.PlayerState.Gold;
+        if (goldText != null)
+            goldText.gameObject.SetActive(false);
         if (leaveButton != null)
-            leaveButton.interactable = !waitingForSelection;
+            leaveButton.interactable = !waitingForSelection && !purchaseInProgress;
 
         for (int i = 0; i < itemViews.Count; i++)
         {
@@ -230,8 +304,177 @@ public class ShopPanelUI : MonoBehaviour
 
             ShopOffer offer = offers[i];
             bool canAfford = owner.PlayerState != null && owner.PlayerState.Gold >= offer.price;
-            bool canUse = !waitingForSelection && (offer.kind != ShopItemKind.RemoveMaterial || HasRemovableMaterial());
-            itemViews[i].Bind(this, offer, canAfford, canUse, OnOfferClicked);
+            bool selected = offer == selectedMagicOffer;
+            bool canUse = !purchaseInProgress && (!waitingForSelection || selected) && (offer.kind != ShopItemKind.RemoveMaterial || HasRemovableMaterial());
+            itemViews[i].Bind(this, offer, canAfford, canUse, selected, OnOfferClicked);
+        }
+    }
+
+    private void PlayOpenAnimation()
+    {
+        DOTween.Kill(this);
+
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        CacheReferences();
+        CapturePanelLayout(panelRect);
+        SetAnimationRectLayout();
+        panelRect.anchoredPosition = panelOpenPosition + panelOpenMoveOffset;
+        ApplyOpenReveal(0f);
+
+        float duration = Mathf.Max(0f, panelRevealDuration);
+        if (duration > 0f)
+        {
+            Sequence sequence = DOTween.Sequence().SetTarget(this);
+            sequence.Join(panelRect.DOAnchorPos(panelOpenPosition, duration).SetEase(panelRevealEase));
+            sequence.Join(DOVirtual.Float(0f, 1f, duration, ApplyOpenReveal).SetEase(panelRevealEase));
+        }
+        else
+        {
+            panelRect.anchoredPosition = panelOpenPosition;
+            ApplyOpenReveal(1f);
+        }
+
+        PlayItemPopAnimations();
+    }
+
+    private void PlayCloseAnimation()
+    {
+        DOTween.Kill(this);
+
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect == null)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        CacheReferences();
+        CapturePanelLayout(panelRect);
+        SetAnimationRectLayout();
+        panelRect.anchoredPosition = panelOpenPosition;
+        ApplyOpenReveal(1f);
+
+        float duration = Mathf.Max(0f, panelHideDuration);
+        if (duration > 0f)
+        {
+            Sequence sequence = DOTween.Sequence().SetTarget(this);
+            sequence.Join(panelRect.DOAnchorPos(panelOpenPosition + panelCloseMoveOffset, duration).SetEase(panelHideEase));
+            sequence.Join(DOVirtual.Float(0f, 1f, duration, ApplyCloseReveal).SetEase(panelHideEase));
+            sequence.OnComplete(FinishCloseAnimation);
+        }
+        else
+        {
+            ApplyCloseReveal(1f);
+            FinishCloseAnimation();
+        }
+    }
+
+    private void PlayItemPopAnimations()
+    {
+        for (int i = 0; i < itemViews.Count; i++)
+        {
+            RectTransform itemRect = itemViews[i].transform as RectTransform;
+            if (itemRect == null || !itemRect.gameObject.activeSelf)
+                continue;
+
+            Vector3 targetItemScale = itemRect.localScale;
+            if (targetItemScale == Vector3.zero)
+                targetItemScale = Vector3.one;
+
+            itemRect.localScale = Vector3.zero;
+            if (itemPopDuration > 0f)
+            {
+                itemRect.DOScale(targetItemScale, itemPopDuration)
+                    .SetDelay(i * Mathf.Max(0f, itemPopDelayStep))
+                    .SetEase(itemPopEase)
+                    .SetTarget(this);
+            }
+            else
+            {
+                itemRect.localScale = targetItemScale;
+            }
+        }
+    }
+
+    private void FinishCloseAnimation()
+    {
+        gameObject.SetActive(false);
+
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect != null)
+            panelRect.anchoredPosition = panelOpenPosition;
+        ApplyOpenReveal(1f);
+    }
+
+    private void CapturePanelLayout(RectTransform panelRect)
+    {
+        if (hasPanelLayout)
+            return;
+
+        panelOpenPosition = panelRect.anchoredPosition;
+        panelSize = panelRect.rect.size;
+        if (panelSize.x <= 0f || panelSize.y <= 0f)
+            panelSize = panelRect.sizeDelta;
+        hasPanelLayout = true;
+    }
+
+    private void SetAnimationRectLayout()
+    {
+        if (revealMask == null)
+            return;
+
+        Image panelImage = GetComponent<Image>();
+        if (panelImage != null)
+            panelImage.enabled = false;
+
+        revealMask.anchorMin = new Vector2(0f, 1f);
+        revealMask.anchorMax = new Vector2(0f, 1f);
+        revealMask.pivot = new Vector2(0f, 1f);
+        revealMask.localScale = Vector3.one;
+        revealMask.localRotation = Quaternion.identity;
+
+        if (contentRoot == null)
+            return;
+
+        contentRoot.anchorMin = new Vector2(0f, 1f);
+        contentRoot.anchorMax = new Vector2(0f, 1f);
+        contentRoot.pivot = new Vector2(0f, 1f);
+        contentRoot.sizeDelta = panelSize;
+        contentRoot.localScale = Vector3.one;
+        contentRoot.localRotation = Quaternion.identity;
+    }
+
+    private void ApplyOpenReveal(float progress)
+    {
+        progress = Mathf.Clamp01(progress);
+        if (revealMask == null)
+            return;
+
+        revealMask.anchoredPosition = Vector2.zero;
+        revealMask.sizeDelta = new Vector2(panelSize.x * progress, panelSize.y * progress);
+        if (contentRoot != null)
+        {
+            contentRoot.anchoredPosition = Vector2.zero;
+            contentRoot.sizeDelta = panelSize;
+        }
+    }
+
+    private void ApplyCloseReveal(float progress)
+    {
+        progress = Mathf.Clamp01(progress);
+        if (revealMask == null)
+            return;
+
+        Vector2 maskPosition = new Vector2(panelSize.x * progress, -panelSize.y * progress);
+        revealMask.anchoredPosition = maskPosition;
+        revealMask.sizeDelta = new Vector2(panelSize.x * (1f - progress), panelSize.y * (1f - progress));
+        if (contentRoot != null)
+        {
+            contentRoot.anchoredPosition = -maskPosition;
+            contentRoot.sizeDelta = panelSize;
         }
     }
 
@@ -271,31 +514,43 @@ public class ShopPanelUI : MonoBehaviour
         if (offer.magicData == null)
             return;
 
-        ShowMessage("选择一个法术槽完成购买");
+        ShowMessage("点击法术槽完成购买");
+        selectedMagicOffer = offer;
         waitingForSelection = true;
+        purchaseInProgress = false;
+        owner.SelectPendingShopMagic(offer.magicData, slotIndex => CompleteMagicPurchase(offer, slotIndex));
         Refresh();
-        owner.GetUIManager().ShowSlotSelect(offer.magicData, slotIndex => CompleteMagicPurchase(offer, slotIndex));
     }
 
     private void CompleteMagicPurchase(ShopOffer offer, int slotIndex)
     {
         waitingForSelection = false;
+        owner.ClearPendingShopMagic();
         if (offer == null || offer.purchased || offer.magicData == null)
         {
+            selectedMagicOffer = null;
             Refresh();
             return;
         }
         if (!owner.TrySpendShopGold(offer.price))
         {
+            selectedMagicOffer = null;
             ShowMessage("金币不足");
             Refresh();
             return;
         }
 
-        owner.SetShopMagicAtSlot(offer.magicData, slotIndex);
-        offer.purchased = true;
-        ShowMessage("购买成功");
+        purchaseInProgress = true;
         Refresh();
+        RectTransform sourceRect = GetMagicOfferRect(offer);
+        owner.SetShopMagicAtSlotAnimated(offer.magicData, slotIndex, sourceRect, () =>
+        {
+            purchaseInProgress = false;
+            selectedMagicOffer = null;
+            offer.purchased = true;
+            ShowMessage("购买成功");
+            Refresh();
+        });
     }
 
     private void CompleteMaterialPurchase(ShopOffer offer)
@@ -307,10 +562,16 @@ public class ShopPanelUI : MonoBehaviour
             return;
         }
 
-        owner.AddShopMaterial(offer.material);
-        offer.purchased = true;
-        ShowMessage("购买成功");
+        purchaseInProgress = true;
         Refresh();
+        RectTransform sourceRect = GetMaterialOfferRect(offer);
+        owner.AddShopMaterialAnimated(offer.material, sourceRect, () =>
+        {
+            purchaseInProgress = false;
+            offer.purchased = true;
+            ShowMessage("购买成功");
+            Refresh();
+        });
     }
 
     private void BeginRemoveMaterialPurchase(ShopOffer offer)
@@ -322,6 +583,8 @@ public class ShopPanelUI : MonoBehaviour
             return;
         }
 
+        selectedMagicOffer = null;
+        owner.ClearPendingShopMagic();
         ShowMessage("选择一张素材删除");
         waitingForSelection = true;
         Refresh();
@@ -358,6 +621,24 @@ public class ShopPanelUI : MonoBehaviour
             ShowMessage("已删除素材");
         }
         Refresh();
+    }
+
+    private RectTransform GetMagicOfferRect(ShopOffer offer)
+    {
+        ShopItemView view = GetItemView(offer);
+        return view != null ? view.MagicVisualRect : null;
+    }
+
+    private RectTransform GetMaterialOfferRect(ShopOffer offer)
+    {
+        ShopItemView view = GetItemView(offer);
+        return view != null ? view.MaterialVisualRect : null;
+    }
+
+    private ShopItemView GetItemView(ShopOffer offer)
+    {
+        int index = offers.IndexOf(offer);
+        return index >= 0 && index < itemViews.Count ? itemViews[index] : null;
     }
 
     private void ShowMessage(string text)

@@ -9,10 +9,21 @@ using TMPro;
 
 public class EventPanelUI : MonoBehaviour
 {
+    private static readonly Vector2 PanelOpenPivot = new Vector2(0f, 1f);
+    private static readonly Vector2 PanelClosePivot = new Vector2(1f, 0f);
+
     private readonly List<RectTransform> optionRects = new List<RectTransform>();
     [Header("预制体")]
     [SerializeField] private EventOptionView optionPrefab;
-    [Header("动画参数")]
+    [Header("面板动画参数")]
+    [SerializeField] private float panelOpenDuration = 0.28f;
+    [SerializeField] private Ease panelOpenEase = Ease.OutCubic;
+    [SerializeField] private float panelCloseDuration = 0.2f;
+    [SerializeField] private Ease panelCloseEase = Ease.InCubic;
+    [SerializeField] private Vector2 panelDiagonalMoveOffset = new Vector2(72f, -72f);
+    [SerializeField] private RectTransform revealMask;
+    [SerializeField] private RectTransform contentRoot;
+    [Header("文本和选项动画参数")]
     [SerializeField] private float textCharactersPerSecond = 34f;
     [SerializeField] private float optionShowDuration = 0.24f;
     [SerializeField] private float optionShowDelayStep = 0.06f;
@@ -35,6 +46,10 @@ public class EventPanelUI : MonoBehaviour
 
     private RectTransform panel;
     private RectTransform optionArea;
+    private Vector2 panelDefaultAnchoredPosition;
+    private Vector2 fullPanelSize;
+    private bool hasPanelDefaultTransform;
+    private Tween panelTween;
     private TMP_Text titleText;
     private TMP_Text bodyText;
     private TMP_Text hintText;
@@ -70,11 +85,16 @@ public class EventPanelUI : MonoBehaviour
         }
 
         panel = (RectTransform)panelTransform;
-        titleText = FindText(panel, "Title");
-        bodyText = FindText(panel, "Body");
-        hintText = FindText(panel, "Hint");
+        CachePanelTransform();
+        DOTween.Kill(this);
+        panelTween?.Kill(false);
+        ResetPanelTransform();
+        HideOptionTooltipImmediate();
+        titleText = FindText(GetPanelContentRoot(), "Title");
+        bodyText = FindText(GetPanelContentRoot(), "Body");
+        hintText = FindText(GetPanelContentRoot(), "Hint");
         EnsureOptionTooltip();
-        Transform optionAreaTransform = panel.Find("OptionArea");
+        Transform optionAreaTransform = GetPanelContentRoot().Find("OptionArea");
         optionArea = optionAreaTransform as RectTransform;
         if (hintText != null)
             hintText.text = "左键：跳过/继续；打出素材并结束回合来选择选项";
@@ -86,17 +106,160 @@ public class EventPanelUI : MonoBehaviour
             for (int i = 0; i < optionArea.childCount; i++)
                 optionArea.GetChild(i).gameObject.SetActive(false);
         }
-        panel.gameObject.SetActive(false);
+        SetPanelActive(false);
     }
 
     public void Bind(EventModel model)
     {
         eventModel = model;
-        if (panel != null)
-            panel.gameObject.SetActive(true);
+        typing = false;
+        waitingForClick = false;
+        showingOptions = false;
+        StopAllCoroutines();
+        SetPanelActive(true);
         if (titleText != null)
             titleText.text = model.Title;
-        StartCoroutine(ShowCurrentNodeRoutine());
+        StartCoroutine(BindRoutine());
+    }
+
+    private IEnumerator BindRoutine()
+    {
+        yield return PlayPanelOpenRoutine();
+        yield return ShowCurrentNodeRoutine();
+    }
+
+    private IEnumerator PlayPanelOpenRoutine()
+    {
+        if (panel == null)
+            yield break;
+
+        panelTween?.Kill(false);
+        ResetPanelTransform();
+        ConfigureRevealLayout(true);
+        SetRevealProgress(0f);
+        panel.anchoredPosition = panelDefaultAnchoredPosition - panelDiagonalMoveOffset;
+        if (panelOpenDuration <= 0f)
+        {
+            ResetPanelTransform();
+            yield break;
+        }
+
+        bool complete = false;
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(DOVirtual.Float(0f, 1f, panelOpenDuration, SetRevealProgress).SetEase(panelOpenEase));
+        sequence.Join(panel.DOAnchorPos(panelDefaultAnchoredPosition, panelOpenDuration).SetEase(panelOpenEase));
+        panelTween = sequence;
+        panelTween.OnComplete(() => complete = true);
+        while (!complete && panelTween != null && panelTween.IsActive())
+            yield return null;
+
+        panelTween = null;
+        ResetPanelTransform();
+    }
+
+    private void CachePanelTransform()
+    {
+        if (panel == null)
+            return;
+
+        if (!hasPanelDefaultTransform)
+        {
+            panelDefaultAnchoredPosition = panel.anchoredPosition;
+            hasPanelDefaultTransform = true;
+        }
+
+        if (revealMask == null)
+        {
+            Transform maskTransform = panel.Find("RevealMask");
+            revealMask = maskTransform as RectTransform;
+        }
+
+        if (contentRoot == null)
+        {
+            Transform contentTransform = revealMask != null ? revealMask.Find("PanelContent") : panel.Find("PanelContent");
+            contentRoot = contentTransform as RectTransform;
+        }
+
+        Vector2 rectSize = panel.rect.size;
+        fullPanelSize = rectSize.x > 0f && rectSize.y > 0f ? rectSize : panel.sizeDelta;
+        ConfigureRevealLayout(true);
+        SetRevealProgress(1f);
+    }
+
+    private void ResetPanelTransform()
+    {
+        if (panel == null || !hasPanelDefaultTransform)
+            return;
+
+        panel.anchoredPosition = panelDefaultAnchoredPosition;
+        panel.localScale = Vector3.one;
+        ConfigureRevealLayout(true);
+        SetRevealProgress(1f);
+    }
+
+    private RectTransform GetPanelContentRoot()
+    {
+        return contentRoot != null ? contentRoot : panel;
+    }
+
+    private void SetPanelActive(bool active)
+    {
+        if (panel != null)
+            panel.gameObject.SetActive(active);
+    }
+
+    private void ConfigureRevealLayout(bool fromTopLeft)
+    {
+        if (revealMask == null)
+            return;
+
+        revealMask.anchorMin = new Vector2(0.5f, 0.5f);
+        revealMask.anchorMax = new Vector2(0.5f, 0.5f);
+        revealMask.pivot = fromTopLeft ? PanelOpenPivot : PanelClosePivot;
+        revealMask.anchoredPosition = fromTopLeft
+            ? new Vector2(fullPanelSize.x * -0.5f, fullPanelSize.y * 0.5f)
+            : new Vector2(fullPanelSize.x * 0.5f, fullPanelSize.y * -0.5f);
+        revealMask.localScale = Vector3.one;
+
+        if (contentRoot == null)
+            return;
+
+        contentRoot.anchorMin = fromTopLeft ? PanelOpenPivot : PanelClosePivot;
+        contentRoot.anchorMax = contentRoot.anchorMin;
+        contentRoot.pivot = new Vector2(0.5f, 0.5f);
+        contentRoot.anchoredPosition = fromTopLeft
+            ? new Vector2(fullPanelSize.x * 0.5f, fullPanelSize.y * -0.5f)
+            : new Vector2(fullPanelSize.x * -0.5f, fullPanelSize.y * 0.5f);
+        contentRoot.sizeDelta = fullPanelSize;
+        contentRoot.localScale = Vector3.one;
+    }
+
+    private void SetRevealProgress(float progress)
+    {
+        if (revealMask == null)
+            return;
+
+        float clampedProgress = Mathf.Clamp01(progress);
+        revealMask.sizeDelta = new Vector2(fullPanelSize.x * clampedProgress, fullPanelSize.y * clampedProgress);
+    }
+
+    private void HideOptionTooltipImmediate()
+    {
+        optionTooltipTween?.Kill(false);
+        optionTagTooltipTween?.Kill(false);
+        optionTooltipTween = null;
+        optionTagTooltipTween = null;
+        if (optionTooltipCanvasGroup != null)
+            optionTooltipCanvasGroup.alpha = 0f;
+        if (optionTooltip != null)
+        {
+            optionTooltip.localScale = tooltipHiddenScale;
+            optionTooltip.gameObject.SetActive(false);
+        }
+        if (optionTagTooltipCanvasGroup != null)
+            optionTagTooltipCanvasGroup.alpha = 0f;
+        if (optionTagTooltip != null)
+            optionTagTooltip.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -124,6 +287,9 @@ public class EventPanelUI : MonoBehaviour
 
     public IEnumerator ShowCurrentNodeRoutine()
     {
+        if (eventModel == null)
+            yield break;
+
         showingOptions = false;
         ClearOptions();
         string[] texts = eventModel.CurrentTexts;
@@ -259,13 +425,48 @@ public class EventPanelUI : MonoBehaviour
 
     public void Close()
     {
+        StopAllCoroutines();
         DOTween.Kill(this);
+        panelTween?.Kill(false);
         optionTooltipTween?.Kill(false);
         optionTagTooltipTween?.Kill(false);
+        HideOptionTooltipImmediate();
+        eventModel = null;
+        typing = false;
+        waitingForClick = false;
+        showingOptions = false;
+        if (panel == null || !panel.gameObject.activeSelf)
+        {
+            ClearOptions();
+            return;
+        }
+
+        ResetPanelTransform();
+        ConfigureRevealLayout(false);
+        SetRevealProgress(1f);
+        Vector2 closeTargetPosition = panelDefaultAnchoredPosition + panelDiagonalMoveOffset;
+        if (panelCloseDuration <= 0f)
+        {
+            CompletePanelClose();
+            return;
+        }
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(DOVirtual.Float(1f, 0f, panelCloseDuration, SetRevealProgress).SetEase(panelCloseEase));
+        sequence.Join(panel.DOAnchorPos(closeTargetPosition, panelCloseDuration).SetEase(panelCloseEase));
+        panelTween = sequence;
+        panelTween.OnComplete(CompletePanelClose);
+    }
+
+    private void CompletePanelClose()
+    {
+        panelTween = null;
         ClearOptions();
-        if (panel != null)
-            panel.gameObject.SetActive(false);
-        Destroy(this);
+        if (panel == null)
+            return;
+
+        SetPanelActive(false);
+        ResetPanelTransform();
     }
 
     private void ClearOptions()
@@ -455,7 +656,7 @@ public class EventPanelUI : MonoBehaviour
         else if (option.resultId == 2)
             effect = "之后每回合抽牌数+1";
         else if (option.resultId == 100)
-            effect = "选择并删除" + GetChoiceCountText(option) + "张手牌素材";
+            effect = "选择并删除" + GetChoiceCountText(option) + "张素材牌";
         else if (option.resultId >= 101 && option.resultId <= 104)
             effect = "获得1张素材牌";
         else if (option.resultId == 201)

@@ -22,6 +22,8 @@ public class BuffTooltipUI : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
         canvasGroup.alpha = 0f;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
         transform.localScale = HiddenScale;
         gameObject.SetActive(false);
     }
@@ -43,7 +45,8 @@ public class BuffTooltipUI : MonoBehaviour
         gameObject.SetActive(true);
         transform.localScale = HiddenScale;
         canvasGroup.alpha = 0f;
-        transform.position = slot.RectTransform.position + new Vector3(0f, tooltipYOffset, 0f);
+        float yOffset = Mathf.Max(tooltipYOffset, BuffSlotView.LayoutSize + 28f);
+        transform.position = slot.RectTransform.position + new Vector3(0f, yOffset, 0f);
         PopupLayerUtility.ApplyTo((RectTransform)transform);
         transform.SetAsLastSibling();
         tween?.Kill(false);
