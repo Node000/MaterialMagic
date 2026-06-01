@@ -184,7 +184,7 @@ MonoBehaviour:
   LeftBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
   DownBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
   RightBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
-  recipeIconSize: {x: 48, y: 48}
+  recipeIconSize: {x: 96, y: 96}
   recipeIconSpacing: {x: 22, y: 22}
   recipeIconPadding: {x: 0, y: 0}
   tagTooltipRoot: {fileID: 0}
