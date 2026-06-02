@@ -34,6 +34,9 @@ public static class LocalizationKeys
         if (modifier == null)
             return string.Empty;
 
+        if (MaterialModifierDisplayDatabase.TryGetName(modifier, out string name))
+            return name;
+
         return LocalizationSystem.GetText("modifier." + GetModifierKey(modifier) + ".name", modifier.GetType().Name);
     }
 
@@ -41,6 +44,9 @@ public static class LocalizationKeys
     {
         if (modifier == null)
             return string.Empty;
+
+        if (MaterialModifierDisplayDatabase.TryGetDescription(modifier, out string description))
+            return description;
 
         return LocalizationSystem.GetText("modifier." + GetModifierKey(modifier) + ".desc", string.Empty);
     }

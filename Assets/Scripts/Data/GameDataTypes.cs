@@ -269,6 +269,8 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public int baseAttack;
     public BuffStackData[] initialBuffs = Array.Empty<BuffStackData>();
     public string iconName;
+    public string spriteAnimationPath;
+    public float animationFrameRate = 8f;
     public EnemyIntentGroupData[] intentLoop = Array.Empty<EnemyIntentGroupData>();
     public EnemyActionData[] actionLoop = Array.Empty<EnemyActionData>();
 

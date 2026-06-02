@@ -6,23 +6,23 @@
     },
     {
       "buffType": 2,
-      "iconName": "DefaultBuff"
+      "iconName": "burn"
     },
     {
       "buffType": 3,
-      "iconName": "DefaultBuff"
+      "iconName": "weak"
     },
     {
       "buffType": 6,
-      "iconName": "DefaultBuff"
+      "iconName": "vulnerable"
     },
     {
       "buffType": 7,
-      "iconName": "DefaultBuff"
+      "iconName": "slow"
     },
     {
       "buffType": 9,
-      "iconName": "DefaultBuff"
+      "iconName": "lightning"
     },
     {
       "buffType": 10,

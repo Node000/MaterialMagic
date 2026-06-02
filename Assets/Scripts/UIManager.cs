@@ -326,9 +326,9 @@ public class UIManager : MonoBehaviour
         return type switch
         {
             LevelType.Shop => Resources.Load<Sprite>("Images/UI/shop"),
-            LevelType.Event => null,
-            LevelType.Rest => Resources.Load<Sprite>("Images/UI/shop"),
-            LevelType.Reward => null,
+            LevelType.Event => Resources.Load<Sprite>("Images/UI/Event"),
+            LevelType.Rest => Resources.Load<Sprite>("Images/UI/Rest"),
+            LevelType.Reward => Resources.Load<Sprite>("Images/UI/Reward"),
             _ => Resources.Load<Sprite>("Images/UI/normal"),
         };
     }

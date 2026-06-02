@@ -11,6 +11,13 @@
     { "key": "ui.run_result.unknown_enemy", "text": "未知敌人" },
     { "key": "ui.run_result.time.hours_minutes_seconds", "text": "{0}小时{1}分钟{2}秒" },
     { "key": "ui.run_result.time.minutes_seconds", "text": "{0}分钟{1}秒" },
-    { "key": "ui.run_result.time.seconds", "text": "{0}秒" }
+    { "key": "ui.run_result.time.seconds", "text": "{0}秒" },
+    { "key": "ui.start_menu.start", "text": "开始游戏" },
+    { "key": "ui.start_menu.choose_start_config", "text": "选择一个游戏配置" },
+    { "key": "ui.start_menu.start_with_config", "text": "开始游戏www！" },
+    { "key": "ui.start_menu.confirm_exit", "text": "确认退出" },
+    { "key": "ui.start_config.select", "text": "选择" },
+    { "key": "ui.start_config.selected", "text": "已选" },
+    { "key": "ui.start_config.health", "text": "生命值 {0}" }
   ]
 }

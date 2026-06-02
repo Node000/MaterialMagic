@@ -25,6 +25,7 @@ public class StartMenuUI : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        startConfigSelectionUI.Prewarm();
         buttonGroupUI.StartClicked += HandleStartClicked;
         buttonGroupUI.ContinueClicked += ContinueSavedRun;
         buttonGroupUI.SettingsClicked += OpenSettings;
@@ -118,10 +119,21 @@ public class StartMenuUI : MonoBehaviour
             return;
         }
 
-        if (selectedConfig != null)
-            PlayerState.SelectedStartConfigId = selectedConfig.id;
-        else
-            PlayerState.SelectedStartConfigId = string.Empty;
+        bool hasAllConfigWindows = startConfigSelectionUI.HasExpectedConfigWindows;
+        if (!hasAllConfigWindows)
+        {
+            startConfigSelectionUI.EnsureConfigWindows();
+            buttonGroupUI.SetStartConfigSelected(selectedConfig != null);
+            return;
+        }
+
+        if (selectedConfig == null)
+        {
+            buttonGroupUI.SetStartConfigSelected(false);
+            return;
+        }
+
+        PlayerState.SelectedStartConfigId = selectedConfig.id;
 
         PlayerState.ContinueSavedRun = false;
         RunSaveSystem.BeginNewRun();
@@ -136,7 +148,7 @@ public class StartMenuUI : MonoBehaviour
     {
         selectingStartConfig = true;
         selectedConfig = null;
-        buttonGroupUI.SetStartConfigMode(true);
+        buttonGroupUI.SetStartConfigMode(true, false);
         HideExitConfirm();
         HideTutorial();
         settingsPanelUI.Hide();
@@ -151,13 +163,15 @@ public class StartMenuUI : MonoBehaviour
 
         selectingStartConfig = false;
         selectedConfig = null;
-        buttonGroupUI.SetStartConfigMode(false);
+        buttonGroupUI.SetStartConfigMode(false, false);
         startConfigSelectionUI.Hide();
     }
 
     private void SelectConfig(PlayerStartConfigData config)
     {
         selectedConfig = config;
+        if (selectingStartConfig)
+            buttonGroupUI.SetStartConfigSelected(selectedConfig != null);
     }
 
     private void OpenSettings()

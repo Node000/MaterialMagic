@@ -1,0 +1,53 @@
+{
+  "items": [
+    {
+      "id": "temporary",
+      "script": "TemporaryModifier",
+      "nameKey": "modifier.temporary.name",
+      "descriptionKey": "modifier.temporary.desc",
+      "lineColor": "#B8B8B8"
+    },
+    {
+      "id": "charge",
+      "script": "ChargeModifier",
+      "nameKey": "modifier.charge.name",
+      "descriptionKey": "modifier.charge.desc",
+      "lineColor": "#FFE45C"
+    },
+    {
+      "id": "vortex",
+      "script": "VortexModifier",
+      "nameKey": "modifier.vortex.name",
+      "descriptionKey": "modifier.vortex.desc",
+      "lineColor": "#7B5CFF"
+    },
+    {
+      "id": "kindling",
+      "script": "KindlingModifier",
+      "nameKey": "modifier.kindling.name",
+      "descriptionKey": "modifier.kindling.desc",
+      "lineColor": "#FF7A1A"
+    },
+    {
+      "id": "flow",
+      "script": "FlowModifier",
+      "nameKey": "modifier.flow.name",
+      "descriptionKey": "modifier.flow.desc",
+      "lineColor": "#45D9FF"
+    },
+    {
+      "id": "liquefy",
+      "script": "LiquefyModifier",
+      "nameKey": "modifier.liquefy.name",
+      "descriptionKey": "modifier.liquefy.desc",
+      "lineColor": "#4D8DFF"
+    },
+    {
+      "id": "sturdy",
+      "script": "SturdyModifier",
+      "nameKey": "modifier.sturdy.name",
+      "descriptionKey": "modifier.sturdy.desc",
+      "lineColor": "#D19B5A"
+    }
+  ]
+}

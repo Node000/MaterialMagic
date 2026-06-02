@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "对敌方造成6点伤害，本回合内每触发一次法术，使本伤害+1"
+      "text": "对敌方造成6点伤害，本回合内每触发一次道具，使本伤害+1"
     },
     {
       "key": "magic.burning_wind.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "magic.storm_hand.desc",
-      "text": "本回合所有法术重复释放1次，使全体敌方获得1层电弧"
+      "text": "本回合所有道具重复释放1次，使全体敌方获得1层电弧"
     },
     {
       "key": "magic.current_attachment.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "magic.current_attachment.desc",
-      "text": "本回合所有法术伤害+1，回合额外获得1张素材获得电荷（电荷：以此素材激活法术时，使随机一名敌方获得1层电弧）"
+      "text": "本回合所有道具伤害+1，回合额外获得1张素材获得电荷"
     },
     {
       "key": "magic.sandstorm.name",
@@ -174,7 +174,7 @@
     },
     {
       "key": "magic.turbid_current.desc",
-      "text": "获得7点护盾，下回合抽到的3张素材牌获得漩涡（漩涡：以此素材牌触发法术时，对随机一名敌人随机施加1层虚弱/迟缓/易损，回合结束时失去此效果）"
+      "text": "获得7点护盾，下回合抽到的3张素材牌获得漩涡"
     },
     {
       "key": "magic.tide_hand.name",
@@ -206,7 +206,7 @@
     },
     {
       "key": "magic.rockfall.desc",
-      "text": "获得6点护盾，下回合开始时，所有手牌获得坚固（坚固：以此素材牌触发法术时，获得1点护盾。回合结束时移除此效果）"
+      "text": "获得6点护盾，下回合开始时，所有手牌获得坚固"
     },
     {
       "key": "magic.earth_fire.name",

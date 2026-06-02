@@ -7,12 +7,12 @@
     { "key": "modifier.vortex.name", "text": "漩涡" },
     { "key": "modifier.vortex.desc", "text": "进入出牌区时，对随机敌人施加1层随机负面状态；回合结束时额外抽1张素材到出牌区。" },
     { "key": "modifier.kindling.name", "text": "助燃" },
-    { "key": "modifier.kindling.desc", "text": "以此素材触发法术时，对随机敌人施加1层燃烧。" },
+    { "key": "modifier.kindling.desc", "text": "以此素材触发道具时，对随机敌人施加1层燃烧。" },
     { "key": "modifier.flow.name", "text": "流转" },
     { "key": "modifier.flow.desc", "text": "若此素材被用于换牌，额外抽1张牌。" },
     { "key": "modifier.liquefy.name", "text": "液化" },
     { "key": "modifier.liquefy.desc", "text": "此素材也被视为水素材。" },
     { "key": "modifier.sturdy.name", "text": "坚固" },
-    { "key": "modifier.sturdy.desc", "text": "以此素材触发法术时，获得1点护盾；离开手牌或出牌区时消失。" }
+    { "key": "modifier.sturdy.desc", "text": "以此素材触发道具时，获得1点护盾；离开手牌或出牌区时消失。" }
   ]
 }

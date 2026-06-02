@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: C:\MaterialMagic\menu.exe
+  m_text: C:\Menu.exe
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}
@@ -790,9 +790,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '> popup dragon layer 01
-
-    > main menu background online'
+  m_text: "\n\n\u300A\u5236\u4F5C\u4EBA\u5458\u300B\n\n\u7A0B\u5E8F/\u73A9\u6CD5\uFF1A\u7A7A\u5807\n\n\u7F8E\u672F/\u4E16\u754C\u89C2\uFF1Ascarlemonty"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}

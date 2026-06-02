@@ -214,7 +214,7 @@
     },
     {
       "key": "event.midnight_convenience.mint.1",
-      "text": "薄荷味在舌尖炸开，一个新法术广告弹了出来。"
+      "text": "薄荷味在舌尖炸开，一个新道具广告弹了出来。"
     },
     {
       "key": "event.midnight_convenience.leave.1",
@@ -278,7 +278,7 @@
     },
     {
       "key": "event.anonymous_forum.post.1",
-      "text": "帖子发出后，评论区反噬了你的精神值，但也给了你一次法术强化。"
+      "text": "帖子发出后，评论区反噬了你的精神值，但也给了你一次道具强化。"
     },
     {
       "key": "event.anonymous_forum.leave.1",
@@ -354,7 +354,7 @@
     },
     {
       "key": "event.limited_sale.weapon.1",
-      "text": "武器只是贴纸，但贴纸真的改变了你的法术。"
+      "text": "武器只是贴纸，但贴纸真的改变了你的道具。"
     },
     {
       "key": "event.limited_sale.no_buy.1",

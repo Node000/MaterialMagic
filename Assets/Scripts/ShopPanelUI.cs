@@ -490,6 +490,7 @@ public class ShopPanelUI : MonoBehaviour
 
         if (owner.PlayerState.Gold < offer.price)
         {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
             Refresh();
             return;
@@ -535,11 +536,13 @@ public class ShopPanelUI : MonoBehaviour
         if (!owner.TrySpendShopGold(offer.price))
         {
             selectedMagicOffer = null;
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
             Refresh();
             return;
         }
 
+        PlayShopSfx(GameSfxId.Buy);
         purchaseInProgress = true;
         Refresh();
         RectTransform sourceRect = GetMagicOfferRect(offer);
@@ -557,11 +560,13 @@ public class ShopPanelUI : MonoBehaviour
     {
         if (!owner.TrySpendShopGold(offer.price))
         {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
             Refresh();
             return;
         }
 
+        PlayShopSfx(GameSfxId.Buy);
         purchaseInProgress = true;
         Refresh();
         RectTransform sourceRect = GetMaterialOfferRect(offer);
@@ -610,6 +615,7 @@ public class ShopPanelUI : MonoBehaviour
         }
         if (!owner.TrySpendShopGold(offer.price))
         {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
             Refresh();
             return;
@@ -617,6 +623,7 @@ public class ShopPanelUI : MonoBehaviour
 
         if (owner.RemoveShopMaterial(selected[0]))
         {
+            PlayShopSfx(GameSfxId.Buy);
             offer.purchased = true;
             ShowMessage("已删除素材");
         }
@@ -639,6 +646,12 @@ public class ShopPanelUI : MonoBehaviour
     {
         int index = offers.IndexOf(offer);
         return index >= 0 && index < itemViews.Count ? itemViews[index] : null;
+    }
+
+    private static void PlayShopSfx(GameSfxId id)
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySfx(id);
     }
 
     private void ShowMessage(string text)

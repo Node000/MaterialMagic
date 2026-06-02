@@ -54,7 +54,7 @@
     },
     {
       "key": "buff.spell_power.desc",
-      "text": "每层使攻击和法术造成伤害提高1；玩家回合结束时清除，敌人获得后持续生效。"
+      "text": "每层使攻击和道具造成伤害提高1；玩家回合结束时清除，敌人获得后持续生效。"
     },
     {
       "key": "buff.burning_next_turn.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "modifier.sturdy.desc",
-      "text": "以此素材牌触发法术时，获得1点护盾。回合结束时移除此效果。"
+      "text": "以此素材牌触发道具时，获得1点护盾。回合结束时移除此效果。"
     },
     {
       "key": "buff.stable.name",

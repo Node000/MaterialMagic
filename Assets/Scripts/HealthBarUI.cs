@@ -10,8 +10,12 @@ public class HealthBarUI : MonoBehaviour
     [SerializeField] private Image healthFill;
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
-    [SerializeField] private float textWidth = 72f;
-    [SerializeField] private float healthTextFontSize = 30f;
+
+    [Header("血条样式")]
+    [SerializeField] private Color healthFillColor = new Color(0.441f, 0.774f, 0.09f, 1f);
+    [SerializeField] private Color healthBufferFillColor = Color.white;
+    [SerializeField] private Color shieldFillColor = new Color(0.2f, 0.55f, 1f, 1f);
+
     [Header("动画参数")]
     [SerializeField] private float healthFillDuration = 0.35f;
     [SerializeField] private float healthBufferDecreaseDuration = 0.55f;
@@ -29,11 +33,10 @@ public class HealthBarUI : MonoBehaviour
     public int DisplayedHealth => displayedHealth;
     public Tween HealthNumberTween => healthNumberTween;
 
-    public void Initialize(TMP_Text text, Image fill, float labelWidth, int currentHealth)
+    public void Initialize(TMP_Text text, Image fill, int currentHealth)
     {
         healthText = text;
         healthFill = fill;
-        textWidth = labelWidth;
         displayedHealth = currentHealth;
         CacheLayers();
         Setup(currentHealth, currentHealth, 0, true);
@@ -41,27 +44,12 @@ public class HealthBarUI : MonoBehaviour
 
     public void Setup(int currentHealth, int maxHealth, int shield, bool instant)
     {
-        SetupHealthText(healthText, healthTextFontSize);
         if (healthFill == null)
             return;
 
-        RectTransform barBack = healthFill.transform.parent as RectTransform;
-        if (barBack == null)
-            return;
-
-        if (barBack.sizeDelta.x < 0f)
-        {
-            barBack.anchorMin = new Vector2(0f, 0.5f);
-            barBack.anchorMax = new Vector2(0f, 0.5f);
-            barBack.pivot = new Vector2(0f, 0.5f);
-            barBack.sizeDelta = new Vector2(220f, barBack.sizeDelta.y);
-            barBack.anchoredPosition = new Vector2(86f, barBack.anchoredPosition.y);
-        }
-
-        SetupFillImage(healthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
+        SetupFillImage(healthFill, healthFillColor, 1);
         CacheLayers();
         SetHealthLayerOrder(healthBufferFill, healthFill, shieldFill);
-        PositionHealthTextRightOfBar(healthText, barBack, textWidth);
         UpdateValue(currentHealth, maxHealth, shield, instant);
     }
 
@@ -69,7 +57,7 @@ public class HealthBarUI : MonoBehaviour
     {
         UpdateHealthBar(healthFill, healthBufferFill, shieldFill, currentHealth, maxHealth, shield, instant, healthFillDuration, healthBufferDecreaseDuration, healthBufferIncreaseDuration, healthEase);
         int totalHealthTextValue = GetHealthTextValue(currentHealth, shield);
-        SetHealthTextColor(healthText, shield > 0);
+        ApplyHealthTextColor(shield > 0);
         healthNumberTween?.Kill(false);
         healthNumberTween = UpdateHealthText(healthText, displayedHealth, totalHealthTextValue, instant, value => displayedHealth = value, this, healthTextDuration, healthEase);
     }
@@ -84,11 +72,23 @@ public class HealthBarUI : MonoBehaviour
             return;
 
         if (healthBufferFill == null)
-            healthBufferFill = CreateHealthFillLayer(barBack, "HealthBufferFill", Color.white, 0);
+            healthBufferFill = CreateHealthFillLayer(barBack, "HealthBufferFill", healthBufferFillColor, 0);
+        else
+            SetupFillImage(healthBufferFill, healthBufferFillColor, 0);
         if (shieldFill == null)
-            shieldFill = CreateHealthFillLayer(barBack, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
+            shieldFill = CreateHealthFillLayer(barBack, "ShieldFill", shieldFillColor, 2);
+        else
+            SetupFillImage(shieldFill, shieldFillColor, 2);
         if (shieldFill != null)
             shieldFill.raycastTarget = false;
+    }
+
+    private void ApplyHealthTextColor(bool shielded)
+    {
+        if (healthText == null)
+            return;
+
+        healthText.color = shielded ? shieldFillColor : healthFillColor;
     }
 
     public static Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
@@ -159,7 +159,6 @@ public class HealthBarUI : MonoBehaviour
         if (fontSize > 0f)
             text.fontSize = fontSize;
         SetHealthTextColor(text, false);
-        EnsureWhiteOutline(text);
         text.raycastTarget = false;
     }
 
@@ -176,22 +175,12 @@ public class HealthBarUI : MonoBehaviour
         text.color = shielded ? new Color(0.25f, 0.55f, 1f, 1f) : new Color(0.95f, 0.08f, 0.04f, 1f);
     }
 
-    private static void EnsureWhiteOutline(TMP_Text text)
+    public static void PositionHealthTextRightOfBar(TMP_Text text, RectTransform barBack, float width)
     {
-        Material material = text.fontSharedMaterial;
-        if (material != null && material.HasProperty("_OutlineColor") && material.HasProperty("_OutlineWidth"))
-        {
-            Color outlineColor = material.GetColor("_OutlineColor");
-            float outlineWidth = material.GetFloat("_OutlineWidth");
-            if (outlineColor == Color.white && Mathf.Approximately(outlineWidth, 0.18f))
-                return;
-        }
-
-        text.outlineColor = Color.white;
-        text.outlineWidth = 0.18f;
+        PositionHealthTextRightOfBar(text, barBack, width, 10f, 8f);
     }
 
-    public static void PositionHealthTextRightOfBar(TMP_Text text, RectTransform barBack, float width)
+    public static void PositionHealthTextRightOfBar(TMP_Text text, RectTransform barBack, float width, float heightPadding, float gap)
     {
         if (text == null || barBack == null)
             return;
@@ -200,8 +189,8 @@ public class HealthBarUI : MonoBehaviour
         rect.anchorMin = barBack.anchorMin;
         rect.anchorMax = barBack.anchorMin;
         rect.pivot = new Vector2(0f, 0.5f);
-        rect.sizeDelta = new Vector2(width, barBack.rect.height + 10f);
-        rect.anchoredPosition = barBack.anchoredPosition + new Vector2(barBack.rect.width * (1f - barBack.pivot.x) + 8f, 0f);
+        rect.sizeDelta = new Vector2(width, barBack.rect.height + heightPadding);
+        rect.anchoredPosition = barBack.anchoredPosition + new Vector2(barBack.rect.width * (1f - barBack.pivot.x) + gap, 0f);
     }
 
     public static void PositionHealthTextLeftOfBar(TMP_Text text, RectTransform barBack, float width)

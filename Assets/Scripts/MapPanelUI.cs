@@ -20,6 +20,7 @@ public class MapPanelUI : MonoBehaviour
     [SerializeField] private Vector2 connectionDashSize = new Vector2(18f, 4f);
     [SerializeField] private float connectionDashGap = 10f;
     [SerializeField] private Color connectionDashColor = new Color(1f, 1f, 1f, 1f);
+    [SerializeField] private RectTransform mapNodePrefab;
 
     private const int RunNodeCount = 10;
     private readonly List<RectTransform> nodeViews = new List<RectTransform>();
@@ -200,7 +201,8 @@ public class MapPanelUI : MonoBehaviour
         Image markerImage = playerMarker.GetComponent<Image>();
         if (markerImage != null)
         {
-            markerImage.color = new Color(1f, 0.86f, 0.18f, 1f);
+            markerImage.color = Color.white;
+            markerImage.preserveAspect = true;
             markerImage.raycastTarget = false;
         }
 
@@ -326,10 +328,22 @@ public class MapPanelUI : MonoBehaviour
 
     private RectTransform CreateRuntimeNode(int index)
     {
+        RectTransform rect;
+        if (mapNodePrefab != null)
+        {
+            rect = Instantiate(mapNodePrefab, content, false);
+            rect.name = "MapNode" + (index + 1);
+            rect.anchorMin = new Vector2(0f, 0.5f);
+            rect.anchorMax = new Vector2(0f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            DisableNodeRaycastTargets(rect);
+            return rect;
+        }
+
         Image image = new GameObject("MapNode" + (index + 1), typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
         image.transform.SetParent(content, false);
         image.color = new Color(0.16f, 0.16f, 0.22f, 1f);
-        RectTransform rect = image.GetComponent<RectTransform>();
+        rect = image.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0f, 0.5f);
         rect.anchorMax = new Vector2(0f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
@@ -338,7 +352,18 @@ public class MapPanelUI : MonoBehaviour
         CreateMapIcon(rect, "LeftIcon", new Vector2(-18f, 18f));
         CreateMapIcon(rect, "RightIcon", new Vector2(18f, -18f));
         CreateMapIcon(rect, "CenterIcon", Vector2.zero).gameObject.SetActive(false);
+        DisableNodeRaycastTargets(rect);
         return rect;
+    }
+
+    private static void DisableNodeRaycastTargets(RectTransform node)
+    {
+        if (node == null)
+            return;
+
+        Graphic[] graphics = node.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
     }
 
     private static void CreateSlash(RectTransform parent)

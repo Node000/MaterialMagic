@@ -9,6 +9,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text labelText;
+    [SerializeField] private TMP_Text modifierText;
     [SerializeField] private SpringLineHighlightUI springHighlight;
     [SerializeField] private float selectedScale = 1f;
     [SerializeField] private float hoverTilt = 0f;
@@ -18,7 +19,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween feedbackTween;
-    private TMP_Text modifierText;
     private bool selected;
     private bool inPlayZone;
     private bool hovered;
@@ -142,6 +142,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             modifierText.gameObject.SetActive(!string.IsNullOrEmpty(modifierLabel));
         }
 
+        RefreshSpringHighlight();
+
         if (iconImage != null)
         {
             Sprite sprite = MaterialCardView.GetMaterialIcon(card.material);
@@ -169,25 +171,53 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private void RefreshSpringHighlight()
     {
         CacheSpringHighlight();
-        if (springHighlight != null)
-            springHighlight.gameObject.SetActive(selected || hovered);
+        if (springHighlight == null)
+            return;
+
+        springHighlight.color = GetSpringHighlightColor();
+        springHighlight.gameObject.SetActive(selected || hovered);
+    }
+
+    private Color GetSpringHighlightColor()
+    {
+        Color color = Color.white;
+        if (card == null || card.modifiers == null)
+            return color;
+
+        for (int i = 0; i < card.modifiers.Count; i++)
+        {
+            MaterialModifierModel modifier = card.modifiers[i];
+            if (modifier != null && MaterialModifierDisplayDatabase.TryGetLineColor(modifier, out Color modifierColor))
+                color = modifierColor;
+        }
+        return color;
     }
 
     private string GetModifierLabel()
     {
         string text = string.Empty;
-        if (card.isTemporary)
-            text = LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
+        bool hasTemporaryModifier = false;
         for (int i = 0; i < card.modifiers.Count; i++)
         {
             MaterialModifierModel modifier = card.modifiers[i];
-            if (modifier is TemporaryModifier)
+            if (modifier == null)
                 continue;
+
+            if (modifier is TemporaryModifier)
+                hasTemporaryModifier = true;
 
             if (!string.IsNullOrEmpty(text))
                 text += " ";
             text += LocalizationKeys.GetModifierName(modifier);
         }
+
+        if (card.isTemporary && !hasTemporaryModifier)
+        {
+            if (!string.IsNullOrEmpty(text))
+                text += " ";
+            text += LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
+        }
+
         return text;
     }
 
@@ -201,13 +231,16 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         modifierText.font = labelText != null && labelText.font != null ? labelText.font : UIManager.GetDefaultTMPFont();
         modifierText.fontSize = 13;
         modifierText.alignment = TextAlignmentOptions.Center;
-        modifierText.color = new Color(1f, 0.92f, 0.58f, 1f);
+        modifierText.color = Color.white;
         modifierText.raycastTarget = false;
+        modifierText.enableWordWrapping = false;
+        modifierText.overflowMode = TextOverflowModes.Overflow;
         RectTransform rect = modifierText.rectTransform;
-        rect.anchorMin = new Vector2(0.08f, 0.16f);
-        rect.anchorMax = new Vector2(0.92f, 0.42f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -6f);
+        rect.sizeDelta = new Vector2(0f, 22f);
     }
 
     private void PlayFeedback(bool instant)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -168,10 +167,6 @@ public class PopupDragonBackgroundUI : MonoBehaviour
         Graphic[] graphics = window.GetComponentsInChildren<Graphic>(true);
         for (int i = 0; i < graphics.Length; i++)
             graphics[i].raycastTarget = false;
-
-        TMP_Text prompt = window.Find("Frame/Content/Prompt")?.GetComponent<TMP_Text>();
-        if (prompt != null)
-            prompt.text = $"> popup dragon layer {index + 1:00}\n> main menu background online";
     }
 
     private void ApplyActiveAndOrder()

@@ -29,7 +29,7 @@ public class PlayerStatusUI : MonoBehaviour
         CacheReferences();
         if (healthBar == null)
             healthBar = gameObject.GetComponent<HealthBarUI>() ?? gameObject.AddComponent<HealthBarUI>();
-        healthBar.Initialize(healthText, healthFill, 72f, playerState.CurrentHealth);
+        healthBar.Initialize(healthText, healthFill, playerState.CurrentHealth);
         healthBar.UpdateValue(playerState.CurrentHealth, playerState.MaxHealth, playerState.Shield, instant);
     }
 

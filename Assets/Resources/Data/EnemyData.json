@@ -13,6 +13,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 1
     },
     {
@@ -27,6 +29,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 2
     },
     {
@@ -41,6 +45,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 3
     },
     {
@@ -55,6 +61,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 4
     },
     {
@@ -69,6 +77,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 5
     },
     {
@@ -83,6 +93,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 6
     },
     {
@@ -97,6 +109,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 7
     },
     {
@@ -110,6 +124,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 8
     },
     {
@@ -125,6 +141,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 9
     },
     {
@@ -141,6 +159,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 10
     },
     {
@@ -156,6 +176,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 11
     },
     {
@@ -171,6 +193,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 12
     },
     {
@@ -186,6 +210,8 @@
       ],
       "actionLoop": [],
       "iconName": "Sample",
+      "spriteAnimationPath": "",
+      "animationFrameRate": 8.0,
       "numericId": 13
     }
   ]

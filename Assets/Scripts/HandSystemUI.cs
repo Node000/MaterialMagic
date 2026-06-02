@@ -486,7 +486,49 @@ public class HandSystemUI : MonoBehaviour
 
 	private List<LevelData> GetBattleLevels()
 	{
-		return GetLevels(LevelType.Battle);
+		List<LevelData> levels = GetLevels(LevelType.Battle);
+		RemoveBossBattleLevel(levels, GetBossBattleLevel(levels));
+		return levels;
+	}
+
+	private LevelData GetBossBattleLevel()
+	{
+		return GetBossBattleLevel(null);
+	}
+
+	private LevelData GetBossBattleLevel(List<LevelData> battleLevels)
+	{
+		LevelData bossLevel = null;
+		if (battleLevels != null)
+		{
+			for (int i = 0; i < battleLevels.Count; i++)
+			{
+				LevelData level = battleLevels[i];
+				if (level != null && level.levelType == LevelType.Battle && (bossLevel == null || level.numericId > bossLevel.numericId))
+					bossLevel = level;
+			}
+			return bossLevel;
+		}
+
+		foreach (LevelData level in GameDataDatabase.LevelData.Values)
+		{
+			if (level != null && level.levelType == LevelType.Battle && (bossLevel == null || level.numericId > bossLevel.numericId))
+				bossLevel = level;
+		}
+		return bossLevel;
+	}
+
+	private void RemoveBossBattleLevel(List<LevelData> levels, LevelData bossLevel)
+	{
+		if (levels == null || bossLevel == null)
+			return;
+
+		for (int i = levels.Count - 1; i >= 0; i--)
+		{
+			LevelData level = levels[i];
+			if (level != null && level.levelType == LevelType.Battle && level.numericId == bossLevel.numericId)
+				levels.RemoveAt(i);
+		}
 	}
 
 	private List<LevelData> GetEventLevels()
@@ -1197,22 +1239,26 @@ public class HandSystemUI : MonoBehaviour
 		ChapterData chapter = GetActiveChapter();
 		List<LevelData> eventLevels = GetEventLevelsForChapter(chapter);
 		int chapterLength = GetActiveChapterLength();
+		LevelData bossLevel = GetBossBattleLevel();
 		for (int i = 0; i < chapterLength; i++)
 		{
-			List<LevelData> candidateLevels = GetLevelsForProgress(chapter, i + 1);
+			int progress = i + 1;
+			RunMapNodeModel mapNodeModel = new RunMapNodeModel();
+			if (progress == chapterLength && bossLevel != null)
+			{
+				mapNodeModel.leftLevel = bossLevel;
+				mapNodeModel.rightLevel = bossLevel;
+				mapNodeModel.fixedSingleChoice = true;
+				mapNodes.Add(mapNodeModel);
+				continue;
+			}
+
+			List<LevelData> candidateLevels = GetLevelsForProgress(chapter, progress);
+			RemoveBossBattleLevel(candidateLevels, bossLevel);
 			if (candidateLevels.Count == 0)
 				candidateLevels = GetBattleLevels();
 			if (candidateLevels.Count == 0)
 				return;
-
-			RunMapNodeModel mapNodeModel = new RunMapNodeModel();
-			if (i == 0 && GameDataDatabase.TryGetLevelData(DebugRewardLevelNumericId, out LevelData debugRewardLevel))
-			{
-				mapNodeModel.leftLevel = ChooseRandomMapLevel(candidateLevels);
-				mapNodeModel.rightLevel = debugRewardLevel;
-				mapNodes.Add(mapNodeModel);
-				continue;
-			}
 			if (i == 0 && TutorialManager != null && TutorialManager.ShouldForceFirstNodeBattles())
 			{
 				List<LevelData> battleLevels = GetBattleLevels();
@@ -1223,7 +1269,7 @@ public class HandSystemUI : MonoBehaviour
 				mapNodes.Add(mapNodeModel);
 				continue;
 			}
-			LevelData fixedLevel = GetFixedLevelForProgress(chapter, i + 1);
+			LevelData fixedLevel = GetFixedLevelForProgress(chapter, progress);
 			if (fixedLevel != null)
 			{
 				mapNodeModel.leftLevel = fixedLevel;
@@ -1292,7 +1338,7 @@ public class HandSystemUI : MonoBehaviour
 			if (fixedLevel.levelId > 0 && GameDataDatabase.TryGetLevelData(fixedLevel.levelId, out LevelData configuredLevel))
 				return configuredLevel;
 
-			List<LevelData> levels = GetLevels(fixedLevel.levelType);
+			List<LevelData> levels = fixedLevel.levelType == LevelType.Battle ? GetBattleLevels() : GetLevels(fixedLevel.levelType);
 			return levels.Count > 0 ? levels[Random.Range(0, levels.Count)] : null;
 		}
 
@@ -1485,6 +1531,11 @@ public class HandSystemUI : MonoBehaviour
 
 	private void Update()
 	{
+		if (Input.GetKeyDown(KeyCode.Escape))
+		{
+			ToggleSettingsPanel();
+		}
+
 		if (Input.GetMouseButtonDown(1))
 		{
 			PlaySelectedCardsByInput();
@@ -3339,12 +3390,11 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if ((Object)enemyViewState.bodyImage != (Object)null)
 		{
-			Sprite val2 = LoadEnemyIcon(model.Data.iconName);
-			if ((Object)(object)val2 != (Object)null)
-			{
-				enemyViewState.bodyImage.sprite = val2;
-				enemyViewState.bodyImage.color = Color.white;
-			}
+			EnemySpriteAnimatorUI bodyAnimator = ((Component)enemyViewState.bodyImage).GetComponent<EnemySpriteAnimatorUI>();
+			if ((Object)bodyAnimator == (Object)null)
+				bodyAnimator = ((Component)enemyViewState.bodyImage).gameObject.AddComponent<EnemySpriteAnimatorUI>();
+
+			bodyAnimator.Bind(model.Data);
 			enemyViewState.bodyBaseColor = enemyViewState.bodyImage.color;
 		}
 		enemyModel = model;
@@ -3370,15 +3420,6 @@ public class HandSystemUI : MonoBehaviour
 		enemyViewState.buffRoot = EnsureBuffRoot(val, new Vector2(0f, -82f));
 		RebuildEnemyIntentViews(enemyViewState);
 		enemyViewStates.Add(enemyViewState);
-	}
-
-	private static Sprite LoadEnemyIcon(string iconName)
-	{
-		if (string.IsNullOrEmpty(iconName))
-		{
-			return null;
-		}
-		return Resources.Load<Sprite>("Images/Enemies/" + iconName);
 	}
 
 	private void CreateParticleCaster()
@@ -3474,7 +3515,7 @@ public class HandSystemUI : MonoBehaviour
 
         float pitch = playerCastSwingPitchBase + Mathf.Max(0, continuousCastCount - 1) * playerCastSwingPitchIncrease;
         pitch = Mathf.Min(pitch, playerCastSwingPitchMax);
-        AudioManager.Instance.PlaySfx(GameSfxId.PlayerCastSwing, pitch);
+        AudioManager.Instance.PlaySfx(GameSfxId.HitPitch, pitch);
     }
 
 	private void QueueCastParticle(MagicModel magic, RectTransform target, Action onImpact)

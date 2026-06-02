@@ -369,6 +369,8 @@ public class PlayerState
         if (healthDamage > 0)
             LastDamageSourceEnemy = attacker != null && attacker.IsEnemy ? attacker.Enemy : null;
         GameLog.Data($"Player take damage raw={damage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
         if (blockedDamage > 0 && GetBuffStack(BuffEnum.ShieldReflect) > 0)
             attacker?.TakeDamage(blockedDamage);
@@ -392,6 +394,8 @@ public class PlayerState
         if (healthDamage > 0)
             LastDamageSourceEnemy = null;
         GameLog.Data($"Player take direct damage={damage} hp={CurrentHealth}/{MaxHealth}");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(null);
@@ -521,6 +525,8 @@ public class PlayerState
         if (Gold < 0)
             Gold = 0;
         GameLog.Data($"Player gold change={amount} gold={Gold}");
+        if (amount > 0 && AudioManager.Instance != null)
+            AudioManager.Instance.PlaySfx(GameSfxId.GetCoin);
     }
 
     public void AddBuff(BuffEnum buffType, int stack)

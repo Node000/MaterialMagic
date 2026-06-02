@@ -13,7 +13,12 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
     [SerializeField] private RectTransform buttonGroup;
-    [SerializeField] private string confirmStartText = "确认开始";
+    [SerializeField] private string startTextKey = "ui.start_menu.start";
+    [SerializeField] private string chooseStartConfigTextKey = "ui.start_menu.choose_start_config";
+    [SerializeField] private string selectedStartConfigTextKey = "ui.start_menu.start_with_config";
+    [SerializeField] private string confirmStartText = "选择一个游戏配置";
+    [SerializeField] private string selectedStartConfigText = "开始游戏www！";
+    [SerializeField] private string confirmExitTextKey = "ui.start_menu.confirm_exit";
     [SerializeField] private string confirmExitText = "确认退出";
     [SerializeField] private Color startButtonNormalColor = new Color(0.28f, 0.19f, 0.45f, 1f);
     [SerializeField] private Color startButtonConfirmColor = new Color(0.85f, 0.54f, 0.18f, 1f);
@@ -41,6 +46,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     private Image startButtonImage;
     private string originalStartText;
     private string originalExitText;
+    private bool startConfigMode;
+    private bool startConfigSelected;
     private int selectedOptionIndex = -1;
     private int activeOptionIndex = -1;
     private Tween buttonGroupTween;
@@ -62,11 +69,16 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         startButtonText = startButton.GetComponentInChildren<TMP_Text>(true);
         exitButtonText = exitButton.GetComponentInChildren<TMP_Text>(true);
         startButtonImage = startButton.GetComponent<Image>();
-        originalStartText = startButtonText != null ? startButtonText.text : "开始游戏";
+        originalStartText = LocalizationSystem.GetText(startTextKey, startButtonText != null && !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
+        confirmStartText = LocalizationSystem.GetText(chooseStartConfigTextKey, confirmStartText);
+        selectedStartConfigText = LocalizationSystem.GetText(selectedStartConfigTextKey, selectedStartConfigText);
         originalExitText = exitButtonText != null ? exitButtonText.text : "退出游戏";
+        confirmExitText = LocalizationSystem.GetText(confirmExitTextKey, confirmExitText);
 
-        if (startButtonText != null && string.IsNullOrEmpty(startButtonText.text))
+        if (startButtonText != null)
             startButtonText.text = originalStartText;
+        if (exitButtonText != null && string.IsNullOrEmpty(exitButtonText.text))
+            exitButtonText.text = originalExitText;
         if (startButtonImage != null)
             startButtonImage.color = startButtonNormalColor;
 
@@ -99,17 +111,27 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         return buttonGroup != null && hit != null && hit.IsChildOf(buttonGroup);
     }
 
-    public void SetStartConfigMode(bool selecting)
+    public void SetStartConfigMode(bool selecting, bool hasSelectedConfig = false)
     {
+        startConfigMode = selecting;
+        startConfigSelected = selecting && hasSelectedConfig;
         int startIndex = GetOptionIndex(startButton);
         if (startIndex >= 0 && startIndex < optionBaseColors.Count)
             optionBaseColors[startIndex] = selecting ? startButtonConfirmColor : startButtonNormalColor;
-        if (startButtonText != null)
-            startButtonText.text = selecting ? confirmStartText : originalStartText;
+        RefreshStartButtonText();
         if (startButtonImage != null)
             startButtonImage.color = selecting ? startButtonConfirmColor : startButtonNormalColor;
         activeOptionIndex = selecting ? startIndex : activeOptionIndex == startIndex ? -1 : activeOptionIndex;
         MoveButtonGroup();
+    }
+
+    public void SetStartConfigSelected(bool hasSelectedConfig)
+    {
+        if (!startConfigMode)
+            return;
+
+        startConfigSelected = hasSelectedConfig;
+        RefreshStartButtonText();
     }
 
     public void SetSettingsMode(bool showing)
@@ -129,6 +151,20 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     public void ClearActiveOption()
     {
         activeOptionIndex = -1;
+    }
+
+    private void RefreshStartButtonText()
+    {
+        if (startButtonText == null)
+            return;
+
+        if (!startConfigMode)
+        {
+            startButtonText.text = originalStartText;
+            return;
+        }
+
+        startButtonText.text = startConfigSelected ? selectedStartConfigText : confirmStartText;
     }
 
     private void ResolveReferences()

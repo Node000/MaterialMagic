@@ -2,19 +2,27 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public enum GameSfxId
 {
     None = 0,
-    CardPlay = 1,
-    CardReturnToHand = 2,
-    CardRefresh = 3,
-    ButtonClick = 4,
-    EnemyAttack = 5,
-    NegativeStatusApply = 6,
-    PositiveStatusApply = 7,
-    PlayerCastSwing = 8
+    Blocked = 1,
+    Damaged = 2,
+    GetCoin = 3,
+    NormalInteract = 4,
+    HitPitch = 5,
+    Buy = 6,
+    NotEnoughMoney = 7,
+
+    CardPlay = NormalInteract,
+    CardReturnToHand = NormalInteract,
+    CardRefresh = NormalInteract,
+    ButtonClick = NormalInteract,
+    EnemyAttack = Damaged,
+    PlayerCastSwing = HitPitch
 }
 
 [Serializable]
@@ -41,14 +49,13 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip battleMusic;
     [SerializeField] private GameSfxClipEntry[] gameSfxClips =
     {
-        new GameSfxClipEntry(GameSfxId.CardPlay),
-        new GameSfxClipEntry(GameSfxId.CardReturnToHand),
-        new GameSfxClipEntry(GameSfxId.CardRefresh),
-        new GameSfxClipEntry(GameSfxId.ButtonClick),
-        new GameSfxClipEntry(GameSfxId.EnemyAttack),
-        new GameSfxClipEntry(GameSfxId.NegativeStatusApply),
-        new GameSfxClipEntry(GameSfxId.PositiveStatusApply),
-        new GameSfxClipEntry(GameSfxId.PlayerCastSwing)
+        new GameSfxClipEntry(GameSfxId.Blocked),
+        new GameSfxClipEntry(GameSfxId.Damaged),
+        new GameSfxClipEntry(GameSfxId.GetCoin),
+        new GameSfxClipEntry(GameSfxId.NormalInteract),
+        new GameSfxClipEntry(GameSfxId.HitPitch),
+        new GameSfxClipEntry(GameSfxId.Buy),
+        new GameSfxClipEntry(GameSfxId.NotEnoughMoney)
     };
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
@@ -58,6 +65,9 @@ public class AudioManager : MonoBehaviour
     public AudioSource MusicSource => musicSource;
 
     private readonly List<AudioSource> pitchedSfxSources = new List<AudioSource>();
+    private readonly List<RaycastResult> pointerRaycastResults = new List<RaycastResult>(8);
+    private PointerEventData pointerEventData;
+    private EventSystem pointerEventSystem;
 
     private const string MusicVolumeKey = "MusicVolume";
     private const string SfxVolumeKey = "SfxVolume";
@@ -93,6 +103,14 @@ public class AudioManager : MonoBehaviour
 
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         Instance = null;
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+            TryPlayNormalInteractFromPointer(PointerEventData.InputButton.Left);
+        else if (Input.GetMouseButtonDown(1))
+            TryPlayNormalInteractFromPointer(PointerEventData.InputButton.Right);
     }
 
     private void OnValidate()
@@ -171,6 +189,14 @@ public class AudioManager : MonoBehaviour
         PlaySfx(GetSfxClip(id), pitch);
     }
 
+    public void PlayDamageResultSfx(int healthDamage, int shieldDamage)
+    {
+        if (healthDamage > 0)
+            PlaySfx(GameSfxId.Damaged);
+        else if (shieldDamage > 0)
+            PlaySfx(GameSfxId.Blocked);
+    }
+
     public AudioClip GetSfxClip(GameSfxId id)
     {
         if (id == GameSfxId.None || gameSfxClips == null)
@@ -189,6 +215,51 @@ public class AudioManager : MonoBehaviour
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         PlaySceneMusic(scene.name);
+    }
+
+    private void TryPlayNormalInteractFromPointer(PointerEventData.InputButton inputButton)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return;
+
+        if (pointerEventData == null || pointerEventSystem != eventSystem)
+        {
+            pointerEventSystem = eventSystem;
+            pointerEventData = new PointerEventData(eventSystem);
+        }
+
+        pointerEventData.Reset();
+        pointerEventData.position = Input.mousePosition;
+        pointerEventData.button = inputButton;
+        pointerRaycastResults.Clear();
+        eventSystem.RaycastAll(pointerEventData, pointerRaycastResults);
+
+        for (int i = 0; i < pointerRaycastResults.Count; i++)
+        {
+            GameObject hitObject = pointerRaycastResults[i].gameObject;
+            if (IsNormalInteractTarget(hitObject, inputButton))
+            {
+                PlaySfx(GameSfxId.NormalInteract);
+                break;
+            }
+        }
+    }
+
+    private static bool IsNormalInteractTarget(GameObject hitObject, PointerEventData.InputButton inputButton)
+    {
+        if (hitObject == null)
+            return false;
+
+        if (inputButton == PointerEventData.InputButton.Left)
+        {
+            Button button = hitObject.GetComponentInParent<Button>();
+            if (button != null && button.isActiveAndEnabled && button.interactable)
+                return true;
+        }
+
+        HandCardView cardView = hitObject.GetComponentInParent<HandCardView>();
+        return cardView != null && cardView.isActiveAndEnabled;
     }
 
     private void PlaySceneMusic(string sceneName)
@@ -288,14 +359,13 @@ public class AudioManager : MonoBehaviour
 
     private void EnsureSfxClipEntries()
     {
-        EnsureSfxClipEntry(GameSfxId.CardPlay);
-        EnsureSfxClipEntry(GameSfxId.CardReturnToHand);
-        EnsureSfxClipEntry(GameSfxId.CardRefresh);
-        EnsureSfxClipEntry(GameSfxId.ButtonClick);
-        EnsureSfxClipEntry(GameSfxId.EnemyAttack);
-        EnsureSfxClipEntry(GameSfxId.NegativeStatusApply);
-        EnsureSfxClipEntry(GameSfxId.PositiveStatusApply);
-        EnsureSfxClipEntry(GameSfxId.PlayerCastSwing);
+        EnsureSfxClipEntry(GameSfxId.Blocked);
+        EnsureSfxClipEntry(GameSfxId.Damaged);
+        EnsureSfxClipEntry(GameSfxId.GetCoin);
+        EnsureSfxClipEntry(GameSfxId.NormalInteract);
+        EnsureSfxClipEntry(GameSfxId.HitPitch);
+        EnsureSfxClipEntry(GameSfxId.Buy);
+        EnsureSfxClipEntry(GameSfxId.NotEnoughMoney);
     }
 
     private void EnsureSfxClipEntry(GameSfxId id)

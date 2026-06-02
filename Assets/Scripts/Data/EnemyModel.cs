@@ -115,9 +115,10 @@ public class EnemyModel
             return 0;
 
         int healthBefore = CurrentHealth;
+        int blockedDamage = 0;
         if (Shield > 0)
         {
-            int blockedDamage = remainingDamage < Shield ? remainingDamage : Shield;
+            blockedDamage = remainingDamage < Shield ? remainingDamage : Shield;
             Shield -= blockedDamage;
             remainingDamage -= blockedDamage;
         }
@@ -125,12 +126,15 @@ public class EnemyModel
         CurrentHealth -= remainingDamage;
         if (CurrentHealth < 0)
             CurrentHealth = 0;
-        GameLog.Data($"Enemy {Id} take damage raw={damage} finalHealthDamage={healthBefore - CurrentHealth} shieldNow={Shield} hp={CurrentHealth}/{Data.maxHealth}");
+        int healthDamage = healthBefore - CurrentHealth;
+        GameLog.Data($"Enemy {Id} take damage raw={damage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{Data.maxHealth}");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(attacker);
 
-        return healthBefore - CurrentHealth;
+        return healthDamage;
     }
 
     public int TakeDirectDamage(int damage)
@@ -142,12 +146,15 @@ public class EnemyModel
         CurrentHealth -= damage;
         if (CurrentHealth < 0)
             CurrentHealth = 0;
+        int healthDamage = healthBefore - CurrentHealth;
         GameLog.Data($"Enemy {Id} take direct damage={damage} hp={CurrentHealth}/{Data.maxHealth}");
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(null);
 
-        return healthBefore - CurrentHealth;
+        return healthDamage;
     }
 
     public int GainShield(int amount)

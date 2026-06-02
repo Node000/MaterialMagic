@@ -476,9 +476,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             case MaterialEnum.Fire:
                 return "Images/UI/up";
             case MaterialEnum.Wind:
-                return "Images/UI/down";
-            case MaterialEnum.Water:
                 return "Images/UI/left";
+            case MaterialEnum.Water:
+                return "Images/UI/down";
             case MaterialEnum.Earth:
                 return "Images/UI/right";
             default:

@@ -120,14 +120,13 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         {
             Sprite sprite = GetMaterialIcon(material);
             iconImage.sprite = sprite;
-            iconImage.color = Color.white ;
+            iconImage.color = Color.white;
             iconImage.preserveAspect = true;
+            iconImage.enabled = true;
         }
 
         if (frameImage != null)
         {
-            Color frameColor = new Color(0.18f, 0.18f, 0.18f, 1f);
-            frameImage.color = frameColor;
             frameImage.raycastTarget = false;
         }
 
