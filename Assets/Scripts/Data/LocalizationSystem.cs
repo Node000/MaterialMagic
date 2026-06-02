@@ -103,6 +103,10 @@ public static class LocalizationKeys
             case BuffEnum.SpellPower: return "spell_power";
             case BuffEnum.DefensePower: return "defense_power";
             case BuffEnum.BurningNextTurn: return "burning_next_turn";
+            case BuffEnum.BurnOnAttack: return "burn_on_attack";
+            case BuffEnum.RepeatSpell: return "repeat_spell";
+            case BuffEnum.DebuffPower: return "debuff_power";
+            case BuffEnum.VortexNextDraw: return "vortex_next_draw";
             case BuffEnum.ShieldReflect: return "shield_reflect";
             case BuffEnum.ExtraDraw: return "extra_draw";
             case BuffEnum.ExtraRefresh: return "extra_refresh";

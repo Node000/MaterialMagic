@@ -11,6 +11,7 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
     [SerializeField] private Image targetImage;
 
     private Sprite[] frames = Array.Empty<Sprite>();
+    private Vector2 currentNativeSize;
     private float frameInterval;
     private float elapsed;
     private int frameIndex;
@@ -31,14 +32,10 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
         frameInterval = 1f / frameRate;
         elapsed = 0f;
         frameIndex = 0;
+        currentNativeSize = Vector2.zero;
 
         Sprite sprite = frames.Length > 0 ? frames[0] : EnemyVisualLoader.LoadStaticSpriteOrSample(data);
-        if (targetImage != null)
-        {
-            targetImage.sprite = sprite;
-            if (sprite != null)
-                targetImage.color = Color.white;
-        }
+        ApplySprite(sprite);
 
         enabled = targetImage != null && frames.Length > 1;
     }
@@ -52,7 +49,26 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
         int step = (int)(elapsed / frameInterval);
         elapsed -= step * frameInterval;
         frameIndex = (frameIndex + step) % frames.Length;
-        targetImage.sprite = frames[frameIndex];
+        ApplySprite(frames[frameIndex]);
+    }
+
+    private void ApplySprite(Sprite sprite)
+    {
+        if (targetImage == null)
+            return;
+
+        targetImage.sprite = sprite;
+        targetImage.preserveAspect = true;
+        if (sprite == null)
+            return;
+
+        targetImage.color = Color.white;
+        Vector2 spriteSize = sprite.rect.size;
+        if (spriteSize != currentNativeSize)
+        {
+            targetImage.rectTransform.sizeDelta = spriteSize;
+            currentNativeSize = spriteSize;
+        }
     }
 }
 

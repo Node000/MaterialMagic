@@ -4,7 +4,7 @@ public class FireballArtMagicModel : ScriptedMagicModel
     protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
-        Damage(playerState, target, 5, result);
+        Damage(playerState, target, 3, result);
         AddBuff(target, BuffEnum.Burning, 2, result);
     }
 }

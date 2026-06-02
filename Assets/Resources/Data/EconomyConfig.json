@@ -10,8 +10,12 @@
       "battleGoldMax": 2,
       "eliteBattleGoldMin": 4,
       "eliteBattleGoldMax": 5,
+      "battleMapLevelWeight": 10,
+      "eventMapLevelWeight": 4,
+      "restMapLevelWeight": 2,
+      "rewardMapLevelWeight": 2,
       "defaultMapLevelWeight": 4,
-      "shopMapLevelWeight": 1,
+      "shopMapLevelWeight": 2,
       "shopMagicRewardPoolId": 1,
       "shopMaterialPool": [1, 2, 3, 4]
     }

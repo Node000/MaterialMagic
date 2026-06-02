@@ -22,8 +22,12 @@ public class EconomyConfigData : INumericDataRecord
     public int battleGoldMax = 2;
     public int eliteBattleGoldMin = 4;
     public int eliteBattleGoldMax = 5;
+    public int battleMapLevelWeight = 10;
+    public int eventMapLevelWeight = 4;
+    public int restMapLevelWeight = 2;
+    public int rewardMapLevelWeight = 2;
     public int defaultMapLevelWeight = 4;
-    public int shopMapLevelWeight = 1;
+    public int shopMapLevelWeight = 2;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
 
@@ -57,7 +61,11 @@ public enum BuffEnum
     Sturdy = 15,
     Stable = 16,
     Disorder = 17,
-    DefensePower = 18
+    DefensePower = 18,
+    BurnOnAttack = 19,
+    RepeatSpell = 20,
+    DebuffPower = 21,
+    VortexNextDraw = 22
 }
 
 public enum BuffKindEnum

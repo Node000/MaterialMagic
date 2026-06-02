@@ -59,6 +59,22 @@
     {
       "buffType": 18,
       "iconName": "DefendUP"
+    },
+    {
+      "buffType": 19,
+      "iconName": "DefaultBuff"
+    },
+    {
+      "buffType": 20,
+      "iconName": "DefaultBuff"
+    },
+    {
+      "buffType": 21,
+      "iconName": "DefaultBuff"
+    },
+    {
+      "buffType": 22,
+      "iconName": "DefaultBuff"
     }
   ]
 }

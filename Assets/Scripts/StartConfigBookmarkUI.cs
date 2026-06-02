@@ -19,10 +19,16 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private MaterialCardView materialCardPrefab;
     [SerializeField] private Button button;
     [SerializeField] private Button selectButton;
+    [SerializeField] private Image selectButtonImage;
     [SerializeField] private TMP_Text selectButtonText;
     [SerializeField] private Button windowCloseButton;
     [SerializeField] private string selectTextKey = "ui.start_config.select";
     [SerializeField] private string selectedTextKey = "ui.start_config.selected";
+    [Header("选择按钮颜色")]
+    [SerializeField] private Color selectButtonUnselectedOutlineColor = new Color(0.18f, 0.68f, 0.28f, 1f);
+    [SerializeField] private Color selectButtonUnselectedTextColor = new Color(0.18f, 0.68f, 0.28f, 1f);
+    [SerializeField] private Color selectButtonSelectedFillColor = new Color(0.18f, 0.68f, 0.28f, 1f);
+    [SerializeField] private Color selectButtonSelectedTextColor = Color.white;
     [Header("书签移动")]
     [SerializeField] private float enterDuration = 0.34f;
     [SerializeField] private float selectDuration = 0.34f;
@@ -107,7 +113,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
 
         RebuildMagicViews(config.initialMagics);
         RebuildMaterialViews(config.initialMaterials);
-        RefreshSelectButtonText();
+        RefreshSelectButtonState();
         RectTransform.localScale = Vector3.one;
     }
 
@@ -145,7 +151,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     public void SetSelected(bool selected, float readyX, float displayX)
     {
         this.selected = selected;
-        RefreshSelectButtonText();
+        RefreshSelectButtonState();
         scaleTween?.Kill(false);
         scaleTween = RectTransform.DOScale(selected ? Vector3.one * 1.035f : Vector3.one, selectDuration).SetEase(selectEase).SetUpdate(true).SetTarget(this);
     }
@@ -153,7 +159,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     public void SetSelectedImmediate(bool selected)
     {
         this.selected = selected;
-        RefreshSelectButtonText();
+        RefreshSelectButtonState();
         scaleTween?.Kill(false);
         RectTransform.localScale = selected ? Vector3.one * 1.035f : Vector3.one;
     }
@@ -221,6 +227,12 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             selectButton = transform.Find("SelectButton")?.GetComponent<Button>();
         if (selectButton == null)
             selectButton = button;
+        if (selectButtonImage == null && selectButton != null)
+        {
+            selectButtonImage = selectButton.targetGraphic as Image;
+            if (selectButtonImage == null)
+                selectButtonImage = selectButton.GetComponent<Image>();
+        }
         if (selectButtonText == null && selectButton != null)
             selectButtonText = selectButton.GetComponentInChildren<TMP_Text>(true);
         if (windowCloseButton == null)
@@ -262,10 +274,19 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         RectTransform.anchoredPosition = floatCenter + currentFloatOffset;
     }
 
-    private void RefreshSelectButtonText()
+    private void RefreshSelectButtonState()
     {
+        if (selectButtonImage != null)
+        {
+            selectButtonImage.color = selected ? selectButtonSelectedFillColor : selectButtonUnselectedOutlineColor;
+            selectButtonImage.fillCenter = selected;
+        }
+
         if (selectButtonText != null)
+        {
             selectButtonText.text = LocalizationSystem.GetText(selected ? selectedTextKey : selectTextKey, selected ? "已选" : "选择");
+            selectButtonText.color = selected ? selectButtonSelectedTextColor : selectButtonUnselectedTextColor;
+        }
     }
 
     private void HandleClick()

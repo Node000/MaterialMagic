@@ -13,6 +13,7 @@ public class SceneTransitionManager : MonoBehaviour
     [SerializeField] private Color transitionColor = Color.black;
 
     private const string ProgressProperty = "_Progress";
+    private const string StartSceneName = "StartScene";
     private bool transitioning;
 
     private void Awake()
@@ -26,8 +27,18 @@ public class SceneTransitionManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         EnsureTransitionView();
-        SetProgress(0f);
-        transitionImage.raycastTarget = false;
+
+        if (SceneManager.GetActiveScene().name == StartSceneName)
+        {
+            SetProgress(1f);
+            transitionImage.raycastTarget = true;
+            StartCoroutine(PlayStartSceneIntroRoutine());
+        }
+        else
+        {
+            SetProgress(0f);
+            transitionImage.raycastTarget = false;
+        }
     }
 
     public void LoadSceneWithTransition(string sceneName)
@@ -36,11 +47,21 @@ public class SceneTransitionManager : MonoBehaviour
             StartCoroutine(LoadSceneRoutine(sceneName));
     }
 
+    private IEnumerator PlayStartSceneIntroRoutine()
+    {
+        transitioning = true;
+        yield return null;
+        yield return PlayTransition(1f, 0f);
+        transitionImage.raycastTarget = false;
+        transitioning = false;
+    }
+
     private IEnumerator LoadSceneRoutine(string sceneName)
     {
         transitioning = true;
         transitionImage.raycastTarget = true;
         yield return PlayTransition(0f, 1f);
+        yield return null;
 
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
         while (!operation.isDone)

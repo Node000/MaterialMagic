@@ -1320,7 +1320,28 @@ public class HandSystemUI : MonoBehaviour
 		if (level == null)
 			return 0;
 
-		int weight = level.levelType == LevelType.Shop ? economy?.shopMapLevelWeight ?? 1 : economy?.defaultMapLevelWeight ?? 1;
+		int weight = economy?.defaultMapLevelWeight ?? 1;
+		if (economy != null)
+		{
+			switch (level.levelType)
+			{
+				case LevelType.Battle:
+					weight = economy.battleMapLevelWeight;
+					break;
+				case LevelType.Event:
+					weight = economy.eventMapLevelWeight;
+					break;
+				case LevelType.Rest:
+					weight = economy.restMapLevelWeight;
+					break;
+				case LevelType.Shop:
+					weight = economy.shopMapLevelWeight;
+					break;
+				case LevelType.Reward:
+					weight = economy.rewardMapLevelWeight;
+					break;
+			}
+		}
 		return Mathf.Max(0, weight);
 	}
 
@@ -2495,6 +2516,28 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().PlayArea.ShowResolveIndicator();
 		for (int roundStart = 0; roundStart < cards.Count; roundStart++)
 		{
+			MaterialModel card = cards[roundStart];
+			if (card != null)
+			{
+				ResetMagicHighlights();
+				MoveIndicatorToCardRange(cards, roundStart, 1, roundStart == 0);
+				yield return (object)new WaitForSeconds(layoutDuration * 0.35f);
+				HandCardView handCardView = FindView(card);
+				if ((Object)handCardView != (Object)null)
+				{
+					TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
+				}
+				GameLog.Data($"Resolve material from play zone material={card.material} index={roundStart}");
+				MagicCastResult materialResult = ResolveMaterialCardEffect(card);
+				PlayMagicCastFeedback(materialResult);
+				yield return PlayPendingEnemyDeaths();
+				if (AllEnemiesDead())
+				{
+					yield break;
+				}
+				yield return (object)new WaitForSeconds(postMagicResolveDelay);
+			}
+
 			CollectCastableMagicsByRecipeLength(cards, roundStart);
 			if (castableMagicViews.Count == 0)
 			{
@@ -2505,7 +2548,7 @@ public class HandSystemUI : MonoBehaviour
 				ResetMagicHighlights();
 				MagicItemView matchedMagicView = castableMagicViews[matchedIndex];
 				int matchLength = GetRecipeLength(matchedMagicView.Magic);
-				MoveIndicatorToCardRange(cards, roundStart, matchLength, roundStart == 0 && matchedIndex == 0);
+				MoveIndicatorToCardRange(cards, roundStart, matchLength, false);
 				yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
 				for (int i = 0; i < matchLength; i++)
 				{
@@ -2543,6 +2586,73 @@ public class HandSystemUI : MonoBehaviour
 				ResetMagicHighlights();
 			}
 		}
+	}
+
+	private MagicCastResult ResolveMaterialCardEffect(MaterialModel card)
+	{
+		MagicCastResult result = new MagicCastResult();
+		if (card == null || playerState == null)
+			return result;
+
+		card.TriggerOnInvoke();
+		switch (card.material)
+		{
+			case MaterialEnum.Fire:
+				ResolveMaterialDamage(3, result);
+				break;
+			case MaterialEnum.Water:
+				ResolveMaterialEnemyBuff(BuffEnum.Weak, 2, result);
+				break;
+			case MaterialEnum.Wind:
+				playerState.AddBuff(BuffEnum.ExtraDraw, 1);
+				GameLog.Data("Material Wind add player buff ExtraDraw stack=1");
+				RefreshStaticUI();
+				break;
+			case MaterialEnum.Earth:
+				int shieldGain = playerState.GainShield(3);
+				GameLog.Data($"Material Earth shield player value={shieldGain}");
+				result.playerShield += shieldGain;
+				break;
+		}
+		return result;
+	}
+
+	private void ResolveMaterialDamage(int damage, MagicCastResult result)
+	{
+		if (battleManager == null || damage <= 0)
+			return;
+
+		EnemyModel target = battleManager.BeginCastTarget();
+		if (target == null)
+			return;
+
+		CombatantModel targetCombatant = new CombatantModel(target);
+		CombatantModel caster = new CombatantModel(playerState);
+		int attackValue = damage;
+		playerState.TriggerOnAttack(targetCombatant, ref attackValue);
+		int shieldBefore = target.Shield;
+		int attackResult = target.TakeDamage(attackValue, caster);
+		int shieldBlocked = shieldBefore - target.Shield;
+		if (shieldBlocked < 0)
+			shieldBlocked = 0;
+		result.AddEnemyDamageHit(target, attackResult, shieldBlocked);
+		GameLog.Data($"Material Fire damage target={target.Id} value={attackValue}");
+		battleManager.EndCastTarget();
+	}
+
+	private void ResolveMaterialEnemyBuff(BuffEnum buffType, int stack, MagicCastResult result)
+	{
+		if (battleManager == null || buffType == BuffEnum.None || stack <= 0)
+			return;
+
+		EnemyModel target = battleManager.BeginCastTarget();
+		if (target == null)
+			return;
+
+		target.AddBuff(buffType, stack);
+		result.enemyBuffApplied = true;
+		GameLog.Data($"Material Water add buff target={target.Id} buff={buffType} stack={stack}");
+		battleManager.EndCastTarget();
 	}
 
 	private void CollectCastableMagicsByRecipeLength(List<MaterialModel> cards, int startIndex)

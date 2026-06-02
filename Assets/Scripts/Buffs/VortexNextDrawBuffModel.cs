@@ -1,0 +1,29 @@
+public class VortexNextDrawBuffModel : BuffModel
+{
+    private bool pendingNextTurn = true;
+
+    public VortexNextDrawBuffModel(int stack) : base(BuffEnum.VortexNextDraw, stack)
+    {
+    }
+
+    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
+    {
+        if (pendingNextTurn)
+            pendingNextTurn = false;
+    }
+
+    public override void AfterDraw(CombatantModel self, MaterialModel card)
+    {
+        if (pendingNextTurn || card == null || stack <= 0)
+            return;
+
+        card.AddModifier(new VortexModifier());
+        ConsumeStack(1);
+    }
+
+    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    {
+        if (!pendingNextTurn)
+            stack = 0;
+    }
+}

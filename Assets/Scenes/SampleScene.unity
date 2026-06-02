@@ -12697,8 +12697,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -38}
-  m_SizeDelta: {x: 234, y: 90}
+  m_AnchoredPosition: {x: 218.3, y: 91.99}
+  m_SizeDelta: {x: 304.77, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1099119136
 MonoBehaviour:
@@ -12717,8 +12717,8 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
-  m_StartCorner: 0
+  m_ChildAlignment: 6
+  m_StartCorner: 2
   m_StartAxis: 0
   m_CellSize: {x: 42, y: 42}
   m_Spacing: {x: 6, y: 6}
@@ -13913,7 +13913,6 @@ GameObject:
   - component: {fileID: 1191735229}
   - component: {fileID: 1191735228}
   - component: {fileID: 1191735227}
-  - component: {fileID: 1191735226}
   m_Layer: 0
   m_Name: RewardOption0
   m_TagString: Untagged
@@ -13941,18 +13940,6 @@ RectTransform:
   m_AnchoredPosition: {x: 95, y: 0}
   m_SizeDelta: {x: 170, y: 54}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1191735226
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1191735224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1917652775}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1191735227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20048,7 +20035,6 @@ GameObject:
   - component: {fileID: 1783760987}
   - component: {fileID: 1783760986}
   - component: {fileID: 1783760985}
-  - component: {fileID: 1783760984}
   m_Layer: 0
   m_Name: RewardOption1
   m_TagString: Untagged
@@ -20076,18 +20062,6 @@ RectTransform:
   m_AnchoredPosition: {x: -95, y: 0}
   m_SizeDelta: {x: 170, y: 54}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1783760984
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1783760982}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1917652775}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1783760985
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21677,21 +21651,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!115 &1917652775
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: RewardOptionView
-  m_Namespace: 
-  m_AssemblyName: Assembly-CSharp
 --- !u!1 &1930668302
 GameObject:
   m_ObjectHideFlags: 0

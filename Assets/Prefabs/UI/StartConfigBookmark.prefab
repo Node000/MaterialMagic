@@ -75,7 +75,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -458,7 +458,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 1
+  m_FillCenter: 0
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -484,7 +484,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.92, g: 1, b: 0.92, a: 1}
@@ -662,10 +662,15 @@ MonoBehaviour:
   materialCardPrefab: {fileID: 2150081298421458138, guid: 5a245cf3e163b134eadf8b70b0407a36, type: 3}
   button: {fileID: 8145950788074016558}
   selectButton: {fileID: 6161638558908779608}
+  selectButtonImage: {fileID: 2684382611285602598}
   selectButtonText: {fileID: 5465572886402405743}
   windowCloseButton: {fileID: 7349904133642345471}
   selectTextKey: ui.start_config.select
   selectedTextKey: ui.start_config.selected
+  selectButtonUnselectedOutlineColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
+  selectButtonUnselectedTextColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
+  selectButtonSelectedFillColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
+  selectButtonSelectedTextColor: {r: 1, g: 1, b: 1, a: 1}
   enterDuration: 0.34
   selectDuration: 0.34
   exitDuration: 0.34

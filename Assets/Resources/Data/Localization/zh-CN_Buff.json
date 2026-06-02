@@ -127,6 +127,38 @@
     {
       "key": "buff.defense_power.desc",
       "text": "每层使获得护盾量提高1；玩家回合结束时清除，敌人获得后持续生效。"
+    },
+    {
+      "key": "buff.burn_on_attack.name",
+      "text": "攻击燃烧"
+    },
+    {
+      "key": "buff.burn_on_attack.desc",
+      "text": "本回合每次攻击时，自身获得等同层数的燃烧。"
+    },
+    {
+      "key": "buff.repeat_spell.name",
+      "text": "法术重复"
+    },
+    {
+      "key": "buff.repeat_spell.desc",
+      "text": "本回合每个法术额外释放等同层数次。"
+    },
+    {
+      "key": "buff.debuff_power.name",
+      "text": "负面强化"
+    },
+    {
+      "key": "buff.debuff_power.desc",
+      "text": "本回合施加的负面状态层数提高等同层数。"
+    },
+    {
+      "key": "buff.vortex_next_draw.name",
+      "text": "下回合漩涡"
+    },
+    {
+      "key": "buff.vortex_next_draw.desc",
+      "text": "下回合抽到的前若干张素材牌获得漩涡。"
     }
   ]
 }

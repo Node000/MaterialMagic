@@ -99,7 +99,8 @@ Shader "UI/CircleWipeTransition"
                 centered.x *= _AspectScale;
                 float distanceFromCenter = length(centered);
                 float maxRadius = length(float2(0.5 * _AspectScale, 0.5));
-                float visibleRadius = maxRadius * (1 - _Progress);
+                float progress = saturate(_Progress);
+                float visibleRadius = lerp(maxRadius + _Feather, -_Feather, progress);
                 float blackAlpha = smoothstep(visibleRadius - _Feather, visibleRadius + _Feather, distanceFromCenter);
                 color.a *= blackAlpha;
 

@@ -4,7 +4,7 @@
       "numericId": 1,
       "id": "chapter_001",
       "nameKey": "chapter.001.name",
-      "levelLength": 21,
+      "levelLength": 18,
       "levelPoolIds": [
         1,
         2,
@@ -98,7 +98,7 @@
         },
         {
           "startProgress": 13,
-          "endProgress": 20,
+          "endProgress": 17,
           "levelPoolIds": [
             10,
             11,
@@ -119,8 +119,8 @@
           ]
         },
         {
-          "startProgress": 21,
-          "endProgress": 21,
+          "startProgress": 18,
+          "endProgress": 18,
           "levelPoolIds": [
             17
           ]

@@ -170,7 +170,7 @@ public class RewardPanelUI : MonoBehaviour
 
     private void RefreshOptions()
     {
-        EnsureOptionCount(magicOnlyMode ? 1 : 2);
+        EnsureOptionCount(1);
         int index = 0;
         if (magicOnlyMode)
         {
@@ -181,8 +181,6 @@ public class RewardPanelUI : MonoBehaviour
         {
             if (!goldClaimed && !goldClaimInProgress)
                 optionViews[index++].Bind("获得金币 +" + currentGoldReward, ClaimGoldReward);
-            if (!magicClaimed)
-                optionViews[index++].Bind("获得法术", ShowMagicChoices);
         }
         for (int i = index; i < optionViews.Count; i++)
             optionViews[i].Hide();

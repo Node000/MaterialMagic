@@ -135,7 +135,7 @@ public class BattleManager
         if (damage <= 0)
             return 0;
 
-        EnemyModel target = SelectTargetEnemy();
+        EnemyModel target = SelectRandomEnemy();
         if (target == null)
             return 0;
 
@@ -147,7 +147,7 @@ public class BattleManager
         if (stack <= 0)
             return;
 
-        EnemyModel target = SelectTargetEnemy();
+        EnemyModel target = SelectRandomEnemy();
         if (target != null)
             target.AddBuff(BuffEnum.Burning, stack);
     }
@@ -157,7 +157,7 @@ public class BattleManager
         if (stack <= 0)
             return;
 
-        EnemyModel target = SelectTargetEnemy();
+        EnemyModel target = SelectRandomEnemy();
         if (target == null)
             return;
 
@@ -188,20 +188,44 @@ public class BattleManager
         if (FocusTarget != null && !FocusTarget.IsDead)
             return FocusTarget;
 
-        int aliveCount = 0;
-        EnemyModel onlyAlive = null;
+        return SelectLeftmostEnemy();
+    }
+
+    private EnemyModel SelectLeftmostEnemy()
+    {
+        EnemyModel selected = null;
+        float selectedX = 0f;
+        int selectedIndex = 0;
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyModel enemy = enemies[i];
             if (enemy == null || enemy.IsDead)
                 continue;
 
-            aliveCount++;
-            onlyAlive = enemy;
+            float enemyX = enemy.HasSpawnPosition ? enemy.SpawnPositionX : i;
+            if (selected == null || enemyX < selectedX || (Mathf.Approximately(enemyX, selectedX) && i < selectedIndex))
+            {
+                selected = enemy;
+                selectedX = enemyX;
+                selectedIndex = i;
+            }
         }
 
-        if (aliveCount <= 1)
-            return onlyAlive;
+        return selected;
+    }
+
+    private EnemyModel SelectRandomEnemy()
+    {
+        int aliveCount = 0;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                aliveCount++;
+        }
+
+        if (aliveCount == 0)
+            return null;
 
         int targetIndex = Random.Range(0, aliveCount);
         int aliveIndex = 0;
@@ -217,7 +241,6 @@ public class BattleManager
             aliveIndex++;
         }
 
-        CurrentCastTarget = null;
         return null;
     }
 

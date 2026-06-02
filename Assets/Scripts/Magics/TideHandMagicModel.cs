@@ -5,8 +5,9 @@ public class TideHandMagicModel : ScriptedMagicModel
 
     protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        DamageAll(playerState, battleManager, 7, result);
+        for (int i = 0; i < 7; i++)
+            DamageAll(playerState, battleManager, 1, result);
         AddAllEnemyDebuffStacks(battleManager, 2);
-        playerState.AddBuff(BuffEnum.ExtraRefresh, 1);
+        playerState.AddBuff(BuffEnum.DebuffPower, 1);
     }
 }

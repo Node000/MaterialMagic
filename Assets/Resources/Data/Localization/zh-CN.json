@@ -14,7 +14,7 @@
     },
     {
       "key": "magic.fireball_art.desc",
-      "text": "对敌方造成5点伤害，使其获得2层燃烧"
+      "text": "对敌方造成3点伤害，使其获得2层燃烧"
     },
     {
       "key": "magic.flame_barrier.name",
@@ -22,7 +22,7 @@
     },
     {
       "key": "magic.flame_barrier.desc",
-      "text": "获得9点护盾，若敌方的意图是攻击，则使其获得3层燃烧"
+      "text": "本回合敌方每次攻击时，获得3层燃烧"
     },
     {
       "key": "magic.magma.name",
@@ -30,7 +30,7 @@
     },
     {
       "key": "magic.magma.desc",
-      "text": "使全体敌方立刻获得3层燃烧，并在下个友方回合开始时获得2层燃烧"
+      "text": "使全体敌方获得3层燃烧"
     },
     {
       "key": "magic.molten.name",
@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "对敌方造成6点伤害，本回合内每触发一次道具，使本伤害+1"
+      "text": "对敌方造成3点伤害，本回合内每触发一次法术，使本伤害+1"
     },
     {
       "key": "magic.burning_wind.name",
@@ -86,7 +86,7 @@
     },
     {
       "key": "magic.burning_wind.desc",
-      "text": "对全体敌方造成4点伤害，使其获得4层燃烧"
+      "text": "本回合所有法术重复释放1次"
     },
     {
       "key": "magic.lightning.name",
@@ -94,7 +94,7 @@
     },
     {
       "key": "magic.lightning.desc",
-      "text": "对敌方造成4点伤害，并使其获得1层电弧"
+      "text": "使敌方获得2层电弧"
     },
     {
       "key": "magic.storm_hand.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "magic.storm_hand.desc",
-      "text": "本回合所有道具重复释放1次，使全体敌方获得1层电弧"
+      "text": "使全体敌方获得4层电弧"
     },
     {
       "key": "magic.current_attachment.name",
@@ -118,7 +118,7 @@
     },
     {
       "key": "magic.sandstorm.desc",
-      "text": "获得4点护盾，下回合额外抽取1张素材"
+      "text": "获得3点护盾，使全体敌方获得1层电弧"
     },
     {
       "key": "magic.gale.name",
@@ -126,7 +126,7 @@
     },
     {
       "key": "magic.gale.desc",
-      "text": "立即抽取1张素材并将其置于出牌区末尾，下回合额外抽1张牌"
+      "text": "立即抽取2张素材并将其置于出牌区末尾，下回合额外抽取2张牌"
     },
     {
       "key": "magic.ice_pick.name",
@@ -134,7 +134,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "对敌方造成4点伤害，使其获得1层易损"
+      "text": "使敌方获得3层虚弱"
     },
     {
       "key": "magic.swamp.name",
@@ -150,7 +150,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "获得4点护盾，下回合额外抽取1张素材"
+      "text": "对敌方施加2层易损。"
     },
     {
       "key": "magic.boiling_rain.name",
@@ -174,7 +174,7 @@
     },
     {
       "key": "magic.turbid_current.desc",
-      "text": "获得7点护盾，下回合抽到的3张素材牌获得漩涡"
+      "text": "获得4点护盾，下回合抽到的前3张素材牌获得漩涡"
     },
     {
       "key": "magic.tide_hand.name",
@@ -182,7 +182,7 @@
     },
     {
       "key": "magic.tide_hand.desc",
-      "text": "对敌方全体造成7点伤害，所有负面状态层数+2，本回合施加的负面状态层数+1"
+      "text": "对敌方全体造成7次1点伤害，所有负面状态层数+2，本回合施加的负面状态层数+1"
     },
     {
       "key": "magic.water_corrosion.name",

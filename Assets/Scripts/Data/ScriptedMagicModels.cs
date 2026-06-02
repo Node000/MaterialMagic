@@ -108,8 +108,9 @@ public abstract class ScriptedMagicModel : MagicModel
         if (target == null || buffType == BuffEnum.None || stack <= 0)
             return;
 
-        target.AddBuff(buffType, stack);
-        GameLog.Data($"Scripted magic {Id} add buff target={target.Id} buff={buffType} stack={stack}");
+        int finalStack = stack + GetEnemyDebuffStackBonus(buffType);
+        target.AddBuff(buffType, finalStack);
+        GameLog.Data($"Scripted magic {Id} add buff target={target.Id} buff={buffType} stack={finalStack}");
         result.enemyBuffApplied = true;
     }
 
@@ -125,6 +126,13 @@ public abstract class ScriptedMagicModel : MagicModel
             if (enemy != null && !enemy.IsDead)
                 AddBuff(enemy, buffType, stack, result);
         }
+    }
+
+    private int GetEnemyDebuffStackBonus(BuffEnum buffType)
+    {
+        return BuffModel.GetKind(buffType) == BuffKindEnum.DeBuff && MagicModifierModel.CurrentContext?.PlayerState != null
+            ? MagicModifierModel.CurrentContext.PlayerState.GetBuffStack(BuffEnum.DebuffPower)
+            : 0;
     }
 
     protected bool UseExtraRefreshChance(PlayerState playerState)
@@ -186,19 +194,20 @@ public abstract class ScriptedMagicModel : MagicModel
             if (enemy == null || enemy.IsDead)
                 continue;
 
-            if (enemy.GetBuffStack(BuffEnum.Vulnerable) > 0)
-                enemy.AddBuff(BuffEnum.Vulnerable, amount);
-            if (enemy.GetBuffStack(BuffEnum.Slow) > 0)
-                enemy.AddBuff(BuffEnum.Slow, amount);
-            if (enemy.GetBuffStack(BuffEnum.Weak) > 0)
-                enemy.AddBuff(BuffEnum.Weak, amount);
-            if (enemy.GetBuffStack(BuffEnum.Arc) > 0)
-                enemy.AddBuff(BuffEnum.Arc, amount);
-            if (enemy.GetBuffStack(BuffEnum.Burning) > 0)
-                enemy.AddBuff(BuffEnum.Burning, amount);
-            if (enemy.GetBuffStack(BuffEnum.BurningNextTurn) > 0)
-                enemy.AddBuff(BuffEnum.BurningNextTurn, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Vulnerable, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Slow, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Weak, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Arc, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Burning, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.BurningNextTurn, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.BurnOnAttack, amount);
         }
+    }
+
+    private void AddDebuffStackIfPresent(EnemyModel enemy, BuffEnum buffType, int amount)
+    {
+        if (enemy.GetBuffStack(buffType) > 0)
+            enemy.AddBuff(buffType, amount);
     }
 
     protected void GainShield(PlayerState playerState, BattleManager battleManager, int amount, MagicCastResult result)

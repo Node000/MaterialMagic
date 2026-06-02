@@ -70,7 +70,7 @@ public class MagicModel
 
         MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
         SetModifierContext(playerState, battleManager);
-        int castCount = 1 + GetAdditionalCastCount();
+        int castCount = 1 + GetAdditionalCastCount(playerState);
         GameLog.Data($"Cast magic {Id} ({Name}) replayCount={castCount - 1}");
         for (int castIndex = 0; castIndex < castCount; castIndex++)
         {
@@ -132,6 +132,8 @@ public class MagicModel
                 break;
             case MagicEffectType.ApplyBuff:
                 int buffAmount = Data.buffAmount;
+                if (BuffModel.GetKind(Data.buffType) == BuffKindEnum.DeBuff)
+                    buffAmount += playerState.GetBuffStack(BuffEnum.DebuffPower);
                 if (enemyModel != null)
                 {
                     GameLog.Data($"Magic {Id} add buff target={enemyModel.Id} buff={Data.buffType} stack={buffAmount}");
@@ -161,9 +163,9 @@ public class MagicModel
         };
     }
 
-    protected int GetAdditionalCastCount()
+    protected int GetAdditionalCastCount(PlayerState playerState)
     {
-        int count = 0;
+        int count = playerState != null ? playerState.GetBuffStack(BuffEnum.RepeatSpell) : 0;
         for (int i = 0; i < Modifiers.Count; i++)
             count += Modifiers[i].GetAdditionalCastCount();
         return count;

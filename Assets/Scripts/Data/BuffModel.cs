@@ -114,6 +114,14 @@ public class BuffModel
                 return new BurningBuffModel(stack);
             case BuffEnum.BurningNextTurn:
                 return new BurningNextTurnBuffModel(stack);
+            case BuffEnum.BurnOnAttack:
+                return new BurnOnAttackBuffModel(stack);
+            case BuffEnum.RepeatSpell:
+                return new RepeatSpellBuffModel(stack);
+            case BuffEnum.DebuffPower:
+                return new DebuffPowerBuffModel(stack);
+            case BuffEnum.VortexNextDraw:
+                return new VortexNextDrawBuffModel(stack);
             case BuffEnum.SpellPower:
                 return new SpellPowerBuffModel(stack);
             case BuffEnum.DefensePower:
@@ -145,9 +153,13 @@ public class BuffModel
             case BuffEnum.Arc:
             case BuffEnum.Burning:
             case BuffEnum.BurningNextTurn:
+            case BuffEnum.BurnOnAttack:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
+            case BuffEnum.RepeatSpell:
+            case BuffEnum.DebuffPower:
+            case BuffEnum.VortexNextDraw:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:

@@ -323,6 +323,7 @@ public class EnemyModel
         int attackValue = GetAttackValueBeforeTargetReaction(intent, new CombatantModel(playerState));
         GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
         playerState.TakeDamage(attackValue, new CombatantModel(this));
+        ApplyBurnOnAttack();
     }
 
     private void ResolveAttackAllIntent(EnemyIntentData intent, PlayerState playerState)
@@ -333,6 +334,7 @@ public class EnemyModel
             int playerAttackValue = GetAttackValueBeforeTargetReaction(intent, new CombatantModel(playerState));
             GameLog.Data($"Enemy {Id} intent attack all player value={playerAttackValue}");
             playerState.TakeDamage(playerAttackValue, attacker);
+            ApplyBurnOnAttack();
         }
 
         IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
@@ -352,6 +354,13 @@ public class EnemyModel
             GameLog.Data($"Enemy {Id} intent attack all target={target.Id} value={attackValue}");
             target.TakeDamage(attackValue, attacker);
         }
+    }
+
+    private void ApplyBurnOnAttack()
+    {
+        int stack = GetBuffStack(BuffEnum.BurnOnAttack);
+        if (stack > 0)
+            AddBuff(BuffEnum.Burning, stack);
     }
 
     private int GetAttackValueBeforeTargetReaction(EnemyIntentData intent, CombatantModel target)
