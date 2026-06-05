@@ -14,6 +14,9 @@ public class EnemyIntentView : MonoBehaviour
     [SerializeField] private float rippleSize = 74f;
     [SerializeField] private int rippleRingCount = 3;
     [SerializeField] private float fadeOutDuration = 0.18f;
+    [SerializeField] private float horizontalPadding = 8f;
+    [SerializeField] private float iconTextSpacing = 6f;
+    [SerializeField] private float minWidth = 58f;
 
     private RectTransform rectTransform;
     private Vector2 baseAnchoredPosition;
@@ -23,6 +26,14 @@ public class EnemyIntentView : MonoBehaviour
     private bool hidden;
 
     public RectTransform RectTransform => rectTransform != null ? rectTransform : (RectTransform)transform;
+    public float LayoutWidth
+    {
+        get
+        {
+            CacheReferences();
+            return rectTransform != null ? rectTransform.sizeDelta.x : 0f;
+        }
+    }
 
     public void SetBaseAnchoredPosition(Vector2 position)
     {
@@ -76,7 +87,7 @@ public class EnemyIntentView : MonoBehaviour
         if (iconImage != null)
         {
             iconImage.sprite = LoadIntentSprite(intent);
-            iconImage.color = GetIntentColor(intent);
+            iconImage.color = Color.white;
             iconImage.raycastTarget = false;
             iconImage.canvasRenderer.SetAlpha(1f);
         }
@@ -86,9 +97,15 @@ public class EnemyIntentView : MonoBehaviour
             Color textColor = valueText.color;
             textColor.a = 1f;
             valueText.color = textColor;
-            valueText.text = GetIntentDisplayValue(intent, attackValue);
+            string displayValue = GetIntentDisplayValue(intent, attackValue);
+            valueText.text = displayValue;
             valueText.raycastTarget = false;
             valueText.canvasRenderer.SetAlpha(1f);
+            ApplyAdaptiveWidth(displayValue);
+        }
+        else
+        {
+            ApplyAdaptiveWidth(string.Empty);
         }
     }
 
@@ -100,14 +117,14 @@ public class EnemyIntentView : MonoBehaviour
 
         float duration = durationOverride > 0f ? durationOverride : rippleDuration;
         rippleImage.gameObject.SetActive(true);
-        rippleImage.color = iconImage != null ? iconImage.color : Color.white;
+        rippleImage.color = Color.white;
         rippleImage.rectTransform.sizeDelta = new Vector2(rippleSize, rippleSize);
         rippleImage.rectTransform.anchoredPosition = Vector2.zero;
         EnsureRippleMaterial();
         if (rippleMaterial == null)
             return rippleImage.DOFade(0f, duration).OnComplete(() => rippleImage.gameObject.SetActive(false));
 
-        rippleMaterial.SetColor("_Color", iconImage != null ? iconImage.color : Color.white);
+        rippleMaterial.SetColor("_Color", Color.white);
         rippleMaterial.SetFloat("_Progress", 0f);
         rippleMaterial.SetFloat("_RingCount", rippleRingCount);
         return DOTween.To(() => 0f, value => rippleMaterial.SetFloat("_Progress", value), 1f, duration)
@@ -159,41 +176,107 @@ public class EnemyIntentView : MonoBehaviour
             if (shader == null)
                 return;
             rippleMaterial = new Material(shader);
-            rippleMaterial.SetColor("_Color", iconImage != null ? iconImage.color : Color.white);
+            rippleMaterial.SetColor("_Color", Color.white);
             rippleImage.material = rippleMaterial;
         }
     }
 
     private static Sprite LoadIntentSprite(EnemyIntentData intent)
     {
-        if (intent == null)
-            return Resources.Load<Sprite>("Images/UI/mixed");
+        string displayType = ResolveIntentDisplayType(intent);
+        Sprite sprite = !string.IsNullOrEmpty(displayType) ? Resources.Load<Sprite>("Images/Intent/" + displayType) : null;
+        if (sprite != null)
+            return sprite;
 
-        switch (intent.intentType)
+        switch (intent != null ? intent.actionType : EnemyActionType.None)
         {
-            case EnemyIntentType.Attack: return Resources.Load<Sprite>("Images/UI/attack");
-            case EnemyIntentType.Defend: return Resources.Load<Sprite>("Images/UI/defend");
-            case EnemyIntentType.ApplyBuff: return Resources.Load<Sprite>("Images/UI/mixed");
-            case EnemyIntentType.ApplyDebuff: return Resources.Load<Sprite>("Images/UI/mixed");
-            case EnemyIntentType.Summon: return Resources.Load<Sprite>("Images/UI/mixed");
-            default: return Resources.Load<Sprite>("Images/UI/mixed");
+            case EnemyActionType.Attack:
+            case EnemyActionType.AttackAll:
+                return Resources.Load<Sprite>("Images/Intent/attack");
+            case EnemyActionType.GainShield:
+                return Resources.Load<Sprite>("Images/Intent/defend");
+            case EnemyActionType.ApplyDebuff:
+                return Resources.Load<Sprite>("Images/Intent/debuff");
+            case EnemyActionType.Summon:
+                return Resources.Load<Sprite>("Images/Intent/summon");
+            case EnemyActionType.Stunned:
+                return Resources.Load<Sprite>("Images/Intent/stun");
+            case EnemyActionType.ApplyBuff:
+                return Resources.Load<Sprite>("Images/Intent/buff");
+            case EnemyActionType.Special:
+            default:
+                return Resources.Load<Sprite>("Images/Intent/spAttack");
         }
     }
 
-    private static Color GetIntentColor(EnemyIntentData intent)
+    private static string ResolveIntentDisplayType(EnemyIntentData intent)
     {
         if (intent == null)
-            return Color.gray;
+            return "spAttack";
+        if (!string.IsNullOrEmpty(intent.displayType))
+            return intent.displayType;
 
-        switch (intent.intentType)
+        switch (intent.actionType)
         {
-            case EnemyIntentType.Attack: return new Color(0.95f, 0.18f, 0.14f, 1f);
-            case EnemyIntentType.Defend: return new Color(0.25f, 0.55f, 1f, 1f);
-            case EnemyIntentType.ApplyBuff: return new Color(0.75f, 0.35f, 1f, 1f);
-            case EnemyIntentType.ApplyDebuff: return new Color(0.25f, 0.8f, 0.35f, 1f);
-            case EnemyIntentType.Summon: return new Color(1f, 0.62f, 0.16f, 1f);
-            default: return Color.gray;
+            case EnemyActionType.AttackAll:
+                return "allAttack";
+            case EnemyActionType.Attack:
+                if (intent.times > 1)
+                    return intent.value >= 6 ? "bitMultiAttack" : "multiAttack";
+                return intent.value >= 8 ? "bigAttack" : "attack";
+            case EnemyActionType.GainShield:
+                return intent.value >= 8 ? "bigDefend" : "defend";
+            case EnemyActionType.ApplyDebuff:
+                return "debuff";
+            case EnemyActionType.ApplyBuff:
+                return "buff";
+            case EnemyActionType.Summon:
+                return "summon";
+            case EnemyActionType.Stunned:
+                return "stun";
+            case EnemyActionType.Special:
+                return "spAttack";
+            default:
+                return "spAttack";
         }
+    }
+
+    private void ApplyAdaptiveWidth(string displayValue)
+    {
+        if (rectTransform == null || iconImage == null)
+            return;
+
+        RectTransform iconRect = iconImage.rectTransform;
+        float iconWidth = iconRect.sizeDelta.x > 0f ? iconRect.sizeDelta.x : iconRect.rect.width;
+        if (iconWidth <= 0f)
+            iconWidth = 42f;
+
+        bool hasValue = !string.IsNullOrEmpty(displayValue);
+        float textWidth = 0f;
+        if (valueText != null)
+        {
+            valueText.gameObject.SetActive(hasValue);
+            if (hasValue)
+            {
+                valueText.ForceMeshUpdate();
+                textWidth = Mathf.Ceil(valueText.preferredWidth);
+                RectTransform textRect = valueText.rectTransform;
+                Vector2 textSize = textRect.sizeDelta;
+                textSize.x = textWidth;
+                textRect.sizeDelta = textSize;
+                float textX = valueText.transform.parent == iconImage.transform
+                    ? iconTextSpacing + textWidth * 0.5f
+                    : iconRect.anchoredPosition.x + iconWidth * 0.5f + iconTextSpacing + textWidth * 0.5f;
+                textRect.anchoredPosition = new Vector2(textX, textRect.anchoredPosition.y);
+            }
+        }
+
+        float width = hasValue ? horizontalPadding * 2f + iconWidth + iconTextSpacing + textWidth : horizontalPadding * 2f + iconWidth;
+        width = Mathf.Max(minWidth, width);
+        Vector2 size = rectTransform.sizeDelta;
+        size.x = width;
+        rectTransform.sizeDelta = size;
+        iconRect.anchoredPosition = new Vector2(horizontalPadding + iconWidth * 0.5f, iconRect.anchoredPosition.y);
     }
 
     private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue)
@@ -204,11 +287,11 @@ public class EnemyIntentView : MonoBehaviour
             return attackValue.ToString();
         if (intent.actionType == EnemyActionType.Summon)
             return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
-        if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff)
+        if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff || intent.actionType == EnemyActionType.Special || intent.actionType == EnemyActionType.Stunned)
             return string.Empty;
         if (intent.value > 0)
             return intent.value.ToString();
-        return LocalizationSystem.GetText(intent.descriptionKey, string.Empty);
+        return string.Empty;
     }
 
     private void OnDestroy()

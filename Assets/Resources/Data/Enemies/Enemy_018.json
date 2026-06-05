@@ -1,0 +1,82 @@
+{
+  "numericId": 18,
+  "string_id": "enemy_018",
+  "nameKey": "enemy.018.name",
+  "maxHealth": 51,
+  "baseAttack": 11,
+  "imageScale": 0.6,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [
+    {
+      "buffType": 24,
+      "stack": 1
+    }
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 11,
+              "displayType": "bigAttack"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 5,
+              "times": 2,
+              "displayType": "multiAttack"
+            },
+            {
+              "actionType": 2,
+              "value": 8,
+              "displayType": "bigDefend"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 7,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 2
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        },
+        {
+          "groupId": 3
+        }
+      ]
+    }
+  ],
+  "iconName": "黑白块",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

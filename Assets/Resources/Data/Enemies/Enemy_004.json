@@ -1,0 +1,58 @@
+{
+  "numericId": 4,
+  "string_id": "enemy_004",
+  "nameKey": "enemy.004.name",
+  "maxHealth": 26,
+  "baseAttack": 9,
+  "imageScale": 0.4,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 9,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 2,
+              "value": 3,
+              "displayType": "defend"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 2,
+              "value": 9,
+              "displayType": "bigDefend"
+            },
+            {
+              "actionType": 1,
+              "value": 3,
+              "displayType": "attack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "相扑男",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

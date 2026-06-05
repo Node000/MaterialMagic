@@ -4,9 +4,9 @@ public class VulnerableBuffModel : BuffModel
     {
     }
 
-    public override void AfterAttack(CombatantModel self, CombatantModel target, ref int attackResult)
+    public override void OnTakeDamage(CombatantModel self, CombatantModel attacker, ref int damage)
     {
-        attackResult += stack;
+        damage += stack;
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

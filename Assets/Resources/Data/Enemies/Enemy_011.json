@@ -1,0 +1,40 @@
+{
+  "numericId": 11,
+  "string_id": "enemy_011",
+  "nameKey": "enemy.011.name",
+  "maxHealth": 10,
+  "baseAttack": 2,
+  "imageScale": 1.0,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [
+    {
+      "buffType": 23,
+      "stack": 5
+    }
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 8,
+              "value": 2,
+              "displayType": "allAttack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        }
+      ]
+    }
+  ],
+  "iconName": "卵",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

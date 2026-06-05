@@ -10,6 +10,7 @@ public class BuffModel
 
     public BuffKindEnum Kind => GetKind(buffType);
     public bool IsDeBuff => Kind == BuffKindEnum.DeBuff;
+    public virtual bool IsVisible => true;
 
     public BuffModel(BuffEnum buffType, int stack)
     {
@@ -46,6 +47,14 @@ public class BuffModel
     }
 
     public virtual void OnAttack(CombatantModel self, CombatantModel target, ref int attackValue)
+    {
+    }
+
+    public virtual void OnTakeDamage(CombatantModel self, CombatantModel attacker, ref int damage)
+    {
+    }
+
+    public virtual void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
     }
 
@@ -122,6 +131,28 @@ public class BuffModel
                 return new DebuffPowerBuffModel(stack);
             case BuffEnum.VortexNextDraw:
                 return new VortexNextDrawBuffModel(stack);
+            case BuffEnum.EggDeathExplosion:
+                return new EggDeathExplosionBuffModel(stack);
+            case BuffEnum.ShieldOnHealthLoss:
+                return new ShieldOnHealthLossBuffModel(stack);
+            case BuffEnum.ShuffleHandOnInvokeChance:
+                return new ShuffleHandOnInvokeChanceBuffModel(stack);
+            case BuffEnum.AttributeDisabled:
+                return new AttributeDisabledBuffModel(stack);
+            case BuffEnum.Curse:
+                return new CurseBuffModel(stack);
+            case BuffEnum.DirectionDamageBonus:
+                return new DirectionDamageBonusBuffModel(stack);
+            case BuffEnum.DirectionWeakBonus:
+                return new DirectionWeakBonusBuffModel(stack);
+            case BuffEnum.DirectionExtraDraw:
+                return new DirectionExtraDrawBuffModel(stack);
+            case BuffEnum.DirectionShieldBonus:
+                return new DirectionShieldBonusBuffModel(stack);
+            case BuffEnum.MaterialOverplayDebuff:
+                return new MaterialOverplayDebuffBuffModel(stack);
+            case BuffEnum.PreparedShield:
+                return new PreparedShieldBuffModel(stack);
             case BuffEnum.SpellPower:
                 return new SpellPowerBuffModel(stack);
             case BuffEnum.DefensePower:
@@ -154,12 +185,22 @@ public class BuffModel
             case BuffEnum.Burning:
             case BuffEnum.BurningNextTurn:
             case BuffEnum.BurnOnAttack:
+            case BuffEnum.AttributeDisabled:
+            case BuffEnum.Curse:
+            case BuffEnum.MaterialOverplayDebuff:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
             case BuffEnum.RepeatSpell:
             case BuffEnum.DebuffPower:
             case BuffEnum.VortexNextDraw:
+            case BuffEnum.ShieldOnHealthLoss:
+            case BuffEnum.ShuffleHandOnInvokeChance:
+            case BuffEnum.DirectionDamageBonus:
+            case BuffEnum.DirectionWeakBonus:
+            case BuffEnum.DirectionExtraDraw:
+            case BuffEnum.DirectionShieldBonus:
+            case BuffEnum.PreparedShield:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:
@@ -167,6 +208,7 @@ public class BuffModel
             case BuffEnum.Stable:
             case BuffEnum.Disorder:
             case BuffEnum.Shield:
+            case BuffEnum.EggDeathExplosion:
                 return BuffKindEnum.Buff;
             default:
                 return BuffKindEnum.Neutral;
@@ -196,6 +238,13 @@ public class CombatantModel
     public CombatantModel(EnemyModel enemy)
     {
         this.enemy = enemy;
+    }
+
+    public CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
+    {
+        if (IsPlayer)
+            return player.TakeDamageResult(damage, attacker);
+        return enemy.TakeDamageResult(damage, attacker);
     }
 
     public void TakeDamage(int damage)

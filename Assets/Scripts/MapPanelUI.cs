@@ -291,6 +291,8 @@ public class MapPanelUI : MonoBehaviour
             SetSlashVisible(node, false);
             SetIconVisible(node, "LeftIcon", false);
             SetIconVisible(node, "RightIcon", false);
+            SetUnknownTextVisible(node, "LeftUnknownText", false);
+            SetUnknownTextVisible(node, "RightUnknownText", false);
             Image centerIcon = GetOrCreateMapIcon(node, "CenterIcon", Vector2.zero);
             if (centerIcon != null)
             {
@@ -298,12 +300,13 @@ public class MapPanelUI : MonoBehaviour
                 centerRect.anchoredPosition = Vector2.zero;
                 centerRect.sizeDelta = new Vector2(42f, 42f);
             }
-            SetNodeIcon(node, "CenterIcon", nodeModel.leftLevel.levelType, GetChoiceColor(nodeModel, nodeModel.leftLevel));
+            SetNodeChoice(node, "CenterIcon", "CenterUnknownText", nodeModel.leftLevel, nodeModel.leftHidden, GetChoiceColor(nodeModel, nodeModel.leftLevel));
             return;
         }
 
         SetSlashVisible(node, true);
         SetIconVisible(node, "CenterIcon", false);
+        SetUnknownTextVisible(node, "CenterUnknownText", false);
         Image left = GetOrCreateMapIcon(node, "LeftIcon", new Vector2(-18f, 18f));
         if (left != null)
         {
@@ -322,8 +325,8 @@ public class MapPanelUI : MonoBehaviour
             rightRect.sizeDelta = new Vector2(32f, 32f);
         }
 
-        SetNodeIcon(node, "LeftIcon", nodeModel.leftLevel.levelType, GetChoiceColor(nodeModel, nodeModel.leftLevel));
-        SetNodeIcon(node, "RightIcon", nodeModel.rightLevel.levelType, GetChoiceColor(nodeModel, nodeModel.rightLevel));
+        SetNodeChoice(node, "LeftIcon", "LeftUnknownText", nodeModel.leftLevel, nodeModel.leftHidden, GetChoiceColor(nodeModel, nodeModel.leftLevel));
+        SetNodeChoice(node, "RightIcon", "RightUnknownText", nodeModel.rightLevel, nodeModel.rightHidden, GetChoiceColor(nodeModel, nodeModel.rightLevel));
     }
 
     private RectTransform CreateRuntimeNode(int index)
@@ -458,12 +461,84 @@ public class MapPanelUI : MonoBehaviour
         return nodeModel.selectedLevel == level ? Color.white : new Color(0.58f, 0.58f, 0.58f, 1f);
     }
 
-    private void SetNodeIcon(RectTransform node, string iconName, LevelType type, Color color)
+    private void SetNodeChoice(RectTransform node, string iconName, string unknownTextName, LevelData level, bool hidden, Color color)
+    {
+        if (level == null)
+        {
+            SetIconVisible(node, iconName, false);
+            SetUnknownTextVisible(node, unknownTextName, false);
+            return;
+        }
+
+        if (hidden)
+            SetUnknownNodeIcon(node, iconName, unknownTextName, color);
+        else
+            SetNodeIcon(node, iconName, unknownTextName, level.levelType, color);
+    }
+
+    private void SetUnknownNodeIcon(RectTransform node, string iconName, string unknownTextName, Color color)
     {
         Image icon = UIManager.FindChildComponent<Image>(node, iconName);
         if (icon == null)
             return;
 
+        icon.gameObject.SetActive(true);
+        icon.sprite = null;
+        icon.color = new Color(0.24f * color.r, 0.24f * color.g, 0.3f * color.b, 1f);
+        icon.raycastTarget = false;
+
+        TMP_Text text = GetOrCreateUnknownText(node, unknownTextName, icon.rectTransform);
+        if (text != null)
+        {
+            text.text = "?";
+            text.color = color;
+            text.fontSize = icon.rectTransform.sizeDelta.y * 0.9f;
+            text.raycastTarget = false;
+            text.gameObject.SetActive(true);
+            text.transform.SetAsLastSibling();
+        }
+    }
+
+    private TMP_Text GetOrCreateUnknownText(RectTransform parent, string name, RectTransform sourceRect)
+    {
+        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(parent, name);
+        if (text == null && parent != null)
+        {
+            text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+            text.transform.SetParent(parent, false);
+            text.alignment = TextAlignmentOptions.Center;
+            text.fontStyle = FontStyles.Bold;
+            TMP_FontAsset font = UIManager.GetDefaultTMPFont();
+            if (font != null)
+                text.font = font;
+        }
+
+        if (text != null && sourceRect != null)
+        {
+            RectTransform rect = text.rectTransform;
+            rect.anchorMin = sourceRect.anchorMin;
+            rect.anchorMax = sourceRect.anchorMax;
+            rect.pivot = sourceRect.pivot;
+            rect.anchoredPosition = sourceRect.anchoredPosition;
+            rect.sizeDelta = sourceRect.sizeDelta;
+        }
+        return text;
+    }
+
+    private static void SetUnknownTextVisible(RectTransform node, string textName, bool visible)
+    {
+        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(node, textName);
+        if (text != null)
+            text.gameObject.SetActive(visible);
+    }
+
+    private void SetNodeIcon(RectTransform node, string iconName, string unknownTextName, LevelType type, Color color)
+    {
+        Image icon = UIManager.FindChildComponent<Image>(node, iconName);
+        if (icon == null)
+            return;
+
+        SetUnknownTextVisible(node, unknownTextName, false);
         icon.gameObject.SetActive(true);
         icon.sprite = UIManager.LoadLevelTypeSprite(type);
         icon.color = icon.sprite != null ? color : new Color(color.r * 0.7f, color.g * 0.7f, color.b * 0.75f, 1f);

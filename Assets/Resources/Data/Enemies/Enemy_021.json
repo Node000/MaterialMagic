@@ -1,0 +1,67 @@
+{
+  "numericId": 21,
+  "string_id": "enemy_021",
+  "nameKey": "enemy.021.name",
+  "maxHealth": 119,
+  "baseAttack": 12,
+  "imageScale": 0.7,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 12,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 2,
+              "value": 15,
+              "displayType": "bigDefend"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 4,
+              "times": 4,
+              "displayType": "multiAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 1,
+              "displayType": "summon"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "randomGroupIds": [
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "蓝眼",
+  "spriteAnimationPath": "蓝眼",
+  "animationFrameRate": 8.0
+}

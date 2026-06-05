@@ -1,0 +1,48 @@
+{
+  "numericId": 16,
+  "string_id": "enemy_016",
+  "nameKey": "enemy.016.name",
+  "maxHealth": 63,
+  "baseAttack": 0,
+  "imageScale": 0.45,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 1,
+              "displayType": "spDefend"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 2,
+              "displayType": "spAttack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "鹿男",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

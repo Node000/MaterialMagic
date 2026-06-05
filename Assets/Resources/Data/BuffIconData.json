@@ -2,7 +2,7 @@
   "items": [
     {
       "buffType": 1,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 2,
@@ -30,31 +30,31 @@
     },
     {
       "buffType": 11,
-      "iconName": "DefaultBuff"
+      "iconName": "redStar"
     },
     {
       "buffType": 12,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 13,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 14,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 15,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 16,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 17,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 18,
@@ -62,19 +62,59 @@
     },
     {
       "buffType": 19,
-      "iconName": "DefaultBuff"
+      "iconName": "redStar"
     },
     {
       "buffType": 20,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 21,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
     },
     {
       "buffType": 22,
-      "iconName": "DefaultBuff"
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 23,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 24,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 25,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 26,
+      "iconName": "redStar"
+    },
+    {
+      "buffType": 27,
+      "iconName": "redStar"
+    },
+    {
+      "buffType": 28,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 29,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 30,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 31,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 32,
+      "iconName": "redStar"
     }
   ]
 }

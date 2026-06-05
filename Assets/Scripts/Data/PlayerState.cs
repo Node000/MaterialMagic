@@ -30,6 +30,7 @@ public class PlayerState
     public List<MagicModel> MagicBook { get; } = new List<MagicModel>();
     public IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
     public EnemyModel LastDamageSourceEnemy { get; private set; }
+    public bool IsEndingTurn { get; private set; }
 
     public PlayerState(int maxHealth = 50, int gold = 0)
     {
@@ -49,7 +50,7 @@ public class PlayerState
         if (!GameDataDatabase.TryGetPlayerStartConfigData(configId, out PlayerStartConfigData config))
             config = null;
 
-        PlayerState state = new PlayerState(config != null ? config.maxHealth : 50, config != null ? config.gold : 0);
+        PlayerState state = new PlayerStatus(config != null ? config.maxHealth : 50, config != null ? config.gold : 0);
         GameLog.Data($"Create player config={configId} maxHealth={state.MaxHealth} gold={state.Gold}");
         if (config == null)
         {
@@ -81,18 +82,29 @@ public class PlayerState
 
     public int DrawCards(int count)
     {
+        return DrawCardsToHand(count, true);
+    }
+
+    public int DrawCardsForRefresh(int count)
+    {
+        return DrawCardsToHand(count, false);
+    }
+
+    private int DrawCardsToHand(int count, bool triggerAfterDraw)
+    {
         int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
             if (!EnsureDrawPileHasCards())
                 break;
 
-            int randomIndex = Random.Range(0, DrawPile.Count);
+            int randomIndex = NextRunRandomInt(0, DrawPile.Count);
             MaterialModel card = DrawPile[randomIndex];
             DrawPile.RemoveAt(randomIndex);
             Hand.Add(card);
             card.TriggerOnDraw();
-            TriggerAfterDraw(card);
+            if (triggerAfterDraw)
+                TriggerAfterDraw(card);
             drawnCount++;
             GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
         }
@@ -108,7 +120,7 @@ public class PlayerState
             if (!EnsureDrawPileHasCards())
                 break;
 
-            int randomIndex = Random.Range(0, DrawPile.Count);
+            int randomIndex = NextRunRandomInt(0, DrawPile.Count);
             MaterialModel card = DrawPile[randomIndex];
             DrawPile.RemoveAt(randomIndex);
             PlayZone.Add(card);
@@ -120,6 +132,11 @@ public class PlayerState
         }
 
         return drawnCount;
+    }
+
+    private int NextRunRandomInt(int minInclusive, int maxExclusive)
+    {
+        return this is PlayerStatus status ? status.NextRunRandomInt(minInclusive, maxExclusive) : Random.Range(minInclusive, maxExclusive);
     }
 
     private bool EnsureDrawPileHasCards()
@@ -147,12 +164,43 @@ public class PlayerState
         if (index < 0)
             return false;
 
+        int disabledMaterial = GetBuffStack(BuffEnum.AttributeDisabled);
+        if (disabledMaterial > 0 && (int)card.material == disabledMaterial)
+            return false;
+
         Hand.RemoveAt(index);
         PlayZone.Add(card);
         card.isPlayed = true;
         card.TriggerOnJoin();
+        if (GetBuffStack(BuffEnum.MaterialOverplayDebuff) > 0 || HasMaterialOverplayDebuffSource())
+        {
+            if (PlayZone.Count > 4)
+                AddRandomEnemyDebuff(1);
+        }
         GameLog.Data($"Move card {DescribeMaterial(card)} hand->playZone. hand={Hand.Count} playZone={PlayZone.Count}");
         return true;
+    }
+
+    private void AddRandomEnemyDebuff(int stack)
+    {
+        int index = NextRunRandomInt(0, 3);
+        AddBuff(index == 0 ? BuffEnum.Weak : index == 1 ? BuffEnum.Slow : BuffEnum.Vulnerable, stack);
+    }
+
+    private bool HasMaterialOverplayDebuffSource()
+    {
+        IReadOnlyList<EnemyModel> enemies = BattleManager.Instance?.Enemies;
+        if (enemies == null)
+            return false;
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead && enemy.GetBuffStack(BuffEnum.MaterialOverplayDebuff) > 0)
+                return true;
+        }
+
+        return false;
     }
 
     public bool TryMovePlayCardToHand(MaterialModel card)
@@ -253,7 +301,7 @@ public class PlayerState
         MaterialModifierModel.CurrentContext = null;
 
         int discardedCount = ReturnHandCardsToDiscardPile(cards, removedTemporaryCards);
-        int drawnCount = DrawCards(refreshCount);
+        int drawnCount = DrawCardsForRefresh(refreshCount);
         GameLog.Data($"Refresh hand cards selected={cards.Count} drawn={drawnCount} discarded={discardedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
         return new RefreshHandResult(drawnCount, discardedCount);
     }
@@ -305,6 +353,7 @@ public class PlayerState
 
     public void EndTurn(List<MaterialModel> removedTemporaryCards)
     {
+        IsEndingTurn = true;
         if (Hand.Count > 0)
         {
             if (KeepHandOnEndTurn)
@@ -333,6 +382,7 @@ public class PlayerState
                 Hand.Clear();
             }
         }
+        IsEndingTurn = false;
 
         ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
         KeepHandOnEndTurn = false;
@@ -345,14 +395,21 @@ public class PlayerState
 
     public int TakeDamage(int damage, CombatantModel attacker)
     {
+        return TakeDamageResult(damage, attacker).HealthDamage;
+    }
+
+    public CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
+    {
+        CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
-            return 0;
+            return result;
 
         int remainingDamage = damage;
-        TriggerAfterAttack(attacker, ref remainingDamage);
+        TriggerOnTakeDamage(attacker, ref remainingDamage);
         if (remainingDamage <= 0)
-            return 0;
+            return result;
 
+        result.FinalDamage = remainingDamage;
         int healthBefore = CurrentHealth;
         int blockedDamage = 0;
         if (Shield > 0)
@@ -368,17 +425,18 @@ public class PlayerState
         int healthDamage = healthBefore - CurrentHealth;
         if (healthDamage > 0)
             LastDamageSourceEnemy = attacker != null && attacker.IsEnemy ? attacker.Enemy : null;
-        GameLog.Data($"Player take damage raw={damage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
+        result.ShieldDamage = blockedDamage;
+        result.HealthDamage = healthDamage;
+        result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
+        GameLog.Data($"Player take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
-        if (blockedDamage > 0 && GetBuffStack(BuffEnum.ShieldReflect) > 0)
-            attacker?.TakeDamage(blockedDamage);
-
-        if (healthBefore > 0 && CurrentHealth <= 0)
+        TriggerAfterTakeDamage(attacker, result);
+        if (result.TargetDied)
             TriggerOnDie(attacker);
 
-        return healthDamage;
+        return result;
     }
 
     public int TakeDirectDamage(int damage)
@@ -619,6 +677,28 @@ public class PlayerState
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
             snapshot[i].AfterAttack(self, attacker, ref attackResult);
+    }
+
+    public void TriggerOnTakeDamage(CombatantModel attacker, ref int damage)
+    {
+        if (buffs.Count == 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].OnTakeDamage(self, attacker, ref damage);
+    }
+
+    public void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result)
+    {
+        if (buffs.Count == 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].AfterTakeDamage(self, attacker, result);
     }
 
     public void TriggerOnGainShield(ref int shieldValue)

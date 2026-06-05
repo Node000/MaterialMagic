@@ -1,7 +1,8 @@
-public class SwampMagicModel : ScriptedMagicModel
+public class SwampMagicModel : MagicModel
 {
     public SwampMagicModel(MagicData data, int slotIndex = 0) : base(data, slotIndex) { }
-    protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
+    public override MagicEffectType EffectType => MagicEffectType.ApplyBuff;
+    protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
         AddBuff(target, BuffEnum.Slow, 2, result);

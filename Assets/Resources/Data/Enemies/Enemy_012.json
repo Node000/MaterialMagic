@@ -1,0 +1,89 @@
+{
+  "numericId": 12,
+  "string_id": "enemy_012",
+  "nameKey": "enemy.012.name",
+  "maxHealth": 27,
+  "baseAttack": 11,
+  "imageScale": 0.95,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 3,
+                  "stack": 4
+                },
+                {
+                  "buffType": 7,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 1,
+              "displayType": "spAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 11,
+              "displayType": "bigAttack"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 7,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 2,
+              "value": 5,
+              "displayType": "defend"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1,
+          "onlyOnce": true
+        },
+        {
+          "randomGroupIds": [
+            3,
+            4
+          ]
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "生意人",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

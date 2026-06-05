@@ -7,7 +7,8 @@ public enum LevelType
     Event = 1,
     Shop = 2,
     Rest = 3,
-    Reward = 4
+    Reward = 4,
+    Elite = 5
 }
 
 [Serializable]
@@ -65,7 +66,18 @@ public enum BuffEnum
     BurnOnAttack = 19,
     RepeatSpell = 20,
     DebuffPower = 21,
-    VortexNextDraw = 22
+    VortexNextDraw = 22,
+    EggDeathExplosion = 23,
+    ShieldOnHealthLoss = 24,
+    ShuffleHandOnInvokeChance = 25,
+    AttributeDisabled = 26,
+    Curse = 27,
+    DirectionDamageBonus = 28,
+    DirectionWeakBonus = 29,
+    DirectionExtraDraw = 30,
+    DirectionShieldBonus = 31,
+    MaterialOverplayDebuff = 32,
+    PreparedShield = 33
 }
 
 public enum BuffKindEnum
@@ -118,7 +130,9 @@ public enum EnemyActionType
     CounterFirstMagic = 5,
     ApplyDebuff = 6,
     Summon = 7,
-    AttackAll = 8
+    AttackAll = 8,
+    Special = 9,
+    Stunned = 10
 }
 
 public enum EventRewardType
@@ -137,7 +151,8 @@ public enum EventRewardType
     GainRandomMaterial = 11,
     GainSameRandomMaterials = 12,
     IncreaseDrawCount = 13,
-    RemoveMaterial = 14
+    RemoveMaterial = 14,
+    GainNextBattleStartShield = 15
 }
 
 public enum BonusRewardType
@@ -195,16 +210,12 @@ public class MagicData : IDataRecord, INumericDataRecord
     public string id;
     public string nameKey;
     public string descriptionKey;
+    public string script;
     public string iconName;
     public MaterialEnum element;
     public string[] tagIds = Array.Empty<string>();
     public MaterialEnum[] recipe = Array.Empty<MaterialEnum>();
     public MagicMatchRule matchRule;
-    public MagicEffectType effectType;
-    public int power;
-    public int hitCount;
-    public BuffEnum buffType;
-    public int buffAmount;
     public bool playPlayerCastAnimation = true;
 
     public string Id => id;
@@ -244,16 +255,37 @@ public class EnemyIntentData
     public EnemyIntentType intentType;
     public EnemyActionType actionType;
     public int value;
+    public int times = 1;
     public int summonEnemyId;
     public int summonCount = 1;
     public BuffStackData[] buffs = Array.Empty<BuffStackData>();
+    public string displayType;
     public string descriptionKey;
 }
 
 [Serializable]
 public class EnemyIntentGroupData
 {
+    public int id;
+    public bool onlyOnce;
     public EnemyIntentData[] intents = Array.Empty<EnemyIntentData>();
+}
+
+[Serializable]
+public class EnemyIntentLoopData
+{
+    public int groupId;
+    public int[] randomGroupIds = Array.Empty<int>();
+    public bool onlyOnce;
+}
+
+[Serializable]
+public class EnemyPhaseData
+{
+    public int phase;
+    public EnemyIntentGroupData[] intentGroups = Array.Empty<EnemyIntentGroupData>();
+    public EnemyIntentLoopData[] intentLoop = Array.Empty<EnemyIntentLoopData>();
+    public EnemyIntentGroupData[] intentPool = Array.Empty<EnemyIntentGroupData>();
 }
 
 [Serializable]
@@ -272,17 +304,22 @@ public class EnemyData : IDataRecord, INumericDataRecord
 {
     public int numericId;
     public string id;
+    public string string_id;
     public string nameKey;
     public int maxHealth;
     public int baseAttack;
+    public float imageScale = 1f;
+    public float healthBarWidth;
     public BuffStackData[] initialBuffs = Array.Empty<BuffStackData>();
     public string iconName;
     public string spriteAnimationPath;
     public float animationFrameRate = 8f;
-    public EnemyIntentGroupData[] intentLoop = Array.Empty<EnemyIntentGroupData>();
+    public EnemyPhaseData[] phases = Array.Empty<EnemyPhaseData>();
+    public EnemyIntentGroupData[] intentGroups = Array.Empty<EnemyIntentGroupData>();
+    public EnemyIntentLoopData[] intentLoop = Array.Empty<EnemyIntentLoopData>();
     public EnemyActionData[] actionLoop = Array.Empty<EnemyActionData>();
 
-    public string Id => id;
+    public string Id => !string.IsNullOrEmpty(string_id) ? string_id : id;
     public int NumericId => numericId;
 }
 
@@ -346,6 +383,12 @@ public class LevelEnemyData
 }
 
 [Serializable]
+public class LevelEnemyGroupData
+{
+    public LevelEnemyData[] enemies = Array.Empty<LevelEnemyData>();
+}
+
+[Serializable]
 public class LevelData : IDataRecord, INumericDataRecord
 {
     public int numericId;
@@ -353,6 +396,7 @@ public class LevelData : IDataRecord, INumericDataRecord
     public string titleKey;
     public LevelType levelType;
     public LevelEnemyData[] enemies = Array.Empty<LevelEnemyData>();
+    public LevelEnemyGroupData[] randomEnemyGroups = Array.Empty<LevelEnemyGroupData>();
     public int[] enemyIds = Array.Empty<int>();
     public int rewardPoolId;
     public int eventPoolId;
@@ -419,6 +463,13 @@ public class ChapterData : INumericDataRecord
     public string id;
     public string nameKey;
     public int levelLength;
+    public float hiddenLevelWeight;
+    public int[] BeginPool = Array.Empty<int>();
+    public int[] MidPool = Array.Empty<int>();
+    public int[] NormalPool = Array.Empty<int>();
+    public int[] EventPool = Array.Empty<int>();
+    public int[] ElitePool = Array.Empty<int>();
+    public int[] BossPool = Array.Empty<int>();
     public int[] levelPoolIds = Array.Empty<int>();
     public ChapterLevelPoolRangeData[] levelPoolRanges = Array.Empty<ChapterLevelPoolRangeData>();
     public ChapterFixedLevelData[] fixed_level = Array.Empty<ChapterFixedLevelData>();

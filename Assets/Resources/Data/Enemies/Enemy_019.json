@@ -1,0 +1,85 @@
+{
+  "numericId": 19,
+  "string_id": "enemy_019",
+  "nameKey": "enemy.019.name",
+  "maxHealth": 38,
+  "baseAttack": 9,
+  "imageScale": 0.7,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 7,
+                  "stack": 3
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 9,
+              "displayType": "bigAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 3
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 3,
+              "times": 3,
+              "displayType": "multiAttack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "randomGroupIds": [
+            1,
+            3
+          ]
+        },
+        {
+          "randomGroupIds": [
+            2,
+            4
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "蓝眼",
+  "spriteAnimationPath": "蓝眼",
+  "animationFrameRate": 8.0
+}

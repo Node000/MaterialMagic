@@ -13,6 +13,18 @@ public enum RewardOptionKind
     Magic
 }
 
+public class RewardOptionsModel
+{
+    public int GoldReward { get; }
+    public List<MagicData> MagicChoices { get; }
+
+    public RewardOptionsModel(int goldReward, List<MagicData> magicChoices)
+    {
+        GoldReward = goldReward;
+        MagicChoices = magicChoices ?? new List<MagicData>();
+    }
+}
+
 public class RewardOptionView : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
@@ -67,6 +79,7 @@ public class RewardPanelUI : MonoBehaviour
     private int currentGoldReward;
     private bool magicOnlyMode;
     private Action magicOnlyCompleted;
+    private RewardOptionsModel currentRewardOptions;
 
     private const float SelectedMagicScale = 1.24f;
     private const float HoverMagicScaleBonus = 0.08f;
@@ -88,7 +101,8 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimed = false;
         goldClaimInProgress = false;
         magicClaimed = false;
-        currentGoldReward = RollBattleGoldReward();
+        currentRewardOptions = new RewardOptionsModel(RollBattleGoldReward(), owner.GetRewardMagicChoices(3));
+        currentGoldReward = currentRewardOptions.GoldReward;
         selectedMagicView = null;
         hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
@@ -117,7 +131,8 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimed = true;
         goldClaimInProgress = false;
         magicClaimed = false;
-        currentGoldReward = 0;
+        currentRewardOptions = new RewardOptionsModel(0, owner.GetRewardMagicChoices(3));
+        currentGoldReward = currentRewardOptions.GoldReward;
         selectedMagicView = null;
         hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
@@ -139,6 +154,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         owner?.SelectPendingRewardMagic(null);
         HideMagicChoices();
+        currentRewardOptions = null;
         gameObject.SetActive(false);
     }
 
@@ -162,6 +178,7 @@ public class RewardPanelUI : MonoBehaviour
         Action completed = magicOnlyCompleted;
         magicOnlyMode = false;
         magicOnlyCompleted = null;
+        currentRewardOptions = null;
         owner?.SelectPendingRewardMagic(null);
         HideMagicChoices();
         gameObject.SetActive(false);
@@ -170,20 +187,39 @@ public class RewardPanelUI : MonoBehaviour
 
     private void RefreshOptions()
     {
-        EnsureOptionCount(1);
-        int index = 0;
+        EnsureOptionCount(magicOnlyMode ? 1 : 2);
+
         if (magicOnlyMode)
         {
-            if (!magicClaimed)
-                optionViews[index++].Bind("获得法术", ShowMagicChoices);
+            if (optionViews.Count > 0)
+            {
+                if (!magicClaimed)
+                    optionViews[0].Bind("获得法术", ShowMagicChoices);
+                else
+                    optionViews[0].Hide();
+            }
+            for (int i = 1; i < optionViews.Count; i++)
+                optionViews[i].Hide();
         }
         else
         {
-            if (!goldClaimed && !goldClaimInProgress)
-                optionViews[index++].Bind("获得金币 +" + currentGoldReward, ClaimGoldReward);
+            if (optionViews.Count > 0)
+            {
+                if (!goldClaimed && !goldClaimInProgress)
+                    optionViews[0].Bind("金币x" + currentGoldReward, ClaimGoldReward);
+                else
+                    optionViews[0].Hide();
+            }
+            if (optionViews.Count > 1)
+            {
+                if (!magicClaimed && !goldClaimInProgress)
+                    optionViews[1].Bind("获得法术", ShowMagicChoices);
+                else
+                    optionViews[1].Hide();
+            }
+            for (int i = 2; i < optionViews.Count; i++)
+                optionViews[i].Hide();
         }
-        for (int i = index; i < optionViews.Count; i++)
-            optionViews[i].Hide();
 
         if (endButton != null)
         {
@@ -224,9 +260,10 @@ public class RewardPanelUI : MonoBehaviour
         if (economy == null)
             return battleGoldReward;
 
-        int min = Mathf.Min(economy.battleGoldMin, economy.battleGoldMax);
-        int max = Mathf.Max(economy.battleGoldMin, economy.battleGoldMax);
-        return UnityEngine.Random.Range(min, max + 1);
+        bool eliteReward = owner != null && owner.RunManager != null && owner.RunManager.CurrentLevel != null && owner.RunManager.CurrentLevel.levelType == LevelType.Elite;
+        int min = eliteReward ? Mathf.Min(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Min(economy.battleGoldMin, economy.battleGoldMax);
+        int max = eliteReward ? Mathf.Max(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Max(economy.battleGoldMin, economy.battleGoldMax);
+        return owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(min, max + 1) : UnityEngine.Random.Range(min, max + 1);
     }
 
     private void ShowMagicChoices()
@@ -239,7 +276,10 @@ public class RewardPanelUI : MonoBehaviour
         magicChoicePanel.gameObject.SetActive(true);
         magicChoicePanel.SetAsLastSibling();
 
-        List<MagicData> choices = owner.GetRewardMagicChoices();
+        if (currentRewardOptions == null)
+            currentRewardOptions = new RewardOptionsModel(currentGoldReward, owner.GetRewardMagicChoices(3));
+
+        List<MagicData> choices = currentRewardOptions.MagicChoices;
         for (int i = 0; i < rewardMagicViews.Count; i++)
         {
             MagicItemView view = rewardMagicViews[i];
@@ -270,6 +310,8 @@ public class RewardPanelUI : MonoBehaviour
                 button.onClick.AddListener(() => SelectMagicReward(data, view));
             }
             ConfigureMagicChoiceHover(view);
+            view.gameObject.SetActive(true);
+            SetRewardMagicHighlightVisible(view, view == selectedMagicView || view == hoveredMagicView);
         }
     }
 
@@ -294,6 +336,7 @@ public class RewardPanelUI : MonoBehaviour
 
             Transform rewardTransform = rewardView.transform;
             rewardTransform.DOKill(false);
+            SetRewardMagicHighlightVisible(rewardView, rewardView == selectedMagicView || rewardView == hoveredMagicView);
             Tween tween = rewardTransform.DOScale(GetRewardMagicTargetScale(rewardView), 0.16f).SetEase(Ease.OutBack).SetTarget(this);
             if (rewardView == selectedMagicView)
                 selectedMagicTween = tween;
@@ -318,8 +361,37 @@ public class RewardPanelUI : MonoBehaviour
         return Vector3.one * scale;
     }
 
+    private void SetRewardMagicHighlightVisible(MagicItemView view, bool visible)
+    {
+        SpringLineHighlightUI highlight = FindRewardMagicHighlight(view);
+        if (highlight == null)
+            return;
+
+        highlight.color = Color.white;
+        highlight.gameObject.SetActive(visible);
+    }
+
+    private SpringLineHighlightUI FindRewardMagicHighlight(MagicItemView view)
+    {
+        if (view == null)
+            return null;
+
+        SpringLineHighlightUI[] highlights = view.GetComponentsInChildren<SpringLineHighlightUI>(true);
+        for (int i = 0; i < highlights.Length; i++)
+        {
+            if (highlights[i] != null && highlights[i].transform != view.transform)
+                return highlights[i];
+        }
+        return highlights.Length > 0 ? highlights[0] : null;
+    }
+
     private void ConfigureMagicChoiceHover(MagicItemView view)
     {
+        SpringLineHighlightUI highlight = FindRewardMagicHighlight(view);
+        HoverHighlightTargetRelayUI relay = view != null ? view.GetComponent<HoverHighlightTargetRelayUI>() : null;
+        if (relay != null && highlight != null)
+            relay.Unregister(highlight.gameObject);
+
         EventTrigger trigger = view.GetComponent<EventTrigger>();
         if (trigger == null)
             trigger = view.gameObject.AddComponent<EventTrigger>();
@@ -363,6 +435,7 @@ public class RewardPanelUI : MonoBehaviour
                 rect.anchoredPosition = new Vector2(-160f + i * 160f, -18f);
                 rect.sizeDelta = new Vector2(196f, 92f);
                 rect.localScale = Vector3.one;
+                SetRewardMagicHighlightVisible(rewardMagicViews[i], false);
                 rewardMagicViews[i].gameObject.SetActive(false);
             }
         }
@@ -518,8 +591,29 @@ public class RewardPanelUI : MonoBehaviour
     private void CacheOptionViews()
     {
         optionViews.Clear();
-        RewardOptionView[] views = GetComponentsInChildren<RewardOptionView>(true);
-        for (int i = 0; i < views.Length; i++)
-            optionViews.Add(views[i]);
+        Transform optionRoot = transform.Find("OptionArea");
+        if (optionRoot != null)
+        {
+            Button[] buttons = optionRoot.GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                RewardOptionView view = buttons[i].GetComponent<RewardOptionView>();
+                if (view == null)
+                    view = buttons[i].gameObject.AddComponent<RewardOptionView>();
+                optionViews.Add(view);
+            }
+        }
+        else
+        {
+            RewardOptionView[] views = GetComponentsInChildren<RewardOptionView>(true);
+            for (int i = 0; i < views.Length; i++)
+                optionViews.Add(views[i]);
+        }
+        optionViews.Sort(CompareOptionViewNames);
+    }
+
+    private static int CompareOptionViewNames(RewardOptionView left, RewardOptionView right)
+    {
+        return string.CompareOrdinal(left != null ? left.name : string.Empty, right != null ? right.name : string.Empty);
     }
 }

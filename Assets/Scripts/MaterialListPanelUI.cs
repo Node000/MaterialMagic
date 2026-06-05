@@ -30,7 +30,7 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private Ease tooltipShowEase = Ease.OutBack;
     [SerializeField] private Ease tooltipHideEase = Ease.InBack;
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
-    [SerializeField] private float tooltipYOffset = 72f;
+    [SerializeField] private float tooltipYOffset = 30f;
 
     private HandSystemUI owner;
     private TMP_Text titleText;
@@ -39,6 +39,7 @@ public class MaterialListPanelUI : MonoBehaviour
     private CanvasGroup modifierTooltipCanvasGroup;
     private Tween modifierTooltipTween;
     private readonly List<TMP_Text> modifierTooltipTexts = new List<TMP_Text>();
+    private readonly Vector3[] tooltipAnchorCorners = new Vector3[4];
     private readonly List<MaterialModel> selectedMaterials = new List<MaterialModel>();
     private Predicate<MaterialModel> selectionPredicate;
     private Action<IReadOnlyList<MaterialModel>> selectionCompleted;
@@ -130,7 +131,7 @@ public class MaterialListPanelUI : MonoBehaviour
 
     public void ShowModifierTooltip(RectTransform anchor, MaterialModel materialModel)
     {
-        if (anchor == null || materialModel == null || materialModel.modifiers.Count == 0)
+        if (anchor == null || materialModel == null)
             return;
 
         EnsureModifierTooltip();
@@ -141,7 +142,7 @@ public class MaterialListPanelUI : MonoBehaviour
         modifierTooltip.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(modifierTooltip);
         modifierTooltip.SetAsLastSibling();
-        modifierTooltip.position = anchor.position + new Vector3(0f, tooltipYOffset, 0f);
+        modifierTooltip.anchoredPosition = GetModifierTooltipAnchoredPosition(anchor);
         modifierTooltip.localScale = tooltipHiddenScale;
         modifierTooltipCanvasGroup.alpha = 0f;
         modifierTooltipTween?.Kill(false);
@@ -149,6 +150,18 @@ public class MaterialListPanelUI : MonoBehaviour
         sequence.Join(modifierTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
         sequence.Join(modifierTooltip.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipShowEase));
         modifierTooltipTween = sequence;
+    }
+
+    private Vector2 GetModifierTooltipAnchoredPosition(RectTransform anchor)
+    {
+        RectTransform parent = modifierTooltip != null ? modifierTooltip.parent as RectTransform : null;
+        if (anchor == null || parent == null)
+            return Vector2.zero;
+
+        anchor.GetWorldCorners(tooltipAnchorCorners);
+        Vector3 cardCenter = (tooltipAnchorCorners[0] + tooltipAnchorCorners[2]) * 0.5f;
+        Vector3 localPoint = parent.InverseTransformPoint(cardCenter);
+        return new Vector2(localPoint.x, localPoint.y + tooltipYOffset);
     }
 
     public void HideModifierTooltip(MaterialCardView cardView)
@@ -452,13 +465,17 @@ public class MaterialListPanelUI : MonoBehaviour
 
     private void RebuildModifierTooltip(MaterialModel materialModel)
     {
-        int count = materialModel.modifiers.Count;
+        int modifierCount = materialModel.modifiers.Count;
+        int count = modifierCount + 1;
         for (int i = 0; i < modifierTooltipTexts.Count; i++)
             modifierTooltipTexts[i].gameObject.SetActive(i < count);
 
-        for (int i = 0; i < count; i++)
+        TMP_Text effectText = GetModifierTooltipText(0);
+        effectText.text = GetMaterialSinglePlayEffectText(materialModel.material);
+
+        for (int i = 0; i < modifierCount; i++)
         {
-            TMP_Text text = GetModifierTooltipText(i);
+            TMP_Text text = GetModifierTooltipText(i + 1);
             MaterialModifierModel modifier = materialModel.modifiers[i];
             string description = LocalizationKeys.GetModifierDescription(modifier);
             text.text = string.IsNullOrEmpty(description)
@@ -466,8 +483,25 @@ public class MaterialListPanelUI : MonoBehaviour
                 : LocalizationKeys.GetModifierName(modifier) + "：" + description;
         }
 
-        float height = Mathf.Clamp(20f + count * 48f, 72f, 220f);
+        float height = Mathf.Clamp(20f + count * 48f, 72f, 260f);
         modifierTooltip.sizeDelta = new Vector2(modifierTooltip.sizeDelta.x, height);
+    }
+
+    private static string GetMaterialSinglePlayEffectText(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return "单独打出：对敌方造成3点伤害";
+            case MaterialEnum.Water:
+                return "单独打出：对敌方施加2层虚弱";
+            case MaterialEnum.Wind:
+                return "单独打出：下回合抽牌+1";
+            case MaterialEnum.Earth:
+                return "单独打出：友方获得3点护盾";
+            default:
+                return "单独打出：无基础效果";
+        }
     }
 
     private TMP_Text GetModifierTooltipText(int index)

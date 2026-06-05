@@ -1,0 +1,70 @@
+{
+  "numericId": 22,
+  "string_id": "enemy_022",
+  "nameKey": "enemy.022.name",
+  "maxHealth": 15,
+  "baseAttack": 1,
+  "imageScale": 0.5,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 1,
+              "times": 3,
+              "displayType": "multiAttack"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 7,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "randomGroupIds": [
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "眼球",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

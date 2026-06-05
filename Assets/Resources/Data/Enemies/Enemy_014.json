@@ -1,0 +1,66 @@
+{
+  "numericId": 14,
+  "string_id": "enemy_014",
+  "nameKey": "enemy.014.name",
+  "maxHealth": 51,
+  "baseAttack": 15,
+  "imageScale": 1.0,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 1,
+              "displayType": "spAttack"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 2,
+              "value": 10,
+              "displayType": "bigDefend"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 15,
+              "displayType": "bigAttack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1,
+          "onlyOnce": true
+        },
+        {
+          "randomGroupIds": [
+            1,
+            2,
+            2,
+            2,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "猫咪",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

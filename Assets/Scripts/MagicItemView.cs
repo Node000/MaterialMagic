@@ -16,6 +16,11 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private TMP_Text tooltipNameText;
     [SerializeField] private TMP_Text tooltipDescriptionText;
     [SerializeField] private TMP_Text tooltipEffectText;
+    [SerializeField] private RectTransform modifierTooltipRoot;
+    [SerializeField] private TMP_Text modifierTooltipText;
+    [SerializeField] private Vector2 modifierTooltipSize = new Vector2(230f, 76f);
+    [SerializeField] private float modifierTooltipVerticalPadding = 22f;
+    [SerializeField] private float modifierTooltipGap = 8f;
     [SerializeField] private Image modifierMarkerImage;
     [Header("背景颜色")]
     [SerializeField] private Color UpBackgroundColor = new Color(0.9f, 0.22f, 0.12f, 1f);
@@ -53,16 +58,28 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private MagicModel magic;
     private CanvasGroup tooltipCanvasGroup;
     private CanvasGroup tagTooltipCanvasGroup;
+    private CanvasGroup modifierTooltipCanvasGroup;
     private Tween tooltipTween;
     private Tween tagTooltipTween;
+    private Tween modifierTooltipTween;
     private Tween pulseTween;
     private Tween modifierMarkerTween;
+    private bool tooltipInitialized;
     private bool warnedMissingBackgroundImage;
 
     public MagicModel Magic => magic;
 
     private void Awake()
     {
+        EnsureTooltipInitialized();
+    }
+
+    private void EnsureTooltipInitialized()
+    {
+        if (tooltipInitialized)
+            return;
+
+        tooltipInitialized = true;
         if (tooltipRoot != null)
         {
             tooltipCanvasGroup = tooltipRoot.GetComponent<CanvasGroup>();
@@ -77,11 +94,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         }
 
         EnsureTagTooltip();
+        EnsureModifierTooltip();
     }
 
     private void OnDisable()
     {
         HideTooltip(true);
+        HideModifierTooltipImmediate();
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
     }
@@ -90,6 +109,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         tooltipTween?.Kill(false);
         tagTooltipTween?.Kill(false);
+        modifierTooltipTween?.Kill(false);
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
     }
@@ -119,6 +139,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             if (tagTooltipText != null)
                 tagTooltipText.text = string.Empty;
 
+            if (modifierTooltipText != null)
+                modifierTooltipText.text = string.Empty;
+
             SetModifierMarkerVisible(false);
             RebuildRecipe();
             return;
@@ -145,6 +168,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         if (tooltipDescriptionText != null)
             tooltipDescriptionText.text = BuildDescriptionText(magic);
+
+        if (modifierTooltipText != null)
+            modifierTooltipText.text = BuildModifierTooltipText(magic);
 
         if (tagTooltipText != null)
             tagTooltipText.text = BuildTagTooltipText(magic.Data.tagIds);
@@ -194,6 +220,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (tagTooltipText != null)
             tagTooltipText.richText = true;
 
+        if (modifierTooltipText != null)
+            modifierTooltipText.richText = true;
+
         if (tooltipRoot != null)
         {
             Transform effectText = tooltipRoot.Find("EffectText");
@@ -201,6 +230,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 effectText.gameObject.SetActive(false);
         }
 
+        EnsureTooltipInitialized();
         EnsureModifierMarker();
 
         if (backgroundImage == null && !warnedMissingBackgroundImage)
@@ -215,10 +245,24 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (magic == null)
             return string.Empty;
 
-        if (!magic.HasModifier || magic.PrimaryModifier == null || string.IsNullOrEmpty(magic.PrimaryModifier.Description))
-            return magic.Description;
+        return magic.Description;
+    }
 
-        return magic.Description + "\n*" + magic.PrimaryModifier.Description;
+    private string BuildModifierTooltipText(MagicModel magic)
+    {
+        if (magic == null || !magic.HasModifier || magic.PrimaryModifier == null)
+            return string.Empty;
+
+        MagicModifierModel modifier = magic.PrimaryModifier;
+        string name = modifier.Name;
+        string description = modifier.Description;
+        if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(description))
+            return string.Empty;
+
+        if (string.IsNullOrEmpty(description))
+            return "<color=#FFE99E>强化效果：</color>" + name;
+
+        return "<color=#FFE99E>强化效果：" + name + "</color>\n" + description;
     }
 
     private void EnsureModifierMarker()
@@ -299,6 +343,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private void ShowTooltip()
     {
+        EnsureTooltipInitialized();
         if (tooltipRoot == null || tooltipCanvasGroup == null)
             return;
 
@@ -314,7 +359,59 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         sequence.Join(tooltipRoot.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipEase));
         tooltipTween = sequence;
 
+        ShowModifierTooltip();
         ShowTagTooltip();
+    }
+
+    private void ShowModifierTooltip()
+    {
+        if (modifierTooltipRoot == null || modifierTooltipCanvasGroup == null || modifierTooltipText == null || string.IsNullOrEmpty(modifierTooltipText.text))
+            return;
+
+        modifierTooltipText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, modifierTooltipSize.x - 24f);
+        Canvas.ForceUpdateCanvases();
+        modifierTooltipRoot.sizeDelta = GetModifierTooltipSize();
+        modifierTooltipRoot.gameObject.SetActive(true);
+        PopupLayerUtility.ApplyTo(modifierTooltipRoot);
+        modifierTooltipRoot.SetAsLastSibling();
+        modifierTooltipRoot.anchoredPosition = GetModifierTooltipShownPosition();
+        modifierTooltipRoot.localScale = tooltipHiddenScale;
+        modifierTooltipCanvasGroup.alpha = 0f;
+        modifierTooltipTween?.Kill(false);
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(modifierTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
+        sequence.Join(modifierTooltipRoot.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipEase));
+        modifierTooltipTween = sequence;
+    }
+
+    private Vector2 GetModifierTooltipShownPosition()
+    {
+        if (tooltipRoot == null)
+            return Vector2.zero;
+
+        float tooltipTop = tooltipRoot.anchoredPosition.y + tooltipRoot.sizeDelta.y * (1f - tooltipRoot.pivot.y);
+        return new Vector2(tooltipRoot.anchoredPosition.x, tooltipTop + modifierTooltipGap);
+    }
+
+    private Vector2 GetModifierTooltipSize()
+    {
+        if (modifierTooltipText == null || string.IsNullOrEmpty(modifierTooltipText.text))
+            return modifierTooltipSize;
+
+        float height = Mathf.Max(modifierTooltipSize.y, modifierTooltipText.preferredHeight + modifierTooltipVerticalPadding);
+        return new Vector2(modifierTooltipSize.x, height);
+    }
+
+    private void HideModifierTooltipImmediate()
+    {
+        modifierTooltipTween?.Kill(false);
+        if (modifierTooltipRoot == null || modifierTooltipCanvasGroup == null)
+            return;
+
+        modifierTooltipCanvasGroup.alpha = 0f;
+        modifierTooltipRoot.localScale = tooltipHiddenScale;
+        modifierTooltipRoot.gameObject.SetActive(false);
     }
 
     private void ShowTagTooltip()
@@ -357,6 +454,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 tagTooltipCanvasGroup.alpha = 0f;
                 tagTooltipRoot.gameObject.SetActive(false);
             }
+            HideModifierTooltipImmediate();
             return;
         }
 
@@ -365,6 +463,19 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         sequence.Join(tooltipRoot.DOScale(tooltipHiddenScale, tooltipScaleDuration).SetEase(Ease.InBack));
         tooltipTween = sequence.OnComplete(() => tooltipRoot.gameObject.SetActive(false));
         HideTagTooltip();
+        HideModifierTooltip();
+    }
+
+    private void HideModifierTooltip()
+    {
+        if (modifierTooltipRoot == null || modifierTooltipCanvasGroup == null || !modifierTooltipRoot.gameObject.activeSelf)
+            return;
+
+        modifierTooltipTween?.Kill(false);
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Join(modifierTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
+        sequence.Join(modifierTooltipRoot.DOScale(tooltipHiddenScale, tooltipScaleDuration).SetEase(Ease.InBack));
+        modifierTooltipTween = sequence.OnComplete(() => modifierTooltipRoot.gameObject.SetActive(false));
     }
 
     private void HideTagTooltip()
@@ -377,6 +488,66 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         sequence.Join(tagTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
         sequence.Join(tagTooltipRoot.DOAnchorPos(hiddenPosition, tooltipScaleDuration).SetEase(Ease.InBack));
         tagTooltipTween = sequence.OnComplete(() => tagTooltipRoot.gameObject.SetActive(false));
+    }
+
+    private void EnsureModifierTooltip()
+    {
+        if (tooltipRoot == null)
+            return;
+
+        if (modifierTooltipRoot == null)
+        {
+            Transform existing = tooltipRoot.Find("ModifierTooltip");
+            if (existing != null)
+                modifierTooltipRoot = (RectTransform)existing;
+        }
+
+        if (modifierTooltipRoot == null)
+        {
+            modifierTooltipRoot = new GameObject("ModifierTooltip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+            modifierTooltipRoot.SetParent(tooltipRoot.parent, false);
+            modifierTooltipRoot.anchorMin = tooltipRoot.anchorMin;
+            modifierTooltipRoot.anchorMax = tooltipRoot.anchorMax;
+            modifierTooltipRoot.pivot = new Vector2(0.5f, 0f);
+            modifierTooltipRoot.sizeDelta = modifierTooltipSize;
+            Image image = modifierTooltipRoot.GetComponent<Image>();
+            image.color = new Color(0.075f, 0.055f, 0.03f, 1f);
+            image.raycastTarget = false;
+        }
+
+        modifierTooltipCanvasGroup = modifierTooltipRoot.GetComponent<CanvasGroup>();
+        if (modifierTooltipCanvasGroup == null)
+            modifierTooltipCanvasGroup = modifierTooltipRoot.gameObject.AddComponent<CanvasGroup>();
+        PopupLayerUtility.ApplyTo(modifierTooltipRoot);
+        modifierTooltipCanvasGroup.alpha = 0f;
+        modifierTooltipCanvasGroup.blocksRaycasts = false;
+        modifierTooltipRoot.gameObject.SetActive(false);
+
+        if (modifierTooltipText == null)
+        {
+            Transform textTransform = modifierTooltipRoot.Find("Text");
+            if (textTransform != null)
+                modifierTooltipText = textTransform.GetComponent<TMP_Text>();
+        }
+
+        if (modifierTooltipText == null)
+        {
+            modifierTooltipText = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+            modifierTooltipText.transform.SetParent(modifierTooltipRoot, false);
+            modifierTooltipText.font = tooltipDescriptionText != null && tooltipDescriptionText.font != null ? tooltipDescriptionText.font : UIManager.GetDefaultTMPFont();
+            modifierTooltipText.fontSize = 15;
+            modifierTooltipText.alignment = TextAlignmentOptions.TopLeft;
+            modifierTooltipText.color = new Color(1f, 0.92f, 0.72f, 1f);
+            modifierTooltipText.raycastTarget = false;
+            modifierTooltipText.richText = true;
+            modifierTooltipText.enableWordWrapping = true;
+            modifierTooltipText.overflowMode = TextOverflowModes.Overflow;
+            RectTransform textRect = (RectTransform)modifierTooltipText.transform;
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(12f, 10f);
+            textRect.offsetMax = new Vector2(-12f, -10f);
+        }
     }
 
     private void EnsureTagTooltip()

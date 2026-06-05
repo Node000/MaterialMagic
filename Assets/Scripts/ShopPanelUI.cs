@@ -270,7 +270,7 @@ public class ShopPanelUI : MonoBehaviour
         if (magicPool.Count == 0)
             return;
 
-        int index = UnityEngine.Random.Range(0, magicPool.Count);
+        int index = NextRunRandomInt(0, magicPool.Count);
         MagicData data = magicPool[index];
         magicPool.RemoveAt(index);
         offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = config.shopSpellPrice, magicData = data });
@@ -281,10 +281,15 @@ public class ShopPanelUI : MonoBehaviour
         if (materialPool.Count == 0)
             return;
 
-        int index = UnityEngine.Random.Range(0, materialPool.Count);
+        int index = NextRunRandomInt(0, materialPool.Count);
         MaterialEnum material = materialPool[index];
         materialPool.RemoveAt(index);
         offers.Add(new ShopOffer { kind = ShopItemKind.Material, price = config.shopMaterialPrice, material = material });
+    }
+
+    private int NextRunRandomInt(int minInclusive, int maxExclusive)
+    {
+        return owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
     }
 
     private void Refresh()

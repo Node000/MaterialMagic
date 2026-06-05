@@ -4,8 +4,10 @@ public class ShieldReflectBuffModel : BuffModel
     {
     }
 
-    public override void AfterAttack(CombatantModel self, CombatantModel target, ref int attackResult)
+    public override void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
+        if (result != null && result.ShieldDamage > 0)
+            attacker?.TakeDamage(result.ShieldDamage);
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

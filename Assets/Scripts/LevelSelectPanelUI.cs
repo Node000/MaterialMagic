@@ -52,7 +52,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         float optionBaseDelay = panelShowDuration;
         if (nodeModel.fixedSingleChoice)
         {
-            BindOption(0, nodeModel.leftLevel, optionBaseDelay);
+            BindOption(0, nodeModel.leftLevel, nodeModel.leftHidden, optionBaseDelay);
             HideOption(1);
             if (optionButtons.Count > 0 && optionButtons[0] != null)
                 optionButtons[0].GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
@@ -60,8 +60,8 @@ public class LevelSelectPanelUI : MonoBehaviour
             return;
         }
 
-        BindOption(0, nodeModel.leftLevel, optionBaseDelay);
-        BindOption(1, nodeModel.rightLevel, optionBaseDelay + optionDelayStep);
+        BindOption(0, nodeModel.leftLevel, nodeModel.leftHidden, optionBaseDelay);
+        BindOption(1, nodeModel.rightLevel, nodeModel.rightHidden, optionBaseDelay + optionDelayStep);
         PlayPanelShow();
     }
 
@@ -127,7 +127,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         }
     }
 
-    private void BindOption(int index, LevelData level, float delay)
+    private void BindOption(int index, LevelData level, bool hidden, float delay)
     {
         EnsureOptionCapacity(index);
         Button button = optionButtons[index];
@@ -147,13 +147,13 @@ public class LevelSelectPanelUI : MonoBehaviour
         button.gameObject.SetActive(true);
         TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
         if (text != null)
-            text.text = UIManager.GetLevelTypeName(level.levelType);
+            text.text = hidden ? "未知" : UIManager.GetLevelTypeName(level.levelType);
 
         Image icon = UIManager.FindChildComponent<Image>(button.transform, "TypeIcon");
         if (icon != null)
         {
-            icon.sprite = UIManager.LoadLevelTypeSprite(level.levelType);
-            icon.color = icon.sprite != null ? Color.white : new Color(0.7f, 0.7f, 0.75f, 1f);
+            icon.sprite = hidden ? null : UIManager.LoadLevelTypeSprite(level.levelType);
+            icon.color = hidden || icon.sprite == null ? new Color(0.7f, 0.7f, 0.75f, 1f) : Color.white;
         }
 
         button.onClick.RemoveAllListeners();

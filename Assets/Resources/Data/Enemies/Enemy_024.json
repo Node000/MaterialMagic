@@ -1,0 +1,139 @@
+{
+  "numericId": 24,
+  "string_id": "enemy_024",
+  "nameKey": "enemy.024.name",
+  "maxHealth": 126,
+  "baseAttack": 14,
+  "imageScale": 1.2,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [
+    {
+      "buffType": 32,
+      "stack": 1
+    }
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 3,
+              "times": 4,
+              "displayType": "multiAttack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 2
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 14,
+              "displayType": "bigAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 7,
+              "times": 2,
+              "displayType": "bitMultiAttack"
+            },
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 2
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "intents": [
+            {
+              "actionType": 10,
+              "displayType": "stun"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 4,
+              "times": 5,
+              "displayType": "multiAttack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 3,
+                  "stack": 1
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "randomGroupIds": [
+            1,
+            2
+          ]
+        },
+        {
+          "randomGroupIds": [
+            1,
+            2
+          ]
+        },
+        {
+          "groupId": 4
+        },
+        {
+          "randomGroupIds": [
+            3,
+            5
+          ]
+        },
+        {
+          "randomGroupIds": [
+            3,
+            5
+          ]
+        },
+        {
+          "groupId": 4
+        }
+      ]
+    }
+  ],
+  "iconName": "Sample",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

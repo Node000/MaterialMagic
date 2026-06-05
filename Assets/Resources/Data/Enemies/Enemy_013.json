@@ -1,0 +1,45 @@
+{
+  "numericId": 13,
+  "string_id": "enemy_013",
+  "nameKey": "enemy.013.name",
+  "maxHealth": 18,
+  "baseAttack": 2,
+  "imageScale": 0.5,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 2,
+              "displayType": "attack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        }
+      ]
+    }
+  ],
+  "iconName": "假人",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

@@ -260,21 +260,81 @@ public class EventModel
             if (node == null || node.options == null)
                 continue;
 
+            HashSet<string> usedRecipeKeys = new HashSet<string>();
             for (int optionIndex = 0; optionIndex < node.options.Length; optionIndex++)
             {
                 EventOptionData option = node.options[optionIndex];
-                if (option != null && option.randomRecipeLength > 0)
-                    option.recipe = CreateRandomRecipe(option.randomRecipeLength);
+                if (option == null || option.isExitOption || option.randomRecipeLength > 0 || string.IsNullOrEmpty(option.recipe))
+                    continue;
+
+                usedRecipeKeys.Add(CreateRecipeKey(option.recipe, option.ignoreOrder));
+            }
+
+            for (int optionIndex = 0; optionIndex < node.options.Length; optionIndex++)
+            {
+                EventOptionData option = node.options[optionIndex];
+                if (option == null || option.randomRecipeLength <= 0)
+                    continue;
+
+                option.recipe = CreateUniqueRandomRecipe(option.randomRecipeLength, option.ignoreOrder, usedRecipeKeys);
+                usedRecipeKeys.Add(CreateRecipeKey(option.recipe, option.ignoreOrder));
             }
         }
+    }
+
+    private static string CreateUniqueRandomRecipe(int length, bool ignoreOrder, HashSet<string> usedRecipeKeys)
+    {
+        if (usedRecipeKeys == null)
+            return CreateRandomRecipe(length);
+
+        List<string> candidates = new List<string>();
+        HashSet<string> candidateKeys = new HashSet<string>();
+        CollectUnusedRecipeCandidates(Math.Max(1, length), ignoreOrder, usedRecipeKeys, candidateKeys, new char[Math.Max(1, length)], 0, candidates);
+        if (candidates.Count == 0)
+            return CreateRandomRecipe(length);
+
+        return candidates[NextRunRandomInt(0, candidates.Count)];
+    }
+
+    private static void CollectUnusedRecipeCandidates(int length, bool ignoreOrder, HashSet<string> usedRecipeKeys, HashSet<string> candidateKeys, char[] buffer, int index, List<string> candidates)
+    {
+        if (index >= length)
+        {
+            string recipe = new string(buffer);
+            string key = CreateRecipeKey(recipe, ignoreOrder);
+            if (!usedRecipeKeys.Contains(key) && candidateKeys.Add(key))
+                candidates.Add(recipe);
+            return;
+        }
+
+        for (char material = '1'; material <= '4'; material++)
+        {
+            buffer[index] = material;
+            CollectUnusedRecipeCandidates(length, ignoreOrder, usedRecipeKeys, candidateKeys, buffer, index + 1, candidates);
+        }
+    }
+
+    private static string CreateRecipeKey(string recipe, bool ignoreOrder)
+    {
+        if (string.IsNullOrEmpty(recipe) || !ignoreOrder)
+            return recipe ?? string.Empty;
+
+        char[] chars = recipe.ToCharArray();
+        Array.Sort(chars);
+        return new string(chars);
     }
 
     private static string CreateRandomRecipe(int length)
     {
         char[] recipe = new char[Math.Max(1, length)];
         for (int i = 0; i < recipe.Length; i++)
-            recipe[i] = (char)('0' + UnityEngine.Random.Range(1, 5));
+            recipe[i] = (char)('0' + NextRunRandomInt(1, 5));
         return new string(recipe);
+    }
+
+    private static int NextRunRandomInt(int minInclusive, int maxExclusive)
+    {
+        return RunManager.Current != null ? RunManager.Current.NextRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
     }
 
     private string GetDefaultEndNodeId()

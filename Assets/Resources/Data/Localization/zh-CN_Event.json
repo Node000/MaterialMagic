@@ -238,7 +238,7 @@
     },
     {
       "key": "event.capsule_machine.option.smash_open",
-      "text": "砸开它"
+      "text": "给它一脚"
     },
     {
       "key": "event.capsule_machine.insert_coin.1",
@@ -346,7 +346,7 @@
     },
     {
       "key": "event.limited_sale.option.no_buy",
-      "text": "不买"
+      "text": "不买立省百分百"
     },
     {
       "key": "event.limited_sale.clothes.1",
@@ -403,6 +403,66 @@
     {
       "key": "event.traffic_growth.growth.1",
       "text": "你学会了更快抓取素材。之后每回合抽牌数+1。"
+    },
+    {
+      "key": "event.midnight_convenience.option.sleep",
+      "text": "回家睡觉"
+    },
+    {
+      "key": "event.midnight_convenience.sleep.1",
+      "text": "今晚熬不动了，你决定好好休息一晚。"
+    },
+    {
+      "key": "event.capsule_machine.option.kick",
+      "text": "给它一脚"
+    },
+    {
+      "key": "event.capsule_machine.option.punch",
+      "text": "给它一拳"
+    },
+    {
+      "key": "event.capsule_machine.punch.1",
+      "text": "你给了扭蛋机一拳，硬币槽咳出两枚硬币，你的手也隐隐作痛。"
+    },
+    {
+      "key": "event.anonymous_forum.option.reply",
+      "text": "跟贴"
+    },
+    {
+      "key": "event.anonymous_forum.reply.1",
+      "text": "你认真跟了一句，陌生人的认同感化作一层短暂的安全感。下场战斗开始时，你将获得4点护盾。"
+    },
+    {
+      "key": "event.coffee_or_cola.coffee_remove.1",
+      "text": "咖啡苦得像待办事项。你清醒过来，决定删掉一张不该继续留着的素材。"
+    },
+    {
+      "key": "event.coffee_or_cola.option.water",
+      "text": "白开水更健康"
+    },
+    {
+      "key": "event.coffee_or_cola.water.1",
+      "text": "你接了一杯白开水，身体没有抗议，反而悄悄恢复了一点精神。"
+    },
+    {
+      "key": "event.limited_sale.no_buy_save.1",
+      "text": "你关掉所有弹窗，发现最划算的购买方案就是不买。系统不情愿地吐出2金币当作“理性消费奖励”。"
+    },
+    {
+      "key": "event.promo_link.option.stop",
+      "text": "适可而止"
+    },
+    {
+      "key": "event.traffic_growth.start.video.1",
+      "text": "主角把闯关视频发布到平台上，几分钟后播放量像霓虹浪潮一样冲上来。弹幕和点赞把屏幕挤满，他忽然觉得下一段旅程可以更快一点。"
+    },
+    {
+      "key": "event.traffic_growth.option.cheer",
+      "text": "好耶！！！"
+    },
+    {
+      "key": "event.traffic_growth.growth.video.1",
+      "text": "平台的流量推着你向前。之后每回合抽牌数+1。"
     }
   ]
 }

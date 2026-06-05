@@ -9,9 +9,12 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
     private const float DefaultFrameRate = 8f;
 
     [SerializeField] private Image targetImage;
+    [SerializeField] private EnemyViewUI owner;
 
     private Sprite[] frames = Array.Empty<Sprite>();
+    private EnemyData boundData;
     private Vector2 currentNativeSize;
+    private float imageScale = 1f;
     private float frameInterval;
     private float elapsed;
     private int frameIndex;
@@ -20,19 +23,25 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
     {
         if (targetImage == null)
             targetImage = GetComponent<Image>();
+        if (owner == null)
+            owner = GetComponentInParent<EnemyViewUI>();
     }
 
     public void Bind(EnemyData data)
     {
         if (targetImage == null)
             targetImage = GetComponent<Image>();
+        if (owner == null)
+            owner = GetComponentInParent<EnemyViewUI>();
 
+        boundData = data;
         frames = EnemyVisualLoader.LoadAnimationFrames(data);
         float frameRate = data != null && data.animationFrameRate > 0f ? data.animationFrameRate : DefaultFrameRate;
         frameInterval = 1f / frameRate;
         elapsed = 0f;
         frameIndex = 0;
         currentNativeSize = Vector2.zero;
+        imageScale = data != null && data.imageScale > 0f ? data.imageScale : 1f;
 
         Sprite sprite = frames.Length > 0 ? frames[0] : EnemyVisualLoader.LoadStaticSpriteOrSample(data);
         ApplySprite(sprite);
@@ -63,12 +72,16 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
             return;
 
         targetImage.color = Color.white;
-        Vector2 spriteSize = sprite.rect.size;
+        Vector2 spriteSize = sprite.rect.size * imageScale;
         if (spriteSize != currentNativeSize)
         {
             targetImage.rectTransform.sizeDelta = spriteSize;
             currentNativeSize = spriteSize;
         }
+        if (owner == null)
+            owner = GetComponentInParent<EnemyViewUI>();
+        if (owner != null)
+            owner.ApplyDataLayout(boundData);
     }
 }
 

@@ -133,6 +133,8 @@ public static class LocalizationKeys
             return GetModifierKey(MaterialModifierDisplayKind.Liquefy);
         if (modifier is SturdyModifier)
             return "sturdy";
+        if (modifier is DoomModifier)
+            return "doom";
 
         return modifier != null ? modifier.GetType().Name.ToLowerInvariant() : string.Empty;
     }

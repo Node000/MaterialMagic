@@ -3,6 +3,59 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+public enum BattlePhase
+{
+    None = 0,
+    PlayerTurn = 1,
+    EnemyTurn = 2,
+    Finished = 3
+}
+
+public class BattleActionResult
+{
+    public int PlayerHealthBefore;
+    public int PlayerHealthAfter;
+    public int PlayerShieldBefore;
+    public int PlayerShieldAfter;
+    public int EnemyShieldBefore;
+    public int EnemyShieldAfter;
+    public bool PlayerDefeated;
+    public bool AllEnemiesDead;
+    public bool EnemyBuffChanged;
+    public bool PlayerBuffChanged;
+    public bool EnemySpawned;
+    public bool EnemyRemoved;
+
+    public void CapturePlayerBefore(PlayerState playerState)
+    {
+        if (playerState == null)
+            return;
+
+        PlayerHealthBefore = playerState.CurrentHealth;
+        PlayerShieldBefore = playerState.Shield;
+    }
+
+    public void CapturePlayerAfter(PlayerState playerState)
+    {
+        if (playerState == null)
+            return;
+
+        PlayerHealthAfter = playerState.CurrentHealth;
+        PlayerShieldAfter = playerState.Shield;
+        PlayerDefeated = playerState.CurrentHealth <= 0;
+    }
+
+    public void CaptureEnemyShieldBefore(EnemyModel enemy)
+    {
+        EnemyShieldBefore = enemy != null ? enemy.Shield : 0;
+    }
+
+    public void CaptureEnemyShieldAfter(EnemyModel enemy)
+    {
+        EnemyShieldAfter = enemy != null ? enemy.Shield : 0;
+    }
+}
+
 public class BattleManager
 {
     private readonly List<EnemyModel> enemies = new List<EnemyModel>();
@@ -12,14 +65,17 @@ public class BattleManager
     public event Action<EnemyModel> EnemyAdded;
 
     public PlayerState PlayerState { get; private set; }
+    public PlayerModel Player { get; private set; }
     public IReadOnlyList<EnemyModel> Enemies => enemies;
     public EnemyModel FocusTarget { get; private set; }
     public EnemyModel CurrentCastTarget { get; private set; }
     public int ContinuousCastCount { get; private set; }
+    public BattlePhase CurrentPhase { get; private set; }
 
     public BattleManager(PlayerState playerState)
     {
         PlayerState = playerState;
+        Player = playerState is PlayerStatus status ? new PlayerModel(status) : null;
     }
 
     public static BattleManager Create(PlayerState playerState)
@@ -86,6 +142,15 @@ public class BattleManager
         if (!enemies.Contains(enemy))
         {
             enemies.Add(enemy);
+            if (CurrentPhase == BattlePhase.EnemyTurn)
+            {
+                enemy.SetCanActThisEnemyTurn(false);
+                enemy.ClearCurrentIntents();
+            }
+            else
+            {
+                enemy.SetCanActThisEnemyTurn(true);
+            }
             EnemyAdded?.Invoke(enemy);
         }
 
@@ -103,6 +168,7 @@ public class BattleManager
         FocusTarget = null;
         CurrentCastTarget = null;
         ContinuousCastCount = 0;
+        CurrentPhase = BattlePhase.None;
     }
 
     public void SetFocusTarget(EnemyModel enemy)
@@ -152,6 +218,16 @@ public class BattleManager
             target.AddBuff(BuffEnum.Burning, stack);
     }
 
+    public void AddArcToRandomEnemy(int stack)
+    {
+        if (stack <= 0)
+            return;
+
+        EnemyModel target = SelectRandomEnemy();
+        if (target != null)
+            target.AddBuff(BuffEnum.Arc, stack);
+    }
+
     public void AddRandomDebuffToRandomEnemy(int stack)
     {
         if (stack <= 0)
@@ -161,7 +237,7 @@ public class BattleManager
         if (target == null)
             return;
 
-        int index = Random.Range(0, 3);
+        int index = NextRandomInt(0, 3);
         target.AddBuff(index == 0 ? BuffEnum.Weak : index == 1 ? BuffEnum.Slow : BuffEnum.Vulnerable, stack);
     }
 
@@ -227,7 +303,7 @@ public class BattleManager
         if (aliveCount == 0)
             return null;
 
-        int targetIndex = Random.Range(0, aliveCount);
+        int targetIndex = NextRandomInt(0, aliveCount);
         int aliveIndex = 0;
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -242,6 +318,13 @@ public class BattleManager
         }
 
         return null;
+    }
+
+    private int NextRandomInt(int minInclusive, int maxExclusive)
+    {
+        if (Player != null && Player.Status != null)
+            return Player.Status.NextRunRandomInt(minInclusive, maxExclusive);
+        return Random.Range(minInclusive, maxExclusive);
     }
 
     public void CollectAliveEnemyCombatants(List<CombatantModel> results)
@@ -268,6 +351,213 @@ public class BattleManager
         }
 
         return null;
+    }
+
+    public void BeginBattleRules()
+    {
+        TriggerMagicBattleStart();
+    }
+
+    public void FinishBattleRules(List<MaterialModel> removedTemporaryCards)
+    {
+        TriggerMagicBattleEnd();
+        ResetContinuousCastCount();
+        FinishBattle();
+        PlayerState?.EndTurn(removedTemporaryCards);
+        PlayerState?.ClearCombatState();
+    }
+
+    public void BeginPlayerResolveRules()
+    {
+        MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = PlayerState, BattleManager = this };
+        PlayerState?.TriggerMaterialBegin();
+    }
+
+    public void EndPlayerResolveRules()
+    {
+        MaterialModifierModel.CurrentContext = null;
+    }
+
+    public BattleActionResult BeginPlayerTurnStartRules()
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (PlayerState == null)
+            return result;
+
+        GameLog.Data($"Begin player turn extra={PlayerState.GetBuffStack(BuffEnum.ExtraDraw)}");
+        BeginPlayerTurn();
+        result.CapturePlayerBefore(PlayerState);
+        CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
+        PlayerState.ClearShield();
+        PlayerState.TriggerOnTurnStart(opponent);
+        PlayerState.TriggerAfterTurnStart(opponent);
+        TriggerMagicTurnStart();
+        result.CapturePlayerAfter(PlayerState);
+        return result;
+    }
+
+    public BattleActionResult DrawPlayerTurnCardsRules(int drawCount, bool skipNormalDraw)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        if (!skipNormalDraw)
+        {
+            int extraDraw = PlayerState.GetBuffStack(BuffEnum.ExtraDraw);
+            PlayerState.DrawCards(drawCount + extraDraw);
+            if (extraDraw > 0)
+                PlayerState.ConsumeBuff(BuffEnum.ExtraDraw, extraDraw);
+            PlayerState.ConsumeTemporaryMaterialsNextTurn();
+        }
+        if (PlayerState.GetBuffStack(BuffEnum.Sturdy) > 0)
+            PlayerState.ApplySturdyToHand();
+        result.CapturePlayerAfter(PlayerState);
+        return result;
+    }
+
+    public BattleActionResult EndPlayerTurnRules(List<MaterialModel> removedTemporaryCards)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        PlayerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
+        TriggerMagicTurnEnd();
+        PlayerState.EndTurn(removedTemporaryCards);
+        PlayerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
+        PlayerState.TriggerMaterialEnd();
+        EndPlayerResolveRules();
+        result.CapturePlayerAfter(PlayerState);
+        result.AllEnemiesDead = AllEnemiesDead();
+        return result;
+    }
+
+    public BattleActionResult BeginEnemyAction(EnemyModel enemy)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (enemy == null || PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        result.CaptureEnemyShieldBefore(enemy);
+        CombatantModel opponent = new CombatantModel(PlayerState);
+        enemy.ClearShield();
+        enemy.TriggerOnTurnStart(opponent);
+        enemy.TriggerAfterTurnStart(opponent);
+        enemy.BeginResolveIntents(PlayerState);
+        result.CapturePlayerAfter(PlayerState);
+        result.CaptureEnemyShieldAfter(enemy);
+        return result;
+    }
+
+    public BattleActionResult ResolveEnemyIntentAt(EnemyModel enemy, int intentIndex)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (enemy == null || PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        result.CaptureEnemyShieldBefore(enemy);
+        enemy.ResolveCurrentIntentAt(intentIndex, PlayerState);
+        result.CapturePlayerAfter(PlayerState);
+        result.CaptureEnemyShieldAfter(enemy);
+        result.AllEnemiesDead = AllEnemiesDead();
+        return result;
+    }
+
+    public BattleActionResult EndEnemyAction(EnemyModel enemy)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (enemy == null || PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        result.CaptureEnemyShieldBefore(enemy);
+        CombatantModel opponent = new CombatantModel(PlayerState);
+        enemy.EndResolveIntents(PlayerState);
+        enemy.TriggerOnTurnEnd(opponent);
+        enemy.TriggerAfterTurnEnd(opponent);
+        result.CapturePlayerAfter(PlayerState);
+        result.CaptureEnemyShieldAfter(enemy);
+        result.AllEnemiesDead = AllEnemiesDead();
+        return result;
+    }
+
+    private void TriggerMagicBattleStart()
+    {
+        if (PlayerState == null)
+            return;
+
+        for (int i = 0; i < PlayerState.MagicBook.Count; i++)
+            PlayerState.MagicBook[i]?.TriggerMagicBattleStart(PlayerState, this);
+    }
+
+    private void TriggerMagicBattleEnd()
+    {
+        if (PlayerState == null)
+            return;
+
+        for (int i = 0; i < PlayerState.MagicBook.Count; i++)
+            PlayerState.MagicBook[i]?.TriggerMagicBattleEnd(PlayerState, this);
+    }
+
+    private void TriggerMagicTurnStart()
+    {
+        if (PlayerState == null)
+            return;
+
+        for (int i = 0; i < PlayerState.MagicBook.Count; i++)
+            PlayerState.MagicBook[i]?.TriggerMagicTurnStart(PlayerState, this);
+    }
+
+    private void TriggerMagicTurnEnd()
+    {
+        if (PlayerState == null)
+            return;
+
+        for (int i = 0; i < PlayerState.MagicBook.Count; i++)
+            PlayerState.MagicBook[i]?.TriggerMagicTurnEnd(PlayerState, this);
+    }
+
+    public void BeginPlayerTurn()
+    {
+        CurrentPhase = BattlePhase.PlayerTurn;
+        for (int i = 0; i < enemies.Count; i++)
+            enemies[i]?.SetCanActThisEnemyTurn(true);
+    }
+
+    public void BeginEnemyTurn()
+    {
+        CurrentPhase = BattlePhase.EnemyTurn;
+        for (int i = 0; i < enemies.Count; i++)
+            enemies[i]?.SetCanActThisEnemyTurn(true);
+    }
+
+    public void EndEnemyTurn()
+    {
+        CurrentPhase = BattlePhase.PlayerTurn;
+        for (int i = 0; i < enemies.Count; i++)
+            enemies[i]?.SetCanActThisEnemyTurn(true);
+    }
+
+    public void FinishBattle()
+    {
+        CurrentPhase = BattlePhase.Finished;
+    }
+
+    public bool HasActingEnemyAfter(int index)
+    {
+        for (int i = index + 1; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead && enemy.CanActThisEnemyTurn)
+                return true;
+        }
+
+        return false;
     }
 
     public bool HasAliveEnemyAfter(int index)

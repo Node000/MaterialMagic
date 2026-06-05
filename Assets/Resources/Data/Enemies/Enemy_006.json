@@ -1,0 +1,53 @@
+{
+  "numericId": 6,
+  "string_id": "enemy_006",
+  "nameKey": "enemy.006.name",
+  "maxHealth": 16,
+  "baseAttack": 1,
+  "imageScale": 0.65,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 5
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 1,
+              "displayType": "attack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "蝙蝠2",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

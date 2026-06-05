@@ -18,7 +18,13 @@ public class HandSystemUI : MonoBehaviour
 	{
 		public EnemyModel model;
 
+		public EnemyViewUI viewUI;
+
 		public RectTransform viewRect;
+
+		public RectTransform motionRoot;
+
+		public TMP_Text nameText;
 
 		public Image healthFill;
 
@@ -37,6 +43,8 @@ public class HandSystemUI : MonoBehaviour
 		public RectTransform buffRoot;
 
 		public Image focusMarker;
+
+		public RectTransform intentRoot;
 
 		public readonly List<EnemyIntentView> intentViews = new List<EnemyIntentView>();
 
@@ -71,6 +79,9 @@ public class HandSystemUI : MonoBehaviour
 
 	[SerializeField]
 	private RectTransform enemyViewPrefab;
+
+	[SerializeField]
+	private RectTransform enemyIntentViewPrefab;
 
 	[SerializeField]
 	private RectTransform floatingTextPrefab;
@@ -257,6 +268,8 @@ public class HandSystemUI : MonoBehaviour
 
 	private BattleManager battleManager;
 
+    private RunManager runManager;
+
 	private readonly List<RunMapNodeModel> mapNodes = new List<RunMapNodeModel>();
 
 	private readonly List<CombatantModel> magicEnemyTargets = new List<CombatantModel>();
@@ -300,6 +313,12 @@ public class HandSystemUI : MonoBehaviour
 	private Action pendingCastParticleImpactHandler;
 
 	private int pendingCastShakeCount;
+
+    private int castReleaseToken;
+
+    private bool castReleaseHandled;
+
+    private Coroutine castReleaseFallbackRoutine;
 
 	private Image enemyHealthBufferFill;
 
@@ -379,6 +398,8 @@ public class HandSystemUI : MonoBehaviour
     private const string EnemyDeathExplosionMaterialPath = "Materials/Style/Sprite/M_Sprite_FragmentExplosion_Default";
 
 	public PlayerState PlayerState => playerState;
+
+    public RunManager RunManager => runManager;
 
     public void DebugDealDamageToTarget(int damage)
     {
@@ -504,7 +525,7 @@ public class HandSystemUI : MonoBehaviour
 			for (int i = 0; i < battleLevels.Count; i++)
 			{
 				LevelData level = battleLevels[i];
-				if (level != null && level.levelType == LevelType.Battle && (bossLevel == null || level.numericId > bossLevel.numericId))
+				if (level != null && IsBattleLevel(level) && (bossLevel == null || level.numericId > bossLevel.numericId))
 					bossLevel = level;
 			}
 			return bossLevel;
@@ -512,10 +533,15 @@ public class HandSystemUI : MonoBehaviour
 
 		foreach (LevelData level in GameDataDatabase.LevelData.Values)
 		{
-			if (level != null && level.levelType == LevelType.Battle && (bossLevel == null || level.numericId > bossLevel.numericId))
+			if (level != null && IsBattleLevel(level) && (bossLevel == null || level.numericId > bossLevel.numericId))
 				bossLevel = level;
 		}
 		return bossLevel;
+	}
+
+	private static bool IsBattleLevel(LevelData level)
+	{
+		return level != null && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite);
 	}
 
 	private void RemoveBossBattleLevel(List<LevelData> levels, LevelData bossLevel)
@@ -526,7 +552,7 @@ public class HandSystemUI : MonoBehaviour
 		for (int i = levels.Count - 1; i >= 0; i--)
 		{
 			LevelData level = levels[i];
-			if (level != null && level.levelType == LevelType.Battle && level.numericId == bossLevel.numericId)
+			if (IsBattleLevel(level) && level.numericId == bossLevel.numericId)
 				levels.RemoveAt(i);
 		}
 	}
@@ -555,11 +581,18 @@ public class HandSystemUI : MonoBehaviour
 
 	public void StartLevel(LevelData level)
 	{
+        LevelData selectedMapLevel = level;
+        level = ResolveSelectedMapLevel(level);
+        if (level == null)
+            return;
+
 		GameLog.Data($"Start level node={currentMapNodeIndex + 1}/{mapNodes.Count} id={level.id} type={level.levelType}");
 		currentLevel = level;
+		runManager?.SelectCurrentNodeLevel(level);
 		if (currentMapNodeIndex >= 0 && currentMapNodeIndex < mapNodes.Count)
 		{
-			mapNodes[currentMapNodeIndex].selectedLevel = level;
+			mapNodes[currentMapNodeIndex].selectedLevel = selectedMapLevel ?? level;
+            RevealSelectedMapLevel(mapNodes[currentMapNodeIndex], selectedMapLevel ?? level);
 			GetUIManager().MapPanel?.RefreshNodeVisual(currentMapNodeIndex);
 			GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		}
@@ -568,6 +601,32 @@ public class HandSystemUI : MonoBehaviour
         SetButtonsInteractable(interactable: false);
         HideMapPanel();
         HideLevelSelectPanelAnimated(() => StartLevelAfterSelectClosed(level));
+	}
+
+	private void RevealSelectedMapLevel(RunMapNodeModel node, LevelData selectedLevel)
+	{
+		if (node == null || selectedLevel == null)
+			return;
+
+		if (node.leftLevel == selectedLevel)
+			node.leftHidden = false;
+		if (node.rightLevel == selectedLevel)
+			node.rightHidden = false;
+	}
+
+	private LevelData ResolveSelectedMapLevel(LevelData level)
+	{
+		if (level == null)
+			return null;
+
+		ChapterData chapter = activeChapter ?? GetActiveChapter();
+		if (level.levelType == LevelType.Battle)
+			return DrawMapBattleLevel(chapter, level);
+		if (level.levelType == LevelType.Event)
+			return DrawMapEventLevel(chapter, level);
+		if (level.levelType == LevelType.Elite)
+			return runManager != null ? runManager.DrawEliteLevel(chapter) ?? level : level;
+		return level;
 	}
 
     private void StartLevelAfterSelectClosed(LevelData level)
@@ -598,11 +657,17 @@ public class HandSystemUI : MonoBehaviour
 	{
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0056: Expected O, but got Unknown
-		int configuredEnemyCount = level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
+        int configuredEnemyCount = level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0
+            ? level.randomEnemyGroups[0].enemies.Length
+            : level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
 		GameLog.Data("Start battle level=" + level.id + " enemies=" + configuredEnemyCount);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayBattleMusic();
 		currentLevel = level;
+		runManager?.BeginLevel(level);
+        runManager?.AdvanceRunRandomStep();
+        SaveRunProgress();
+        runManager?.SetBattle(battleManager);
 		currentEvent = null;
 		refreshUsedThisTurn = false;
 		ResetBattleDeckState();
@@ -616,6 +681,17 @@ public class HandSystemUI : MonoBehaviour
 			battleManager.SpawnEnemy(TutorialManager.CreateTutorialEnemy());
 			TutorialManager.BeginTutorialBattle();
 		}
+        else if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
+        {
+            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+            if (group != null && group.enemies != null)
+            {
+                for (int i = 0; i < group.enemies.Length; i++)
+                {
+                    battleManager.SpawnEnemy(group.enemies[i]);
+                }
+            }
+        }
 		else if (level.enemies != null && level.enemies.Length > 0)
 		{
 			for (int i = 0; i < level.enemies.Length; i++)
@@ -632,7 +708,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if (battleManager.Enemies.Count != 0)
 		{
-            TriggerMagicBattleStart();
+            battleManager.BeginBattleRules();
 			BeginPlayerTurn(playerState.DrawCount);
 			ResetMagicHighlights();
 			busy = false;
@@ -642,27 +718,13 @@ public class HandSystemUI : MonoBehaviour
 
 	private void BeginPlayerTurn(int drawCount)
 	{
-		GameLog.Data($"Begin player turn drawCount={drawCount} extra={playerState.GetBuffStack(BuffEnum.ExtraDraw)}");
+		battleManager?.BeginPlayerTurnStartRules();
 		GetUIManager().TurnBanner?.Show("你的回合");
-		CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
 		ResetContinuousCastCounterUI();
 		suppressEnemyIntentRefresh = false;
 		RefreshEnemyUI();
-        playerState.ClearShield();
-		playerState.TriggerOnTurnStart(opponent);
-		playerState.TriggerAfterTurnStart(opponent);
-        TriggerMagicTurnStart();
-        int extraDraw = playerState.GetBuffStack(BuffEnum.ExtraDraw);
         bool fixedTutorialHand = TutorialManager != null && TutorialManager.TryApplyFixedTurnHand(playerState);
-        if (!fixedTutorialHand)
-        {
-            playerState.DrawCards(drawCount + extraDraw);
-            if (extraDraw > 0)
-                playerState.ConsumeBuff(BuffEnum.ExtraDraw, extraDraw);
-            playerState.ConsumeTemporaryMaterialsNextTurn();
-        }
-        if (playerState.GetBuffStack(BuffEnum.Sturdy) > 0)
-            playerState.ApplySturdyToHand();
+        battleManager?.DrawPlayerTurnCardsRules(drawCount, fixedTutorialHand);
 		GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
 		RefreshStaticUI();
 		RefreshMaterialListPanel();
@@ -676,8 +738,9 @@ public class HandSystemUI : MonoBehaviour
             AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
+		runManager?.BeginLevel(level);
 		currentEvent = null;
-		pendingRewardMagic = null;
+        pendingRewardMagic = null;
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
@@ -723,6 +786,7 @@ public class HandSystemUI : MonoBehaviour
             AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
+		runManager?.BeginLevel(level);
 		HideMapPanel();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
@@ -752,6 +816,7 @@ public class HandSystemUI : MonoBehaviour
             AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
+		runManager?.BeginLevel(level);
 		currentEvent = null;
 		HideMapPanel();
 		enemyModels.Clear();
@@ -805,6 +870,7 @@ public class HandSystemUI : MonoBehaviour
             AudioManager.Instance.PlayGameplayMusic();
 		ResetBattleDeckState();
 		currentLevel = level;
+		runManager?.BeginLevel(level);
 		HideMapPanel();
 		EventData eventData = null;
 		if (level.eventPoolId > 0)
@@ -903,7 +969,7 @@ public class HandSystemUI : MonoBehaviour
     {
         char[] recipe = new char[Mathf.Max(1, length)];
         for (int i = 0; i < recipe.Length; i++)
-            recipe[i] = (char)('0' + Random.Range(1, 5));
+            recipe[i] = (char)('0' + NextRunRandomInt(1, 5));
         return new string(recipe);
     }
 
@@ -1015,6 +1081,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
 		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
 		//IL_006a: Expected O, but got Unknown
+		bool created = false;
 		Transform val = ((Transform)parent).Find("BuffRoot");
 		RectTransform val2 = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<RectTransform>() : null);
 		if ((Object)val2 == (Object)null)
@@ -1025,11 +1092,18 @@ public class HandSystemUI : MonoBehaviour
 				typeof(GridLayoutGroup)
 			}).GetComponent<RectTransform>();
 			((Transform)val2).SetParent((Transform)parent, false);
+			created = true;
 		}
-		val2.anchorMin = new Vector2(0.5f, 0.5f);
-		val2.anchorMax = new Vector2(0.5f, 0.5f);
-		val2.pivot = new Vector2(0.5f, 0.5f);
-		val2.anchoredPosition = anchoredPosition;
+		if (created)
+		{
+			val2.anchorMin = new Vector2(0.5f, 0.5f);
+			val2.anchorMax = new Vector2(0.5f, 0.5f);
+			val2.pivot = new Vector2(0.5f, 0.5f);
+			val2.anchoredPosition = anchoredPosition;
+			float slotSize = BuffSlotSize;
+			float slotSpacing = BuffSlotSpacing;
+			val2.sizeDelta = new Vector2(slotSize * BuffRootColumnCount + slotSpacing * (BuffRootColumnCount - 1), slotSize * BuffRootRowCount + slotSpacing * (BuffRootRowCount - 1));
+		}
 		ConfigureBuffRootLayout(val2);
 		return val2;
 	}
@@ -1041,7 +1115,6 @@ public class HandSystemUI : MonoBehaviour
 
 		float slotSize = BuffSlotSize;
 		float slotSpacing = BuffSlotSpacing;
-		root.sizeDelta = new Vector2(slotSize * BuffRootColumnCount + slotSpacing * (BuffRootColumnCount - 1), slotSize * BuffRootRowCount + slotSpacing * (BuffRootRowCount - 1));
 		GridLayoutGroup grid = ((Component)root).GetComponent<GridLayoutGroup>();
 		if ((Object)grid == (Object)null)
 			return;
@@ -1068,7 +1141,7 @@ public class HandSystemUI : MonoBehaviour
 		int num = 0;
 		foreach (BuffModel value in buffs.Values)
 		{
-			if (value.stack > 0)
+			if (value.stack > 0 && value.IsVisible)
 			{
 				BuffSlotView slot = FindBuffSlot(root, value.buffType, num);
 				if ((Object)slot == (Object)null)
@@ -1237,9 +1310,10 @@ public class HandSystemUI : MonoBehaviour
 	{
 		mapNodes.Clear();
 		ChapterData chapter = GetActiveChapter();
+        runManager?.SetActiveChapter(chapter);
 		List<LevelData> eventLevels = GetEventLevelsForChapter(chapter);
 		int chapterLength = GetActiveChapterLength();
-		LevelData bossLevel = GetBossBattleLevel();
+		LevelData bossLevel = runManager != null ? runManager.DrawBossLevel(chapter) : GetBossBattleLevel();
 		for (int i = 0; i < chapterLength; i++)
 		{
 			int progress = i + 1;
@@ -1249,6 +1323,7 @@ public class HandSystemUI : MonoBehaviour
 				mapNodeModel.leftLevel = bossLevel;
 				mapNodeModel.rightLevel = bossLevel;
 				mapNodeModel.fixedSingleChoice = true;
+				ApplyHiddenRolls(chapter, mapNodeModel);
 				mapNodes.Add(mapNodeModel);
 				continue;
 			}
@@ -1264,8 +1339,9 @@ public class HandSystemUI : MonoBehaviour
 				List<LevelData> battleLevels = GetBattleLevels();
 				if (battleLevels.Count == 0)
 					return;
-				mapNodeModel.leftLevel = battleLevels[Random.Range(0, battleLevels.Count)];
-				mapNodeModel.rightLevel = battleLevels[Random.Range(0, battleLevels.Count)];
+                mapNodeModel.leftLevel = battleLevels[NextRunRandomInt(0, battleLevels.Count)];
+                mapNodeModel.rightLevel = battleLevels[NextRunRandomInt(0, battleLevels.Count)];
+                ApplyHiddenRolls(chapter, mapNodeModel);
 				mapNodes.Add(mapNodeModel);
 				continue;
 			}
@@ -1278,18 +1354,38 @@ public class HandSystemUI : MonoBehaviour
 			}
 			else
 			{
-				mapNodeModel.leftLevel = ChooseRandomMapLevel(candidateLevels);
-				mapNodeModel.rightLevel = ChooseRandomMapLevel(candidateLevels);
+				mapNodeModel.leftLevel = ChooseRandomMapLevel(chapter, candidateLevels);
+				mapNodeModel.rightLevel = ChooseRandomMapLevel(chapter, candidateLevels);
 			}
+			ApplyHiddenRolls(chapter, mapNodeModel);
 			mapNodes.Add(mapNodeModel);
 		}
 		currentMapNodeIndex = 0;
+        runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
 		RefreshChapterProgressUI();
 		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
 	}
 
-	private LevelData ChooseRandomMapLevel(List<LevelData> levels)
+	private void ApplyHiddenRolls(ChapterData chapter, RunMapNodeModel node)
+	{
+		if (node == null)
+			return;
+
+		float hiddenWeight = Mathf.Clamp01(chapter != null ? chapter.hiddenLevelWeight : 0f);
+		if (hiddenWeight <= 0f)
+			return;
+
+		node.leftHidden = RollHiddenLevel(hiddenWeight);
+		node.rightHidden = node.fixedSingleChoice || node.rightLevel == node.leftLevel ? node.leftHidden : RollHiddenLevel(hiddenWeight);
+	}
+
+	private bool RollHiddenLevel(float hiddenWeight)
+	{
+		return NextRunRandomInt(0, 10000) < Mathf.RoundToInt(hiddenWeight * 10000f);
+	}
+
+	private LevelData ChooseRandomMapLevel(ChapterData chapter, List<LevelData> levels)
 	{
 		if (levels == null || levels.Count == 0)
 			return null;
@@ -1299,20 +1395,59 @@ public class HandSystemUI : MonoBehaviour
 		for (int i = 0; i < levels.Count; i++)
 			totalWeight += GetMapLevelWeight(levels[i], economy);
 
+		LevelData selectedLevel = null;
 		if (totalWeight <= 0)
-			return levels[Random.Range(0, levels.Count)];
+            selectedLevel = levels[NextRunRandomInt(0, levels.Count)];
+        else
+        {
+            int roll = NextRunRandomInt(0, totalWeight);
+			for (int i = 0; i < levels.Count; i++)
+			{
+				int weight = GetMapLevelWeight(levels[i], economy);
+				if (weight <= 0)
+					continue;
+				if (roll < weight)
+				{
+					selectedLevel = levels[i];
+					break;
+				}
+				roll -= weight;
+			}
+        }
 
-		int roll = Random.Range(0, totalWeight);
-		for (int i = 0; i < levels.Count; i++)
-		{
-			int weight = GetMapLevelWeight(levels[i], economy);
-			if (weight <= 0)
-				continue;
-			if (roll < weight)
-				return levels[i];
-			roll -= weight;
-		}
-		return levels[levels.Count - 1];
+		if (selectedLevel == null)
+			selectedLevel = levels[levels.Count - 1];
+
+		return selectedLevel;
+	}
+
+	private LevelData DrawMapBattleLevel(ChapterData chapter, LevelData fallbackLevel)
+	{
+		if (runManager == null || !HasChapterBattlePools(chapter))
+			return fallbackLevel;
+
+		return runManager.DrawNextBattleLevel(chapter) ?? fallbackLevel;
+	}
+
+	private LevelData DrawMapEventLevel(ChapterData chapter, LevelData fallbackLevel)
+	{
+		if (runManager == null || !HasChapterEventPool(chapter))
+			return fallbackLevel;
+
+		return runManager.DrawEventLevel(chapter) ?? fallbackLevel;
+	}
+
+	private bool HasChapterEventPool(ChapterData chapter)
+	{
+		return chapter != null && chapter.EventPool != null && chapter.EventPool.Length > 0;
+	}
+
+	private bool HasChapterBattlePools(ChapterData chapter)
+	{
+		return chapter != null &&
+			((chapter.BeginPool != null && chapter.BeginPool.Length > 0) ||
+			(chapter.MidPool != null && chapter.MidPool.Length > 0) ||
+			(chapter.NormalPool != null && chapter.NormalPool.Length > 0));
 	}
 
 	private int GetMapLevelWeight(LevelData level, EconomyConfigData economy)
@@ -1326,6 +1461,7 @@ public class HandSystemUI : MonoBehaviour
 			switch (level.levelType)
 			{
 				case LevelType.Battle:
+                case LevelType.Elite:
 					weight = economy.battleMapLevelWeight;
 					break;
 				case LevelType.Event:
@@ -1359,11 +1495,16 @@ public class HandSystemUI : MonoBehaviour
 			if (fixedLevel.levelId > 0 && GameDataDatabase.TryGetLevelData(fixedLevel.levelId, out LevelData configuredLevel))
 				return configuredLevel;
 
-			List<LevelData> levels = fixedLevel.levelType == LevelType.Battle ? GetBattleLevels() : GetLevels(fixedLevel.levelType);
-			return levels.Count > 0 ? levels[Random.Range(0, levels.Count)] : null;
+			List<LevelData> levels = IsFixedBattleLevelType(fixedLevel.levelType) ? GetBattleLevels() : GetLevels(fixedLevel.levelType);
+            return levels.Count > 0 ? levels[NextRunRandomInt(0, levels.Count)] : null;
 		}
 
 		return null;
+	}
+
+	private static bool IsFixedBattleLevelType(LevelType levelType)
+	{
+		return levelType == LevelType.Battle || levelType == LevelType.Elite;
 	}
 
 	private ChapterData GetActiveChapter()
@@ -1397,7 +1538,7 @@ public class HandSystemUI : MonoBehaviour
 		List<LevelData> levels = new List<LevelData>();
 		for (int i = 0; i < poolIds.Length; i++)
 		{
-			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Event || level.levelType == LevelType.Shop || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
+			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite || level.levelType == LevelType.Event || level.levelType == LevelType.Shop || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
 				levels.Add(level);
 		}
 		return levels;
@@ -1497,10 +1638,14 @@ public class HandSystemUI : MonoBehaviour
         loadedRunPlaySeconds = saveData != null ? Mathf.Max(0f, saveData.totalPlaySeconds) : 0f;
         runStartRealtime = Time.realtimeSinceStartup;
 
-		playerState = saveData != null ? RunSaveSystem.CreatePlayer(saveData) : PlayerState.CreateDefault();
+        PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
+		playerState = playerStatus;
+        runManager = RunManager.Create(playerStatus);
+        runManager.AttachMapNodes(mapNodes);
         playerState.BuffAdded += OnPlayerBuffAdded;
         playerState.DiscardPileShuffledIntoDrawPile += OnDiscardPileShuffledIntoDrawPile;
 		battleManager = BattleManager.Create(playerState);
+        runManager.SetBattle(battleManager);
         battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
@@ -1512,14 +1657,18 @@ public class HandSystemUI : MonoBehaviour
             activeChapter = null;
             if (saveData.chapterNumericId > 0)
                 GameDataDatabase.TryGetChapterData(saveData.chapterNumericId, out activeChapter);
+            runManager.SetActiveChapter(activeChapter);
+            runManager.RestorePoolState(saveData.runPools);
             RunSaveSystem.RestoreMapNodes(saveData, mapNodes);
             currentMapNodeIndex = Mathf.Clamp(saveData.currentMapNodeIndex, 0, Mathf.Max(0, mapNodes.Count - 1));
+            runManager.SetCurrentMapNodeIndex(currentMapNodeIndex);
             RefreshChapterProgressUI();
             GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
         }
         else
         {
 		    BuildDebugMap();
+            runManager.SetActiveChapter(activeChapter ?? GetActiveChapter());
         }
 		CreateMagicViews();
 		CreateParticleCaster();
@@ -1604,6 +1753,8 @@ public class HandSystemUI : MonoBehaviour
             battleManager.EnemyAdded -= OnBattleEnemyAdded;
             BattleManager.ClearInstance(battleManager);
         }
+        if (runManager != null)
+            RunManager.ClearCurrent(runManager);
 		((UnityEvent)refreshButton.onClick).RemoveListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).RemoveListener(new UnityAction(EndTurn));
 		if ((Object)(object)deckPileArea != (Object)null)
@@ -1941,8 +2092,7 @@ public class HandSystemUI : MonoBehaviour
 		busy = true;
 		SetButtonsInteractable(interactable: false);
 		ResetMagicHighlights();
-		MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
-		playerState.TriggerMaterialBegin();
+		battleManager?.BeginPlayerResolveRules();
 		List<MaterialModel> list = new List<MaterialModel>(playerState.PlayZone);
 		if (list.Count > 0)
 		{
@@ -1951,6 +2101,7 @@ public class HandSystemUI : MonoBehaviour
 			ResetContinuousCastCounterUI();
 			if (AllEnemiesDead())
 			{
+                battleManager?.EndPlayerResolveRules();
 				yield return FinishBattleRoutine();
 				yield break;
 			}
@@ -1960,15 +2111,8 @@ public class HandSystemUI : MonoBehaviour
 		{
 			list2.Add(cardViews[i]);
 		}
-		int playerHealthBefore = playerState.CurrentHealth;
-		int playerShieldBefore = playerState.Shield;
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-		playerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
-        TriggerMagicTurnEnd();
-		playerState.EndTurn(removedTemporaryCards);
-		playerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
-		playerState.TriggerMaterialEnd();
-		MaterialModifierModel.CurrentContext = null;
+        battleManager?.EndPlayerTurnRules(removedTemporaryCards);
 		RefreshStaticUI();
 		bool discardDone = false;
 		AnimateReturningViews(list2, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -1980,11 +2124,11 @@ public class HandSystemUI : MonoBehaviour
 			yield return null;
 		}
 		bool enemyTurnBannerShown = false;
-		int enemyTurnCount = enemyModels.Count;
-		for (int num = 0; num < enemyTurnCount; num++)
+        battleManager?.BeginEnemyTurn();
+		for (int num = 0; num < enemyModels.Count; num++)
 		{
 			EnemyModel enemy = enemyModels[num];
-			if (enemy.IsDead)
+			if (enemy == null || enemy.IsDead || !enemy.CanActThisEnemyTurn)
 				continue;
 
 			if (!enemyTurnBannerShown)
@@ -1994,9 +2138,10 @@ public class HandSystemUI : MonoBehaviour
 			}
 
 			yield return ResolveEnemyIntentsRoutine(enemy);
-			if (HasAliveEnemyAfter(num))
+			if (HasActingEnemyAfter(num))
 				yield return new WaitForSeconds(enemyBetweenDelay);
 		}
+        battleManager?.EndEnemyTurn();
 		RefreshStaticUI();
 		if (CheckPlayerDefeated())
 			yield break;
@@ -2233,9 +2378,12 @@ public class HandSystemUI : MonoBehaviour
 			case EventRewardType.IncreaseDrawCount:
 				ApplyEventIncreaseDrawCount(GetEventEffectAmount(effect, 1));
 				break;
-			case EventRewardType.RemoveMaterial:
-				yield return RemoveEventMaterialsRoutine(GetEventEffectChoiceCount(effect, option, 1));
-				break;
+            case EventRewardType.RemoveMaterial:
+                yield return RemoveEventMaterialsRoutine(GetEventEffectChoiceCount(effect, option, 1));
+                break;
+            case EventRewardType.GainNextBattleStartShield:
+                ApplyEventNextBattleStartShield(GetEventEffectAmount(effect, 1));
+                break;
 		}
 	}
 
@@ -2325,6 +2473,12 @@ public class HandSystemUI : MonoBehaviour
 		SaveRunProgress();
 	}
 
+    private void ApplyEventNextBattleStartShield(int amount)
+    {
+        playerState.AddBuff(BuffEnum.PreparedShield, amount);
+        SaveRunProgress();
+    }
+
 	private void AddEventRandomMaterials(int count)
 	{
 		for (int i = 0; i < count; i++)
@@ -2345,7 +2499,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private MaterialEnum GetRandomBasicMaterial()
 	{
-		return (MaterialEnum)Random.Range((int)MaterialEnum.Fire, (int)MaterialEnum.Earth + 1);
+		return (MaterialEnum)NextRunRandomInt((int)MaterialEnum.Fire, (int)MaterialEnum.Earth + 1);
 	}
 
 	private IEnumerator RemoveEventMaterialsRoutine(int choiceCount)
@@ -2630,12 +2784,10 @@ public class HandSystemUI : MonoBehaviour
 		CombatantModel caster = new CombatantModel(playerState);
 		int attackValue = damage;
 		playerState.TriggerOnAttack(targetCombatant, ref attackValue);
-		int shieldBefore = target.Shield;
-		int attackResult = target.TakeDamage(attackValue, caster);
-		int shieldBlocked = shieldBefore - target.Shield;
-		if (shieldBlocked < 0)
-			shieldBlocked = 0;
-		result.AddEnemyDamageHit(target, attackResult, shieldBlocked);
+		CombatDamageResult damageResult = target.TakeDamageResult(attackValue, caster);
+        int attackResult = damageResult.HealthDamage;
+        playerState.TriggerAfterAttack(targetCombatant, ref attackResult);
+		result.AddEnemyDamageHit(target, attackResult, damageResult.ShieldDamage);
 		GameLog.Data($"Material Fire damage target={target.Id} value={attackValue}");
 		battleManager.EndCastTarget();
 	}
@@ -2810,7 +2962,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
 		//IL_011f: Unknown result type (might be due to invalid IL or missing references)
 		int count = cards.Count;
-		float num = (playZone ? playCardSpacing : cardSpacing);
+		float num = GetLayoutSpacing(cards, area, playZone);
 		float num2 = ((count > 1) ? ((0f - num) * (float)(count - 1) * 0.5f) : 0f);
 		Vector2 val = default(Vector2);
 		for (int i = 0; i < count; i++)
@@ -2838,6 +2990,33 @@ public class HandSystemUI : MonoBehaviour
 			}
 		}
 	}
+
+	private float GetLayoutSpacing(List<MaterialModel> cards, RectTransform area, bool playZone)
+    {
+        float preferredSpacing = playZone ? playCardSpacing : cardSpacing;
+        int count = cards != null ? cards.Count : 0;
+        if (count <= 1 || area == null)
+            return preferredSpacing;
+
+        float cardWidth = 0f;
+        for (int i = 0; i < count; i++)
+        {
+            HandCardView view = FindView(cards[i]);
+            if (view != null)
+            {
+                cardWidth = view.RectTransform.rect.width;
+                if (cardWidth > 0f)
+                    break;
+            }
+        }
+        if (cardWidth <= 0f && cardPrefab != null)
+            cardWidth = cardPrefab.rect.width;
+        if (cardWidth <= 0f)
+            return preferredSpacing;
+
+        float availableSpacingWidth = Mathf.Max(0f, area.rect.width - cardWidth);
+        return Mathf.Min(preferredSpacing, availableSpacingWidth / (count - 1));
+    }
 
 	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool animateFromExistingView)
 	{
@@ -2990,7 +3169,7 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().RefreshMaterialListPanel();
 	}
 
-	private void CreateEnemyHealthView(RectTransform enemyView)
+	private void CreateEnemyHealthView(RectTransform enemyView, EnemyData enemyData, bool preserveLayout = false)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
@@ -3038,16 +3217,21 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform val2 = (RectTransform)((parent is RectTransform) ? parent : null);
 		if (!((Object)val2 == (Object)null))
 		{
-			val2.anchorMin = new Vector2(0.5f, 0.5f);
-			val2.anchorMax = new Vector2(0.5f, 0.5f);
-			val2.pivot = new Vector2(0.5f, 0.5f);
-			val2.anchoredPosition = new Vector2(0f, -56f);
-			val2.sizeDelta = new Vector2(150f, 14f);
+			float healthBarWidth = enemyData != null && enemyData.healthBarWidth > 0f ? enemyData.healthBarWidth : 150f;
+            if (!preserveLayout)
+            {
+				val2.anchorMin = new Vector2(0.5f, 0.5f);
+				val2.anchorMax = new Vector2(0.5f, 0.5f);
+				val2.pivot = new Vector2(0.5f, 0.5f);
+				val2.anchoredPosition = new Vector2(0f, -56f);
+            }
+			val2.sizeDelta = new Vector2(healthBarWidth, val2.sizeDelta.y > 0f ? val2.sizeDelta.y : 14f);
 			SetupFillImage(enemyHealthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
 			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
 			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
 			SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
-			HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
+            if (!preserveLayout)
+				HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
 		}
 	}
 
@@ -3482,25 +3666,42 @@ public class HandSystemUI : MonoBehaviour
 		EnemyViewState enemyViewState = new EnemyViewState();
 		enemyViewState.model = model;
 		enemyViewState.viewRect = val;
+        enemyViewState.viewUI = ((Component)val).GetComponent<EnemyViewUI>();
+        if ((Object)enemyViewState.viewUI != (Object)null)
+        {
+            enemyViewState.viewUI.CacheMissingReferences();
+            enemyViewState.motionRoot = enemyViewState.viewUI.MotionRoot;
+            enemyViewState.nameText = enemyViewState.viewUI.NameText;
+            enemyViewState.healthFill = enemyViewState.viewUI.HealthFill;
+            enemyViewState.healthBufferFill = enemyViewState.viewUI.HealthBufferFill;
+            enemyViewState.shieldFill = enemyViewState.viewUI.ShieldFill;
+            enemyViewState.healthText = enemyViewState.viewUI.HealthText;
+            enemyViewState.bodyImage = enemyViewState.viewUI.BodyImage;
+            enemyViewState.focusMarker = enemyViewState.viewUI.FocusMarker;
+            enemyViewState.buffRoot = enemyViewState.viewUI.BuffRoot;
+            enemyViewState.intentRoot = enemyViewState.viewUI.IntentRoot;
+        }
 		Image[] componentsInChildren = ((Component)val).GetComponentsInChildren<Image>(true);
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			if (((Object)componentsInChildren[i]).name == "HealthFill")
+			if (((Object)componentsInChildren[i]).name == "HealthFill" && (Object)enemyViewState.healthFill == (Object)null)
 			{
 				enemyViewState.healthFill = componentsInChildren[i];
 			}
-			else if (((Object)componentsInChildren[i]).name == "IntentIcon")
+			else if (((Object)componentsInChildren[i]).name == "IntentIcon" && (Object)enemyViewState.intentIcon == (Object)null)
 			{
 				enemyViewState.intentIcon = componentsInChildren[i];
 			}
-			else if (((Object)componentsInChildren[i]).name == "Body")
+			else if (((Object)componentsInChildren[i]).name == "Body" && (Object)enemyViewState.bodyImage == (Object)null)
 			{
 				enemyViewState.bodyImage = componentsInChildren[i];
 			}
 		}
 		if ((Object)enemyViewState.bodyImage != (Object)null)
 		{
-			EnemySpriteAnimatorUI bodyAnimator = ((Component)enemyViewState.bodyImage).GetComponent<EnemySpriteAnimatorUI>();
+			EnemySpriteAnimatorUI bodyAnimator = (Object)enemyViewState.viewUI != (Object)null ? enemyViewState.viewUI.BodyAnimator : null;
+            if ((Object)bodyAnimator == (Object)null)
+                bodyAnimator = ((Component)enemyViewState.bodyImage).GetComponent<EnemySpriteAnimatorUI>();
 			if ((Object)bodyAnimator == (Object)null)
 				bodyAnimator = ((Component)enemyViewState.bodyImage).gameObject.AddComponent<EnemySpriteAnimatorUI>();
 
@@ -3510,15 +3711,21 @@ public class HandSystemUI : MonoBehaviour
 		enemyModel = model;
 		enemyViewRect = val;
 		enemyHealthFill = enemyViewState.healthFill;
+		enemyHealthBufferFill = enemyViewState.healthBufferFill;
+		enemyShieldFill = enemyViewState.shieldFill;
+		enemyHealthText = enemyViewState.healthText;
 		enemyIntentIcon = enemyViewState.intentIcon;
 		enemyBodyImage = enemyViewState.bodyImage;
 		enemyBodyBaseColor = enemyViewState.bodyBaseColor;
 		EnsureEnemyIntentView(val);
 		enemyViewState.intentIcon = enemyIntentIcon;
-		CreateEnemyHealthView(val);
-		enemyViewState.healthBufferFill = enemyHealthBufferFill;
-		enemyViewState.shieldFill = enemyShieldFill;
-        enemyViewState.healthText = enemyHealthText;
+		CreateEnemyHealthView(val, model.Data, (Object)enemyViewState.viewUI != (Object)null);
+		if ((Object)enemyHealthBufferFill != (Object)null)
+			enemyViewState.healthBufferFill = enemyHealthBufferFill;
+		if ((Object)enemyShieldFill != (Object)null)
+			enemyViewState.shieldFill = enemyShieldFill;
+        if ((Object)enemyHealthText != (Object)null)
+            enemyViewState.healthText = enemyHealthText;
         enemyViewState.displayedHealth = HealthBarUI.GetHealthTextValue(model.CurrentHealth, model.Shield);
 		EnemyViewClickHandler enemyViewClickHandler = ((Component)val).GetComponent<EnemyViewClickHandler>();
 		if ((Object)enemyViewClickHandler == (Object)null)
@@ -3526,8 +3733,12 @@ public class HandSystemUI : MonoBehaviour
 			enemyViewClickHandler = ((Component)val).gameObject.AddComponent<EnemyViewClickHandler>();
 		}
 		enemyViewClickHandler.Bind(this, model);
-		enemyViewState.focusMarker = EnsureFocusMarker(val);
-		enemyViewState.buffRoot = EnsureBuffRoot(val, new Vector2(0f, -82f));
+		if ((Object)enemyViewState.focusMarker == (Object)null)
+			enemyViewState.focusMarker = EnsureFocusMarker(val);
+		if ((Object)enemyViewState.buffRoot == (Object)null)
+			enemyViewState.buffRoot = EnsureBuffRoot(val, new Vector2(0f, -82f));
+        if ((Object)enemyViewState.viewUI != (Object)null)
+            enemyViewState.viewUI.ApplyDataLayout(model.Data);
 		RebuildEnemyIntentViews(enemyViewState);
 		enemyViewStates.Add(enemyViewState);
 	}
@@ -3652,6 +3863,10 @@ public class HandSystemUI : MonoBehaviour
 
 	private void HandleCastReleaseFrame()
 	{
+        if (castReleaseHandled)
+            return;
+
+        castReleaseHandled = true;
 		int shakeCount = pendingCastShakeCount;
 		pendingCastShakeCount = 0;
         PlayPlayerCastSwingSfx(shakeCount);
@@ -3659,13 +3874,33 @@ public class HandSystemUI : MonoBehaviour
 		PlayPendingCastParticle();
 	}
 
+    private void ArmCastReleaseFallback(float releaseWait)
+    {
+        castReleaseToken++;
+        castReleaseHandled = false;
+        if (castReleaseFallbackRoutine != null)
+            StopCoroutine(castReleaseFallbackRoutine);
+        castReleaseFallbackRoutine = StartCoroutine(CastReleaseFallbackRoutine(castReleaseToken, Mathf.Max(0f, releaseWait)));
+    }
+
+    private IEnumerator CastReleaseFallbackRoutine(int token, float releaseWait)
+    {
+        if (releaseWait > 0f)
+            yield return new WaitForSeconds(releaseWait);
+
+        if (token == castReleaseToken && !castReleaseHandled)
+            HandleCastReleaseFrame();
+        if (token == castReleaseToken)
+            castReleaseFallbackRoutine = null;
+    }
+
 	private void PlayCastScreenShake(int continuousCastCount)
 	{
 		if (battleManager == null)
 			return;
 
 		if (continuousCastCount <= 0)
-			continuousCastCount = battleManager.ContinuousCastCount;
+            return;
 
 		GetUIManager().PlayerFeedback?.PlayCastScreenShake(continuousCastCount);
 	}
@@ -3779,7 +4014,7 @@ public class HandSystemUI : MonoBehaviour
         pendingCastParticleTargets.Clear();
         castParticleTargetBuffer.Clear();
 		pendingCastParticleImpactHandler = null;
-		pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 0;
+		pendingCastShakeCount = 0;
 		if (!magicView.Magic.Data.playPlayerCastAnimation)
 		{
 			pendingCastShakeCount = 0;
@@ -3788,61 +4023,56 @@ public class HandSystemUI : MonoBehaviour
 
 		bool animationStarted = PlayPlayerCastAnimation();
 		float releaseWait = GetCastReleaseWait();
-		if (!magicView.Magic.CastParticleTargetsAllEnemies && GetMagicEffectTargetType(magicView.Magic) != SpellEffectTarget.Enemy)
-		{
-			return releaseWait;
-		}
-
-		if (spellCastEffect == null)
-		{
-			return releaseWait;
-		}
-
-        if (magicView.Magic.CastParticleTargetsAllEnemies)
+        float impactWait = 0f;
+        bool shouldTryCastParticle = magicView.Magic.CastParticleTargetsAllEnemies || GetMagicEffectTargetType(magicView.Magic) == SpellEffectTarget.Enemy;
+        if (shouldTryCastParticle && spellCastEffect != null)
         {
-            CollectAliveEnemyTargetRects(castParticleTargetBuffer);
-            if (castParticleTargetBuffer.Count == 0)
+            if (magicView.Magic.CastParticleTargetsAllEnemies)
             {
-                return releaseWait;
+                CollectAliveEnemyTargetRects(castParticleTargetBuffer);
+                if (castParticleTargetBuffer.Count > 0)
+                {
+                    QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
+                    pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+                    impactWait = GetCastParticleImpactStartWait();
+                }
             }
-
-            QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
+            else
+            {
+				RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
+				if ((Object)magicEffectTarget != (Object)null)
+                {
+					QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
+                    pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+                    impactWait = GetCastParticleImpactStartWait();
+                }
+            }
         }
-        else
-        {
-			RectTransform magicEffectTarget = GetMagicEffectTarget(magicView.Magic, targetEnemy);
-			if ((Object)magicEffectTarget == (Object)null)
-			{
-				return releaseWait;
-			}
 
-			QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
-        }
 		if (!animationStarted)
 		{
+            castReleaseToken++;
+            castReleaseHandled = false;
 			HandleCastReleaseFrame();
-			return GetCastParticleImpactStartWait();
+			return impactWait;
 		}
-		return releaseWait + GetCastParticleImpactStartWait();
+        ArmCastReleaseFallback(releaseWait);
+		return releaseWait + impactWait;
 	}
 
 	private IEnumerator FinishBattleRoutine()
 	{
 		HideContinuousCastCounterUI();
 		yield return PlayPendingEnemyDeaths();
-        TriggerMagicBattleEnd();
-        if (battleManager != null)
-            battleManager.ResetContinuousCastCount();
+		List<HandCardView> views = new List<HandCardView>(cardViews);
+		List<MaterialModel> battleEndRemovedTemporaryCards = new List<MaterialModel>();
+		battleManager?.FinishBattleRules(battleEndRemovedTemporaryCards);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
 		ResetMagicHighlights();
 		GetUIManager().PlayArea?.HideResolveIndicator();
-		List<HandCardView> views = new List<HandCardView>(cardViews);
-		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-		playerState.EndTurn(removedTemporaryCards);
-        playerState.ClearCombatState();
 		bool returnDone = false;
-		AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
+		AnimateReturningViews(views, battleEndRemovedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
 		{
 			returnDone = true;
 		});
@@ -3910,7 +4140,7 @@ public class HandSystemUI : MonoBehaviour
         while (result.Count < count && pool.Count > 0 && attempts < 40)
         {
             attempts++;
-            MagicModifierData data = pool[Random.Range(0, pool.Count)];
+            MagicModifierData data = pool[NextRunRandomInt(0, pool.Count)];
             if (!result.Contains(data))
                 result.Add(data);
         }
@@ -3947,30 +4177,6 @@ public class HandSystemUI : MonoBehaviour
         GameLog.Data($"Rest default heal amount={healed}");
     }
 
-    private void TriggerMagicBattleStart()
-    {
-        for (int i = 0; i < playerState.MagicBook.Count; i++)
-            playerState.MagicBook[i]?.TriggerMagicBattleStart(playerState, battleManager);
-    }
-
-    private void TriggerMagicBattleEnd()
-    {
-        for (int i = 0; i < playerState.MagicBook.Count; i++)
-            playerState.MagicBook[i]?.TriggerMagicBattleEnd(playerState, battleManager);
-    }
-
-    private void TriggerMagicTurnStart()
-    {
-        for (int i = 0; i < playerState.MagicBook.Count; i++)
-            playerState.MagicBook[i]?.TriggerMagicTurnStart(playerState, battleManager);
-    }
-
-    private void TriggerMagicTurnEnd()
-    {
-        for (int i = 0; i < playerState.MagicBook.Count; i++)
-            playerState.MagicBook[i]?.TriggerMagicTurnEnd(playerState, battleManager);
-    }
-
 	private void ResetBattleDeckState()
 	{
 		consumedBattleDeckCards.Clear();
@@ -4003,9 +4209,14 @@ public class HandSystemUI : MonoBehaviour
 	}
 
 	public List<MagicData> GetRewardMagicChoices()
+    {
+        return GetRewardMagicChoices(3);
+    }
+
+	public List<MagicData> GetRewardMagicChoices(int choiceCount)
 	{
 		if (TutorialManager != null && TutorialManager.MainTutorialRunning)
-			return GetTutorialRewardMagicChoices();
+			return GetTutorialRewardMagicChoices(choiceCount);
 
 		List<MagicData> list = new List<MagicData>();
 		RewardPoolData rewardPool = null;
@@ -4028,10 +4239,10 @@ public class HandSystemUI : MonoBehaviour
 		}
 		List<MagicData> list2 = new List<MagicData>();
 		int num = 0;
-		while (list2.Count < 3 && list.Count > 0 && num < 30)
+		while (list2.Count < choiceCount && list.Count > 0 && num < 30)
 		{
 			num++;
-			MagicData item = list[Random.Range(0, list.Count)];
+			MagicData item = list[NextRunRandomInt(0, list.Count)];
 			if (!list2.Contains(item))
 			{
 				list2.Add(item);
@@ -4040,7 +4251,7 @@ public class HandSystemUI : MonoBehaviour
 		return list2;
 	}
 
-	private List<MagicData> GetTutorialRewardMagicChoices()
+	private List<MagicData> GetTutorialRewardMagicChoices(int choiceCount)
 	{
 		List<MagicData> choices = new List<MagicData>();
 		foreach (MagicData data in GameDataDatabase.MagicData.Values)
@@ -4048,7 +4259,7 @@ public class HandSystemUI : MonoBehaviour
 			if (data != null)
 			{
 				choices.Add(data);
-				if (choices.Count >= 3)
+				if (choices.Count >= choiceCount)
 					break;
 			}
 		}
@@ -4280,11 +4491,13 @@ public class HandSystemUI : MonoBehaviour
 		enemyViewStates.Clear();
 		currentEvent = null;
 		currentLevel = null;
+		runManager?.ClearCurrentLevel();
 		GameLog.Data($"Finish reward node={currentMapNodeIndex + 1}/{mapNodes.Count}");
 		if (mapNodes.Count != 0)
 		{
 			int num = currentMapNodeIndex;
-			currentMapNodeIndex++;
+            runManager?.AdvanceMapNode();
+            currentMapNodeIndex = runManager != null ? runManager.CurrentMapNodeIndex : currentMapNodeIndex + 1;
 			GameLog.Data($"Advance map node index={currentMapNodeIndex + 1}");
 			RefreshChapterProgressUI();
 			if (currentMapNodeIndex >= mapNodes.Count)
@@ -4321,11 +4534,7 @@ public class HandSystemUI : MonoBehaviour
 	{
 		EnemyViewState state = FindEnemyViewState(enemy);
 		suppressEnemyIntentRefresh = true;
-		CombatantModel opponent = new CombatantModel(playerState);
-        enemy.ClearShield();
-		enemy.TriggerOnTurnStart(opponent);
-		enemy.TriggerAfterTurnStart(opponent);
-		enemy.BeginResolveIntents(playerState);
+        battleManager?.BeginEnemyAction(enemy);
 
 		for (int i = 0; i < enemy.CurrentIntents.Count; i++)
 		{
@@ -4345,12 +4554,9 @@ public class HandSystemUI : MonoBehaviour
 
 			yield return new WaitForSeconds(enemyIntentPrePerformDelay);
 			yield return PlayEnemyIntentPerformance(state, enemy.CurrentIntents[i]);
-			int playerHealthBefore = playerState.CurrentHealth;
-			int playerShieldBefore = playerState.Shield;
-			int enemyShieldBefore = enemy.Shield;
-			enemy.ResolveCurrentIntentAt(i, playerState);
-			PlayPlayerDamageFeedbackIfNeeded(playerHealthBefore, playerShieldBefore);
-			PlayEnemyShieldFeedbackIfNeeded(state, enemy, enemyShieldBefore);
+			BattleActionResult intentResult = battleManager != null ? battleManager.ResolveEnemyIntentAt(enemy, i) : null;
+			PlayPlayerDamageFeedbackIfNeeded(intentResult != null ? intentResult.PlayerHealthBefore : playerState.CurrentHealth, intentResult != null ? intentResult.PlayerShieldBefore : playerState.Shield);
+			PlayEnemyShieldFeedbackIfNeeded(state, enemy, intentResult != null ? intentResult.EnemyShieldBefore : enemy.Shield);
 			RefreshStaticUI();
 			RefreshEnemyUI(state, false);
 			Tween fadeOut = intentView != null ? intentView.PlayFadeOut(enemyIntentFadeOutDuration) : null;
@@ -4359,9 +4565,7 @@ public class HandSystemUI : MonoBehaviour
 			yield return new WaitForSeconds(enemyIntentBetweenDelay);
 		}
 
-		enemy.EndResolveIntents(playerState);
-        enemy.TriggerOnTurnEnd(opponent);
-        enemy.TriggerAfterTurnEnd(opponent);
+        battleManager?.EndEnemyAction(enemy);
 		RefreshEnemyUI(state, false);
 		yield return PlayPendingEnemyDeaths();
 	}
@@ -4402,11 +4606,11 @@ public class HandSystemUI : MonoBehaviour
 		if (state == null || intent == null)
 			yield break;
 
-		if (intent.intentType == EnemyIntentType.Attack || intent.actionType == EnemyActionType.AttackAll)
+		if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
 		{
 			yield return PlayEnemyAttackPerformance(state);
 		}
-		else if (intent.intentType == EnemyIntentType.Defend || intent.actionType == EnemyActionType.GainShield)
+		else if (intent.actionType == EnemyActionType.GainShield)
 		{
 			yield return PlayEnemyDefendPerformance(state);
 		}
@@ -4417,7 +4621,7 @@ public class HandSystemUI : MonoBehaviour
 		if (state.bodyImage == null)
 			yield break;
 
-		RectTransform body = state.bodyImage.rectTransform;
+		RectTransform body = (Object)state.motionRoot != (Object)null ? state.motionRoot : state.bodyImage.rectTransform;
 		body.DOKill(false);
 		Vector2 origin = body.anchoredPosition;
 		Sequence sequence = DOTween.Sequence().SetTarget(this);
@@ -4431,9 +4635,10 @@ public class HandSystemUI : MonoBehaviour
 		if (state.viewRect == null)
 			yield break;
 
+		RectTransform parent = (Object)state.motionRoot != (Object)null ? state.motionRoot : state.viewRect;
 		Image icon = new GameObject("DefendBurst", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-		icon.transform.SetParent(state.viewRect, false);
-		icon.sprite = Resources.Load<Sprite>("Images/UI/defend");
+		icon.transform.SetParent(parent, false);
+		icon.sprite = Resources.Load<Sprite>("Images/Intent/defend");
 		icon.color = new Color(0.35f, 0.65f, 1f, 1f);
 		icon.raycastTarget = false;
 		RectTransform rect = icon.rectTransform;
@@ -4458,8 +4663,19 @@ public class HandSystemUI : MonoBehaviour
 	private RectTransform GetAliveEnemyTargetRect()
 	{
 		EnemyModel firstAliveEnemy = GetFirstAliveEnemy();
-		return FindEnemyViewState(firstAliveEnemy)?.viewRect;
+		return GetEnemyCastTargetRect(FindEnemyViewState(firstAliveEnemy));
 	}
+
+    private RectTransform GetEnemyCastTargetRect(EnemyViewState state)
+    {
+        if (state == null)
+            return null;
+        if ((Object)state.viewUI != (Object)null && (Object)state.viewUI.BodyRoot != (Object)null)
+            return state.viewUI.BodyRoot;
+        if ((Object)state.motionRoot != (Object)null)
+            return state.motionRoot;
+        return state.viewRect;
+    }
 
     private void CollectAliveEnemyTargetRects(List<RectTransform> results)
     {
@@ -4470,8 +4686,9 @@ public class HandSystemUI : MonoBehaviour
         for (int i = 0; i < enemyViewStates.Count; i++)
         {
             EnemyViewState state = enemyViewStates[i];
-            if (state != null && state.model != null && !state.model.IsDead && (Object)state.viewRect != (Object)null)
-                results.Add(state.viewRect);
+            RectTransform targetRect = GetEnemyCastTargetRect(state);
+            if (state != null && state.model != null && !state.model.IsDead && (Object)targetRect != (Object)null)
+                results.Add(targetRect);
         }
     }
 
@@ -4565,9 +4782,9 @@ public class HandSystemUI : MonoBehaviour
         return battleManager != null && battleManager.AllEnemiesDead();
 	}
 
-	private bool HasAliveEnemyAfter(int index)
+	private bool HasActingEnemyAfter(int index)
 	{
-        return battleManager != null && battleManager.HasAliveEnemyAfter(index);
+        return battleManager != null && battleManager.HasActingEnemyAfter(index);
 	}
 
 	private IEnumerator PlayPendingEnemyDeaths()
@@ -4759,15 +4976,15 @@ public class HandSystemUI : MonoBehaviour
 	{
 		if (GetMagicEffectTargetType(magic) != SpellEffectTarget.Player)
 		{
-			return FindEnemyViewState(targetEnemy)?.viewRect ?? GetAliveEnemyTargetRect();
+			return GetEnemyCastTargetRect(FindEnemyViewState(targetEnemy)) ?? GetAliveEnemyTargetRect();
 		}
 		return GetUIManager().PlayerFeedback?.PlayerVirtualTarget;
 	}
 
 	private SpellEffectTarget GetMagicEffectTargetType(MagicModel magic)
 	{
-		MagicEffectType effectType = magic.Data.effectType;
-		if ((uint)(effectType - 2) <= 1u || effectType == MagicEffectType.DrawNextTurn)
+		MagicEffectType effectType = magic.EffectType;
+		if (magic.CastParticleTargetsPlayer || effectType == MagicEffectType.GainShield || effectType == MagicEffectType.Heal || effectType == MagicEffectType.DrawNextTurn)
 		{
 			return SpellEffectTarget.Player;
 		}
@@ -4955,17 +5172,25 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return;
 		}
-		TMP_Text[] componentsInChildren = ((Component)state.viewRect).GetComponentsInChildren<TMP_Text>(true);
-		for (int i = 0; i < componentsInChildren.Length; i++)
+		if ((Object)state.nameText != (Object)null)
 		{
-			if (((Object)componentsInChildren[i]).name == "NameText")
+			state.nameText.text = state.model.Name;
+		}
+		else
+		{
+			TMP_Text[] componentsInChildren = ((Component)state.viewRect).GetComponentsInChildren<TMP_Text>(true);
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				componentsInChildren[i].text = state.model.Name;
+				if (((Object)componentsInChildren[i]).name == "NameText")
+				{
+					componentsInChildren[i].text = state.model.Name;
+					state.nameText = componentsInChildren[i];
+				}
 			}
 		}
 		if ((Object)state.intentIcon != (Object)null)
 		{
-			state.intentIcon.color = (state.model.IsDead ? Color.gray : GetIntentColor(state.model));
+			state.intentIcon.color = Color.white;
 		}
 		UpdateHealthBar(state.healthFill, state.healthBufferFill, state.shieldFill, state.model.CurrentHealth, state.model.Data.maxHealth, state.model.Shield, instant);
 		RefreshBuffRoot(state.buffRoot, state.model.Buffs, null);
@@ -4975,6 +5200,8 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if (!suppressEnemyIntentRefresh)
 			RebuildEnemyIntentViews(state);
+        if ((Object)state.viewUI != (Object)null)
+            state.viewUI.ApplyDataLayout(state.model.Data);
 		Tween healthNumberTween = state.healthNumberTween;
 		if (healthNumberTween != null)
 		{
@@ -4992,14 +5219,17 @@ public class HandSystemUI : MonoBehaviour
 		if (state == null || state.viewRect == null || state.model == null)
 			return;
 
-		RectTransform root = EnsureIntentRoot(state.viewRect);
+		RectTransform root = (Object)state.intentRoot != (Object)null ? state.intentRoot : EnsureIntentRoot(state.viewRect);
+        state.intentRoot = root;
 		IReadOnlyList<EnemyIntentData> intents = state.model.CurrentIntents;
 		while (state.intentViews.Count < intents.Count)
 			state.intentViews.Add(CreateEnemyIntentView(root));
 
-		float intentSpacing = 64f;
+		float intentSpacing = 8f;
+        float intentY = (Object)state.viewUI != (Object)null ? 0f : 38f;
 		int totalIntentCount = GetTotalVisibleIntentCount();
 		int phaseStart = GetIntentPhaseStartIndex(state.model);
+        float totalWidth = 0f;
 		for (int i = 0; i < state.intentViews.Count; i++)
 		{
 			EnemyIntentView view = state.intentViews[i];
@@ -5008,11 +5238,19 @@ public class HandSystemUI : MonoBehaviour
 			if (!visible)
 				continue;
 
-			RectTransform rect = view.RectTransform;
-			Vector2 position = new Vector2((i - (intents.Count - 1) * 0.5f) * intentSpacing, 38f);
-			view.SetBaseAnchoredPosition(position);
-			rect.localScale = Vector3.one * 1.5f;
-			view.Bind(state.model, intents[i], playerState, phaseStart + i, totalIntentCount);
+            view.Bind(state.model, intents[i], playerState, phaseStart + i, totalIntentCount);
+            totalWidth += view.LayoutWidth;
+            if (i < intents.Count - 1)
+                totalWidth += intentSpacing;
+		}
+
+        float cursor = -totalWidth * 0.5f;
+		for (int i = 0; i < intents.Count; i++)
+		{
+            EnemyIntentView view = state.intentViews[i];
+            float width = view.LayoutWidth;
+            view.SetBaseAnchoredPosition(new Vector2(cursor + width * 0.5f, intentY));
+            cursor += width + intentSpacing;
 		}
 	}
 
@@ -5035,6 +5273,16 @@ public class HandSystemUI : MonoBehaviour
 
 	private EnemyIntentView CreateEnemyIntentView(RectTransform parent)
 	{
+        if ((Object)enemyIntentViewPrefab != (Object)null)
+        {
+            RectTransform prefabInstance = Object.Instantiate<RectTransform>(enemyIntentViewPrefab, (Transform)parent, false);
+            prefabInstance.gameObject.SetActive(true);
+            EnemyIntentView prefabView = ((Component)prefabInstance).GetComponent<EnemyIntentView>();
+            if ((Object)prefabView != (Object)null)
+                return prefabView;
+            Object.Destroy((Object)((Component)prefabInstance).gameObject);
+        }
+
 		RectTransform rect = new GameObject("IntentView", typeof(RectTransform), typeof(EnemyIntentView)).GetComponent<RectTransform>();
 		rect.SetParent(parent, false);
 		rect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -5159,15 +5407,11 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
 		}
-		if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff)
+		if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff || intent.actionType == EnemyActionType.Special || intent.actionType == EnemyActionType.Stunned)
 		{
 			return string.Empty;
 		}
-		if (intent.value > 0)
-		{
-			return intent.value.ToString();
-		}
-		return LocalizationSystem.GetText(intent.descriptionKey, string.Empty);
+		return string.Empty;
 	}
 
 	private Color GetIntentColor(EnemyModel model)
@@ -5187,16 +5431,33 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return Color.gray;
 		}
-		return (Color)(currentIntents[0].intentType switch
-		{
-			EnemyIntentType.Attack => new Color(0.95f, 0.18f, 0.14f, 1f), 
-			EnemyIntentType.Defend => new Color(0.25f, 0.55f, 1f, 1f), 
-			EnemyIntentType.ApplyBuff => new Color(0.75f, 0.35f, 1f, 1f),
-			EnemyIntentType.ApplyDebuff => new Color(0.25f, 0.8f, 0.35f, 1f),
-			EnemyIntentType.Summon => new Color(1f, 0.62f, 0.16f, 1f),
-			_ => Color.gray, 
-		});
+        EnemyIntentData intent = currentIntents[0];
+        switch (intent.actionType)
+        {
+            case EnemyActionType.Attack:
+            case EnemyActionType.AttackAll:
+                return new Color(0.95f, 0.18f, 0.14f, 1f);
+            case EnemyActionType.GainShield:
+                return new Color(0.25f, 0.55f, 1f, 1f);
+            case EnemyActionType.ApplyBuff:
+                return new Color(0.75f, 0.35f, 1f, 1f);
+            case EnemyActionType.ApplyDebuff:
+                return new Color(0.25f, 0.8f, 0.35f, 1f);
+            case EnemyActionType.Summon:
+                return new Color(1f, 0.62f, 0.16f, 1f);
+            case EnemyActionType.Special:
+                return new Color(0.92f, 0.82f, 0.28f, 1f);
+            case EnemyActionType.Stunned:
+                return new Color(0.55f, 0.55f, 0.6f, 1f);
+            default:
+                return Color.gray;
+        }
 	}
+
+    private int NextRunRandomInt(int minInclusive, int maxExclusive)
+    {
+        return runManager != null ? runManager.NextRandomInt(minInclusive, maxExclusive) : Random.Range(minInclusive, maxExclusive);
+    }
 
 	private void UpdateContinuousCastCounter(int count, bool instant)
 	{

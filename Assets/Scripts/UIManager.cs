@@ -329,6 +329,7 @@ public class UIManager : MonoBehaviour
             LevelType.Event => Resources.Load<Sprite>("Images/UI/Event"),
             LevelType.Rest => Resources.Load<Sprite>("Images/UI/Rest"),
             LevelType.Reward => Resources.Load<Sprite>("Images/UI/Reward"),
+            LevelType.Elite => Resources.Load<Sprite>("Images/UI/hard"),
             _ => Resources.Load<Sprite>("Images/UI/normal"),
         };
     }
@@ -341,6 +342,7 @@ public class UIManager : MonoBehaviour
             LevelType.Event => "事件",
             LevelType.Rest => "休息",
             LevelType.Reward => "奖励",
+            LevelType.Elite => "精英",
             _ => "战斗",
         };
     }

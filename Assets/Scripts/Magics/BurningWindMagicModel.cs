@@ -1,7 +1,9 @@
-public class BurningWindMagicModel : ScriptedMagicModel
+public class BurningWindMagicModel : MagicModel
 {
     public BurningWindMagicModel(MagicData data, int slotIndex = 0) : base(data, slotIndex) { }
-    protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
+    public override MagicEffectType EffectType => MagicEffectType.None;
+    public override bool CastParticleTargetsPlayer => true;
+    protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         playerState.AddBuff(BuffEnum.RepeatSpell, 1);
     }

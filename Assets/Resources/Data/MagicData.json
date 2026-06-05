@@ -1,634 +1,547 @@
 {
   "items": [
     {
+      "numericId": 1,
       "id": "magic_ignite",
+      "script": "IgniteMagicModel",
       "nameKey": "magic.ignite.name",
       "descriptionKey": "magic.ignite.desc",
-      "rarity": "Basic",
-      "recipe": [
-        1
-      ],
-      "effectType": 4,
-      "buffType": 2,
-      "buffAmount": 2,
       "iconName": "5",
-      "playPlayerCastAnimation": true,
-      "numericId": 1,
       "element": 1,
       "tagIds": [
         "burning"
-      ]
+      ],
+      "recipe": [
+        1
+      ],
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 2,
       "id": "magic_fireball_art",
+      "script": "FireballArtMagicModel",
       "nameKey": "magic.fireball_art.name",
       "descriptionKey": "magic.fireball_art.desc",
-      "rarity": "Common",
+      "iconName": "6",
+      "element": 1,
+      "tagIds": [
+        "burning"
+      ],
       "recipe": [
         1,
         1
       ],
-      "effectType": 1,
-      "power": 3,
-      "iconName": "6",
-      "playPlayerCastAnimation": true,
-      "numericId": 2,
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 3,
+      "id": "magic_flame_barrier",
+      "script": "FlameBarrierMagicModel",
+      "nameKey": "magic.flame_barrier.name",
+      "descriptionKey": "magic.flame_barrier.desc",
+      "iconName": "7",
       "element": 1,
       "tagIds": [
         "burning"
-      ]
-    },
-    {
-      "id": "magic_flame_barrier",
-      "nameKey": "magic.flame_barrier.name",
-      "descriptionKey": "magic.flame_barrier.desc",
-      "rarity": "Common",
+      ],
       "recipe": [
         1,
         2,
         4
       ],
-      "effectType": 4,
-      "power": 0,
-      "iconName": "7",
-      "playPlayerCastAnimation": true,
-      "numericId": 3,
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 4,
+      "id": "magic_magma",
+      "script": "MagmaMagicModel",
+      "nameKey": "magic.magma.name",
+      "descriptionKey": "magic.magma.desc",
+      "iconName": "8",
       "element": 1,
       "tagIds": [
         "burning"
       ],
-      "buffType": 19,
-      "buffAmount": 3
-    },
-    {
-      "id": "magic_magma",
-      "nameKey": "magic.magma.name",
-      "descriptionKey": "magic.magma.desc",
-      "rarity": "Common",
       "recipe": [
         1,
         4
       ],
-      "effectType": 4,
-      "buffType": 2,
-      "buffAmount": 3,
-      "iconName": "8",
-      "playPlayerCastAnimation": true,
-      "numericId": 4,
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 5,
+      "id": "magic_molten",
+      "script": "MoltenMagicModel",
+      "nameKey": "magic.molten.name",
+      "descriptionKey": "magic.molten.desc",
+      "iconName": "9",
       "element": 1,
       "tagIds": [
         "burning"
-      ]
-    },
-    {
-      "id": "magic_molten",
-      "nameKey": "magic.molten.name",
-      "descriptionKey": "magic.molten.desc",
-      "rarity": "Common",
+      ],
       "recipe": [
         1,
         1,
         1
       ],
-      "effectType": 1,
-      "power": 9,
-      "iconName": "9",
-      "playPlayerCastAnimation": true,
-      "numericId": 5,
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 6,
+      "id": "magic_explosion",
+      "script": "ExplosionMagicModel",
+      "nameKey": "magic.explosion.name",
+      "descriptionKey": "magic.explosion.desc",
+      "iconName": "10",
       "element": 1,
       "tagIds": [
         "burning"
-      ]
-    },
-    {
-      "id": "magic_explosion",
-      "nameKey": "magic.explosion.name",
-      "descriptionKey": "magic.explosion.desc",
-      "rarity": "Common",
+      ],
       "recipe": [
         1,
         2
       ],
-      "effectType": 1,
-      "iconName": "10",
-      "playPlayerCastAnimation": true,
-      "numericId": 6,
-      "element": 1,
-      "tagIds": [
-        "burning"
-      ]
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 7,
       "id": "magic_burning_hand",
+      "script": "BurningHandMagicModel",
       "nameKey": "magic.burning_hand.name",
       "descriptionKey": "magic.burning_hand.desc",
-      "rarity": "Rare",
-      "recipe": [
-        1,
-        1,
-        1,
-        1
-      ],
-      "effectType": 4,
-      "buffType": 2,
-      "buffAmount": 8,
       "iconName": "11",
-      "playPlayerCastAnimation": true,
-      "numericId": 7,
       "element": 1,
       "tagIds": [
         "burning",
         "burning_deepen"
-      ]
-    },
-    {
-      "id": "magic_flame_demon",
-      "nameKey": "magic.flame_demon.name",
-      "descriptionKey": "magic.flame_demon.desc",
-      "rarity": "Common",
+      ],
       "recipe": [
         1,
-        3
+        1,
+        1,
+        1
       ],
-      "effectType": 5,
-      "iconName": "12",
-      "playPlayerCastAnimation": false,
+      "playPlayerCastAnimation": true
+    },
+    {
       "numericId": 8,
+      "id": "magic_flame_demon",
+      "script": "FlameDemonMagicModel",
+      "nameKey": "magic.flame_demon.name",
+      "descriptionKey": "magic.flame_demon.desc",
+      "iconName": "12",
       "element": 1,
       "tagIds": [
         "temporary"
-      ]
+      ],
+      "recipe": [
+        1,
+        3
+      ],
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 9,
       "id": "magic_airflow",
+      "script": "AirflowMagicModel",
       "nameKey": "magic.airflow.name",
       "descriptionKey": "magic.airflow.desc",
-      "rarity": "Basic",
+      "iconName": "13",
+      "element": 2,
+      "tagIds": [],
       "recipe": [
         2
       ],
-      "effectType": 1,
-      "power": 3,
-      "iconName": "13",
-      "playPlayerCastAnimation": true,
-      "numericId": 9,
-      "element": 2,
-      "tagIds": []
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 10,
       "id": "magic_wind_blade",
+      "script": "WindBladeMagicModel",
       "nameKey": "magic.wind_blade.name",
       "descriptionKey": "magic.wind_blade.desc",
-      "rarity": "Common",
+      "iconName": "14",
+      "element": 2,
+      "tagIds": [],
       "recipe": [
         2,
         2
       ],
-      "effectType": 1,
-      "power": 3,
-      "iconName": "14",
-      "playPlayerCastAnimation": true,
-      "numericId": 10,
-      "element": 2,
-      "tagIds": []
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 11,
       "id": "magic_burning_wind",
+      "script": "BurningWindMagicModel",
       "nameKey": "magic.burning_wind.name",
       "descriptionKey": "magic.burning_wind.desc",
-      "rarity": "Common",
+      "iconName": "15",
+      "element": 2,
+      "tagIds": [],
       "recipe": [
         2,
         1,
         3
       ],
-      "effectType": 5,
-      "power": 0,
-      "iconName": "15",
-      "playPlayerCastAnimation": true,
-      "numericId": 11,
-      "element": 2,
-      "tagIds": [],
-      "buffType": 20,
-      "buffAmount": 1
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 12,
       "id": "magic_lightning",
+      "script": "LightningMagicModel",
       "nameKey": "magic.lightning.name",
       "descriptionKey": "magic.lightning.desc",
-      "rarity": "Common",
+      "iconName": "16",
+      "element": 2,
+      "tagIds": [
+        "arc"
+      ],
       "recipe": [
         2,
         1
       ],
-      "effectType": 4,
-      "power": 0,
-      "iconName": "16",
-      "playPlayerCastAnimation": true,
-      "numericId": 12,
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 13,
+      "id": "magic_storm_hand",
+      "script": "StormHandMagicModel",
+      "nameKey": "magic.storm_hand.name",
+      "descriptionKey": "magic.storm_hand.desc",
+      "iconName": "17",
       "element": 2,
       "tagIds": [
         "arc"
       ],
-      "buffType": 9,
-      "buffAmount": 2
-    },
-    {
-      "id": "magic_storm_hand",
-      "nameKey": "magic.storm_hand.name",
-      "descriptionKey": "magic.storm_hand.desc",
-      "rarity": "Rare",
       "recipe": [
         2,
         2,
         2,
         2
       ],
-      "effectType": 4,
-      "buffType": 9,
-      "buffAmount": 4,
-      "iconName": "17",
-      "playPlayerCastAnimation": true,
-      "numericId": 13,
-      "element": 2,
-      "tagIds": [
-        "arc"
-      ]
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 14,
       "id": "magic_current_attachment",
+      "script": "CurrentAttachmentMagicModel",
       "nameKey": "magic.current_attachment.name",
       "descriptionKey": "magic.current_attachment.desc",
-      "rarity": "Common",
-      "recipe": [
-        2,
-        3
-      ],
-      "effectType": 4,
-      "buffType": 15,
-      "buffAmount": 1,
       "iconName": "18",
-      "playPlayerCastAnimation": false,
-      "numericId": 14,
       "element": 2,
       "tagIds": [
         "spell_power",
         "charge"
-      ]
-    },
-    {
-      "id": "magic_sandstorm",
-      "nameKey": "magic.sandstorm.name",
-      "descriptionKey": "magic.sandstorm.desc",
-      "rarity": "Common",
+      ],
       "recipe": [
         2,
-        4
+        3
       ],
-      "effectType": 2,
-      "power": 3,
-      "iconName": "19",
-      "playPlayerCastAnimation": false,
+      "playPlayerCastAnimation": false
+    },
+    {
       "numericId": 15,
+      "id": "magic_sandstorm",
+      "script": "SandstormMagicModel",
+      "nameKey": "magic.sandstorm.name",
+      "descriptionKey": "magic.sandstorm.desc",
+      "iconName": "19",
       "element": 2,
       "tagIds": [
         "extra_draw"
       ],
-      "buffType": 9,
-      "buffAmount": 1
+      "recipe": [
+        2,
+        4
+      ],
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 16,
       "id": "magic_gale",
+      "script": "GaleMagicModel",
       "nameKey": "magic.gale.name",
       "descriptionKey": "magic.gale.desc",
-      "rarity": "Common",
+      "iconName": "20",
+      "element": 2,
+      "tagIds": [
+        "extra_draw"
+      ],
       "recipe": [
         2,
         2,
         2
       ],
-      "effectType": 5,
-      "power": 0,
-      "iconName": "20",
-      "playPlayerCastAnimation": false,
-      "numericId": 16,
-      "element": 2,
-      "tagIds": [
-        "extra_draw"
-      ],
-      "buffType": 13,
-      "buffAmount": 2
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 17,
       "id": "magic_ice_pick",
+      "script": "IcePickMagicModel",
       "nameKey": "magic.ice_pick.name",
       "descriptionKey": "magic.ice_pick.desc",
-      "rarity": "Common",
-      "recipe": [
-        3,
-        3
-      ],
-      "effectType": 4,
-      "power": 0,
       "iconName": "21",
-      "playPlayerCastAnimation": true,
-      "numericId": 17,
       "element": 3,
       "tagIds": [
         "vulnerable"
       ],
-      "buffType": 3,
-      "buffAmount": 3
-    },
-    {
-      "id": "magic_swamp",
-      "nameKey": "magic.swamp.name",
-      "descriptionKey": "magic.swamp.desc",
-      "rarity": "Common",
       "recipe": [
         3,
-        4
+        3
       ],
-      "effectType": 4,
-      "buffType": 7,
-      "buffAmount": 2,
-      "iconName": "22",
-      "playPlayerCastAnimation": true,
+      "playPlayerCastAnimation": true
+    },
+    {
       "numericId": 18,
+      "id": "magic_swamp",
+      "script": "SwampMagicModel",
+      "nameKey": "magic.swamp.name",
+      "descriptionKey": "magic.swamp.desc",
+      "iconName": "22",
       "element": 3,
       "tagIds": [
         "slow",
         "weak",
         "extra_refresh"
-      ]
+      ],
+      "recipe": [
+        3,
+        4
+      ],
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 19,
       "id": "magic_poison_fog",
+      "script": "PoisonFogMagicModel",
       "nameKey": "magic.poison_fog.name",
       "descriptionKey": "magic.poison_fog.desc",
-      "rarity": "Common",
+      "iconName": "23",
+      "element": 3,
+      "tagIds": [],
       "recipe": [
         3,
         2
       ],
-      "effectType": 4,
-      "buffType": 6,
-      "buffAmount": 2,
-      "iconName": "23",
-      "playPlayerCastAnimation": true,
-      "numericId": 19,
-      "element": 3,
-      "tagIds": [],
-      "power": 0
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 20,
       "id": "magic_boiling_rain",
+      "script": "BoilingRainMagicModel",
       "nameKey": "magic.boiling_rain.name",
       "descriptionKey": "magic.boiling_rain.desc",
-      "rarity": "Common",
+      "iconName": "24",
+      "element": 3,
+      "tagIds": [],
       "recipe": [
         3,
         1
       ],
-      "effectType": 1,
-      "power": 1,
-      "hitCount": 3,
-      "iconName": "24",
-      "playPlayerCastAnimation": true,
-      "numericId": 20,
-      "element": 3,
-      "tagIds": []
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 21,
       "id": "magic_blizzard",
+      "script": "BlizzardMagicModel",
       "nameKey": "magic.blizzard.name",
       "descriptionKey": "magic.blizzard.desc",
-      "rarity": "Common",
-      "recipe": [
-        3,
-        3,
-        3
-      ],
-      "effectType": 1,
-      "power": 5,
       "iconName": "25",
-      "playPlayerCastAnimation": true,
-      "numericId": 21,
       "element": 3,
       "tagIds": [
         "weak",
         "slow",
         "vulnerable"
-      ]
+      ],
+      "recipe": [
+        3,
+        3,
+        3
+      ],
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 22,
       "id": "magic_turbid_current",
+      "script": "TurbidCurrentMagicModel",
       "nameKey": "magic.turbid_current.name",
       "descriptionKey": "magic.turbid_current.desc",
-      "rarity": "Common",
+      "iconName": "26",
+      "element": 3,
+      "tagIds": [
+        "vortex"
+      ],
       "recipe": [
         3,
         2,
         4
       ],
-      "effectType": 2,
-      "power": 4,
-      "iconName": "26",
-      "playPlayerCastAnimation": false,
-      "numericId": 22,
-      "element": 3,
-      "tagIds": [
-        "vortex"
-      ]
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 23,
       "id": "magic_tide_hand",
+      "script": "TideHandMagicModel",
       "nameKey": "magic.tide_hand.name",
       "descriptionKey": "magic.tide_hand.desc",
-      "rarity": "Rare",
-      "recipe": [
-        3,
-        3,
-        3,
-        3
-      ],
-      "effectType": 1,
-      "power": 1,
       "iconName": "27",
-      "playPlayerCastAnimation": true,
-      "numericId": 23,
       "element": 3,
       "tagIds": [],
-      "hitCount": 7,
-      "buffType": 21,
-      "buffAmount": 1
-    },
-    {
-      "id": "magic_water_corrosion",
-      "nameKey": "magic.water_corrosion.name",
-      "descriptionKey": "magic.water_corrosion.desc",
-      "rarity": "Basic",
       "recipe": [
+        3,
+        3,
+        3,
         3
       ],
-      "effectType": 4,
-      "buffType": 6,
-      "buffAmount": 1,
-      "iconName": "28",
-      "playPlayerCastAnimation": true,
+      "playPlayerCastAnimation": true
+    },
+    {
       "numericId": 24,
+      "id": "magic_water_corrosion",
+      "script": "WaterCorrosionMagicModel",
+      "nameKey": "magic.water_corrosion.name",
+      "descriptionKey": "magic.water_corrosion.desc",
+      "iconName": "28",
       "element": 3,
       "tagIds": [
         "vulnerable"
-      ]
+      ],
+      "recipe": [
+        3
+      ],
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 25,
       "id": "magic_stone_wall",
+      "script": "StoneWallMagicModel",
       "nameKey": "magic.stone_wall.name",
       "descriptionKey": "magic.stone_wall.desc",
-      "rarity": "Basic",
+      "iconName": "29",
+      "element": 4,
+      "tagIds": [],
       "recipe": [
         4
       ],
-      "effectType": 2,
-      "power": 4,
-      "iconName": "29",
-      "playPlayerCastAnimation": false,
-      "numericId": 25,
-      "element": 4,
-      "tagIds": []
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 26,
       "id": "magic_rockfall",
+      "script": "RockfallMagicModel",
       "nameKey": "magic.rockfall.name",
       "descriptionKey": "magic.rockfall.desc",
-      "rarity": "Common",
+      "iconName": "30",
+      "element": 4,
+      "tagIds": [
+        "sturdy"
+      ],
       "recipe": [
         4,
         4
       ],
-      "effectType": 2,
-      "power": 6,
-      "iconName": "30",
-      "playPlayerCastAnimation": false,
-      "numericId": 26,
-      "element": 4,
-      "tagIds": [
-        "sturdy"
-      ]
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 27,
       "id": "magic_earth_fire",
+      "script": "EarthFireMagicModel",
       "nameKey": "magic.earth_fire.name",
       "descriptionKey": "magic.earth_fire.desc",
-      "rarity": "Common",
+      "iconName": "31",
+      "element": 4,
+      "tagIds": [],
       "recipe": [
         4,
         1
       ],
-      "effectType": 1,
-      "power": 3,
-      "iconName": "31",
-      "playPlayerCastAnimation": true,
-      "numericId": 27,
-      "element": 4,
-      "tagIds": []
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 28,
       "id": "magic_petrify",
+      "script": "PetrifyMagicModel",
       "nameKey": "magic.petrify.name",
       "descriptionKey": "magic.petrify.desc",
-      "rarity": "Common",
-      "recipe": [
-        4,
-        3
-      ],
-      "effectType": 1,
-      "power": 4,
       "iconName": "32",
-      "playPlayerCastAnimation": true,
-      "numericId": 28,
       "element": 4,
       "tagIds": [
         "weak",
         "slow"
-      ]
+      ],
+      "recipe": [
+        4,
+        3
+      ],
+      "playPlayerCastAnimation": true
     },
     {
+      "numericId": 29,
       "id": "magic_floating",
+      "script": "FloatingMagicModel",
       "nameKey": "magic.floating.name",
       "descriptionKey": "magic.floating.desc",
-      "rarity": "Common",
+      "iconName": "33",
+      "element": 4,
+      "tagIds": [],
       "recipe": [
         4,
         2
       ],
-      "effectType": 2,
-      "power": 6,
-      "iconName": "33",
-      "playPlayerCastAnimation": false,
-      "numericId": 29,
-      "element": 4,
-      "tagIds": []
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 30,
       "id": "magic_thorn_bush",
+      "script": "ThornBushMagicModel",
       "nameKey": "magic.thorn_bush.name",
       "descriptionKey": "magic.thorn_bush.desc",
-      "rarity": "Common",
+      "iconName": "34",
+      "element": 4,
+      "tagIds": [
+        "shield_reflect"
+      ],
       "recipe": [
         4,
         4,
         4
       ],
-      "effectType": 2,
-      "power": 10,
-      "iconName": "34",
-      "playPlayerCastAnimation": false,
-      "numericId": 30,
-      "element": 4,
-      "tagIds": [
-        "shield_reflect"
-      ]
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 31,
       "id": "magic_refine",
+      "script": "RefineMagicModel",
       "nameKey": "magic.refine.name",
       "descriptionKey": "magic.refine.desc",
-      "rarity": "Common",
+      "iconName": "35",
+      "element": 4,
+      "tagIds": [
+        "extra_draw"
+      ],
       "recipe": [
         4,
         1,
         3
       ],
-      "effectType": 2,
-      "power": 8,
-      "iconName": "35",
-      "playPlayerCastAnimation": false,
-      "numericId": 31,
-      "element": 4,
-      "tagIds": [
-        "extra_draw"
-      ]
+      "playPlayerCastAnimation": false
     },
     {
+      "numericId": 32,
       "id": "magic_earth_hand",
+      "script": "EarthHandMagicModel",
       "nameKey": "magic.earth_hand.name",
       "descriptionKey": "magic.earth_hand.desc",
-      "rarity": "Rare",
+      "iconName": "36",
+      "element": 4,
+      "tagIds": [],
       "recipe": [
         4,
         4,
         4,
         4
       ],
-      "effectType": 2,
-      "power": 5,
-      "iconName": "36",
-      "playPlayerCastAnimation": true,
-      "numericId": 32,
-      "element": 4,
-      "tagIds": []
+      "playPlayerCastAnimation": true
     }
   ]
 }

@@ -14,7 +14,9 @@ public class MagicModel
     public string Description => LocalizationSystem.GetText(Data.descriptionKey, string.Empty);
     public bool HasModifier => Modifiers.Count > 0;
     public MagicModifierModel PrimaryModifier => Modifiers.Count > 0 ? Modifiers[0] : null;
+    public virtual MagicEffectType EffectType => MagicEffectType.None;
     public virtual bool CastParticleTargetsAllEnemies => false;
+    public virtual bool CastParticleTargetsPlayer => false;
 
     public MagicModel(MagicData data, int slotIndex = 0)
     {
@@ -90,58 +92,6 @@ public class MagicModel
 
     protected virtual void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        EnemyModel enemyModel = battleManager.GetTargetEnemy();
-        CombatantModel primaryTarget = enemyModel != null ? new CombatantModel(enemyModel) : null;
-        CombatantModel caster = new CombatantModel(playerState);
-
-        switch (Data.effectType)
-        {
-            case MagicEffectType.Damage:
-                for (int i = 0; i < GetHitCount(); i++)
-                {
-                    int attackValue = Data.power;
-                    TriggerMagicBeforeAttack(enemyModel, ref attackValue);
-                    playerState.TriggerOnAttack(primaryTarget, ref attackValue);
-                    if (enemyModel != null)
-                    {
-                        GameLog.Data($"Magic {Id} damage target={enemyModel.Id} value={attackValue}");
-                        int shieldBefore = enemyModel.Shield;
-                        int attackResult = enemyModel.TakeDamage(attackValue, caster);
-                        int shieldBlocked = shieldBefore - enemyModel.Shield;
-                        if (shieldBlocked < 0)
-                            shieldBlocked = 0;
-                        TriggerMagicAfterAttack(enemyModel, ref attackResult);
-                        result.AddEnemyDamageHit(enemyModel, attackResult, shieldBlocked);
-                    }
-                }
-                break;
-            case MagicEffectType.Heal:
-                int healthBefore = playerState.CurrentHealth;
-                playerState.Heal(Data.power);
-                GameLog.Data($"Magic {Id} heal player value={Data.power}");
-                result.playerHeal += playerState.CurrentHealth - healthBefore;
-                break;
-            case MagicEffectType.GainShield:
-                int shieldValue = Data.power;
-                TriggerMagicBeforeGainShield(ref shieldValue);
-                int shieldGain = playerState.GainShield(shieldValue);
-                TriggerMagicAfterGainShield(ref shieldGain);
-                GameLog.Data($"Magic {Id} shield player value={shieldGain}");
-                result.playerShield += shieldGain;
-                TriggerShieldAttack(playerState, battleManager, shieldGain, result);
-                break;
-            case MagicEffectType.ApplyBuff:
-                int buffAmount = Data.buffAmount;
-                if (BuffModel.GetKind(Data.buffType) == BuffKindEnum.DeBuff)
-                    buffAmount += playerState.GetBuffStack(BuffEnum.DebuffPower);
-                if (enemyModel != null)
-                {
-                    GameLog.Data($"Magic {Id} add buff target={enemyModel.Id} buff={Data.buffType} stack={buffAmount}");
-                    enemyModel.AddBuff(Data.buffType, buffAmount);
-                    result.enemyBuffApplied = Data.buffType != BuffEnum.None && buffAmount > 0;
-                }
-                break;
-        }
     }
 
     protected void TriggerInvoke(PlayerState playerState, EnemyModel enemyModel)
@@ -241,7 +191,7 @@ public class MagicModel
 
     public int GetHitCount()
     {
-        return Data.hitCount > 0 ? Data.hitCount : 1;
+        return 1;
     }
 
     public bool IsMatch(IReadOnlyList<MaterialModel> sequence, int startIndex)
@@ -263,6 +213,171 @@ public class MagicModel
         return true;
     }
 
+    protected EnemyModel Target(BattleManager battleManager)
+    {
+        return battleManager?.GetTargetEnemy();
+    }
+
+    protected void Damage(PlayerState playerState, EnemyModel target, int damage, MagicCastResult result)
+    {
+        if (target == null || damage <= 0)
+            return;
+
+        CombatantModel targetCombatant = new CombatantModel(target);
+        CombatantModel caster = new CombatantModel(playerState);
+        int attackValue = damage;
+        TriggerMagicBeforeAttack(target, ref attackValue);
+        playerState.TriggerOnAttack(targetCombatant, ref attackValue);
+        GameLog.Data($"Magic {Id} damage target={target.Id} value={attackValue}");
+        CombatDamageResult damageResult = target.TakeDamageResult(attackValue, caster);
+        int attackResult = damageResult.HealthDamage;
+        playerState.TriggerAfterAttack(targetCombatant, ref attackResult);
+        TriggerMagicAfterAttack(target, ref attackResult);
+        result.AddEnemyDamageHit(target, attackResult, damageResult.ShieldDamage);
+    }
+
+    protected void DamageTarget(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
+    {
+        Damage(playerState, Target(battleManager), damage, result);
+    }
+
+    protected void DamageAll(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
+    {
+        if (battleManager == null)
+            return;
+
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                Damage(playerState, enemy, damage, result);
+        }
+    }
+
+    protected void AddBuff(UnitModel target, BuffEnum buffType, int stack, MagicCastResult result)
+    {
+        if (target == null || buffType == BuffEnum.None || stack <= 0)
+            return;
+
+        int finalStack = stack + GetDebuffStackBonus(buffType);
+        target.AddBuff(buffType, finalStack);
+        GameLog.Data($"Magic {Id} add buff target={target.DisplayName} buff={buffType} stack={finalStack}");
+        result.enemyBuffApplied = target is EnemyModel && finalStack > 0;
+    }
+
+    protected void AddBuff(EnemyModel target, BuffEnum buffType, int stack, MagicCastResult result)
+    {
+        AddBuff((UnitModel)target, buffType, stack, result);
+    }
+
+    protected void AddBuffAll(BattleManager battleManager, BuffEnum buffType, int stack, MagicCastResult result)
+    {
+        if (battleManager == null)
+            return;
+
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                AddBuff(enemy, buffType, stack, result);
+        }
+    }
+
+    private int GetDebuffStackBonus(BuffEnum buffType)
+    {
+        return BuffModel.GetKind(buffType) == BuffKindEnum.DeBuff && MagicModifierModel.CurrentContext?.PlayerState != null
+            ? MagicModifierModel.CurrentContext.PlayerState.GetBuffStack(BuffEnum.DebuffPower) + MagicModifierModel.CurrentContext.PlayerState.GetBuffStack(BuffEnum.DirectionWeakBonus)
+            : 0;
+    }
+
+    protected bool UseExtraRefreshChance(PlayerState playerState)
+    {
+        return playerState.UseExtraRefreshChance();
+    }
+
+    protected void AddBuffSelf(PlayerState playerState, BuffEnum buffType, int stack)
+    {
+        playerState.AddBuff(buffType, stack);
+    }
+
+    protected MaterialModel AddTemporaryMaterialToHand(PlayerState playerState, MaterialEnum material)
+    {
+        return playerState.AddTemporaryMaterialNextTurn(material, true);
+    }
+
+    protected MaterialModel AddMaterialNextTurn(PlayerState playerState, MaterialEnum material, MaterialModifierModel modifier)
+    {
+        return playerState.AddMaterialNextTurn(material, modifier);
+    }
+
+    protected int GetBuffStack(EnemyModel target, BuffEnum buffType)
+    {
+        return target != null ? target.GetBuffStack(buffType) : 0;
+    }
+
+    protected int GetTotalEnemyDebuffStacks(BattleManager battleManager)
+    {
+        if (battleManager == null)
+            return 0;
+
+        int total = 0;
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy == null || enemy.IsDead)
+                continue;
+
+            foreach (BuffModel buff in enemy.Buffs.Values)
+            {
+                if (buff.IsDeBuff)
+                    total += buff.stack;
+            }
+        }
+        return total;
+    }
+
+    protected void AddAllEnemyDebuffStacks(BattleManager battleManager, int amount)
+    {
+        if (battleManager == null || amount <= 0)
+            return;
+
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy == null || enemy.IsDead)
+                continue;
+
+            AddDebuffStackIfPresent(enemy, BuffEnum.Vulnerable, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Slow, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Weak, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Arc, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.Burning, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.BurningNextTurn, amount);
+            AddDebuffStackIfPresent(enemy, BuffEnum.BurnOnAttack, amount);
+        }
+    }
+
+    private void AddDebuffStackIfPresent(EnemyModel enemy, BuffEnum buffType, int amount)
+    {
+        if (enemy.GetBuffStack(buffType) > 0)
+            enemy.AddBuff(buffType, amount);
+    }
+
+    protected void GainShield(PlayerState playerState, BattleManager battleManager, int amount, MagicCastResult result)
+    {
+        int shieldValue = amount;
+        TriggerMagicBeforeGainShield(ref shieldValue);
+        int shieldGain = playerState.GainShield(shieldValue);
+        TriggerMagicAfterGainShield(ref shieldGain);
+        GameLog.Data($"Magic {Id} gain shield={shieldGain}");
+        result.playerShield += shieldGain;
+        TriggerShieldAttack(playerState, battleManager, shieldGain, result);
+    }
+
     protected static void TriggerShieldAttack(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
     {
         if (damage <= 0 || playerState.GetBuffStack(BuffEnum.ShieldReflect) <= 0 || battleManager == null)
@@ -276,12 +391,8 @@ public class MagicModel
             if (target == null || target.IsDead)
                 continue;
 
-            int shieldBefore = target.Shield;
-            int attackResult = target.TakeDamage(damage, caster);
-            int shieldBlocked = shieldBefore - target.Shield;
-            if (shieldBlocked < 0)
-                shieldBlocked = 0;
-            result.AddEnemyDamageHit(target, attackResult, shieldBlocked);
+            CombatDamageResult damageResult = target.TakeDamageResult(damage, caster);
+            result.AddEnemyDamageHit(target, damageResult.HealthDamage, damageResult.ShieldDamage);
         }
     }
 

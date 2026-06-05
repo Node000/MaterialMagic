@@ -1,49 +1,100 @@
 {
   "items": [
-    { "key": "enemy.placeholder_1.name", "text": "豆荚" },
-    { "key": "enemy.placeholder_2.name", "text": "相扑男" },
-    { "key": "enemy.placeholder_31.name", "text": "蝙蝠1" },
-    { "key": "enemy.placeholder_32.name", "text": "蝙蝠2" },
-    { "key": "enemy.placeholder_4.name", "text": "毛球" },
-    { "key": "enemy.placeholder_5.name", "text": "好船" },
-    { "key": "enemy.placeholder_6.name", "text": "蝇王" },
-    { "key": "enemy.placeholder_61.name", "text": "卵" },
-    { "key": "enemy.placeholder_7.name", "text": "黑白块" },
-    { "key": "enemy.placeholder_8.name", "text": "蓝眼" },
-    { "key": "enemy.placeholder_9.name", "text": "眼球" },
-    { "key": "enemy.placeholder_10.name", "text": "蓝眼" },
-    { "key": "enemy.placeholder_101.name", "text": "眼球" },
-    { "key": "enemy.action.attack_1", "text": "攻击1" },
-    { "key": "enemy.action.attack_2", "text": "攻击2" },
-    { "key": "enemy.action.attack_3", "text": "攻击3" },
-    { "key": "enemy.action.attack_4", "text": "攻击4" },
-    { "key": "enemy.action.attack_5", "text": "攻击5" },
-    { "key": "enemy.action.attack_6", "text": "攻击6" },
-    { "key": "enemy.action.attack_7", "text": "攻击7" },
-    { "key": "enemy.action.attack_8", "text": "攻击8" },
-    { "key": "enemy.action.attack_9", "text": "攻击9" },
-    { "key": "enemy.action.attack_10", "text": "攻击10" },
-    { "key": "enemy.action.attack_12", "text": "攻击12" },
-    { "key": "enemy.action.attack_all_2", "text": "全体攻击2" },
-    { "key": "enemy.action.shield_4", "text": "防御4" },
-    { "key": "enemy.action.shield_5", "text": "防御5" },
-    { "key": "enemy.action.shield_6", "text": "防御6" },
-    { "key": "enemy.action.shield_8", "text": "防御8" },
-    { "key": "enemy.action.shield_10", "text": "防御10" },
-    { "key": "enemy.action.shield_12", "text": "防御12" },
-    { "key": "enemy.action.shield_15", "text": "防御15" },
-    { "key": "enemy.action.damage_power_1", "text": "伤害提升1" },
-    { "key": "enemy.action.damage_power_3", "text": "伤害提升3" },
-    { "key": "enemy.action.damage_power_5", "text": "伤害提升5" },
-    { "key": "enemy.action.defense_power_2", "text": "防御提升2" },
-    { "key": "enemy.action.defense_damage_power_1", "text": "防御提升1 伤害提升1" },
-    { "key": "enemy.action.player_vulnerable_3", "text": "玩家易损3" },
-    { "key": "enemy.action.player_vulnerable_4", "text": "玩家易损4" },
-    { "key": "enemy.action.player_vulnerable_5", "text": "玩家易损5" },
-    { "key": "enemy.action.player_weak_2", "text": "玩家虚弱2" },
-    { "key": "enemy.action.player_slow_3", "text": "玩家迟缓3" },
-    { "key": "enemy.action.player_slow_4", "text": "玩家迟缓4" },
-    { "key": "enemy.action.summon_61_x2", "text": "召唤卵×2" },
-    { "key": "enemy.action.summon_101", "text": "召唤眼球" }
+    {
+      "key": "enemy.001.name",
+      "text": "豆荚"
+    },
+    {
+      "key": "enemy.002.name",
+      "text": "猫头鹰"
+    },
+    {
+      "key": "enemy.003.name",
+      "text": "相扑男"
+    },
+    {
+      "key": "enemy.004.name",
+      "text": "相扑男"
+    },
+    {
+      "key": "enemy.005.name",
+      "text": "蝙蝠1"
+    },
+    {
+      "key": "enemy.006.name",
+      "text": "蝙蝠2"
+    },
+    {
+      "key": "enemy.007.name",
+      "text": "毛球"
+    },
+    {
+      "key": "enemy.008.name",
+      "text": "好船"
+    },
+    {
+      "key": "enemy.009.name",
+      "text": "舞女"
+    },
+    {
+      "key": "enemy.010.name",
+      "text": "蝇王"
+    },
+    {
+      "key": "enemy.011.name",
+      "text": "卵"
+    },
+    {
+      "key": "enemy.012.name",
+      "text": "生意人"
+    },
+    {
+      "key": "enemy.013.name",
+      "text": "假人"
+    },
+    {
+      "key": "enemy.014.name",
+      "text": "喵咪"
+    },
+    {
+      "key": "enemy.015.name",
+      "text": "猫咪（招财）"
+    },
+    {
+      "key": "enemy.016.name",
+      "text": "鹿男"
+    },
+    {
+      "key": "enemy.017.name",
+      "text": "恶魔"
+    },
+    {
+      "key": "enemy.018.name",
+      "text": "黑白块"
+    },
+    {
+      "key": "enemy.019.name",
+      "text": "蓝眼(假)"
+    },
+    {
+      "key": "enemy.020.name",
+      "text": "眼球(假)"
+    },
+    {
+      "key": "enemy.021.name",
+      "text": "蓝眼"
+    },
+    {
+      "key": "enemy.022.name",
+      "text": "眼球"
+    },
+    {
+      "key": "enemy.023.name",
+      "text": "彩虹"
+    },
+    {
+      "key": "enemy.024.name",
+      "text": "南极洲"
+    }
   ]
 }

@@ -1,291 +1,6 @@
 {
   "items": [
     {
-      "id": "event_test_crossroad",
-      "titleKey": "event.test_crossroad.title",
-      "startNodeId": "start",
-      "drawCount": 5,
-      "nodes": [
-        {
-          "id": "start",
-          "textKeys": [
-            "event.test_crossroad.start.1",
-            "event.test_crossroad.start.2"
-          ],
-          "options": [
-            {
-              "id": "inspect_rune",
-              "titleKey": "event.test_crossroad.option.inspect",
-              "recipe": "12",
-              "resultId": 0,
-              "nextNodeId": "rune"
-            },
-            {
-              "id": "drink_spring",
-              "titleKey": "event.test_crossroad.option.heal",
-              "recipe": "33",
-              "resultId": 1,
-              "nextNodeId": "spring"
-            },
-            {
-              "id": "leave",
-              "titleKey": "event.test_crossroad.option.leave",
-              "isExitOption": true
-            }
-          ]
-        },
-        {
-          "id": "spring",
-          "textKeys": [
-            "event.test_crossroad.spring.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "rune",
-          "textKeys": [
-            "event.test_crossroad.rune.1",
-            "event.test_crossroad.rune.2"
-          ],
-          "options": [
-            {
-              "id": "strengthen_material",
-              "titleKey": "event.test_crossroad.option.upgrade",
-              "recipe": "24",
-              "resultId": 2,
-              "nextNodeId": "upgrade"
-            },
-            {
-              "id": "leave",
-              "titleKey": "event.test_crossroad.option.leave",
-              "isExitOption": true
-            }
-          ]
-        },
-        {
-          "id": "upgrade",
-          "textKeys": [
-            "event.test_crossroad.upgrade.1"
-          ],
-          "options": []
-        }
-      ],
-      "numericId": 1
-    },
-    {
-      "id": "event_material_trade",
-      "titleKey": "event.material_trade.title",
-      "startNodeId": "start",
-      "drawCount": 5,
-      "nodes": [
-        {
-          "id": "start",
-          "textKeys": [
-            "event.material_trade.start.1",
-            "event.material_trade.start.2"
-          ],
-          "options": [
-            {
-              "id": "remove_material",
-              "titleKey": "event.material_trade.option.remove_material",
-              "recipe": "14",
-              "resultId": 100,
-              "nextNodeId": "remove_material",
-              "choiceCount": 1
-            },
-            {
-              "id": "go_gain",
-              "titleKey": "event.material_trade.option.go_gain",
-              "recipe": "23",
-              "ignoreOrder": true,
-              "resultId": 0,
-              "nextNodeId": "gain_select"
-            },
-            {
-              "id": "leave",
-              "titleKey": "event.test_crossroad.option.leave",
-              "isExitOption": true
-            }
-          ]
-        },
-        {
-          "id": "gain_select",
-          "textKeys": [
-            "event.material_trade.gain_select.1"
-          ],
-          "options": [
-            {
-              "id": "gain_fire_material",
-              "titleKey": "event.test_crossroad.option.gain_fire",
-              "recipe": "1",
-              "resultId": 101,
-              "nextNodeId": "gain_fire"
-            },
-            {
-              "id": "gain_wind_material",
-              "titleKey": "event.test_crossroad.option.gain_wind",
-              "recipe": "2",
-              "resultId": 102,
-              "nextNodeId": "gain_wind"
-            }
-          ]
-        },
-        {
-          "id": "gain_select_more",
-          "textKeys": [
-            "event.material_trade.gain_select.1"
-          ],
-          "options": [
-            {
-              "id": "gain_water_material",
-              "titleKey": "event.test_crossroad.option.gain_water",
-              "recipe": "3",
-              "resultId": 103,
-              "nextNodeId": "gain_water"
-            },
-            {
-              "id": "gain_earth_material",
-              "titleKey": "event.test_crossroad.option.gain_earth",
-              "recipe": "4",
-              "resultId": 104,
-              "nextNodeId": "gain_earth"
-            }
-          ]
-        },
-        {
-          "id": "remove_material",
-          "textKeys": [
-            "event.test_crossroad.remove_material.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "gain_fire",
-          "textKeys": [
-            "event.test_crossroad.gain_fire.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "gain_wind",
-          "textKeys": [
-            "event.test_crossroad.gain_wind.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "gain_water",
-          "textKeys": [
-            "event.test_crossroad.gain_water.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "gain_earth",
-          "textKeys": [
-            "event.test_crossroad.gain_earth.1"
-          ],
-          "options": []
-        }
-      ],
-      "numericId": 2
-    },
-    {
-      "id": "event_modifier_shrine",
-      "titleKey": "event.modifier_shrine.title",
-      "startNodeId": "start",
-      "drawCount": 5,
-      "nodes": [
-        {
-          "id": "start",
-          "textKeys": [
-            "event.modifier_shrine.start.1",
-            "event.modifier_shrine.start.2"
-          ],
-          "options": [
-            {
-              "id": "add_kindling_modifier",
-              "titleKey": "event.test_crossroad.option.kindling",
-              "recipe": "13",
-              "ignoreOrder": true,
-              "resultId": 201,
-              "nextNodeId": "kindling",
-              "choiceCount": 1,
-              "tagIds": [
-                "kindling"
-              ]
-            },
-            {
-              "id": "go_more",
-              "titleKey": "event.modifier_shrine.option.more",
-              "recipe": "24",
-              "ignoreOrder": true,
-              "resultId": 0,
-              "nextNodeId": "more"
-            },
-            {
-              "id": "leave",
-              "titleKey": "event.test_crossroad.option.leave",
-              "isExitOption": true
-            }
-          ]
-        },
-        {
-          "id": "more",
-          "textKeys": [
-            "event.modifier_shrine.more.1"
-          ],
-          "options": [
-            {
-              "id": "add_flow_modifier_two",
-              "titleKey": "event.test_crossroad.option.flow_two",
-              "recipe": "22",
-              "resultId": 202,
-              "nextNodeId": "flow",
-              "choiceCount": 2,
-              "tagIds": [
-                "flow"
-              ]
-            },
-            {
-              "id": "add_liquefy_modifier",
-              "titleKey": "event.test_crossroad.option.liquefy",
-              "recipe": "34",
-              "ignoreOrder": true,
-              "resultId": 203,
-              "nextNodeId": "liquefy",
-              "choiceCount": 1,
-              "tagIds": [
-                "liquefy"
-              ]
-            }
-          ]
-        },
-        {
-          "id": "kindling",
-          "textKeys": [
-            "event.test_crossroad.kindling.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "flow",
-          "textKeys": [
-            "event.test_crossroad.flow.1"
-          ],
-          "options": []
-        },
-        {
-          "id": "liquefy",
-          "textKeys": [
-            "event.test_crossroad.liquefy.1"
-          ],
-          "options": []
-        }
-      ],
-      "numericId": 3
-    },
-    {
       "id": "event_draw_training",
       "titleKey": "event.draw_training.title",
       "startNodeId": "start",
@@ -322,19 +37,6 @@
           ],
           "options": [
             {
-              "id": "compressed_biscuit",
-              "titleKey": "event.midnight_convenience.option.biscuit",
-              "randomRecipeLength": 2,
-              "ignoreOrder": true,
-              "effects": [
-                {
-                  "rewardType": 1,
-                  "amount": 10
-                }
-              ],
-              "nextNodeId": "biscuit"
-            },
-            {
               "id": "energy_drink",
               "titleKey": "event.midnight_convenience.option.energy_drink",
               "randomRecipeLength": 2,
@@ -361,18 +63,17 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.midnight_convenience.option.sleep",
               "nextNodeId": "leave",
-              "isExitOption": true
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 10
+                }
+              ]
             }
           ]
-        },
-        {
-          "id": "biscuit",
-          "textKeys": [
-            "event.midnight_convenience.biscuit.1"
-          ],
-          "options": []
         },
         {
           "id": "energy_drink",
@@ -391,7 +92,7 @@
         {
           "id": "leave",
           "textKeys": [
-            "event.midnight_convenience.leave.1"
+            "event.midnight_convenience.sleep.1"
           ],
           "options": []
         }
@@ -426,7 +127,7 @@
             },
             {
               "id": "smash_open",
-              "titleKey": "event.capsule_machine.option.smash_open",
+              "titleKey": "event.capsule_machine.option.kick",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -443,9 +144,19 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.capsule_machine.option.punch",
               "nextNodeId": "leave",
-              "isExitOption": true
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 2
+                },
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ]
             }
           ]
         },
@@ -466,7 +177,7 @@
         {
           "id": "leave",
           "textKeys": [
-            "event.capsule_machine.leave.1"
+            "event.capsule_machine.punch.1"
           ],
           "options": []
         }
@@ -522,9 +233,15 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.anonymous_forum.option.reply",
               "nextNodeId": "leave",
-              "isExitOption": true
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 15,
+                  "amount": 4
+                }
+              ]
             }
           ]
         },
@@ -545,7 +262,7 @@
         {
           "id": "leave",
           "textKeys": [
-            "event.anonymous_forum.leave.1"
+            "event.anonymous_forum.reply.1"
           ],
           "options": []
         }
@@ -556,7 +273,7 @@
       "id": "event_coffee_or_cola",
       "titleKey": "event.coffee_or_cola.title",
       "startNodeId": "start",
-      "drawCount": 3,
+      "drawCount": 2,
       "nodes": [
         {
           "id": "start",
@@ -589,8 +306,8 @@
               "ignoreOrder": true,
               "effects": [
                 {
-                  "rewardType": 1,
-                  "amount": 10
+                  "rewardType": 14,
+                  "choiceCount": 1
                 }
               ],
               "nextNodeId": "coffee"
@@ -610,9 +327,15 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.coffee_or_cola.option.water",
               "nextNodeId": "leave",
-              "isExitOption": true
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 5
+                }
+              ]
             }
           ]
         },
@@ -626,7 +349,7 @@
         {
           "id": "coffee",
           "textKeys": [
-            "event.coffee_or_cola.coffee.1"
+            "event.coffee_or_cola.coffee_remove.1"
           ],
           "options": []
         },
@@ -640,7 +363,7 @@
         {
           "id": "leave",
           "textKeys": [
-            "event.coffee_or_cola.leave.1"
+            "event.coffee_or_cola.water.1"
           ],
           "options": []
         }
@@ -717,7 +440,7 @@
         {
           "id": "no_buy",
           "textKeys": [
-            "event.limited_sale.no_buy.1"
+            "event.limited_sale.no_buy_save.1"
           ],
           "options": []
         }
@@ -757,7 +480,7 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.promo_link.option.stop",
               "nextNodeId": "leave",
               "isExitOption": true
             }
@@ -789,7 +512,7 @@
             },
             {
               "id": "leave",
-              "titleKey": "event.common.option.leave",
+              "titleKey": "event.promo_link.option.stop",
               "nextNodeId": "leave",
               "isExitOption": true
             }
@@ -814,12 +537,12 @@
         {
           "id": "start",
           "textKeys": [
-            "event.traffic_growth.start.1"
+            "event.traffic_growth.start.video.1"
           ],
           "options": [
             {
               "id": "accept_growth",
-              "titleKey": "event.traffic_growth.option.accept",
+              "titleKey": "event.traffic_growth.option.cheer",
               "effects": [
                 {
                   "rewardType": 13,
@@ -834,7 +557,7 @@
         {
           "id": "growth",
           "textKeys": [
-            "event.traffic_growth.growth.1"
+            "event.traffic_growth.growth.video.1"
           ],
           "options": []
         }

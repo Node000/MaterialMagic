@@ -1,0 +1,72 @@
+{
+  "numericId": 1,
+  "string_id": "enemy_001",
+  "nameKey": "enemy.001.name",
+  "maxHealth": 18,
+  "baseAttack": 5,
+  "imageScale": 0.75,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 5,
+              "displayType": "attack"
+            },
+            {
+              "actionType": 2,
+              "value": 5,
+              "displayType": "defend"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 3,
+              "times": 2,
+              "displayType": "multiAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 2
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        },
+        {
+          "groupId": 3
+        }
+      ]
+    }
+  ],
+  "iconName": "豆荚",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

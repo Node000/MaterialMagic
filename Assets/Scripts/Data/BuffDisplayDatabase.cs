@@ -66,6 +66,9 @@ public static class BuffDisplayDatabase
 
     private static BuffDisplayData CreateDefault(BuffEnum buffType, Sprite icon)
     {
+        if (icon == null)
+            icon = LoadDefaultIcon(buffType);
+
         return new BuffDisplayData
         {
             Name = LocalizationKeys.GetBuffName(buffType),
@@ -73,6 +76,19 @@ public static class BuffDisplayDatabase
             Icon = icon,
             FallbackColor = GetFallbackColor(buffType)
         };
+    }
+
+    private static Sprite LoadDefaultIcon(BuffEnum buffType)
+    {
+        switch (BuffModel.GetKind(buffType))
+        {
+            case BuffKindEnum.Buff:
+                return Resources.Load<Sprite>("Images/Buffs/yellowStar");
+            case BuffKindEnum.DeBuff:
+                return Resources.Load<Sprite>("Images/Buffs/redStar");
+            default:
+                return null;
+        }
     }
 
     private static Color GetFallbackColor(BuffEnum buffType)

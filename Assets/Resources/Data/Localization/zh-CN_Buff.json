@@ -159,6 +159,86 @@
     {
       "key": "buff.vortex_next_draw.desc",
       "text": "下回合抽到的前若干张素材牌获得漩涡。"
+    },
+    {
+      "key": "buff.eggdeathexplosion.name",
+      "text": "亡语爆炸"
+    },
+    {
+      "key": "buff.eggdeathexplosion.desc",
+      "text": "死亡时对所有单位造成{0}点伤害。"
+    },
+    {
+      "key": "buff.shieldonhealthloss.name",
+      "text": "受伤护盾"
+    },
+    {
+      "key": "buff.shieldonhealthloss.desc",
+      "text": "生命值减少时，获得减少量×{0}的护盾。"
+    },
+    {
+      "key": "buff.shufflehandoninvokechance.name",
+      "text": "随机打乱"
+    },
+    {
+      "key": "buff.shufflehandoninvokechance.desc",
+      "text": "玩家出手时，有1/{0}概率打乱玩家手牌顺序。"
+    },
+    {
+      "key": "buff.attributedisabled.name",
+      "text": "属性禁用"
+    },
+    {
+      "key": "buff.attributedisabled.desc",
+      "text": "本回合不能打出指定属性素材。"
+    },
+    {
+      "key": "buff.curse.name",
+      "text": "诅咒"
+    },
+    {
+      "key": "buff.curse.desc",
+      "text": "回合开始时，手牌前两张获得厄运。"
+    },
+    {
+      "key": "buff.directiondamagebonus.name",
+      "text": "上：额外伤害"
+    },
+    {
+      "key": "buff.directiondamagebonus.desc",
+      "text": "本回合攻击额外造成{0}点伤害。"
+    },
+    {
+      "key": "buff.directionweakbonus.name",
+      "text": "下：额外虚弱"
+    },
+    {
+      "key": "buff.directionweakbonus.desc",
+      "text": "本回合施加负面状态时额外施加{0}层。"
+    },
+    {
+      "key": "buff.directionextradraw.name",
+      "text": "左：额外抽牌"
+    },
+    {
+      "key": "buff.directionextradraw.desc",
+      "text": "回合开始时额外抽{0}张牌。"
+    },
+    {
+      "key": "buff.directionshieldbonus.name",
+      "text": "右：额外护盾"
+    },
+    {
+      "key": "buff.directionshieldbonus.desc",
+      "text": "本回合获得护盾时额外获得{0}点。"
+    },
+    {
+      "key": "buff.materialoverplaydebuff.name",
+      "text": "素材过载"
+    },
+    {
+      "key": "buff.materialoverplaydebuff.desc",
+      "text": "玩家打出超过4张素材后，每多打出1张获得1层随机负面状态。"
     }
   ]
 }

@@ -1,7 +1,8 @@
-public class ExplosionMagicModel : ScriptedMagicModel
+public class ExplosionMagicModel : MagicModel
 {
     public ExplosionMagicModel(MagicData data, int slotIndex = 0) : base(data, slotIndex) { }
-    protected override void CastScript(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
+    public override MagicEffectType EffectType => MagicEffectType.Damage;
+    protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
         AddBuff(target, BuffEnum.Burning, 2, result);

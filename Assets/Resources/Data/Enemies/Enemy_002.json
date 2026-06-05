@@ -1,0 +1,53 @@
+{
+  "numericId": 2,
+  "string_id": "enemy_002",
+  "nameKey": "enemy.002.name",
+  "maxHealth": 29,
+  "baseAttack": 4,
+  "imageScale": 0.95,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 4,
+              "displayType": "attack"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 6
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "猫头鹰",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

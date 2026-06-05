@@ -1,0 +1,78 @@
+{
+  "numericId": 9,
+  "string_id": "enemy_009",
+  "nameKey": "enemy.009.name",
+  "maxHealth": 25,
+  "baseAttack": 10,
+  "imageScale": 0.95,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 8
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 8,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 7,
+                  "stack": 2
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 10,
+              "displayType": "bigAttack"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1,
+          "onlyOnce": true
+        },
+        {
+          "randomGroupIds": [
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "舞女",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

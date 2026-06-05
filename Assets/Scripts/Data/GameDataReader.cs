@@ -58,13 +58,52 @@ public static class GameDataReader
         for (int i = 0; i < table.items.Count; i++)
         {
             T item = table.items[i];
-            if (item == null || item.NumericId <= 0)
-                continue;
-
-            dictionary[item.NumericId] = item;
+            AddNumericItem(dictionary, item);
         }
 
         return dictionary;
+    }
+
+    public static Dictionary<int, T> LoadNumericDictionary<T>(string tablePath, string folderPath) where T : INumericDataRecord
+    {
+        Dictionary<int, T> dictionary = LoadNumericDictionary<T>(tablePath);
+        TextAsset[] assets = Resources.LoadAll<TextAsset>(DataRoot + folderPath);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            TextAsset asset = assets[i];
+            if (asset == null)
+                continue;
+
+            if (!LooksLikeJsonObject(asset.text))
+                continue;
+
+            T item = JsonUtility.FromJson<T>(asset.text);
+            AddNumericItem(dictionary, item);
+        }
+
+        return dictionary;
+    }
+
+    private static bool LooksLikeJsonObject(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return false;
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (!char.IsWhiteSpace(text[i]))
+                return text[i] == '{';
+        }
+
+        return false;
+    }
+
+    private static void AddNumericItem<T>(Dictionary<int, T> dictionary, T item) where T : INumericDataRecord
+    {
+        if (item == null || item.NumericId <= 0)
+            return;
+
+        dictionary[item.NumericId] = item;
     }
 
     public static TextAsset LoadTextAsset(string path)
@@ -98,7 +137,7 @@ public static class GameDataDatabase
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
 
     public static IReadOnlyDictionary<int, MagicData> MagicData => magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData");
-    public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= GameDataReader.LoadNumericDictionary<EnemyData>("EnemyData");
+    public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= GameDataReader.LoadNumericDictionary<EnemyData>("EnemyData", "Enemies");
     public static IReadOnlyDictionary<int, EventData> EventData => eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData");
     public static IReadOnlyDictionary<int, LevelData> LevelData => levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData");
     public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");

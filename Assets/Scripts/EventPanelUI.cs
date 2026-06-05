@@ -69,6 +69,7 @@ public class EventPanelUI : MonoBehaviour
     private bool showingOptions;
     private string fullText;
     private Action optionsShown;
+    private readonly Vector3[] tooltipAnchorCorners = new Vector3[4];
 
     public bool ShowingOptions => showingOptions;
     public bool WaitingForFinalClick => waitingForFinalNodeClick && waitingForClick && !typing && !showingOptions && eventModel != null && eventModel.CurrentOptions.Length == 0;
@@ -513,7 +514,7 @@ public class EventPanelUI : MonoBehaviour
         optionTooltip.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(optionTooltip);
         optionTooltip.SetAsLastSibling();
-        optionTooltip.position = anchor.position + new Vector3(0f, tooltipYOffset, 0f);
+        optionTooltip.anchoredPosition = GetTooltipAnchoredPosition(anchor);
         optionTooltip.localScale = tooltipHiddenScale;
         optionTooltipCanvasGroup.alpha = 0f;
         optionTooltipTween?.Kill(false);
@@ -537,6 +538,14 @@ public class EventPanelUI : MonoBehaviour
         sequence.OnComplete(() => optionTooltip.gameObject.SetActive(false));
         optionTooltipTween = sequence;
         HideOptionTagTooltip();
+    }
+
+    private Vector2 GetTooltipAnchoredPosition(RectTransform anchor)
+    {
+        anchor.GetWorldCorners(tooltipAnchorCorners);
+        Vector3 topCenter = (tooltipAnchorCorners[1] + tooltipAnchorCorners[2]) * 0.5f;
+        Vector3 panelLocalPoint = panel.InverseTransformPoint(topCenter);
+        return new Vector2(panelLocalPoint.x, panelLocalPoint.y + tooltipYOffset);
     }
 
     private void ShowOptionTagTooltip()
@@ -730,6 +739,8 @@ public class EventPanelUI : MonoBehaviour
                 return "抽牌数+" + GetEffectAmountText(effect, 1);
             case EventRewardType.RemoveMaterial:
                 return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张素材牌";
+            case EventRewardType.GainNextBattleStartShield:
+                return "下场战斗开始时，获得" + GetEffectAmountText(effect, 1) + "点护盾";
             default:
                 return string.Empty;
         }

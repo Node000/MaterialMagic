@@ -21,6 +21,7 @@ public class RunSaveData
     public float totalPlaySeconds;
     public string lastPlayedAtUtc;
     public RunMapNodeSaveData[] mapNodes = Array.Empty<RunMapNodeSaveData>();
+    public RunPoolSaveData runPools;
     public PlayerSaveData player;
     public CurrentNodeSaveData currentNode;
 }
@@ -32,6 +33,19 @@ public class RunMapNodeSaveData
     public int rightLevelId;
     public int selectedLevelId;
     public bool fixedSingleChoice;
+    public bool leftHidden;
+    public bool rightHidden;
+}
+
+[Serializable]
+public class RunPoolSaveData
+{
+    public int battleCount;
+    public int[] remainingBeginPool = Array.Empty<int>();
+    public int[] remainingMidPool = Array.Empty<int>();
+    public int[] remainingNormalPool = Array.Empty<int>();
+    public int[] remainingEventPool = Array.Empty<int>();
+    public int[] remainingElitePool = Array.Empty<int>();
 }
 
 [Serializable]
@@ -49,6 +63,9 @@ public class PlayerSaveData
     public int drawCount;
     public int maxPlayCount;
     public int magicBookSlotCount;
+    public BuffStackData[] preparedBuffs = Array.Empty<BuffStackData>();
+    public int runRandomSeed;
+    public int runRandomStep;
     public MaterialCardSaveData[] deck = Array.Empty<MaterialCardSaveData>();
     public MagicSlotSaveData[] magicBook = Array.Empty<MagicSlotSaveData>();
 }
@@ -238,6 +255,7 @@ public static class RunSaveSystem
             chapterNumericId = chapter != null ? chapter.numericId : 0,
             currentMapNodeIndex = currentMapNodeIndex,
             mapNodes = ExportMapNodes(mapNodes),
+            runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
             player = ExportPlayer(player),
             currentNode = currentLevel != null ? new CurrentNodeSaveData { levelId = currentLevel.numericId } : null
         };
@@ -253,16 +271,23 @@ public static class RunSaveSystem
 
     public static PlayerState CreatePlayer(RunSaveData save)
     {
+        return CreatePlayerStatus(save);
+    }
+
+    public static PlayerStatus CreatePlayerStatus(RunSaveData save)
+    {
         PlayerSaveData playerData = save != null ? save.player : null;
         if (playerData == null)
-            return PlayerState.CreateDefault();
+            return PlayerStatus.CreateDefaultStatus();
 
-        PlayerState player = new PlayerState(playerData.maxHealth, playerData.gold);
+        PlayerStatus player = new PlayerStatus(playerData.maxHealth, playerData.gold);
         if (playerData.currentHealth < playerData.maxHealth)
             player.TakeDirectDamage(playerData.maxHealth - playerData.currentHealth);
         player.DrawCount = playerData.drawCount;
         player.MaxPlayCount = playerData.maxPlayCount;
         player.MagicBookSlotCount = playerData.magicBookSlotCount;
+        ApplyPreparedBuffs(player, playerData.preparedBuffs);
+        player.SetRunRandomState(playerData.runRandomSeed, playerData.runRandomStep);
         player.Deck.Clear();
         player.DrawPile.Clear();
         player.DiscardPile.Clear();
@@ -303,6 +328,8 @@ public static class RunSaveSystem
             RunMapNodeModel node = new RunMapNodeModel
             {
                 fixedSingleChoice = nodeData.fixedSingleChoice,
+                leftHidden = nodeData.leftHidden,
+                rightHidden = nodeData.rightHidden,
                 leftLevel = GetLevel(nodeData.leftLevelId),
                 rightLevel = GetLevel(nodeData.rightLevelId),
                 selectedLevel = GetLevel(nodeData.selectedLevelId)
@@ -348,7 +375,9 @@ public static class RunSaveSystem
                 leftLevelId = node.leftLevel != null ? node.leftLevel.numericId : 0,
                 rightLevelId = node.rightLevel != null ? node.rightLevel.numericId : 0,
                 selectedLevelId = node.selectedLevel != null ? node.selectedLevel.numericId : 0,
-                fixedSingleChoice = node.fixedSingleChoice
+                fixedSingleChoice = node.fixedSingleChoice,
+                leftHidden = node.leftHidden,
+                rightHidden = node.rightHidden
             };
         }
         return results;
@@ -364,6 +393,9 @@ public static class RunSaveSystem
             drawCount = player.DrawCount,
             maxPlayCount = player.MaxPlayCount,
             magicBookSlotCount = player.MagicBookSlotCount,
+            preparedBuffs = ExportPreparedBuffs(player.Buffs),
+            runRandomSeed = player is PlayerStatus status ? status.RunRandomSeed : 0,
+            runRandomStep = player is PlayerStatus statusForStep ? statusForStep.RunRandomStep : 0,
             deck = ExportDeck(player.Deck),
             magicBook = ExportMagicBook(player.MagicBook)
         };
@@ -404,6 +436,33 @@ public static class RunSaveSystem
             };
         }
         return results;
+    }
+
+    private static BuffStackData[] ExportPreparedBuffs(IReadOnlyDictionary<BuffEnum, BuffModel> buffs)
+    {
+        if (buffs == null || buffs.Count == 0)
+            return Array.Empty<BuffStackData>();
+
+        List<BuffStackData> results = new List<BuffStackData>();
+        foreach (BuffModel buff in buffs.Values)
+        {
+            if (buff != null && buff.buffType != BuffEnum.None && buff.stack > 0 && !buff.IsVisible)
+                results.Add(new BuffStackData { buffType = buff.buffType, stack = buff.stack });
+        }
+        return results.ToArray();
+    }
+
+    private static void ApplyPreparedBuffs(PlayerState player, BuffStackData[] buffs)
+    {
+        if (player == null || buffs == null)
+            return;
+
+        for (int i = 0; i < buffs.Length; i++)
+        {
+            BuffStackData buff = buffs[i];
+            if (buff != null)
+                player.AddBuff(buff.buffType, buff.stack);
+        }
     }
 
     private static string[] ExportMaterialModifiers(IReadOnlyList<MaterialModifierModel> modifiers)

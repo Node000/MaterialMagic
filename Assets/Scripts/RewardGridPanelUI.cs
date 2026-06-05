@@ -422,7 +422,12 @@ public class RewardGridPanelUI : MonoBehaviour
         if (rewards == null || rewards.Length == 0)
             return null;
 
-        return rewards[UnityEngine.Random.Range(0, rewards.Length)];
+        return rewards[NextRunRandomInt(0, rewards.Length)];
+    }
+
+    private int NextRunRandomInt(int minInclusive, int maxExclusive)
+    {
+        return owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
     }
 
     private IEnumerator ApplyCellRewardRoutine(int x, int y, PlayerState playerState)

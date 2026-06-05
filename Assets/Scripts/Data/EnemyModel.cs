@@ -1,26 +1,31 @@
 using System.Collections.Generic;
 
-public class EnemyModel
+public class EnemyModel : UnitModel
 {
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
+    private readonly HashSet<int> consumedOnlyOnceIntentIds = new HashSet<int>();
 
     public EnemyData Data { get; }
-    public int CurrentHealth { get; private set; }
-    public int Shield { get; private set; }
+    public override int CurrentHealth { get; protected set; }
+    public override int Shield { get; protected set; }
     public int ActionIndex { get; private set; }
-    public IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
+    public int Phase { get; private set; }
+    public override IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
     public IReadOnlyList<EnemyIntentData> CurrentIntents { get; }
     public bool HasSpawnPosition { get; private set; }
     public float SpawnPositionX { get; private set; }
     public float SpawnPositionY { get; private set; }
+    public bool CanActThisEnemyTurn { get; private set; } = true;
 
     private bool dead;
 
-    public string Id => Data.id;
-    public int NumericId => Data.numericId;
-    public string Name => LocalizationSystem.GetText(Data.nameKey, Data.id);
-    public bool IsDead => CurrentHealth <= 0;
-    public bool DeathHandled => dead;
+    public string Id => Data.Id;
+    public override int NumericId => Data.numericId;
+    public string Name => LocalizationSystem.GetText(Data.nameKey, Data.Id);
+    public override string DisplayName => Name;
+    public override int MaxHealth => Data.maxHealth;
+    public override bool IsDead => CurrentHealth <= 0;
+    public override bool DeathHandled => dead;
 
     public EnemyModel(EnemyData data)
     {
@@ -29,6 +34,16 @@ public class EnemyModel
         CurrentIntents = new List<EnemyIntentData>();
         ApplyInitialBuffs();
         UpdateCurrentIntents();
+    }
+
+    public void SetCanActThisEnemyTurn(bool canAct)
+    {
+        CanActThisEnemyTurn = canAct;
+    }
+
+    public void ClearCurrentIntents()
+    {
+        ((List<EnemyIntentData>)CurrentIntents).Clear();
     }
 
     public void SetSpawnPosition(float x, float y)
@@ -62,9 +77,23 @@ public class EnemyModel
     public void ResolveCurrentIntents(PlayerState playerState)
     {
         BeginResolveIntents(playerState);
-        for (int i = 0; i < CurrentIntents.Count; i++)
-            ResolveIntent(CurrentIntents[i], playerState);
+        ProcessIntent(playerState);
         EndResolveIntents(playerState);
+    }
+
+    public virtual void ProcessIntent(PlayerState playerState)
+    {
+        for (int i = 0; i < CurrentIntents.Count; i++)
+        {
+            EnemyIntentData intent = CurrentIntents[i];
+            if (intent == null)
+                continue;
+
+            if (intent.actionType == EnemyActionType.Special)
+                ProcessSpecialIntent(intent.value, playerState);
+            else
+                ResolveStandardIntent(intent, playerState);
+        }
     }
 
     public void BeginResolveIntents(PlayerState playerState)
@@ -80,7 +109,11 @@ public class EnemyModel
         if (intentIndex < 0 || intentIndex >= CurrentIntents.Count)
             return;
 
-        ResolveIntent(CurrentIntents[intentIndex], playerState);
+        EnemyIntentData intent = CurrentIntents[intentIndex];
+        if (intent.actionType == EnemyActionType.Special)
+            ProcessSpecialIntent(intent.value, playerState);
+        else
+            ResolveStandardIntent(intent, playerState);
     }
 
     public void EndResolveIntents(PlayerState playerState)
@@ -99,21 +132,35 @@ public class EnemyModel
         UpdateCurrentIntents();
     }
 
+    public virtual void SetPhase(int phase)
+    {
+        Phase = phase < 0 ? 0 : phase;
+        ActionIndex = 0;
+        GameLog.Data($"Enemy {Id} set phase={Phase}");
+    }
+
     public void TakeDamage(int damage)
     {
         TakeDamage(damage, null);
     }
 
-    public int TakeDamage(int damage, CombatantModel attacker)
+    public override int TakeDamage(int damage, CombatantModel attacker)
     {
+        return TakeDamageResult(damage, attacker).HealthDamage;
+    }
+
+    public override CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
+    {
+        CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
-            return 0;
+            return result;
 
         int remainingDamage = damage;
-        TriggerAfterAttack(attacker, ref remainingDamage);
+        TriggerOnTakeDamage(attacker, ref remainingDamage);
         if (remainingDamage <= 0)
-            return 0;
+            return result;
 
+        result.FinalDamage = remainingDamage;
         int healthBefore = CurrentHealth;
         int blockedDamage = 0;
         if (Shield > 0)
@@ -127,17 +174,21 @@ public class EnemyModel
         if (CurrentHealth < 0)
             CurrentHealth = 0;
         int healthDamage = healthBefore - CurrentHealth;
-        GameLog.Data($"Enemy {Id} take damage raw={damage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{Data.maxHealth}");
+        result.ShieldDamage = blockedDamage;
+        result.HealthDamage = healthDamage;
+        result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
+        GameLog.Data($"Enemy {Id} take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{Data.maxHealth}");
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
-        if (healthBefore > 0 && CurrentHealth <= 0)
+        TriggerAfterTakeDamage(attacker, result);
+        if (result.TargetDied)
             TriggerOnDie(attacker);
 
-        return healthDamage;
+        return result;
     }
 
-    public int TakeDirectDamage(int damage)
+    public override int TakeDirectDamage(int damage)
     {
         if (damage <= 0)
             return 0;
@@ -157,7 +208,7 @@ public class EnemyModel
         return healthDamage;
     }
 
-    public int GainShield(int amount)
+    public override int GainShield(int amount)
     {
         if (amount <= 0)
             return 0;
@@ -172,7 +223,7 @@ public class EnemyModel
         return shieldValue;
     }
 
-    public int ConsumeShield(int amount)
+    public override int ConsumeShield(int amount)
     {
         if (amount <= 0 || Shield <= 0)
             return 0;
@@ -183,13 +234,13 @@ public class EnemyModel
         return consumed;
     }
 
-    public void ClearShield()
+    public override void ClearShield()
     {
         Shield = 0;
         GameLog.Data($"Enemy {Id} clear shield");
     }
 
-    public void AddBuff(BuffEnum buffType, int stack)
+    public override void AddBuff(BuffEnum buffType, int stack)
     {
         if (buffType == BuffEnum.None || stack <= 0)
             return;
@@ -206,7 +257,7 @@ public class EnemyModel
         AddBuff(BuffEnum.Burning, stack);
     }
 
-    public int GetBuffStack(BuffEnum buffType)
+    public override int GetBuffStack(BuffEnum buffType)
     {
         if (buffs.TryGetValue(buffType, out BuffModel buff))
             return buff.stack;
@@ -214,7 +265,7 @@ public class EnemyModel
         return 0;
     }
 
-    public void ConsumeBuff(BuffEnum buffType, int amount)
+    public override void ConsumeBuff(BuffEnum buffType, int amount)
     {
         if (buffs.TryGetValue(buffType, out BuffModel buff))
         {
@@ -242,7 +293,8 @@ public class EnemyModel
         EnemyIntentGroupData group = GetCurrentIntentGroup();
         if (group != null && group.intents != null && group.intents.Length > 0)
         {
-            currentIntents.AddRange(group.intents);
+            for (int i = 0; i < group.intents.Length; i++)
+                currentIntents.Add(NormalizeIntent(group.intents[i]));
             return;
         }
 
@@ -253,10 +305,128 @@ public class EnemyModel
 
     private EnemyIntentGroupData GetCurrentIntentGroup()
     {
-        if (Data.intentLoop == null || Data.intentLoop.Length == 0)
+        EnemyIntentLoopData[] loop = GetCurrentSeparatedIntentLoop(out EnemyIntentGroupData[] groups);
+        if (loop != null && loop.Length > 0)
+            return GetCurrentSeparatedIntentGroup(loop, groups);
+
+        EnemyIntentGroupData[] pool = GetCurrentIntentPool();
+        if (pool == null || pool.Length == 0)
             return null;
 
-        return Data.intentLoop[ActionIndex % Data.intentLoop.Length];
+        int checkedCount = 0;
+        int index = ActionIndex % pool.Length;
+        while (checkedCount < pool.Length)
+        {
+            EnemyIntentGroupData group = pool[index];
+            if (group != null && (!group.onlyOnce || group.id == 0 || !consumedOnlyOnceIntentIds.Contains(group.id)))
+            {
+                if (group.onlyOnce && group.id != 0)
+                    consumedOnlyOnceIntentIds.Add(group.id);
+                return group;
+            }
+
+            index = (index + 1) % pool.Length;
+            checkedCount++;
+        }
+
+        return null;
+    }
+
+    private EnemyIntentGroupData GetCurrentSeparatedIntentGroup(EnemyIntentLoopData[] loop, EnemyIntentGroupData[] groups)
+    {
+        if (groups == null || groups.Length == 0)
+            return null;
+
+        int checkedCount = 0;
+        int index = ActionIndex % loop.Length;
+        while (checkedCount < loop.Length)
+        {
+            EnemyIntentLoopData entry = loop[index];
+            if (entry != null)
+            {
+                int groupId = ResolveLoopGroupId(entry);
+                int onceKey = -(index + 1);
+                if (groupId != 0 && (!entry.onlyOnce || !consumedOnlyOnceIntentIds.Contains(onceKey)))
+                {
+                    EnemyIntentGroupData group = FindIntentGroup(groups, groupId);
+                    if (group != null)
+                    {
+                        if (entry.onlyOnce)
+                            consumedOnlyOnceIntentIds.Add(onceKey);
+                        return group;
+                    }
+                }
+            }
+
+            index = (index + 1) % loop.Length;
+            checkedCount++;
+        }
+
+        return null;
+    }
+
+    private int ResolveLoopGroupId(EnemyIntentLoopData entry)
+    {
+        if (entry.randomGroupIds != null && entry.randomGroupIds.Length > 0)
+            return entry.randomGroupIds[NextRandomInt(0, entry.randomGroupIds.Length)];
+
+        return entry.groupId;
+    }
+
+    private static EnemyIntentGroupData FindIntentGroup(EnemyIntentGroupData[] groups, int groupId)
+    {
+        for (int i = 0; i < groups.Length; i++)
+        {
+            EnemyIntentGroupData group = groups[i];
+            if (group != null && group.id == groupId)
+                return group;
+        }
+
+        return null;
+    }
+
+    private int NextRandomInt(int minInclusive, int maxExclusive)
+    {
+        PlayerState playerState = BattleManager.Instance?.PlayerState;
+        if (playerState is PlayerStatus status)
+            return status.NextRunRandomInt(minInclusive, maxExclusive);
+
+        return UnityEngine.Random.Range(minInclusive, maxExclusive);
+    }
+
+    private EnemyIntentLoopData[] GetCurrentSeparatedIntentLoop(out EnemyIntentGroupData[] groups)
+    {
+        groups = null;
+        if (Data.phases != null && Data.phases.Length > 0)
+        {
+            for (int i = 0; i < Data.phases.Length; i++)
+            {
+                EnemyPhaseData phaseData = Data.phases[i];
+                if (phaseData != null && phaseData.phase == Phase)
+                {
+                    groups = phaseData.intentGroups;
+                    return phaseData.intentLoop;
+                }
+            }
+        }
+
+        groups = Data.intentGroups;
+        return Data.intentLoop;
+    }
+
+    private EnemyIntentGroupData[] GetCurrentIntentPool()
+    {
+        if (Data.phases != null && Data.phases.Length > 0)
+        {
+            for (int i = 0; i < Data.phases.Length; i++)
+            {
+                EnemyPhaseData phaseData = Data.phases[i];
+                if (phaseData != null && phaseData.phase == Phase)
+                    return phaseData.intentPool;
+            }
+        }
+
+        return null;
     }
 
     public int GetIntentAttackValue(EnemyIntentData intent, PlayerState playerState = null)
@@ -268,7 +438,7 @@ public class EnemyModel
         CombatantModel target = playerState != null ? new CombatantModel(playerState) : null;
         TriggerOnAttack(target, ref attackValue);
         if (playerState != null)
-            playerState.TriggerAfterAttack(new CombatantModel(this), ref attackValue);
+            playerState.TriggerOnTakeDamage(new CombatantModel(this), ref attackValue);
         if (attackValue < 0)
             attackValue = 0;
         return attackValue;
@@ -286,7 +456,7 @@ public class EnemyModel
         return shieldValue;
     }
 
-    private void ResolveIntent(EnemyIntentData intent, PlayerState playerState)
+    protected virtual void ResolveStandardIntent(EnemyIntentData intent, PlayerState playerState)
     {
         if (intent == null)
             return;
@@ -312,7 +482,15 @@ public class EnemyModel
             case EnemyActionType.Summon:
                 ResolveSummonIntent(intent);
                 break;
+            case EnemyActionType.Stunned:
+                GameLog.Data($"Enemy {Id} stunned intent skip");
+                break;
         }
+    }
+
+    protected virtual void ProcessSpecialIntent(int value, PlayerState playerState)
+    {
+        GameLog.Data($"Enemy {Id} special intent value={value}");
     }
 
     private void ResolveAttackIntent(EnemyIntentData intent, PlayerState playerState)
@@ -320,39 +498,56 @@ public class EnemyModel
         if (playerState == null)
             return;
 
-        int attackValue = GetAttackValueBeforeTargetReaction(intent, new CombatantModel(playerState));
-        GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
-        playerState.TakeDamage(attackValue, new CombatantModel(this));
-        ApplyBurnOnAttack();
+        int times = intent.times > 0 ? intent.times : 1;
+        for (int i = 0; i < times; i++)
+        {
+            CombatantModel targetCombatant = new CombatantModel(playerState);
+            int attackValue = GetAttackValueBeforeTargetReaction(intent, targetCombatant);
+            GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
+            CombatDamageResult damageResult = playerState.TakeDamageResult(attackValue, new CombatantModel(this));
+            int attackResult = damageResult.HealthDamage;
+            TriggerAfterAttack(targetCombatant, ref attackResult);
+            ApplyBurnOnAttack();
+        }
     }
 
     private void ResolveAttackAllIntent(EnemyIntentData intent, PlayerState playerState)
     {
         CombatantModel attacker = new CombatantModel(this);
-        if (playerState != null && playerState.CurrentHealth > 0)
+        int times = intent.times > 0 ? intent.times : 1;
+        for (int hit = 0; hit < times; hit++)
         {
-            int playerAttackValue = GetAttackValueBeforeTargetReaction(intent, new CombatantModel(playerState));
-            GameLog.Data($"Enemy {Id} intent attack all player value={playerAttackValue}");
-            playerState.TakeDamage(playerAttackValue, attacker);
-            ApplyBurnOnAttack();
-        }
+            if (playerState != null && playerState.CurrentHealth > 0)
+            {
+                CombatantModel playerTarget = new CombatantModel(playerState);
+                int playerAttackValue = GetAttackValueBeforeTargetReaction(intent, playerTarget);
+                GameLog.Data($"Enemy {Id} intent attack all player value={playerAttackValue}");
+                CombatDamageResult damageResult = playerState.TakeDamageResult(playerAttackValue, attacker);
+                int attackResult = damageResult.HealthDamage;
+                TriggerAfterAttack(playerTarget, ref attackResult);
+                ApplyBurnOnAttack();
+            }
 
-        IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
-        if (targets == null)
-            return;
+            IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
+            if (targets == null)
+                return;
 
-        int targetCount = targets.Count;
-        for (int i = 0; i < targetCount; i++)
-        {
-            EnemyModel target = targets[i];
-            if (target == null)
-                continue;
-            if (target.IsDead && !ReferenceEquals(target, this))
-                continue;
+            int targetCount = targets.Count;
+            for (int i = 0; i < targetCount; i++)
+            {
+                EnemyModel target = targets[i];
+                if (target == null)
+                    continue;
+                if (target.IsDead && !ReferenceEquals(target, this))
+                    continue;
 
-            int attackValue = GetAttackValueBeforeTargetReaction(intent, new CombatantModel(target));
-            GameLog.Data($"Enemy {Id} intent attack all target={target.Id} value={attackValue}");
-            target.TakeDamage(attackValue, attacker);
+                CombatantModel targetCombatant = new CombatantModel(target);
+                int attackValue = GetAttackValueBeforeTargetReaction(intent, targetCombatant);
+                GameLog.Data($"Enemy {Id} intent attack all target={target.Id} value={attackValue}");
+                CombatDamageResult damageResult = target.TakeDamageResult(attackValue, attacker);
+                int attackResult = damageResult.HealthDamage;
+                TriggerAfterAttack(targetCombatant, ref attackResult);
+            }
         }
     }
 
@@ -462,6 +657,28 @@ public class EnemyModel
             snapshot[i].AfterAttack(self, attacker, ref attackResult);
     }
 
+    public void TriggerOnTakeDamage(CombatantModel attacker, ref int damage)
+    {
+        if (buffs.Count == 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].OnTakeDamage(self, attacker, ref damage);
+    }
+
+    public void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result)
+    {
+        if (buffs.Count == 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        for (int i = 0; i < snapshot.Count; i++)
+            snapshot[i].AfterTakeDamage(self, attacker, result);
+    }
+
     public void TriggerOnGainShield(ref int shieldValue)
     {
         if (buffs.Count == 0)
@@ -558,18 +775,31 @@ public class EnemyModel
 
     private delegate void BuffTrigger(BuffModel buff, CombatantModel self, CombatantModel opponent);
 
+    private static EnemyIntentData NormalizeIntent(EnemyIntentData intent)
+    {
+        if (intent == null)
+            return null;
+
+        intent.intentType = GetIntentType(intent.actionType);
+        if (intent.times <= 0)
+            intent.times = 1;
+        if (intent.summonCount <= 0)
+            intent.summonCount = 1;
+        return intent;
+    }
+
     private static EnemyIntentData CreateIntentFromAction(EnemyActionData action)
     {
-        return new EnemyIntentData
+        return NormalizeIntent(new EnemyIntentData
         {
-            intentType = GetIntentType(action.actionType),
             actionType = action.actionType,
             value = action.value,
+            times = 1,
             buffs = action.buffs,
             summonEnemyId = action.summonEnemyId,
             summonCount = action.summonCount,
             descriptionKey = action.descriptionKey
-        };
+        });
     }
 
     private static EnemyIntentType GetIntentType(EnemyActionType actionType)
@@ -587,6 +817,9 @@ public class EnemyModel
                 return EnemyIntentType.ApplyDebuff;
             case EnemyActionType.Summon:
                 return EnemyIntentType.Summon;
+            case EnemyActionType.Special:
+            case EnemyActionType.Stunned:
+                return EnemyIntentType.None;
             default:
                 return EnemyIntentType.None;
         }

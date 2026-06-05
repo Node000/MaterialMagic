@@ -4,6 +4,6 @@ public class FlowModifier : MaterialModifierModel
     {
         MaterialModifierContext context = Context;
         if (context != null && context.PlayerState != null)
-            context.PlayerState.DrawCards(1);
+            context.PlayerState.DrawCardsForRefresh(1);
     }
 }

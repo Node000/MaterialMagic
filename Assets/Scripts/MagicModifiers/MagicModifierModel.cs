@@ -77,7 +77,7 @@ public class MagicModifierModel
             case MagicModifierTargetRule.Element:
                 return magic.Data.element == Data.targetElement;
             case MagicModifierTargetRule.EffectType:
-                return magic.Data.effectType == Data.targetEffectType;
+                return magic.EffectType == Data.targetEffectType;
             case MagicModifierTargetRule.Tag:
                 if (magic.Data.tagIds == null || string.IsNullOrEmpty(Data.targetTagId))
                     return false;

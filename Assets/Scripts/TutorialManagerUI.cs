@@ -80,10 +80,11 @@ public class TutorialManagerUI : MonoBehaviour
             nameKey = "教程敌人",
             maxHealth = 15,
             baseAttack = 5,
-            intentLoop = new[]
+            intentGroups = new[]
             {
                 new EnemyIntentGroupData
                 {
+                    id = 1,
                     intents = new[]
                     {
                         new EnemyIntentData
@@ -95,6 +96,10 @@ public class TutorialManagerUI : MonoBehaviour
                         }
                     }
                 }
+            },
+            intentLoop = new[]
+            {
+                new EnemyIntentLoopData { groupId = 1 }
             },
             actionLoop = Array.Empty<EnemyActionData>()
         };

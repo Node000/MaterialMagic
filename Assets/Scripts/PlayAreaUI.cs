@@ -8,6 +8,7 @@ public class PlayAreaUI : MonoBehaviour
     [SerializeField] private RectTransform resolveIndicator;
     [SerializeField] private RectTransform continuousCastCounterRect;
     [SerializeField] private TMP_Text continuousCastCounterText;
+    [SerializeField] private ComboView comboView;
 
     [SerializeField] private float counterPunchDuration = 0.24f;
     [SerializeField] private float counterPunchScale = 0.55f;
@@ -22,13 +23,19 @@ public class PlayAreaUI : MonoBehaviour
 
     private Sequence continuousCastCounterSequence;
     private Vector2 continuousCastCounterBasePosition;
-    private bool continuousCastCounterBasePositionCached;
+    private Vector3 continuousCastCounterBaseScale;
+    private Vector3 continuousCastCounterBaseEulerAngles;
+    private bool continuousCastCounterBaseTransformCached;
+    private readonly Color continuousCastCounterColor = new Color(1f, 0.86f, 0.18f, 1f);
 
     public RectTransform ResolveIndicator => resolveIndicator;
 
     public void Initialize(HandSystemUI owner)
     {
         CacheReferences();
+        CacheContinuousCastCounterTextStyle(owner);
+        if (comboView != null)
+            comboView.Initialize(owner);
         if (resolveIndicator != null)
         {
             Graphic graphic = resolveIndicator.GetComponent<Graphic>();
@@ -36,7 +43,8 @@ public class PlayAreaUI : MonoBehaviour
                 graphic.raycastTarget = false;
             resolveIndicator.gameObject.SetActive(false);
         }
-        UpdateContinuousCastCounter(0, true);
+        if (comboView == null)
+            UpdateContinuousCastCounter(0, true);
     }
 
     public void HideResolveIndicator()
@@ -54,6 +62,12 @@ public class PlayAreaUI : MonoBehaviour
     public void UpdateContinuousCastCounter(int count, bool instant)
     {
         CacheReferences();
+        if (comboView != null)
+        {
+            comboView.UpdateCount(count, instant);
+            return;
+        }
+
         if (continuousCastCounterRect == null || continuousCastCounterText == null)
             return;
 
@@ -61,19 +75,22 @@ public class PlayAreaUI : MonoBehaviour
         continuousCastCounterSequence?.Kill(false);
         continuousCastCounterSequence = null;
         continuousCastCounterRect.DOKill(false);
-        if (!continuousCastCounterBasePositionCached)
+        if (!continuousCastCounterBaseTransformCached)
         {
             continuousCastCounterBasePosition = continuousCastCounterRect.anchoredPosition;
-            continuousCastCounterBasePositionCached = true;
+            continuousCastCounterBaseScale = continuousCastCounterRect.localScale;
+            continuousCastCounterBaseEulerAngles = continuousCastCounterRect.localEulerAngles;
+            continuousCastCounterBaseTransformCached = true;
         }
         continuousCastCounterRect.anchoredPosition = continuousCastCounterBasePosition;
-        continuousCastCounterRect.localScale = Vector3.one;
-        continuousCastCounterRect.localEulerAngles = Vector3.zero;
+        continuousCastCounterRect.localScale = continuousCastCounterBaseScale;
+        continuousCastCounterRect.localEulerAngles = continuousCastCounterBaseEulerAngles;
         continuousCastCounterRect.gameObject.SetActive(visible);
         if (!visible)
             return;
 
-        continuousCastCounterText.text = "x" + count;
+        continuousCastCounterText.text = BuildContinuousCastCounterText(count);
+        continuousCastCounterText.color = continuousCastCounterColor;
         if (!instant)
         {
             float tiltProgress = Mathf.Clamp01(count / (float)Mathf.Max(1, counterMaxEffectCastCount));
@@ -89,8 +106,8 @@ public class PlayAreaUI : MonoBehaviour
             continuousCastCounterSequence.OnComplete(() =>
             {
                 continuousCastCounterRect.anchoredPosition = continuousCastCounterBasePosition;
-                continuousCastCounterRect.localEulerAngles = Vector3.zero;
-                continuousCastCounterRect.localScale = Vector3.one;
+                continuousCastCounterRect.localEulerAngles = continuousCastCounterBaseEulerAngles;
+                continuousCastCounterRect.localScale = continuousCastCounterBaseScale;
                 continuousCastCounterSequence = null;
             });
         }
@@ -125,6 +142,33 @@ public class PlayAreaUI : MonoBehaviour
         sequence.SetTarget(this);
     }
 
+    private string BuildContinuousCastCounterText(int count)
+    {
+        string suffix = count > 10 ? "!!" : count > 5 ? "!" : string.Empty;
+        return "COMBO " + count + suffix;
+    }
+
+    private void CacheContinuousCastCounterTextStyle(HandSystemUI owner)
+    {
+        if (continuousCastCounterText == null || owner == null)
+            return;
+
+        UIManager manager = owner.GetUIManager();
+        TMP_Text healthText = manager != null && manager.PlayerStatus != null ? manager.PlayerStatus.HealthText : null;
+        if (healthText != null)
+        {
+            if (healthText.font != null)
+                continuousCastCounterText.font = healthText.font;
+            continuousCastCounterText.fontSize = healthText.fontSize;
+            continuousCastCounterText.fontStyle = healthText.fontStyle;
+        }
+        continuousCastCounterText.color = continuousCastCounterColor;
+        continuousCastCounterText.enableWordWrapping = false;
+        continuousCastCounterText.overflowMode = TextOverflowModes.Overflow;
+        continuousCastCounterText.alignment = TextAlignmentOptions.Center;
+        continuousCastCounterText.raycastTarget = false;
+    }
+
     private void CacheReferences()
     {
         if (resolveIndicator == null)
@@ -135,5 +179,12 @@ public class PlayAreaUI : MonoBehaviour
             continuousCastCounterRect = UIManager.FindChildRect(transform, "ContinuousCastCounter");
         if (continuousCastCounterText == null && continuousCastCounterRect != null)
             continuousCastCounterText = continuousCastCounterRect.GetComponent<TMP_Text>();
+        if (comboView == null)
+        {
+            if (continuousCastCounterRect != null)
+                comboView = continuousCastCounterRect.GetComponent<ComboView>();
+            if (comboView == null)
+                comboView = GetComponentInChildren<ComboView>(true);
+        }
     }
 }

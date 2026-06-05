@@ -1,0 +1,75 @@
+{
+  "numericId": 23,
+  "string_id": "enemy_023",
+  "nameKey": "enemy.023.name",
+  "maxHealth": 82,
+  "baseAttack": 14,
+  "imageScale": 1.2,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [
+    {
+      "buffType": 25,
+      "stack": 3
+    }
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 1,
+              "displayType": "spAttack"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 2,
+              "displayType": "spAttack"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 3,
+              "displayType": "spAttack"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "intents": [
+            {
+              "actionType": 9,
+              "value": 4,
+              "displayType": "spDefend"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "randomGroupIds": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ]
+    }
+  ],
+  "iconName": "Sample",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

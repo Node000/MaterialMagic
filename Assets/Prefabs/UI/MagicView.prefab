@@ -257,8 +257,8 @@ MonoBehaviour:
   animationFramesPerSecond: 12
   redrawInterval: 0
   hoverTarget: {fileID: 0}
-  bindHoverTarget: 1
-  hideOnAwake: 1
+  bindHoverTarget: 0
+  hideOnAwake: 0
 --- !u!114 &8321768328743563346
 MonoBehaviour:
   m_ObjectHideFlags: 0

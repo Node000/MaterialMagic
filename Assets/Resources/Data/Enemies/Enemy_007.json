@@ -1,0 +1,78 @@
+{
+  "numericId": 7,
+  "string_id": "enemy_007",
+  "nameKey": "enemy.007.name",
+  "maxHealth": 42,
+  "baseAttack": 5,
+  "imageScale": 0.7,
+  "healthBarWidth": 150.0,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "actionType": 1,
+              "value": 5,
+              "displayType": "attack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 5
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "intents": [
+            {
+              "actionType": 2,
+              "value": 5,
+              "displayType": "defend"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 5
+                }
+              ],
+              "displayType": "debuff"
+            },
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 18,
+                  "stack": 2
+                }
+              ],
+              "displayType": "buff"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        }
+      ]
+    }
+  ],
+  "iconName": "毛球",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}
