@@ -5,7 +5,7 @@ public class FireballArtMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
-        Damage(playerState, target, 3, result);
+        DamageTarget(playerState, battleManager, 3, result);
         AddBuff(target, BuffEnum.Burning, 2, result);
     }
 }

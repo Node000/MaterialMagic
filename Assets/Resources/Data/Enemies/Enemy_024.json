@@ -4,7 +4,7 @@
   "nameKey": "enemy.024.name",
   "maxHealth": 126,
   "baseAttack": 14,
-  "imageScale": 1.2,
+  "imageScale": 0.6,
   "healthBarWidth": 150.0,
   "initialBuffs": [
     {
@@ -133,7 +133,7 @@
       ]
     }
   ],
-  "iconName": "Sample",
+  "iconName": "南极洲",
   "spriteAnimationPath": "",
   "animationFrameRate": 8.0
 }

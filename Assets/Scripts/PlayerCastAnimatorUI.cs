@@ -7,6 +7,14 @@ using UnityEngine.UI;
 public class PlayerCastAnimatorUI : MonoBehaviour
 {
     [SerializeField] private Animator animator;
+    [Header("单张素材动作贴图")]
+    [SerializeField] private Image playerImage;
+    [SerializeField] private Sprite fireActionSprite;
+    [SerializeField] private Sprite waterActionSprite;
+    [SerializeField] private Sprite windActionSprite;
+    [SerializeField] private Sprite earthActionSprite;
+    [SerializeField] private float materialActionDuration = 0.24f;
+    [Header("Animator 状态")]
     [SerializeField] private string idleStateName = "Idle";
     [SerializeField] private string castStateName = "Cast";
     [SerializeField] private string hitStateName = "Hit";
@@ -30,10 +38,14 @@ public class PlayerCastAnimatorUI : MonoBehaviour
     private Action releaseHandler;
     private float resolvedCastReleaseDelay = -1f;
     private Coroutine temporaryStateRoutine;
+    private Coroutine materialActionRoutine;
     private bool hashesResolved;
     private bool magicSelectionActive;
     private int endTurnHoverCount;
     private int temporaryStateToken;
+    private int materialActionToken;
+
+    public float MaterialActionDuration => materialActionDuration;
 
     public float CastReleaseDelay
     {
@@ -54,6 +66,8 @@ public class PlayerCastAnimatorUI : MonoBehaviour
     {
         if (animator == null)
             animator = GetComponent<Animator>();
+        if (playerImage == null)
+            playerImage = GetComponentInChildren<Image>(true);
 
         ResolveStateHashes();
         resolvedCastReleaseDelay = -1f;
@@ -74,6 +88,21 @@ public class PlayerCastAnimatorUI : MonoBehaviour
     public void PlayNegativeStatus()
     {
         PlayTemporaryState(negativeStateHash, negativeStatusDuration);
+    }
+
+    public void PlayMaterialAction(MaterialEnum material)
+    {
+        Sprite sprite = GetMaterialActionSprite(material);
+        if (sprite == null || !EnsurePlayerImage())
+            return;
+
+        StopMaterialAction(false);
+        materialActionToken++;
+        int token = materialActionToken;
+        if (animator != null)
+            animator.enabled = false;
+        playerImage.sprite = sprite;
+        materialActionRoutine = StartCoroutine(ResumeAfterMaterialAction(token, Mathf.Max(0f, materialActionDuration)));
     }
 
     public void SetMagicSelectionActive(bool active)
@@ -134,11 +163,19 @@ public class PlayerCastAnimatorUI : MonoBehaviour
         return animator != null && animator.runtimeAnimatorController != null;
     }
 
+    private bool EnsurePlayerImage()
+    {
+        if (playerImage == null)
+            playerImage = GetComponentInChildren<Image>(true);
+        return playerImage != null;
+    }
+
     private void PlayTemporaryState(int stateHash, float duration)
     {
         if (!EnsureAnimator() || !animator.HasState(0, stateHash))
             return;
 
+        StopMaterialAction(false);
         if (temporaryStateRoutine != null)
             StopCoroutine(temporaryStateRoutine);
 
@@ -160,9 +197,54 @@ public class PlayerCastAnimatorUI : MonoBehaviour
         ResumeLoopState(true);
     }
 
+    private IEnumerator ResumeAfterMaterialAction(int token, float duration)
+    {
+        if (duration > 0f)
+            yield return new WaitForSeconds(duration);
+
+        if (token != materialActionToken)
+            yield break;
+
+        materialActionRoutine = null;
+        if (animator != null)
+            animator.enabled = true;
+        ResumeLoopState(true);
+    }
+
+    private void StopMaterialAction(bool resumeLoop)
+    {
+        if (materialActionRoutine != null)
+        {
+            StopCoroutine(materialActionRoutine);
+            materialActionRoutine = null;
+        }
+        materialActionToken++;
+        if (animator != null && !animator.enabled)
+            animator.enabled = true;
+        if (resumeLoop)
+            ResumeLoopState(true);
+    }
+
+    private Sprite GetMaterialActionSprite(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return fireActionSprite;
+            case MaterialEnum.Water:
+                return waterActionSprite;
+            case MaterialEnum.Wind:
+                return windActionSprite;
+            case MaterialEnum.Earth:
+                return earthActionSprite;
+            default:
+                return null;
+        }
+    }
+
     private void ResumeLoopState(bool force)
     {
-        if (temporaryStateRoutine != null)
+        if (temporaryStateRoutine != null || materialActionRoutine != null)
             return;
         if (!EnsureAnimator())
             return;

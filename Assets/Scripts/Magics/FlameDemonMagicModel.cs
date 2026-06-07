@@ -5,7 +5,6 @@ public class FlameDemonMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        playerState.ReturnLeftmostHandCardToDiscardPile();
         AddTemporaryMaterialToHand(playerState, MaterialEnum.Fire);
     }
 }

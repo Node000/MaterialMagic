@@ -468,6 +468,21 @@ public class BattleManager
         return result;
     }
 
+    public BattleActionResult ResolveEnemyIntentHitAt(EnemyModel enemy, int intentIndex, int hitIndex)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (enemy == null || PlayerState == null)
+            return result;
+
+        result.CapturePlayerBefore(PlayerState);
+        result.CaptureEnemyShieldBefore(enemy);
+        enemy.ResolveCurrentIntentHitAt(intentIndex, hitIndex, PlayerState);
+        result.CapturePlayerAfter(PlayerState);
+        result.CaptureEnemyShieldAfter(enemy);
+        result.AllEnemiesDead = AllEnemiesDead();
+        return result;
+    }
+
     public BattleActionResult EndEnemyAction(EnemyModel enemy)
     {
         BattleActionResult result = new BattleActionResult();

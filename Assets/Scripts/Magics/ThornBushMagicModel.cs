@@ -5,7 +5,7 @@ public class ThornBushMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        GainShield(playerState, battleManager, 10, result);
-        playerState.AddBuff(BuffEnum.ShieldReflect, playerState.Shield);
+        GainShield(playerState, battleManager, 5, result);
+        playerState.AddBuff(BuffEnum.ShieldReflect, 1);
     }
 }

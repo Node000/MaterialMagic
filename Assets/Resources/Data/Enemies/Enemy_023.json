@@ -4,7 +4,7 @@
   "nameKey": "enemy.023.name",
   "maxHealth": 82,
   "baseAttack": 14,
-  "imageScale": 1.2,
+  "imageScale": 0.6,
   "healthBarWidth": 150.0,
   "initialBuffs": [
     {
@@ -69,7 +69,7 @@
       ]
     }
   ],
-  "iconName": "Sample",
+  "iconName": "彩虹",
   "spriteAnimationPath": "",
   "animationFrameRate": 8.0
 }

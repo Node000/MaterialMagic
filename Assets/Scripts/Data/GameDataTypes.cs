@@ -8,7 +8,9 @@ public enum LevelType
     Shop = 2,
     Rest = 3,
     Reward = 4,
-    Elite = 5
+    Elite = 5,
+    RemoveMaterial = 6,
+    AddMaterial = 7
 }
 
 [Serializable]
@@ -23,12 +25,6 @@ public class EconomyConfigData : INumericDataRecord
     public int battleGoldMax = 2;
     public int eliteBattleGoldMin = 4;
     public int eliteBattleGoldMax = 5;
-    public int battleMapLevelWeight = 10;
-    public int eventMapLevelWeight = 4;
-    public int restMapLevelWeight = 2;
-    public int rewardMapLevelWeight = 2;
-    public int defaultMapLevelWeight = 4;
-    public int shopMapLevelWeight = 2;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
 
@@ -77,7 +73,14 @@ public enum BuffEnum
     DirectionExtraDraw = 30,
     DirectionShieldBonus = 31,
     MaterialOverplayDebuff = 32,
-    PreparedShield = 33
+    PreparedShield = 33,
+    KindlingNextDraw = 34,
+    DrawOnEnemyAttack = 35,
+    BurningOnEnemyAttack = 36,
+    ExtraDrawOnEnemyDamage = 37,
+    ShieldReflectBoost = 38,
+    MagicAttackAll = 39,
+    NextMagicRepeat = 40
 }
 
 public enum BuffKindEnum
@@ -256,6 +259,7 @@ public class EnemyIntentData
     public EnemyActionType actionType;
     public int value;
     public int times = 1;
+    public float hitInterval = 0.2f;
     public int summonEnemyId;
     public int summonCount = 1;
     public BuffStackData[] buffs = Array.Empty<BuffStackData>();
@@ -463,7 +467,21 @@ public class ChapterData : INumericDataRecord
     public string id;
     public string nameKey;
     public int levelLength;
+    public int mapWidth = 5;
+    public int mapHeight = 5;
+    public int initialActionPower = 5;
+    public int startMapX = 2;
+    public int startMapY = 2;
     public float hiddenLevelWeight;
+    public int battleMapLevelWeight = 10;
+    public int eliteMapLevelWeight = 10;
+    public int eventMapLevelWeight = 4;
+    public int restMapLevelWeight = 2;
+    public int rewardMapLevelWeight = 2;
+    public int defaultMapLevelWeight = 4;
+    public int shopMapLevelWeight = 2;
+    public int removeMapLevelWeight = 2;
+    public int addMapLevelWeight = 2;
     public int[] BeginPool = Array.Empty<int>();
     public int[] MidPool = Array.Empty<int>();
     public int[] NormalPool = Array.Empty<int>();

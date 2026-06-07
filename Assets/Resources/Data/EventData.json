@@ -563,6 +563,188 @@
         }
       ],
       "numericId": 107
+    },
+    {
+      "id": "event_arrow_recycle_station",
+      "titleKey": "event.arrow_recycle_station.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.arrow_recycle_station.start.1",
+            "event.arrow_recycle_station.start.2"
+          ],
+          "options": [
+            {
+              "id": "single_recycle",
+              "titleKey": "event.arrow_recycle_station.option.single",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 14,
+                  "choiceCount": 1
+                }
+              ],
+              "nextNodeId": "single_recycle"
+            },
+            {
+              "id": "double_recycle",
+              "titleKey": "event.arrow_recycle_station.option.double",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 14,
+                  "choiceCount": 2
+                }
+              ],
+              "nextNodeId": "double_recycle"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "single_recycle",
+          "textKeys": [
+            "event.arrow_recycle_station.single.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "double_recycle",
+          "textKeys": [
+            "event.arrow_recycle_station.double.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.arrow_recycle_station.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 108
+    },
+    {
+      "id": "event_arrow_claw_machine",
+      "titleKey": "event.arrow_claw_machine.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.arrow_claw_machine.start.1",
+            "event.arrow_claw_machine.start.2"
+          ],
+          "options": [
+            {
+              "id": "catch_up",
+              "titleKey": "event.arrow_claw_machine.option.up",
+              "recipe": "1",
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 1
+                }
+              ],
+              "nextNodeId": "catch_up"
+            },
+            {
+              "id": "catch_down",
+              "titleKey": "event.arrow_claw_machine.option.down",
+              "recipe": "3",
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 3
+                }
+              ],
+              "nextNodeId": "catch_down"
+            },
+            {
+              "id": "catch_left",
+              "titleKey": "event.arrow_claw_machine.option.left",
+              "recipe": "2",
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 2
+                }
+              ],
+              "nextNodeId": "catch_left"
+            },
+            {
+              "id": "catch_right",
+              "titleKey": "event.arrow_claw_machine.option.right",
+              "recipe": "4",
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 4
+                }
+              ],
+              "nextNodeId": "catch_right"
+            },
+            {
+              "id": "leave",
+              "titleKey": "event.common.option.leave",
+              "nextNodeId": "leave",
+              "isExitOption": true
+            }
+          ]
+        },
+        {
+          "id": "catch_up",
+          "textKeys": [
+            "event.arrow_claw_machine.up.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "catch_down",
+          "textKeys": [
+            "event.arrow_claw_machine.down.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "catch_left",
+          "textKeys": [
+            "event.arrow_claw_machine.left.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "catch_right",
+          "textKeys": [
+            "event.arrow_claw_machine.right.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "leave",
+          "textKeys": [
+            "event.arrow_claw_machine.leave.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 109
     }
   ]
 }

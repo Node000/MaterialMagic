@@ -5,6 +5,11 @@
       "id": "chapter_001",
       "nameKey": "chapter.001.name",
       "levelLength": 18,
+      "mapWidth": 5,
+      "mapHeight": 5,
+      "initialActionPower": 16,
+      "startMapX": 2,
+      "startMapY": 2,
       "hiddenLevelWeight": 0.0,
       "levelPoolIds": [
         1,
@@ -141,7 +146,16 @@
       ],
       "BossPool": [
         23
-      ]
+      ],
+      "battleMapLevelWeight": 12,
+      "eliteMapLevelWeight": 6,
+      "eventMapLevelWeight": 4,
+      "restMapLevelWeight": 4,
+      "rewardMapLevelWeight": 4,
+      "defaultMapLevelWeight": 2,
+      "shopMapLevelWeight": 4,
+      "removeMapLevelWeight": 2,
+      "addMapLevelWeight": 2
     }
   ]
 }

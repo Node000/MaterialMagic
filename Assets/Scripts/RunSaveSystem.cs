@@ -21,6 +21,7 @@ public class RunSaveData
     public float totalPlaySeconds;
     public string lastPlayedAtUtc;
     public RunMapNodeSaveData[] mapNodes = Array.Empty<RunMapNodeSaveData>();
+    public RunMapGridSaveData mapGrid;
     public RunPoolSaveData runPools;
     public PlayerSaveData player;
     public CurrentNodeSaveData currentNode;
@@ -35,6 +36,28 @@ public class RunMapNodeSaveData
     public bool fixedSingleChoice;
     public bool leftHidden;
     public bool rightHidden;
+}
+
+[Serializable]
+public class RunMapGridSaveData
+{
+    public int width;
+    public int height;
+    public int playerX;
+    public int playerY;
+    public int currentActionPower;
+    public bool bossMapActive;
+    public bool pendingBossMapTransform;
+    public RunMapCellSaveData[] cells = Array.Empty<RunMapCellSaveData>();
+}
+
+[Serializable]
+public class RunMapCellSaveData
+{
+    public int x;
+    public int y;
+    public int levelId;
+    public bool isBoss;
 }
 
 [Serializable]
@@ -255,6 +278,7 @@ public static class RunSaveSystem
             chapterNumericId = chapter != null ? chapter.numericId : 0,
             currentMapNodeIndex = currentMapNodeIndex,
             mapNodes = ExportMapNodes(mapNodes),
+            mapGrid = ExportMapGrid(RunManager.Current != null ? RunManager.Current.MapGrid : null),
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
             player = ExportPlayer(player),
             currentNode = currentLevel != null ? new CurrentNodeSaveData { levelId = currentLevel.numericId } : null
@@ -338,6 +362,41 @@ public static class RunSaveSystem
         }
     }
 
+    public static RunMapGridModel RestoreMapGrid(RunSaveData save)
+    {
+        RunMapGridSaveData data = save != null ? save.mapGrid : null;
+        if (data == null || data.width <= 0 || data.height <= 0 || data.cells == null || data.cells.Length == 0)
+            return null;
+
+        RunMapGridModel grid = new RunMapGridModel
+        {
+            width = data.width,
+            height = data.height,
+            playerX = data.playerX,
+            playerY = data.playerY,
+            currentActionPower = Mathf.Max(0, data.currentActionPower),
+            bossMapActive = data.bossMapActive,
+            pendingBossMapTransform = data.pendingBossMapTransform
+        };
+
+        for (int i = 0; i < data.cells.Length; i++)
+        {
+            RunMapCellSaveData cellData = data.cells[i];
+            if (cellData == null)
+                continue;
+
+            grid.cells.Add(new RunMapCellModel
+            {
+                x = cellData.x,
+                y = cellData.y,
+                level = GetLevel(cellData.levelId),
+                isBoss = cellData.isBoss
+            });
+        }
+        grid.WrapPosition(ref grid.playerX, ref grid.playerY);
+        return grid;
+    }
+
     public static bool ShouldAutoStartSavedNode(RunSaveData save)
     {
         return save != null && save.runState == BeforeNodeState && save.currentNode != null && save.currentNode.levelId > 0;
@@ -381,6 +440,37 @@ public static class RunSaveSystem
             };
         }
         return results;
+    }
+
+    private static RunMapGridSaveData ExportMapGrid(RunMapGridModel grid)
+    {
+        if (grid == null || grid.width <= 0 || grid.height <= 0 || grid.cells == null || grid.cells.Count == 0)
+            return null;
+
+        RunMapCellSaveData[] cells = new RunMapCellSaveData[grid.cells.Count];
+        for (int i = 0; i < grid.cells.Count; i++)
+        {
+            RunMapCellModel cell = grid.cells[i];
+            cells[i] = new RunMapCellSaveData
+            {
+                x = cell != null ? cell.x : 0,
+                y = cell != null ? cell.y : 0,
+                levelId = cell != null && cell.level != null ? cell.level.numericId : 0,
+                isBoss = cell != null && cell.isBoss
+            };
+        }
+
+        return new RunMapGridSaveData
+        {
+            width = grid.width,
+            height = grid.height,
+            playerX = grid.playerX,
+            playerY = grid.playerY,
+            currentActionPower = grid.currentActionPower,
+            bossMapActive = grid.bossMapActive,
+            pendingBossMapTransform = grid.pendingBossMapTransform,
+            cells = cells
+        };
     }
 
     private static PlayerSaveData ExportPlayer(PlayerState player)

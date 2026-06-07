@@ -4,7 +4,7 @@
   "nameKey": "enemy.015.name",
   "maxHealth": 49,
   "baseAttack": 10,
-  "imageScale": 1.0,
+  "imageScale": 0.6,
   "healthBarWidth": 150.0,
   "initialBuffs": [],
   "phases": [
@@ -61,7 +61,7 @@
       ]
     }
   ],
-  "iconName": "猫咪",
+  "iconName": "招财猫",
   "spriteAnimationPath": "",
   "animationFrameRate": 8.0
 }

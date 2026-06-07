@@ -5,7 +5,7 @@ public class RockfallMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        GainShield(playerState, battleManager, 6, result);
+        GainShield(playerState, battleManager, 2, result);
         AddBuffSelf(playerState, BuffEnum.Sturdy, 1);
     }
 }

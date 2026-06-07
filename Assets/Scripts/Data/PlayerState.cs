@@ -164,8 +164,7 @@ public class PlayerState
         if (index < 0)
             return false;
 
-        int disabledMaterial = GetBuffStack(BuffEnum.AttributeDisabled);
-        if (disabledMaterial > 0 && (int)card.material == disabledMaterial)
+        if (IsMaterialDisabled(card))
             return false;
 
         Hand.RemoveAt(index);
@@ -179,6 +178,15 @@ public class PlayerState
         }
         GameLog.Data($"Move card {DescribeMaterial(card)} hand->playZone. hand={Hand.Count} playZone={PlayZone.Count}");
         return true;
+    }
+
+    public bool IsMaterialDisabled(MaterialModel card)
+    {
+        if (card == null)
+            return false;
+
+        int disabledMaterial = GetBuffStack(BuffEnum.AttributeDisabled);
+        return disabledMaterial > 0 && (int)card.material == disabledMaterial;
     }
 
     private void AddRandomEnemyDebuff(int stack)
@@ -591,6 +599,18 @@ public class PlayerState
     {
         if (buffType == BuffEnum.None || stack <= 0)
             return;
+
+        if (buffType == BuffEnum.AttributeDisabled)
+        {
+            if (buffs.TryGetValue(buffType, out BuffModel existingAttributeBuff))
+                existingAttributeBuff.stack = stack;
+            else
+                buffs.Add(buffType, BuffModel.Create(buffType, stack));
+
+            GameLog.Data($"Player add buff {buffType} material={stack} now={GetBuffStack(buffType)}");
+            BuffAdded?.Invoke(buffType, stack);
+            return;
+        }
 
         if (buffs.TryGetValue(buffType, out BuffModel buff))
             buff.AddStack(stack);

@@ -166,6 +166,9 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float postMagicResolveDelay = 0.11f;
 
+	[SerializeField]
+	private float magicDamageHitInterval = 0.15f;
+
     [Header("玩家施法音效")]
     [SerializeField]
     private float playerCastSwingPitchBase = 1f;
@@ -176,6 +179,7 @@ public class HandSystemUI : MonoBehaviour
     [SerializeField]
     private float playerCastSwingPitchMax = 1.45f;
 
+	[Header("敌人死亡碎裂参数")]
 	[SerializeField]
 	private float enemyDeathScaleDuration = 0.35f;
 
@@ -185,6 +189,27 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	[FormerlySerializedAs("enemyDissolveDuration")]
 	private float enemyDeathExplosionDuration = 0.7f;
+
+	[SerializeField]
+	private int enemyDeathShardColumns = 5;
+
+	[SerializeField]
+	private int enemyDeathShardRows = 4;
+
+	[SerializeField]
+	private float enemyDeathExplosionDistance = 120f;
+
+	[SerializeField]
+	private float enemyDeathExplosionDistanceMinMultiplier = 0.62f;
+
+	[SerializeField]
+	private float enemyDeathExplosionRandomness = 26f;
+
+	[SerializeField]
+	private Vector2 enemyDeathShardScaleRange = new Vector2(0.82f, 1.12f);
+
+	[SerializeField]
+	private float enemyDeathShardRotationRange = 170f;
 
 	[SerializeField]
 	private float enemyHitShakeDuration = 0.28f;
@@ -351,6 +376,9 @@ public class HandSystemUI : MonoBehaviour
 
 	private int currentMapNodeIndex;
 
+    private bool pendingChapterMapBossStart;
+    private bool chapterMapMoveInProgress;
+
 	private bool busy;
 
 	private bool choosingEventCard;
@@ -363,11 +391,15 @@ public class HandSystemUI : MonoBehaviour
 
 	private bool runEnded;
 
+    private bool eliteMagicModifierRewardResolved;
+
     private float loadedRunPlaySeconds;
 
     private float runStartRealtime;
 
 	private TutorialManagerUI TutorialManager => GetUIManager().TutorialManager;
+
+	private const int RestDefaultHealResultId = 300;
 
 	private const int RestStudyResultId = 301;
 
@@ -384,12 +416,6 @@ public class HandSystemUI : MonoBehaviour
     private const int BuffRootRowCount = 2;
 
     private const float EnemyHealthTextWidth = 56f;
-
-    private const int EnemyDeathShardColumns = 5;
-
-    private const int EnemyDeathShardRows = 4;
-
-    private const float EnemyDeathExplosionDistance = 120f;
 
     private const int DiscardShuffleAnimationMaxCards = 18;
 
@@ -448,6 +474,8 @@ public class HandSystemUI : MonoBehaviour
 
 	public IReadOnlyList<RunMapNodeModel> MapNodes => mapNodes;
 
+    public RunMapGridModel ChapterMapGrid => runManager != null ? runManager.MapGrid : null;
+
 	public int CurrentMapNodeIndex => currentMapNodeIndex;
 
 	private const int RunNodeCount = 21;
@@ -460,15 +488,33 @@ public class HandSystemUI : MonoBehaviour
 
 	private void ShowLevelSelect()
 	{
+        chapterMapMoveInProgress = false;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
 		HideLevelSelectPanel();
-		if (currentMapNodeIndex < mapNodes.Count)
-		{
-			CreateLevelSelectPanel();
-			return;
-		}
-		ShowVictoryPanel();
+        EnsureChapterMapGrid();
+        RunMapGridModel grid = ChapterMapGrid;
+        if (grid == null || grid.CellCount == 0)
+        {
+            ShowVictoryPanel();
+            return;
+        }
+
+        ChapterGridPanelUI panel = GetUIManager().ChapterGridPanel;
+        if (panel != null)
+            panel.SetDirectionCardSource(handArea, cardPrefab, cardSpacing);
+        GetUIManager().ShowChapterGridPanel(grid);
+        if (grid.pendingBossMapTransform && !grid.bossMapActive && panel != null)
+        {
+            panel.SetInputLocked(true);
+            panel.PlayBossTransform(() =>
+            {
+                runManager?.ActivateBossMap();
+                panel.RefreshTexts();
+                panel.SetInputLocked(false);
+                SaveRunProgress();
+            });
+        }
 	}
 
 	private void CreateLevelSelectPanel()
@@ -583,6 +629,8 @@ public class HandSystemUI : MonoBehaviour
 	{
         LevelData selectedMapLevel = level;
         level = ResolveSelectedMapLevel(level);
+        pendingChapterMapBossStart = false;
+        chapterMapMoveInProgress = false;
         if (level == null)
             return;
 
@@ -619,6 +667,9 @@ public class HandSystemUI : MonoBehaviour
 		if (level == null)
 			return null;
 
+        if (pendingChapterMapBossStart)
+            return level;
+
 		ChapterData chapter = activeChapter ?? GetActiveChapter();
 		if (level.levelType == LevelType.Battle)
 			return DrawMapBattleLevel(chapter, level);
@@ -629,9 +680,14 @@ public class HandSystemUI : MonoBehaviour
 		return level;
 	}
 
+    private static bool IsEventLikeLevel(LevelType levelType)
+    {
+        return levelType == LevelType.Event || levelType == LevelType.RemoveMaterial || levelType == LevelType.AddMaterial;
+    }
+
     private void StartLevelAfterSelectClosed(LevelData level)
     {
-		if (level.levelType == LevelType.Event)
+		if (IsEventLikeLevel(level.levelType))
 		{
 			StartEventLevel(level);
 		}
@@ -932,6 +988,13 @@ public class HandSystemUI : MonoBehaviour
 
     private EventModel CreateRestEventModel(LevelData level)
     {
+        EventOptionData defaultRest = new EventOptionData
+        {
+            id = "default_rest",
+            titleKey = "rest.option.rest",
+            resultId = RestDefaultHealResultId,
+            isExitOption = true
+        };
         EventOptionData study = new EventOptionData
         {
             id = "study_magic",
@@ -958,7 +1021,7 @@ public class HandSystemUI : MonoBehaviour
                 {
                     id = "start",
                     textKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>(),
-                    options = new[] { study, deepStudy }
+                    options = new[] { defaultRest, study, deepStudy }
                 }
             }
         };
@@ -1362,10 +1425,132 @@ public class HandSystemUI : MonoBehaviour
 		}
 		currentMapNodeIndex = 0;
         runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
+        BuildChapterMapGrid(chapter);
 		RefreshChapterProgressUI();
 		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
 	}
+
+	private void BuildChapterMapGrid(ChapterData chapter)
+    {
+        if (runManager == null)
+            return;
+
+        int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
+        int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
+        int cellCount = width * height;
+        List<LevelData> levels = new List<LevelData>();
+        LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
+        for (int i = 0; i < cellCount; i++)
+        {
+            int progress = i + 1;
+            List<LevelData> candidateLevels = GetMapGridCandidateLevels(chapter, progress, bossLevel);
+            levels.Add(ChooseRandomMapLevel(chapter, candidateLevels));
+        }
+        runManager.BuildMapGrid(chapter, levels);
+    }
+
+    private List<LevelData> GetMapGridCandidateLevels(ChapterData chapter, int progress, LevelData bossLevel)
+    {
+        List<LevelData> candidateLevels = GetLevelsForProgress(chapter, progress);
+        RemoveBossBattleLevel(candidateLevels, bossLevel);
+        AddLevelsIfMissing(candidateLevels, GetEventLevelsForChapter(chapter));
+        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.RemoveMaterial));
+        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.AddMaterial));
+        AddLevelsIfMissing(candidateLevels, GetRestLevels());
+        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.Shop));
+        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.Reward));
+        if (candidateLevels.Count == 0)
+            candidateLevels = GetBattleLevels();
+        return candidateLevels;
+    }
+
+    private void AddLevelsIfMissing(List<LevelData> target, List<LevelData> source)
+    {
+        if (target == null || source == null)
+            return;
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            LevelData level = source[i];
+            if (level != null && !target.Contains(level))
+                target.Add(level);
+        }
+    }
+
+    private LevelData GetChapterBossPreviewLevel(ChapterData chapter)
+    {
+        if (chapter != null && chapter.BossPool != null)
+        {
+            for (int i = 0; i < chapter.BossPool.Length; i++)
+            {
+                if (GameDataDatabase.TryGetLevelData(chapter.BossPool[i], out LevelData level))
+                    return level;
+            }
+        }
+        return GetBossBattleLevel();
+    }
+
+    private void EnsureChapterMapGrid()
+    {
+        RunMapGridModel grid = ChapterMapGrid;
+        if (grid == null || grid.CellCount == 0)
+            BuildChapterMapGrid(activeChapter ?? GetActiveChapter());
+    }
+
+    public void OnChapterMapDirectionClicked(MaterialEnum material)
+    {
+        if (runManager == null || chapterMapMoveInProgress || currentLevel != null || runManager.State != RunFlowState.MapSelection)
+            return;
+
+        StartCoroutine(ChapterMapMoveRoutine(material));
+    }
+
+    private IEnumerator ChapterMapMoveRoutine(MaterialEnum material)
+    {
+        chapterMapMoveInProgress = true;
+        ChapterGridPanelUI panel = GetUIManager().ChapterGridPanel;
+        RunMapCellModel targetCell = runManager.MoveMapPlayer(material);
+        if (targetCell == null)
+        {
+            chapterMapMoveInProgress = false;
+            yield break;
+        }
+
+        busy = true;
+        panel?.SetInputLocked(true);
+        panel?.RefreshTexts();
+        Tween moveTween = panel?.MoveMarkerToCurrentCell(true);
+        if (moveTween != null)
+            yield return moveTween.WaitForCompletion();
+
+        SaveRunProgress();
+        float delay = panel != null ? panel.EnterLevelDelayAfterMove : 0.2f;
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        pendingChapterMapBossStart = targetCell.isBoss || (ChapterMapGrid != null && ChapterMapGrid.bossMapActive);
+        LevelData level = pendingChapterMapBossStart ? runManager.DrawBossLevel(activeChapter ?? GetActiveChapter()) : targetCell.level;
+        if (level == null)
+        {
+            if (ChapterMapGrid != null && ChapterMapGrid.pendingBossMapTransform && !ChapterMapGrid.bossMapActive)
+            {
+                SaveRunProgress();
+                ShowLevelSelect();
+            }
+            else
+            {
+                SaveRunProgress();
+                if (panel != null)
+                    panel.SetInputLocked(false);
+                busy = false;
+                chapterMapMoveInProgress = false;
+            }
+            yield break;
+        }
+        runManager.ConsumeCurrentMapCellLevel();
+        StartLevel(level);
+    }
 
 	private void ApplyHiddenRolls(ChapterData chapter, RunMapNodeModel node)
 	{
@@ -1390,35 +1575,47 @@ public class HandSystemUI : MonoBehaviour
 		if (levels == null || levels.Count == 0)
 			return null;
 
-		EconomyConfigData economy = GameDataDatabase.GetDefaultEconomyConfig();
-		int totalWeight = 0;
-		for (int i = 0; i < levels.Count; i++)
-			totalWeight += GetMapLevelWeight(levels[i], economy);
-
-		LevelData selectedLevel = null;
-		if (totalWeight <= 0)
-            selectedLevel = levels[NextRunRandomInt(0, levels.Count)];
-        else
+		ChapterData weightChapter = chapter ?? activeChapter ?? GetActiveChapter();
+        List<LevelType> types = new List<LevelType>();
+        List<int> weights = new List<int>();
+        int totalWeight = 0;
+        for (int i = 0; i < levels.Count; i++)
         {
-            int roll = NextRunRandomInt(0, totalWeight);
-			for (int i = 0; i < levels.Count; i++)
-			{
-				int weight = GetMapLevelWeight(levels[i], economy);
-				if (weight <= 0)
-					continue;
-				if (roll < weight)
-				{
-					selectedLevel = levels[i];
-					break;
-				}
-				roll -= weight;
-			}
+            LevelData level = levels[i];
+            if (level == null || types.Contains(level.levelType))
+                continue;
+
+            int weight = GetMapLevelWeight(level, weightChapter);
+            if (weight <= 0)
+                continue;
+
+            types.Add(level.levelType);
+            weights.Add(weight);
+            totalWeight += weight;
         }
 
-		if (selectedLevel == null)
-			selectedLevel = levels[levels.Count - 1];
+        if (types.Count == 0 || totalWeight <= 0)
+            return levels[NextRunRandomInt(0, levels.Count)];
 
-		return selectedLevel;
+        LevelType selectedType = types[types.Count - 1];
+        int roll = NextRunRandomInt(0, totalWeight);
+        for (int i = 0; i < types.Count; i++)
+        {
+            if (roll < weights[i])
+            {
+                selectedType = types[i];
+                break;
+            }
+            roll -= weights[i];
+        }
+
+        List<LevelData> sameTypeLevels = new List<LevelData>();
+        for (int i = 0; i < levels.Count; i++)
+        {
+            if (levels[i] != null && levels[i].levelType == selectedType)
+                sameTypeLevels.Add(levels[i]);
+        }
+        return sameTypeLevels.Count > 0 ? sameTypeLevels[NextRunRandomInt(0, sameTypeLevels.Count)] : levels[NextRunRandomInt(0, levels.Count)];
 	}
 
 	private LevelData DrawMapBattleLevel(ChapterData chapter, LevelData fallbackLevel)
@@ -1450,34 +1647,39 @@ public class HandSystemUI : MonoBehaviour
 			(chapter.NormalPool != null && chapter.NormalPool.Length > 0));
 	}
 
-	private int GetMapLevelWeight(LevelData level, EconomyConfigData economy)
+	private int GetMapLevelWeight(LevelData level, ChapterData chapter)
 	{
 		if (level == null)
 			return 0;
 
-		int weight = economy?.defaultMapLevelWeight ?? 1;
-		if (economy != null)
-		{
-			switch (level.levelType)
-			{
-				case LevelType.Battle:
-                case LevelType.Elite:
-					weight = economy.battleMapLevelWeight;
-					break;
-				case LevelType.Event:
-					weight = economy.eventMapLevelWeight;
-					break;
-				case LevelType.Rest:
-					weight = economy.restMapLevelWeight;
-					break;
-				case LevelType.Shop:
-					weight = economy.shopMapLevelWeight;
-					break;
-				case LevelType.Reward:
-					weight = economy.rewardMapLevelWeight;
-					break;
-			}
-		}
+		int weight = chapter != null ? chapter.defaultMapLevelWeight : 1;
+        switch (level.levelType)
+        {
+            case LevelType.Battle:
+                weight = chapter != null ? chapter.battleMapLevelWeight : 10;
+                break;
+            case LevelType.Elite:
+                weight = chapter != null ? chapter.eliteMapLevelWeight : 10;
+                break;
+            case LevelType.Event:
+                weight = chapter != null ? chapter.eventMapLevelWeight : 4;
+                break;
+            case LevelType.RemoveMaterial:
+                weight = chapter != null ? chapter.removeMapLevelWeight : 2;
+                break;
+            case LevelType.AddMaterial:
+                weight = chapter != null ? chapter.addMapLevelWeight : 2;
+                break;
+            case LevelType.Rest:
+                weight = chapter != null ? chapter.restMapLevelWeight : 2;
+                break;
+            case LevelType.Shop:
+                weight = chapter != null ? chapter.shopMapLevelWeight : 2;
+                break;
+            case LevelType.Reward:
+                weight = chapter != null ? chapter.rewardMapLevelWeight : 2;
+                break;
+        }
 		return Mathf.Max(0, weight);
 	}
 
@@ -1538,9 +1740,14 @@ public class HandSystemUI : MonoBehaviour
 		List<LevelData> levels = new List<LevelData>();
 		for (int i = 0; i < poolIds.Length; i++)
 		{
-			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite || level.levelType == LevelType.Event || level.levelType == LevelType.Shop || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
+			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite || level.levelType == LevelType.Event || level.levelType == LevelType.RemoveMaterial || level.levelType == LevelType.AddMaterial || level.levelType == LevelType.Shop || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
 				levels.Add(level);
 		}
+        if (chapter == null || progress < chapter.levelLength)
+        {
+            AddLevelsIfMissing(levels, GetLevels(LevelType.RemoveMaterial));
+            AddLevelsIfMissing(levels, GetLevels(LevelType.AddMaterial));
+        }
 		return levels;
 	}
 
@@ -1581,6 +1788,14 @@ public class HandSystemUI : MonoBehaviour
 
 	private void RefreshChapterProgressUI()
 	{
+        RunMapGridModel grid = ChapterMapGrid;
+        if (grid != null && grid.CellCount > 0)
+        {
+            int completedSteps = Mathf.Max(0, currentMapNodeIndex);
+            int maxSteps = Mathf.Max(1, (activeChapter ?? GetActiveChapter()) != null ? (activeChapter ?? GetActiveChapter()).initialActionPower : grid.currentActionPower + completedSteps);
+            GetUIManager().ChapterProgress?.SetProgress(Mathf.Min(completedSteps + 1, maxSteps), maxSteps);
+            return;
+        }
 		GetUIManager().ChapterProgress?.SetProgress(Mathf.Min(currentMapNodeIndex + 1, mapNodes.Count), mapNodes.Count);
 	}
 
@@ -1597,6 +1812,7 @@ public class HandSystemUI : MonoBehaviour
 	private void HideMapPanel()
 	{
 		GetUIManager().HideMapPanel();
+        GetUIManager().HideChapterGridPanel();
 	}
 
 	private void CreateTopBar()
@@ -1642,6 +1858,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState = playerStatus;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
+        runManager.AttachMapGrid(new RunMapGridModel());
         playerState.BuffAdded += OnPlayerBuffAdded;
         playerState.DiscardPileShuffledIntoDrawPile += OnDiscardPileShuffledIntoDrawPile;
 		battleManager = BattleManager.Create(playerState);
@@ -1660,6 +1877,8 @@ public class HandSystemUI : MonoBehaviour
             runManager.SetActiveChapter(activeChapter);
             runManager.RestorePoolState(saveData.runPools);
             RunSaveSystem.RestoreMapNodes(saveData, mapNodes);
+            if (!runManager.RestoreMapGrid(RunSaveSystem.RestoreMapGrid(saveData)))
+                BuildChapterMapGrid(activeChapter ?? GetActiveChapter());
             currentMapNodeIndex = Mathf.Clamp(saveData.currentMapNodeIndex, 0, Mathf.Max(0, mapNodes.Count - 1));
             runManager.SetCurrentMapNodeIndex(currentMapNodeIndex);
             RefreshChapterProgressUI();
@@ -1809,6 +2028,12 @@ public class HandSystemUI : MonoBehaviour
 			}
 			return;
 		}
+		if (playerState.IsMaterialDisabled(cardView.Card))
+		{
+			selectedCards.Remove(cardView.Card);
+			cardView.SetSelected(false, instant: false);
+			return;
+		}
 		bool flag = !cardView.Selected;
 		cardView.SetSelected(flag, instant: false);
 		if (flag)
@@ -1827,7 +2052,7 @@ public class HandSystemUI : MonoBehaviour
 
 	public void OnCardPlayRequested(HandCardView cardView)
 	{
-		if (!busy && !cardView.InPlayZone)
+		if (!busy && !cardView.InPlayZone && !playerState.IsMaterialDisabled(cardView.Card))
 		{
 			PlayCard(cardView.Card);
 		}
@@ -1955,10 +2180,12 @@ public class HandSystemUI : MonoBehaviour
 		for (int i = 0; i < playerState.Hand.Count; i++)
 		{
 			MaterialModel materialModel = playerState.Hand[i];
-			if (selectedCards.Contains(materialModel) && (TutorialManager == null || TutorialManager.CanMoveCardToPlay(materialModel, playerState.PlayZone)))
+			if (selectedCards.Contains(materialModel) && !playerState.IsMaterialDisabled(materialModel) && (TutorialManager == null || TutorialManager.CanMoveCardToPlay(materialModel, playerState.PlayZone)))
 			{
-				flag |= playerState.TryMoveHandCardToPlay(materialModel);
-				i--;
+				bool moved = playerState.TryMoveHandCardToPlay(materialModel);
+				flag |= moved;
+				if (moved)
+					i--;
 			}
 		}
 		selectedCards.Clear();
@@ -1971,6 +2198,9 @@ public class HandSystemUI : MonoBehaviour
 
 	private void PlayCard(MaterialModel card)
 	{
+		if (playerState.IsMaterialDisabled(card))
+			return;
+
 		if (TutorialManager != null && !TutorialManager.CanMoveCardToPlay(card, playerState.PlayZone))
 			return;
 
@@ -2170,6 +2400,8 @@ public class HandSystemUI : MonoBehaviour
         List<MaterialModel> playSnapshot = new List<MaterialModel>(playerState.PlayZone);
         EventOptionData matchedOption = null;
         bool matched = currentEvent != null && currentEvent.TryGetMatchedOption(playSnapshot, out matchedOption);
+        if (!matched && currentEvent != null)
+            matched = currentEvent.TryGetExitOption(out matchedOption);
         GameLog.Data(string.Format("Resolve rest end turn matched={0} option={1}", matched, (matchedOption != null) ? matchedOption.id : "none"));
         if (matched && (Object)eventPanel != (Object)null)
         {
@@ -2681,8 +2913,9 @@ public class HandSystemUI : MonoBehaviour
 				{
 					TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
 				}
-				GameLog.Data($"Resolve material from play zone material={card.material} index={roundStart}");
-				MagicCastResult materialResult = ResolveMaterialCardEffect(card);
+                GameLog.Data($"Resolve material from play zone material={card.material} index={roundStart}");
+                playerCastAnimator?.PlayMaterialAction(card.material);
+                MagicCastResult materialResult = ResolveMaterialCardEffect(card);
 				PlayMagicCastFeedback(materialResult);
 				yield return PlayPendingEnemyDeaths();
 				if (AllEnemiesDead())
@@ -2755,7 +2988,7 @@ public class HandSystemUI : MonoBehaviour
 				ResolveMaterialDamage(3, result);
 				break;
 			case MaterialEnum.Water:
-				ResolveMaterialEnemyBuff(BuffEnum.Weak, 2, result);
+				ResolveMaterialEnemyBuff(NextRunRandomInt(0, 2) == 0 ? BuffEnum.Weak : BuffEnum.Slow, 1, result);
 				break;
 			case MaterialEnum.Wind:
 				playerState.AddBuff(BuffEnum.ExtraDraw, 1);
@@ -4024,10 +4257,11 @@ public class HandSystemUI : MonoBehaviour
 		bool animationStarted = PlayPlayerCastAnimation();
 		float releaseWait = GetCastReleaseWait();
         float impactWait = 0f;
-        bool shouldTryCastParticle = magicView.Magic.CastParticleTargetsAllEnemies || GetMagicEffectTargetType(magicView.Magic) == SpellEffectTarget.Enemy;
+        bool targetsAllEnemies = MagicTargetsAllEnemiesForCast(magicView.Magic);
+        bool shouldTryCastParticle = targetsAllEnemies || GetMagicEffectTargetType(magicView.Magic) == SpellEffectTarget.Enemy;
         if (shouldTryCastParticle && spellCastEffect != null)
         {
-            if (magicView.Magic.CastParticleTargetsAllEnemies)
+            if (targetsAllEnemies)
             {
                 CollectAliveEnemyTargetRects(castParticleTargetBuffer);
                 if (castParticleTargetBuffer.Count > 0)
@@ -4115,15 +4349,19 @@ public class HandSystemUI : MonoBehaviour
 
     private void ShowMagicModifierSelection(int choiceCount, Action completed = null)
     {
+        ShowMagicModifierSelection(GetMagicModifierChoices(choiceCount), completed ?? FinishRestLevel);
+    }
+
+    private void ShowMagicModifierSelection(IReadOnlyList<MagicModifierData> choices, Action completed)
+    {
         busy = true;
         SetButtonsInteractable(interactable: false);
         pendingMagicModifier = null;
-        Action onCompleted = completed ?? FinishRestLevel;
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (panel != null)
-            panel.Show(GetMagicModifierChoices(choiceCount), onCompleted);
+            panel.Show(choices, completed);
         else
-            onCompleted?.Invoke();
+            completed?.Invoke();
     }
 
     private List<MagicModifierData> GetMagicModifierChoices(int count)
@@ -4340,11 +4578,6 @@ public class HandSystemUI : MonoBehaviour
             panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.empty_slot", "这个法术槽是空的！"));
             return false;
         }
-        if (magic.HasModifier)
-        {
-            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.already_has_modifier", "这个法术已经有强化了！"));
-            return false;
-        }
 
         MagicModifierModel modifier = MagicModifierFactory.Create(pendingMagicModifier);
         if (modifier == null || !magic.AddModifier(modifier))
@@ -4476,6 +4709,14 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0011: Expected O, but got Unknown
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
+        if (ShouldShowEliteMagicModifierReward())
+        {
+            eliteMagicModifierRewardResolved = true;
+            StartCoroutine(ShowEliteMagicModifierRewardRoutine());
+            return;
+        }
+
+        bool finishedBossMapLevel = ChapterMapGrid != null && ChapterMapGrid.bossMapActive;
 		pendingRewardMagic = null;
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
@@ -4491,8 +4732,24 @@ public class HandSystemUI : MonoBehaviour
 		enemyViewStates.Clear();
 		currentEvent = null;
 		currentLevel = null;
+        eliteMagicModifierRewardResolved = false;
 		runManager?.ClearCurrentLevel();
 		GameLog.Data($"Finish reward node={currentMapNodeIndex + 1}/{mapNodes.Count}");
+        if (ChapterMapGrid != null && ChapterMapGrid.CellCount > 0)
+        {
+            if (finishedBossMapLevel)
+            {
+                ShowVictoryPanel();
+                return;
+            }
+
+            currentMapNodeIndex++;
+            runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
+            RefreshChapterProgressUI();
+            SaveRunProgress();
+            ShowLevelSelect();
+            return;
+        }
 		if (mapNodes.Count != 0)
 		{
 			int num = currentMapNodeIndex;
@@ -4509,6 +4766,42 @@ public class HandSystemUI : MonoBehaviour
 			ShowLevelSelectAfterMapAdvance(num != currentMapNodeIndex);
 		}
 	}
+
+    private bool ShouldShowEliteMagicModifierReward()
+    {
+        return !eliteMagicModifierRewardResolved && currentLevel != null && currentLevel.levelType == LevelType.Elite && HasAnyMagicModifierChoice();
+    }
+
+    private bool HasAnyMagicModifierChoice()
+    {
+        foreach (MagicModifierData data in GameDataDatabase.MagicModifierData.Values)
+        {
+            if (data != null && data.weight != 0 && CanAnyMagicAcceptModifier(data))
+                return true;
+        }
+        return false;
+    }
+
+    private IEnumerator ShowEliteMagicModifierRewardRoutine()
+    {
+        List<MagicModifierData> choices = GetMagicModifierChoices(1);
+        if (choices.Count == 0)
+        {
+            FinishReward();
+            yield break;
+        }
+
+        GetUIManager().HideRewardPanel();
+        GetUIManager().HideSlotSelect();
+        bool completed = false;
+        ShowMagicModifierSelection(choices, delegate { completed = true; });
+        while (!completed)
+            yield return null;
+
+        RefreshStaticUI();
+        SaveRunProgress();
+        FinishReward();
+    }
 
 	private void ShowLevelSelectAfterMapAdvance(bool animateMarker)
 	{
@@ -4538,6 +4831,7 @@ public class HandSystemUI : MonoBehaviour
 
 		for (int i = 0; i < enemy.CurrentIntents.Count; i++)
 		{
+			EnemyIntentData intent = enemy.CurrentIntents[i];
 			EnemyIntentView intentView = state != null && i < state.intentViews.Count ? state.intentViews[i] : null;
 			if (intentView != null)
 			{
@@ -4553,12 +4847,21 @@ public class HandSystemUI : MonoBehaviour
 			}
 
 			yield return new WaitForSeconds(enemyIntentPrePerformDelay);
-			yield return PlayEnemyIntentPerformance(state, enemy.CurrentIntents[i]);
-			BattleActionResult intentResult = battleManager != null ? battleManager.ResolveEnemyIntentAt(enemy, i) : null;
-			PlayPlayerDamageFeedbackIfNeeded(intentResult != null ? intentResult.PlayerHealthBefore : playerState.CurrentHealth, intentResult != null ? intentResult.PlayerShieldBefore : playerState.Shield);
-			PlayEnemyShieldFeedbackIfNeeded(state, enemy, intentResult != null ? intentResult.EnemyShieldBefore : enemy.Shield);
-			RefreshStaticUI();
-			RefreshEnemyUI(state, false);
+			int hitCount = enemy.GetIntentHitCount(intent);
+			for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
+			{
+				yield return PlayEnemyIntentPerformance(state, intent);
+				BattleActionResult intentResult = hitCount > 1
+					? (battleManager != null ? battleManager.ResolveEnemyIntentHitAt(enemy, i, hitIndex) : null)
+					: (battleManager != null ? battleManager.ResolveEnemyIntentAt(enemy, i) : null);
+				PlayPlayerDamageFeedbackIfNeeded(intentResult != null ? intentResult.PlayerHealthBefore : playerState.CurrentHealth, intentResult != null ? intentResult.PlayerShieldBefore : playerState.Shield);
+				PlayEnemyShieldFeedbackIfNeeded(state, enemy, intentResult != null ? intentResult.EnemyShieldBefore : enemy.Shield);
+				RefreshStaticUI();
+				RefreshEnemyUI(state, false);
+				if (hitIndex + 1 < hitCount)
+					yield return new WaitForSeconds(enemy.GetIntentHitInterval(intent));
+			}
+
 			Tween fadeOut = intentView != null ? intentView.PlayFadeOut(enemyIntentFadeOutDuration) : null;
 			if (fadeOut != null)
 				yield return fadeOut.WaitForCompletion();
@@ -4840,7 +5143,9 @@ public class HandSystemUI : MonoBehaviour
 		bodySize.x = Mathf.Max(1f, Mathf.Abs(bodySize.x));
 		bodySize.y = Mathf.Max(1f, Mathf.Abs(bodySize.y));
 
-		int shardCount = EnemyDeathShardColumns * EnemyDeathShardRows;
+		int shardColumns = Mathf.Max(1, enemyDeathShardColumns);
+		int shardRows = Mathf.Max(1, enemyDeathShardRows);
+		int shardCount = shardColumns * shardRows;
 		RectTransform[] shardRects = new RectTransform[shardCount];
 		Material[] shardMaterials = new Material[shardCount];
 		Vector2[] startPositions = new Vector2[shardCount];
@@ -4849,16 +5154,16 @@ public class HandSystemUI : MonoBehaviour
 		float[] targetRotations = new float[shardCount];
 		Vector3[] startScales = new Vector3[shardCount];
 		Vector3[] targetScales = new Vector3[shardCount];
-		Vector2 shardSize = new Vector2(bodySize.x / EnemyDeathShardColumns, bodySize.y / EnemyDeathShardRows);
+		Vector2 shardSize = new Vector2(bodySize.x / shardColumns, bodySize.y / shardRows);
 		Vector2 sourceAnchoredPosition = sourceRect.anchoredPosition;
 		Vector3 sourceScale = ((Transform)sourceRect).localScale;
 		float sourceRotation = ((Transform)sourceRect).localEulerAngles.z;
 		int sourceSiblingIndex = ((Transform)sourceRect).GetSiblingIndex();
 		int index = 0;
 
-		for (int row = 0; row < EnemyDeathShardRows; row++)
+		for (int row = 0; row < shardRows; row++)
 		{
-			for (int column = 0; column < EnemyDeathShardColumns; column++)
+			for (int column = 0; column < shardColumns; column++)
 			{
 				GameObject shardObject = new GameObject("BodyShard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
 				RectTransform shardRect = (RectTransform)shardObject.transform;
@@ -4871,8 +5176,8 @@ public class HandSystemUI : MonoBehaviour
 				((Transform)shardRect).localScale = sourceScale;
 				((Transform)shardRect).localRotation = ((Transform)sourceRect).localRotation;
 
-				float normalizedX = (column + 0.5f) / EnemyDeathShardColumns;
-				float normalizedY = (row + 0.5f) / EnemyDeathShardRows;
+				float normalizedX = (column + 0.5f) / shardColumns;
+				float normalizedY = (row + 0.5f) / shardRows;
 				Vector2 offset = new Vector2(normalizedX * bodySize.x - sourceRect.pivot.x * bodySize.x, normalizedY * bodySize.y - sourceRect.pivot.y * bodySize.y);
 				Vector2 startPosition = sourceAnchoredPosition + offset;
 				shardRect.anchoredPosition = startPosition;
@@ -4880,7 +5185,7 @@ public class HandSystemUI : MonoBehaviour
 				Material shardMaterial = new Material(enemyDeathExplosionMaterialTemplate);
 				shardMaterial.SetFloat("_Explosion", 0f);
 				shardMaterial.SetFloat("_ShardIndex", index);
-				shardMaterial.SetVector("_ShardRect", new Vector4((float)column / EnemyDeathShardColumns, (float)row / EnemyDeathShardRows, 1f / EnemyDeathShardColumns, 1f / EnemyDeathShardRows));
+				shardMaterial.SetVector("_ShardRect", new Vector4((float)column / shardColumns, (float)row / shardRows, 1f / shardColumns, 1f / shardRows));
 				shardMaterial.SetVector("_SpriteUV", spriteUv);
 
 				Image shardImage = shardObject.GetComponent<Image>();
@@ -4902,17 +5207,22 @@ public class HandSystemUI : MonoBehaviour
 					direction = Vector2.up;
 				}
 				direction.Normalize();
-				Vector2 scatter = direction * Random.Range(EnemyDeathExplosionDistance * 0.62f, EnemyDeathExplosionDistance);
-				scatter += Random.insideUnitCircle * 26f;
+				float explosionDistance = Mathf.Max(0f, enemyDeathExplosionDistance);
+				float minDistance = Mathf.Min(explosionDistance, explosionDistance * Mathf.Max(0f, enemyDeathExplosionDistanceMinMultiplier));
+				Vector2 scatter = direction * Random.Range(minDistance, explosionDistance);
+				scatter += Random.insideUnitCircle * Mathf.Max(0f, enemyDeathExplosionRandomness);
+				float minScale = Mathf.Min(enemyDeathShardScaleRange.x, enemyDeathShardScaleRange.y);
+				float maxScale = Mathf.Max(enemyDeathShardScaleRange.x, enemyDeathShardScaleRange.y);
+				float rotationRange = Mathf.Max(0f, enemyDeathShardRotationRange);
 
 				shardRects[index] = shardRect;
 				shardMaterials[index] = shardMaterial;
 				startPositions[index] = startPosition;
 				targetPositions[index] = startPosition + scatter;
 				startRotations[index] = sourceRotation;
-				targetRotations[index] = sourceRotation + Random.Range(-170f, 170f);
+				targetRotations[index] = sourceRotation + Random.Range(-rotationRange, rotationRange);
 				startScales[index] = sourceScale;
-				targetScales[index] = sourceScale * Random.Range(0.82f, 1.12f);
+				targetScales[index] = sourceScale * Random.Range(minScale, maxScale);
 				index++;
 			}
 		}
@@ -4981,6 +5291,11 @@ public class HandSystemUI : MonoBehaviour
 		return GetUIManager().PlayerFeedback?.PlayerVirtualTarget;
 	}
 
+    private bool MagicTargetsAllEnemiesForCast(MagicModel magic)
+    {
+        return magic != null && (magic.CastParticleTargetsAllEnemies || (playerState != null && playerState.GetBuffStack(BuffEnum.MagicAttackAll) > 0 && magic.EffectType == MagicEffectType.Damage));
+    }
+
 	private SpellEffectTarget GetMagicEffectTargetType(MagicModel magic)
 	{
 		MagicEffectType effectType = magic.EffectType;
@@ -5020,10 +5335,8 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
 		if (result != null)
 		{
-			for (int i = 0; i < result.enemyDamageHits.Count; i++)
-			{
-				PlayEnemyDamageFeedback(result.enemyDamageHits[i]);
-			}
+			if (result.enemyDamageHits.Count > 0)
+				StartCoroutine(PlayMagicDamageFeedbackRoutine(result.enemyDamageHits));
 			if (result.playerHeal > 0)
 			{
 				PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
@@ -5040,6 +5353,23 @@ public class HandSystemUI : MonoBehaviour
 			{
 				RefreshEnemyUI();
 			}
+		}
+	}
+
+	private IEnumerator PlayMagicDamageFeedbackRoutine(IReadOnlyList<MagicDamageHitResult> hits)
+	{
+		int lastStepIndex = -1;
+		for (int i = 0; hits != null && i < hits.Count; i++)
+		{
+			MagicDamageHitResult hit = hits[i];
+			if (hit == null)
+				continue;
+
+			if (lastStepIndex >= 0 && hit.stepIndex != lastStepIndex)
+				yield return new WaitForSeconds(magicDamageHitInterval);
+
+			PlayEnemyDamageFeedback(hit);
+			lastStepIndex = hit.stepIndex;
 		}
 	}
 
@@ -5397,7 +5727,9 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
 		{
-			return (model != null ? model.GetIntentAttackValue(intent, playerState) : intent.value).ToString();
+			int value = model != null ? model.GetIntentAttackValue(intent, playerState) : intent.value;
+			int times = intent.times > 0 ? intent.times : 1;
+			return times > 1 ? value + "x" + times : value.ToString();
 		}
 		if (intent.actionType == EnemyActionType.GainShield)
 		{
@@ -5407,7 +5739,11 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
 		}
-		if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff || intent.actionType == EnemyActionType.Special || intent.actionType == EnemyActionType.Stunned)
+		if (intent.actionType == EnemyActionType.Special)
+		{
+			return model != null ? model.GetSpecialIntentDisplayValue(intent, playerState) : string.Empty;
+		}
+		if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff || intent.actionType == EnemyActionType.Stunned)
 		{
 			return string.Empty;
 		}

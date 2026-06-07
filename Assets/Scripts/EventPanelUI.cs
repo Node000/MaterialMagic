@@ -702,6 +702,8 @@ public class EventPanelUI : MonoBehaviour
             effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加流转";
         else if (option.resultId == 203)
             effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加液化";
+        else if (option.resultId == 300)
+            effect = "恢复30%最大生命";
         else if (option.resultId == 301)
             effect = LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个法术上");
         else if (option.resultId == 302)
@@ -730,15 +732,15 @@ public class EventPanelUI : MonoBehaviour
             case EventRewardType.IncreaseMaxHealth:
                 return "生命上限+" + GetEffectAmountText(effect, 5);
             case EventRewardType.GainMaterial:
-                return "获得" + GetEffectCountText(effect, 1) + "张素材牌";
+                return "获得" + GetEffectCountText(effect, 1) + "张箭头";
             case EventRewardType.GainRandomMaterial:
-                return "获得" + GetEffectCountText(effect, 1) + "张随机素材牌";
+                return "获得" + GetEffectCountText(effect, 1) + "张随机箭头";
             case EventRewardType.GainSameRandomMaterials:
-                return "获得随机同种素材牌x" + GetEffectCountText(effect, 1);
+                return "获得随机同种箭头x" + GetEffectCountText(effect, 1);
             case EventRewardType.IncreaseDrawCount:
                 return "抽牌数+" + GetEffectAmountText(effect, 1);
             case EventRewardType.RemoveMaterial:
-                return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张素材牌";
+                return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张箭头";
             case EventRewardType.GainNextBattleStartShield:
                 return "下场战斗开始时，获得" + GetEffectAmountText(effect, 1) + "点护盾";
             default:

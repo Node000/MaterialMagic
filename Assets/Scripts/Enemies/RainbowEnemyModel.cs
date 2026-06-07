@@ -4,6 +4,26 @@ public class RainbowEnemyModel : EnemyModel
     {
     }
 
+    public override string GetSpecialIntentDisplayValue(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return string.Empty;
+
+        switch (intent.value)
+        {
+            case 1:
+                return "3";
+            case 2:
+                return "2";
+            case 3:
+                return "1";
+            case 4:
+                return "3";
+            default:
+                return string.Empty;
+        }
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (playerState == null)

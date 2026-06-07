@@ -113,6 +113,13 @@ public static class LocalizationKeys
             case BuffEnum.Sturdy: return "sturdy";
             case BuffEnum.Stable: return "stable";
             case BuffEnum.Disorder: return "disorder";
+            case BuffEnum.KindlingNextDraw: return "kindling_next_draw";
+            case BuffEnum.DrawOnEnemyAttack: return "draw_on_enemy_attack";
+            case BuffEnum.BurningOnEnemyAttack: return "burning_on_enemy_attack";
+            case BuffEnum.ExtraDrawOnEnemyDamage: return "extra_draw_on_enemy_damage";
+            case BuffEnum.ShieldReflectBoost: return "shield_reflect_boost";
+            case BuffEnum.MagicAttackAll: return "magic_attack_all";
+            case BuffEnum.NextMagicRepeat: return "next_magic_repeat";
             default: return buffType.ToString().ToLowerInvariant();
         }
     }

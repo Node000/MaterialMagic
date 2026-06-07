@@ -492,13 +492,13 @@ public class MaterialListPanelUI : MonoBehaviour
         switch (material)
         {
             case MaterialEnum.Fire:
-                return "单独打出：对敌方造成3点伤害";
+                return "单独打出（上）：对敌方造成3点伤害";
             case MaterialEnum.Water:
-                return "单独打出：对敌方施加2层虚弱";
+                return "单独打出（下）：对敌方随机施加1层【虚弱】或【迟缓】";
             case MaterialEnum.Wind:
-                return "单独打出：下回合抽牌+1";
+                return "单独打出（左）：下回合额外抽1张牌";
             case MaterialEnum.Earth:
-                return "单独打出：友方获得3点护盾";
+                return "单独打出（右）：获得3点护盾";
             default:
                 return "单独打出：无基础效果";
         }

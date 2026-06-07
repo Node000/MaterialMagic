@@ -116,6 +116,22 @@ public class EnemyModel : UnitModel
             ResolveStandardIntent(intent, playerState);
     }
 
+    public void ResolveCurrentIntentHitAt(int intentIndex, int hitIndex, PlayerState playerState)
+    {
+        if (intentIndex < 0 || intentIndex >= CurrentIntents.Count)
+            return;
+
+        EnemyIntentData intent = CurrentIntents[intentIndex];
+        if (intent.actionType == EnemyActionType.Special)
+        {
+            if (hitIndex == 0)
+                ProcessSpecialIntent(intent.value, playerState);
+            return;
+        }
+
+        ResolveStandardIntentHit(intent, hitIndex, playerState);
+    }
+
     public void EndResolveIntents(PlayerState playerState)
     {
         CombatantModel self = new CombatantModel(this);
@@ -456,34 +472,68 @@ public class EnemyModel : UnitModel
         return shieldValue;
     }
 
+    public virtual string GetSpecialIntentDisplayValue(EnemyIntentData intent, PlayerState playerState)
+    {
+        return string.Empty;
+    }
+
+    protected int GetSpecialDamagePreviewValue(int rawDamage, PlayerState playerState)
+    {
+        int damageValue = rawDamage;
+        if (playerState != null)
+            playerState.TriggerOnTakeDamage(new CombatantModel(this), ref damageValue);
+        return damageValue > 0 ? damageValue : 0;
+    }
+
+    protected int GetSpecialShieldPreviewValue(int rawShield)
+    {
+        int shieldValue = rawShield;
+        TriggerOnGainShield(ref shieldValue);
+        return shieldValue > 0 ? shieldValue : 0;
+    }
+
     protected virtual void ResolveStandardIntent(EnemyIntentData intent, PlayerState playerState)
     {
         if (intent == null)
             return;
 
+        int hitCount = GetIntentHitCount(intent);
+        for (int i = 0; i < hitCount; i++)
+            ResolveStandardIntentHit(intent, i, playerState);
+    }
+
+    protected virtual void ResolveStandardIntentHit(EnemyIntentData intent, int hitIndex, PlayerState playerState)
+    {
+        if (intent == null || hitIndex < 0 || hitIndex >= GetIntentHitCount(intent))
+            return;
+
         switch (intent.actionType)
         {
             case EnemyActionType.Attack:
-                ResolveAttackIntent(intent, playerState);
+                ResolveAttackIntentHit(intent, playerState);
                 break;
             case EnemyActionType.AttackAll:
-                ResolveAttackAllIntent(intent, playerState);
+                ResolveAttackAllIntentHit(intent, playerState);
                 break;
             case EnemyActionType.GainShield:
-                GainShield(intent.value);
+                if (hitIndex == 0)
+                    GainShield(intent.value);
                 break;
             case EnemyActionType.ApplyBuff:
-                ApplyBuffs(new CombatantModel(this), intent.buffs);
+                if (hitIndex == 0)
+                    ApplyBuffs(new CombatantModel(this), intent.buffs);
                 break;
             case EnemyActionType.ApplyDebuff:
-                if (playerState != null)
+                if (hitIndex == 0 && playerState != null)
                     ApplyBuffs(new CombatantModel(playerState), intent.buffs);
                 break;
             case EnemyActionType.Summon:
-                ResolveSummonIntent(intent);
+                if (hitIndex == 0)
+                    ResolveSummonIntent(intent);
                 break;
             case EnemyActionType.Stunned:
-                GameLog.Data($"Enemy {Id} stunned intent skip");
+                if (hitIndex == 0)
+                    GameLog.Data($"Enemy {Id} stunned intent skip");
                 break;
         }
     }
@@ -493,62 +543,70 @@ public class EnemyModel : UnitModel
         GameLog.Data($"Enemy {Id} special intent value={value}");
     }
 
-    private void ResolveAttackIntent(EnemyIntentData intent, PlayerState playerState)
+    private void ResolveAttackIntentHit(EnemyIntentData intent, PlayerState playerState)
     {
         if (playerState == null)
             return;
 
-        int times = intent.times > 0 ? intent.times : 1;
-        for (int i = 0; i < times; i++)
+        CombatantModel targetCombatant = new CombatantModel(playerState);
+        int attackValue = GetAttackValueBeforeTargetReaction(intent, targetCombatant);
+        GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
+        CombatDamageResult damageResult = playerState.TakeDamageResult(attackValue, new CombatantModel(this));
+        int attackResult = damageResult.HealthDamage;
+        TriggerAfterAttack(targetCombatant, ref attackResult);
+        ApplyBurnOnAttack();
+    }
+
+    private void ResolveAttackAllIntentHit(EnemyIntentData intent, PlayerState playerState)
+    {
+        CombatantModel attacker = new CombatantModel(this);
+        if (playerState != null && playerState.CurrentHealth > 0)
         {
-            CombatantModel targetCombatant = new CombatantModel(playerState);
+            CombatantModel playerTarget = new CombatantModel(playerState);
+            int playerAttackValue = GetAttackValueBeforeTargetReaction(intent, playerTarget);
+            GameLog.Data($"Enemy {Id} intent attack all player value={playerAttackValue}");
+            CombatDamageResult damageResult = playerState.TakeDamageResult(playerAttackValue, attacker);
+            int attackResult = damageResult.HealthDamage;
+            TriggerAfterAttack(playerTarget, ref attackResult);
+            ApplyBurnOnAttack();
+        }
+
+        IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
+        if (targets == null)
+            return;
+
+        int targetCount = targets.Count;
+        for (int i = 0; i < targetCount; i++)
+        {
+            EnemyModel target = targets[i];
+            if (target == null)
+                continue;
+            if (target.IsDead && !ReferenceEquals(target, this))
+                continue;
+
+            CombatantModel targetCombatant = new CombatantModel(target);
             int attackValue = GetAttackValueBeforeTargetReaction(intent, targetCombatant);
-            GameLog.Data($"Enemy {Id} intent attack value={attackValue}");
-            CombatDamageResult damageResult = playerState.TakeDamageResult(attackValue, new CombatantModel(this));
+            GameLog.Data($"Enemy {Id} intent attack all target={target.Id} value={attackValue}");
+            CombatDamageResult damageResult = target.TakeDamageResult(attackValue, attacker);
             int attackResult = damageResult.HealthDamage;
             TriggerAfterAttack(targetCombatant, ref attackResult);
-            ApplyBurnOnAttack();
         }
     }
 
-    private void ResolveAttackAllIntent(EnemyIntentData intent, PlayerState playerState)
+    public int GetIntentHitCount(EnemyIntentData intent)
     {
-        CombatantModel attacker = new CombatantModel(this);
-        int times = intent.times > 0 ? intent.times : 1;
-        for (int hit = 0; hit < times; hit++)
-        {
-            if (playerState != null && playerState.CurrentHealth > 0)
-            {
-                CombatantModel playerTarget = new CombatantModel(playerState);
-                int playerAttackValue = GetAttackValueBeforeTargetReaction(intent, playerTarget);
-                GameLog.Data($"Enemy {Id} intent attack all player value={playerAttackValue}");
-                CombatDamageResult damageResult = playerState.TakeDamageResult(playerAttackValue, attacker);
-                int attackResult = damageResult.HealthDamage;
-                TriggerAfterAttack(playerTarget, ref attackResult);
-                ApplyBurnOnAttack();
-            }
+        if (intent == null || (intent.actionType != EnemyActionType.Attack && intent.actionType != EnemyActionType.AttackAll))
+            return 1;
 
-            IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
-            if (targets == null)
-                return;
+        return intent.times > 0 ? intent.times : 1;
+    }
 
-            int targetCount = targets.Count;
-            for (int i = 0; i < targetCount; i++)
-            {
-                EnemyModel target = targets[i];
-                if (target == null)
-                    continue;
-                if (target.IsDead && !ReferenceEquals(target, this))
-                    continue;
+    public float GetIntentHitInterval(EnemyIntentData intent)
+    {
+        if (intent == null || GetIntentHitCount(intent) <= 1)
+            return 0f;
 
-                CombatantModel targetCombatant = new CombatantModel(target);
-                int attackValue = GetAttackValueBeforeTargetReaction(intent, targetCombatant);
-                GameLog.Data($"Enemy {Id} intent attack all target={target.Id} value={attackValue}");
-                CombatDamageResult damageResult = target.TakeDamageResult(attackValue, attacker);
-                int attackResult = damageResult.HealthDamage;
-                TriggerAfterAttack(targetCombatant, ref attackResult);
-            }
-        }
+        return intent.hitInterval > 0f ? intent.hitInterval : 0.2f;
     }
 
     private void ApplyBurnOnAttack()
@@ -783,6 +841,8 @@ public class EnemyModel : UnitModel
         intent.intentType = GetIntentType(intent.actionType);
         if (intent.times <= 0)
             intent.times = 1;
+        if (intent.hitInterval <= 0f)
+            intent.hitInterval = 0.2f;
         if (intent.summonCount <= 0)
             intent.summonCount = 1;
         return intent;

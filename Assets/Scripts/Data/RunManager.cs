@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public enum RunFlowState
 {
@@ -16,19 +17,26 @@ public enum RunFlowState
 
 public class RunManager
 {
+    private const int BeginPoolBattleLimit = 2;
+    private const int MidPoolBattleLimit = 5;
+
     private readonly List<int> remainingBeginPool = new List<int>();
     private readonly List<int> remainingMidPool = new List<int>();
     private readonly List<int> remainingNormalPool = new List<int>();
     private readonly List<int> remainingEventPool = new List<int>();
     private readonly List<int> remainingElitePool = new List<int>();
     private readonly List<int> combinedCandidateIndexes = new List<int>();
-    private readonly List<int> combinedCandidatePools = new List<int>();
     private List<RunMapNodeModel> mapNodes;
+    private RunMapGridModel mapGrid;
 
     public static RunManager Current { get; private set; }
 
     public PlayerStatus PlayerStatus { get; }
     public IReadOnlyList<RunMapNodeModel> MapNodes => mapNodes;
+    public RunMapGridModel MapGrid => mapGrid;
+    public int CurrentMapX => mapGrid != null ? mapGrid.playerX : 0;
+    public int CurrentMapY => mapGrid != null ? mapGrid.playerY : 0;
+    public int CurrentActionPower => mapGrid != null ? mapGrid.currentActionPower : 0;
     public int CurrentMapNodeIndex { get; private set; }
     public int BattleCount { get; private set; }
     public ChapterData ActiveChapter { get; private set; }
@@ -40,6 +48,7 @@ public class RunManager
     {
         PlayerStatus = playerStatus;
         mapNodes = new List<RunMapNodeModel>();
+        mapGrid = new RunMapGridModel();
         State = RunFlowState.MapSelection;
     }
 
@@ -59,6 +68,115 @@ public class RunManager
     public void AttachMapNodes(List<RunMapNodeModel> nodes)
     {
         mapNodes = nodes ?? new List<RunMapNodeModel>();
+    }
+
+    public void AttachMapGrid(RunMapGridModel grid)
+    {
+        mapGrid = grid ?? new RunMapGridModel();
+    }
+
+    public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels)
+    {
+        int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
+        int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
+        mapGrid = new RunMapGridModel
+        {
+            width = width,
+            height = height,
+            playerX = chapter != null ? chapter.startMapX : width / 2,
+            playerY = chapter != null ? chapter.startMapY : height / 2,
+            currentActionPower = Mathf.Max(0, chapter != null && chapter.initialActionPower > 0 ? chapter.initialActionPower : 5),
+            bossMapActive = false,
+            pendingBossMapTransform = false
+        };
+        mapGrid.WrapPosition(ref mapGrid.playerX, ref mapGrid.playerY);
+
+        int cellCount = width * height;
+        for (int i = 0; i < cellCount; i++)
+        {
+            LevelData level = levels != null && levels.Count > 0 ? levels[i % levels.Count] : GetFallbackBattleLevel();
+            RunMapCellModel cell = new RunMapCellModel
+            {
+                x = i % width,
+                y = i / width,
+                level = level,
+                isBoss = false
+            };
+            if (cell.x == mapGrid.playerX && cell.y == mapGrid.playerY)
+                cell.level = null;
+            mapGrid.cells.Add(cell);
+        }
+    }
+
+    public bool RestoreMapGrid(RunMapGridModel grid)
+    {
+        if (grid == null || grid.width <= 0 || grid.height <= 0 || grid.cells == null || grid.cells.Count == 0)
+            return false;
+
+        mapGrid = grid;
+        mapGrid.WrapPosition(ref mapGrid.playerX, ref mapGrid.playerY);
+        return true;
+    }
+
+    public RunMapCellModel MoveMapPlayer(MaterialEnum material)
+    {
+        if (mapGrid == null || mapGrid.width <= 0 || mapGrid.height <= 0)
+            return null;
+
+        Vector2Int direction = GetMapDirection(material);
+        if (direction == Vector2Int.zero)
+            return mapGrid.GetCurrentCell();
+
+        int nextX = mapGrid.playerX + direction.x;
+        int nextY = mapGrid.playerY + direction.y;
+        mapGrid.WrapPosition(ref nextX, ref nextY);
+        mapGrid.playerX = nextX;
+        mapGrid.playerY = nextY;
+        if (!mapGrid.bossMapActive)
+        {
+            mapGrid.currentActionPower = Mathf.Max(0, mapGrid.currentActionPower - 1);
+            if (mapGrid.currentActionPower == 0)
+                mapGrid.pendingBossMapTransform = true;
+        }
+        return mapGrid.GetCurrentCell();
+    }
+
+    public void ConsumeCurrentMapCellLevel()
+    {
+        RunMapCellModel cell = mapGrid != null ? mapGrid.GetCurrentCell() : null;
+        if (cell != null && !cell.isBoss)
+            cell.level = null;
+    }
+
+    public void ActivateBossMap()
+    {
+        if (mapGrid == null)
+            return;
+
+        mapGrid.bossMapActive = true;
+        mapGrid.pendingBossMapTransform = false;
+        for (int i = 0; i < mapGrid.cells.Count; i++)
+        {
+            if (mapGrid.cells[i] != null)
+                mapGrid.cells[i].isBoss = true;
+        }
+    }
+
+    public static Vector2Int GetMapDirection(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return Vector2Int.up;
+            case MaterialEnum.Wind:
+                return Vector2Int.left;
+            case MaterialEnum.Water:
+                return Vector2Int.down;
+            case MaterialEnum.Earth:
+                return Vector2Int.right;
+            default:
+                return Vector2Int.zero;
+        }
     }
 
     public void SetActiveChapter(ChapterData chapter)
@@ -116,16 +234,15 @@ public class RunManager
 
         BattleCount++;
 
-        if (BattleCount <= 3)
+        if (BattleCount <= BeginPoolBattleLimit)
             return DrawFromPool(remainingBeginPool, ActiveChapter.BeginPool, LevelType.Battle) ?? GetFallbackBattleLevel();
 
-        if (BattleCount <= 6)
+        MovePool(remainingBeginPool, remainingMidPool);
+        if (BattleCount <= MidPoolBattleLimit)
             return DrawFromPool(remainingMidPool, ActiveChapter.MidPool, LevelType.Battle) ?? GetFallbackBattleLevel();
 
-        if (remainingMidPool.Count == 0 && remainingNormalPool.Count == 0)
-            ResetMidAndNormalPools();
-
-        return DrawFromMidNormalPools() ?? GetFallbackBattleLevel();
+        MovePool(remainingMidPool, remainingNormalPool);
+        return DrawFromPool(remainingNormalPool, ActiveChapter.NormalPool, LevelType.Battle) ?? GetFallbackBattleLevel();
     }
 
     public LevelData DrawEventLevel(ChapterData chapter)
@@ -201,15 +318,20 @@ public class RunManager
     {
         BattleCount = 0;
         FillPool(remainingBeginPool, ActiveChapter != null ? ActiveChapter.BeginPool : null);
-        FillPool(remainingEventPool, ActiveChapter != null ? ActiveChapter.EventPool : null);
-        FillPool(remainingElitePool, ActiveChapter != null ? ActiveChapter.ElitePool : null);
-        ResetMidAndNormalPools();
-    }
-
-    private void ResetMidAndNormalPools()
-    {
         FillPool(remainingMidPool, ActiveChapter != null ? ActiveChapter.MidPool : null);
         FillPool(remainingNormalPool, ActiveChapter != null ? ActiveChapter.NormalPool : null);
+        FillPool(remainingEventPool, ActiveChapter != null ? ActiveChapter.EventPool : null);
+        FillPool(remainingElitePool, ActiveChapter != null ? ActiveChapter.ElitePool : null);
+    }
+
+    private static void MovePool(List<int> source, List<int> target)
+    {
+        if (source == null || target == null || source.Count == 0)
+            return;
+
+        for (int i = 0; i < source.Count; i++)
+            target.Add(source[i]);
+        source.Clear();
     }
 
     private static void FillPool(List<int> target, int[] source)
@@ -247,36 +369,6 @@ public class RunManager
         int levelId = pool[poolIndex];
         pool.RemoveAt(poolIndex);
         return GameDataDatabase.TryGetLevelData(levelId, out LevelData level) ? level : null;
-    }
-
-    private LevelData DrawFromMidNormalPools()
-    {
-        combinedCandidateIndexes.Clear();
-        combinedCandidatePools.Clear();
-        AddPoolCandidates(remainingMidPool, 0, LevelType.Battle);
-        AddPoolCandidates(remainingNormalPool, 1, LevelType.Battle);
-
-        if (combinedCandidateIndexes.Count == 0)
-            return null;
-
-        int candidateIndex = NextRandomInt(0, combinedCandidateIndexes.Count);
-        List<int> pool = combinedCandidatePools[candidateIndex] == 0 ? remainingMidPool : remainingNormalPool;
-        int poolIndex = combinedCandidateIndexes[candidateIndex];
-        int levelId = pool[poolIndex];
-        pool.RemoveAt(poolIndex);
-        return GameDataDatabase.TryGetLevelData(levelId, out LevelData level) ? level : null;
-    }
-
-    private void AddPoolCandidates(List<int> pool, int poolId, params LevelType[] allowedTypes)
-    {
-        for (int i = 0; pool != null && i < pool.Count; i++)
-        {
-            if (!TryGetAllowedLevel(pool[i], allowedTypes, out _))
-                continue;
-
-            combinedCandidateIndexes.Add(i);
-            combinedCandidatePools.Add(poolId);
-        }
     }
 
     private LevelData DrawFromArray(int[] levelIds, params LevelType[] allowedTypes)
@@ -340,6 +432,8 @@ public class RunManager
             case LevelType.Elite:
                 return RunFlowState.Battle;
             case LevelType.Event:
+            case LevelType.RemoveMaterial:
+            case LevelType.AddMaterial:
                 return RunFlowState.Event;
             case LevelType.Rest:
                 return RunFlowState.Rest;

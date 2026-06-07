@@ -26,7 +26,7 @@ public class MagicModel
 
     public bool CanAddModifier(MagicModifierModel modifier)
     {
-        return modifier != null && !HasModifier && modifier.CanApplyTo(this);
+        return modifier != null && modifier.CanApplyTo(this);
     }
 
     public bool AddModifier(MagicModifierModel modifier)
@@ -35,6 +35,7 @@ public class MagicModel
             return false;
 
         modifier.model = this;
+        Modifiers.Clear();
         Modifiers.Add(modifier);
         GameLog.Data($"Add magic modifier magic={Id} modifier={modifier.Id}");
         return true;
@@ -116,6 +117,15 @@ public class MagicModel
     protected int GetAdditionalCastCount(PlayerState playerState)
     {
         int count = playerState != null ? playerState.GetBuffStack(BuffEnum.RepeatSpell) : 0;
+        if (playerState != null)
+        {
+            int nextMagicRepeat = playerState.GetBuffStack(BuffEnum.NextMagicRepeat);
+            if (nextMagicRepeat > 0)
+            {
+                count += nextMagicRepeat;
+                playerState.ConsumeBuff(BuffEnum.NextMagicRepeat, nextMagicRepeat);
+            }
+        }
         for (int i = 0; i < Modifiers.Count; i++)
             count += Modifiers[i].GetAdditionalCastCount();
         return count;
@@ -238,7 +248,31 @@ public class MagicModel
 
     protected void DamageTarget(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
     {
+        if (playerState != null && playerState.GetBuffStack(BuffEnum.MagicAttackAll) > 0)
+        {
+            DamageAll(playerState, battleManager, damage, result);
+            return;
+        }
+
         Damage(playerState, Target(battleManager), damage, result);
+    }
+
+    protected void DamageTargetTimes(PlayerState playerState, BattleManager battleManager, int damage, int times, MagicCastResult result)
+    {
+        for (int i = 0; i < times; i++)
+        {
+            DamageTarget(playerState, battleManager, damage, result);
+            result.AdvanceDamageStep();
+        }
+    }
+
+    protected void DamageAllTimes(PlayerState playerState, BattleManager battleManager, int damage, int times, MagicCastResult result)
+    {
+        for (int i = 0; i < times; i++)
+        {
+            DamageAll(playerState, battleManager, damage, result);
+            result.AdvanceDamageStep();
+        }
     }
 
     protected void DamageAll(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
@@ -384,15 +418,19 @@ public class MagicModel
             return;
 
         CombatantModel caster = new CombatantModel(playerState);
+        int repeatCount = 1 + playerState.GetBuffStack(BuffEnum.ShieldReflectBoost);
         IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
-        for (int i = 0; i < enemies.Count; i++)
+        for (int repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++)
         {
-            EnemyModel target = enemies[i];
-            if (target == null || target.IsDead)
-                continue;
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                EnemyModel target = enemies[i];
+                if (target == null || target.IsDead)
+                    continue;
 
-            CombatDamageResult damageResult = target.TakeDamageResult(damage, caster);
-            result.AddEnemyDamageHit(target, damageResult.HealthDamage, damageResult.ShieldDamage);
+                CombatDamageResult damageResult = target.TakeDamageResult(damage, caster);
+                result.AddEnemyDamageHit(target, damageResult.HealthDamage, damageResult.ShieldDamage);
+            }
         }
     }
 
@@ -422,14 +460,16 @@ public class MagicDamageHitResult
     public EnemyModel target;
     public int healthDamage;
     public int shieldDamage;
+    public int stepIndex;
 
     public bool FullyBlocked => healthDamage <= 0 && shieldDamage > 0;
 
-    public MagicDamageHitResult(EnemyModel target, int healthDamage, int shieldDamage)
+    public MagicDamageHitResult(EnemyModel target, int healthDamage, int shieldDamage, int stepIndex)
     {
         this.target = target;
         this.healthDamage = healthDamage;
         this.shieldDamage = shieldDamage;
+        this.stepIndex = stepIndex;
     }
 }
 
@@ -440,9 +480,16 @@ public class MagicCastResult
     public int playerShield;
     public bool enemyBuffApplied;
 
+    private int currentDamageStep;
+
     public void AddEnemyDamageHit(EnemyModel target, int healthDamage, int shieldDamage)
     {
-        enemyDamageHits.Add(new MagicDamageHitResult(target, healthDamage, shieldDamage));
+        enemyDamageHits.Add(new MagicDamageHitResult(target, healthDamage, shieldDamage, currentDamageStep));
+    }
+
+    public void AdvanceDamageStep()
+    {
+        currentDamageStep++;
     }
 }
 

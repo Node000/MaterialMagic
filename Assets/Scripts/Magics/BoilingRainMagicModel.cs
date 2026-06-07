@@ -6,8 +6,6 @@ public class BoilingRainMagicModel : MagicModel
 
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        DamageAll(playerState, battleManager, 1, result);
-        DamageAll(playerState, battleManager, 1, result);
-        DamageAll(playerState, battleManager, 1, result);
+        DamageAllTimes(playerState, battleManager, 1, 3, result);
     }
 }

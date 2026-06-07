@@ -605,6 +605,22 @@
       "levelType": 2,
       "numericId": 401,
       "enemyIds": []
+    },
+    {
+      "id": "level_arrow_remove",
+      "titleKey": "level.arrow_remove.title",
+      "levelType": 6,
+      "numericId": 501,
+      "enemyIds": [],
+      "eventPoolId": 108
+    },
+    {
+      "id": "level_arrow_add",
+      "titleKey": "level.arrow_add.title",
+      "levelType": 7,
+      "numericId": 502,
+      "enemyIds": [],
+      "eventPoolId": 109
     }
   ]
 }

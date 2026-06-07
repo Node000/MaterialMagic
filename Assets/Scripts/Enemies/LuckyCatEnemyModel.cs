@@ -4,6 +4,11 @@ public class LuckyCatEnemyModel : EnemyModel
     {
     }
 
+    public override string GetSpecialIntentDisplayValue(EnemyIntentData intent, PlayerState playerState)
+    {
+        return intent != null && intent.value == 1 ? "5" : string.Empty;
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (value == 1)

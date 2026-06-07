@@ -115,6 +115,18 @@
     {
       "buffType": 32,
       "iconName": "redStar"
+    },
+    {
+      "buffType": 38,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 39,
+      "iconName": "yellowStar"
+    },
+    {
+      "buffType": 40,
+      "iconName": "yellowStar"
     }
   ]
 }

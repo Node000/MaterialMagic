@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RunMapNodeModel
@@ -8,4 +9,52 @@ public class RunMapNodeModel
     public bool fixedSingleChoice;
     public bool leftHidden;
     public bool rightHidden;
+}
+
+public class RunMapCellModel
+{
+    public int x;
+    public int y;
+    public LevelData level;
+    public bool isBoss;
+
+    public LevelType DisplayType => isBoss ? LevelType.Elite : level != null ? level.levelType : LevelType.Battle;
+}
+
+public class RunMapGridModel
+{
+    public int width;
+    public int height;
+    public int playerX;
+    public int playerY;
+    public int currentActionPower;
+    public bool bossMapActive;
+    public bool pendingBossMapTransform;
+    public readonly List<RunMapCellModel> cells = new List<RunMapCellModel>();
+
+    public int CellCount => cells.Count;
+
+    public RunMapCellModel GetCell(int x, int y)
+    {
+        for (int i = 0; i < cells.Count; i++)
+        {
+            RunMapCellModel cell = cells[i];
+            if (cell != null && cell.x == x && cell.y == y)
+                return cell;
+        }
+        return null;
+    }
+
+    public RunMapCellModel GetCurrentCell()
+    {
+        return GetCell(playerX, playerY);
+    }
+
+    public void WrapPosition(ref int x, ref int y)
+    {
+        int safeWidth = Mathf.Max(1, width);
+        int safeHeight = Mathf.Max(1, height);
+        x = (x % safeWidth + safeWidth) % safeWidth;
+        y = (y % safeHeight + safeHeight) % safeHeight;
+    }
 }

@@ -239,6 +239,62 @@
     {
       "key": "buff.materialoverplaydebuff.desc",
       "text": "玩家打出超过4张素材后，每多打出1张获得1层随机负面状态。"
+    },
+    {
+      "key": "buff.kindling_next_draw.name",
+      "text": "下回合燃薪"
+    },
+    {
+      "key": "buff.kindling_next_draw.desc",
+      "text": "下回合抽到的素材牌获得燃薪。"
+    },
+    {
+      "key": "buff.draw_on_enemy_attack.name",
+      "text": "反击抽牌"
+    },
+    {
+      "key": "buff.draw_on_enemy_attack.desc",
+      "text": "本回合每被敌方攻击1次，下回合额外抽{0}张牌。"
+    },
+    {
+      "key": "buff.burning_on_enemy_attack.name",
+      "text": "反击燃烧"
+    },
+    {
+      "key": "buff.burning_on_enemy_attack.desc",
+      "text": "本回合敌方每次攻击时，攻击者获得{0}层燃烧。"
+    },
+    {
+      "key": "buff.extra_draw_on_enemy_damage.name",
+      "text": "伤害抽牌"
+    },
+    {
+      "key": "buff.extra_draw_on_enemy_damage.desc",
+      "text": "本回合每对敌方造成一次生命伤害，下回合额外抽{0}张牌。"
+    },
+    {
+      "key": "buff.shield_reflect_boost.name",
+      "text": "反击强化"
+    },
+    {
+      "key": "buff.shield_reflect_boost.desc",
+      "text": "本回合道具的反击效果额外触发{0}次。"
+    },
+    {
+      "key": "buff.magic_attack_all.name",
+      "text": "全体攻击"
+    },
+    {
+      "key": "buff.magic_attack_all.desc",
+      "text": "本回合友方道具攻击对象变为全体。"
+    },
+    {
+      "key": "buff.next_magic_repeat.name",
+      "text": "下个道具重复"
+    },
+    {
+      "key": "buff.next_magic_repeat.desc",
+      "text": "下一个道具额外触发{0}次。"
     }
   ]
 }

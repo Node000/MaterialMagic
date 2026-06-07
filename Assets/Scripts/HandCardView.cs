@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -24,6 +25,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private bool hovered;
     private float baseZRotation;
     private MaterialModel card;
+    private Action<HandCardView, PointerEventData> clickOverride;
 
     public MaterialModel Card => card;
     public bool Selected => selected;
@@ -96,8 +98,19 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         PlayFeedback(false);
     }
 
+    public void SetClickOverride(Action<HandCardView, PointerEventData> handler)
+    {
+        clickOverride = handler;
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (clickOverride != null)
+        {
+            clickOverride(this, eventData);
+            return;
+        }
+
         if (owner == null)
             return;
 

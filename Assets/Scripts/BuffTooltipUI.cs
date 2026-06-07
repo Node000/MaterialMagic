@@ -38,7 +38,10 @@ public class BuffTooltipUI : MonoBehaviour
         BuffDisplayData display = BuffDisplayDatabase.Get(buff.buffType);
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = display.Name + (buff.stack > 0 ? "  " + buff.stack : string.Empty);
+        {
+            string stackText = buff.GetTooltipStackText();
+            title.text = display.Name + (!string.IsNullOrEmpty(stackText) ? "  " + stackText : string.Empty);
+        }
 
         TMP_Text description = UIManager.FindChildComponent<TMP_Text>(transform, "Description");
         if (description != null)

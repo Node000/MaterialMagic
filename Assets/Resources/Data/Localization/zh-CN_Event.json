@@ -454,7 +454,7 @@
     },
     {
       "key": "event.traffic_growth.start.video.1",
-      "text": "主角把闯关视频发布到平台上，几分钟后播放量像霓虹浪潮一样冲上来。弹幕和点赞把屏幕挤满，他忽然觉得下一段旅程可以更快一点。"
+      "text": "把闯关视频发布到平台上，几分钟后播放量像霓虹浪潮一样冲上来。弹幕和点赞把屏幕挤满，你忽然觉得下一段旅程可以更快一点。"
     },
     {
       "key": "event.traffic_growth.option.cheer",
@@ -463,6 +463,94 @@
     {
       "key": "event.traffic_growth.growth.video.1",
       "text": "平台的流量推着你向前。之后每回合抽牌数+1。"
+    },
+    {
+      "key": "level.arrow_remove.title",
+      "text": "删除"
+    },
+    {
+      "key": "level.arrow_add.title",
+      "text": "新增"
+    },
+    {
+      "key": "event.arrow_recycle_station.title",
+      "text": "箭头回收站"
+    },
+    {
+      "key": "event.arrow_recycle_station.start.1",
+      "text": "一台旧终端嵌在墙里，屏幕上跳着“回收多余箭头”。"
+    },
+    {
+      "key": "event.arrow_recycle_station.start.2",
+      "text": "它会读取你打出的箭头序列，并启动对应强度的回收程序。"
+    },
+    {
+      "key": "event.arrow_recycle_station.option.single",
+      "text": "轻量回收"
+    },
+    {
+      "key": "event.arrow_recycle_station.option.double",
+      "text": "深度回收"
+    },
+    {
+      "key": "event.arrow_recycle_station.single.1",
+      "text": "终端把一个箭头压缩成发烫的数据碎片。你的牌组变得更轻了一点。"
+    },
+    {
+      "key": "event.arrow_recycle_station.double.1",
+      "text": "终端连续轧下两次，两个箭头被压成细小的光屑。你的牌组明显轻了一截。"
+    },
+    {
+      "key": "event.arrow_recycle_station.leave.1",
+      "text": "你关掉回收程序，终端屏幕慢慢暗了下去。"
+    },
+    {
+      "key": "event.arrow_claw_machine.title",
+      "text": "箭头娃娃机"
+    },
+    {
+      "key": "event.arrow_claw_machine.start.1",
+      "text": "一台娃娃机亮着霓虹灯，玻璃柜里堆满了上下左右的箭头。"
+    },
+    {
+      "key": "event.arrow_claw_machine.start.2",
+      "text": "机械爪悬在半空，只会响应你打出的同方向箭头。"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.up",
+      "text": "抓上箭头"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.down",
+      "text": "抓下箭头"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.left",
+      "text": "抓左箭头"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.right",
+      "text": "抓右箭头"
+    },
+    {
+      "key": "event.arrow_claw_machine.up.1",
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的上箭头。新的箭头落入你的牌组。"
+    },
+    {
+      "key": "event.arrow_claw_machine.down.1",
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的下箭头。新的箭头落入你的牌组。"
+    },
+    {
+      "key": "event.arrow_claw_machine.left.1",
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的左箭头。新的箭头落入你的牌组。"
+    },
+    {
+      "key": "event.arrow_claw_machine.right.1",
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的右箭头。新的箭头落入你的牌组。"
+    },
+    {
+      "key": "event.arrow_claw_machine.leave.1",
+      "text": "你松开操纵杆，娃娃机里的箭头继续闪着霓虹光。"
     }
   ]
 }

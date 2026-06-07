@@ -542,6 +542,74 @@
         4
       ],
       "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 33,
+      "id": "magic_tumbler",
+      "script": "TumblerMagicModel",
+      "nameKey": "magic.tumbler.name",
+      "descriptionKey": "magic.tumbler.desc",
+      "iconName": "不倒翁",
+      "element": 4,
+      "tagIds": [
+        "shield_reflect"
+      ],
+      "recipe": [
+        2,
+        4,
+        1
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 34,
+      "id": "magic_tangram",
+      "script": "TangramMagicModel",
+      "nameKey": "magic.tangram.name",
+      "descriptionKey": "magic.tangram.desc",
+      "iconName": "七巧板",
+      "element": 3,
+      "tagIds": [
+        "temporary"
+      ],
+      "recipe": [
+        3,
+        1,
+        2
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 35,
+      "id": "magic_glue",
+      "script": "GlueMagicModel",
+      "nameKey": "magic.glue.name",
+      "descriptionKey": "magic.glue.desc",
+      "iconName": "胶水",
+      "element": 2,
+      "tagIds": [],
+      "recipe": [
+        2,
+        3,
+        1
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 36,
+      "id": "magic_spring",
+      "script": "SpringMagicModel",
+      "nameKey": "magic.spring.name",
+      "descriptionKey": "magic.spring.desc",
+      "iconName": "弹簧",
+      "element": 4,
+      "tagIds": [],
+      "recipe": [
+        4,
+        2,
+        3
+      ],
+      "playPlayerCastAnimation": false
     }
   ]
 }

@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     private static TMP_FontAsset cachedDefaultTMPFont;
 
     [SerializeField] private MapPanelUI mapPanelUI;
+    [SerializeField] private ChapterGridPanelUI chapterGridPanelUI;
     [SerializeField] private LevelSelectPanelUI levelSelectPanelUI;
     [SerializeField] private SettingsPanelUI settingsPanelUI;
     [SerializeField] private MaterialListPanelUI materialListPanelUI;
@@ -31,6 +32,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TutorialManagerUI tutorialManagerUI;
 
     public MapPanelUI MapPanel => mapPanelUI;
+    public ChapterGridPanelUI ChapterGridPanel => chapterGridPanelUI;
     public LevelSelectPanelUI LevelSelectPanel => levelSelectPanelUI;
     public SettingsPanelUI SettingsPanel => settingsPanelUI;
     public MaterialListPanelUI MaterialListPanel => materialListPanelUI;
@@ -54,6 +56,7 @@ public class UIManager : MonoBehaviour
     public void Initialize(HandSystemUI owner, Transform root)
     {
         mapPanelUI = GetOrAddPanel<MapPanelUI>(root, "MapPanel", mapPanelUI);
+        chapterGridPanelUI = GetOrAddPanel<ChapterGridPanelUI>(root, "MapPanel", chapterGridPanelUI);
         levelSelectPanelUI = GetOrAddPanel<LevelSelectPanelUI>(root, "LevelSelectPanel", levelSelectPanelUI);
         settingsPanelUI = GetOrAddPanel<SettingsPanelUI>(root, "SettingsPanel", settingsPanelUI);
         materialListPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "MaterialListPanel", materialListPanelUI);
@@ -75,6 +78,7 @@ public class UIManager : MonoBehaviour
         tutorialManagerUI = GetOrAddPanelInChildren<TutorialManagerUI>(root, "TutorialRoot", tutorialManagerUI);
 
         mapPanelUI?.Initialize(owner);
+        chapterGridPanelUI?.Initialize(owner);
         levelSelectPanelUI?.Initialize(owner);
         settingsPanelUI?.Initialize(owner);
         materialListPanelUI?.Initialize(owner);
@@ -156,6 +160,15 @@ public class UIManager : MonoBehaviour
 
     public void ToggleMapPanel()
     {
+        RunManager currentRun = RunManager.Current;
+        if (currentRun != null && currentRun.State == RunFlowState.MapSelection)
+            return;
+
+        if (chapterGridPanelUI != null)
+        {
+            chapterGridPanelUI.Toggle(currentRun != null ? currentRun.MapGrid : null);
+            return;
+        }
         mapPanelUI?.Toggle();
     }
 
@@ -183,6 +196,16 @@ public class UIManager : MonoBehaviour
     public void ShowLevelSelect(IReadOnlyList<RunMapNodeModel> nodes, int currentNodeIndex)
     {
         levelSelectPanelUI?.Show(nodes, currentNodeIndex);
+    }
+
+    public void ShowChapterGridPanel(RunMapGridModel grid)
+    {
+        chapterGridPanelUI?.Show(grid, true);
+    }
+
+    public void HideChapterGridPanel()
+    {
+        chapterGridPanelUI?.Hide();
     }
 
     public void HideLevelSelect()
@@ -327,6 +350,8 @@ public class UIManager : MonoBehaviour
         {
             LevelType.Shop => Resources.Load<Sprite>("Images/UI/shop"),
             LevelType.Event => Resources.Load<Sprite>("Images/UI/Event"),
+            LevelType.RemoveMaterial => Resources.Load<Sprite>("Images/UI/RemoveMaterial"),
+            LevelType.AddMaterial => Resources.Load<Sprite>("Images/UI/AddMaterial"),
             LevelType.Rest => Resources.Load<Sprite>("Images/UI/Rest"),
             LevelType.Reward => Resources.Load<Sprite>("Images/UI/Reward"),
             LevelType.Elite => Resources.Load<Sprite>("Images/UI/hard"),
@@ -340,6 +365,8 @@ public class UIManager : MonoBehaviour
         {
             LevelType.Shop => "商店",
             LevelType.Event => "事件",
+            LevelType.RemoveMaterial => "删除",
+            LevelType.AddMaterial => "新增",
             LevelType.Rest => "休息",
             LevelType.Reward => "奖励",
             LevelType.Elite => "精英",

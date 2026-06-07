@@ -22,7 +22,7 @@
     },
     {
       "key": "magic.flame_barrier.desc",
-      "text": "本回合敌方每次攻击时，获得3层燃烧"
+      "text": "下回合抽到的素材牌获得【燃薪】（【燃薪】：以此素材触发道具时，使随机一名敌方获得1层【燃烧】）"
     },
     {
       "key": "magic.magma.name",
@@ -30,7 +30,7 @@
     },
     {
       "key": "magic.magma.desc",
-      "text": "使全体敌方获得3层燃烧"
+      "text": "使敌方获得2层【燃烧】，下回合将一张带有【临时】的右加入手牌"
     },
     {
       "key": "magic.molten.name",
@@ -38,7 +38,7 @@
     },
     {
       "key": "magic.molten.desc",
-      "text": "对敌方造成9点伤害，每1层燃烧使伤害+1"
+      "text": "对敌方造成5点伤害，敌方每有一层【燃烧】，使本伤害+1"
     },
     {
       "key": "magic.explosion.name",
@@ -46,7 +46,7 @@
     },
     {
       "key": "magic.explosion.desc",
-      "text": "使敌方获得2层燃烧，立刻触发敌人的燃烧"
+      "text": "立刻触发敌人的【燃烧】"
     },
     {
       "key": "magic.burning_hand.name",
@@ -62,7 +62,7 @@
     },
     {
       "key": "magic.flame_demon.desc",
-      "text": "移除手牌区最靠左侧的素材，下回合将1张带有临时的火素材加入手牌"
+      "text": "下回合将1张带有【临时】的上加入手牌"
     },
     {
       "key": "magic.airflow.name",
@@ -70,7 +70,7 @@
     },
     {
       "key": "magic.airflow.desc",
-      "text": "对敌方造成3点伤害"
+      "text": "对敌方造成2点伤害"
     },
     {
       "key": "magic.wind_blade.name",
@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "对敌方造成3点伤害，本回合内每触发一次法术，使本伤害+1"
+      "text": "对敌方造成2点伤害，本回合内每触发一次法术，使本伤害+1"
     },
     {
       "key": "magic.burning_wind.name",
@@ -118,7 +118,7 @@
     },
     {
       "key": "magic.sandstorm.desc",
-      "text": "获得3点护盾，使全体敌方获得1层电弧"
+      "text": "【反击】本回合每被敌方攻击1次，下回合额外抽1张牌"
     },
     {
       "key": "magic.gale.name",
@@ -126,7 +126,7 @@
     },
     {
       "key": "magic.gale.desc",
-      "text": "立即抽取2张素材并将其置于出牌区末尾，下回合额外抽取2张牌"
+      "text": "下回合额外抽取3张牌"
     },
     {
       "key": "magic.ice_pick.name",
@@ -134,7 +134,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "使敌方获得3层虚弱"
+      "text": "使敌方获得两层【易损】，对敌方造成两次1点伤害"
     },
     {
       "key": "magic.swamp.name",
@@ -142,7 +142,7 @@
     },
     {
       "key": "magic.swamp.desc",
-      "text": "对敌方施加2层迟缓和2层虚弱，下回合额外获得1次换牌机会"
+      "text": "下回合额外获得1次换牌机会"
     },
     {
       "key": "magic.poison_fog.name",
@@ -150,7 +150,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "对敌方施加2层易损。"
+      "text": "本回合每对敌方造成一次伤害，下回合额外抽一张牌"
     },
     {
       "key": "magic.boiling_rain.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "对敌方施加1层易损"
+      "text": "对敌方施加1层【虚弱】"
     },
     {
       "key": "magic.stone_wall.name",
@@ -198,7 +198,7 @@
     },
     {
       "key": "magic.stone_wall.desc",
-      "text": "获得4点护盾"
+      "text": "获得2点护盾"
     },
     {
       "key": "magic.rockfall.name",
@@ -206,7 +206,7 @@
     },
     {
       "key": "magic.rockfall.desc",
-      "text": "获得6点护盾，下回合开始时，所有手牌获得坚固"
+      "text": "获得2点护盾，下回合开始时，使所有手牌获得【坚固】（【坚固】：以此素材牌触发法术时，获得1点护盾。回合结束时此效果消失）"
     },
     {
       "key": "magic.earth_fire.name",
@@ -214,7 +214,7 @@
     },
     {
       "key": "magic.earth_fire.desc",
-      "text": "获得5点护盾，本回合敌方每次攻击时，获得2层燃烧"
+      "text": "【反击】本回合敌方每次攻击时，获得3层【燃烧】"
     },
     {
       "key": "magic.petrify.name",
@@ -222,7 +222,7 @@
     },
     {
       "key": "magic.petrify.desc",
-      "text": "对敌方造成4点伤害，并施加1层虚弱和1层迟缓"
+      "text": "对敌方施加2层【迟缓】和2层【虚弱】"
     },
     {
       "key": "magic.floating.name",
@@ -230,7 +230,7 @@
     },
     {
       "key": "magic.floating.desc",
-      "text": "获得6点护盾，保留你本回合的手牌"
+      "text": "获得3点护盾，保留你本回合的手牌"
     },
     {
       "key": "magic.thorn_bush.name",
@@ -238,7 +238,7 @@
     },
     {
       "key": "magic.thorn_bush.desc",
-      "text": "获得10点护盾，本回合被敌方攻击时，反弹被护盾格挡的伤害"
+      "text": "获得5点护盾，本回合被敌方攻击时，反弹被护盾格挡的伤害"
     },
     {
       "key": "magic.refine.name",
@@ -246,7 +246,7 @@
     },
     {
       "key": "magic.refine.desc",
-      "text": "获得8点护盾，下回合额外抽取1张素材"
+      "text": "移除手牌区的素材牌"
     },
     {
       "key": "magic.earth_hand.name",
@@ -347,6 +347,38 @@
     {
       "key": "level.shop_001.title",
       "text": "商店"
+    },
+    {
+      "key": "magic.tumbler.name",
+      "text": "不倒翁"
+    },
+    {
+      "key": "magic.tumbler.desc",
+      "text": "本回合道具的【反击】效果会额外触发一次"
+    },
+    {
+      "key": "magic.tangram.name",
+      "text": "七巧板"
+    },
+    {
+      "key": "magic.tangram.desc",
+      "text": "下回合将1张【临时】左和1张【临时】下加入手牌"
+    },
+    {
+      "key": "magic.glue.name",
+      "text": "胶水"
+    },
+    {
+      "key": "magic.glue.desc",
+      "text": "本回合内，友方道具攻击对象变为全体"
+    },
+    {
+      "key": "magic.spring.name",
+      "text": "弹簧"
+    },
+    {
+      "key": "magic.spring.desc",
+      "text": "下一个道具额外触发2次"
     }
   ]
 }

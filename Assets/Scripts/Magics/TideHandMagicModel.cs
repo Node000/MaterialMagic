@@ -6,8 +6,7 @@ public class TideHandMagicModel : MagicModel
 
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        for (int i = 0; i < 7; i++)
-            DamageAll(playerState, battleManager, 1, result);
+        DamageAllTimes(playerState, battleManager, 1, 7, result);
         AddAllEnemyDebuffStacks(battleManager, 2);
         playerState.AddBuff(BuffEnum.DebuffPower, 1);
     }

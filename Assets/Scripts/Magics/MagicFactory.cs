@@ -39,6 +39,10 @@ public static class MagicFactory
             case nameof(ThornBushMagicModel): return new ThornBushMagicModel(data, slotIndex);
             case nameof(RefineMagicModel): return new RefineMagicModel(data, slotIndex);
             case nameof(EarthHandMagicModel): return new EarthHandMagicModel(data, slotIndex);
+            case nameof(TumblerMagicModel): return new TumblerMagicModel(data, slotIndex);
+            case nameof(TangramMagicModel): return new TangramMagicModel(data, slotIndex);
+            case nameof(GlueMagicModel): return new GlueMagicModel(data, slotIndex);
+            case nameof(SpringMagicModel): return new SpringMagicModel(data, slotIndex);
             default: return new MagicModel(data, slotIndex);
         }
     }

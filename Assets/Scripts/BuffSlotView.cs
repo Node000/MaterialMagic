@@ -137,7 +137,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         }
 
         if (stackText != null)
-            stackText.text = buff.stack > 1 ? buff.stack.ToString() : string.Empty;
+            stackText.text = buff.GetSlotStackText();
 
         if (!wasBound || previousType != buff.buffType)
             PlayAddMotion();

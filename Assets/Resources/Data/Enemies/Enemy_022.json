@@ -4,7 +4,7 @@
   "nameKey": "enemy.022.name",
   "maxHealth": 15,
   "baseAttack": 1,
-  "imageScale": 0.5,
+  "imageScale": 0.6,
   "healthBarWidth": 150.0,
   "initialBuffs": [],
   "phases": [

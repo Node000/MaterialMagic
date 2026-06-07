@@ -26,11 +26,11 @@
     },
     {
       "key": "modifier.kindling.name",
-      "text": "助燃"
+      "text": "燃薪"
     },
     {
       "key": "modifier.kindling.desc",
-      "text": "以此素材触发道具时，对随机敌人施加1层燃烧。"
+      "text": "以此素材触发道具时，使随机一名敌方获得1层燃烧。"
     },
     {
       "key": "modifier.flow.name",

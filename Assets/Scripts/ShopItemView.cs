@@ -104,7 +104,7 @@ public class ShopItemView : MonoBehaviour
                     rect.anchorMin = new Vector2(0.5f, 0.5f);
                     rect.anchorMax = new Vector2(0.5f, 0.5f);
                     rect.pivot = new Vector2(0.5f, 0.5f);
-                    rect.anchoredPosition = Vector2.zero;
+                    rect.anchoredPosition = new Vector2(0f, -30f);
                     rect.sizeDelta = new Vector2(82f, 118f);
                     materialView = rect.GetComponent<MaterialCardView>();
                     materialView?.Bind(new MaterialModel("shop_preview_" + offer.material, offer.material));
@@ -155,11 +155,28 @@ public class ShopItemView : MonoBehaviour
             case ShopItemKind.Magic:
                 return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "法术";
             case ShopItemKind.Material:
-                return LocalizationKeys.GetMaterialName(offer.material) + "素材";
+                return GetMaterialArrowTitle(offer.material);
             case ShopItemKind.RemoveMaterial:
                 return "删素材";
             default:
                 return string.Empty;
+        }
+    }
+
+    private static string GetMaterialArrowTitle(MaterialEnum material)
+    {
+        switch (material)
+        {
+            case MaterialEnum.Fire:
+                return "上箭头";
+            case MaterialEnum.Water:
+                return "下箭头";
+            case MaterialEnum.Wind:
+                return "左箭头";
+            case MaterialEnum.Earth:
+                return "右箭头";
+            default:
+                return LocalizationKeys.GetMaterialName(material);
         }
     }
 

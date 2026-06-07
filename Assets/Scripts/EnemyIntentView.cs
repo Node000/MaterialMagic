@@ -61,14 +61,17 @@ public class EnemyIntentView : MonoBehaviour
     public void Bind(EnemyModel enemy, EnemyIntentData intent, PlayerState playerState, int phaseIndex, int phaseCount)
     {
         int intentValue = 0;
+        string intentDisplayValue = null;
         if (enemy != null && intent != null)
         {
             if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
                 intentValue = enemy.GetIntentAttackValue(intent, playerState);
             else if (intent.actionType == EnemyActionType.GainShield)
                 intentValue = enemy.GetIntentShieldValue(intent);
+            else if (intent.actionType == EnemyActionType.Special)
+                intentDisplayValue = enemy.GetSpecialIntentDisplayValue(intent, playerState);
         }
-        Bind(intent, phaseIndex, phaseCount, intentValue);
+        Bind(intent, phaseIndex, phaseCount, intentValue, intentDisplayValue);
     }
 
     public void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount)
@@ -77,6 +80,11 @@ public class EnemyIntentView : MonoBehaviour
     }
 
     private void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount, int attackValue)
+    {
+        Bind(intent, phaseIndex, phaseCount, attackValue, null);
+    }
+
+    private void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount, int attackValue, string displayValueOverride)
     {
         CacheReferences();
         phase = phaseCount > 0 ? phaseIndex * Mathf.PI * 2f / phaseCount : 0f;
@@ -97,7 +105,7 @@ public class EnemyIntentView : MonoBehaviour
             Color textColor = valueText.color;
             textColor.a = 1f;
             valueText.color = textColor;
-            string displayValue = GetIntentDisplayValue(intent, attackValue);
+            string displayValue = GetIntentDisplayValue(intent, attackValue, displayValueOverride);
             valueText.text = displayValue;
             valueText.raycastTarget = false;
             valueText.canvasRenderer.SetAlpha(1f);
@@ -279,11 +287,18 @@ public class EnemyIntentView : MonoBehaviour
         iconRect.anchoredPosition = new Vector2(horizontalPadding + iconWidth * 0.5f, iconRect.anchoredPosition.y);
     }
 
-    private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue)
+    private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue, string displayValueOverride = null)
     {
+        if (!string.IsNullOrEmpty(displayValueOverride))
+            return displayValueOverride;
         if (intent == null)
             return string.Empty;
-        if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll || intent.actionType == EnemyActionType.GainShield)
+        if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
+        {
+            int times = intent.times > 0 ? intent.times : 1;
+            return times > 1 ? attackValue + "x" + times : attackValue.ToString();
+        }
+        if (intent.actionType == EnemyActionType.GainShield)
             return attackValue.ToString();
         if (intent.actionType == EnemyActionType.Summon)
             return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;

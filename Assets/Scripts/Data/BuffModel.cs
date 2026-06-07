@@ -87,6 +87,16 @@ public class BuffModel
         stack += amount;
     }
 
+    public virtual string GetSlotStackText()
+    {
+        return stack > 1 ? stack.ToString() : string.Empty;
+    }
+
+    public virtual string GetTooltipStackText()
+    {
+        return stack > 0 ? stack.ToString() : string.Empty;
+    }
+
     public void ConsumeStack(int amount)
     {
         stack -= amount;
@@ -153,6 +163,20 @@ public class BuffModel
                 return new MaterialOverplayDebuffBuffModel(stack);
             case BuffEnum.PreparedShield:
                 return new PreparedShieldBuffModel(stack);
+            case BuffEnum.KindlingNextDraw:
+                return new KindlingNextDrawBuffModel(stack);
+            case BuffEnum.DrawOnEnemyAttack:
+                return new DrawOnEnemyAttackBuffModel(stack);
+            case BuffEnum.BurningOnEnemyAttack:
+                return new BurningOnEnemyAttackBuffModel(stack);
+            case BuffEnum.ExtraDrawOnEnemyDamage:
+                return new ExtraDrawOnEnemyDamageBuffModel(stack);
+            case BuffEnum.ShieldReflectBoost:
+                return new ShieldReflectBoostBuffModel(stack);
+            case BuffEnum.MagicAttackAll:
+                return new MagicAttackAllBuffModel(stack);
+            case BuffEnum.NextMagicRepeat:
+                return new NextMagicRepeatBuffModel(stack);
             case BuffEnum.SpellPower:
                 return new SpellPowerBuffModel(stack);
             case BuffEnum.DefensePower:
@@ -201,6 +225,13 @@ public class BuffModel
             case BuffEnum.DirectionExtraDraw:
             case BuffEnum.DirectionShieldBonus:
             case BuffEnum.PreparedShield:
+            case BuffEnum.KindlingNextDraw:
+            case BuffEnum.DrawOnEnemyAttack:
+            case BuffEnum.BurningOnEnemyAttack:
+            case BuffEnum.ExtraDrawOnEnemyDamage:
+            case BuffEnum.ShieldReflectBoost:
+            case BuffEnum.MagicAttackAll:
+            case BuffEnum.NextMagicRepeat:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:
