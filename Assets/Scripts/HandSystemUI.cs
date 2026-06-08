@@ -7,6 +7,7 @@ using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -287,6 +288,16 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private UIManager uiManager;
 
+	[Header("手机端输入")]
+    [SerializeField]
+    [Range(0f, 1f)]
+    private float mobilePlayInputScreenHeightThreshold = 0.5f;
+
+#if UNITY_EDITOR
+    [SerializeField]
+    private bool simulateMobileUpperHalfPlayInputInEditor;
+#endif
+
 	private readonly List<HandCardView> cardViews = new List<HandCardView>();
 
 	private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
@@ -302,6 +313,12 @@ public class HandSystemUI : MonoBehaviour
 	private readonly List<EnemyModel> enemyModels = new List<EnemyModel>();
 
 	private readonly List<EnemyViewState> enemyViewStates = new List<EnemyViewState>();
+
+    private readonly List<RaycastResult> playInputRaycastResults = new List<RaycastResult>(8);
+
+    private PointerEventData playInputPointerEventData;
+
+    private EventSystem playInputEventSystem;
 
 	private BattleManager battleManager;
 
@@ -2066,7 +2083,7 @@ public class HandSystemUI : MonoBehaviour
 			ToggleSettingsPanel();
 		}
 
-		if (Input.GetMouseButtonDown(1))
+		if (IsPlaySelectedCardsInputDown())
 		{
 			PlaySelectedCardsByInput();
 		}
@@ -2310,6 +2327,75 @@ public class HandSystemUI : MonoBehaviour
 			PlaySelectedCards();
 		}
 	}
+
+    private bool IsPlaySelectedCardsInputDown()
+    {
+        if (Input.GetMouseButtonDown(1))
+            return true;
+
+        if (!IsMobileUpperHalfPlayInput(out Vector2 screenPosition))
+            return false;
+
+        return !IsPointerOverClickHandler(screenPosition);
+    }
+
+    private bool IsMobileUpperHalfPlayInput(out Vector2 screenPosition)
+    {
+        screenPosition = default;
+
+#if UNITY_ANDROID || UNITY_IOS
+        if (Input.touchCount <= 0)
+            return false;
+
+        Touch touch = Input.GetTouch(0);
+        if (touch.phase != TouchPhase.Began)
+            return false;
+
+        screenPosition = touch.position;
+        return IsAboveMobilePlayInputThreshold(screenPosition);
+#elif UNITY_EDITOR
+        if (!simulateMobileUpperHalfPlayInputInEditor || !Input.GetMouseButtonDown(0))
+            return false;
+
+        screenPosition = Input.mousePosition;
+        return IsAboveMobilePlayInputThreshold(screenPosition);
+#else
+        return false;
+#endif
+    }
+
+    private bool IsAboveMobilePlayInputThreshold(Vector2 screenPosition)
+    {
+        return screenPosition.y > Screen.height * Mathf.Clamp01(mobilePlayInputScreenHeightThreshold);
+    }
+
+    private bool IsPointerOverClickHandler(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return false;
+
+        if (playInputPointerEventData == null || playInputEventSystem != eventSystem)
+        {
+            playInputEventSystem = eventSystem;
+            playInputPointerEventData = new PointerEventData(eventSystem);
+        }
+
+        playInputPointerEventData.Reset();
+        playInputPointerEventData.position = screenPosition;
+        playInputPointerEventData.button = PointerEventData.InputButton.Left;
+        playInputRaycastResults.Clear();
+        eventSystem.RaycastAll(playInputPointerEventData, playInputRaycastResults);
+
+        for (int i = 0; i < playInputRaycastResults.Count; i++)
+        {
+            GameObject hitObject = playInputRaycastResults[i].gameObject;
+            if (hitObject != null && ExecuteEvents.GetEventHandler<IPointerClickHandler>(hitObject) != null)
+                return true;
+        }
+
+        return false;
+    }
 
 	private void PlaySelectedCards()
 	{

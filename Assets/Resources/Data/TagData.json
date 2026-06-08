@@ -71,7 +71,54 @@
       "descriptionKey": "tag.defense_power.desc"
     },
     {
-      "id": "burning_deepen"
+      "id": "kindling",
+      "nameKey": "tag.kindling.name",
+      "descriptionKey": "tag.kindling.desc"
+    },
+    {
+      "id": "repeat_spell",
+      "nameKey": "tag.repeat_spell.name",
+      "descriptionKey": "tag.repeat_spell.desc"
+    },
+    {
+      "id": "draw_on_enemy_attack",
+      "nameKey": "tag.draw_on_enemy_attack.name",
+      "descriptionKey": "tag.draw_on_enemy_attack.desc"
+    },
+    {
+      "id": "burning_on_enemy_attack",
+      "nameKey": "tag.burning_on_enemy_attack.name",
+      "descriptionKey": "tag.burning_on_enemy_attack.desc"
+    },
+    {
+      "id": "shield_reflect_boost",
+      "nameKey": "tag.shield_reflect_boost.name",
+      "descriptionKey": "tag.shield_reflect_boost.desc"
+    },
+    {
+      "id": "magic_attack_all",
+      "nameKey": "tag.magic_attack_all.name",
+      "descriptionKey": "tag.magic_attack_all.desc"
+    },
+    {
+      "id": "next_magic_repeat",
+      "nameKey": "tag.next_magic_repeat.name",
+      "descriptionKey": "tag.next_magic_repeat.desc"
+    },
+    {
+      "id": "keep_hand",
+      "nameKey": "tag.keep_hand.name",
+      "descriptionKey": "tag.keep_hand.desc"
+    },
+    {
+      "id": "remove_hand",
+      "nameKey": "tag.remove_hand.name",
+      "descriptionKey": "tag.remove_hand.desc"
+    },
+    {
+      "id": "debuff_power",
+      "nameKey": "tag.debuff_power.name",
+      "descriptionKey": "tag.debuff_power.desc"
     }
   ]
 }

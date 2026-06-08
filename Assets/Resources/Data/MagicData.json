@@ -42,7 +42,8 @@
       "iconName": "7",
       "element": 1,
       "tagIds": [
-        "burning"
+        "burning",
+        "kindling"
       ],
       "recipe": [
         1,
@@ -113,7 +114,7 @@
       "element": 1,
       "tagIds": [
         "burning",
-        "burning_deepen"
+        "spell_power"
       ],
       "recipe": [
         1,
@@ -177,7 +178,9 @@
       "descriptionKey": "magic.burning_wind.desc",
       "iconName": "15",
       "element": 2,
-      "tagIds": [],
+      "tagIds": [
+        "repeat_spell"
+      ],
       "recipe": [
         2,
         1,
@@ -248,7 +251,7 @@
       "iconName": "19",
       "element": 2,
       "tagIds": [
-        "extra_draw"
+        "draw_on_enemy_attack"
       ],
       "recipe": [
         2,
@@ -300,8 +303,6 @@
       "iconName": "22",
       "element": 3,
       "tagIds": [
-        "slow",
-        "weak",
         "extra_refresh"
       ],
       "recipe": [
@@ -318,7 +319,9 @@
       "descriptionKey": "magic.poison_fog.desc",
       "iconName": "23",
       "element": 3,
-      "tagIds": [],
+      "tagIds": [
+        "extra_draw"
+      ],
       "recipe": [
         3,
         2
@@ -349,9 +352,9 @@
       "iconName": "25",
       "element": 3,
       "tagIds": [
-        "weak",
+        "vulnerable",
         "slow",
-        "vulnerable"
+        "weak"
       ],
       "recipe": [
         3,
@@ -386,7 +389,9 @@
       "descriptionKey": "magic.tide_hand.desc",
       "iconName": "27",
       "element": 3,
-      "tagIds": [],
+      "tagIds": [
+        "debuff_power"
+      ],
       "recipe": [
         3,
         3,
@@ -450,7 +455,10 @@
       "descriptionKey": "magic.earth_fire.desc",
       "iconName": "31",
       "element": 4,
-      "tagIds": [],
+      "tagIds": [
+        "burning_on_enemy_attack",
+        "burning"
+      ],
       "recipe": [
         4,
         1
@@ -483,7 +491,9 @@
       "descriptionKey": "magic.floating.desc",
       "iconName": "33",
       "element": 4,
-      "tagIds": [],
+      "tagIds": [
+        "keep_hand"
+      ],
       "recipe": [
         4,
         2
@@ -517,7 +527,7 @@
       "iconName": "35",
       "element": 4,
       "tagIds": [
-        "extra_draw"
+        "remove_hand"
       ],
       "recipe": [
         4,
@@ -552,7 +562,7 @@
       "iconName": "不倒翁",
       "element": 4,
       "tagIds": [
-        "shield_reflect"
+        "shield_reflect_boost"
       ],
       "recipe": [
         2,
@@ -587,7 +597,9 @@
       "descriptionKey": "magic.glue.desc",
       "iconName": "胶水",
       "element": 2,
-      "tagIds": [],
+      "tagIds": [
+        "magic_attack_all"
+      ],
       "recipe": [
         2,
         3,
@@ -603,7 +615,9 @@
       "descriptionKey": "magic.spring.desc",
       "iconName": "弹簧",
       "element": 4,
-      "tagIds": [],
+      "tagIds": [
+        "next_magic_repeat"
+      ],
       "recipe": [
         4,
         2,
