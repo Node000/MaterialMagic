@@ -45,6 +45,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     [SerializeField] private TMP_Text actionPowerText;
     [SerializeField] private RectTransform directionRoot;
     [SerializeField] private RectTransform directionCardPrefab;
+    [SerializeField] private RectTransform cellPrefab;
     [SerializeField] private float panelShowDuration = 0.24f;
     [SerializeField] private Ease panelShowEase = Ease.OutCubic;
     [SerializeField] private float panelHideDuration = 0.18f;
@@ -65,6 +66,12 @@ public class ChapterGridPanelUI : MonoBehaviour
     [SerializeField] private float directionCardLocalZ = -231.7424f;
     [SerializeField] private Color cellColor = new Color(0.08f, 0.1f, 0.16f, 0.92f);
     [SerializeField] private Color emptyCellColor = new Color(0.05f, 0.06f, 0.09f, 0.62f);
+    [SerializeField] private Color unavailableCellColor = new Color(0.02f, 0.025f, 0.035f, 0.32f);
+    [SerializeField] private Color levelIconColor = Color.white;
+    [SerializeField] private Color bossIconColor = Color.white;
+    [SerializeField] private Color labelColor = Color.white;
+    [SerializeField] private Color playerMarkerColor = Color.white;
+    [SerializeField] private Color fallbackDirectionCardColor = new Color(0.08f, 0.1f, 0.16f, 0.92f);
 
     private readonly List<CellView> cells = new List<CellView>();
     private readonly Dictionary<MaterialEnum, RectTransform> directionButtons = new Dictionary<MaterialEnum, RectTransform>();
@@ -212,7 +219,7 @@ public class ChapterGridPanelUI : MonoBehaviour
                 {
                     icon.gameObject.SetActive(true);
                     icon.sprite = Resources.Load<Sprite>("Images/UI/Boss");
-                    icon.color = Color.white;
+                    icon.color = bossIconColor;
                     if (label != null)
                         label.text = "Boss";
                 }));
@@ -233,7 +240,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (titleText != null)
             titleText.text = "地图";
         if (actionPowerText != null)
-            actionPowerText.text = currentGrid != null && currentGrid.bossMapActive ? "行动力：Boss" : $"行动力：{(currentGrid != null ? currentGrid.currentActionPower : 0)}";
+            actionPowerText.gameObject.SetActive(false);
     }
 
     private void HandleDirectionClicked(MaterialEnum material)
@@ -281,7 +288,12 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (titleText == null)
             titleText = FindOrCreateText("Title", new Vector2(0f, -34f), new Vector2(320f, 48f), 28, TextAlignmentOptions.Center);
         if (actionPowerText == null)
-            actionPowerText = FindOrCreateText("ActionPowerText", new Vector2(0f, -76f), new Vector2(260f, 36f), 22, TextAlignmentOptions.Center);
+        {
+            Transform existingActionPower = contentRoot != null ? contentRoot.Find("ActionPowerText") : transform.Find("ActionPowerText");
+            actionPowerText = existingActionPower != null ? existingActionPower.GetComponent<TMP_Text>() : null;
+        }
+        if (actionPowerText != null)
+            actionPowerText.gameObject.SetActive(false);
         if (gridRoot == null)
             gridRoot = FindOrCreateRect("GridRoot", new Vector2(0f, -278f), new Vector2(430f, 430f));
         EnsurePlayerMarkerRoot();
@@ -307,7 +319,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (image == null)
             image = playerMarker.gameObject.AddComponent<Image>();
         image.sprite = Resources.Load<Sprite>("Images/UI/PlayerSmall");
-        image.color = Color.white;
+        image.color = playerMarkerColor;
         image.preserveAspect = true;
         image.raycastTarget = false;
         playerMarker.SetAsLastSibling();
@@ -352,7 +364,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (image == null)
             image = marker.gameObject.AddComponent<Image>();
         image.sprite = Resources.Load<Sprite>("Images/UI/PlayerSmall");
-        image.color = Color.white;
+        image.color = playerMarkerColor;
         image.preserveAspect = true;
         image.raycastTarget = false;
         marker.SetAsLastSibling();
@@ -385,40 +397,35 @@ public class ChapterGridPanelUI : MonoBehaviour
 
     private CellView CreateCell(RunMapCellModel model, Vector2 anchoredPosition, float cellSize)
     {
-        RectTransform rect = new GameObject($"Cell_{model.x}_{model.y}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<RectTransform>();
+        RectTransform rect = cellPrefab != null
+            ? Instantiate(cellPrefab, gridRoot)
+            : new GameObject($"Cell_{model.x}_{model.y}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<RectTransform>();
+        rect.name = $"Cell_{model.x}_{model.y}";
         rect.SetParent(gridRoot, false);
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = anchoredPosition;
         rect.sizeDelta = new Vector2(cellSize, cellSize);
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+        rect.gameObject.SetActive(true);
 
         Image background = rect.GetComponent<Image>();
+        if (background == null)
+            background = rect.gameObject.AddComponent<Image>();
         background.raycastTarget = false;
 
-        Image icon = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-        icon.transform.SetParent(rect, false);
-        RectTransform iconRect = (RectTransform)icon.transform;
-        iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-        iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-        iconRect.pivot = new Vector2(0.5f, 0.5f);
-        iconRect.anchoredPosition = new Vector2(0f, 8f);
-        iconRect.sizeDelta = new Vector2(cellSize * 0.46f, cellSize * 0.46f);
+        Image icon = FindChildImage(rect, "Icon");
+        if (icon == null)
+            icon = CreateFallbackIcon(rect, cellSize);
         icon.raycastTarget = false;
         icon.preserveAspect = true;
 
-        TMP_Text label = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
-        label.transform.SetParent(rect, false);
-        RectTransform labelRect = (RectTransform)label.transform;
-        labelRect.anchorMin = new Vector2(0f, 0f);
-        labelRect.anchorMax = new Vector2(1f, 0f);
-        labelRect.pivot = new Vector2(0.5f, 0f);
-        labelRect.anchoredPosition = new Vector2(0f, 6f);
-        labelRect.sizeDelta = new Vector2(0f, 24f);
+        TMP_Text label = FindChildText(rect, "Label");
+        if (label == null)
+            label = CreateFallbackLabel(rect, cellSize);
         label.font = UIManager.GetDefaultTMPFont();
-        label.fontSize = Mathf.Clamp(cellSize * 0.18f, 13f, 18f);
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
         label.raycastTarget = false;
 
         CellView cell = new CellView { Model = model, Rect = rect, Background = background, Icon = icon, Label = label };
@@ -426,15 +433,56 @@ public class ChapterGridPanelUI : MonoBehaviour
         return cell;
     }
 
+    private Image FindChildImage(RectTransform parent, string childName)
+    {
+        Transform child = parent.Find(childName);
+        return child != null ? child.GetComponent<Image>() : null;
+    }
+
+    private TMP_Text FindChildText(RectTransform parent, string childName)
+    {
+        Transform child = parent.Find(childName);
+        return child != null ? child.GetComponent<TMP_Text>() : null;
+    }
+
+    private Image CreateFallbackIcon(RectTransform parent, float cellSize)
+    {
+        Image icon = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+        icon.transform.SetParent(parent, false);
+        RectTransform iconRect = (RectTransform)icon.transform;
+        iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+        iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.anchoredPosition = new Vector2(0f, 8f);
+        iconRect.sizeDelta = new Vector2(cellSize * 0.46f, cellSize * 0.46f);
+        return icon;
+    }
+
+    private TMP_Text CreateFallbackLabel(RectTransform parent, float cellSize)
+    {
+        TMP_Text label = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+        label.transform.SetParent(parent, false);
+        RectTransform labelRect = (RectTransform)label.transform;
+        labelRect.anchorMin = new Vector2(0f, 0f);
+        labelRect.anchorMax = new Vector2(1f, 0f);
+        labelRect.pivot = new Vector2(0.5f, 0f);
+        labelRect.anchoredPosition = new Vector2(0f, 6f);
+        labelRect.sizeDelta = new Vector2(0f, 24f);
+        label.fontSize = Mathf.Clamp(cellSize * 0.18f, 13f, 18f);
+        label.alignment = TextAlignmentOptions.Center;
+        return label;
+    }
+
     private void ApplyCellVisual(CellView cell)
     {
         if (cell == null || cell.Icon == null)
             return;
 
-        bool empty = cell.Model == null || (!cell.Model.isBoss && cell.Model.level == null);
+        bool unavailable = cell.Model == null || !cell.Model.isAvailable;
+        bool hasContent = !unavailable && (cell.Model.isBoss || cell.Model.level != null);
         if (cell.Background != null)
-            cell.Background.color = empty ? emptyCellColor : cellColor;
-        if (empty)
+            cell.Background.color = unavailable ? unavailableCellColor : cellColor;
+        if (!hasContent)
         {
             cell.Icon.gameObject.SetActive(false);
             if (cell.Label != null)
@@ -444,9 +492,12 @@ public class ChapterGridPanelUI : MonoBehaviour
 
         cell.Icon.gameObject.SetActive(true);
         cell.Icon.rectTransform.localScale = Vector3.one;
+        if (cell.Label != null)
+            cell.Label.color = labelColor;
         if (cell.Model != null && cell.Model.isBoss)
         {
             cell.Icon.sprite = Resources.Load<Sprite>("Images/UI/Boss");
+            cell.Icon.color = bossIconColor;
             if (cell.Label != null)
                 cell.Label.text = "Boss";
             return;
@@ -454,6 +505,7 @@ public class ChapterGridPanelUI : MonoBehaviour
 
         LevelType type = cell.Model != null && cell.Model.level != null ? cell.Model.level.levelType : LevelType.Battle;
         cell.Icon.sprite = UIManager.LoadLevelTypeSprite(type);
+        cell.Icon.color = levelIconColor;
         if (cell.Label != null)
             cell.Label.text = UIManager.GetLevelTypeName(type);
     }
@@ -522,7 +574,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             Image background = rect.GetComponent<Image>();
             if (background == null)
                 background = rect.gameObject.AddComponent<Image>();
-            background.color = new Color(0.08f, 0.1f, 0.16f, 0.92f);
+            background.color = fallbackDirectionCardColor;
             background.raycastTarget = true;
             Image icon = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             icon.transform.SetParent(rect, false);

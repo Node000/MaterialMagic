@@ -24,6 +24,8 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private float compactMaterialRowMinSpacing = 4f;
     [SerializeField] private float compactMaterialRowMaxSpacing = 72f;
     [SerializeField] private float compactMaterialCardScale = 0.72f;
+    [SerializeField] private float rowLayoutWidthLimit = 820f;
+    [SerializeField] private float compactRowLayoutWidthLimit = 820f;
     [Header("动画参数")]
     [SerializeField] private float tooltipFadeDuration = 0.12f;
     [SerializeField] private float tooltipScaleDuration = 0.18f;
@@ -43,6 +45,7 @@ public class MaterialListPanelUI : MonoBehaviour
     private readonly List<MaterialModel> selectedMaterials = new List<MaterialModel>();
     private Predicate<MaterialModel> selectionPredicate;
     private Action<IReadOnlyList<MaterialModel>> selectionCompleted;
+    private Action selectionCancelled;
     private int selectionCount;
     private bool selectionLocked;
     private DisplayMode displayMode = DisplayMode.DrawPile;
@@ -73,18 +76,26 @@ public class MaterialListPanelUI : MonoBehaviour
 
         displayMode = mode;
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
         Refresh();
     }
 
     public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted)
     {
+        BeginSelection(count, predicate, onCompleted, null);
+    }
+
+    public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted, Action onCancelled)
+    {
         selectionCount = Mathf.Max(1, count);
         selectionPredicate = predicate;
         selectionCompleted = onCompleted;
+        selectionCancelled = onCancelled;
         selectionLocked = true;
         displayMode = DisplayMode.FullDeck;
         selectedMaterials.Clear();
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
         Refresh();
     }
 
@@ -115,6 +126,7 @@ public class MaterialListPanelUI : MonoBehaviour
     {
         CacheReferences();
         RefreshTitle();
+        EnsurePanelBlocksRaycasts();
         RefreshRow(waterMaterialRow, MaterialEnum.Water);
         RefreshRow(fireMaterialRow, MaterialEnum.Fire);
         RefreshRow(windMaterialRow, MaterialEnum.Wind);
@@ -206,11 +218,22 @@ public class MaterialListPanelUI : MonoBehaviour
         closeButton.onClick.AddListener(() =>
         {
             if (selectionLocked)
+            {
+                CancelSelection();
                 return;
+            }
 
             ClearSelectionMode();
             gameObject.SetActive(false);
         });
+    }
+
+    private void CancelSelection()
+    {
+        Action cancelled = selectionCancelled;
+        ClearSelectionMode();
+        gameObject.SetActive(false);
+        cancelled?.Invoke();
     }
 
     private void CacheReferences()
@@ -258,6 +281,19 @@ public class MaterialListPanelUI : MonoBehaviour
         }
     }
 
+    private void EnsurePanelBlocksRaycasts()
+    {
+        Graphic graphic = GetComponent<Graphic>();
+        if (graphic != null)
+            graphic.raycastTarget = true;
+        CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.interactable = true;
+        transform.SetAsLastSibling();
+    }
+
     private void RefreshRow(RectTransform row, MaterialEnum material)
     {
         if (row == null || materialCardPrefab == null || owner == null || owner.PlayerState == null)
@@ -267,8 +303,9 @@ public class MaterialListPanelUI : MonoBehaviour
             Destroy(row.GetChild(i).gameObject);
 
         int materialCount = CountMaterialsForDisplay(material);
-        ApplyRowSpacing(row, materialCount);
+        PrepareManualRowLayout(row);
         CreateMaterialCardsForDisplay(row, material);
+        ApplyManualRowLayout(row, materialCount);
     }
 
     private int CountMaterialsForDisplay(MaterialEnum material)
@@ -375,6 +412,10 @@ public class MaterialListPanelUI : MonoBehaviour
     {
         RectTransform cardRect = Instantiate(materialCardPrefab, parent);
         cardRect.gameObject.SetActive(true);
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot = new Vector2(0.5f, 0.5f);
+        cardRect.localScale = Vector3.one;
         ApplyCardDisplaySize(cardRect);
         MaterialCardView view = cardRect.GetComponent<MaterialCardView>();
         if (view != null)
@@ -422,6 +463,7 @@ public class MaterialListPanelUI : MonoBehaviour
     {
         selectionPredicate = null;
         selectionCompleted = null;
+        selectionCancelled = null;
         selectionLocked = false;
         selectionCount = 0;
         selectedMaterials.Clear();
@@ -523,6 +565,51 @@ public class MaterialListPanelUI : MonoBehaviour
         TMP_Text result = modifierTooltipTexts[index];
         result.gameObject.SetActive(true);
         return result;
+    }
+
+    private void PrepareManualRowLayout(RectTransform row)
+    {
+        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
+        if (layout != null)
+            layout.enabled = false;
+    }
+
+    private void ApplyManualRowLayout(RectTransform row, int materialCount)
+    {
+        if (row == null || materialCount <= 0)
+            return;
+
+        float cardWidth = GetCardDisplayWidth();
+        float layoutWidth = Mathf.Min(GetCurrentRowLayoutWidthLimit(), Mathf.Max(0f, row.rect.width));
+        if (layoutWidth <= 0f)
+            layoutWidth = GetCurrentRowLayoutWidthLimit();
+        float spacing = GetManualRowSpacing(materialCount, cardWidth, layoutWidth);
+        float startX = materialCount > 1 ? -spacing * (materialCount - 1) * 0.5f : 0f;
+        int index = 0;
+        for (int i = 0; i < row.childCount; i++)
+        {
+            RectTransform child = row.GetChild(i) as RectTransform;
+            if (child == null || !child.gameObject.activeSelf)
+                continue;
+            child.anchoredPosition = new Vector2(startX + spacing * index, 0f);
+            index++;
+        }
+    }
+
+    private float GetManualRowSpacing(int materialCount, float cardWidth, float layoutWidth)
+    {
+        float minSpacing = IsCompactDisplay() ? compactMaterialRowMinSpacing : materialRowMinSpacing;
+        if (materialCount <= 1)
+            return minSpacing;
+
+        float maxSpacing = IsCompactDisplay() ? compactMaterialRowMaxSpacing : materialRowMaxSpacing;
+        float spacingByLimit = Mathf.Max(0f, (layoutWidth - cardWidth) / (materialCount - 1));
+        return Mathf.Clamp(spacingByLimit, minSpacing, maxSpacing);
+    }
+
+    private float GetCurrentRowLayoutWidthLimit()
+    {
+        return IsCompactDisplay() ? compactRowLayoutWidthLimit : rowLayoutWidthLimit;
     }
 
     private void ApplyRowSpacing(RectTransform row, int materialCount)

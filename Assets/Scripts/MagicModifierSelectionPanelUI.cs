@@ -16,6 +16,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private RectTransform optionRoot;
     private TMP_Text titleText;
     private TMP_Text hintText;
+    private TMP_Text selectedHintText;
     private Button backButton;
     private RectTransform popupRoot;
     private TMP_Text popupText;
@@ -53,6 +54,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             titleText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.title", "选择法术强化");
         if (hintText != null)
             hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.hint", "选择一个强化后，点击一个已有法术完成附魔。每个法术只能附魔一次。");
+        RefreshSelectedHint();
 
         RefreshOptions();
     }
@@ -103,6 +105,9 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             panel = (RectTransform)transform;
         titleText = titleText != null ? titleText : UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         hintText = hintText != null ? hintText : UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
+        selectedHintText = selectedHintText != null ? selectedHintText : UIManager.FindChildComponent<TMP_Text>(transform, "SelectedHint");
+        if (selectedHintText == null)
+            selectedHintText = CreateSelectedHintText();
         optionRoot = optionRoot != null ? optionRoot : UIManager.FindChildRect(transform, "OptionArea");
         backButton = backButton != null ? backButton : UIManager.FindChildComponent<Button>(transform, "BackButton");
         CacheOptionReferences();
@@ -166,8 +171,42 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         selectedModifier = currentChoices[index];
         owner?.SelectPendingMagicModifier(selectedModifier);
+        RefreshSelectedHint();
         for (int i = 0; i < optionButtons.Count; i++)
             SetOptionSelected(i, i == index, false);
+    }
+
+    private void RefreshSelectedHint()
+    {
+        if (selectedHintText == null)
+            return;
+
+        if (selectedModifier == null)
+        {
+            selectedHintText.text = "未选择强化";
+            return;
+        }
+
+        string name = LocalizationSystem.GetText(selectedModifier.nameKey, selectedModifier.id);
+        selectedHintText.text = "已选择：" + name + "，请点击右侧法术槽应用";
+    }
+
+    private TMP_Text CreateSelectedHintText()
+    {
+        RectTransform rect = new GameObject("SelectedHint", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<RectTransform>();
+        rect.SetParent(transform, false);
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0f, -106f);
+        rect.sizeDelta = new Vector2(420f, 34f);
+        TMP_Text text = rect.GetComponent<TMP_Text>();
+        text.font = UIManager.GetDefaultTMPFont();
+        text.fontSize = 17;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.92f, 0.55f, 1f);
+        text.raycastTarget = false;
+        return text;
     }
 
     private void SetOptionSelected(int index, bool selected, bool instant)

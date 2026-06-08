@@ -36,7 +36,6 @@ public class RunManager
     public RunMapGridModel MapGrid => mapGrid;
     public int CurrentMapX => mapGrid != null ? mapGrid.playerX : 0;
     public int CurrentMapY => mapGrid != null ? mapGrid.playerY : 0;
-    public int CurrentActionPower => mapGrid != null ? mapGrid.currentActionPower : 0;
     public int CurrentMapNodeIndex { get; private set; }
     public int BattleCount { get; private set; }
     public ChapterData ActiveChapter { get; private set; }
@@ -85,25 +84,27 @@ public class RunManager
             height = height,
             playerX = chapter != null ? chapter.startMapX : width / 2,
             playerY = chapter != null ? chapter.startMapY : height / 2,
-            currentActionPower = Mathf.Max(0, chapter != null && chapter.initialActionPower > 0 ? chapter.initialActionPower : 5),
-            bossMapActive = false,
-            pendingBossMapTransform = false
+            bossMapActive = false
         };
-        mapGrid.WrapPosition(ref mapGrid.playerX, ref mapGrid.playerY);
+        mapGrid.ClampPosition(ref mapGrid.playerX, ref mapGrid.playerY);
 
         int cellCount = width * height;
         for (int i = 0; i < cellCount; i++)
         {
-            LevelData level = levels != null && levels.Count > 0 ? levels[i % levels.Count] : GetFallbackBattleLevel();
+            LevelData level = levels != null && i < levels.Count ? levels[i] : null;
             RunMapCellModel cell = new RunMapCellModel
             {
                 x = i % width,
                 y = i / width,
                 level = level,
-                isBoss = false
+                isBoss = false,
+                isAvailable = level != null
             };
             if (cell.x == mapGrid.playerX && cell.y == mapGrid.playerY)
+            {
                 cell.level = null;
+                cell.isAvailable = true;
+            }
             mapGrid.cells.Add(cell);
         }
     }
@@ -114,7 +115,7 @@ public class RunManager
             return false;
 
         mapGrid = grid;
-        mapGrid.WrapPosition(ref mapGrid.playerX, ref mapGrid.playerY);
+        mapGrid.ClampPosition(ref mapGrid.playerX, ref mapGrid.playerY);
         return true;
     }
 
@@ -129,16 +130,16 @@ public class RunManager
 
         int nextX = mapGrid.playerX + direction.x;
         int nextY = mapGrid.playerY + direction.y;
-        mapGrid.WrapPosition(ref nextX, ref nextY);
+        if (nextX < 0 || nextX >= mapGrid.width || nextY < 0 || nextY >= mapGrid.height)
+            return null;
+
+        RunMapCellModel targetCell = mapGrid.GetCell(nextX, nextY);
+        if (targetCell == null || !targetCell.isAvailable)
+            return null;
+
         mapGrid.playerX = nextX;
         mapGrid.playerY = nextY;
-        if (!mapGrid.bossMapActive)
-        {
-            mapGrid.currentActionPower = Mathf.Max(0, mapGrid.currentActionPower - 1);
-            if (mapGrid.currentActionPower == 0)
-                mapGrid.pendingBossMapTransform = true;
-        }
-        return mapGrid.GetCurrentCell();
+        return targetCell;
     }
 
     public void ConsumeCurrentMapCellLevel()
@@ -154,11 +155,13 @@ public class RunManager
             return;
 
         mapGrid.bossMapActive = true;
-        mapGrid.pendingBossMapTransform = false;
         for (int i = 0; i < mapGrid.cells.Count; i++)
         {
             if (mapGrid.cells[i] != null)
+            {
+                mapGrid.cells[i].isAvailable = true;
                 mapGrid.cells[i].isBoss = true;
+            }
         }
     }
 

@@ -78,7 +78,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Left && !inactive)
+        if (eventData.button == PointerEventData.InputButton.Left)
             owner?.OnMaterialCardClicked(this);
     }
 
@@ -139,7 +139,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 1f;
-            canvasGroup.blocksRaycasts = !inactive;
+            canvasGroup.blocksRaycasts = true;
             consumedTween?.Kill(false);
             if (inactive)
             {

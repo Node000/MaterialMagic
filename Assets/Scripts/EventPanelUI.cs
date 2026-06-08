@@ -27,6 +27,10 @@ public class EventPanelUI : MonoBehaviour
     [SerializeField] private float textCharactersPerSecond = 34f;
     [SerializeField] private float optionShowDuration = 0.24f;
     [SerializeField] private float optionShowDelayStep = 0.06f;
+    [SerializeField] private float optionSpacing = 14f;
+    [SerializeField] private float optionAreaHeight = 300f;
+    [SerializeField] private float minOptionHeight = 46f;
+    [SerializeField] private float optionHeightShrinkPerExtraOption = 12f;
     [SerializeField] private Ease optionShowEase = Ease.OutBack;
     [SerializeField] private float optionHideDuration = 0.18f;
     [SerializeField] private Ease optionHideEase = Ease.InBack;
@@ -361,6 +365,9 @@ public class EventPanelUI : MonoBehaviour
 
         EventOptionData[] options = eventModel.CurrentOptions;
         optionsShown?.Invoke();
+        float optionHeight = GetOptionHeight(options.Length);
+        float optionStep = optionHeight + optionSpacing;
+        float startY = (options.Length - 1) * optionStep * 0.5f;
         for (int i = 0; i < options.Length; i++)
         {
             EventOptionData option = options[i];
@@ -369,15 +376,13 @@ public class EventPanelUI : MonoBehaviour
                 continue;
 
             RectTransform rect = (RectTransform)optionView.transform;
-            float optionHeight = rect.sizeDelta.y;
-            float optionStep = optionHeight + 14f;
-            float startY = (options.Length - 1) * optionStep * 0.5f;
 
             rect.gameObject.SetActive(true);
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = new Vector2(0f, startY - optionStep * i);
+            rect.sizeDelta = new Vector2(rect.sizeDelta.x, optionHeight);
             rect.localRotation = Quaternion.identity;
             Image background = rect.GetComponent<Image>();
             if (background != null)
@@ -396,6 +401,22 @@ public class EventPanelUI : MonoBehaviour
             rect.DOScale(Vector3.one, optionShowDuration).SetDelay(i * optionShowDelayStep).SetEase(optionShowEase).SetTarget(this);
             optionRects.Add(rect);
         }
+    }
+
+    private float GetOptionHeight(int optionCount)
+    {
+        if (optionPrefab == null)
+            return Mathf.Max(minOptionHeight, 64f - Mathf.Max(0, optionCount - 3) * optionHeightShrinkPerExtraOption);
+
+        RectTransform prefabRect = optionPrefab.transform as RectTransform;
+        float baseHeight = prefabRect != null ? prefabRect.sizeDelta.y : 64f;
+        float shrunkHeight = baseHeight - Mathf.Max(0, optionCount - 3) * optionHeightShrinkPerExtraOption;
+        if (optionCount > 1)
+        {
+            float maxHeightByArea = (optionAreaHeight - optionSpacing * (optionCount - 1)) / optionCount;
+            shrunkHeight = Mathf.Min(shrunkHeight, maxHeightByArea);
+        }
+        return Mathf.Max(minOptionHeight, shrunkHeight);
     }
 
     private EventOptionView GetOptionView(int index)

@@ -1295,7 +1295,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -29.100006, y: 102.8}
-  m_SizeDelta: {x: 24, y: 24}
+  m_SizeDelta: {x: 28, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &298148232
 MonoBehaviour:
@@ -1354,7 +1354,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 1}
+  m_Color: {r: 0.82, g: 0.05, b: 0.05, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1414,6 +1414,7 @@ MonoBehaviour:
   startMenuMusic: {fileID: 8300000, guid: 4094b3ca41085dd4a8d8401ef2be20d1, type: 3}
   gameplayMusic: {fileID: 8300000, guid: 342009f9d35ad004da413d74adff32b1, type: 3}
   battleMusic: {fileID: 8300000, guid: 6175851e9b1eed443adc69a153a7abae, type: 3}
+  bossBattleMusic: {fileID: 8300000, guid: 3cf17a69135ac7d49a96bb25874a968f, type: 3}
   gameSfxClips:
   - id: 1
     clip: {fileID: 8300000, guid: 74da3e377b8cc814c8463a6501dd24fc, type: 3}
@@ -6871,6 +6872,7 @@ GameObject:
   - component: {fileID: 1800344131}
   - component: {fileID: 1800344133}
   - component: {fileID: 1800344134}
+  - component: {fileID: 1800344135}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -6922,6 +6924,8 @@ MonoBehaviour:
   direction: {x: 1, y: -1}
   boundary: {fileID: 939732670}
   useUnscaledTime: 1
+  closeButton: {fileID: 298148232}
+  restoreDelay: 30
 --- !u!114 &1800344134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6952,6 +6956,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &1800344135
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800344128}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1847242469
 GameObject:
   m_ObjectHideFlags: 0

@@ -19,6 +19,8 @@ public class RainbowEnemyModel : EnemyModel
                 return "1";
             case 4:
                 return "3";
+            case 5:
+                return "?";
             default:
                 return string.Empty;
         }
@@ -43,9 +45,10 @@ public class RainbowEnemyModel : EnemyModel
             case 4:
                 playerState.AddBuff(BuffEnum.DirectionShieldBonus, 3);
                 break;
+            case 5:
+                ResolveRandomFollowup(playerState);
+                break;
         }
-
-        ResolveRandomFollowup(playerState);
     }
 
     private void ResolveRandomFollowup(PlayerState playerState)

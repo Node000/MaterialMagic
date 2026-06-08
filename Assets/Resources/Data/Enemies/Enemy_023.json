@@ -2,7 +2,7 @@
   "numericId": 23,
   "string_id": "enemy_023",
   "nameKey": "enemy.023.name",
-  "maxHealth": 82,
+  "maxHealth": 98,
   "baseAttack": 14,
   "imageScale": 0.6,
   "healthBarWidth": 150.0,
@@ -23,6 +23,11 @@
               "actionType": 9,
               "value": 1,
               "displayType": "spAttack"
+            },
+            {
+              "actionType": 9,
+              "value": 5,
+              "displayType": "spDefend"
             }
           ]
         },
@@ -33,6 +38,11 @@
               "actionType": 9,
               "value": 2,
               "displayType": "spAttack"
+            },
+            {
+              "actionType": 9,
+              "value": 5,
+              "displayType": "spDefend"
             }
           ]
         },
@@ -43,6 +53,11 @@
               "actionType": 9,
               "value": 3,
               "displayType": "spAttack"
+            },
+            {
+              "actionType": 9,
+              "value": 5,
+              "displayType": "spDefend"
             }
           ]
         },
@@ -52,6 +67,11 @@
             {
               "actionType": 9,
               "value": 4,
+              "displayType": "spDefend"
+            },
+            {
+              "actionType": 9,
+              "value": 5,
               "displayType": "spDefend"
             }
           ]

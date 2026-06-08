@@ -469,7 +469,6 @@ public class ChapterData : INumericDataRecord
     public int levelLength;
     public int mapWidth = 5;
     public int mapHeight = 5;
-    public int initialActionPower = 5;
     public int startMapX = 2;
     public int startMapY = 2;
     public float hiddenLevelWeight;

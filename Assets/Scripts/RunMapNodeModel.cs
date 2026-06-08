@@ -17,6 +17,7 @@ public class RunMapCellModel
     public int y;
     public LevelData level;
     public bool isBoss;
+    public bool isAvailable = true;
 
     public LevelType DisplayType => isBoss ? LevelType.Elite : level != null ? level.levelType : LevelType.Battle;
 }
@@ -27,9 +28,7 @@ public class RunMapGridModel
     public int height;
     public int playerX;
     public int playerY;
-    public int currentActionPower;
     public bool bossMapActive;
-    public bool pendingBossMapTransform;
     public readonly List<RunMapCellModel> cells = new List<RunMapCellModel>();
 
     public int CellCount => cells.Count;
@@ -50,11 +49,11 @@ public class RunMapGridModel
         return GetCell(playerX, playerY);
     }
 
-    public void WrapPosition(ref int x, ref int y)
+    public void ClampPosition(ref int x, ref int y)
     {
         int safeWidth = Mathf.Max(1, width);
         int safeHeight = Mathf.Max(1, height);
-        x = (x % safeWidth + safeWidth) % safeWidth;
-        y = (y % safeHeight + safeHeight) % safeHeight;
+        x = Mathf.Clamp(x, 0, safeWidth - 1);
+        y = Mathf.Clamp(y, 0, safeHeight - 1);
     }
 }

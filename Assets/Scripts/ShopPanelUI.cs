@@ -599,10 +599,17 @@ public class ShopPanelUI : MonoBehaviour
         waitingForSelection = true;
         Refresh();
         MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialListPanel;
-        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected));
+        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelRemoveMaterialPurchase);
         RectTransform materialRect = materialListPanel != null ? materialListPanel.transform as RectTransform : null;
         if (materialRect != null)
             PopupLayerUtility.ApplyTo(materialRect);
+    }
+
+    private void CancelRemoveMaterialPurchase()
+    {
+        waitingForSelection = false;
+        ShowMessage(string.Empty);
+        Refresh();
     }
 
     private bool IsRemovableMaterial(MaterialModel material)

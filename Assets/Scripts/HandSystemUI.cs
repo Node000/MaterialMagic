@@ -111,8 +111,20 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float cardSpacing = 118f;
 
+    [SerializeField]
+    private float handLayoutY;
+
+    [SerializeField]
+    private float handLayoutZ;
+
 	[SerializeField]
 	private float playCardSpacing = 118f;
+
+    [SerializeField]
+    private float playLayoutY;
+
+    [SerializeField]
+    private float playLayoutZ;
 
 	[SerializeField]
 	private float layoutDuration = 0.3f;
@@ -377,6 +389,7 @@ public class HandSystemUI : MonoBehaviour
 	private int currentMapNodeIndex;
 
     private bool pendingChapterMapBossStart;
+    private bool currentChapterMapBossLevel;
     private bool chapterMapMoveInProgress;
 
 	private bool busy;
@@ -504,18 +517,36 @@ public class HandSystemUI : MonoBehaviour
         if (panel != null)
             panel.SetDirectionCardSource(handArea, cardPrefab, cardSpacing);
         GetUIManager().ShowChapterGridPanel(grid);
-        if (grid.pendingBossMapTransform && !grid.bossMapActive && panel != null)
+        if (ShouldActivateBossMapForCurrentSelection(grid))
         {
-            panel.SetInputLocked(true);
-            panel.PlayBossTransform(() =>
+            if (panel != null)
             {
-                runManager?.ActivateBossMap();
-                panel.RefreshTexts();
-                panel.SetInputLocked(false);
-                SaveRunProgress();
-            });
+                panel.SetInputLocked(true);
+                panel.PlayBossTransform(() =>
+                {
+                    ActivateBossMapForCurrentSelection(panel);
+                    panel.SetInputLocked(false);
+                });
+            }
+            else
+            {
+                ActivateBossMapForCurrentSelection(null);
+            }
         }
 	}
+
+    private bool ShouldActivateBossMapForCurrentSelection(RunMapGridModel grid)
+    {
+        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1;
+    }
+
+    private void ActivateBossMapForCurrentSelection(ChapterGridPanelUI panel)
+    {
+        runManager?.ActivateBossMap();
+        panel?.RefreshCellVisuals();
+        panel?.RefreshTexts();
+        SaveRunProgress();
+    }
 
 	private void CreateLevelSelectPanel()
 	{
@@ -627,6 +658,8 @@ public class HandSystemUI : MonoBehaviour
 
 	public void StartLevel(LevelData level)
 	{
+        bool chapterMapBossStart = pendingChapterMapBossStart;
+        currentChapterMapBossLevel = chapterMapBossStart;
         LevelData selectedMapLevel = level;
         level = ResolveSelectedMapLevel(level);
         pendingChapterMapBossStart = false;
@@ -667,7 +700,7 @@ public class HandSystemUI : MonoBehaviour
 		if (level == null)
 			return null;
 
-        if (pendingChapterMapBossStart)
+        if (currentChapterMapBossLevel)
             return level;
 
 		ChapterData chapter = activeChapter ?? GetActiveChapter();
@@ -718,7 +751,12 @@ public class HandSystemUI : MonoBehaviour
             : level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
 		GameLog.Data("Start battle level=" + level.id + " enemies=" + configuredEnemyCount);
         if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayBattleMusic();
+        {
+            if (currentChapterMapBossLevel)
+                AudioManager.Instance.PlayBossBattleMusic();
+            else
+                AudioManager.Instance.PlayBattleMusic();
+        }
 		currentLevel = level;
 		runManager?.BeginLevel(level);
         runManager?.AdvanceRunRandomStep();
@@ -993,6 +1031,7 @@ public class HandSystemUI : MonoBehaviour
             id = "default_rest",
             titleKey = "rest.option.rest",
             resultId = RestDefaultHealResultId,
+            nextNodeId = "rest_result",
             isExitOption = true
         };
         EventOptionData study = new EventOptionData
@@ -1009,6 +1048,9 @@ public class HandSystemUI : MonoBehaviour
             recipe = CreateRandomRecipe(2),
             resultId = RestDeepStudyResultId
         };
+        string[] restTextKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>();
+        string startTextKey = restTextKeys.Length > 0 ? restTextKeys[0] : string.Empty;
+        string resultTextKey = restTextKeys.Length > 1 ? restTextKeys[1] : startTextKey;
         EventData data = new EventData
         {
             id = level != null ? level.id : "rest",
@@ -1020,8 +1062,14 @@ public class HandSystemUI : MonoBehaviour
                 new EventNodeData
                 {
                     id = "start",
-                    textKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>(),
+                    textKeys = !string.IsNullOrEmpty(startTextKey) ? new[] { startTextKey } : Array.Empty<string>(),
                     options = new[] { defaultRest, study, deepStudy }
+                },
+                new EventNodeData
+                {
+                    id = "rest_result",
+                    textKeys = !string.IsNullOrEmpty(resultTextKey) ? new[] { resultTextKey } : Array.Empty<string>(),
+                    options = Array.Empty<EventOptionData>()
                 }
             }
         };
@@ -1439,15 +1487,117 @@ public class HandSystemUI : MonoBehaviour
         int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
         int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
         int cellCount = width * height;
-        List<LevelData> levels = new List<LevelData>();
+        List<LevelData> levels = new List<LevelData>(cellCount);
+        for (int i = 0; i < cellCount; i++)
+            levels.Add(null);
+
         LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
+        if (width == 5 && height == 8)
+            BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel);
+        else
+            BuildWeightedChapterMapGrid(chapter, levels, width, height, bossLevel);
+
+        runManager.BuildMapGrid(chapter, levels);
+        if (width == 5 && height == 8)
+            ApplyDesignedChapterMapCellFlags();
+    }
+
+    private void BuildWeightedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel)
+    {
+        int cellCount = width * height;
         for (int i = 0; i < cellCount; i++)
         {
             int progress = i + 1;
             List<LevelData> candidateLevels = GetMapGridCandidateLevels(chapter, progress, bossLevel);
-            levels.Add(ChooseRandomMapLevel(chapter, candidateLevels));
+            levels[i] = ChooseRandomMapLevel(chapter, candidateLevels);
         }
-        runManager.BuildMapGrid(chapter, levels);
+    }
+
+    private void BuildDesignedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel)
+    {
+        SetMapGridLevel(levels, width, 2, 7, bossLevel);
+        SetMapGridLevel(levels, width, 2, 2, ChooseRandomMapLevel(chapter, GetBattleLevels()));
+        SetMapGridLevel(levels, width, 2, 1, ChooseRandomMapLevel(chapter, GetBattleLevels()));
+
+        List<Vector2Int> positions = new List<Vector2Int>();
+        for (int y = 6; y >= 2; y--)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (x == 2 && y == 2)
+                    continue;
+                positions.Add(new Vector2Int(x, y));
+            }
+        }
+
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Shop, 1);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Battle, 3);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Elite, 2);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.RemoveMaterial, 1);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.AddMaterial, 1);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Rest, 2);
+
+        while (positions.Count > 0)
+        {
+            Vector2Int position = TakeRandomMapPosition(positions);
+            List<LevelData> candidateLevels = GetMapGridCandidateLevels(chapter, position.y * width + position.x + 1, bossLevel);
+            SetMapGridLevel(levels, width, position.x, position.y, ChooseRandomMapLevel(chapter, candidateLevels));
+        }
+    }
+
+    private void AssignDesignedMapLevels(ChapterData chapter, List<LevelData> levels, int width, List<Vector2Int> positions, LevelType levelType, int count)
+    {
+        for (int i = 0; i < count && positions.Count > 0; i++)
+        {
+            Vector2Int position = TakeRandomMapPosition(positions);
+            SetMapGridLevel(levels, width, position.x, position.y, ChooseRandomMapLevel(chapter, GetDesignedMapLevels(levelType)));
+        }
+    }
+
+    private List<LevelData> GetDesignedMapLevels(LevelType levelType)
+    {
+        if (levelType == LevelType.Battle)
+            return GetBattleLevels();
+        if (levelType == LevelType.Rest)
+            return GetRestLevels();
+        return GetLevels(levelType);
+    }
+
+    private Vector2Int TakeRandomMapPosition(List<Vector2Int> positions)
+    {
+        int index = NextRunRandomInt(0, positions.Count);
+        Vector2Int position = positions[index];
+        positions.RemoveAt(index);
+        return position;
+    }
+
+    private static void SetMapGridLevel(List<LevelData> levels, int width, int x, int y, LevelData level)
+    {
+        int index = y * width + x;
+        if (index >= 0 && index < levels.Count)
+            levels[index] = level;
+    }
+
+    private void ApplyDesignedChapterMapCellFlags()
+    {
+        RunMapGridModel grid = ChapterMapGrid;
+        if (grid == null)
+            return;
+
+        for (int i = 0; i < grid.cells.Count; i++)
+        {
+            RunMapCellModel cell = grid.cells[i];
+            if (cell == null)
+                continue;
+
+            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y);
+            cell.isBoss = cell.x == 2 && cell.y == 7;
+        }
+    }
+
+    private static bool IsDesignedChapterMapCellAvailable(int x, int y)
+    {
+        return (x == 2 && y == 7) || (y >= 2 && y <= 6) || (x == 2 && (y == 0 || y == 1));
     }
 
     private List<LevelData> GetMapGridCandidateLevels(ChapterData chapter, int progress, LevelData bossLevel)
@@ -1533,19 +1683,11 @@ public class HandSystemUI : MonoBehaviour
         LevelData level = pendingChapterMapBossStart ? runManager.DrawBossLevel(activeChapter ?? GetActiveChapter()) : targetCell.level;
         if (level == null)
         {
-            if (ChapterMapGrid != null && ChapterMapGrid.pendingBossMapTransform && !ChapterMapGrid.bossMapActive)
-            {
-                SaveRunProgress();
-                ShowLevelSelect();
-            }
-            else
-            {
-                SaveRunProgress();
-                if (panel != null)
-                    panel.SetInputLocked(false);
-                busy = false;
-                chapterMapMoveInProgress = false;
-            }
+            SaveRunProgress();
+            if (panel != null)
+                panel.SetInputLocked(false);
+            busy = false;
+            chapterMapMoveInProgress = false;
             yield break;
         }
         runManager.ConsumeCurrentMapCellLevel();
@@ -1791,9 +1933,8 @@ public class HandSystemUI : MonoBehaviour
         RunMapGridModel grid = ChapterMapGrid;
         if (grid != null && grid.CellCount > 0)
         {
-            int completedSteps = Mathf.Max(0, currentMapNodeIndex);
-            int maxSteps = Mathf.Max(1, (activeChapter ?? GetActiveChapter()) != null ? (activeChapter ?? GetActiveChapter()).initialActionPower : grid.currentActionPower + completedSteps);
-            GetUIManager().ChapterProgress?.SetProgress(Mathf.Min(completedSteps + 1, maxSteps), maxSteps);
+            int maxSteps = Mathf.Max(1, GetActiveChapterLength());
+            GetUIManager().ChapterProgress?.SetProgress(Mathf.Min(currentMapNodeIndex + 1, maxSteps), maxSteps);
             return;
         }
 		GetUIManager().ChapterProgress?.SetProgress(Mathf.Min(currentMapNodeIndex + 1, mapNodes.Count), mapNodes.Count);
@@ -2439,6 +2580,8 @@ public class HandSystemUI : MonoBehaviour
         }
 
         ApplyRestDefaultHeal();
+        if (matchedOption != null && !string.IsNullOrEmpty(matchedOption.nextNodeId) && currentEvent != null && currentEvent.AdvanceToNextNode(matchedOption) && (Object)eventPanel != (Object)null)
+            yield return eventPanel.ShowCurrentNodeRoutine();
         FinishRestLevel();
     }
 
@@ -3207,18 +3350,18 @@ public class HandSystemUI : MonoBehaviour
 				{
 					((Transform)handCardView.RectTransform).SetParent((Transform)area, true);
 				}
-				val = new Vector2(num2 + num * (float)i, 0f);
+				val = new Vector2(num2 + num * (float)i, GetLayoutY(playZone));
 				handCardView.SetInPlayZone(playZone);
 				if (instant)
 				{
 					((Transform)handCardView.RectTransform).SetParent((Transform)area, false);
-					handCardView.RectTransform.anchoredPosition = val;
+                    SetCardLayoutPosition(handCardView.RectTransform, val, playZone);
 					handCardView.SetBaseRotation(0f, instant: true);
 				}
 				else
 				{
 					bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
-					AnimateCardToLayoutTarget(handCardView, area, val, animateFromExistingView);
+					AnimateCardToLayoutTarget(handCardView, area, val, playZone, animateFromExistingView);
 				}
 			}
 		}
@@ -3251,92 +3394,54 @@ public class HandSystemUI : MonoBehaviour
         return Mathf.Min(preferredSpacing, availableSpacingWidth / (count - 1));
     }
 
-	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool animateFromExistingView)
+	private float GetLayoutY(bool playZone)
+    {
+        return playZone ? playLayoutY : handLayoutY;
+    }
+
+    private float GetLayoutZ(bool playZone)
+    {
+        return playZone ? playLayoutZ : handLayoutZ;
+    }
+
+	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool playZone, bool animateFromExistingView)
 	{
-		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e3: Expected O, but got Unknown
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Expected O, but got Unknown
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0117: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ad: Expected O, but got Unknown
-		//IL_01ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c2: Expected O, but got Unknown
-		//IL_01cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e5: Expected O, but got Unknown
-		//IL_01e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fa: Expected O, but got Unknown
-		//IL_020a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0214: Expected O, but got Unknown
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Expected O, but got Unknown
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Expected O, but got Unknown
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Expected O, but got Unknown
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Expected O, but got Unknown
-		if (!animateFromExistingView)
-		{
-			ShortcutExtensions.DOKill((Component)view.RectTransform, false);
-			Sequence obj = DOTween.Sequence();
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector2, Vector2, VectorOptions>>(view.RectTransform.DOAnchorPos(targetAnchoredPosition, layoutDuration), layoutEase));
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0), layoutEase));
-			TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
-			return;
-		}
-		Vector3 position = ((Transform)view.RectTransform).position;
-		Quaternion rotation = ((Transform)view.RectTransform).rotation;
-		ShortcutExtensions.DOKill((Component)view.RectTransform, false);
-		((Transform)view.RectTransform).SetParent((Transform)targetParent, true);
-		((Transform)view.RectTransform).position = position;
-		((Transform)view.RectTransform).rotation = rotation;
-		Vector2 anchoredPosition = view.RectTransform.anchoredPosition;
-		view.RectTransform.anchoredPosition = targetAnchoredPosition;
-		Vector3 position2 = ((Transform)view.RectTransform).position;
-		view.RectTransform.anchoredPosition = anchoredPosition;
-		((Transform)view.RectTransform).position = position;
-		((Transform)view.RectTransform).rotation = rotation;
-		Sequence obj2 = DOTween.Sequence();
-		TweenSettingsExtensions.Join(obj2, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOMove((Transform)view.RectTransform, position2, layoutDuration, false), layoutEase));
-		TweenSettingsExtensions.Join(obj2, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0), layoutEase));
-		TweenSettingsExtensions.SetTarget<Sequence>(obj2, (object)this);
-		TweenSettingsExtensions.OnComplete<Sequence>(obj2, (TweenCallback)delegate
-		{
-			//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0011: Expected O, but got Unknown
-			//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-			if ((Object)view != (Object)null)
-			{
-				view.RectTransform.anchoredPosition = targetAnchoredPosition;
-				((Transform)view.RectTransform).localEulerAngles = Vector3.zero;
-			}
-		});
+        Vector3 position = ((Transform)view.RectTransform).position;
+        Quaternion rotation = ((Transform)view.RectTransform).rotation;
+        ShortcutExtensions.DOKill((Transform)view.RectTransform, false);
+
+        if (!animateFromExistingView)
+        {
+            ((Transform)view.RectTransform).SetParent((Transform)targetParent, true);
+            ((Transform)view.RectTransform).position = position;
+            ((Transform)view.RectTransform).rotation = rotation;
+        }
+
+        Vector3 targetLocalPosition = GetCardLayoutLocalPosition(view.RectTransform, targetAnchoredPosition, playZone);
+        Sequence sequence = DOTween.Sequence();
+        TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, layoutDuration, false), layoutEase));
+        TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0), layoutEase));
+        TweenSettingsExtensions.SetTarget<Sequence>(sequence, (object)view.RectTransform);
 	}
+
+    private Vector3 GetCardLayoutLocalPosition(RectTransform rectTransform, Vector2 targetAnchoredPosition, bool playZone)
+    {
+        Vector2 anchoredPosition = rectTransform.anchoredPosition;
+        Vector3 localPosition = rectTransform.localPosition;
+        SetCardLayoutPosition(rectTransform, targetAnchoredPosition, playZone);
+        Vector3 targetLocalPosition = rectTransform.localPosition;
+        rectTransform.anchoredPosition = anchoredPosition;
+        rectTransform.localPosition = localPosition;
+        return targetLocalPosition;
+    }
+
+    private void SetCardLayoutPosition(RectTransform rectTransform, Vector2 anchoredPosition, bool playZone)
+    {
+        rectTransform.anchoredPosition = anchoredPosition;
+        Vector3 localPosition = rectTransform.localPosition;
+        localPosition.z = GetLayoutZ(playZone);
+        rectTransform.localPosition = localPosition;
+    }
 
 	private HandCardView FindView(MaterialModel card)
 	{
@@ -4318,8 +4423,32 @@ public class HandSystemUI : MonoBehaviour
 		refreshUsedThisTurn = false;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
+        if (ShouldCompleteRunAfterCurrentBattle())
+        {
+            ShowVictoryPanel();
+            yield break;
+        }
 		ShowRewardPanel();
 	}
+
+    private bool ShouldCompleteRunAfterCurrentBattle()
+    {
+        return currentChapterMapBossLevel && IsFinalChapter(activeChapter ?? GetActiveChapter());
+    }
+
+    private bool IsFinalChapter(ChapterData chapter)
+    {
+        if (chapter == null)
+            return false;
+
+        int lastChapterNumericId = 0;
+        foreach (ChapterData data in GameDataDatabase.ChapterData.Values)
+        {
+            if (data != null && data.numericId > lastChapterNumericId)
+                lastChapterNumericId = data.numericId;
+        }
+        return chapter.numericId >= lastChapterNumericId;
+    }
 
 	private void ShowRewardPanel()
 	{
@@ -4709,14 +4838,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0011: Expected O, but got Unknown
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
-        if (ShouldShowEliteMagicModifierReward())
-        {
-            eliteMagicModifierRewardResolved = true;
-            StartCoroutine(ShowEliteMagicModifierRewardRoutine());
-            return;
-        }
-
-        bool finishedBossMapLevel = ChapterMapGrid != null && ChapterMapGrid.bossMapActive;
+        bool finishedBossMapLevel = currentChapterMapBossLevel;
 		pendingRewardMagic = null;
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
@@ -4732,6 +4854,7 @@ public class HandSystemUI : MonoBehaviour
 		enemyViewStates.Clear();
 		currentEvent = null;
 		currentLevel = null;
+        currentChapterMapBossLevel = false;
         eliteMagicModifierRewardResolved = false;
 		runManager?.ClearCurrentLevel();
 		GameLog.Data($"Finish reward node={currentMapNodeIndex + 1}/{mapNodes.Count}");
@@ -4766,6 +4889,35 @@ public class HandSystemUI : MonoBehaviour
 			ShowLevelSelectAfterMapAdvance(num != currentMapNodeIndex);
 		}
 	}
+
+    public bool CanClaimEliteMagicModifierReward()
+    {
+        return ShouldShowEliteMagicModifierReward();
+    }
+
+    public void ClaimEliteMagicModifierReward(Action completed)
+    {
+        if (!ShouldShowEliteMagicModifierReward())
+        {
+            completed?.Invoke();
+            return;
+        }
+
+        eliteMagicModifierRewardResolved = true;
+        List<MagicModifierData> choices = GetMagicModifierChoices(1);
+        if (choices.Count == 0)
+        {
+            completed?.Invoke();
+            return;
+        }
+
+        ShowMagicModifierSelection(choices, delegate
+        {
+            RefreshStaticUI();
+            SaveRunProgress();
+            completed?.Invoke();
+        });
+    }
 
     private bool ShouldShowEliteMagicModifierReward()
     {

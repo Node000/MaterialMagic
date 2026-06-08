@@ -47,6 +47,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip startMenuMusic;
     [SerializeField] private AudioClip gameplayMusic;
     [SerializeField] private AudioClip battleMusic;
+    [SerializeField] private AudioClip bossBattleMusic;
     [SerializeField] private GameSfxClipEntry[] gameSfxClips =
     {
         new GameSfxClipEntry(GameSfxId.Blocked),
@@ -154,6 +155,11 @@ public class AudioManager : MonoBehaviour
     public void PlayBattleMusic()
     {
         PlayMusic(battleMusic);
+    }
+
+    public void PlayBossBattleMusic()
+    {
+        PlayMusic(bossBattleMusic != null ? bossBattleMusic : battleMusic);
     }
 
     public void PlaySfx(AudioClip clip)

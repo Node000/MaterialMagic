@@ -2,7 +2,7 @@
   "numericId": 7,
   "string_id": "enemy_007",
   "nameKey": "enemy.007.name",
-  "maxHealth": 42,
+  "maxHealth": 50,
   "baseAttack": 5,
   "imageScale": 0.6,
   "healthBarWidth": 150.0,

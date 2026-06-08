@@ -187,7 +187,8 @@ public class RewardPanelUI : MonoBehaviour
 
     private void RefreshOptions()
     {
-        EnsureOptionCount(magicOnlyMode ? 1 : 2);
+        EnsureOptionCount(GetRewardOptionCount());
+        LayoutRewardOptions(GetRewardOptionCount());
 
         if (magicOnlyMode)
         {
@@ -217,7 +218,14 @@ public class RewardPanelUI : MonoBehaviour
                 else
                     optionViews[1].Hide();
             }
-            for (int i = 2; i < optionViews.Count; i++)
+            if (optionViews.Count > 2)
+            {
+                if (owner.CanClaimEliteMagicModifierReward() && !goldClaimInProgress)
+                    optionViews[2].Bind("法术强化", ClaimEliteMagicModifierReward);
+                else
+                    optionViews[2].Hide();
+            }
+            for (int i = 3; i < optionViews.Count; i++)
                 optionViews[i].Hide();
         }
 
@@ -233,6 +241,45 @@ public class RewardPanelUI : MonoBehaviour
             if (text != null)
                 text.text = magicOnlyMode ? "跳过" : "离开";
         }
+    }
+
+    private void LayoutRewardOptions(int count)
+    {
+        RectTransform parent = FindOptionParent();
+        if (parent == null || count <= 0)
+            return;
+
+        float optionWidth = count >= 3 ? 134f : 170f;
+        float spacing = count >= 3 ? 146f : 190f;
+        float startX = count > 1 ? -spacing * (count - 1) * 0.5f : 0f;
+        for (int i = 0; i < optionViews.Count; i++)
+        {
+            RectTransform rect = optionViews[i] != null ? optionViews[i].transform as RectTransform : null;
+            if (rect == null)
+                continue;
+
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(startX + spacing * i, 0f);
+            rect.sizeDelta = new Vector2(optionWidth, 54f);
+        }
+    }
+
+    private int GetRewardOptionCount()
+    {
+        if (magicOnlyMode)
+            return 1;
+        return owner != null && owner.CanClaimEliteMagicModifierReward() ? 3 : 2;
+    }
+
+    private void ClaimEliteMagicModifierReward()
+    {
+        if (owner == null || goldClaimInProgress)
+            return;
+
+        owner.ClaimEliteMagicModifierReward(RefreshOptions);
     }
 
     private void ClaimGoldReward()
@@ -446,6 +493,14 @@ public class RewardPanelUI : MonoBehaviour
         if (magicChoicePanel != null)
             return;
 
+        RectTransform existingPanel = transform.parent != null ? transform.parent.Find("RewardMagicChoicePanel") as RectTransform : null;
+        if (existingPanel != null)
+        {
+            magicChoicePanel = existingPanel;
+            CacheMagicChoicePanelReferences();
+            return;
+        }
+
         RectTransform sourceRect = (RectTransform)transform;
         Image panelImage = new GameObject("RewardMagicChoicePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
         magicChoicePanel = panelImage.rectTransform;
@@ -474,11 +529,37 @@ public class RewardPanelUI : MonoBehaviour
         magicChoiceContent.pivot = new Vector2(0.5f, 0.5f);
         magicChoiceContent.anchoredPosition = new Vector2(0f, -24f);
         magicChoiceContent.sizeDelta = new Vector2(760f, 120f);
+        CacheMagicChoicePanelReferences();
 
         for (int i = 0; i < rewardMagicViews.Count; i++)
         {
             if (rewardMagicViews[i] != null)
                 rewardMagicViews[i].transform.SetParent(magicChoiceContent, false);
+        }
+    }
+
+    private void CacheMagicChoicePanelReferences()
+    {
+        if (magicChoicePanel == null)
+            return;
+
+        magicChoiceBackButton = UIManager.FindChildComponent<Button>(magicChoicePanel, "BackButton");
+        if (magicChoiceBackButton != null)
+        {
+            magicChoiceBackButton.onClick.RemoveAllListeners();
+            magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
+        }
+
+        magicChoiceContent = UIManager.FindChildRect(magicChoicePanel, "MagicChoices");
+        if (magicChoiceContent == null)
+        {
+            magicChoiceContent = new GameObject("MagicChoices", typeof(RectTransform)).GetComponent<RectTransform>();
+            magicChoiceContent.SetParent(magicChoicePanel, false);
+            magicChoiceContent.anchorMin = new Vector2(0.5f, 0.5f);
+            magicChoiceContent.anchorMax = new Vector2(0.5f, 0.5f);
+            magicChoiceContent.pivot = new Vector2(0.5f, 0.5f);
+            magicChoiceContent.anchoredPosition = new Vector2(0f, -24f);
+            magicChoiceContent.sizeDelta = new Vector2(760f, 120f);
         }
     }
 
@@ -541,7 +622,7 @@ public class RewardPanelUI : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(-180f + index * 180f, -70f);
+        rect.anchoredPosition = Vector2.zero;
         rect.sizeDelta = new Vector2(160f, 54f);
 
         TMP_Text text = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();

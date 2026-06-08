@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class BouncingTitleUI : MonoBehaviour
@@ -7,14 +8,24 @@ public class BouncingTitleUI : MonoBehaviour
     [SerializeField] private Vector2 direction = new Vector2(1f, -1f);
     [SerializeField] private RectTransform boundary;
     [SerializeField] private bool useUnscaledTime = true;
+    [SerializeField] private Button closeButton;
+    [SerializeField, Min(0f)] private float restoreDelay = 30f;
 
     private readonly Vector3[] corners = new Vector3[4];
+    private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
     private Vector2 velocity;
 
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
+        canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        if (closeButton == null)
+            closeButton = transform.Find("Close")?.GetComponent<Button>();
+        if (closeButton != null)
+            closeButton.onClick.AddListener(HideTemporarily);
         if (boundary == null)
             boundary = rectTransform.parent as RectTransform;
         ResetVelocity();
@@ -41,6 +52,38 @@ public class BouncingTitleUI : MonoBehaviour
         float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
         rectTransform.localPosition += (Vector3)(velocity * deltaTime);
         KeepInsideBounds();
+    }
+
+    private void OnDestroy()
+    {
+        if (closeButton != null)
+            closeButton.onClick.RemoveListener(HideTemporarily);
+    }
+
+    private void HideTemporarily()
+    {
+        if (canvasGroup == null)
+            return;
+
+        canvasGroup.alpha = 0f;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
+        if (closeButton != null)
+            closeButton.interactable = false;
+        CancelInvoke(nameof(RestoreVisibility));
+        Invoke(nameof(RestoreVisibility), restoreDelay);
+    }
+
+    private void RestoreVisibility()
+    {
+        if (canvasGroup == null)
+            return;
+
+        canvasGroup.alpha = 1f;
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.interactable = true;
+        if (closeButton != null)
+            closeButton.interactable = true;
     }
 
     private void ResetVelocity()
@@ -108,6 +151,7 @@ public class BouncingTitleUI : MonoBehaviour
     private void OnValidate()
     {
         speed = Mathf.Max(0f, speed);
+        restoreDelay = Mathf.Max(0f, restoreDelay);
         if (direction.sqrMagnitude <= 0.0001f)
             direction = new Vector2(1f, -1f);
     }

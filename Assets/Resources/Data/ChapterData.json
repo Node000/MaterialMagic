@@ -6,10 +6,9 @@
       "nameKey": "chapter.001.name",
       "levelLength": 18,
       "mapWidth": 5,
-      "mapHeight": 5,
-      "initialActionPower": 16,
+      "mapHeight": 8,
       "startMapX": 2,
-      "startMapY": 2,
+      "startMapY": 0,
       "hiddenLevelWeight": 0.0,
       "levelPoolIds": [
         1,

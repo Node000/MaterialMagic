@@ -45,9 +45,7 @@ public class RunMapGridSaveData
     public int height;
     public int playerX;
     public int playerY;
-    public int currentActionPower;
     public bool bossMapActive;
-    public bool pendingBossMapTransform;
     public RunMapCellSaveData[] cells = Array.Empty<RunMapCellSaveData>();
 }
 
@@ -58,6 +56,7 @@ public class RunMapCellSaveData
     public int y;
     public int levelId;
     public bool isBoss;
+    public bool isAvailable = true;
 }
 
 [Serializable]
@@ -115,7 +114,7 @@ public class MagicSlotSaveData
 
 public static class RunSaveSystem
 {
-    private const int CurrentVersion = 1;
+    private const int CurrentVersion = 2;
     private const string MapSelectionState = "MapSelection";
     private const string BeforeNodeState = "BeforeNode";
     private static bool forceNewRun;
@@ -368,15 +367,14 @@ public static class RunSaveSystem
         if (data == null || data.width <= 0 || data.height <= 0 || data.cells == null || data.cells.Length == 0)
             return null;
 
+        bool legacyGridAvailability = save == null || save.version < 2;
         RunMapGridModel grid = new RunMapGridModel
         {
             width = data.width,
             height = data.height,
             playerX = data.playerX,
             playerY = data.playerY,
-            currentActionPower = Mathf.Max(0, data.currentActionPower),
-            bossMapActive = data.bossMapActive,
-            pendingBossMapTransform = data.pendingBossMapTransform
+            bossMapActive = data.bossMapActive
         };
 
         for (int i = 0; i < data.cells.Length; i++)
@@ -390,10 +388,11 @@ public static class RunSaveSystem
                 x = cellData.x,
                 y = cellData.y,
                 level = GetLevel(cellData.levelId),
-                isBoss = cellData.isBoss
+                isBoss = cellData.isBoss,
+                isAvailable = legacyGridAvailability || cellData.isAvailable || cellData.isBoss || cellData.levelId > 0 || (cellData.x == data.playerX && cellData.y == data.playerY)
             });
         }
-        grid.WrapPosition(ref grid.playerX, ref grid.playerY);
+        grid.ClampPosition(ref grid.playerX, ref grid.playerY);
         return grid;
     }
 
@@ -456,7 +455,8 @@ public static class RunSaveSystem
                 x = cell != null ? cell.x : 0,
                 y = cell != null ? cell.y : 0,
                 levelId = cell != null && cell.level != null ? cell.level.numericId : 0,
-                isBoss = cell != null && cell.isBoss
+                isBoss = cell != null && cell.isBoss,
+                isAvailable = cell != null && cell.isAvailable
             };
         }
 
@@ -466,9 +466,7 @@ public static class RunSaveSystem
             height = grid.height,
             playerX = grid.playerX,
             playerY = grid.playerY,
-            currentActionPower = grid.currentActionPower,
             bossMapActive = grid.bossMapActive,
-            pendingBossMapTransform = grid.pendingBossMapTransform,
             cells = cells
         };
     }
