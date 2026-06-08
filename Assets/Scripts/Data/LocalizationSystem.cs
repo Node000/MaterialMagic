@@ -120,6 +120,7 @@ public static class LocalizationKeys
             case BuffEnum.ShieldReflectBoost: return "shield_reflect_boost";
             case BuffEnum.MagicAttackAll: return "magic_attack_all";
             case BuffEnum.NextMagicRepeat: return "next_magic_repeat";
+            case BuffEnum.Claw: return "claw";
             default: return buffType.ToString().ToLowerInvariant();
         }
     }
@@ -142,6 +143,14 @@ public static class LocalizationKeys
             return "sturdy";
         if (modifier is DoomModifier)
             return "doom";
+        if (modifier is EternalArrowModifier)
+            return "eternal_arrow";
+        if (modifier is FragileArrowModifier)
+            return "fragile_arrow";
+        if (modifier is RetainedArrowModifier)
+            return "retained_arrow";
+        if (modifier is HalfArrowModifier)
+            return "half_arrow";
 
         return modifier != null ? modifier.GetType().Name.ToLowerInvariant() : string.Empty;
     }

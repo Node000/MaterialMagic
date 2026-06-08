@@ -1,9 +1,11 @@
 public class DoomModifier : MaterialModifierModel
 {
-    public override void OnDiscard()
+    public override bool RemoveModifierAfterBattle => true;
+
+    public override void OnArrowBaseEffectResolve(ArrowReadContext context)
     {
-        PlayerState player = CurrentContext?.PlayerState ?? BattleManager.Instance?.PlayerState;
-        if (model != null && !model.isPlayed && player != null && player.IsEndingTurn)
-            player.TakeDirectDamage(5);
+        PlayerState player = context?.PlayerState ?? CurrentContext?.PlayerState ?? BattleManager.Instance?.PlayerState;
+        if (player != null)
+            player.TakeDamage(3, null);
     }
 }

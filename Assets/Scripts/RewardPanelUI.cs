@@ -9,8 +9,11 @@ using TMPro;
 
 public enum RewardOptionKind
 {
+    None,
     Gold,
-    Magic
+    Magic,
+    MagicModifier,
+    ArrowModifier
 }
 
 public class RewardOptionsModel
@@ -80,6 +83,7 @@ public class RewardPanelUI : MonoBehaviour
     private bool magicOnlyMode;
     private Action magicOnlyCompleted;
     private RewardOptionsModel currentRewardOptions;
+    private RewardOptionKind eliteExtraRewardKind;
 
     private const float SelectedMagicScale = 1.24f;
     private const float HoverMagicScaleBonus = 0.08f;
@@ -102,6 +106,7 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimInProgress = false;
         magicClaimed = false;
         currentRewardOptions = new RewardOptionsModel(RollBattleGoldReward(), owner.GetRewardMagicChoices(3));
+        eliteExtraRewardKind = owner.RollEliteExtraRewardKind();
         currentGoldReward = currentRewardOptions.GoldReward;
         selectedMagicView = null;
         hoveredMagicView = null;
@@ -132,6 +137,7 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimInProgress = false;
         magicClaimed = false;
         currentRewardOptions = new RewardOptionsModel(0, owner.GetRewardMagicChoices(3));
+        eliteExtraRewardKind = RewardOptionKind.None;
         currentGoldReward = currentRewardOptions.GoldReward;
         selectedMagicView = null;
         hoveredMagicView = null;
@@ -220,8 +226,10 @@ public class RewardPanelUI : MonoBehaviour
             }
             if (optionViews.Count > 2)
             {
-                if (owner.CanClaimEliteMagicModifierReward() && !goldClaimInProgress)
+                if (eliteExtraRewardKind == RewardOptionKind.MagicModifier && !goldClaimInProgress)
                     optionViews[2].Bind("法术强化", ClaimEliteMagicModifierReward);
+                else if (eliteExtraRewardKind == RewardOptionKind.ArrowModifier && !goldClaimInProgress)
+                    optionViews[2].Bind("箭头附魔", ClaimEliteArrowModifierReward);
                 else
                     optionViews[2].Hide();
             }
@@ -271,7 +279,7 @@ public class RewardPanelUI : MonoBehaviour
     {
         if (magicOnlyMode)
             return 1;
-        return owner != null && owner.CanClaimEliteMagicModifierReward() ? 3 : 2;
+        return eliteExtraRewardKind != RewardOptionKind.None ? 3 : 2;
     }
 
     private void ClaimEliteMagicModifierReward()
@@ -280,6 +288,14 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         owner.ClaimEliteMagicModifierReward(RefreshOptions);
+    }
+
+    private void ClaimEliteArrowModifierReward()
+    {
+        if (owner == null || goldClaimInProgress)
+            return;
+
+        owner.ClaimEliteArrowModifierReward(RefreshOptions);
     }
 
     private void ClaimGoldReward()

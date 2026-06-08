@@ -80,7 +80,8 @@ public enum BuffEnum
     ExtraDrawOnEnemyDamage = 37,
     ShieldReflectBoost = 38,
     MagicAttackAll = 39,
-    NextMagicRepeat = 40
+    NextMagicRepeat = 40,
+    Claw = 41
 }
 
 public enum BuffKindEnum
@@ -155,7 +156,8 @@ public enum EventRewardType
     GainSameRandomMaterials = 12,
     IncreaseDrawCount = 13,
     RemoveMaterial = 14,
-    GainNextBattleStartShield = 15
+    GainNextBattleStartShield = 15,
+    GainMaterialModifier = 16
 }
 
 public enum BonusRewardType
@@ -314,6 +316,7 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public int baseAttack;
     public float imageScale = 1f;
     public float healthBarWidth;
+    public bool isMinion;
     public BuffStackData[] initialBuffs = Array.Empty<BuffStackData>();
     public string iconName;
     public string spriteAnimationPath;
@@ -336,6 +339,7 @@ public class EventEffectData
     public int choiceCount;
     public int escalatePerUse;
     public MaterialEnum material;
+    public string modifierId;
 }
 
 [Serializable]
@@ -506,6 +510,7 @@ public class MaterialModel
     public bool isPlayed;
     public bool isTemporary;
     public bool isRetained;
+    public bool removeCardAfterBattle;
 
     public MaterialModel(string instanceId, MaterialEnum material)
     {
@@ -529,15 +534,201 @@ public class MaterialModel
 
         return false;
     }
+
+    public bool IsArrowReadable()
+    {
+        bool readable = material != MaterialEnum.None;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                readable = modifiers[i].IsArrowReadable(readable);
+        }
+        return readable;
+    }
+
+    public MaterialEnum GetArrowDisplayMaterial()
+    {
+        MaterialEnum displayMaterial = material;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                displayMaterial = modifiers[i].GetArrowDisplayMaterial(displayMaterial);
+        }
+        return displayMaterial;
+    }
+
+    public void FillArrowBaseEffectDirections(ArrowReadStep step)
+    {
+        if (step == null)
+            return;
+
+        bool usesBaseEffect = material != MaterialEnum.None;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                usesBaseEffect = modifiers[i].UsesArrowBaseEffect(usesBaseEffect);
+        }
+
+        if (usesBaseEffect)
+            step.AddBaseEffectDirection(material);
+
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i]?.FillArrowBaseEffectDirections(step);
+    }
+
+    public int GetArrowMatchTokenCount()
+    {
+        int tokenCount = 1;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                tokenCount = modifiers[i].GetArrowMatchTokenCount(tokenCount);
+        }
+        return tokenCount < 0 ? 0 : tokenCount;
+    }
+
+    public int GetAdditionalArrowReadCount()
+    {
+        int readCount = 0;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                readCount += modifiers[i].GetAdditionalArrowReadCount();
+        }
+        return readCount < 0 ? 0 : readCount;
+    }
+
+    public void TriggerBeforeArrowRead(ArrowReadContext context)
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i]?.OnBeforeArrowRead(context);
+    }
+
+    public void TriggerOnArrowBaseEffectResolve(ArrowReadContext context)
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i]?.OnArrowBaseEffectResolve(context);
+    }
+
+    public bool ShouldRemoveSourceAfterArrowRead()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].ShouldRemoveSourceAfterArrowRead())
+                return true;
+        }
+        return false;
+    }
+
+    public ArrowReadAfterReadAction GetArrowAfterReadAction()
+    {
+        ArrowReadAfterReadAction action = ArrowReadAfterReadAction.None;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] == null)
+                continue;
+
+            ArrowReadAfterReadAction modifierAction = modifiers[i].GetArrowAfterReadAction();
+            if (modifierAction != ArrowReadAfterReadAction.None)
+                action = modifierAction;
+        }
+        return action;
+    }
+
+    public ArrowReadDirectionChange GetArrowReadDirectionChange()
+    {
+        ArrowReadDirectionChange change = ArrowReadDirectionChange.None;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] == null)
+                continue;
+
+            ArrowReadDirectionChange modifierChange = modifiers[i].GetArrowReadDirectionChange();
+            if (modifierChange != ArrowReadDirectionChange.None)
+                change = modifierChange;
+        }
+        return change;
+    }
+
+    public bool ShouldRemoveAfterBattle()
+    {
+        if (removeCardAfterBattle)
+            return true;
+
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].RemoveCardAfterBattle)
+                return true;
+        }
+        return false;
+    }
+
+    public void RemoveBattleOnlyModifiers()
+    {
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+        {
+            if (modifiers[i] != null && modifiers[i].RemoveModifierAfterBattle)
+                modifiers.RemoveAt(i);
+        }
+        RebuildModifierFlags();
+    }
+
+    public MaterialModel CloneForBattle(string newInstanceId)
+    {
+        MaterialModel clone = new MaterialModel(newInstanceId, material)
+        {
+            alternateMaterial = alternateMaterial,
+            isTemporary = isTemporary,
+            isRetained = isRetained,
+            removeCardAfterBattle = removeCardAfterBattle
+        };
+        clone.enhancementIds.AddRange(enhancementIds);
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            MaterialModifierModel modifier = modifiers[i]?.Clone();
+            if (modifier != null)
+                clone.AddModifier(modifier);
+        }
+        return clone;
+    }
     public void AddModifier(MaterialModifierModel modifier)
     {
         if (modifier == null || modifiers.Contains(modifier))
             return;
 
+        if (IsSingleArrowModifier(modifier))
+            RemoveSingleArrowModifiers();
+
         modifier.model = this;
         modifiers.Add(modifier);
-        if (modifier is TemporaryModifier)
-            isTemporary = true;
+        RebuildModifierFlags();
+    }
+
+    private void RemoveSingleArrowModifiers()
+    {
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+        {
+            if (IsSingleArrowModifier(modifiers[i]))
+                modifiers.RemoveAt(i);
+        }
+    }
+
+    private static bool IsSingleArrowModifier(MaterialModifierModel modifier)
+    {
+        return modifier is HeavyArrowModifier || modifier is BigArrow2Modifier || modifier is BigArrow3Modifier || modifier is BigArrow4Modifier || modifier is ReturnArrowModifier || modifier is RandomArrowModifier || modifier is ProliferatingArrowModifier || modifier is EternalArrowModifier || modifier is FragileArrowModifier || modifier is RetainedArrowModifier;
+    }
+
+    private void RebuildModifierFlags()
+    {
+        isTemporary = false;
+        isRetained = false;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] is TemporaryModifier)
+                isTemporary = true;
+            if (modifiers[i] is RetainedArrowModifier)
+                isRetained = true;
+        }
     }
 
     public void TriggerOnDraw()
@@ -571,6 +762,12 @@ public class MaterialModel
             modifiers[i].OnDiscard();
     }
 
+    public void TriggerOnPlayedDiscard()
+    {
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+            modifiers[i].OnPlayedDiscard();
+    }
+
     public void TriggerOnRefresh()
     {
         for (int i = 0; i < modifiers.Count; i++)
@@ -590,6 +787,7 @@ public class MaterialModel
             if (modifiers[i] is T)
                 modifiers.RemoveAt(i);
         }
+        RebuildModifierFlags();
     }
 }
 

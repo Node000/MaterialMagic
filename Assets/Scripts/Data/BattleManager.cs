@@ -110,6 +110,17 @@ public class BattleManager
         return GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data) ? SpawnEnemy(data) : null;
     }
 
+    public EnemyModel SpawnMinion(int enemyId)
+    {
+        if (!GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
+            return null;
+
+        EnemyModel enemy = EnemyFactory.Create(data);
+        if (enemy != null)
+            enemy.SetMinion(true);
+        return SpawnEnemy(enemy);
+    }
+
     public EnemyModel SpawnEnemy(LevelEnemyData placement)
     {
         if (placement == null)
@@ -363,7 +374,9 @@ public class BattleManager
         TriggerMagicBattleEnd();
         ResetContinuousCastCount();
         FinishBattle();
+        BeginPlayerResolveRules();
         PlayerState?.EndTurn(removedTemporaryCards);
+        EndPlayerResolveRules();
         PlayerState?.ClearCombatState();
     }
 
@@ -563,6 +576,21 @@ public class BattleManager
         CurrentPhase = BattlePhase.Finished;
     }
 
+    public bool KillAliveMinionsForVictory()
+    {
+        bool killedAny = false;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && enemy.IsMinion && !enemy.IsDead)
+            {
+                enemy.KillAsBattleCleanup();
+                killedAny = true;
+            }
+        }
+        return killedAny;
+    }
+
     public bool HasActingEnemyAfter(int index)
     {
         for (int i = index + 1; i < enemies.Count; i++)
@@ -592,12 +620,18 @@ public class BattleManager
         if (enemies.Count == 0)
             return false;
 
+        bool hasVictoryTarget = false;
         for (int i = 0; i < enemies.Count; i++)
         {
-            if (enemies[i] != null && !enemies[i].IsDead)
+            EnemyModel enemy = enemies[i];
+            if (enemy == null || enemy.IsMinion)
+                continue;
+
+            hasVictoryTarget = true;
+            if (!enemy.IsDead)
                 return false;
         }
 
-        return true;
+        return hasVictoryTarget;
     }
 }

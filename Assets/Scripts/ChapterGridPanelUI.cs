@@ -12,7 +12,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     {
         public RunMapCellModel Model;
         public RectTransform Rect;
-        public Image Background;
+        public MapGridSlotView SlotView;
         public Image Icon;
         public TMP_Text Label;
     }
@@ -64,6 +64,9 @@ public class ChapterGridPanelUI : MonoBehaviour
     [SerializeField] private float directionCardIconSize = 68f;
     [SerializeField] private float directionCardY = 0f;
     [SerializeField] private float directionCardLocalZ = -231.7424f;
+    [SerializeField] private float gridScale = 1f;
+    [SerializeField] private float verticalScrollFollowDuration = 0.24f;
+    [SerializeField] private Ease verticalScrollFollowEase = Ease.OutQuad;
     [SerializeField] private Color cellColor = new Color(0.08f, 0.1f, 0.16f, 0.92f);
     [SerializeField] private Color emptyCellColor = new Color(0.05f, 0.06f, 0.09f, 0.62f);
     [SerializeField] private Color unavailableCellColor = new Color(0.02f, 0.025f, 0.035f, 0.32f);
@@ -79,6 +82,9 @@ public class ChapterGridPanelUI : MonoBehaviour
     private RunMapGridModel currentGrid;
     private RectTransform rectTransform;
     private RectTransform contentRoot;
+    private RectTransform scrollContent;
+    private ScrollRect scrollRect;
+    private Tween scrollTween;
     private Tween panelTween;
     private Tween markerTween;
     private Sequence bossSequence;
@@ -185,10 +191,13 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (!animated)
         {
             playerMarker.anchoredPosition = position;
+            UpdateScrollToMarker(true);
             return null;
         }
 
         markerTween = playerMarker.DOAnchorPos(position, markerMoveDuration).SetEase(markerMoveEase).SetTarget(this);
+        markerTween.OnUpdate(() => UpdateScrollToMarker(false));
+        markerTween.OnComplete(() => UpdateScrollToMarker(false));
         return markerTween;
     }
 
@@ -209,7 +218,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             for (int x = 0; x < currentGrid.width; x++)
             {
                 CellView cell = FindCell(x, y);
-                if (cell == null || cell.Icon == null)
+                if (cell == null || cell.Icon == null || cell.Model == null || !currentGrid.IsCellReachable(x, y))
                     continue;
 
                 float delay = ((currentGrid.height - 1 - y) + x) * bossWaveInterval;
@@ -261,29 +270,62 @@ public class ChapterGridPanelUI : MonoBehaviour
             shownPositionCached = true;
         }
 
-        ScrollRect scrollRect = GetComponent<ScrollRect>();
-        if (scrollRect != null)
-            scrollRect.enabled = false;
-
+        ScrollRect existingScrollRect = GetComponent<ScrollRect>();
+        scrollRect = existingScrollRect;
+        RectTransform viewport = null;
         Transform oldViewport = transform.Find("Viewport");
         if (oldViewport != null)
-            oldViewport.gameObject.SetActive(false);
+        {
+            viewport = oldViewport as RectTransform;
+            oldViewport.gameObject.SetActive(true);
+        }
+
+        if (viewport != null)
+        {
+            Transform existingContent = viewport.Find("Content");
+            scrollContent = existingContent as RectTransform;
+            if (scrollContent == null)
+            {
+                scrollContent = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+                scrollContent.SetParent(viewport, false);
+            }
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.enabled = true;
+            scrollRect.viewport = viewport;
+            scrollRect.content = scrollContent;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+        }
 
         if (contentRoot == null)
         {
             Transform existing = transform.Find("ChapterGridContent");
             contentRoot = existing as RectTransform;
+            if (contentRoot == null && scrollContent != null)
+            {
+                existing = scrollContent.Find("ChapterGridContent");
+                contentRoot = existing as RectTransform;
+            }
         }
         if (contentRoot == null)
         {
             contentRoot = new GameObject("ChapterGridContent", typeof(RectTransform)).GetComponent<RectTransform>();
-            contentRoot.SetParent(transform, false);
+            contentRoot.SetParent(scrollContent != null ? scrollContent : transform, false);
         }
-        contentRoot.anchorMin = Vector2.zero;
-        contentRoot.anchorMax = Vector2.one;
-        contentRoot.offsetMin = Vector2.zero;
-        contentRoot.offsetMax = Vector2.zero;
+        else if (scrollContent != null && contentRoot.parent != scrollContent)
+        {
+            contentRoot.SetParent(scrollContent, false);
+        }
+        contentRoot.anchorMin = new Vector2(0.5f, 1f);
+        contentRoot.anchorMax = new Vector2(0.5f, 1f);
+        contentRoot.pivot = new Vector2(0.5f, 1f);
+        contentRoot.anchoredPosition = Vector2.zero;
+        contentRoot.sizeDelta = scrollRect != null && scrollRect.viewport != null ? scrollRect.viewport.rect.size : rectTransform.rect.size;
         contentRoot.SetAsLastSibling();
+        ConfigureScrollContent();
 
         if (titleText == null)
             titleText = FindOrCreateText("Title", new Vector2(0f, -34f), new Vector2(320f, 48f), 28, TextAlignmentOptions.Center);
@@ -299,6 +341,19 @@ public class ChapterGridPanelUI : MonoBehaviour
         EnsurePlayerMarkerRoot();
     }
 
+    private void ConfigureScrollContent()
+    {
+        if (scrollContent == null)
+            return;
+
+        Vector2 viewportSize = scrollRect != null && scrollRect.viewport != null ? scrollRect.viewport.rect.size : rectTransform.rect.size;
+        scrollContent.anchorMin = new Vector2(0f, 1f);
+        scrollContent.anchorMax = new Vector2(1f, 1f);
+        scrollContent.pivot = new Vector2(0.5f, 1f);
+        scrollContent.anchoredPosition = Vector2.zero;
+        scrollContent.sizeDelta = new Vector2(0f, viewportSize.y);
+    }
+
     private void EnsurePlayerMarkerRoot()
     {
         if (playerMarker == null)
@@ -308,8 +363,8 @@ public class ChapterGridPanelUI : MonoBehaviour
         }
 
         playerMarker.SetParent(contentRoot, false);
-        playerMarker.anchorMin = new Vector2(0.5f, 0.5f);
-        playerMarker.anchorMax = new Vector2(0.5f, 0.5f);
+        playerMarker.anchorMin = new Vector2(0.5f, 1f);
+        playerMarker.anchorMax = new Vector2(0.5f, 1f);
         playerMarker.pivot = new Vector2(0.5f, 0.5f);
         playerMarker.localScale = Vector3.one;
         playerMarker.localRotation = Quaternion.identity;
@@ -377,11 +432,23 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (currentGrid == null || gridRoot == null)
             return;
 
-        float gridSide = gridRoot.rect.width > 1f ? Mathf.Min(gridRoot.rect.width, gridRoot.rect.height) : DefaultGridSide;
-        float cellSize = Mathf.Max(24f, (gridSide - CellSpacing * (Mathf.Max(currentGrid.width, currentGrid.height) - 1)) / Mathf.Max(currentGrid.width, currentGrid.height));
-        float step = cellSize + CellSpacing;
-        float firstX = -step * (currentGrid.width - 1) * 0.5f;
-        float firstY = -step * (currentGrid.height - 1) * 0.5f;
+        float viewportHeight = scrollRect != null && scrollRect.viewport != null ? scrollRect.viewport.rect.height : rectTransform.rect.height;
+        Vector2 cellSize = GetCellSize();
+        float stepX = cellSize.x + CellSpacing;
+        float stepY = cellSize.y + CellSpacing;
+        float gridWidth = stepX * (currentGrid.width - 1) + cellSize.x;
+        float gridHeight = stepY * (currentGrid.height - 1) + cellSize.y;
+        float contentHeight = Mathf.Max(viewportHeight, gridHeight + 160f);
+        if (scrollContent != null)
+            scrollContent.sizeDelta = new Vector2(0f, contentHeight);
+        contentRoot.sizeDelta = new Vector2(contentRoot.sizeDelta.x, contentHeight);
+        gridRoot.anchorMin = new Vector2(0.5f, 1f);
+        gridRoot.anchorMax = new Vector2(0.5f, 1f);
+        gridRoot.pivot = new Vector2(0.5f, 0.5f);
+        gridRoot.sizeDelta = new Vector2(gridWidth, gridHeight);
+        gridRoot.anchoredPosition = new Vector2(0f, -80f - gridHeight * 0.5f + cellSize.y * 0.5f);
+        float firstX = -gridWidth * 0.5f + cellSize.x * 0.5f;
+        float firstY = -gridHeight * 0.5f + cellSize.y * 0.5f;
 
         for (int i = 0; i < currentGrid.cells.Count; i++)
         {
@@ -389,13 +456,29 @@ public class ChapterGridPanelUI : MonoBehaviour
             if (model == null)
                 continue;
 
-            CellView cell = CreateCell(model, new Vector2(firstX + model.x * step, firstY + model.y * step), cellSize);
+            CellView cell = CreateCell(model, new Vector2(firstX + model.x * stepX, firstY + model.y * stepY), cellSize);
             cells.Add(cell);
         }
         playerMarker.SetAsLastSibling();
     }
 
-    private CellView CreateCell(RunMapCellModel model, Vector2 anchoredPosition, float cellSize)
+    private Vector2 GetCellSize()
+    {
+        Vector2 size = cellPrefab != null ? cellPrefab.sizeDelta : Vector2.zero;
+        if (size.x <= 0f || size.y <= 0f)
+        {
+            float baseGridSide = gridRoot.rect.width > 1f ? gridRoot.rect.width : DefaultGridSide;
+            float scaledGridSide = baseGridSide * Mathf.Max(1f, gridScale);
+            float fallbackSize = Mathf.Max(24f, (scaledGridSide - CellSpacing * (currentGrid.width - 1)) / currentGrid.width);
+            if (size.x <= 0f)
+                size.x = fallbackSize;
+            if (size.y <= 0f)
+                size.y = fallbackSize;
+        }
+        return size;
+    }
+
+    private CellView CreateCell(RunMapCellModel model, Vector2 anchoredPosition, Vector2 cellSize)
     {
         RectTransform rect = cellPrefab != null
             ? Instantiate(cellPrefab, gridRoot)
@@ -406,7 +489,8 @@ public class ChapterGridPanelUI : MonoBehaviour
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = new Vector2(cellSize, cellSize);
+        if (cellPrefab == null)
+            rect.sizeDelta = cellSize;
         rect.localScale = Vector3.one;
         rect.localRotation = Quaternion.identity;
         rect.gameObject.SetActive(true);
@@ -418,17 +502,22 @@ public class ChapterGridPanelUI : MonoBehaviour
 
         Image icon = FindChildImage(rect, "Icon");
         if (icon == null)
-            icon = CreateFallbackIcon(rect, cellSize);
+            icon = CreateFallbackIcon(rect, Mathf.Min(cellSize.x, cellSize.y));
         icon.raycastTarget = false;
         icon.preserveAspect = true;
 
         TMP_Text label = FindChildText(rect, "Label");
         if (label == null)
-            label = CreateFallbackLabel(rect, cellSize);
+            label = CreateFallbackLabel(rect, Mathf.Min(cellSize.x, cellSize.y));
         label.font = UIManager.GetDefaultTMPFont();
         label.raycastTarget = false;
 
-        CellView cell = new CellView { Model = model, Rect = rect, Background = background, Icon = icon, Label = label };
+        MapGridSlotView slotView = rect.GetComponent<MapGridSlotView>();
+        if (slotView == null)
+            slotView = rect.gameObject.AddComponent<MapGridSlotView>();
+        slotView.Initialize(background, icon, label);
+
+        CellView cell = new CellView { Model = model, Rect = rect, SlotView = slotView, Icon = icon, Label = label };
         ApplyCellVisual(cell);
         return cell;
     }
@@ -478,10 +567,29 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (cell == null || cell.Icon == null)
             return;
 
+        Sprite iconSprite = null;
+        string labelText = string.Empty;
+        if (cell.Model != null && cell.Model.isBoss)
+        {
+            iconSprite = Resources.Load<Sprite>("Images/UI/Boss");
+            labelText = "Boss";
+        }
+        else if (cell.Model != null && cell.Model.level != null)
+        {
+            LevelType type = cell.Model.level.levelType;
+            iconSprite = UIManager.LoadLevelTypeSprite(type);
+            labelText = UIManager.GetLevelTypeName(type);
+        }
+
+        if (cell.SlotView != null)
+        {
+            cell.SlotView.Apply(cell.Model, iconSprite, labelText);
+            return;
+        }
+
         bool unavailable = cell.Model == null || !cell.Model.isAvailable;
-        bool hasContent = !unavailable && (cell.Model.isBoss || cell.Model.level != null);
-        if (cell.Background != null)
-            cell.Background.color = unavailable ? unavailableCellColor : cellColor;
+        bool hiddenByFog = !unavailable && !cell.Model.isRevealed;
+        bool hasContent = !unavailable && !hiddenByFog && (cell.Model.isBoss || cell.Model.level != null);
         if (!hasContent)
         {
             cell.Icon.gameObject.SetActive(false);
@@ -494,20 +602,10 @@ public class ChapterGridPanelUI : MonoBehaviour
         cell.Icon.rectTransform.localScale = Vector3.one;
         if (cell.Label != null)
             cell.Label.color = labelColor;
-        if (cell.Model != null && cell.Model.isBoss)
-        {
-            cell.Icon.sprite = Resources.Load<Sprite>("Images/UI/Boss");
-            cell.Icon.color = bossIconColor;
-            if (cell.Label != null)
-                cell.Label.text = "Boss";
-            return;
-        }
-
-        LevelType type = cell.Model != null && cell.Model.level != null ? cell.Model.level.levelType : LevelType.Battle;
-        cell.Icon.sprite = UIManager.LoadLevelTypeSprite(type);
-        cell.Icon.color = levelIconColor;
+        cell.Icon.sprite = iconSprite;
+        cell.Icon.color = cell.Model != null && cell.Model.isBoss ? bossIconColor : levelIconColor;
         if (cell.Label != null)
-            cell.Label.text = UIManager.GetLevelTypeName(type);
+            cell.Label.text = labelText;
     }
 
     private void ClearGrid()
@@ -658,6 +756,30 @@ public class ChapterGridPanelUI : MonoBehaviour
     private Vector2 GetMarkerPosition(int x, int y)
     {
         return gridRoot != null ? gridRoot.anchoredPosition + GetCellPosition(x, y) : GetCellPosition(x, y);
+    }
+
+    private void UpdateScrollToMarker(bool instant)
+    {
+        if (scrollRect == null || scrollContent == null || scrollRect.viewport == null || playerMarker == null)
+            return;
+
+        float scrollableHeight = Mathf.Max(0f, scrollContent.rect.height - scrollRect.viewport.rect.height);
+        if (scrollableHeight <= 0f)
+        {
+            scrollContent.anchoredPosition = Vector2.zero;
+            return;
+        }
+
+        float markerCenterFromTop = Mathf.Max(0f, -playerMarker.anchoredPosition.y);
+        float targetY = Mathf.Clamp(markerCenterFromTop - scrollRect.viewport.rect.height * 0.5f, 0f, scrollableHeight);
+        scrollTween?.Kill(false);
+        if (instant)
+        {
+            scrollContent.anchoredPosition = new Vector2(scrollContent.anchoredPosition.x, targetY);
+            return;
+        }
+
+        scrollTween = scrollContent.DOAnchorPosY(targetY, verticalScrollFollowDuration).SetEase(verticalScrollFollowEase).SetTarget(this);
     }
 
     private CanvasGroup GetOrAddCanvasGroup()

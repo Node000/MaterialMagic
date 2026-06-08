@@ -190,7 +190,7 @@
     },
     {
       "key": "buff.attributedisabled.desc",
-      "text": "本回合不能打出指定属性素材。"
+      "text": "本回合无法选中指定属性素材。"
     },
     {
       "key": "buff.curse.name",
@@ -295,6 +295,14 @@
     {
       "key": "buff.next_magic_repeat.desc",
       "text": "下一个道具额外触发{0}次。"
+    },
+    {
+      "key": "buff.claw.name",
+      "text": "爪牙"
+    },
+    {
+      "key": "buff.claw.desc",
+      "text": "该敌人不会计入胜利条件；击败所有非爪牙敌人后会立刻死亡。"
     }
   ]
 }

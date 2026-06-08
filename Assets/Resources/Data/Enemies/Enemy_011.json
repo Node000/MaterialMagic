@@ -6,6 +6,7 @@
   "baseAttack": 2,
   "imageScale": 0.6,
   "healthBarWidth": 150.0,
+  "isMinion": false,
   "initialBuffs": [
     {
       "buffType": 23,

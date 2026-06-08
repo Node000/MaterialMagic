@@ -42,7 +42,7 @@ public class EventPanelUI : MonoBehaviour
     [SerializeField] private Ease tooltipShowEase = Ease.OutBack;
     [SerializeField] private Ease tooltipHideEase = Ease.InBack;
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
-    [SerializeField] private float tooltipYOffset = 58f;
+    [SerializeField] private float tooltipYOffset = 28f;
     [SerializeField] private float tagTooltipXOffset = 12f;
     [SerializeField] private float tagTooltipSlideDistance = 24f;
     [SerializeField] private Vector2 tagTooltipSize = new Vector2(250f, 120f);
@@ -764,9 +764,19 @@ public class EventPanelUI : MonoBehaviour
                 return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张箭头";
             case EventRewardType.GainNextBattleStartShield:
                 return "下场战斗开始时，获得" + GetEffectAmountText(effect, 1) + "点护盾";
+            case EventRewardType.GainMaterialModifier:
+                return "选择1张箭头获得" + GetMaterialModifierNameText(effect.modifierId) + "";
             default:
                 return string.Empty;
         }
+    }
+
+    private static string GetMaterialModifierNameText(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return "箭头附魔";
+
+        return LocalizationSystem.GetText("modifier." + modifierId + ".name", modifierId);
     }
 
     private static string GetEffectAmountText(EventEffectData effect, int defaultAmount)

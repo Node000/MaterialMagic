@@ -89,11 +89,17 @@ public class BuffModel
 
     public virtual string GetSlotStackText()
     {
+        if (buffType == BuffEnum.Claw)
+            return string.Empty;
+
         return stack > 1 ? stack.ToString() : string.Empty;
     }
 
     public virtual string GetTooltipStackText()
     {
+        if (buffType == BuffEnum.Claw)
+            return string.Empty;
+
         return stack > 0 ? stack.ToString() : string.Empty;
     }
 
@@ -232,6 +238,7 @@ public class BuffModel
             case BuffEnum.ShieldReflectBoost:
             case BuffEnum.MagicAttackAll:
             case BuffEnum.NextMagicRepeat:
+            case BuffEnum.Claw:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:

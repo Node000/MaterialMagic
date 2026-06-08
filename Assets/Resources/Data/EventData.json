@@ -565,6 +565,239 @@
       "numericId": 107
     },
     {
+      "id": "event_screen_protector_stall",
+      "titleKey": "event.screen_protector_stall.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.screen_protector_stall.start.1",
+            "event.screen_protector_stall.start.2"
+          ],
+          "options": [
+            {
+              "id": "free_film",
+              "titleKey": "event.screen_protector_stall.option.free",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "retained_arrow"
+                }
+              ],
+              "nextNodeId": "free_film"
+            },
+            {
+              "id": "cheap_film",
+              "titleKey": "event.screen_protector_stall.option.cheap",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "fragile_arrow"
+                }
+              ],
+              "nextNodeId": "cheap_film"
+            },
+            {
+              "id": "tempered_film",
+              "titleKey": "event.screen_protector_stall.option.tempered",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "eternal_arrow"
+                }
+              ],
+              "nextNodeId": "tempered_film"
+            }
+          ]
+        },
+        {
+          "id": "free_film",
+          "textKeys": [
+            "event.screen_protector_stall.free.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "cheap_film",
+          "textKeys": [
+            "event.screen_protector_stall.cheap.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "tempered_film",
+          "textKeys": [
+            "event.screen_protector_stall.tempered.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 110
+    },
+    {
+      "id": "event_printer_accident",
+      "titleKey": "event.printer_accident.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.printer_accident.start.1",
+            "event.printer_accident.start.2"
+          ],
+          "options": [
+            {
+              "id": "unclear",
+              "titleKey": "event.printer_accident.option.unclear",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "unclear"
+            },
+            {
+              "id": "wrong_size",
+              "titleKey": "event.printer_accident.option.wrong_size",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "big_arrow_2"
+                }
+              ],
+              "nextNodeId": "wrong_size"
+            },
+            {
+              "id": "misaligned",
+              "titleKey": "event.printer_accident.option.misaligned",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "heavy_arrow"
+                }
+              ],
+              "nextNodeId": "misaligned"
+            }
+          ]
+        },
+        {
+          "id": "unclear",
+          "textKeys": [
+            "event.printer_accident.unclear.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "wrong_size",
+          "textKeys": [
+            "event.printer_accident.wrong_size.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "misaligned",
+          "textKeys": [
+            "event.printer_accident.misaligned.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 111
+    },
+    {
+      "id": "event_website_emergency",
+      "titleKey": "event.website_emergency.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.website_emergency.start.1",
+            "event.website_emergency.start.2"
+          ],
+          "options": [
+            {
+              "id": "refresh",
+              "titleKey": "event.website_emergency.option.refresh",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 4
+                }
+              ],
+              "nextNodeId": "refresh"
+            },
+            {
+              "id": "reversed_direction",
+              "titleKey": "event.website_emergency.option.reversed_direction",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 5,
+                  "modifierId": "return_arrow"
+                }
+              ],
+              "nextNodeId": "reversed_direction"
+            },
+            {
+              "id": "popups",
+              "titleKey": "event.website_emergency.option.popups",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 16,
+                  "modifierId": "proliferating_arrow"
+                }
+              ],
+              "nextNodeId": "popups"
+            }
+          ]
+        },
+        {
+          "id": "refresh",
+          "textKeys": [
+            "event.website_emergency.refresh.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "reversed_direction",
+          "textKeys": [
+            "event.website_emergency.reversed_direction.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "popups",
+          "textKeys": [
+            "event.website_emergency.popups.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 112
+    },
+    {
       "id": "event_arrow_recycle_station",
       "titleKey": "event.arrow_recycle_station.title",
       "startNodeId": "start",

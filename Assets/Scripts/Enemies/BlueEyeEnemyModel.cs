@@ -20,7 +20,7 @@ public class BlueEyeEnemyModel : EnemyModel
         if (manager != null)
         {
             for (int i = 0; i < summonCount; i++)
-                manager.SpawnEnemy(22);
+                manager.SpawnMinion(22);
         }
         summonCount++;
         AddBuff(BuffEnum.DefensePower, 2);

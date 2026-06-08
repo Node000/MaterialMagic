@@ -25,6 +25,7 @@ public class PlayerState
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
     public List<MaterialModel> DrawPile { get; } = new List<MaterialModel>();
     public List<MaterialModel> DiscardPile { get; } = new List<MaterialModel>();
+    public List<MaterialModel> ConsumedPile { get; } = new List<MaterialModel>();
     public List<MaterialModel> Hand { get; } = new List<MaterialModel>();
     public List<MaterialModel> PlayZone { get; } = new List<MaterialModel>();
     public List<MagicModel> MagicBook { get; } = new List<MagicModel>();
@@ -112,6 +113,70 @@ public class PlayerState
         return drawnCount;
     }
 
+    public bool ApplyArrowReadAfterAction(MaterialModel card, ArrowReadAfterReadAction action)
+    {
+        if (card == null || action == ArrowReadAfterReadAction.None)
+            return false;
+
+        switch (action)
+        {
+            case ArrowReadAfterReadAction.ReturnNextTurn:
+                return ReturnArrowReadSourceNextTurn(card);
+            case ArrowReadAfterReadAction.SplitIntoHalfArrowsToDiscard:
+                return SplitArrowReadSourceToDiscard(card);
+            case ArrowReadAfterReadAction.Consume:
+                return ConsumeCardForBattle(card);
+            default:
+                return false;
+        }
+    }
+
+    private bool ReturnArrowReadSourceNextTurn(MaterialModel card)
+    {
+        if (!RemoveCardFromCombatPiles(card))
+            return false;
+
+        card.isPlayed = false;
+        TemporaryMaterialsNextTurn.Add(card);
+        GameLog.Data($"Return eternal arrow next turn {DescribeMaterial(card)}");
+        return true;
+    }
+
+    private bool SplitArrowReadSourceToDiscard(MaterialModel card)
+    {
+        if (!RemoveCardFromCombatPiles(card))
+            return false;
+
+        card.isPlayed = false;
+        AddHalfArrowToDiscard(card, 0);
+        AddHalfArrowToDiscard(card, 1);
+        GameLog.Data($"Split fragile arrow {DescribeMaterial(card)} to half arrows. discardPile={DiscardPile.Count}");
+        return true;
+    }
+
+    private void AddHalfArrowToDiscard(MaterialModel source, int index)
+    {
+        MaterialModel half = new MaterialModel("half_" + source.instanceId + "_" + index + "_" + temporaryMaterialIndex++, source.material)
+        {
+            alternateMaterial = source.alternateMaterial,
+            removeCardAfterBattle = true
+        };
+        half.AddModifier(new HalfArrowModifier());
+        DiscardPile.Add(half);
+    }
+
+    private bool RemoveCardFromCombatPiles(MaterialModel card)
+    {
+        bool removed = false;
+        removed |= Hand.Remove(card);
+        removed |= PlayZone.Remove(card);
+        removed |= DrawPile.Remove(card);
+        removed |= DiscardPile.Remove(card);
+        removed |= ConsumedPile.Remove(card);
+        removed |= TemporaryMaterialsNextTurn.Remove(card);
+        return removed;
+    }
+
     public int DrawCardsToPlayZoneTail(int count)
     {
         int drawnCount = 0;
@@ -153,6 +218,30 @@ public class PlayerState
         DiscardPileShuffledIntoDrawPile?.Invoke(shuffledCards);
         GameLog.Data($"Shuffle discard pile into draw pile. drawPile={DrawPile.Count}");
         return true;
+    }
+
+    public bool ConsumeCardForBattle(MaterialModel card)
+    {
+        if (card == null)
+            return false;
+
+        bool removed = false;
+        removed |= DrawPile.Remove(card);
+        removed |= DiscardPile.Remove(card);
+        removed |= Hand.Remove(card);
+        removed |= PlayZone.Remove(card);
+        if (removed || Deck.Contains(card) || card.isTemporary)
+            AddConsumedCard(card);
+        return removed;
+    }
+
+    public void AddConsumedCard(MaterialModel card)
+    {
+        if (card == null || ConsumedPile.Contains(card))
+            return;
+
+        card.isPlayed = false;
+        ConsumedPile.Add(card);
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
@@ -277,6 +366,7 @@ public class PlayerState
             if (card.isTemporary)
             {
                 removedTemporaryCards?.Add(card);
+                AddConsumedCard(card);
                 GameLog.Data($"Refresh removes temporary card {DescribeMaterial(card)}. hand={Hand.Count}");
                 continue;
             }
@@ -337,11 +427,13 @@ public class PlayerState
         for (int i = 0; i < PlayZone.Count; i++)
         {
             MaterialModel card = PlayZone[i];
+            card.TriggerOnPlayedDiscard();
             card.TriggerOnDiscard();
             TriggerAfterDiscard(card);
             if (card.isTemporary)
             {
                 removedTemporaryCards?.Add(card);
+                AddConsumedCard(card);
                 GameLog.Data($"Return play zone removes temporary card {DescribeMaterial(card)}.");
             }
             else
@@ -370,14 +462,22 @@ public class PlayerState
             }
             else
             {
-                for (int i = 0; i < Hand.Count; i++)
+                for (int i = Hand.Count - 1; i >= 0; i--)
                 {
                     MaterialModel card = Hand[i];
+                    if (card != null && card.isRetained)
+                    {
+                        GameLog.Data($"End turn retains hand card {DescribeMaterial(card)}.");
+                        continue;
+                    }
+
+                    Hand.RemoveAt(i);
                     card.TriggerOnDiscard();
                     TriggerAfterDiscard(card);
                     if (card.isTemporary)
                     {
                         removedTemporaryCards?.Add(card);
+                        AddConsumedCard(card);
                         GameLog.Data($"End turn removes temporary hand card {DescribeMaterial(card)}.");
                     }
                     else
@@ -386,8 +486,6 @@ public class PlayerState
                         GameLog.Data($"End turn discards hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
                     }
                 }
-
-                Hand.Clear();
             }
         }
         IsEndingTurn = false;
@@ -535,7 +633,9 @@ public class PlayerState
         ClearShield();
         ClearBuffs();
         RemoveSturdyModifiers();
+        RemoveBattleOnlyArrowState();
         TemporaryMaterialsNextTurn.Clear();
+        ConsumedPile.Clear();
     }
 
     public void RemoveSturdyModifiers()
@@ -544,6 +644,7 @@ public class PlayerState
         RemoveSturdyModifiers(PlayZone);
         RemoveSturdyModifiers(DrawPile);
         RemoveSturdyModifiers(DiscardPile);
+        RemoveSturdyModifiers(ConsumedPile);
         RemoveSturdyModifiers(Deck);
         RemoveSturdyModifiers(TemporaryMaterialsNextTurn);
     }
@@ -552,6 +653,35 @@ public class PlayerState
     {
         for (int i = 0; i < cards.Count; i++)
             cards[i]?.RemoveModifiers<SturdyModifier>();
+    }
+
+    public void RemoveBattleOnlyArrowState()
+    {
+        RemoveBattleOnlyArrowState(Hand);
+        RemoveBattleOnlyArrowState(PlayZone);
+        RemoveBattleOnlyArrowState(DrawPile);
+        RemoveBattleOnlyArrowState(DiscardPile);
+        RemoveBattleOnlyArrowState(ConsumedPile);
+        RemoveBattleOnlyArrowState(Deck);
+        RemoveBattleOnlyArrowState(TemporaryMaterialsNextTurn);
+    }
+
+    private static void RemoveBattleOnlyArrowState(List<MaterialModel> cards)
+    {
+        for (int i = cards.Count - 1; i >= 0; i--)
+        {
+            MaterialModel card = cards[i];
+            if (card == null)
+                continue;
+
+            if (card.ShouldRemoveAfterBattle())
+            {
+                cards.RemoveAt(i);
+                continue;
+            }
+
+            card.RemoveBattleOnlyModifiers();
+        }
     }
 
     public void ApplySturdyToHand()
@@ -810,6 +940,7 @@ public class PlayerState
         if (card.isTemporary)
         {
             removedTemporaryCards?.Add(card);
+            AddConsumedCard(card);
             GameLog.Data($"Remove leftmost temporary hand card {DescribeMaterial(card)}");
         }
         else
@@ -909,6 +1040,7 @@ public class PlayerState
         removed |= Hand.Remove(card);
         removed |= PlayZone.Remove(card);
         removed |= TemporaryMaterialsNextTurn.Remove(card);
+        removed |= ConsumedPile.Remove(card);
         if (removed)
             GameLog.Data($"Remove material card {DescribeMaterial(card)}");
         return removed;

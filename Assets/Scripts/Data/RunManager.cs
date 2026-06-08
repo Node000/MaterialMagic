@@ -98,15 +98,19 @@ public class RunManager
                 y = i / width,
                 level = level,
                 isBoss = false,
-                isAvailable = level != null
+                isAvailable = level != null,
+                isRevealed = false
             };
             if (cell.x == mapGrid.playerX && cell.y == mapGrid.playerY)
             {
                 cell.level = null;
                 cell.isAvailable = true;
             }
+            if (cell.isBoss)
+                cell.isRevealed = true;
             mapGrid.cells.Add(cell);
         }
+        RevealCurrentMapNeighbors();
     }
 
     public bool RestoreMapGrid(RunMapGridModel grid)
@@ -139,6 +143,7 @@ public class RunManager
 
         mapGrid.playerX = nextX;
         mapGrid.playerY = nextY;
+        RevealCurrentMapNeighbors();
         return targetCell;
     }
 
@@ -149,6 +154,25 @@ public class RunManager
             cell.level = null;
     }
 
+    public void RevealCurrentMapNeighbors()
+    {
+        if (mapGrid == null)
+            return;
+
+        RevealMapCell(mapGrid.playerX, mapGrid.playerY);
+        RevealMapCell(mapGrid.playerX, mapGrid.playerY + 1);
+        RevealMapCell(mapGrid.playerX, mapGrid.playerY - 1);
+        RevealMapCell(mapGrid.playerX - 1, mapGrid.playerY);
+        RevealMapCell(mapGrid.playerX + 1, mapGrid.playerY);
+    }
+
+    private void RevealMapCell(int x, int y)
+    {
+        RunMapCellModel cell = mapGrid.GetCell(x, y);
+        if (cell != null && cell.isAvailable)
+            cell.isRevealed = true;
+    }
+
     public void ActivateBossMap()
     {
         if (mapGrid == null)
@@ -157,10 +181,11 @@ public class RunManager
         mapGrid.bossMapActive = true;
         for (int i = 0; i < mapGrid.cells.Count; i++)
         {
-            if (mapGrid.cells[i] != null)
+            RunMapCellModel cell = mapGrid.cells[i];
+            if (cell != null && mapGrid.IsCellReachable(cell.x, cell.y))
             {
-                mapGrid.cells[i].isAvailable = true;
-                mapGrid.cells[i].isBoss = true;
+                cell.isBoss = true;
+                cell.isRevealed = true;
             }
         }
     }

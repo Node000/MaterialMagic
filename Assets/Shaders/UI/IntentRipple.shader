@@ -8,6 +8,7 @@ Shader "UI/IntentRipple"
         _RingWidth ("Ring Width", Range(0.01,0.4)) = 0.08
         _RingSpacing ("Ring Spacing", Range(0.05,0.5)) = 0.18
         _RingCount ("Ring Count", Range(1,6)) = 3
+        _RippleSize ("Ripple Size", Float) = 74
     }
     SubShader
     {
@@ -35,6 +36,7 @@ Shader "UI/IntentRipple"
                 float4 vertex : SV_POSITION;
                 fixed4 color : COLOR;
                 float2 texcoord : TEXCOORD0;
+                float2 localPosition : TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -43,20 +45,23 @@ Shader "UI/IntentRipple"
             float _RingWidth;
             float _RingSpacing;
             float _RingCount;
+            float _RippleSize;
 
             v2f vert(appdata_t v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.texcoord = v.texcoord;
+                o.localPosition = v.vertex.xy;
                 o.color = v.color * _Color;
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float2 centered = i.texcoord - 0.5;
-                float dist = length(centered) * 2.0;
+                float halfSize = max(_RippleSize * 0.5, 0.0001);
+                float2 centered = i.localPosition / halfSize;
+                float dist = length(centered);
                 float alpha = 0;
                 for (int ring = 0; ring < 6; ring++)
                 {

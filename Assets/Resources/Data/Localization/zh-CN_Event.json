@@ -551,6 +551,114 @@
     {
       "key": "event.arrow_claw_machine.leave.1",
       "text": "你松开操纵杆，娃娃机里的箭头继续闪着霓虹光。"
+    },
+    {
+      "key": "event.screen_protector_stall.title",
+      "text": "贴膜摊"
+    },
+    {
+      "key": "event.screen_protector_stall.start.1",
+      "text": "路边小摊挂着一排会发光的保护膜，摊主说每一张都能贴在箭头上。"
+    },
+    {
+      "key": "event.screen_protector_stall.start.2",
+      "text": "他熟练地甩出刮板，气泡在霓虹灯下像小型魔法事故。"
+    },
+    {
+      "key": "event.screen_protector_stall.option.free",
+      "text": "免费贴膜"
+    },
+    {
+      "key": "event.screen_protector_stall.option.cheap",
+      "text": "劣质膜"
+    },
+    {
+      "key": "event.screen_protector_stall.option.tempered",
+      "text": "钢化膜"
+    },
+    {
+      "key": "event.screen_protector_stall.free.1",
+      "text": "免费膜意外地很服帖。选择一张箭头，让它在手里多待一会儿。"
+    },
+    {
+      "key": "event.screen_protector_stall.cheap.1",
+      "text": "膜一贴上就裂出漂亮纹路。选择一张箭头，让它变得脆弱。"
+    },
+    {
+      "key": "event.screen_protector_stall.tempered.1",
+      "text": "钢化膜发出清脆的咔哒声。选择一张箭头，让它下回合也会回来。"
+    },
+    {
+      "key": "event.printer_accident.title",
+      "text": "打印机事故"
+    },
+    {
+      "key": "event.printer_accident.start.1",
+      "text": "一台自助打印机正在吐出方向箭头，纸张边缘冒着热气。"
+    },
+    {
+      "key": "event.printer_accident.start.2",
+      "text": "屏幕上写着“打印成功”，但你很确定它什么都没对齐。"
+    },
+    {
+      "key": "event.printer_accident.option.unclear",
+      "text": "看不出来"
+    },
+    {
+      "key": "event.printer_accident.option.wrong_size",
+      "text": "大小不对"
+    },
+    {
+      "key": "event.printer_accident.option.misaligned",
+      "text": "错位了"
+    },
+    {
+      "key": "event.printer_accident.unclear.1",
+      "text": "你决定假装没看懂。打印机退回两枚硬币作为精神损失费。"
+    },
+    {
+      "key": "event.printer_accident.wrong_size.1",
+      "text": "打印比例被拉大了。选择一张箭头，把它变成更占配方格的大箭头。"
+    },
+    {
+      "key": "event.printer_accident.misaligned.1",
+      "text": "同一个箭头被印了两遍。选择一张箭头，让它读取时变得更重。"
+    },
+    {
+      "key": "event.website_emergency.title",
+      "text": "网站突发问题"
+    },
+    {
+      "key": "event.website_emergency.start.1",
+      "text": "你打开一个本该显示地图的网站，页面却开始疯狂抖动。"
+    },
+    {
+      "key": "event.website_emergency.start.2",
+      "text": "错误提示一层叠一层，像一群急着报名的怪物。"
+    },
+    {
+      "key": "event.website_emergency.option.refresh",
+      "text": "刷新就好"
+    },
+    {
+      "key": "event.website_emergency.option.reversed_direction",
+      "text": "方向反了"
+    },
+    {
+      "key": "event.website_emergency.option.popups",
+      "text": "好多弹窗"
+    },
+    {
+      "key": "event.website_emergency.refresh.1",
+      "text": "你按下刷新键，页面短暂恢复正常，连带着你的精神也恢复了一点。"
+    },
+    {
+      "key": "event.website_emergency.reversed_direction.1",
+      "text": "网页把方向箭头渲染反了。你获得一张返回符号。"
+    },
+    {
+      "key": "event.website_emergency.popups.1",
+      "text": "弹窗越关越多。选择一张箭头，让它学会在打出后复制自己。"
     }
   ]
 }

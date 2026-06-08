@@ -11,7 +11,8 @@ public class MaterialListPanelUI : MonoBehaviour
     {
         FullDeck,
         DrawPile,
-        DiscardPile
+        DiscardPile,
+        ConsumedPile
     }
 
     [SerializeField] private RectTransform waterMaterialRow;
@@ -48,6 +49,7 @@ public class MaterialListPanelUI : MonoBehaviour
     private Action selectionCancelled;
     private int selectionCount;
     private bool selectionLocked;
+    private string selectionTitleOverride;
     private DisplayMode displayMode = DisplayMode.DrawPile;
 
     public void Initialize(HandSystemUI owner)
@@ -82,15 +84,21 @@ public class MaterialListPanelUI : MonoBehaviour
 
     public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted)
     {
-        BeginSelection(count, predicate, onCompleted, null);
+        BeginSelection(count, predicate, onCompleted, null, null);
     }
 
     public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted, Action onCancelled)
+    {
+        BeginSelection(count, predicate, onCompleted, onCancelled, null);
+    }
+
+    public void BeginSelection(int count, Predicate<MaterialModel> predicate, Action<IReadOnlyList<MaterialModel>> onCompleted, Action onCancelled, string titleOverride)
     {
         selectionCount = Mathf.Max(1, count);
         selectionPredicate = predicate;
         selectionCompleted = onCompleted;
         selectionCancelled = onCancelled;
+        selectionTitleOverride = titleOverride;
         selectionLocked = true;
         displayMode = DisplayMode.FullDeck;
         selectedMaterials.Clear();
@@ -220,7 +228,8 @@ public class MaterialListPanelUI : MonoBehaviour
         {
             if (selectionLocked)
             {
-                CancelSelection();
+                if (selectionCancelled != null)
+                    CancelSelection();
                 return;
             }
 
@@ -264,7 +273,7 @@ public class MaterialListPanelUI : MonoBehaviour
 
         if (selectionCompleted != null)
         {
-            titleText.text = "选择素材";
+            titleText.text = !string.IsNullOrEmpty(selectionTitleOverride) ? selectionTitleOverride : "选择素材";
             return;
         }
 
@@ -272,6 +281,9 @@ public class MaterialListPanelUI : MonoBehaviour
         {
             case DisplayMode.DiscardPile:
                 titleText.text = "弃牌堆";
+                break;
+            case DisplayMode.ConsumedPile:
+                titleText.text = "消耗堆";
                 break;
             case DisplayMode.DrawPile:
                 titleText.text = "抽牌堆";
@@ -331,6 +343,13 @@ public class MaterialListPanelUI : MonoBehaviour
             return count;
         }
 
+        if (selectionCompleted == null && displayMode == DisplayMode.ConsumedPile)
+        {
+            for (int i = 0; i < state.ConsumedPile.Count; i++)
+                count += CountMaterialRows(state.ConsumedPile[i], material);
+            return count;
+        }
+
         for (int i = 0; i < state.Deck.Count; i++)
             count += CountMaterialRows(state.Deck[i], material);
         for (int i = 0; i < state.Hand.Count; i++)
@@ -362,6 +381,13 @@ public class MaterialListPanelUI : MonoBehaviour
         {
             for (int i = 0; i < state.DiscardPile.Count; i++)
                 CreateMaterialCardsForRow(row, state.DiscardPile[i], material);
+            return;
+        }
+
+        if (selectionCompleted == null && displayMode == DisplayMode.ConsumedPile)
+        {
+            for (int i = 0; i < state.ConsumedPile.Count; i++)
+                CreateMaterialCardsForRow(row, state.ConsumedPile[i], material);
             return;
         }
 
@@ -464,11 +490,18 @@ public class MaterialListPanelUI : MonoBehaviour
         return selectionCompleted == null || (materialModel != null && (selectionPredicate == null || selectionPredicate(materialModel)));
     }
 
+    public void EndSelectionMode()
+    {
+        ClearSelectionMode();
+        gameObject.SetActive(false);
+    }
+
     private void ClearSelectionMode()
     {
         selectionPredicate = null;
         selectionCompleted = null;
         selectionCancelled = null;
+        selectionTitleOverride = null;
         selectionLocked = false;
         selectionCount = 0;
         selectedMaterials.Clear();

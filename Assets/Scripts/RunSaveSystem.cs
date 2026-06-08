@@ -57,6 +57,7 @@ public class RunMapCellSaveData
     public int levelId;
     public bool isBoss;
     public bool isAvailable = true;
+    public bool isRevealed;
 }
 
 [Serializable]
@@ -114,7 +115,7 @@ public class MagicSlotSaveData
 
 public static class RunSaveSystem
 {
-    private const int CurrentVersion = 2;
+    private const int CurrentVersion = 3;
     private const string MapSelectionState = "MapSelection";
     private const string BeforeNodeState = "BeforeNode";
     private static bool forceNewRun;
@@ -314,6 +315,7 @@ public static class RunSaveSystem
         player.Deck.Clear();
         player.DrawPile.Clear();
         player.DiscardPile.Clear();
+        player.ConsumedPile.Clear();
         player.Hand.Clear();
         player.PlayZone.Clear();
         player.MagicBook.Clear();
@@ -368,6 +370,7 @@ public static class RunSaveSystem
             return null;
 
         bool legacyGridAvailability = save == null || save.version < 2;
+        bool legacyGridReveal = save == null || save.version < 3;
         RunMapGridModel grid = new RunMapGridModel
         {
             width = data.width,
@@ -389,7 +392,8 @@ public static class RunSaveSystem
                 y = cellData.y,
                 level = GetLevel(cellData.levelId),
                 isBoss = cellData.isBoss,
-                isAvailable = legacyGridAvailability || cellData.isAvailable || cellData.isBoss || cellData.levelId > 0 || (cellData.x == data.playerX && cellData.y == data.playerY)
+                isAvailable = legacyGridAvailability || cellData.isAvailable || cellData.isBoss || cellData.levelId > 0 || (cellData.x == data.playerX && cellData.y == data.playerY),
+                isRevealed = legacyGridReveal ? cellData.isBoss || (cellData.x == data.playerX && cellData.y == data.playerY) : cellData.isRevealed
             });
         }
         grid.ClampPosition(ref grid.playerX, ref grid.playerY);
@@ -456,7 +460,8 @@ public static class RunSaveSystem
                 y = cell != null ? cell.y : 0,
                 levelId = cell != null && cell.level != null ? cell.level.numericId : 0,
                 isBoss = cell != null && cell.isBoss,
-                isAvailable = cell != null && cell.isAvailable
+                isAvailable = cell != null && cell.isAvailable,
+                isRevealed = cell != null && cell.isRevealed
             };
         }
 
@@ -600,6 +605,18 @@ public static class RunSaveSystem
         if (modifier is LiquefyModifier) return "liquefy";
         if (modifier is ChargeModifier) return "charge";
         if (modifier is VortexModifier) return "vortex";
+        if (modifier is HeavyArrowModifier) return "heavy_arrow";
+        if (modifier is BigArrow2Modifier) return "big_arrow_2";
+        if (modifier is BigArrow3Modifier) return "big_arrow_3";
+        if (modifier is BigArrow4Modifier) return "big_arrow_4";
+        if (modifier is ReturnArrowModifier) return "return_arrow";
+        if (modifier is RandomArrowModifier) return "random_arrow";
+        if (modifier is ProliferatingArrowModifier) return "proliferating_arrow";
+        if (modifier is EternalArrowModifier) return "eternal_arrow";
+        if (modifier is FragileArrowModifier) return "fragile_arrow";
+        if (modifier is RetainedArrowModifier) return "retained_arrow";
+        if (modifier is HalfArrowModifier) return "half_arrow";
+        if (modifier is DoomModifier) return "doom";
         if (modifier is TemporaryModifier) return "temporary";
         return string.Empty;
     }
@@ -613,6 +630,18 @@ public static class RunSaveSystem
             case "liquefy": return new LiquefyModifier();
             case "charge": return new ChargeModifier();
             case "vortex": return new VortexModifier();
+            case "heavy_arrow": return new HeavyArrowModifier();
+            case "big_arrow_2": return new BigArrow2Modifier();
+            case "big_arrow_3": return new BigArrow3Modifier();
+            case "big_arrow_4": return new BigArrow4Modifier();
+            case "return_arrow": return new ReturnArrowModifier();
+            case "random_arrow": return new RandomArrowModifier();
+            case "proliferating_arrow": return new ProliferatingArrowModifier();
+            case "eternal_arrow": return new EternalArrowModifier();
+            case "fragile_arrow": return new FragileArrowModifier();
+            case "retained_arrow": return new RetainedArrowModifier();
+            case "half_arrow": return new HalfArrowModifier();
+            case "doom": return new DoomModifier();
             case "temporary": return new TemporaryModifier();
             default: return null;
         }

@@ -48,6 +48,90 @@
       "nameKey": "modifier.sturdy.name",
       "descriptionKey": "modifier.sturdy.desc",
       "lineColor": "#D19B5A"
+    },
+    {
+      "id": "doom",
+      "script": "DoomModifier",
+      "nameKey": "modifier.doom.name",
+      "descriptionKey": "modifier.doom.desc",
+      "lineColor": "#D95757"
+    },
+    {
+      "id": "heavy_arrow",
+      "script": "HeavyArrowModifier",
+      "nameKey": "modifier.heavy_arrow.name",
+      "descriptionKey": "modifier.heavy_arrow.desc",
+      "lineColor": "#9C6BFF"
+    },
+    {
+      "id": "big_arrow_2",
+      "script": "BigArrow2Modifier",
+      "nameKey": "modifier.big_arrow_2.name",
+      "descriptionKey": "modifier.big_arrow_2.desc",
+      "lineColor": "#FFB84D"
+    },
+    {
+      "id": "big_arrow_3",
+      "script": "BigArrow3Modifier",
+      "nameKey": "modifier.big_arrow_3.name",
+      "descriptionKey": "modifier.big_arrow_3.desc",
+      "lineColor": "#FF9F33"
+    },
+    {
+      "id": "big_arrow_4",
+      "script": "BigArrow4Modifier",
+      "nameKey": "modifier.big_arrow_4.name",
+      "descriptionKey": "modifier.big_arrow_4.desc",
+      "lineColor": "#FF7F1A"
+    },
+    {
+      "id": "return_arrow",
+      "script": "ReturnArrowModifier",
+      "nameKey": "modifier.return_arrow.name",
+      "descriptionKey": "modifier.return_arrow.desc",
+      "lineColor": "#FFFFFF"
+    },
+    {
+      "id": "random_arrow",
+      "script": "RandomArrowModifier",
+      "nameKey": "modifier.random_arrow.name",
+      "descriptionKey": "modifier.random_arrow.desc",
+      "lineColor": "#D86BFF"
+    },
+    {
+      "id": "proliferating_arrow",
+      "script": "ProliferatingArrowModifier",
+      "nameKey": "modifier.proliferating_arrow.name",
+      "descriptionKey": "modifier.proliferating_arrow.desc",
+      "lineColor": "#65E38B"
+    },
+    {
+      "id": "eternal_arrow",
+      "script": "EternalArrowModifier",
+      "nameKey": "modifier.eternal_arrow.name",
+      "descriptionKey": "modifier.eternal_arrow.desc",
+      "lineColor": "#FFD96B"
+    },
+    {
+      "id": "fragile_arrow",
+      "script": "FragileArrowModifier",
+      "nameKey": "modifier.fragile_arrow.name",
+      "descriptionKey": "modifier.fragile_arrow.desc",
+      "lineColor": "#C7F2FF"
+    },
+    {
+      "id": "retained_arrow",
+      "script": "RetainedArrowModifier",
+      "nameKey": "modifier.retained_arrow.name",
+      "descriptionKey": "modifier.retained_arrow.desc",
+      "lineColor": "#8BEA8B"
+    },
+    {
+      "id": "half_arrow",
+      "script": "HalfArrowModifier",
+      "nameKey": "modifier.half_arrow.name",
+      "descriptionKey": "modifier.half_arrow.desc",
+      "lineColor": "#B0B0B0"
     }
   ]
 }

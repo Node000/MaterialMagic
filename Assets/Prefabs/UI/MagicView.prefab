@@ -151,6 +151,11 @@ MonoBehaviour:
   tooltipNameText: {fileID: 1742214259019776607}
   tooltipDescriptionText: {fileID: 1802210053773372698}
   tooltipEffectText: {fileID: 2675315260679234447}
+  modifierTooltipRoot: {fileID: 0}
+  modifierTooltipText: {fileID: 0}
+  modifierTooltipSize: {x: 230, y: 76}
+  modifierTooltipVerticalPadding: 22
+  modifierTooltipGap: 8
   modifierMarkerImage: {fileID: 3061875667698673557}
   UpBackgroundColor: {r: 0.106918216, g: 0.106918216, b: 0.106918216, a: 1}
   LeftBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
@@ -163,7 +168,7 @@ MonoBehaviour:
   tagTooltipText: {fileID: 0}
   tagTooltipXOffset: 12
   tagTooltipSlideDistance: 28
-  tagTooltipSize: {x: 230, y: 120}
+  tagTooltipSize: {x: 172.5, y: 120}
   tagTooltipLineHeight: 22
   tagTooltipVerticalPadding: 20
   tooltipFadeDuration: 0.12
@@ -1206,7 +1211,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 8}
-  m_SizeDelta: {x: 230, y: 136}
+  m_SizeDelta: {x: 230, y: 102}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &7474171788886932575
 CanvasRenderer:

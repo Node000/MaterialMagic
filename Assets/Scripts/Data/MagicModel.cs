@@ -223,6 +223,25 @@ public class MagicModel
         return true;
     }
 
+    public bool IsMatch(IReadOnlyList<ArrowReadToken> sequence, int startIndex)
+    {
+        if (Data.matchRule == MagicMatchRule.AnyTwoDifferentElements)
+            return IsAnyTwoDifferentElements(sequence, startIndex);
+
+        MaterialEnum[] recipe = Data.recipe;
+        if (sequence == null || recipe == null || startIndex < 0 || startIndex + recipe.Length > sequence.Count)
+            return false;
+
+        for (int i = 0; i < recipe.Length; i++)
+        {
+            ArrowReadToken token = sequence[startIndex + i];
+            if (token == null || !token.CanActAs(recipe[i]))
+                return false;
+        }
+
+        return true;
+    }
+
     protected EnemyModel Target(BattleManager battleManager)
     {
         return battleManager?.GetTargetEnemy();
@@ -446,6 +465,21 @@ public class MagicModel
 
         MaterialEnum firstMaterial = first.material;
         MaterialEnum secondMaterial = second.material;
+        return IsBasicElement(firstMaterial) && IsBasicElement(secondMaterial) && firstMaterial != secondMaterial;
+    }
+
+    private static bool IsAnyTwoDifferentElements(IReadOnlyList<ArrowReadToken> sequence, int startIndex)
+    {
+        if (sequence == null || startIndex < 0 || startIndex + 1 >= sequence.Count)
+            return false;
+
+        ArrowReadToken first = sequence[startIndex];
+        ArrowReadToken second = sequence[startIndex + 1];
+        if (first == null || second == null)
+            return false;
+
+        MaterialEnum firstMaterial = first.DisplayMaterial;
+        MaterialEnum secondMaterial = second.DisplayMaterial;
         return IsBasicElement(firstMaterial) && IsBasicElement(secondMaterial) && firstMaterial != secondMaterial;
     }
 

@@ -18,6 +18,10 @@ public class EnemyIntentView : MonoBehaviour
     [SerializeField] private float iconTextSpacing = 6f;
     [SerializeField] private float minWidth = 58f;
 
+    private const string RippleMaterialResourcePath = "Materials/IntentRipple";
+    private const string RippleShaderName = "UI/IntentRipple";
+    private static Material rippleMaterialTemplate;
+
     private RectTransform rectTransform;
     private Vector2 baseAnchoredPosition;
     private float phase;
@@ -124,16 +128,22 @@ public class EnemyIntentView : MonoBehaviour
             return null;
 
         float duration = durationOverride > 0f ? durationOverride : rippleDuration;
-        rippleImage.gameObject.SetActive(true);
-        rippleImage.color = Color.white;
         rippleImage.rectTransform.sizeDelta = new Vector2(rippleSize, rippleSize);
         rippleImage.rectTransform.anchoredPosition = Vector2.zero;
         EnsureRippleMaterial();
         if (rippleMaterial == null)
-            return rippleImage.DOFade(0f, duration).OnComplete(() => rippleImage.gameObject.SetActive(false));
+        {
+            rippleImage.gameObject.SetActive(false);
+            return null;
+        }
 
+        rippleImage.gameObject.SetActive(true);
+        rippleImage.color = Color.white;
+        rippleImage.canvasRenderer.SetAlpha(1f);
+        rippleImage.material = rippleMaterial;
         rippleMaterial.SetColor("_Color", Color.white);
         rippleMaterial.SetFloat("_Progress", 0f);
+        rippleMaterial.SetFloat("_RippleSize", rippleSize);
         rippleMaterial.SetFloat("_RingCount", rippleRingCount);
         return DOTween.To(() => 0f, value => rippleMaterial.SetFloat("_Progress", value), 1f, duration)
             .SetEase(Ease.OutQuad)
@@ -180,10 +190,22 @@ public class EnemyIntentView : MonoBehaviour
             return;
         if (rippleMaterial == null)
         {
-            Shader shader = Shader.Find("UI/IntentRipple");
-            if (shader == null)
-                return;
-            rippleMaterial = new Material(shader);
+            if (rippleMaterialTemplate == null)
+                rippleMaterialTemplate = Resources.Load<Material>(RippleMaterialResourcePath);
+
+            if (rippleMaterialTemplate != null)
+            {
+                rippleMaterial = new Material(rippleMaterialTemplate);
+            }
+            else
+            {
+                Shader shader = Shader.Find(RippleShaderName);
+                if (shader == null)
+                    return;
+                rippleMaterial = new Material(shader);
+            }
+
+            rippleMaterial.hideFlags = HideFlags.DontSave;
             rippleMaterial.SetColor("_Color", Color.white);
             rippleImage.material = rippleMaterial;
         }

@@ -67,6 +67,9 @@ public class HandSystemUI : MonoBehaviour
 	private RectTransform discardPileArea;
 
 	[SerializeField]
+	private RectTransform consumedPileArea;
+
+	[SerializeField]
 	private RectTransform magicBookArea;
 
 	[SerializeField]
@@ -96,11 +99,16 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private Button endTurnButton;
 
+	private TMP_Text endTurnButtonText;
+
 	[SerializeField]
 	private TMP_Text deckCountText;
 
 	[SerializeField]
 	private TMP_Text discardCountText;
+
+	[SerializeField]
+	private TMP_Text consumedCountText;
 
 	[Header("Buff栏参数")]
 	[SerializeField]
@@ -260,6 +268,14 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private Ease floatingTextFadeEase = Ease.OutQuad;
 
+    private RectTransform disabledCardPopupRoot;
+
+    private TMP_Text disabledCardPopupText;
+
+    private CanvasGroup disabledCardPopupCanvasGroup;
+
+    private Tween disabledCardPopupTween;
+
 	[Header("敌人血条动画参数")]
 	[SerializeField]
 	private float enemyHealthFillDuration = 0.35f;
@@ -288,15 +304,11 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private UIManager uiManager;
 
-	[Header("手机端输入")]
+	[Header("出牌输入")]
     [SerializeField]
+    [FormerlySerializedAs("mobilePlayInputScreenHeightThreshold")]
     [Range(0f, 1f)]
-    private float mobilePlayInputScreenHeightThreshold = 0.5f;
-
-#if UNITY_EDITOR
-    [SerializeField]
-    private bool simulateMobileUpperHalfPlayInputInEditor;
-#endif
+    private float playInputScreenHeightThreshold = 0.5f;
 
 	private readonly List<HandCardView> cardViews = new List<HandCardView>();
 
@@ -319,6 +331,8 @@ public class HandSystemUI : MonoBehaviour
     private PointerEventData playInputPointerEventData;
 
     private EventSystem playInputEventSystem;
+
+    private BuffSlotView pinnedBuffTooltipSlot;
 
 	private BattleManager battleManager;
 
@@ -394,6 +408,8 @@ public class HandSystemUI : MonoBehaviour
     private Action<int> pendingShopMagicSlotChosen;
 
 	private MagicModifierData pendingMagicModifier;
+
+    private MaterialModifierData pendingMaterialModifier;
 
 	private EventModel currentEvent;
 
@@ -1136,13 +1152,104 @@ public class HandSystemUI : MonoBehaviour
 
 	public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)
 	{
+        if (pinnedBuffTooltipSlot != null && pinnedBuffTooltipSlot != slot)
+            return;
+
 		GetUIManager().ShowBuffTooltip(slot, buff);
 	}
 
 	public void HideBuffTooltip(BuffSlotView slot)
 	{
+        if (pinnedBuffTooltipSlot != null && pinnedBuffTooltipSlot == slot)
+            return;
+
 		GetUIManager().HideBuffTooltip(slot);
 	}
+
+    public void TogglePinnedBuffTooltip(BuffSlotView slot, BuffModel buff)
+    {
+        if (slot == null || buff == null)
+            return;
+
+        if (pinnedBuffTooltipSlot == slot)
+        {
+            pinnedBuffTooltipSlot = null;
+            GetUIManager().HideBuffTooltip(slot);
+            return;
+        }
+
+        if (pinnedBuffTooltipSlot != null)
+            GetUIManager().HideBuffTooltip(pinnedBuffTooltipSlot);
+        pinnedBuffTooltipSlot = slot;
+        GetUIManager().ShowBuffTooltip(slot, buff);
+    }
+
+    public void ClearPinnedBuffTooltip(BuffSlotView slot)
+    {
+        if (pinnedBuffTooltipSlot == slot)
+            pinnedBuffTooltipSlot = null;
+    }
+
+    private void HidePinnedBuffTooltipOnOutsideClick()
+    {
+        if (pinnedBuffTooltipSlot == null || !TryGetPrimaryPointerDown(out Vector2 screenPosition))
+            return;
+
+        if (IsPointerOverBuffSlot(screenPosition))
+            return;
+
+        BuffSlotView slot = pinnedBuffTooltipSlot;
+        pinnedBuffTooltipSlot = null;
+        GetUIManager().HideBuffTooltip(slot);
+    }
+
+    private bool TryGetPrimaryPointerDown(out Vector2 screenPosition)
+    {
+        screenPosition = default;
+        if (Input.GetMouseButtonDown(0))
+        {
+            screenPosition = Input.mousePosition;
+            return true;
+        }
+
+        if (Input.touchCount <= 0)
+            return false;
+
+        Touch touch = Input.GetTouch(0);
+        if (touch.phase != TouchPhase.Began)
+            return false;
+
+        screenPosition = touch.position;
+        return true;
+    }
+
+    private bool IsPointerOverBuffSlot(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return false;
+
+        if (playInputPointerEventData == null || playInputEventSystem != eventSystem)
+        {
+            playInputEventSystem = eventSystem;
+            playInputPointerEventData = new PointerEventData(eventSystem);
+        }
+
+        playInputPointerEventData.Reset();
+        playInputPointerEventData.position = screenPosition;
+        playInputPointerEventData.button = PointerEventData.InputButton.Left;
+        playInputRaycastResults.Clear();
+        eventSystem.RaycastAll(playInputPointerEventData, playInputRaycastResults);
+
+        for (int i = 0; i < playInputRaycastResults.Count; i++)
+        {
+            GameObject hitObject = playInputRaycastResults[i].gameObject;
+            if (hitObject != null && hitObject.GetComponentInParent<BuffSlotView>() != null)
+                return true;
+        }
+
+        return false;
+    }
 
     public void ShowModifierTooltip(HandCardView cardView, MaterialModel materialModel)
     {
@@ -1609,7 +1716,9 @@ public class HandSystemUI : MonoBehaviour
 
             cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y);
             cell.isBoss = cell.x == 2 && cell.y == 7;
+            cell.isRevealed = cell.isBoss;
         }
+        runManager?.RevealCurrentMapNeighbors();
     }
 
     private static bool IsDesignedChapterMapCellAvailable(int x, int y)
@@ -1692,6 +1801,7 @@ public class HandSystemUI : MonoBehaviour
             yield return moveTween.WaitForCompletion();
 
         SaveRunProgress();
+        panel?.RefreshCellVisuals();
         float delay = panel != null ? panel.EnterLevelDelayAfterMove : 0.2f;
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
@@ -2024,6 +2134,7 @@ public class HandSystemUI : MonoBehaviour
         battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
+        CacheEndTurnButtonText();
 		GetUIManager();
 		EnsurePileButtons();
 			CreateTopBar();
@@ -2078,6 +2189,8 @@ public class HandSystemUI : MonoBehaviour
 
 	private void Update()
 	{
+        HidePinnedBuffTooltipOnOutsideClick();
+
 		if (Input.GetKeyDown(KeyCode.Escape))
 		{
 			ToggleSettingsPanel();
@@ -2150,6 +2263,16 @@ public class HandSystemUI : MonoBehaviour
 				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleDiscardPilePanel));
 			}
 		}
+		if ((Object)(object)consumedPileArea != (Object)null)
+		{
+			Button component = ((Component)consumedPileArea).GetComponent<Button>();
+			if ((Object)(object)component != (Object)null)
+			{
+				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleConsumedPilePanel));
+			}
+		}
+        disabledCardPopupTween?.Kill(false);
+        disabledCardPopupTween = null;
 		DOTween.Kill((object)this, false);
 		for (int i = 0; i < enemyViewStates.Count; i++)
 		{
@@ -2186,10 +2309,12 @@ public class HandSystemUI : MonoBehaviour
 			}
 			return;
 		}
-		if (playerState.IsMaterialDisabled(cardView.Card))
+        if (playerState.IsMaterialDisabled(cardView.Card))
 		{
+            ShowDisabledCardPopup();
 			selectedCards.Remove(cardView.Card);
 			cardView.SetSelected(false, instant: false);
+            RefreshEndTurnButtonText();
 			return;
 		}
 		bool flag = !cardView.Selected;
@@ -2205,16 +2330,60 @@ public class HandSystemUI : MonoBehaviour
 		{
 			selectedCards.Remove(cardView.Card);
 		}
+        RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
 	}
 
 	public void OnCardPlayRequested(HandCardView cardView)
 	{
-		if (!busy && !cardView.InPlayZone && !playerState.IsMaterialDisabled(cardView.Card))
-		{
-			PlayCard(cardView.Card);
-		}
+		if (busy || cardView.InPlayZone)
+            return;
+
+        if (playerState.IsMaterialDisabled(cardView.Card))
+        {
+            ShowDisabledCardPopup();
+            return;
+        }
+
+        PlayCard(cardView.Card);
 	}
+
+    private void ShowDisabledCardPopup()
+    {
+        CacheDisabledCardPopupReferences();
+        if ((Object)disabledCardPopupRoot == (Object)null || disabledCardPopupCanvasGroup == null || disabledCardPopupText == null)
+            return;
+
+        disabledCardPopupText.text = LocalizationSystem.GetText("ui.battle.card_disabled", "这张牌本回合无法打出！");
+        disabledCardPopupTween?.Kill(false);
+        ((Component)disabledCardPopupRoot).gameObject.SetActive(true);
+        disabledCardPopupRoot.SetAsLastSibling();
+        PopupLayerUtility.ApplyTo(disabledCardPopupRoot);
+        disabledCardPopupCanvasGroup.alpha = 0f;
+        ((Transform)disabledCardPopupRoot).localScale = new Vector3(0.72f, 0.72f, 1f);
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        sequence.Append(disabledCardPopupCanvasGroup.DOFade(1f, 0.12f));
+        sequence.Join(disabledCardPopupRoot.DOScale(Vector3.one, 0.22f).SetEase(Ease.OutBack));
+        sequence.AppendInterval(0.72f);
+        sequence.Append(disabledCardPopupCanvasGroup.DOFade(0f, 0.14f));
+        sequence.Join(disabledCardPopupRoot.DOScale(new Vector3(0.82f, 0.82f, 1f), 0.16f).SetEase(Ease.InBack));
+        disabledCardPopupTween = sequence.OnComplete(() => ((Component)disabledCardPopupRoot).gameObject.SetActive(false));
+    }
+
+    private void CacheDisabledCardPopupReferences()
+    {
+        if ((Object)disabledCardPopupRoot == (Object)null)
+            disabledCardPopupRoot = UIManager.FindChildRect(((Component)this).transform, "DisabledCardPopup");
+        if ((Object)disabledCardPopupRoot == (Object)null)
+            return;
+
+        disabledCardPopupCanvasGroup = ((Component)disabledCardPopupRoot).GetComponent<CanvasGroup>();
+        disabledCardPopupText = disabledCardPopupText != null ? disabledCardPopupText : UIManager.FindChildComponent<TMP_Text>(((Component)disabledCardPopupRoot).transform, "Text");
+        if (disabledCardPopupCanvasGroup != null)
+            disabledCardPopupCanvasGroup.alpha = 0f;
+        ((Component)disabledCardPopupRoot).gameObject.SetActive(false);
+    }
 
 	private void HandleEventCardChoice(HandCardView cardView)
 	{
@@ -2331,42 +2500,38 @@ public class HandSystemUI : MonoBehaviour
     private bool IsPlaySelectedCardsInputDown()
     {
         if (Input.GetMouseButtonDown(1))
-            return true;
+            return !IsPointerOverClickHandler(Input.mousePosition);
 
-        if (!IsMobileUpperHalfPlayInput(out Vector2 screenPosition))
+        if (!TryGetPlayInputScreenPosition(out Vector2 screenPosition))
             return false;
 
-        return !IsPointerOverClickHandler(screenPosition);
+        return IsAbovePlayInputThreshold(screenPosition) && !IsPointerOverClickHandler(screenPosition);
     }
 
-    private bool IsMobileUpperHalfPlayInput(out Vector2 screenPosition)
+    private bool TryGetPlayInputScreenPosition(out Vector2 screenPosition)
     {
         screenPosition = default;
 
-#if UNITY_ANDROID || UNITY_IOS
-        if (Input.touchCount <= 0)
-            return false;
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase != TouchPhase.Began)
+                return false;
 
-        Touch touch = Input.GetTouch(0);
-        if (touch.phase != TouchPhase.Began)
-            return false;
+            screenPosition = touch.position;
+            return true;
+        }
 
-        screenPosition = touch.position;
-        return IsAboveMobilePlayInputThreshold(screenPosition);
-#elif UNITY_EDITOR
-        if (!simulateMobileUpperHalfPlayInputInEditor || !Input.GetMouseButtonDown(0))
+        if (!Input.GetMouseButtonDown(0))
             return false;
 
         screenPosition = Input.mousePosition;
-        return IsAboveMobilePlayInputThreshold(screenPosition);
-#else
-        return false;
-#endif
+        return true;
     }
 
-    private bool IsAboveMobilePlayInputThreshold(Vector2 screenPosition)
+    private bool IsAbovePlayInputThreshold(Vector2 screenPosition)
     {
-        return screenPosition.y > Screen.height * Mathf.Clamp01(mobilePlayInputScreenHeightThreshold);
+        return screenPosition.y > Screen.height * Mathf.Clamp01(playInputScreenHeightThreshold);
     }
 
     private bool IsPointerOverClickHandler(Vector2 screenPosition)
@@ -2416,6 +2581,7 @@ public class HandSystemUI : MonoBehaviour
 			}
 		}
 		selectedCards.Clear();
+        RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
 		if (flag)
 		{
@@ -2434,6 +2600,7 @@ public class HandSystemUI : MonoBehaviour
 		if (playerState.TryMoveHandCardToPlay(card))
 		{
 			selectedCards.Remove(card);
+            RefreshEndTurnButtonText();
             RefreshPlayerAnimationState();
 			RebuildCards(animateFromCurrent: true);
 		}
@@ -2481,6 +2648,7 @@ public class HandSystemUI : MonoBehaviour
 			refreshResult = playerState.RefreshHandCards(selectedCards, list2, battleManager);
 		}
 		selectedCards.Clear();
+        RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
 		if (refreshResult.DrawnCount == 0 && refreshResult.ReturnedCount == 0 && list2.Count == 0)
 		{
@@ -2517,30 +2685,37 @@ public class HandSystemUI : MonoBehaviour
 		if (runEnded)
 			return;
 
-		if (!busy)
-		{
-			if (TutorialManager != null && !TutorialManager.CanEndTurn(playerState.PlayZone))
-				return;
+		if (busy)
+            return;
 
-			GameLog.Data((currentEvent != null) ? "Click end turn in event" : "Click end turn in battle");
-			selectedCards.Clear();
-            RefreshPlayerAnimationState();
-			if (currentLevel != null && currentLevel.levelType == LevelType.Rest)
-			{
-				((MonoBehaviour)this).StartCoroutine(ResolveRestEndTurnRoutine());
-			}
-			else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
-			{
-				((MonoBehaviour)this).StartCoroutine(ResolveRewardEndTurnRoutine());
-			}
-			else if (currentEvent != null)
-			{
-				((MonoBehaviour)this).StartCoroutine(ResolveEventEndTurnRoutine());
-			}
-			else
-			{
-				((MonoBehaviour)this).StartCoroutine(ResolveEndTurnRoutine());
-			}
+        if (HasSelectedArrowCard())
+        {
+            PlaySelectedCards();
+            return;
+        }
+
+		if (TutorialManager != null && !TutorialManager.CanEndTurn(playerState.PlayZone))
+			return;
+
+		GameLog.Data((currentEvent != null) ? "Click end turn in event" : "Click end turn in battle");
+		selectedCards.Clear();
+        RefreshEndTurnButtonText();
+        RefreshPlayerAnimationState();
+		if (currentLevel != null && currentLevel.levelType == LevelType.Rest)
+		{
+			((MonoBehaviour)this).StartCoroutine(ResolveRestEndTurnRoutine());
+		}
+		else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
+		{
+			((MonoBehaviour)this).StartCoroutine(ResolveRewardEndTurnRoutine());
+		}
+		else if (currentEvent != null)
+		{
+			((MonoBehaviour)this).StartCoroutine(ResolveEventEndTurnRoutine());
+		}
+		else
+		{
+			((MonoBehaviour)this).StartCoroutine(ResolveEndTurnRoutine());
 		}
 	}
 
@@ -2827,11 +3002,14 @@ public class HandSystemUI : MonoBehaviour
 			case EventRewardType.GainMagicModifier:
 				yield return ShowEventMagicModifierRoutine(GetEventEffectChoiceCount(effect, option, 2));
 				break;
+            case EventRewardType.GainMaterialModifier:
+                yield return ShowEventMaterialModifierRoutine(effect.modifierId);
+                break;
 			case EventRewardType.IncreaseMaxHealth:
 				ApplyEventIncreaseMaxHealth(GetEventEffectAmount(effect, 5));
 				break;
 			case EventRewardType.GainMaterial:
-				AddEventMaterial(effect.material != MaterialEnum.None ? effect.material : GetRandomBasicMaterial(), GetEventEffectCount(effect, 1));
+				AddEventMaterial(effect.material != MaterialEnum.None ? effect.material : GetRandomBasicMaterial(), GetEventEffectCount(effect, 1), effect.modifierId);
 				break;
 			case EventRewardType.GainRandomMaterial:
 				AddEventRandomMaterials(GetEventEffectCount(effect, 1));
@@ -2858,7 +3036,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private bool IsDeferredEventEffect(EventRewardType rewardType)
 	{
-		return rewardType == EventRewardType.GainMagic || rewardType == EventRewardType.GainMagicModifier;
+		return rewardType == EventRewardType.GainMagic || rewardType == EventRewardType.GainMagicModifier || rewardType == EventRewardType.GainMaterialModifier;
 	}
 
 	private int GetEventEffectAmount(EventEffectData effect, int defaultAmount)
@@ -2951,11 +3129,22 @@ public class HandSystemUI : MonoBehaviour
 
 	private void AddEventMaterial(MaterialEnum material, int count)
 	{
+        AddEventMaterial(material, count, null);
+	}
+
+	private void AddEventMaterial(MaterialEnum material, int count, string modifierId)
+	{
 		if (material == MaterialEnum.None || count <= 0)
 			return;
 
+        MaterialModifierData modifierData = GetMaterialModifierDataById(modifierId);
 		for (int i = 0; i < count; i++)
-			playerState.AddDeckMaterial(material);
+        {
+			MaterialModel card = playerState.AddDeckMaterial(material);
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(modifierData);
+            if (card != null && modifier != null)
+                card.AddModifier(modifier);
+        }
 		RefreshMaterialListPanel();
 		RefreshStaticUI();
 		SaveRunProgress();
@@ -3132,32 +3321,38 @@ public class HandSystemUI : MonoBehaviour
 			yield break;
 		}
 		GetUIManager().PlayArea.ShowResolveIndicator();
-		for (int roundStart = 0; roundStart < cards.Count; roundStart++)
+		ArrowReadSequence readSequence = ArrowReadSystem.BuildSequence(cards, playerState, battleManager);
+        List<ArrowReadStep> afterReadActionSteps = new List<ArrowReadStep>();
+		for (int stepIndex = 0; stepIndex < readSequence.Steps.Count; stepIndex++)
 		{
-			MaterialModel card = cards[roundStart];
+			ArrowReadStep step = readSequence.Steps[stepIndex];
+			MaterialModel card = step.SourceCard;
 			if (card != null)
 			{
 				ResetMagicHighlights();
-				MoveIndicatorToCardRange(cards, roundStart, 1, roundStart == 0);
+				MoveIndicatorToReadStep(cards, step, stepIndex == 0);
 				yield return (object)new WaitForSeconds(layoutDuration * 0.35f);
 				HandCardView handCardView = FindView(card);
 				if ((Object)handCardView != (Object)null)
 				{
 					TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
 				}
-                GameLog.Data($"Resolve material from play zone material={card.material} index={roundStart}");
-                playerCastAnimator?.PlayMaterialAction(card.material);
-                MagicCastResult materialResult = ResolveMaterialCardEffect(card);
+                GameLog.Data($"Resolve arrow from play zone material={card.material} cardIndex={step.SourceCardIndex} step={stepIndex}");
+                playerCastAnimator?.PlayMaterialAction(step.PrimaryDisplayMaterial);
+                MagicCastResult materialResult = ResolveArrowReadStepEffect(step);
+                if (step.RemovesSourceAfterRead && !ContainsAfterReadActionStep(afterReadActionSteps, card))
+                    afterReadActionSteps.Add(step);
 				PlayMagicCastFeedback(materialResult);
 				yield return PlayPendingEnemyDeaths();
 				if (AllEnemiesDead())
 				{
+                    yield return ApplyArrowReadAfterActions(afterReadActionSteps);
 					yield break;
 				}
 				yield return (object)new WaitForSeconds(postMagicResolveDelay);
 			}
 
-			CollectCastableMagicsByRecipeLength(cards, roundStart);
+			CollectCastableMagicsByRecipeLength(readSequence.Tokens, step.FirstTokenIndex);
 			if (castableMagicViews.Count == 0)
 			{
 				continue;
@@ -3167,21 +3362,22 @@ public class HandSystemUI : MonoBehaviour
 				ResetMagicHighlights();
 				MagicItemView matchedMagicView = castableMagicViews[matchedIndex];
 				int matchLength = GetRecipeLength(matchedMagicView.Magic);
-				MoveIndicatorToCardRange(cards, roundStart, matchLength, false);
+				MoveIndicatorToTokenRange(cards, readSequence.Tokens, step.FirstTokenIndex, matchLength, false);
 				yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
 				for (int i = 0; i < matchLength; i++)
 				{
-					HandCardView handCardView = FindView(cards[roundStart + i]);
+					ArrowReadToken token = readSequence.Tokens[step.FirstTokenIndex + i];
+					HandCardView handCardView = FindView(token.SourceCard);
 					if ((Object)handCardView != (Object)null)
 					{
 						TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
-						PlayMaterialFillParticle(handCardView, matchedMagicView, cards[roundStart + i].material);
+						PlayMaterialFillParticle(handCardView, matchedMagicView, token.DisplayMaterial);
 					}
 				}
 				yield return (object)new WaitForSeconds(GetParticleArrivalWait());
 				for (int j = 0; j < matchLength; j++)
 				{
-					cards[roundStart + j].TriggerOnInvoke();
+					readSequence.Tokens[step.FirstTokenIndex + j].SourceCard.TriggerOnInvoke();
 					matchedMagicView.HighlightRecipeSlot(j);
 				}
 				EnemyModel targetEnemy = battleManager.BeginCastTarget();
@@ -3194,27 +3390,133 @@ public class HandSystemUI : MonoBehaviour
 					yield return null;
 				}
 				matchedMagicView.PulseCast();
-				GameLog.Data($"Resolve magic from play zone magic={matchedMagicView.Magic.Id} start={roundStart} length={matchLength}");
+				GameLog.Data($"Resolve magic from arrow tokens magic={matchedMagicView.Magic.Id} tokenStart={step.FirstTokenIndex} length={matchLength}");
 				CastMagic(matchedMagicView.Magic);
 				yield return PlayPendingEnemyDeaths();
 				if (AllEnemiesDead())
 				{
+                    yield return ApplyArrowReadAfterActions(afterReadActionSteps);
 					yield break;
 				}
 				yield return (object)new WaitForSeconds(postMagicResolveDelay);
 				ResetMagicHighlights();
 			}
 		}
+        yield return ApplyArrowReadAfterActions(afterReadActionSteps);
 	}
 
-	private MagicCastResult ResolveMaterialCardEffect(MaterialModel card)
+    private static bool ContainsAfterReadActionStep(List<ArrowReadStep> steps, MaterialModel card)
+    {
+        if (steps == null || card == null)
+            return false;
+
+        for (int i = 0; i < steps.Count; i++)
+        {
+            if (steps[i] != null && steps[i].SourceCard == card)
+                return true;
+        }
+        return false;
+    }
+
+    private IEnumerator ApplyArrowReadAfterActions(List<ArrowReadStep> steps)
+    {
+        if (steps == null || steps.Count == 0 || playerState == null)
+            yield break;
+
+        List<HandCardView> consumedViews = new List<HandCardView>();
+        List<HandCardView> discardViews = new List<HandCardView>();
+        List<HandCardView> returnViews = new List<HandCardView>();
+        for (int i = 0; i < steps.Count; i++)
+        {
+            ArrowReadStep step = steps[i];
+            MaterialModel card = step?.SourceCard;
+            if (card == null)
+                continue;
+
+            HandCardView view = FindView(card);
+            if (!playerState.ApplyArrowReadAfterAction(card, step.AfterReadAction) || (Object)view == (Object)null)
+                continue;
+
+            if (step.AfterReadAction == ArrowReadAfterReadAction.SplitIntoHalfArrowsToDiscard)
+                discardViews.Add(view);
+            else if (step.AfterReadAction == ArrowReadAfterReadAction.ReturnNextTurn)
+                returnViews.Add(view);
+            else
+                consumedViews.Add(view);
+        }
+
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        yield return AnimateRemovedReadViews(discardViews, GetDiscardPileArea());
+        yield return AnimateRemovedReadViews(returnViews, deckPileArea != null ? deckPileArea : GetDiscardPileArea());
+        yield return AnimateRemovedReadViews(consumedViews, GetConsumedPileArea());
+    }
+
+    private IEnumerator AnimateRemovedReadViews(List<HandCardView> views, RectTransform targetArea)
+    {
+        if (views == null || views.Count == 0)
+            yield break;
+
+        bool animationDone = false;
+        AnimateViewsToArea(views, targetArea, (TweenCallback)delegate
+        {
+            animationDone = true;
+        });
+        while (!animationDone)
+            yield return null;
+    }
+
+    private IEnumerator AnimateConsumedResolveCards(List<MaterialModel> cards)
+    {
+        if (cards == null || cards.Count == 0 || playerState == null)
+            yield break;
+
+        List<HandCardView> consumedViews = new List<HandCardView>();
+        for (int i = 0; i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (card == null)
+                continue;
+
+            HandCardView view = FindView(card);
+            if (playerState.ConsumeCardForBattle(card))
+            {
+                MarkBattleDeckCardConsumed(card);
+                if ((Object)view != (Object)null)
+                    consumedViews.Add(view);
+            }
+        }
+
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        if (consumedViews.Count == 0)
+            yield break;
+
+        bool animationDone = false;
+        AnimateViewsToArea(consumedViews, GetConsumedPileArea(), (TweenCallback)delegate
+        {
+            animationDone = true;
+        });
+        while (!animationDone)
+            yield return null;
+    }
+
+	private MagicCastResult ResolveArrowReadStepEffect(ArrowReadStep step)
 	{
 		MagicCastResult result = new MagicCastResult();
-		if (card == null || playerState == null)
+		if (step == null || step.SourceCard == null || playerState == null)
 			return result;
 
-		card.TriggerOnInvoke();
-		switch (card.material)
+		step.SourceCard.TriggerOnArrowBaseEffectResolve(new ArrowReadContext(playerState, battleManager));
+		step.SourceCard.TriggerOnInvoke();
+		for (int i = 0; i < step.BaseEffectDirections.Count; i++)
+			ResolveMaterialBaseEffect(step.BaseEffectDirections[i], result);
+		return result;
+	}
+
+	private void ResolveMaterialBaseEffect(MaterialEnum material, MagicCastResult result)
+	{
+		switch (material)
 		{
 			case MaterialEnum.Fire:
 				ResolveMaterialDamage(3, result);
@@ -3233,7 +3535,6 @@ public class HandSystemUI : MonoBehaviour
 				result.playerShield += shieldGain;
 				break;
 		}
-		return result;
 	}
 
 	private void ResolveMaterialDamage(int damage, MagicCastResult result)
@@ -3272,14 +3573,14 @@ public class HandSystemUI : MonoBehaviour
 		battleManager.EndCastTarget();
 	}
 
-	private void CollectCastableMagicsByRecipeLength(List<MaterialModel> cards, int startIndex)
+	private void CollectCastableMagicsByRecipeLength(IReadOnlyList<ArrowReadToken> tokens, int startIndex)
 	{
 		castableMagicViews.Clear();
 		for (int i = 0; i < magicViews.Count; i++)
 		{
 			MagicItemView magicItemView = magicViews[i];
 			MagicModel magic = magicItemView.Magic;
-			if (magic == null || !magic.IsMatch(cards, startIndex))
+			if (magic == null || !magic.IsMatch(tokens, startIndex))
 			{
 				continue;
 			}
@@ -3559,13 +3860,54 @@ public class HandSystemUI : MonoBehaviour
 		{
 			discardCountText.text = playerState != null ? $"弃牌堆\n{playerState.DiscardPile.Count}" : "弃牌堆";
 		}
+		if ((Object)(object)consumedCountText != (Object)null)
+		{
+			consumedCountText.text = playerState != null ? $"消耗堆\n{playerState.ConsumedPile.Count}" : "消耗堆";
+		}
+        RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
 	}
+
+    private void CacheEndTurnButtonText()
+    {
+        if ((Object)endTurnButtonText != (Object)null || (Object)endTurnButton == (Object)null)
+            return;
+
+        endTurnButtonText = UIManager.FindChildComponent<TMP_Text>(((Component)endTurnButton).transform, "Text");
+        if ((Object)endTurnButtonText == (Object)null)
+            endTurnButtonText = ((Component)endTurnButton).GetComponentInChildren<TMP_Text>(true);
+    }
+
+    private void RefreshEndTurnButtonText()
+    {
+        CacheEndTurnButtonText();
+        if ((Object)endTurnButtonText == (Object)null)
+            return;
+
+        endTurnButtonText.text = HasSelectedArrowCard()
+            ? LocalizationSystem.GetText("ui.battle.end_turn.prepare", "预备…")
+            : LocalizationSystem.GetText("ui.battle.end_turn.resolve", "出手！");
+    }
+
+    private bool HasSelectedArrowCard()
+    {
+        if (playerState == null)
+            return false;
+
+        for (int i = 0; i < selectedCards.Count; i++)
+        {
+            MaterialModel card = selectedCards[i];
+            if (card != null && playerState.Hand.Contains(card) && card.IsArrowReadable())
+                return true;
+        }
+        return false;
+    }
 
 	private void EnsurePileButtons()
 	{
 		BindPileButton(deckPileArea, ToggleMaterialListPanel);
 		BindPileButton(discardPileArea, ToggleDiscardPilePanel);
+		BindPileButton(consumedPileArea, ToggleConsumedPilePanel);
 	}
 
 	private void BindPileButton(RectTransform pileArea, UnityAction action)
@@ -3589,6 +3931,11 @@ public class HandSystemUI : MonoBehaviour
 	private void ToggleDiscardPilePanel()
 	{
 		GetUIManager().ToggleDiscardPilePanel();
+	}
+
+	private void ToggleConsumedPilePanel()
+	{
+		GetUIManager().ToggleConsumedPilePanel();
 	}
 
 	private void RefreshMaterialListPanel()
@@ -4492,6 +4839,11 @@ public class HandSystemUI : MonoBehaviour
 	{
 		HideContinuousCastCounterUI();
 		yield return PlayPendingEnemyDeaths();
+        if (battleManager != null && battleManager.KillAliveMinionsForVictory())
+        {
+            RefreshEnemyUI((RectTransform)null, false);
+            yield return PlayPendingEnemyDeaths();
+        }
 		List<HandCardView> views = new List<HandCardView>(cardViews);
 		List<MaterialModel> battleEndRemovedTemporaryCards = new List<MaterialModel>();
 		battleManager?.FinishBattleRules(battleEndRemovedTemporaryCards);
@@ -4640,6 +4992,7 @@ public class HandSystemUI : MonoBehaviour
 		playerState.PlayZone.Clear();
 		playerState.DrawPile.Clear();
         playerState.DiscardPile.Clear();
+        playerState.ConsumedPile.Clear();
 		playerState.DrawPile.AddRange(playerState.Deck);
 		RefreshMaterialListPanel();
 	}
@@ -4651,15 +5004,17 @@ public class HandSystemUI : MonoBehaviour
 		playerState.PlayZone.Clear();
 		playerState.DrawPile.Clear();
         playerState.DiscardPile.Clear();
+        playerState.ConsumedPile.Clear();
 		playerState.DrawPile.AddRange(playerState.Deck);
 		RefreshMaterialListPanel();
 	}
 
 	private void MarkBattleDeckCardConsumed(MaterialModel card)
 	{
-		if (card != null && playerState.Deck.Contains(card))
+		if (card != null && playerState != null && playerState.Deck.Contains(card))
 		{
 			consumedBattleDeckCards.Add(card);
+            playerState.AddConsumedCard(card);
 			RefreshMaterialListPanel();
 		}
 	}
@@ -4949,12 +5304,14 @@ public class HandSystemUI : MonoBehaviour
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
+        pendingMaterialModifier = null;
         playerState.ClearCombatState();
 		GetUIManager().HideRewardPanel();
         GetUIManager().HideShopPanel();
 		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
+        GetUIManager().MaterialListPanel?.EndSelectionMode();
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -4996,14 +5353,28 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
+    public RewardOptionKind RollEliteExtraRewardKind()
+    {
+        if (!ShouldShowEliteExtraReward())
+            return RewardOptionKind.None;
+
+        bool canClaimMagicModifier = HasAnyMagicModifierChoice();
+        bool canClaimArrowModifier = HasAnyArrowModifierChoice();
+        if (canClaimMagicModifier && canClaimArrowModifier)
+            return NextRunRandomInt(0, 2) == 0 ? RewardOptionKind.MagicModifier : RewardOptionKind.ArrowModifier;
+        if (canClaimArrowModifier)
+            return RewardOptionKind.ArrowModifier;
+        return canClaimMagicModifier ? RewardOptionKind.MagicModifier : RewardOptionKind.None;
+    }
+
     public bool CanClaimEliteMagicModifierReward()
     {
-        return ShouldShowEliteMagicModifierReward();
+        return ShouldShowEliteExtraReward() && HasAnyMagicModifierChoice();
     }
 
     public void ClaimEliteMagicModifierReward(Action completed)
     {
-        if (!ShouldShowEliteMagicModifierReward())
+        if (!ShouldShowEliteExtraReward())
         {
             completed?.Invoke();
             return;
@@ -5025,9 +5396,65 @@ public class HandSystemUI : MonoBehaviour
         });
     }
 
+    public void ClaimEliteArrowModifierReward(Action completed)
+    {
+        if (!ShouldShowEliteExtraReward())
+        {
+            completed?.Invoke();
+            return;
+        }
+
+        eliteMagicModifierRewardResolved = true;
+        List<MaterialModifierData> choices = GetArrowModifierChoices(3);
+        if (choices.Count == 0)
+        {
+            completed?.Invoke();
+            return;
+        }
+
+        ShowArrowModifierRewardSelection(choices, delegate
+        {
+            RefreshStaticUI();
+            SaveRunProgress();
+            completed?.Invoke();
+        });
+    }
+
+    private IEnumerator ShowEventMaterialModifierRoutine(string modifierId)
+    {
+        MaterialModifierData data = GetMaterialModifierDataById(modifierId);
+        if (data == null || CountSelectableArrowModifierTargets() == 0)
+            yield break;
+
+        bool completed = false;
+        ShowArrowModifierRewardSelection(new List<MaterialModifierData> { data }, delegate { completed = true; });
+        while (!completed)
+            yield return null;
+    }
+
+    private MaterialModifierData GetMaterialModifierDataById(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return null;
+
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (data != null && data.id == modifierId)
+                return data;
+        }
+        return null;
+    }
+
+    private bool ShouldShowEliteExtraReward()
+    {
+        return !eliteMagicModifierRewardResolved && currentLevel != null && currentLevel.levelType == LevelType.Elite && (HasAnyMagicModifierChoice() || HasAnyArrowModifierChoice());
+    }
+
     private bool ShouldShowEliteMagicModifierReward()
     {
-        return !eliteMagicModifierRewardResolved && currentLevel != null && currentLevel.levelType == LevelType.Elite && HasAnyMagicModifierChoice();
+        return ShouldShowEliteExtraReward() && HasAnyMagicModifierChoice();
     }
 
     private bool HasAnyMagicModifierChoice()
@@ -5038,6 +5465,124 @@ public class HandSystemUI : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    private bool HasAnyArrowModifierChoice()
+    {
+        if (playerState == null || CountSelectableArrowModifierTargets() == 0)
+            return false;
+
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            if (IsEliteArrowModifierRewardData(table.items[i]))
+                return true;
+        }
+        return false;
+    }
+
+    private List<MaterialModifierData> GetArrowModifierChoices(int count)
+    {
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        List<MaterialModifierData> pool = new List<MaterialModifierData>();
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (IsEliteArrowModifierRewardData(data))
+                pool.Add(data);
+        }
+
+        List<MaterialModifierData> result = new List<MaterialModifierData>();
+        int attempts = 0;
+        while (result.Count < count && pool.Count > 0 && attempts < 40)
+        {
+            attempts++;
+            MaterialModifierData data = pool[NextRunRandomInt(0, pool.Count)];
+            if (!result.Contains(data))
+                result.Add(data);
+        }
+        return result;
+    }
+
+    private bool IsEliteArrowModifierRewardData(MaterialModifierData data)
+    {
+        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null && data.id != "temporary" && data.id != "sturdy" && data.id != "doom" && data.id != "half_arrow";
+    }
+
+    private int CountSelectableArrowModifierTargets()
+    {
+        if (playerState == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            if (IsArrowModifierTargetSelectable(playerState.Deck[i]))
+                count++;
+        }
+        return count;
+    }
+
+    private bool IsArrowModifierTargetSelectable(MaterialModel materialModel)
+    {
+        return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && materialModel.material != MaterialEnum.None;
+    }
+
+    private void ShowArrowModifierRewardSelection(IReadOnlyList<MaterialModifierData> choices, Action completed)
+    {
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        pendingMaterialModifier = null;
+        MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
+        if (panel != null)
+            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(selected, completed), completed);
+        else
+            completed?.Invoke();
+    }
+
+    private void StartArrowModifierTargetSelection(MaterialModifierData selectedModifier, Action completed)
+    {
+        if (selectedModifier == null)
+            return;
+
+        pendingMaterialModifier = selectedModifier;
+        MagicModifierSelectionPanelUI modifierPanel = GetUIManager().MagicModifierSelectionPanel;
+        modifierPanel?.Hide();
+        MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
+        if (panel == null)
+        {
+            completed?.Invoke();
+            return;
+        }
+
+        panel.BeginSelection(1, IsArrowModifierTargetSelectable, materials =>
+        {
+            MaterialModel target = materials != null && materials.Count > 0 ? materials[0] : null;
+            TryApplyPendingMaterialModifier(target);
+            completed?.Invoke();
+        }, () =>
+        {
+            pendingMaterialModifier = null;
+            completed?.Invoke();
+        }, "选择箭头");
+    }
+
+    private bool TryApplyPendingMaterialModifier(MaterialModel target)
+    {
+        if (pendingMaterialModifier == null || !IsArrowModifierTargetSelectable(target))
+            return false;
+
+        MaterialModifierModel modifier = MaterialModifierFactory.Create(pendingMaterialModifier);
+        if (modifier == null)
+            return false;
+
+        target.AddModifier(modifier);
+        pendingMaterialModifier = null;
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+        return true;
     }
 
     private IEnumerator ShowEliteMagicModifierRewardRoutine()
@@ -6080,6 +6625,37 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, layoutDuration, layoutEase, instant);
 	}
 
+	private void MoveIndicatorToReadStep(List<MaterialModel> cards, ArrowReadStep step, bool instant)
+	{
+		if (step == null)
+			return;
+
+		MoveIndicatorToSourceCard(cards, step.SourceCardIndex, step.SourceCard, instant);
+	}
+
+	private void MoveIndicatorToTokenRange(List<MaterialModel> cards, IReadOnlyList<ArrowReadToken> tokens, int startIndex, int count, bool instant)
+	{
+		if (tokens == null || count <= 0 || startIndex < 0 || startIndex + count > tokens.Count)
+			return;
+
+		ArrowReadToken firstToken = tokens[startIndex];
+		ArrowReadToken lastToken = tokens[startIndex + count - 1];
+		HandCardView first = FindView(firstToken?.SourceCard);
+		HandCardView last = FindView(lastToken?.SourceCard);
+		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, layoutDuration, layoutEase, instant);
+	}
+
+	private void MoveIndicatorToSourceCard(List<MaterialModel> cards, int sourceCardIndex, MaterialModel sourceCard, bool instant)
+	{
+		if (cards != null && sourceCardIndex >= 0 && sourceCardIndex < cards.Count)
+			MoveIndicatorToCardRange(cards, sourceCardIndex, 1, instant);
+		else
+		{
+			HandCardView view = FindView(sourceCard);
+			GetUIManager().PlayArea?.MoveIndicatorToCardRange(view?.RectTransform, view?.RectTransform, playArea, layoutDuration, layoutEase, instant);
+		}
+	}
+
 	private void ResetMagicHighlights()
 	{
 		for (int i = 0; i < magicViews.Count; i++)
@@ -6259,6 +6835,7 @@ public class HandSystemUI : MonoBehaviour
 			return;
 		}
 		List<HandCardView> list = new List<HandCardView>();
+        List<HandCardView> consumedViews = new List<HandCardView>();
 		List<HandCardView> temporaryViews = new List<HandCardView>();
 		for (int i = 0; i < views.Count; i++)
 		{
@@ -6270,7 +6847,7 @@ public class HandSystemUI : MonoBehaviour
 					if (playerState.Deck.Contains(handCardView.Card))
 					{
 						MarkBattleDeckCardConsumed(handCardView.Card);
-						list.Add(handCardView);
+						consumedViews.Add(handCardView);
 					}
 					else
 					{
@@ -6285,7 +6862,10 @@ public class HandSystemUI : MonoBehaviour
 		}
 		AnimateViewsToArea(list, returnArea, (TweenCallback)delegate
 		{
-			AnimateTemporaryViewsDissolve(temporaryViews, onComplete);
+            AnimateViewsToArea(consumedViews, GetConsumedPileArea(), (TweenCallback)delegate
+            {
+			    AnimateTemporaryViewsDissolve(temporaryViews, onComplete);
+            });
 		});
 	}
 
@@ -6512,6 +7092,11 @@ public class HandSystemUI : MonoBehaviour
 	private RectTransform GetDiscardPileArea()
 	{
 		return discardPileArea != null ? discardPileArea : deckPileArea;
+	}
+
+	private RectTransform GetConsumedPileArea()
+	{
+		return consumedPileArea != null ? consumedPileArea : GetDiscardPileArea();
 	}
 
 	private static Vector3 GetAreaCenterWorldPosition(RectTransform area)

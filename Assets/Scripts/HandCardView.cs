@@ -163,6 +163,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             iconImage.sprite = sprite;
             iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(card.material);
             iconImage.preserveAspect = true;
+            MaterialModifierVisualUtility.ApplyTo(iconImage, card);
         }
     }
 

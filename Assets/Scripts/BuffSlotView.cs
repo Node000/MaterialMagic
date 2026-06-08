@@ -23,7 +23,7 @@ public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
     }
 }
 
-public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text stackText;
@@ -189,6 +189,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void OnDisable()
     {
         KillMotion();
+        owner?.ClearPinnedBuffTooltip(this);
         owner?.HideBuffTooltip(this);
     }
 
@@ -201,5 +202,11 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerExit(PointerEventData eventData)
     {
         owner?.HideBuffTooltip(this);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left && buff != null)
+            owner?.TogglePinnedBuffTooltip(this, buff);
     }
 }

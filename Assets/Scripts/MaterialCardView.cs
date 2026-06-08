@@ -123,6 +123,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             iconImage.color = Color.white;
             iconImage.preserveAspect = true;
             iconImage.enabled = true;
+            MaterialModifierVisualUtility.ApplyTo(iconImage, materialModel);
         }
 
         if (frameImage != null)

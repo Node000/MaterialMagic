@@ -17,7 +17,7 @@ public class AttributeDisabledBuffModel : BuffModel
     public override string GetDesc()
     {
         string directionName = GetDirectionName(stack);
-        return string.IsNullOrEmpty(directionName) ? "本回合不能打出指定属性素材。" : $"本回合不能打出{directionName}属性素材。";
+        return string.IsNullOrEmpty(directionName) ? "本回合无法选中指定属性素材。" : $"本回合无法选中{directionName}属性素材。";
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

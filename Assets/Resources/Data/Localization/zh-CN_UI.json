@@ -18,6 +18,9 @@
     { "key": "ui.start_menu.confirm_exit", "text": "确认退出" },
     { "key": "ui.start_config.select", "text": "选择" },
     { "key": "ui.start_config.selected", "text": "已选" },
-    { "key": "ui.start_config.health", "text": "生命值 {0}" }
+    { "key": "ui.start_config.health", "text": "生命值 {0}" },
+    { "key": "ui.battle.end_turn.prepare", "text": "预备…" },
+    { "key": "ui.battle.end_turn.resolve", "text": "出手！" },
+    { "key": "ui.battle.card_disabled", "text": "这张牌本回合无法打出！" }
   ]
 }

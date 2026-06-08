@@ -62,7 +62,95 @@
     },
     {
       "key": "modifier.doom.desc",
-      "text": "回合结束时，如果这张牌仍在手牌中，玩家失去5点生命。"
+      "text": "结算此箭头的基础效果时，玩家受到3点伤害；战斗结束后移除此附魔。"
+    },
+    {
+      "key": "modifier.heavy_arrow.name",
+      "text": "重箭头"
+    },
+    {
+      "key": "modifier.heavy_arrow.desc",
+      "text": "读取此箭头时，额外读取此箭头一次。"
+    },
+    {
+      "key": "modifier.big_arrow_2.name",
+      "text": "大箭头x2"
+    },
+    {
+      "key": "modifier.big_arrow_2.desc",
+      "text": "此箭头只触发一次基础效果，但可供给2个连续配方格。"
+    },
+    {
+      "key": "modifier.big_arrow_3.name",
+      "text": "大箭头x3"
+    },
+    {
+      "key": "modifier.big_arrow_3.desc",
+      "text": "此箭头只触发一次基础效果，但可供给3个连续配方格。"
+    },
+    {
+      "key": "modifier.big_arrow_4.name",
+      "text": "大箭头x4"
+    },
+    {
+      "key": "modifier.big_arrow_4.desc",
+      "text": "此箭头只触发一次基础效果，但可供给4个连续配方格。"
+    },
+    {
+      "key": "modifier.return_arrow.name",
+      "text": "返回符号"
+    },
+    {
+      "key": "modifier.return_arrow.desc",
+      "text": "读取到此符号时，移除该符号并反转读取方向；此符号不供给配方格。"
+    },
+    {
+      "key": "modifier.random_arrow.name",
+      "text": "随机箭头"
+    },
+    {
+      "key": "modifier.random_arrow.desc",
+      "text": "读取前随机变为一个基础方向箭头，并按该方向触发和匹配。"
+    },
+    {
+      "key": "modifier.proliferating_arrow.name",
+      "text": "增殖"
+    },
+    {
+      "key": "modifier.proliferating_arrow.desc",
+      "text": "打出并进入弃牌堆后，下回合在手牌中添加此箭头的复制；复制卡战斗结束后移除。"
+    },
+    {
+      "key": "modifier.eternal_arrow.name",
+      "text": "永恒"
+    },
+    {
+      "key": "modifier.eternal_arrow.desc",
+      "text": "读取后，此箭头不会进入弃牌堆，而是在下回合回到手牌。"
+    },
+    {
+      "key": "modifier.fragile_arrow.name",
+      "text": "脆弱"
+    },
+    {
+      "key": "modifier.fragile_arrow.desc",
+      "text": "结算基础效果后，此箭头离开出牌区并分裂成两个同方向半箭头进入弃牌堆；半箭头战斗结束后移除。"
+    },
+    {
+      "key": "modifier.retained_arrow.name",
+      "text": "保留"
+    },
+    {
+      "key": "modifier.retained_arrow.desc",
+      "text": "回合结束时，如果此箭头仍在手牌中，则保留在手牌。"
+    },
+    {
+      "key": "modifier.half_arrow.name",
+      "text": "半箭头"
+    },
+    {
+      "key": "modifier.half_arrow.desc",
+      "text": "可以作为对应方向参与配方匹配，但读取时不触发该方向的基础效果。"
     }
   ]
 }

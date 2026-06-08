@@ -580,6 +580,30 @@
       "eventPoolId": 107
     },
     {
+      "id": "level_event_screen_protector_stall",
+      "titleKey": "event.screen_protector_stall.title",
+      "levelType": 1,
+      "numericId": 110,
+      "enemyIds": [],
+      "eventPoolId": 110
+    },
+    {
+      "id": "level_event_printer_accident",
+      "titleKey": "event.printer_accident.title",
+      "levelType": 1,
+      "numericId": 111,
+      "enemyIds": [],
+      "eventPoolId": 111
+    },
+    {
+      "id": "level_event_website_emergency",
+      "titleKey": "event.website_emergency.title",
+      "levelType": 1,
+      "numericId": 112,
+      "enemyIds": [],
+      "eventPoolId": 112
+    },
+    {
       "id": "level_rest_001",
       "titleKey": "level.rest_001.title",
       "levelType": 3,

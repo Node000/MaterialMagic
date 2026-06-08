@@ -16,6 +16,7 @@ public class EnemyModel : UnitModel
     public float SpawnPositionX { get; private set; }
     public float SpawnPositionY { get; private set; }
     public bool CanActThisEnemyTurn { get; private set; } = true;
+    public bool IsMinion { get; private set; }
 
     private bool dead;
 
@@ -30,15 +31,47 @@ public class EnemyModel : UnitModel
     public EnemyModel(EnemyData data)
     {
         Data = data;
+        IsMinion = data.isMinion;
         CurrentHealth = data.maxHealth;
         CurrentIntents = new List<EnemyIntentData>();
         ApplyInitialBuffs();
+        if (IsMinion)
+            AddBuff(BuffEnum.Claw, 1);
         UpdateCurrentIntents();
     }
 
     public void SetCanActThisEnemyTurn(bool canAct)
     {
         CanActThisEnemyTurn = canAct;
+    }
+
+    public void SetMinion(bool isMinion)
+    {
+        if (IsMinion == isMinion)
+            return;
+
+        IsMinion = isMinion;
+        if (IsMinion && !IsDead)
+            AddBuff(BuffEnum.Claw, 1);
+    }
+
+    public void Kill(CombatantModel attacker = null)
+    {
+        if (IsDead)
+            return;
+
+        CurrentHealth = 0;
+        Shield = 0;
+        TriggerOnDie(attacker);
+    }
+
+    public void KillAsBattleCleanup()
+    {
+        if (IsDead)
+            return;
+
+        CurrentHealth = 0;
+        Shield = 0;
     }
 
     public void ClearCurrentIntents()
@@ -651,6 +684,7 @@ public class EnemyModel : UnitModel
                 float offset = count == 1 ? spacing : (i - (count - 1) * 0.5f) * spacing;
                 summoned.SetSpawnPosition(SpawnPositionX + offset, SpawnPositionY);
             }
+            summoned.SetMinion(true);
             manager.SpawnEnemy(summoned);
         }
     }

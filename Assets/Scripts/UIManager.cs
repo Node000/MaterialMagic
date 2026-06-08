@@ -239,6 +239,11 @@ public class UIManager : MonoBehaviour
         materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.DiscardPile);
     }
 
+    public void ToggleConsumedPilePanel()
+    {
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.ConsumedPile);
+    }
+
     public void RefreshMaterialListPanel()
     {
         materialListPanelUI?.Refresh();
