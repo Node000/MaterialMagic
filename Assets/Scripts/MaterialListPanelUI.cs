@@ -127,6 +127,7 @@ public class MaterialListPanelUI : MonoBehaviour
         CacheReferences();
         RefreshTitle();
         EnsurePanelBlocksRaycasts();
+        Canvas.ForceUpdateCanvases();
         RefreshRow(waterMaterialRow, MaterialEnum.Water);
         RefreshRow(fireMaterialRow, MaterialEnum.Fire);
         RefreshRow(windMaterialRow, MaterialEnum.Wind);
@@ -300,7 +301,11 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         for (int i = row.childCount - 1; i >= 0; i--)
-            Destroy(row.GetChild(i).gameObject);
+        {
+            GameObject child = row.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
+        }
 
         int materialCount = CountMaterialsForDisplay(material);
         PrepareManualRowLayout(row);

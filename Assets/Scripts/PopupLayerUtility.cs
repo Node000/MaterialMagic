@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class PopupLayerUtility
 {
@@ -15,5 +16,10 @@ public static class PopupLayerUtility
 
         canvas.overrideSorting = true;
         canvas.sortingOrder = SortingOrder;
+
+        GraphicRaycaster raycaster = rect.GetComponent<GraphicRaycaster>();
+        if (raycaster == null)
+            raycaster = rect.gameObject.AddComponent<GraphicRaycaster>();
+        raycaster.enabled = true;
     }
 }

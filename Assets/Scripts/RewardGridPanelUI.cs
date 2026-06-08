@@ -460,7 +460,10 @@ public class RewardGridPanelUI : MonoBehaviour
                     playerState.AddGold(rewardData.amount);
                 break;
             case BonusRewardType.Heal:
-                playerState.Heal(rewardData.amount);
+                if (owner != null)
+                    owner.ApplyRewardHeal(rewardData.amount);
+                else
+                    playerState.Heal(rewardData.amount);
                 break;
         }
     }

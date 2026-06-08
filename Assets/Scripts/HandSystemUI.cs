@@ -2581,7 +2581,10 @@ public class HandSystemUI : MonoBehaviour
 
         ApplyRestDefaultHeal();
         if (matchedOption != null && !string.IsNullOrEmpty(matchedOption.nextNodeId) && currentEvent != null && currentEvent.AdvanceToNextNode(matchedOption) && (Object)eventPanel != (Object)null)
+        {
             yield return eventPanel.ShowCurrentNodeRoutine();
+            yield break;
+        }
         FinishRestLevel();
     }
 
@@ -4749,6 +4752,23 @@ public class HandSystemUI : MonoBehaviour
         else
             playerState.AddGold(amount);
 
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    public void ApplyRewardHeal(int amount)
+    {
+        if (amount <= 0 || playerState == null)
+            return;
+
+        int healthBefore = playerState.CurrentHealth;
+        playerState.Heal(amount);
+        int healed = playerState.CurrentHealth - healthBefore;
+        if (healed > 0)
+        {
+            PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
+            ShowPlayerFloatingText("+" + healed, FloatingTextType.Heal);
+        }
         RefreshStaticUI();
         SaveRunProgress();
     }
