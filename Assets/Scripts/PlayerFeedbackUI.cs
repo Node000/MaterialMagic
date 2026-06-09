@@ -239,7 +239,7 @@ public class PlayerFeedbackUI : MonoBehaviour
 
     private void CreateVignetteFeedback()
     {
-        Shader shader = Shader.Find("UI/ComicConcentratedLineFeedback");
+        Shader shader = Shader.Find("UI/CornerVignetteFeedback");
         if (shader == null)
             return;
 

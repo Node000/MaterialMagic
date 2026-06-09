@@ -428,6 +428,7 @@ public class MagicModel
         TriggerMagicAfterGainShield(ref shieldGain);
         GameLog.Data($"Magic {Id} gain shield={shieldGain}");
         result.playerShield += shieldGain;
+        TriggerShieldAttack(playerState, battleManager, shieldGain, result);
     }
 
     protected static void TriggerShieldAttack(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)

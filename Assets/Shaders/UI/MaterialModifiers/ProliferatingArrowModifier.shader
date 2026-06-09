@@ -134,11 +134,9 @@ Shader "UI/MaterialModifiers/PixelSlimeClone"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
                 
-                v.vertex.xy *= _ExpandBounds;
-                
                 OUT.worldPosition = v.vertex;
                 OUT.vertex = UnityObjectToClipPos(v.vertex);
-                OUT.texcoord = (v.texcoord - 0.5) * _ExpandBounds + 0.5;
+                OUT.texcoord = v.texcoord;
                 OUT.color = v.color * _Color;
                 return OUT;
             }
@@ -164,11 +162,12 @@ Shader "UI/MaterialModifiers/PixelSlimeClone"
                 }
 
                 float2 splitDir = normalize(float2(1.0, 0.4));
-                float2 c1 = float2(0.5, 0.5) - splitDir * (_SplitDistance * splitProg * 0.15);
-                float2 c2 = float2(0.5, 0.5) + splitDir * (_SplitDistance * splitProg);
+                float splitOffset = _SplitDistance * splitProg * 0.5;
+                float2 c1 = float2(0.5, 0.5) - splitDir * splitOffset;
+                float2 c2 = float2(0.5, 0.5) + splitDir * splitOffset;
                 
-                float angle1 = 0.0;
-                float angle2 = -_SplitAngle * splitProg; 
+                float angle1 = _SplitAngle * splitProg * 0.5;
+                float angle2 = -_SplitAngle * splitProg * 0.5;
 
                 float2 uv1 = rotate(pixelUV - c1, angle1) + float2(0.5, 0.5);
                 float2 uv2 = rotate(pixelUV - c2, angle2) + float2(0.5, 0.5);

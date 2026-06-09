@@ -98,8 +98,8 @@ MonoBehaviour:
   labelText: {fileID: 0}
   enhancementRoot: {fileID: 4439133859879028982}
   springHighlight: {fileID: 2537586290634177019}
-  enhancementLineHeight: -32
-  enhancementLineSpacing: 48
+  enhancementLineHeight: 16
+  enhancementLineSpacing: 0
   consumedPunchScale: 0.035
   consumedPunchDuration: 0.32
   consumedPunchVibrato: 4

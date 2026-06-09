@@ -2456,6 +2456,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot1
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5152379376721684798, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -2478,7 +2482,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -23063,6 +23067,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot4
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: showTagTooltipOnLeft
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.4000015
@@ -23101,7 +23113,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -25837,6 +25849,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot6
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: showTagTooltipOnLeft
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.4000015
@@ -25871,7 +25891,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -36671,6 +36691,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot2
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: showTagTooltipOnLeft
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.4000015
@@ -36701,7 +36729,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -37070,7 +37098,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 114.30005, y: 32.400024}
+  m_AnchoredPosition: {x: 114.30008, y: 32.400024}
   m_SizeDelta: {x: 24, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1419096203
@@ -45943,6 +45971,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot5
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.4000015
@@ -45977,7 +46009,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x
@@ -53148,6 +53180,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot3
       objectReference: {fileID: 0}
+    - target: {fileID: 2370721889911850424, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.4000015
@@ -53182,7 +53218,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8567014346742742353, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 59
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Pivot.x

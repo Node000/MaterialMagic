@@ -97,6 +97,9 @@ public static class MaterialModifierVisualUtility
 
     private static string GetModifierMaterialPath(MaterialModifierModel modifier)
     {
+        if (modifier is SturdyModifier)
+            return ModifierMaterialFolder + "/PeriodArrowModifier";
+
         return ModifierMaterialFolder + "/" + modifier.GetType().Name;
     }
 

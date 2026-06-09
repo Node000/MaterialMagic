@@ -33,6 +33,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private Vector2 recipeIconPadding = Vector2.zero;
     [SerializeField] private RectTransform tagTooltipRoot;
     [SerializeField] private TMP_Text tagTooltipText;
+    [SerializeField] private bool showTagTooltipOnLeft;
     [SerializeField] private float tagTooltipXOffset = 12f;
     [SerializeField] private float tagTooltipSlideDistance = 28f;
     [SerializeField] private Vector2 tagTooltipSize = new Vector2(230f, 120f);
@@ -428,12 +429,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         Canvas.ForceUpdateCanvases();
         tagTooltipRoot.sizeDelta = GetTagTooltipSize();
         Vector2 shownPosition = GetTagTooltipShownPosition();
+        Vector2 slideOffset = new Vector2(tagTooltipSlideDistance * GetTagTooltipSlideDirection(), 0f);
         tagTooltipRoot.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(tagTooltipRoot);
         tagTooltipRoot.SetAsLastSibling();
         tagTooltipCanvasGroup.alpha = 0f;
         tagTooltipRoot.localScale = Vector3.one;
-        tagTooltipRoot.anchoredPosition = shownPosition - new Vector2(tagTooltipSlideDistance, 0f);
+        tagTooltipRoot.anchoredPosition = shownPosition - slideOffset;
 
         Sequence sequence = DOTween.Sequence().SetTarget(this);
         sequence.Join(tagTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
@@ -487,7 +489,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (tagTooltipRoot == null || tagTooltipCanvasGroup == null || !tagTooltipRoot.gameObject.activeSelf)
             return;
 
-        Vector2 hiddenPosition = GetTagTooltipShownPosition() - new Vector2(tagTooltipSlideDistance, 0f);
+        Vector2 hiddenPosition = GetTagTooltipShownPosition() - new Vector2(tagTooltipSlideDistance * GetTagTooltipSlideDirection(), 0f);
         Sequence sequence = DOTween.Sequence().SetTarget(this);
         sequence.Join(tagTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
         sequence.Join(tagTooltipRoot.DOAnchorPos(hiddenPosition, tooltipScaleDuration).SetEase(Ease.InBack));
@@ -572,13 +574,14 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             tagTooltipRoot.SetParent(tooltipRoot.parent, false);
             tagTooltipRoot.anchorMin = tooltipRoot.anchorMin;
             tagTooltipRoot.anchorMax = tooltipRoot.anchorMax;
-            tagTooltipRoot.pivot = new Vector2(0f, 1f);
+            tagTooltipRoot.pivot = showTagTooltipOnLeft ? new Vector2(1f, 1f) : new Vector2(0f, 1f);
             tagTooltipRoot.sizeDelta = tagTooltipSize;
             Image image = tagTooltipRoot.GetComponent<Image>();
             image.color = new Color(0.03f, 0.03f, 0.04f, 1f);
             image.raycastTarget = false;
         }
 
+        tagTooltipRoot.pivot = showTagTooltipOnLeft ? new Vector2(1f, 1f) : new Vector2(0f, 1f);
         tagTooltipCanvasGroup = tagTooltipRoot.GetComponent<CanvasGroup>();
         if (tagTooltipCanvasGroup == null)
             tagTooltipCanvasGroup = tagTooltipRoot.gameObject.AddComponent<CanvasGroup>();
@@ -619,7 +622,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (tooltipRoot == null)
             return Vector2.zero;
 
-        return tooltipRoot.anchoredPosition + new Vector2(tooltipRoot.sizeDelta.x * (1f - tooltipRoot.pivot.x) + tagTooltipXOffset, tooltipRoot.sizeDelta.y * (1f - tooltipRoot.pivot.y));
+        float direction = GetTagTooltipSlideDirection();
+        return tooltipRoot.anchoredPosition + new Vector2(direction * (tooltipRoot.sizeDelta.x * 0.5f + tagTooltipXOffset), tooltipRoot.sizeDelta.y * (1f - tooltipRoot.pivot.y));
+    }
+
+    private float GetTagTooltipSlideDirection()
+    {
+        return showTagTooltipOnLeft ? -1f : 1f;
     }
 
     private Vector2 GetTagTooltipSize()
