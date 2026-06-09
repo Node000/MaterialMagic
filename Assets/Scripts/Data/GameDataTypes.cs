@@ -81,7 +81,8 @@ public enum BuffEnum
     ShieldReflectBoost = 38,
     MagicAttackAll = 39,
     NextMagicRepeat = 40,
-    Claw = 41
+    Claw = 41,
+    LazyNextDraw = 42
 }
 
 public enum BuffKindEnum
@@ -507,6 +508,8 @@ public class MaterialModel
     public MaterialEnum alternateMaterial;
     public List<string> enhancementIds = new List<string>();
     public List<MaterialModifierModel> modifiers = new List<MaterialModifierModel>();
+    public List<MaterialModel> linkedCards = new List<MaterialModel>();
+    public List<MaterialModel> packedCards = new List<MaterialModel>();
     public bool isPlayed;
     public bool isTemporary;
     public bool isRetained;
@@ -523,7 +526,7 @@ public class MaterialModel
         if (targetMaterial == MaterialEnum.None)
             return material == MaterialEnum.None;
 
-        if (material == targetMaterial || alternateMaterial == targetMaterial || material == MaterialEnum.Wild)
+        if (material == targetMaterial || alternateMaterial == targetMaterial || HasDefaultWildBehavior())
             return true;
 
         for (int i = 0; i < modifiers.Count; i++)
@@ -533,6 +536,22 @@ public class MaterialModel
         }
 
         return false;
+    }
+
+    private bool HasDefaultWildBehavior()
+    {
+        if (material != MaterialEnum.Wild && alternateMaterial != MaterialEnum.Wild)
+            return false;
+
+        if (linkedCards.Count > 0 || packedCards.Count > 0)
+            return false;
+
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].SuppressesDefaultWildBehavior())
+                return false;
+        }
+        return true;
     }
 
     public bool IsArrowReadable()
@@ -563,6 +582,8 @@ public class MaterialModel
             return;
 
         bool usesBaseEffect = material != MaterialEnum.None;
+        if (HasDefaultWildBehavior() || IsLinkedArrowContainer())
+            usesBaseEffect = false;
         for (int i = 0; i < modifiers.Count; i++)
         {
             if (modifiers[i] != null)
@@ -571,6 +592,13 @@ public class MaterialModel
 
         if (usesBaseEffect)
             step.AddBaseEffectDirection(material);
+        if (HasDefaultWildBehavior())
+        {
+            step.AddBaseEffectDirection(MaterialEnum.Fire);
+            step.AddBaseEffectDirection(MaterialEnum.Water);
+            step.AddBaseEffectDirection(MaterialEnum.Wind);
+            step.AddBaseEffectDirection(MaterialEnum.Earth);
+        }
 
         for (int i = 0; i < modifiers.Count; i++)
             modifiers[i]?.FillArrowBaseEffectDirections(step);
@@ -608,6 +636,64 @@ public class MaterialModel
     {
         for (int i = 0; i < modifiers.Count; i++)
             modifiers[i]?.OnArrowBaseEffectResolve(context);
+    }
+
+    public bool ShouldStopArrowReadSequence()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].ShouldStopArrowReadSequence())
+                return true;
+        }
+        return false;
+    }
+
+    public bool ShouldPackFollowingArrows()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].ShouldPackFollowingArrows())
+                return true;
+        }
+        return false;
+    }
+
+    public bool IsLinkedArrowContainer()
+    {
+        if (linkedCards.Count > 0 || packedCards.Count > 0)
+            return true;
+
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].IsLinkedArrowContainer())
+                return true;
+        }
+        return false;
+    }
+
+    public void SetPackedCards(IEnumerable<MaterialModel> cards)
+    {
+        packedCards.Clear();
+        if (cards == null)
+            return;
+
+        foreach (MaterialModel card in cards)
+        {
+            if (card != null)
+                packedCards.Add(card);
+        }
+    }
+
+    public void ClearPackedCards()
+    {
+        packedCards.Clear();
+        for (int i = 0; i < linkedCards.Count; i++)
+            linkedCards[i]?.ClearPackedCards();
+    }
+
+    public IReadOnlyList<MaterialModel> GetArrowLinkedCards()
+    {
+        return packedCards.Count > 0 ? packedCards : linkedCards;
     }
 
     public bool ShouldRemoveSourceAfterArrowRead()
@@ -683,6 +769,12 @@ public class MaterialModel
             removeCardAfterBattle = removeCardAfterBattle
         };
         clone.enhancementIds.AddRange(enhancementIds);
+        for (int i = 0; i < linkedCards.Count; i++)
+        {
+            MaterialModel linkedCard = linkedCards[i]?.CloneForBattle(newInstanceId + "_linked_" + i);
+            if (linkedCard != null)
+                clone.linkedCards.Add(linkedCard);
+        }
         for (int i = 0; i < modifiers.Count; i++)
         {
             MaterialModifierModel modifier = modifiers[i]?.Clone();
@@ -696,26 +788,9 @@ public class MaterialModel
         if (modifier == null || modifiers.Contains(modifier))
             return;
 
-        if (IsSingleArrowModifier(modifier))
-            RemoveSingleArrowModifiers();
-
         modifier.model = this;
         modifiers.Add(modifier);
         RebuildModifierFlags();
-    }
-
-    private void RemoveSingleArrowModifiers()
-    {
-        for (int i = modifiers.Count - 1; i >= 0; i--)
-        {
-            if (IsSingleArrowModifier(modifiers[i]))
-                modifiers.RemoveAt(i);
-        }
-    }
-
-    private static bool IsSingleArrowModifier(MaterialModifierModel modifier)
-    {
-        return modifier is HeavyArrowModifier || modifier is BigArrow2Modifier || modifier is BigArrow3Modifier || modifier is BigArrow4Modifier || modifier is ReturnArrowModifier || modifier is RandomArrowModifier || modifier is ProliferatingArrowModifier || modifier is EternalArrowModifier || modifier is FragileArrowModifier || modifier is RetainedArrowModifier;
     }
 
     private void RebuildModifierFlags()

@@ -463,9 +463,20 @@ public class MagicModel
         if (first == null || second == null)
             return false;
 
-        MaterialEnum firstMaterial = first.material;
-        MaterialEnum secondMaterial = second.material;
-        return IsBasicElement(firstMaterial) && IsBasicElement(secondMaterial) && firstMaterial != secondMaterial;
+        for (int firstIndex = 0; firstIndex < 4; firstIndex++)
+        {
+            MaterialEnum firstMaterial = GetBasicElementByIndex(firstIndex);
+            if (!first.CanActAs(firstMaterial))
+                continue;
+
+            for (int secondIndex = 0; secondIndex < 4; secondIndex++)
+            {
+                MaterialEnum secondMaterial = GetBasicElementByIndex(secondIndex);
+                if (firstMaterial != secondMaterial && second.CanActAs(secondMaterial))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private static bool IsAnyTwoDifferentElements(IReadOnlyList<ArrowReadToken> sequence, int startIndex)
@@ -478,9 +489,31 @@ public class MagicModel
         if (first == null || second == null)
             return false;
 
-        MaterialEnum firstMaterial = first.DisplayMaterial;
-        MaterialEnum secondMaterial = second.DisplayMaterial;
-        return IsBasicElement(firstMaterial) && IsBasicElement(secondMaterial) && firstMaterial != secondMaterial;
+        for (int firstIndex = 0; firstIndex < 4; firstIndex++)
+        {
+            MaterialEnum firstMaterial = GetBasicElementByIndex(firstIndex);
+            if (!first.CanActAs(firstMaterial))
+                continue;
+
+            for (int secondIndex = 0; secondIndex < 4; secondIndex++)
+            {
+                MaterialEnum secondMaterial = GetBasicElementByIndex(secondIndex);
+                if (firstMaterial != secondMaterial && second.CanActAs(secondMaterial))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private static MaterialEnum GetBasicElementByIndex(int index)
+    {
+        switch (index)
+        {
+            case 0: return MaterialEnum.Fire;
+            case 1: return MaterialEnum.Wind;
+            case 2: return MaterialEnum.Water;
+            default: return MaterialEnum.Earth;
+        }
     }
 
     private static bool IsBasicElement(MaterialEnum material)

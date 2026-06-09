@@ -54,13 +54,27 @@
       "script": "DoomModifier",
       "nameKey": "modifier.doom.name",
       "descriptionKey": "modifier.doom.desc",
-      "lineColor": "#D95757"
+      "lineColor": "#747478"
     },
     {
-      "id": "heavy_arrow",
-      "script": "HeavyArrowModifier",
-      "nameKey": "modifier.heavy_arrow.name",
-      "descriptionKey": "modifier.heavy_arrow.desc",
+      "id": "lazy",
+      "script": "LazyModifier",
+      "nameKey": "modifier.lazy.name",
+      "descriptionKey": "modifier.lazy.desc",
+      "lineColor": "#8C8CFF"
+    },
+    {
+      "id": "omni_arrow",
+      "script": "OmniArrowModifier",
+      "nameKey": "modifier.omni_arrow.name",
+      "descriptionKey": "modifier.omni_arrow.desc",
+      "lineColor": "#CC72FF"
+    },
+    {
+      "id": "repeat_arrow",
+      "script": "RepeatArrowModifier",
+      "nameKey": "modifier.repeat_arrow.name",
+      "descriptionKey": "modifier.repeat_arrow.desc",
       "lineColor": "#9C6BFF"
     },
     {
@@ -90,6 +104,27 @@
       "nameKey": "modifier.return_arrow.name",
       "descriptionKey": "modifier.return_arrow.desc",
       "lineColor": "#FFFFFF"
+    },
+    {
+      "id": "period_arrow",
+      "script": "PeriodArrowModifier",
+      "nameKey": "modifier.period_arrow.name",
+      "descriptionKey": "modifier.period_arrow.desc",
+      "lineColor": "#D8D8D8"
+    },
+    {
+      "id": "pack_arrow",
+      "script": "PackArrowModifier",
+      "nameKey": "modifier.pack_arrow.name",
+      "descriptionKey": "modifier.pack_arrow.desc",
+      "lineColor": "#FF72D8"
+    },
+    {
+      "id": "linked_arrow",
+      "script": "LinkedArrowModifier",
+      "nameKey": "modifier.linked_arrow.name",
+      "descriptionKey": "modifier.linked_arrow.desc",
+      "lineColor": "#B877FF"
     },
     {
       "id": "random_arrow",

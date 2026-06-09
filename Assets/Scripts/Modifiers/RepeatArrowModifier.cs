@@ -1,4 +1,4 @@
-public class HeavyArrowModifier : MaterialModifierModel
+public class RepeatArrowModifier : MaterialModifierModel
 {
     public override int GetAdditionalArrowReadCount()
     {

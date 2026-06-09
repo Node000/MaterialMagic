@@ -101,6 +101,7 @@ public class MaterialCardSaveData
     public int alternateMaterial;
     public string[] enhancementIds = Array.Empty<string>();
     public string[] modifierIds = Array.Empty<string>();
+    public MaterialCardSaveData[] linkedCards = Array.Empty<MaterialCardSaveData>();
     public bool isTemporary;
     public bool isRetained;
 }
@@ -499,20 +500,26 @@ public static class RunSaveSystem
     {
         MaterialCardSaveData[] results = new MaterialCardSaveData[deck.Count];
         for (int i = 0; i < deck.Count; i++)
-        {
-            MaterialModel card = deck[i];
-            results[i] = new MaterialCardSaveData
-            {
-                instanceId = card.instanceId,
-                material = (int)card.material,
-                alternateMaterial = (int)card.alternateMaterial,
-                enhancementIds = card.enhancementIds.ToArray(),
-                modifierIds = ExportMaterialModifiers(card.modifiers),
-                isTemporary = card.isTemporary,
-                isRetained = card.isRetained
-            };
-        }
+            results[i] = ExportMaterialCard(deck[i]);
         return results;
+    }
+
+    private static MaterialCardSaveData ExportMaterialCard(MaterialModel card)
+    {
+        if (card == null)
+            return null;
+
+        return new MaterialCardSaveData
+        {
+            instanceId = card.instanceId,
+            material = (int)card.material,
+            alternateMaterial = (int)card.alternateMaterial,
+            enhancementIds = card.enhancementIds.ToArray(),
+            modifierIds = ExportMaterialModifiers(card.modifiers),
+            linkedCards = ExportDeck(card.linkedCards),
+            isTemporary = card.isTemporary,
+            isRetained = card.isRetained
+        };
     }
 
     private static MagicSlotSaveData[] ExportMagicBook(IReadOnlyList<MagicModel> magicBook)
@@ -582,6 +589,12 @@ public static class RunSaveSystem
         };
         if (data.enhancementIds != null)
             card.enhancementIds.AddRange(data.enhancementIds);
+        for (int i = 0; data.linkedCards != null && i < data.linkedCards.Length; i++)
+        {
+            MaterialModel linkedCard = CreateMaterial(data.linkedCards[i]);
+            if (linkedCard != null)
+                card.linkedCards.Add(linkedCard);
+        }
         for (int i = 0; data.modifierIds != null && i < data.modifierIds.Length; i++)
         {
             MaterialModifierModel modifier = CreateMaterialModifier(data.modifierIds[i]);
@@ -605,7 +618,11 @@ public static class RunSaveSystem
         if (modifier is LiquefyModifier) return "liquefy";
         if (modifier is ChargeModifier) return "charge";
         if (modifier is VortexModifier) return "vortex";
-        if (modifier is HeavyArrowModifier) return "heavy_arrow";
+        if (modifier is RepeatArrowModifier) return "repeat_arrow";
+        if (modifier is OmniArrowModifier) return "omni_arrow";
+        if (modifier is PeriodArrowModifier) return "period_arrow";
+        if (modifier is PackArrowModifier) return "pack_arrow";
+        if (modifier is LinkedArrowModifier) return "linked_arrow";
         if (modifier is BigArrow2Modifier) return "big_arrow_2";
         if (modifier is BigArrow3Modifier) return "big_arrow_3";
         if (modifier is BigArrow4Modifier) return "big_arrow_4";
@@ -617,6 +634,7 @@ public static class RunSaveSystem
         if (modifier is RetainedArrowModifier) return "retained_arrow";
         if (modifier is HalfArrowModifier) return "half_arrow";
         if (modifier is DoomModifier) return "doom";
+        if (modifier is LazyModifier) return "lazy";
         if (modifier is TemporaryModifier) return "temporary";
         return string.Empty;
     }
@@ -630,7 +648,12 @@ public static class RunSaveSystem
             case "liquefy": return new LiquefyModifier();
             case "charge": return new ChargeModifier();
             case "vortex": return new VortexModifier();
-            case "heavy_arrow": return new HeavyArrowModifier();
+            case "heavy_arrow": return new RepeatArrowModifier();
+            case "repeat_arrow": return new RepeatArrowModifier();
+            case "omni_arrow": return new OmniArrowModifier();
+            case "period_arrow": return new PeriodArrowModifier();
+            case "pack_arrow": return new PackArrowModifier();
+            case "linked_arrow": return new LinkedArrowModifier();
             case "big_arrow_2": return new BigArrow2Modifier();
             case "big_arrow_3": return new BigArrow3Modifier();
             case "big_arrow_4": return new BigArrow4Modifier();
@@ -642,6 +665,7 @@ public static class RunSaveSystem
             case "retained_arrow": return new RetainedArrowModifier();
             case "half_arrow": return new HalfArrowModifier();
             case "doom": return new DoomModifier();
+            case "lazy": return new LazyModifier();
             case "temporary": return new TemporaryModifier();
             default: return null;
         }

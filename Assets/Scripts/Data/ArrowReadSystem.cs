@@ -101,7 +101,7 @@ public class ArrowReadSequence
         if (step == null)
             return;
 
-        step.FirstTokenIndex = tokens.Count;
+        step.FirstTokenIndex = step.Tokens.Count > 0 ? tokens.Count : -1;
         steps.Add(step);
         for (int i = 0; i < step.Tokens.Count; i++)
             tokens.Add(step.Tokens[i]);
@@ -110,6 +110,34 @@ public class ArrowReadSequence
 
 public static class ArrowReadSystem
 {
+    private const int MaxReadSteps = 256;
+    private const int MaxContainerDepth = 8;
+
+    private class ArrowReadItem
+    {
+        public MaterialModel Card;
+        public int SourceCardIndex;
+        public bool Removed;
+
+        public ArrowReadItem(MaterialModel card, int sourceCardIndex)
+        {
+            Card = card;
+            SourceCardIndex = sourceCardIndex;
+        }
+    }
+
+    private class PackedArrowItem
+    {
+        public MaterialModel Card;
+        public int SourceCardIndex;
+
+        public PackedArrowItem(MaterialModel card, int sourceCardIndex)
+        {
+            Card = card;
+            SourceCardIndex = sourceCardIndex;
+        }
+    }
+
     public static ArrowReadSequence BuildSequence(IReadOnlyList<MaterialModel> cards)
     {
         return BuildSequence(cards, null, null);
@@ -121,41 +149,142 @@ public static class ArrowReadSystem
         if (cards == null)
             return sequence;
 
+        ClearPackedCards(cards);
         ArrowReadContext context = new ArrowReadContext(playerState, battleManager);
-        bool[] removed = new bool[cards.Count];
+        List<ArrowReadItem> items = new List<ArrowReadItem>(cards.Count);
+        for (int i = 0; i < cards.Count; i++)
+            items.Add(new ArrowReadItem(cards[i], i));
+
+        BuildSequenceFromItems(items, sequence, context, 0);
+        return sequence;
+    }
+
+    private static void BuildSequenceFromItems(List<ArrowReadItem> items, ArrowReadSequence sequence, ArrowReadContext context, int depth)
+    {
+        if (items == null || sequence == null || depth > MaxContainerDepth)
+            return;
+
         int index = 0;
         int direction = 1;
-        while (index >= 0 && index < cards.Count)
+        int guard = 0;
+        while (index >= 0 && index < items.Count && guard++ < MaxReadSteps)
         {
-            if (removed[index])
+            ArrowReadItem item = items[index];
+            if (item == null || item.Removed || item.Card == null)
             {
                 index += direction;
                 continue;
             }
 
-            MaterialModel card = cards[index];
-            card?.TriggerBeforeArrowRead(context);
-            if (card == null || !card.IsArrowReadable())
+            MaterialModel card = item.Card;
+            card.TriggerBeforeArrowRead(context);
+            if (card.ShouldStopArrowReadSequence())
+                break;
+
+            if (!card.IsArrowReadable())
             {
                 index += direction;
                 continue;
             }
+
+            List<PackedArrowItem> packedItems = null;
+            if (card.ShouldPackFollowingArrows())
+                packedItems = PackFollowingItems(items, index, direction, card);
 
             int readCount = 1 + card.GetAdditionalArrowReadCount();
             for (int readIndex = 0; readIndex < readCount; readIndex++)
             {
-                ArrowReadStep step = CreateStep(card, index);
+                ArrowReadStep step = CreateStep(card, item.SourceCardIndex);
                 sequence.AddStep(step);
                 if (step.RemovesSourceAfterRead)
-                    removed[index] = true;
+                    item.Removed = true;
                 if (step.DirectionChange == ArrowReadDirectionChange.Reverse)
                     direction = -direction;
+
+                IReadOnlyList<MaterialModel> linkedCards = card.GetArrowLinkedCards();
+                if (linkedCards.Count > 0)
+                {
+                    if (packedItems != null)
+                        BuildSequenceFromPackedItems(packedItems, sequence, context, depth + 1);
+                    else
+                        BuildSequenceFromLinkedCards(linkedCards, sequence, context, item.SourceCardIndex, depth + 1);
+                }
             }
 
             index += direction;
         }
+    }
 
-        return sequence;
+    private static void BuildSequenceFromLinkedCards(IReadOnlyList<MaterialModel> cards, ArrowReadSequence sequence, ArrowReadContext context, int sourceCardIndex, int depth)
+    {
+        if (cards == null || cards.Count == 0)
+            return;
+
+        List<ArrowReadItem> items = new List<ArrowReadItem>(cards.Count);
+        for (int i = 0; i < cards.Count; i++)
+            items.Add(new ArrowReadItem(cards[i], sourceCardIndex));
+
+        BuildSequenceFromItems(items, sequence, context, depth);
+    }
+
+    private static List<PackedArrowItem> PackFollowingItems(List<ArrowReadItem> items, int sourceIndex, int direction, MaterialModel packCard)
+    {
+        if (items == null || packCard == null)
+            return null;
+
+        List<MaterialModel> packedCards = new List<MaterialModel>();
+        List<PackedArrowItem> packedItems = new List<PackedArrowItem>();
+        if (direction >= 0)
+        {
+            for (int i = sourceIndex + 1; i < items.Count; i++)
+            {
+                ArrowReadItem item = items[i];
+                if (item == null || item.Removed || item.Card == null)
+                    continue;
+
+                packedCards.Add(item.Card);
+                packedItems.Add(new PackedArrowItem(item.Card, item.SourceCardIndex));
+                item.Removed = true;
+            }
+        }
+        else
+        {
+            for (int i = sourceIndex - 1; i >= 0; i--)
+            {
+                ArrowReadItem item = items[i];
+                if (item == null || item.Removed || item.Card == null)
+                    continue;
+
+                packedCards.Add(item.Card);
+                packedItems.Add(new PackedArrowItem(item.Card, item.SourceCardIndex));
+                item.Removed = true;
+            }
+        }
+
+        packCard.SetPackedCards(packedCards);
+        return packedItems;
+    }
+
+    private static void BuildSequenceFromPackedItems(List<PackedArrowItem> packedItems, ArrowReadSequence sequence, ArrowReadContext context, int depth)
+    {
+        if (packedItems == null || packedItems.Count == 0)
+            return;
+
+        List<ArrowReadItem> items = new List<ArrowReadItem>(packedItems.Count);
+        for (int i = 0; i < packedItems.Count; i++)
+        {
+            PackedArrowItem packedItem = packedItems[i];
+            if (packedItem != null)
+                items.Add(new ArrowReadItem(packedItem.Card, packedItem.SourceCardIndex));
+        }
+
+        BuildSequenceFromItems(items, sequence, context, depth);
+    }
+
+    private static void ClearPackedCards(IReadOnlyList<MaterialModel> cards)
+    {
+        for (int i = 0; cards != null && i < cards.Count; i++)
+            cards[i]?.ClearPackedCards();
     }
 
     private static ArrowReadStep CreateStep(MaterialModel card, int sourceCardIndex)
@@ -168,7 +297,7 @@ public static class ArrowReadSystem
             step.AfterReadAction = ArrowReadAfterReadAction.Consume;
         step.DirectionChange = card.GetArrowReadDirectionChange();
 
-        int tokenCount = card.GetArrowMatchTokenCount();
+        int tokenCount = card.IsLinkedArrowContainer() ? 0 : card.GetArrowMatchTokenCount();
         for (int tokenIndex = 0; tokenIndex < tokenCount; tokenIndex++)
             step.AddToken(new ArrowReadToken(card, sourceCardIndex, tokenIndex));
 

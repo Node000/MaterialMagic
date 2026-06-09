@@ -687,7 +687,7 @@
               "effects": [
                 {
                   "rewardType": 16,
-                  "modifierId": "heavy_arrow"
+                  "modifierId": "repeat_arrow"
                 }
               ],
               "nextNodeId": "misaligned"

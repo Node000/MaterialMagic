@@ -159,9 +159,10 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
         if (iconImage != null)
         {
-            Sprite sprite = MaterialCardView.GetMaterialIcon(card.material);
+            MaterialEnum displayMaterial = card != null ? card.GetArrowDisplayMaterial() : MaterialEnum.None;
+            Sprite sprite = MaterialCardView.GetMaterialIcon(displayMaterial);
             iconImage.sprite = sprite;
-            iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(card.material);
+            iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(displayMaterial);
             iconImage.preserveAspect = true;
             MaterialModifierVisualUtility.ApplyTo(iconImage, card);
         }

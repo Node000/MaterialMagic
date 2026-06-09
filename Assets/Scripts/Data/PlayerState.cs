@@ -681,6 +681,7 @@ public class PlayerState
             }
 
             card.RemoveBattleOnlyModifiers();
+            card.ClearPackedCards();
         }
     }
 

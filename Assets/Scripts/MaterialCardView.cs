@@ -111,7 +111,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     }
     private void RefreshVisual()
     {
-        MaterialEnum material = materialModel != null ? materialModel.material : MaterialEnum.None;
+        MaterialEnum material = materialModel != null ? materialModel.GetArrowDisplayMaterial() : MaterialEnum.None;
 
         if (labelText != null)
             labelText.text = GetCardLabel(materialModel);
@@ -278,6 +278,8 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
                 return "Images/UI/2";
             case MaterialEnum.Earth:
                 return "Images/UI/4";
+            case MaterialEnum.Wild:
+                return "Images/UI/Wild";
             default:
                 return null;
         }

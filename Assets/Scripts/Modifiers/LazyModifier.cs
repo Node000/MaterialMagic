@@ -1,4 +1,4 @@
-public class DoomModifier : MaterialModifierModel
+public class LazyModifier : MaterialModifierModel
 {
     public override bool RemoveModifierAfterBattle => true;
 
@@ -6,6 +6,6 @@ public class DoomModifier : MaterialModifierModel
     {
         PlayerState player = context?.PlayerState ?? CurrentContext?.PlayerState ?? BattleManager.Instance?.PlayerState;
         if (player != null)
-            player.TakeDamage(5, null);
+            player.AddBuff(BuffEnum.LazyNextDraw, 1);
     }
 }

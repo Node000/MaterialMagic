@@ -183,6 +183,8 @@ public class BuffModel
                 return new MagicAttackAllBuffModel(stack);
             case BuffEnum.NextMagicRepeat:
                 return new NextMagicRepeatBuffModel(stack);
+            case BuffEnum.LazyNextDraw:
+                return new LazyNextDrawBuffModel(stack);
             case BuffEnum.SpellPower:
                 return new SpellPowerBuffModel(stack);
             case BuffEnum.DefensePower:
@@ -218,6 +220,7 @@ public class BuffModel
             case BuffEnum.AttributeDisabled:
             case BuffEnum.Curse:
             case BuffEnum.MaterialOverplayDebuff:
+            case BuffEnum.LazyNextDraw:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:

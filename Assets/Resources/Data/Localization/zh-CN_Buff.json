@@ -297,6 +297,14 @@
       "text": "下一个道具额外触发{0}次。"
     },
     {
+      "key": "buff.lazy_next_draw.name",
+      "text": "懒惰"
+    },
+    {
+      "key": "buff.lazy_next_draw.desc",
+      "text": "下回合抽牌减少{0}张，抽牌后清除。"
+    },
+    {
       "key": "buff.claw.name",
       "text": "爪牙"
     },

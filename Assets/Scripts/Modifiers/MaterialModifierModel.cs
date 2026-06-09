@@ -51,6 +51,26 @@ public class MaterialModifierModel
     {
     }
 
+    public virtual bool SuppressesDefaultWildBehavior()
+    {
+        return false;
+    }
+
+    public virtual bool ShouldStopArrowReadSequence()
+    {
+        return false;
+    }
+
+    public virtual bool ShouldPackFollowingArrows()
+    {
+        return false;
+    }
+
+    public virtual bool IsLinkedArrowContainer()
+    {
+        return false;
+    }
+
     public virtual bool ShouldRemoveSourceAfterArrowRead()
     {
         return false;

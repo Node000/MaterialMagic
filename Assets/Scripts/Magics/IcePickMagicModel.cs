@@ -5,7 +5,7 @@ public class IcePickMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
-        AddBuff(target, BuffEnum.Vulnerable, 2, result);
+        AddBuff(target, BuffEnum.Vulnerable, 1, result);
         DamageTargetTimes(playerState, battleManager, 1, 2, result);
     }
 }

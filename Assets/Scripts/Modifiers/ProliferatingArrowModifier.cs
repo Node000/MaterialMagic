@@ -6,9 +6,10 @@ public class ProliferatingArrowModifier : MaterialModifierModel
         if (playerState == null || model == null)
             return;
 
-        MaterialModel copy = model.CloneForBattle("proliferated_" + model.instanceId + "_" + playerState.TemporaryMaterialsNextTurn.Count);
+        MaterialModel copy = model.CloneForBattle("proliferated_" + model.instanceId + "_" + playerState.DiscardPile.Count);
         copy.removeCardAfterBattle = true;
-        playerState.TemporaryMaterialsNextTurn.Add(copy);
-        GameLog.Data($"Schedule proliferated arrow copy {copy.instanceId}");
+        copy.isPlayed = false;
+        playerState.DiscardPile.Add(copy);
+        GameLog.Data($"Add proliferated arrow copy to discard pile {copy.instanceId}");
     }
 }

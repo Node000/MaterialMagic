@@ -19,6 +19,7 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private RectTransform fireMaterialRow;
     [SerializeField] private RectTransform windMaterialRow;
     [SerializeField] private RectTransform earthMaterialRow;
+    [SerializeField] private RectTransform wildMaterialRow;
     [SerializeField] private RectTransform materialCardPrefab;
     [SerializeField] private float materialRowMinSpacing = 16f;
     [SerializeField] private float materialRowMaxSpacing = 140f;
@@ -140,6 +141,7 @@ public class MaterialListPanelUI : MonoBehaviour
         RefreshRow(fireMaterialRow, MaterialEnum.Fire);
         RefreshRow(windMaterialRow, MaterialEnum.Wind);
         RefreshRow(earthMaterialRow, MaterialEnum.Earth);
+        RefreshRow(wildMaterialRow, MaterialEnum.Wild);
     }
 
     public void ShowModifierTooltip(MaterialCardView cardView, MaterialModel materialModel)
@@ -256,6 +258,8 @@ public class MaterialListPanelUI : MonoBehaviour
             windMaterialRow = UIManager.FindChildRect(transform, "WindRow");
         if (earthMaterialRow == null)
             earthMaterialRow = UIManager.FindChildRect(transform, "EarthRow");
+        if (wildMaterialRow == null)
+            wildMaterialRow = UIManager.FindChildRect(transform, "WildRow");
         if (titleText == null)
             titleText = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (materialCardPrefab == null)
@@ -579,6 +583,8 @@ public class MaterialListPanelUI : MonoBehaviour
                 return "单独打出（左）：下回合额外抽1张牌";
             case MaterialEnum.Earth:
                 return "单独打出（右）：获得3点护盾";
+            case MaterialEnum.Wild:
+                return "单独打出：按具体Wild箭头机制结算";
             default:
                 return "单独打出：无基础效果";
         }

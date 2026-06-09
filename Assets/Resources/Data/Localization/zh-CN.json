@@ -134,7 +134,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "使敌方获得两层【易损】，对敌方造成两次1点伤害"
+      "text": "使敌方获得1层【易损】，对敌方造成两次1点伤害"
     },
     {
       "key": "magic.swamp.name",

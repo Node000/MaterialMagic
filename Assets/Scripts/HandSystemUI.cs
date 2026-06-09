@@ -505,6 +505,55 @@ public class HandSystemUI : MonoBehaviour
         UpdatePlayerHealthUI(false);
     }
 
+    private void DebugApplyRandomMaterialModifiersToDeck()
+    {
+        if (playerState == null || playerState.Deck.Count == 0)
+            return;
+
+        List<MaterialModifierData> pool = GetDebugMaterialModifierPool();
+        if (pool.Count == 0)
+            return;
+
+        int appliedCount = 0;
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            MaterialModel card = playerState.Deck[i];
+            if (card == null || card.material == MaterialEnum.None)
+                continue;
+
+            MaterialModifierData data = pool[NextRunRandomInt(0, pool.Count)];
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(data);
+            if (modifier == null)
+                continue;
+
+            card.AddModifier(modifier);
+            appliedCount++;
+        }
+
+        if (appliedCount == 0)
+            return;
+
+        selectedCards.Clear();
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+        GameLog.Data($"Debug apply random material modifiers to deck count={appliedCount}");
+    }
+
+    private List<MaterialModifierData> GetDebugMaterialModifierPool()
+    {
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        List<MaterialModifierData> pool = new List<MaterialModifierData>();
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null)
+                pool.Add(data);
+        }
+        return pool;
+    }
+
     private IEnumerator DebugHandleBattleResult()
     {
         yield return PlayPendingEnemyDeaths();
@@ -2195,6 +2244,11 @@ public class HandSystemUI : MonoBehaviour
 		{
 			ToggleSettingsPanel();
 		}
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            DebugApplyRandomMaterialModifiersToDeck();
+        }
 
 		if (IsPlaySelectedCardsInputDown())
 		{
@@ -5506,7 +5560,7 @@ public class HandSystemUI : MonoBehaviour
 
     private bool IsEliteArrowModifierRewardData(MaterialModifierData data)
     {
-        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null && data.id != "temporary" && data.id != "sturdy" && data.id != "doom" && data.id != "half_arrow";
+        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null && data.id != "temporary" && data.id != "sturdy" && data.id != "doom" && data.id != "lazy" && data.id != "half_arrow" && data.id != "linked_arrow";
     }
 
     private int CountSelectableArrowModifierTargets()

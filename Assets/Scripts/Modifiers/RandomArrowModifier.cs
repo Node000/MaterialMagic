@@ -2,6 +2,11 @@ public class RandomArrowModifier : MaterialModifierModel
 {
     private MaterialEnum rolledMaterial = MaterialEnum.None;
 
+    public override bool SuppressesDefaultWildBehavior()
+    {
+        return true;
+    }
+
     public override void OnBeforeArrowRead(ArrowReadContext context)
     {
         if (rolledMaterial != MaterialEnum.None)
@@ -24,6 +29,11 @@ public class RandomArrowModifier : MaterialModifierModel
     public override MaterialEnum GetArrowDisplayMaterial(MaterialEnum material)
     {
         return rolledMaterial != MaterialEnum.None ? rolledMaterial : material;
+    }
+
+    public override bool UsesArrowBaseEffect(bool usesBaseEffect)
+    {
+        return false;
     }
 
     public override void FillArrowBaseEffectDirections(ArrowReadStep step)

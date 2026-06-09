@@ -419,9 +419,15 @@ public class BattleManager
         if (!skipNormalDraw)
         {
             int extraDraw = PlayerState.GetBuffStack(BuffEnum.ExtraDraw);
-            PlayerState.DrawCards(drawCount + extraDraw);
+            int lazyDrawReduction = PlayerState.GetBuffStack(BuffEnum.LazyNextDraw);
+            int finalDrawCount = drawCount + extraDraw - lazyDrawReduction;
+            if (finalDrawCount < 0)
+                finalDrawCount = 0;
+            PlayerState.DrawCards(finalDrawCount);
             if (extraDraw > 0)
                 PlayerState.ConsumeBuff(BuffEnum.ExtraDraw, extraDraw);
+            if (lazyDrawReduction > 0)
+                PlayerState.ConsumeBuff(BuffEnum.LazyNextDraw, lazyDrawReduction);
             PlayerState.ConsumeTemporaryMaterialsNextTurn();
         }
         if (PlayerState.GetBuffStack(BuffEnum.Sturdy) > 0)

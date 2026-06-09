@@ -62,14 +62,30 @@
     },
     {
       "key": "modifier.doom.desc",
-      "text": "结算此箭头的基础效果时，玩家受到3点伤害；战斗结束后移除此附魔。"
+      "text": "结算此箭头的基础效果时，玩家受到5点伤害；战斗结束后移除此附魔。"
     },
     {
-      "key": "modifier.heavy_arrow.name",
-      "text": "重箭头"
+      "key": "modifier.lazy.name",
+      "text": "懒惰"
     },
     {
-      "key": "modifier.heavy_arrow.desc",
+      "key": "modifier.lazy.desc",
+      "text": "结算此箭头的基础效果时，下回合抽牌-1；战斗结束后移除此附魔。"
+    },
+    {
+      "key": "modifier.omni_arrow.name",
+      "text": "万向箭头"
+    },
+    {
+      "key": "modifier.omni_arrow.desc",
+      "text": "读取时依次触发火、水、风、土四种基础效果，并可作为任意基础方向参与配方。"
+    },
+    {
+      "key": "modifier.repeat_arrow.name",
+      "text": "重复"
+    },
+    {
+      "key": "modifier.repeat_arrow.desc",
       "text": "读取此箭头时，额外读取此箭头一次。"
     },
     {
@@ -105,6 +121,30 @@
       "text": "读取到此符号时，移除该符号并反转读取方向；此符号不供给配方格。"
     },
     {
+      "key": "modifier.period_arrow.name",
+      "text": "句点符号"
+    },
+    {
+      "key": "modifier.period_arrow.desc",
+      "text": "无法读取；箭头读取和配方检索遇到此符号时停止。"
+    },
+    {
+      "key": "modifier.pack_arrow.name",
+      "text": "打包符号"
+    },
+    {
+      "key": "modifier.pack_arrow.desc",
+      "text": "读取时收纳当前读取方向后方所有箭头和句法符号，并按黏合顺序结算；战斗结束后恢复。"
+    },
+    {
+      "key": "modifier.linked_arrow.name",
+      "text": "黏合箭头"
+    },
+    {
+      "key": "modifier.linked_arrow.desc",
+      "text": "包含有序子箭头，读取时按黏合顺序依次结算；黏合箭头可以继续被黏合。"
+    },
+    {
       "key": "modifier.random_arrow.name",
       "text": "随机箭头"
     },
@@ -118,7 +158,7 @@
     },
     {
       "key": "modifier.proliferating_arrow.desc",
-      "text": "打出并进入弃牌堆后，下回合在手牌中添加此箭头的复制；复制卡战斗结束后移除。"
+      "text": "打出并进入弃牌堆后，在弃牌堆中添加此箭头的临时复制；复制卡战斗结束后移除。"
     },
     {
       "key": "modifier.eternal_arrow.name",
