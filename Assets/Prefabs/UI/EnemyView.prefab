@@ -273,7 +273,7 @@ MonoBehaviour:
   shieldFill: {fileID: 8091639919141485936}
   healthText: {fileID: 9068667908674058373}
   buffRoot: {fileID: 6315806533511059672}
-  focusMarker: {fileID: 1651754049987567446}
+  focusMarker: {fileID: 0}
   intentRoot: {fileID: 7932675673432894242}
 --- !u!1 &2662258949341970029
 GameObject:
@@ -484,7 +484,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.4, y: 0.1}
   m_AnchorMax: {x: 0.6, y: 0.1}
-  m_AnchoredPosition: {x: 0, y: -58.8}
+  m_AnchoredPosition: {x: -0.0000019073486, y: -59.122234}
   m_SizeDelta: {x: 130, y: 14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &290990147664619188
@@ -912,8 +912,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2300399858145985020}
   - {fileID: 8938106231670031390}
+  - {fileID: 2300399858145985020}
   - {fileID: 7208767624444841288}
   - {fileID: 7932675673432894242}
   m_Father: {fileID: 170837361442143630}
@@ -933,14 +933,14 @@ GameObject:
   m_Component:
   - component: {fileID: 7208767624444841288}
   - component: {fileID: 4256369144983212937}
-  - component: {fileID: 1651754049987567446}
+  - component: {fileID: 6849744200658386717}
   m_Layer: 0
   m_Name: FocusMarker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7208767624444841288
 RectTransform:
   m_ObjectHideFlags: 0
@@ -957,7 +957,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 50}
+  m_AnchoredPosition: {x: 1, y: -5}
   m_SizeDelta: {x: 34, y: 34}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4256369144983212937
@@ -968,7 +968,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8459937342434916380}
   m_CullTransparentMesh: 1
---- !u!114 &1651754049987567446
+--- !u!114 &6849744200658386717
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -977,24 +977,40 @@ MonoBehaviour:
   m_GameObject: {fileID: 8459937342434916380}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Script: {fileID: 11500000, guid: 2e8141e59bc473b4696ccc4ebf2726f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.08, b: 0.06, a: 0.92}
+  m_Color: {r: 0.98742133, g: 0.20183134, b: 0.4666369, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  shape: 1
+  lineCount: 4
+  samplesPerLine: 41
+  lineWidth: 4.1
+  outset: 133.5
+  lineSpacing: 5.57
+  roundedRectSharpness: 5
+  fillEnabled: 0
+  fillColor: {r: 1, g: 1, b: 1, a: 1}
+  wobbleAmplitude: 19.7
+  waveCount: 3
+  scribbleAmount: 1.22
+  tangentWobble: 0.18
+  linePhaseOffset: 0.135
+  seed: 17
+  animate: 1
+  useUnscaledTime: 1
+  flowSpeed: 1.5
+  pulseAmount: 0.14
+  pulseSpeed: 2.2
+  steppedAnimation: 1
+  animationFramesPerSecond: 7
+  redrawInterval: 0
+  hoverTarget: {fileID: 8199781216497724746}
+  bindHoverTarget: 1
+  hideOnAwake: 1
