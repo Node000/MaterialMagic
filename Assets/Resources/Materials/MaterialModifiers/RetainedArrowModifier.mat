@@ -29,10 +29,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AberrationAmount: 0.0115
+    - _BlockCount: 32.3
     - _ColorMask: 15
     - _EffectMode: 0
     - _EffectSpeed: 1.35
     - _EffectStrength: 0.38
+    - _GlitchIntensity: 0.05
+    - _GlitchSpeed: 15.9
+    - _GlitchThreshold: 0.281
+    - _ScanlineCount: 144.9
+    - _ScanlineIntensity: 0.977
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

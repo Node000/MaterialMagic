@@ -29,17 +29,25 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaMode: 0
     - _ColorMask: 15
     - _EffectMode: 5
     - _EffectSpeed: 1.2
     - _EffectStrength: 0.72
+    - _NoiseIntensity: 0.0332
+    - _ParticleSize: 0.114
+    - _RotationSpeed: 8
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
+    - _TwistAmount: -1.59
     - _UseUIAlphaClip: 0
+    - _VortexDensity: 12
+    - _VortexRadius: 0.317
     m_Colors:
     - _AuraColor: {r: 0.48235294, g: 0.36078432, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ElectricColor: {r: 0, g: 0.47484276, b: 0.9496855, a: 1}
   m_BuildTextureStacks: []

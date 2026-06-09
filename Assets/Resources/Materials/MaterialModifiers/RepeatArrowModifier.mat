@@ -46,18 +46,30 @@ Material:
     m_Ints: []
     m_Floats:
     - _ArrowDirection: 0
+    - _BPM: 120
     - _ColorMask: 15
     - _CopyCount: 1
     - _EffectMode: 2
     - _EffectSpeed: 1.2
     - _EffectStrength: 0.4
+    - _FlashSteps: 3
+    - _GlitchFPS: 15
+    - _ImpactDepth: 10
+    - _JumpHeight: 10
+    - _ShakeIntensity: 0.05
+    - _SquashAmount: 0.5
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
+    - _StretchAmount: 0.3
     - _UseUIAlphaClip: 0
+    - _VibrationRes: 32
+    - _WaveSpeed: 2
+    - _WaveWidth: 0.25
     m_Colors:
     - _AuraColor: {r: 0.6117647, g: 0.41960785, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FlashColor: {r: 0.8666667, g: 0.15294118, b: 0.39215687, a: 1}
   m_BuildTextureStacks: []

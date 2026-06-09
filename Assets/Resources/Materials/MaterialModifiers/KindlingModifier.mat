@@ -29,10 +29,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AnimSpeed: 3
     - _ColorMask: 15
     - _EffectMode: 1
     - _EffectSpeed: 1.6
     - _EffectStrength: 0.6
+    - _Intensity: 0.503
+    - _LeapAngle: 55
+    - _LeapHeight: 0.226
+    - _ParticleSize: 0.056
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -41,5 +46,6 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _AuraColor: {r: 1, g: 0.47843137, b: 0.101960786, a: 1}
+    - _BurnColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

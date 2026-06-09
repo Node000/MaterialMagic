@@ -31,7 +31,7 @@ Material:
     m_Floats:
     - _ColorMask: 15
     - _EffectMode: 4
-    - _EffectSpeed: 1.25
+    - _EffectSpeed: 3
     - _EffectStrength: 0.55
     - _Stencil: 0
     - _StencilComp: 8
