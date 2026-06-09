@@ -135,6 +135,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     public void Show(RunMapGridModel grid, bool showDirectionCards)
     {
         CacheReferences();
+        ResetScrollMotion();
         currentGrid = grid;
         inputLocked = false;
         ignoreOutsideClickFrame = Time.frameCount;
@@ -152,6 +153,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     public void Hide()
     {
         inputLocked = true;
+        ResetScrollMotion();
         scrollTween?.Kill(false);
         markerTween?.Kill(false);
         bossSequence?.Kill(false);
@@ -379,6 +381,8 @@ public class ChapterGridPanelUI : MonoBehaviour
             scrollRect.content = scrollContent;
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            scrollRect.inertia = true;
             EnsureScrollDragArea(viewport);
         }
 
@@ -405,7 +409,8 @@ public class ChapterGridPanelUI : MonoBehaviour
         contentRoot.anchorMax = new Vector2(0.5f, 1f);
         contentRoot.pivot = new Vector2(0.5f, 1f);
         contentRoot.anchoredPosition = Vector2.zero;
-        contentRoot.sizeDelta = scrollRect != null && scrollRect.viewport != null ? scrollRect.viewport.rect.size : rectTransform.rect.size;
+        if (!gameObject.activeSelf)
+            contentRoot.sizeDelta = scrollRect != null && scrollRect.viewport != null ? scrollRect.viewport.rect.size : rectTransform.rect.size;
         contentRoot.SetAsLastSibling();
         ConfigureScrollContent();
 
@@ -445,8 +450,10 @@ public class ChapterGridPanelUI : MonoBehaviour
         scrollContent.anchorMax = new Vector2(1f, 1f);
         scrollContent.pivot = new Vector2(0.5f, 1f);
         if (!gameObject.activeSelf)
+        {
             scrollContent.anchoredPosition = Vector2.zero;
-        scrollContent.sizeDelta = new Vector2(0f, viewportSize.y);
+            scrollContent.sizeDelta = new Vector2(0f, viewportSize.y);
+        }
     }
 
     private void EnsurePlayerMarkerRoot()
@@ -868,6 +875,8 @@ public class ChapterGridPanelUI : MonoBehaviour
             return;
 
         float scrollableHeight = Mathf.Max(0f, scrollContent.rect.height - scrollRect.viewport.rect.height);
+        scrollRect.StopMovement();
+        scrollRect.velocity = Vector2.zero;
         if (scrollableHeight <= 0f)
         {
             scrollContent.anchoredPosition = Vector2.zero;
@@ -880,10 +889,28 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (instant)
         {
             scrollContent.anchoredPosition = new Vector2(scrollContent.anchoredPosition.x, targetY);
+            Canvas.ForceUpdateCanvases();
+            scrollRect.StopMovement();
+            scrollRect.velocity = Vector2.zero;
             return;
         }
 
         scrollTween = scrollContent.DOAnchorPosY(targetY, verticalScrollFollowDuration).SetEase(verticalScrollFollowEase).SetTarget(this);
+    }
+
+    private void ResetScrollMotion()
+    {
+        scrollTween?.Kill(false);
+        rectTransform.DOKill(false);
+        if (scrollContent != null)
+            scrollContent.DOKill(false);
+        if (contentRoot != null)
+            contentRoot.DOKill(false);
+        if (scrollRect == null)
+            return;
+
+        scrollRect.StopMovement();
+        scrollRect.velocity = Vector2.zero;
     }
 
     private CanvasGroup GetOrAddCanvasGroup()
