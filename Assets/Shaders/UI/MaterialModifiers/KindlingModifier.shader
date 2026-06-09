@@ -1,25 +1,19 @@
-// Auto-split per modifier shader. Source behavior derived from UI/MaterialModifierElementAura.
-// 引燃：像素火焰噪声从底部闪烁。
-Shader "UI/MaterialModifiers/KindlingModifier"
+Shader "UI/MaterialModifiers/FireEnchantedArrow"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _AuraColor ("Aura Color", Color) = (1,1,1,1)
-        _GradientColor1 ("Gradient Color 1", Color) = (1,1,1,1)
-        _GradientColor2 ("Gradient Color 2", Color) = (1,0.75,0.25,1)
-        _GradientColor3 ("Gradient Color 3", Color) = (1,0.25,0.75,1)
-        _GradientColor4 ("Gradient Color 4", Color) = (0.25,0.75,1,1)
-        _GradientPosition2 ("Gradient Position 2", Range(0,1)) = 0.33
-        _GradientPosition3 ("Gradient Position 3", Range(0,1)) = 0.66
-        _GradientAngle ("Gradient Angle", Range(0,6.28318)) = 0.7854
-        _GradientScale ("Gradient Scale", Float) = 1
-        _GradientOffset ("Gradient Offset", Float) = 0
-        _GradientScrollSpeed ("Gradient Scroll Speed", Float) = 0
-        _GradientIntensity ("Gradient Intensity", Range(0,1)) = 0
-        _EffectSpeed ("Effect Speed", Float) = 1
-        _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
+        _BurnColor ("Flame Color", Color) = (1, 0.3, 0, 1)
+
+        [Header(Flame Particle Controls)]
+        _ParticleSize ("Particle Size (0.1 is coarse)", Range(0.01, 1.0)) = 0.2
+        _LeapHeight ("Leap Distance", Range(0, 1)) = 0.4
+        _LeapAngle ("Leap Angle (Deg, 90 is up)", Range(0, 360)) = 90.0
+        _Intensity ("Fire Intensity", Range(0, 1)) = 0.5
+        _AnimSpeed ("Animation Speed", Float) = 3.0
+
+        // UI 遮罩相关参数保留以兼容 UGUI 机制
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -62,7 +56,7 @@ Shader "UI/MaterialModifiers/KindlingModifier"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -87,30 +81,35 @@ Shader "UI/MaterialModifiers/KindlingModifier"
 
             sampler2D _MainTex;
             fixed4 _Color;
+            fixed4 _BurnColor;
             fixed4 _TextureSampleAdd;
-            fixed4 _AuraColor;
-            fixed4 _GradientColor1;
-            fixed4 _GradientColor2;
-            fixed4 _GradientColor3;
-            fixed4 _GradientColor4;
-            float _GradientPosition2;
-            float _GradientPosition3;
-            float _GradientAngle;
-            float _GradientScale;
-            float _GradientOffset;
-            float _GradientScrollSpeed;
-            float _GradientIntensity;
             float4 _ClipRect;
-            float _EffectSpeed;
-            float _EffectStrength;
+            
+            float _ParticleSize;
+            float _LeapHeight;
+            float _LeapAngle;
+            float _Intensity;
+            float _AnimSpeed;
 
-            float hash21(float2 p)
+            // --- 核心算法：程序化伪随机噪声 (用于像素级不规则运动) ---
+            float2 hash2(float2 p)
             {
-                p = frac(p * float2(127.1, 311.7));
-                p += dot(p, p + 37.2);
-                return frac(p.x * p.y);
+                p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+                return frac(sin(p) * 43758.5453);
             }
 
+            float gradientNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                float2 u = f*f*(3.0-2.0*f);
+                return lerp( lerp( dot( hash2(i + float2(0.0,0.0)), f - float2(0.0,0.0) ), 
+                                  dot( hash2(i + float2(1.0,0.0)), f - float2(1.0,0.0) ), u.x),
+                             lerp( dot( hash2(i + float2(0.0,1.0)), f - float2(0.0,1.0) ), 
+                                  dot( hash2(i + float2(1.0,1.0)), f - float2(1.0,1.0) ), u.x), u.y);
+            }
+
+            // 判断 UV 是否在 0-1 范围内
             float InsideUv(float2 uv)
             {
                 return step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
@@ -118,49 +117,19 @@ Shader "UI/MaterialModifiers/KindlingModifier"
 
             fixed4 SampleMain(float2 uv, fixed4 vertexColor)
             {
-                float inside = InsideUv(uv);
-                fixed4 color = (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
-                color.a *= inside;
-                return color;
+                // 确保超出 0~1 的 UV 不会产生重复采样
+                return (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
             }
 
-            float SegmentDistance(float2 p, float2 a, float2 b)
+            // 透明度混合公式 (源覆盖目标)
+            fixed4 Over(fixed4 bottom, fixed4 top)
             {
-                float2 pa = p - a;
-                float2 ba = b - a;
-                float h = saturate(dot(pa, ba) / max(dot(ba, ba), 0.0001));
-                return length(pa - ba * h);
-            }
-
-            float Lightning(float2 uv)
-            {
-                float bolt = 0.0;
-                float time = floor(_Time.y * _EffectSpeed * 7.0);
-                for (int i = 0; i < 4; i++)
-                {
-                    float y0 = i * 0.24 + 0.06;
-                    float y1 = y0 + 0.2;
-                    float x0 = 0.12 + hash21(float2(i, time)) * 0.76;
-                    float x1 = 0.12 + hash21(float2(i + 6.0, time)) * 0.76;
-                    float distance = SegmentDistance(uv, float2(x0, y0), float2(x1, y1));
-                    bolt = max(bolt, 1.0 - smoothstep(0.006, 0.03, distance));
-                }
-                return bolt;
-            }
-
-
-            fixed3 SampleGradientRamp(float2 uv)
-            {
-                float2 direction = float2(cos(_GradientAngle), sin(_GradientAngle));
-                float t = dot(uv - 0.5, direction) * max(_GradientScale, 0.0001) + 0.5 + _GradientOffset + _Time.y * _GradientScrollSpeed;
-                t = frac(t);
-                float p2 = saturate(_GradientPosition2);
-                float p3 = max(saturate(_GradientPosition3), p2 + 0.0001);
-                fixed3 c12 = lerp(_GradientColor1.rgb, _GradientColor2.rgb, saturate(t / max(p2, 0.0001)));
-                fixed3 c23 = lerp(_GradientColor2.rgb, _GradientColor3.rgb, saturate((t - p2) / max(p3 - p2, 0.0001)));
-                fixed3 c34 = lerp(_GradientColor3.rgb, _GradientColor4.rgb, saturate((t - p3) / max(1.0 - p3, 0.0001)));
-                fixed3 ramp = t < p2 ? c12 : (t < p3 ? c23 : c34);
-                return lerp(_AuraColor.rgb, ramp, saturate(_GradientIntensity));
+                float alpha = top.a + bottom.a * (1.0 - top.a);
+                float3 rgb = top.rgb * top.a + bottom.rgb * bottom.a * (1.0 - top.a);
+                fixed4 result;
+                result.rgb = alpha > 0.0001 ? rgb / alpha : 0;
+                result.a = alpha;
+                return result;
             }
 
             v2f vert(appdata_t v)
@@ -178,62 +147,77 @@ Shader "UI/MaterialModifiers/KindlingModifier"
             fixed4 frag(v2f IN) : SV_Target
             {
                 float2 uv = IN.texcoord;
-                float mode = 1.0;
-                float2 centered = abs(uv - 0.5) * 2.0;
-                float edgeDistance = max(centered.x, centered.y);
-                fixed4 color = SampleMain(uv, IN.color);
-                float sourceAlpha = color.a;
-                float edge = smoothstep(0.42, 1.0, edgeDistance) * sourceAlpha;
+                float time = _Time.y * _AnimSpeed;
 
-                if (mode < 0.5)
+                // --- 1. 计算腾跃方向和角度 ---
+                // 将角度转换为弧度
+                float rad = _LeapAngle * 0.0174532925; 
+                float2 leapDir = float2(cos(rad), sin(rad));       
+
+                // --- 2. 生成燃烧核心噪声 ---
+                // 噪声坐标。将 _ParticleSize 转换为缩放比例，值越小颗粒越粗
+                float noiseScale = 1.0 / max(_ParticleSize, 0.001);
+                
+                // 基础噪声，让它沿着腾跃方向流动
+                float rawNoise = gradientNoise(uv * noiseScale - leapDir * time);
+                // 将噪声范围调整到 0~1
+                float fireMask = saturate(rawNoise + 0.5); 
+
+                // --- 3. 绘制静态箭头主体 (带有燃烧消融效果) ---
+                fixed4 colBody = SampleMain(uv, IN.color);
+                
+                // 根据 Intensity 和噪声，让箭头主体边缘产生透明度抖动消融
+                float bodyThreshold = 1.0 - _Intensity * 0.7; // 主体不完全消融
+                float bodyAlpha = smoothstep(bodyThreshold, bodyThreshold + 0.2, fireMask);
+                colBody.a *= (1.0 - bodyAlpha * InsideUv(uv)); // 让被消融的部分变透明
+
+                // --- 4. 实现粒子的腾跃效果 ---
+                fixed4 colParticles = fixed4(0,0,0,0);
+                
+                // 只有当噪声值足够高时（处于燃烧剧烈区），才产生腾跃粒子
+                // Threshold 越高，粒子越少
+                float particleThreshold = max(1.0 - _Intensity * 1.5, 0.0); 
+
+                if (fireMask > particleThreshold)
                 {
-                    float sweep = 1.0 - smoothstep(0.0, 0.09, abs(frac((uv.x + uv.y) * 0.65 - _Time.y * _EffectSpeed * 0.32) - 0.5));
-                    float3 metal = lerp(color.rgb * 0.78, float3(0.96, 0.9, 0.72), sweep * sourceAlpha);
-                    color.rgb = lerp(metal, SampleGradientRamp(uv), edge * 0.28);
+                    // 计算粒子个体当前的寿命/腾跃阶段 (0~1)
+                    // 使用指数函数让粒子在寿命末期快速消散
+                    float particleLife = pow(saturate((fireMask - particleThreshold) / max(1.0 - particleThreshold, 0.001)), 1.5);
+                    
+                    // 计算个体偏移量。根据寿命，寿命越长偏得越远，最高偏 _LeapHeight
+                    float individualLeap = particleLife * _LeapHeight;
+                    
+                    // 向腾跃方向的“反方向”进行采样，从而实现像素向上跳的效果
+                    float2 particleUV = uv - leapDir * individualLeap;
+
+                    if (InsideUv(particleUV) > 0.5)
+                    {
+                        colParticles = SampleMain(particleUV, IN.color);
+                        // 应用火焰附魔颜色，保留原贴图的亮度
+                        colParticles.rgb *= _BurnColor.rgb;
+                        // 粒子在寿命末期变透明
+                        colParticles.a *= (1.0 - particleLife);
+                        // 初始箭头如果是不透明的，这里需要应用主体被消融前的 Alpha 或者是 1
+                        colParticles.a *= step(0.01, colParticles.a); // 确保原图透明的地方粒子也透明
+                    }
                 }
-                else if (mode < 1.5)
-                {
-                    float pixelY = floor(uv.y * 18.0) / 18.0;
-                    float pixelX = floor(uv.x * 22.0) / 22.0;
-                    float flameNoise = hash21(float2(pixelX * 17.0, pixelY * 19.0 + floor(_Time.y * _EffectSpeed * 10.0)));
-                    float flameShape = (1.0 - smoothstep(0.18, 0.84, uv.y)) * smoothstep(0.0, 0.55, uv.y);
-                    float flame = step(0.48 + uv.y * 0.28, flameNoise) * flameShape;
-                    float3 flameColor = lerp(float3(1.0, 0.25, 0.05), float3(1.0, 0.86, 0.18), flameNoise);
-                    color.rgb = lerp(color.rgb, flameColor, flame * max(sourceAlpha, 0.35) * 0.55);
-                    color.rgb += SampleGradientRamp(uv) * edge * 0.25;
-                }
-                else if (mode < 2.5)
-                {
-                    float bolt = Lightning(uv);
-                    float flicker = 0.55 + hash21(float2(floor(_Time.y * _EffectSpeed * 12.0), 4.0)) * 0.45;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), saturate((bolt * flicker + edge * 0.25) * sourceAlpha));
-                    color.rgb += SampleGradientRamp(uv) * bolt * 0.4;
-                    color.a = max(color.a, bolt * 0.42 * _AuraColor.a);
-                }
-                else if (mode < 3.5)
-                {
-                    float wave = sin(uv.y * 24.0 + _Time.y * _EffectSpeed * 4.0) * 0.5 + 0.5;
-                    float current = 1.0 - smoothstep(0.0, 0.12, abs(frac(uv.x * 1.4 - _Time.y * _EffectSpeed * 0.35) - 0.5));
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (wave * 0.18 + current * 0.32) * sourceAlpha);
-                }
-                else
-                {
-                    float drop = smoothstep(0.2, 1.0, uv.y) * (sin(uv.x * 32.0 + _Time.y * _EffectSpeed * 3.0) * 0.5 + 0.5);
-                    float wobble = sin(uv.y * 18.0 + _Time.y * _EffectSpeed * 2.5) * 0.015 * _EffectStrength;
-                    fixed4 warped = SampleMain(uv + float2(wobble, 0.0), IN.color);
-                    color = warped;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (drop * 0.22 + edge * 0.18) * color.a);
-                }
+
+                // --- 5. 合并主体和跳跃粒子 ---
+                fixed4 finalColor = Over(colBody, colParticles);
+
+                // 应用 tint 颜色的 Alpha
+                finalColor.a *= IN.color.a;
 
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
+                finalColor.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
 
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(color.a - 0.001);
+                clip(finalColor.a - 0.001);
                 #endif
 
-                return saturate(color);
+                // 最终效果使用加色模式可能在亮部效果更好，但这里使用标准 Over 以保持箭头形状
+                return saturate(finalColor);
             }
             ENDCG
         }

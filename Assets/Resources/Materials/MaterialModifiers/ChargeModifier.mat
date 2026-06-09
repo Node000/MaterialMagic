@@ -29,10 +29,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaMode: 0
     - _ColorMask: 15
     - _EffectMode: 2
     - _EffectSpeed: 1.8
     - _EffectStrength: 0.65
+    - _FlickerSpeed: 2
+    - _FrizzleDistance: 0.1
+    - _Intensity: 0.6
+    - _ParticleSize: 0.08
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -42,4 +47,5 @@ Material:
     m_Colors:
     - _AuraColor: {r: 1, g: 0.89411765, b: 0.36078432, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ElectricColor: {r: 0.19999996, g: 0.6, b: 1, a: 1}
   m_BuildTextureStacks: []

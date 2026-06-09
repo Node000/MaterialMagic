@@ -1,25 +1,25 @@
-// Auto-split per modifier shader. Source behavior derived from UI/MaterialModifierScreenEffect.
-// 漩涡箭头：中心旋涡扭曲和环形光。
-Shader "UI/MaterialModifiers/VortexModifier"
+Shader "UI/MaterialModifiers/StaticElectricVortexDisplace"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _AuraColor ("Aura Color", Color) = (1,1,1,1)
-        _GradientColor1 ("Gradient Color 1", Color) = (1,1,1,1)
-        _GradientColor2 ("Gradient Color 2", Color) = (1,0.75,0.25,1)
-        _GradientColor3 ("Gradient Color 3", Color) = (1,0.25,0.75,1)
-        _GradientColor4 ("Gradient Color 4", Color) = (0.25,0.75,1,1)
-        _GradientPosition2 ("Gradient Position 2", Range(0,1)) = 0.33
-        _GradientPosition3 ("Gradient Position 3", Range(0,1)) = 0.66
-        _GradientAngle ("Gradient Angle", Range(0,6.28318)) = 0.7854
-        _GradientScale ("Gradient Scale", Float) = 1
-        _GradientOffset ("Gradient Offset", Float) = 0
-        _GradientScrollSpeed ("Gradient Scroll Speed", Float) = 0
-        _GradientIntensity ("Gradient Intensity", Range(0,1)) = 0
-        _EffectSpeed ("Effect Speed", Float) = 1
-        _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
+        _ElectricColor ("Vortex Glow Color", Color) = (0.2, 0.6, 1.0, 1.0)
+
+        [Header(Vortex Controls)]
+        _TwistAmount ("Twist Amount (Intensity)", Range(-10, 10)) = 4.0
+        _RotationSpeed ("Rotation Speed", Float) = 8.0
+        _VortexRadius ("Vortex Radius (Range)", Range(0.1, 1.0)) = 0.5
+        _VortexDensity ("Vortex Density (Waves)", Range(1, 30)) = 12.0
+
+        [Header(Static Frizzle Controls)]
+        _ParticleSize ("Noise Particle Size", Range(0.01, 0.5)) = 0.08
+        _NoiseIntensity ("Noise Jitter Intensity", Range(0, 0.1)) = 0.02
+
+        [Header(Transparency Option)]
+        [Enum(Fade Out, 0, Keep Solid, 1)] _AlphaMode ("Alpha Mode", Float) = 0
+
+        // UI 遮罩相关参数保留以兼容 UGUI 机制
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -62,7 +62,7 @@ Shader "UI/MaterialModifiers/VortexModifier"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -87,28 +87,34 @@ Shader "UI/MaterialModifiers/VortexModifier"
 
             sampler2D _MainTex;
             fixed4 _Color;
+            fixed4 _ElectricColor;
             fixed4 _TextureSampleAdd;
-            fixed4 _AuraColor;
-            fixed4 _GradientColor1;
-            fixed4 _GradientColor2;
-            fixed4 _GradientColor3;
-            fixed4 _GradientColor4;
-            float _GradientPosition2;
-            float _GradientPosition3;
-            float _GradientAngle;
-            float _GradientScale;
-            float _GradientOffset;
-            float _GradientScrollSpeed;
-            float _GradientIntensity;
             float4 _ClipRect;
-            float _EffectSpeed;
-            float _EffectStrength;
+            
+            float _TwistAmount;
+            float _RotationSpeed;
+            float _VortexRadius;
+            float _VortexDensity;
+            float _ParticleSize;
+            float _NoiseIntensity;
+            float _AlphaMode;
 
-            float hash21(float2 p)
+            // --- 程序化高频噪声（用于给漩涡边缘增加破碎静电感） ---
+            float2 hash2(float2 p)
             {
-                p = frac(p * float2(123.34, 456.21));
-                p += dot(p, p + 45.32);
-                return frac(p.x * p.y);
+                p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+                return frac(sin(p) * 43758.5453);
+            }
+
+            float gradientNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                float2 u = f*f*(3.0-2.0*f);
+                return lerp( lerp( dot( hash2(i + float2(0.0,0.0)), f - float2(0.0,0.0) ), 
+                                   dot( hash2(i + float2(1.0,0.0)), f - float2(1.0,0.0) ), u.x),
+                             lerp( dot( hash2(i + float2(0.0,1.0)), f - float2(0.0,1.0) ), 
+                                   dot( hash2(i + float2(1.0,1.0)), f - float2(1.0,1.0) ), u.x), u.y);
             }
 
             float InsideUv(float2 uv)
@@ -118,34 +124,7 @@ Shader "UI/MaterialModifiers/VortexModifier"
 
             fixed4 SampleMain(float2 uv, fixed4 vertexColor)
             {
-                float inside = InsideUv(uv);
-                fixed4 color = (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
-                color.a *= inside;
-                return color;
-            }
-
-            float2 SwirlUv(float2 uv, float amount)
-            {
-                float2 centered = uv - 0.5;
-                float radius = length(centered);
-                float angle = atan2(centered.y, centered.x);
-                angle += (1.0 - saturate(radius * 2.0)) * amount;
-                return 0.5 + float2(cos(angle), sin(angle)) * radius;
-            }
-
-
-            fixed3 SampleGradientRamp(float2 uv)
-            {
-                float2 direction = float2(cos(_GradientAngle), sin(_GradientAngle));
-                float t = dot(uv - 0.5, direction) * max(_GradientScale, 0.0001) + 0.5 + _GradientOffset + _Time.y * _GradientScrollSpeed;
-                t = frac(t);
-                float p2 = saturate(_GradientPosition2);
-                float p3 = max(saturate(_GradientPosition3), p2 + 0.0001);
-                fixed3 c12 = lerp(_GradientColor1.rgb, _GradientColor2.rgb, saturate(t / max(p2, 0.0001)));
-                fixed3 c23 = lerp(_GradientColor2.rgb, _GradientColor3.rgb, saturate((t - p2) / max(p3 - p2, 0.0001)));
-                fixed3 c34 = lerp(_GradientColor3.rgb, _GradientColor4.rgb, saturate((t - p3) / max(1.0 - p3, 0.0001)));
-                fixed3 ramp = t < p2 ? c12 : (t < p3 ? c23 : c34);
-                return lerp(_AuraColor.rgb, ramp, saturate(_GradientIntensity));
+                return (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor * InsideUv(uv);
             }
 
             v2f vert(appdata_t v)
@@ -163,77 +142,64 @@ Shader "UI/MaterialModifiers/VortexModifier"
             fixed4 frag(v2f IN) : SV_Target
             {
                 float2 uv = IN.texcoord;
-                float mode = 5.0;
-                fixed4 color = SampleMain(uv, IN.color);
+                float time = _Time.y * _RotationSpeed;
 
-                if (mode < 0.5)
+                // 1. 计算相对中心的距离
+                float2 centerRel = uv - 0.5;
+                float dist = length(centerRel);
+                
+                // 核心控制项：漩涡的影响范围
+                float influence = smoothstep(_VortexRadius, 0.0, dist);
+
+                // 2. 构造漩涡流动 (关键：只在这里引入时间，产生流动的扭曲感)
+                // 移除原有的 + time 整体旋转，只保留sin内的波形偏移
+                float wave = sin(dist * _VortexDensity - time); 
+
+                // 3. 计算旋转角度 (只利用波形产生局部的扭曲)
+                // 这里移除了 "+ time"，这样就不会带动整个图标旋转了
+                float angle = _TwistAmount * wave * influence;
+
+                // 4. 执行 UV 扭曲变换
+                float cosA = cos(angle);
+                float sinA = sin(angle);
+                
+                float2 rotatedRel = float2(
+                    centerRel.x * cosA - centerRel.y * sinA,
+                    centerRel.x * sinA + centerRel.y * cosA
+                );
+
+                // 5. 叠加噪声
+                float noiseScale = 1.0 / max(_ParticleSize, 0.001);
+                float rawNoise = gradientNoise(uv * noiseScale + time * 1.5);
+                rotatedRel += (rawNoise * _NoiseIntensity * influence);
+
+                float2 distortedUV = 0.5 + rotatedRel;
+
+                // 6. 采样
+                fixed4 finalColor = SampleMain(distortedUV, IN.color);
+
+                // --- 后续代码保持不变 ---
+                if (finalColor.a > 0.01)
                 {
-                    float lineId = floor(uv.y * 90.0);
-                    float stepTime = floor(_Time.y * _EffectSpeed * 12.0);
-                    float glitch = step(hash21(float2(lineId, stepTime)), 0.08 + _EffectStrength * 0.08);
-                    float shift = (hash21(float2(lineId, stepTime + 17.0)) * 2.0 - 1.0) * 0.022 * glitch;
-                    fixed4 baseColor = SampleMain(uv + float2(shift, 0.0), IN.color);
-                    fixed4 red = SampleMain(uv + float2(0.006, 0.0), IN.color);
-                    fixed4 cyan = SampleMain(uv - float2(0.006, 0.0), IN.color);
-                    float scan = sin(uv.y * 720.0 + _Time.y * _EffectSpeed * 8.0) * 0.5 + 0.5;
-                    baseColor.rgb = lerp(baseColor.rgb, baseColor.rgb * (0.72 + _EffectStrength * 0.16), scan);
-                    baseColor.rgb += red.r * float3(0.32, 0.02, 0.02) + cyan.b * float3(0.02, 0.18, 0.32);
-                    baseColor.rgb = lerp(baseColor.rgb, SampleGradientRamp(uv), baseColor.a * 0.12);
-                    color = baseColor;
-                }
-                else if (mode < 1.5)
-                {
-                    float pulse = (sin(_Time.y * _EffectSpeed * 2.0) * 0.5 + 0.5) * _EffectStrength;
-                    float3 inverted = 1.0 - color.rgb;
-                    color.rgb = lerp(color.rgb, inverted, pulse);
-                    float loop = 1.0 - smoothstep(0.0, 0.02, abs(frac(uv.y + _Time.y * _EffectSpeed * 0.25) - 0.5));
-                    color.rgb += SampleGradientRamp(uv) * loop * color.a * 0.45;
-                }
-                else if (mode < 2.5)
-                {
-                    float gray = dot(color.rgb, float3(0.299, 0.587, 0.114));
-                    float noise = hash21(floor((uv + _Time.y * 0.04) * 24.0));
-                    float stripe = step(0.58, frac(uv.y * 18.0 + _Time.y * _EffectSpeed));
-                    color.rgb = lerp(color.rgb, float3(gray, gray, gray) * 0.72, 0.86);
-                    color.rgb = lerp(color.rgb, float3(0.05, 0.05, 0.06), stripe * color.a * 0.22);
-                    color.rgb += (noise - 0.5) * 0.08 * _EffectStrength;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv) * 0.45, color.a * 0.12);
-                }
-                else if (mode < 3.5)
-                {
-                    float breath = sin(_Time.y * _EffectSpeed * 2.0) * 0.5 + 0.5;
-                    color.a *= lerp(0.56, 1.0, breath);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), color.a * breath * 0.28);
-                }
-                else if (mode < 4.5)
-                {
-                    float wave = sin(uv.x * 18.0 + _Time.y * _EffectSpeed * 3.0);
-                    float2 warpedUv = uv + float2(0.0, wave * 0.022 * max(_EffectStrength, 0.25));
-                    color = SampleMain(warpedUv, IN.color);
-                    float wobbleLine = abs(frac(uv.x * 3.0 - _Time.y * _EffectSpeed * 0.35) - 0.5);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (1.0 - smoothstep(0.0, 0.28, wobbleLine)) * color.a * 0.22);
-                }
-                else
-                {
-                    float swirlAmount = sin(_Time.y * _EffectSpeed) * 0.8 + 1.2;
-                    float2 swirlUv = SwirlUv(uv, swirlAmount * max(_EffectStrength, 0.25));
-                    color = SampleMain(swirlUv, IN.color);
-                    float2 centered = uv - 0.5;
-                    float radius = length(centered);
-                    float ring = sin(radius * 36.0 - _Time.y * _EffectSpeed * 5.0) * 0.5 + 0.5;
-                    float centerGlow = 1.0 - smoothstep(0.04, 0.48, radius);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), ring * centerGlow * color.a * 0.42);
+                    if (_AlphaMode == 0.0)
+                    {
+                        finalColor.a *= saturate(1.0 - (influence * 0.3));
+                    }
+                    else
+                    {
+                        finalColor.a = step(0.01, finalColor.a);
+                    }
                 }
 
+                finalColor.a *= IN.color.a;
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
+                finalColor.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
-
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(color.a - 0.001);
+                clip(finalColor.a - 0.001);
                 #endif
 
-                return saturate(color);
+                return saturate(finalColor);
             }
             ENDCG
         }

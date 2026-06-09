@@ -7,17 +7,6 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _AuraColor ("Aura Color", Color) = (1,1,1,1)
-        _GradientColor1 ("Gradient Color 1", Color) = (1,1,1,1)
-        _GradientColor2 ("Gradient Color 2", Color) = (1,0.75,0.25,1)
-        _GradientColor3 ("Gradient Color 3", Color) = (1,0.25,0.75,1)
-        _GradientColor4 ("Gradient Color 4", Color) = (0.25,0.75,1,1)
-        _GradientPosition2 ("Gradient Position 2", Range(0,1)) = 0.33
-        _GradientPosition3 ("Gradient Position 3", Range(0,1)) = 0.66
-        _GradientAngle ("Gradient Angle", Range(0,6.28318)) = 0.7854
-        _GradientScale ("Gradient Scale", Float) = 1
-        _GradientOffset ("Gradient Offset", Float) = 0
-        _GradientScrollSpeed ("Gradient Scroll Speed", Float) = 0
-        _GradientIntensity ("Gradient Intensity", Range(0,1)) = 0
         _EffectSpeed ("Effect Speed", Float) = 1
         _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
         _StencilComp ("Stencil Comparison", Float) = 8
@@ -89,17 +78,6 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             fixed4 _AuraColor;
-            fixed4 _GradientColor1;
-            fixed4 _GradientColor2;
-            fixed4 _GradientColor3;
-            fixed4 _GradientColor4;
-            float _GradientPosition2;
-            float _GradientPosition3;
-            float _GradientAngle;
-            float _GradientScale;
-            float _GradientOffset;
-            float _GradientScrollSpeed;
-            float _GradientIntensity;
             float4 _ClipRect;
             float _EffectSpeed;
             float _EffectStrength;
@@ -133,21 +111,6 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                 return 0.5 + float2(cos(angle), sin(angle)) * radius;
             }
 
-
-            fixed3 SampleGradientRamp(float2 uv)
-            {
-                float2 direction = float2(cos(_GradientAngle), sin(_GradientAngle));
-                float t = dot(uv - 0.5, direction) * max(_GradientScale, 0.0001) + 0.5 + _GradientOffset + _Time.y * _GradientScrollSpeed;
-                t = frac(t);
-                float p2 = saturate(_GradientPosition2);
-                float p3 = max(saturate(_GradientPosition3), p2 + 0.0001);
-                fixed3 c12 = lerp(_GradientColor1.rgb, _GradientColor2.rgb, saturate(t / max(p2, 0.0001)));
-                fixed3 c23 = lerp(_GradientColor2.rgb, _GradientColor3.rgb, saturate((t - p2) / max(p3 - p2, 0.0001)));
-                fixed3 c34 = lerp(_GradientColor3.rgb, _GradientColor4.rgb, saturate((t - p3) / max(1.0 - p3, 0.0001)));
-                fixed3 ramp = t < p2 ? c12 : (t < p3 ? c23 : c34);
-                return lerp(_AuraColor.rgb, ramp, saturate(_GradientIntensity));
-            }
-
             v2f vert(appdata_t v)
             {
                 v2f OUT;
@@ -178,7 +141,7 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                     float scan = sin(uv.y * 720.0 + _Time.y * _EffectSpeed * 8.0) * 0.5 + 0.5;
                     baseColor.rgb = lerp(baseColor.rgb, baseColor.rgb * (0.72 + _EffectStrength * 0.16), scan);
                     baseColor.rgb += red.r * float3(0.32, 0.02, 0.02) + cyan.b * float3(0.02, 0.18, 0.32);
-                    baseColor.rgb = lerp(baseColor.rgb, SampleGradientRamp(uv), baseColor.a * 0.12);
+                    baseColor.rgb = lerp(baseColor.rgb, _AuraColor.rgb, baseColor.a * 0.12);
                     color = baseColor;
                 }
                 else if (mode < 1.5)
@@ -187,7 +150,7 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                     float3 inverted = 1.0 - color.rgb;
                     color.rgb = lerp(color.rgb, inverted, pulse);
                     float loop = 1.0 - smoothstep(0.0, 0.02, abs(frac(uv.y + _Time.y * _EffectSpeed * 0.25) - 0.5));
-                    color.rgb += SampleGradientRamp(uv) * loop * color.a * 0.45;
+                    color.rgb += _AuraColor.rgb * loop * color.a * 0.45;
                 }
                 else if (mode < 2.5)
                 {
@@ -197,13 +160,13 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                     color.rgb = lerp(color.rgb, float3(gray, gray, gray) * 0.72, 0.86);
                     color.rgb = lerp(color.rgb, float3(0.05, 0.05, 0.06), stripe * color.a * 0.22);
                     color.rgb += (noise - 0.5) * 0.08 * _EffectStrength;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv) * 0.45, color.a * 0.12);
+                    color.rgb = lerp(color.rgb, _AuraColor.rgb * 0.45, color.a * 0.12);
                 }
                 else if (mode < 3.5)
                 {
                     float breath = sin(_Time.y * _EffectSpeed * 2.0) * 0.5 + 0.5;
                     color.a *= lerp(0.56, 1.0, breath);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), color.a * breath * 0.28);
+                    color.rgb = lerp(color.rgb, _AuraColor.rgb, color.a * breath * 0.28);
                 }
                 else if (mode < 4.5)
                 {
@@ -211,7 +174,7 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                     float2 warpedUv = uv + float2(0.0, wave * 0.022 * max(_EffectStrength, 0.25));
                     color = SampleMain(warpedUv, IN.color);
                     float wobbleLine = abs(frac(uv.x * 3.0 - _Time.y * _EffectSpeed * 0.35) - 0.5);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (1.0 - smoothstep(0.0, 0.28, wobbleLine)) * color.a * 0.22);
+                    color.rgb = lerp(color.rgb, _AuraColor.rgb, (1.0 - smoothstep(0.0, 0.28, wobbleLine)) * color.a * 0.22);
                 }
                 else
                 {
@@ -222,7 +185,7 @@ Shader "UI/MaterialModifiers/TemporaryModifier"
                     float radius = length(centered);
                     float ring = sin(radius * 36.0 - _Time.y * _EffectSpeed * 5.0) * 0.5 + 0.5;
                     float centerGlow = 1.0 - smoothstep(0.04, 0.48, radius);
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), ring * centerGlow * color.a * 0.42);
+                    color.rgb = lerp(color.rgb, _AuraColor.rgb, ring * centerGlow * color.a * 0.42);
                 }
 
                 #ifdef UNITY_UI_CLIP_RECT

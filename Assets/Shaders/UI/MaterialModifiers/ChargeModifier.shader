@@ -1,25 +1,21 @@
-// Auto-split per modifier shader. Source behavior derived from UI/MaterialModifierElementAura.
-// 充能：随机闪电折线。
-Shader "UI/MaterialModifiers/ChargeModifier"
+Shader "UI/MaterialModifiers/StaticElectricArrowDisplace"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _AuraColor ("Aura Color", Color) = (1,1,1,1)
-        _GradientColor1 ("Gradient Color 1", Color) = (1,1,1,1)
-        _GradientColor2 ("Gradient Color 2", Color) = (1,0.75,0.25,1)
-        _GradientColor3 ("Gradient Color 3", Color) = (1,0.25,0.75,1)
-        _GradientColor4 ("Gradient Color 4", Color) = (0.25,0.75,1,1)
-        _GradientPosition2 ("Gradient Position 2", Range(0,1)) = 0.33
-        _GradientPosition3 ("Gradient Position 3", Range(0,1)) = 0.66
-        _GradientAngle ("Gradient Angle", Range(0,6.28318)) = 0.7854
-        _GradientScale ("Gradient Scale", Float) = 1
-        _GradientOffset ("Gradient Offset", Float) = 0
-        _GradientScrollSpeed ("Gradient Scroll Speed", Float) = 0
-        _GradientIntensity ("Gradient Intensity", Range(0,1)) = 0
-        _EffectSpeed ("Effect Speed", Float) = 1
-        _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
+        _ElectricColor ("Lightning Color", Color) = (0.2, 0.6, 1.0, 1.0)
+
+        [Header(Static Frizzle Controls)]
+        _ParticleSize ("Particle Size (0.1 is coarse)", Range(0.01, 0.5)) = 0.08
+        _FrizzleDistance ("Frizzle Dist (Displacement)", Range(0, 1)) = 0.25
+        _Intensity ("Electric Intensity", Range(0, 1)) = 0.6
+        _FlickerSpeed ("Flicker Speed", Float) = 8.0
+
+        [Header(Transparency Option)]
+        [Enum(Particles Fade Out, 0, Keep Solid Pixel, 1)] _AlphaMode ("Alpha Mode", Float) = 0
+
+        // UI 遮罩相关参数保留以兼容 UGUI 机制
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -62,7 +58,7 @@ Shader "UI/MaterialModifiers/ChargeModifier"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -87,28 +83,32 @@ Shader "UI/MaterialModifiers/ChargeModifier"
 
             sampler2D _MainTex;
             fixed4 _Color;
+            fixed4 _ElectricColor;
             fixed4 _TextureSampleAdd;
-            fixed4 _AuraColor;
-            fixed4 _GradientColor1;
-            fixed4 _GradientColor2;
-            fixed4 _GradientColor3;
-            fixed4 _GradientColor4;
-            float _GradientPosition2;
-            float _GradientPosition3;
-            float _GradientAngle;
-            float _GradientScale;
-            float _GradientOffset;
-            float _GradientScrollSpeed;
-            float _GradientIntensity;
             float4 _ClipRect;
-            float _EffectSpeed;
-            float _EffectStrength;
+            
+            float _ParticleSize;
+            float _FrizzleDistance;
+            float _Intensity;
+            float _FlickerSpeed;
+            float _AlphaMode;
 
-            float hash21(float2 p)
+            // --- 核心算法：程序化高频噪声 ---
+            float2 hash2(float2 p)
             {
-                p = frac(p * float2(127.1, 311.7));
-                p += dot(p, p + 37.2);
-                return frac(p.x * p.y);
+                p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+                return frac(sin(p) * 43758.5453);
+            }
+
+            float gradientNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                float2 u = f*f*(3.0-2.0*f);
+                return lerp( lerp( dot( hash2(i + float2(0.0,0.0)), f - float2(0.0,0.0) ), 
+                                   dot( hash2(i + float2(1.0,0.0)), f - float2(1.0,0.0) ), u.x),
+                             lerp( dot( hash2(i + float2(0.0,1.0)), f - float2(0.0,1.0) ), 
+                                   dot( hash2(i + float2(1.0,1.0)), f - float2(1.0,1.0) ), u.x), u.y);
             }
 
             float InsideUv(float2 uv)
@@ -118,49 +118,7 @@ Shader "UI/MaterialModifiers/ChargeModifier"
 
             fixed4 SampleMain(float2 uv, fixed4 vertexColor)
             {
-                float inside = InsideUv(uv);
-                fixed4 color = (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
-                color.a *= inside;
-                return color;
-            }
-
-            float SegmentDistance(float2 p, float2 a, float2 b)
-            {
-                float2 pa = p - a;
-                float2 ba = b - a;
-                float h = saturate(dot(pa, ba) / max(dot(ba, ba), 0.0001));
-                return length(pa - ba * h);
-            }
-
-            float Lightning(float2 uv)
-            {
-                float bolt = 0.0;
-                float time = floor(_Time.y * _EffectSpeed * 7.0);
-                for (int i = 0; i < 4; i++)
-                {
-                    float y0 = i * 0.24 + 0.06;
-                    float y1 = y0 + 0.2;
-                    float x0 = 0.12 + hash21(float2(i, time)) * 0.76;
-                    float x1 = 0.12 + hash21(float2(i + 6.0, time)) * 0.76;
-                    float distance = SegmentDistance(uv, float2(x0, y0), float2(x1, y1));
-                    bolt = max(bolt, 1.0 - smoothstep(0.006, 0.03, distance));
-                }
-                return bolt;
-            }
-
-
-            fixed3 SampleGradientRamp(float2 uv)
-            {
-                float2 direction = float2(cos(_GradientAngle), sin(_GradientAngle));
-                float t = dot(uv - 0.5, direction) * max(_GradientScale, 0.0001) + 0.5 + _GradientOffset + _Time.y * _GradientScrollSpeed;
-                t = frac(t);
-                float p2 = saturate(_GradientPosition2);
-                float p3 = max(saturate(_GradientPosition3), p2 + 0.0001);
-                fixed3 c12 = lerp(_GradientColor1.rgb, _GradientColor2.rgb, saturate(t / max(p2, 0.0001)));
-                fixed3 c23 = lerp(_GradientColor2.rgb, _GradientColor3.rgb, saturate((t - p2) / max(p3 - p2, 0.0001)));
-                fixed3 c34 = lerp(_GradientColor3.rgb, _GradientColor4.rgb, saturate((t - p3) / max(1.0 - p3, 0.0001)));
-                fixed3 ramp = t < p2 ? c12 : (t < p3 ? c23 : c34);
-                return lerp(_AuraColor.rgb, ramp, saturate(_GradientIntensity));
+                return (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor * InsideUv(uv);
             }
 
             v2f vert(appdata_t v)
@@ -178,62 +136,66 @@ Shader "UI/MaterialModifiers/ChargeModifier"
             fixed4 frag(v2f IN) : SV_Target
             {
                 float2 uv = IN.texcoord;
-                float mode = 2.0;
-                float2 centered = abs(uv - 0.5) * 2.0;
-                float edgeDistance = max(centered.x, centered.y);
-                fixed4 color = SampleMain(uv, IN.color);
-                float sourceAlpha = color.a;
-                float edge = smoothstep(0.42, 1.0, edgeDistance) * sourceAlpha;
+                float time = _Time.y * _FlickerSpeed;
 
-                if (mode < 0.5)
+                // --- 1. 计算向四周扩散的放射单位向量 ---
+                float2 centerDir = uv - 0.5;
+                float distFromCenter = length(centerDir);
+                float2 radialDir = distFromCenter > 0.001 ? centerDir / distFromCenter : float2(1.0, 0.0);
+
+                // --- 2. 生成程序化噪声 ---
+                float noiseScale = 1.0 / max(_ParticleSize, 0.001);
+                float rawNoise = gradientNoise(uv * noiseScale + time);
+                float elecMask = saturate(rawNoise + 0.5);
+
+                // --- 3. 核心修改：让箭头自身的像素采样产生静电位移变化 ---
+                // 基于静电强度和噪声，直接计算当前像素坐标的偏移量
+                float displacementFactor = elecMask * _Intensity;
+                float individualLeap = displacementFactor * _FrizzleDistance;
+                
+                // 向中心方向进行逆向采样错位 (- radialDir)
+                // 这会导致原本处于箭头内部的实体像素被“推”向外部，产生由于电荷自扩散导致的炸毛、解体效果
+                float2 distortedUV = uv - radialDir * individualLeap;
+
+                // 直接对形变后的 UV 坐标进行采样，使整个箭头本体粒子化
+                fixed4 finalColor = SampleMain(distortedUV, IN.color);
+
+                // --- 4. 动态电荷染色与边缘透明度处理 ---
+                if (finalColor.a > 0.01)
                 {
-                    float sweep = 1.0 - smoothstep(0.0, 0.09, abs(frac((uv.x + uv.y) * 0.65 - _Time.y * _EffectSpeed * 0.32) - 0.5));
-                    float3 metal = lerp(color.rgb * 0.78, float3(0.96, 0.9, 0.72), sweep * sourceAlpha);
-                    color.rgb = lerp(metal, SampleGradientRamp(uv), edge * 0.28);
+                    // 当局部噪声强度较高时，将形变后的像素染上静电颜色
+                    float electricThresh = 1.0 - _Intensity * 0.7;
+                    if (elecMask > electricThresh)
+                    {
+                        float colorLerp = saturate((elecMask - electricThresh) / max(1.0 - electricThresh, 0.001));
+                        finalColor.rgb = lerp(finalColor.rgb, _ElectricColor.rgb, colorLerp * 0.75);
+                    }
+
+                    // 透明度模式控制
+                    if (_AlphaMode == 0.0)
+                    {
+                        // 随着飞出/错位距离拉长，像素自然淡出，形成电荷消散的视觉毛边
+                        finalColor.a *= saturate(1.0 - displacementFactor * 0.8);
+                    }
+                    else
+                    {
+                        // 硬边模式：确保飞出的扭曲像素在末端依然保持完整的实心切片感
+                        finalColor.a = step(0.01, finalColor.a);
+                    }
                 }
-                else if (mode < 1.5)
-                {
-                    float pixelY = floor(uv.y * 18.0) / 18.0;
-                    float pixelX = floor(uv.x * 22.0) / 22.0;
-                    float flameNoise = hash21(float2(pixelX * 17.0, pixelY * 19.0 + floor(_Time.y * _EffectSpeed * 10.0)));
-                    float flameShape = (1.0 - smoothstep(0.18, 0.84, uv.y)) * smoothstep(0.0, 0.55, uv.y);
-                    float flame = step(0.48 + uv.y * 0.28, flameNoise) * flameShape;
-                    float3 flameColor = lerp(float3(1.0, 0.25, 0.05), float3(1.0, 0.86, 0.18), flameNoise);
-                    color.rgb = lerp(color.rgb, flameColor, flame * max(sourceAlpha, 0.35) * 0.55);
-                    color.rgb += SampleGradientRamp(uv) * edge * 0.25;
-                }
-                else if (mode < 2.5)
-                {
-                    float bolt = Lightning(uv);
-                    float flicker = 0.55 + hash21(float2(floor(_Time.y * _EffectSpeed * 12.0), 4.0)) * 0.45;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), saturate((bolt * flicker + edge * 0.25) * sourceAlpha));
-                    color.rgb += SampleGradientRamp(uv) * bolt * 0.4;
-                    color.a = max(color.a, bolt * 0.42 * _AuraColor.a);
-                }
-                else if (mode < 3.5)
-                {
-                    float wave = sin(uv.y * 24.0 + _Time.y * _EffectSpeed * 4.0) * 0.5 + 0.5;
-                    float current = 1.0 - smoothstep(0.0, 0.12, abs(frac(uv.x * 1.4 - _Time.y * _EffectSpeed * 0.35) - 0.5));
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (wave * 0.18 + current * 0.32) * sourceAlpha);
-                }
-                else
-                {
-                    float drop = smoothstep(0.2, 1.0, uv.y) * (sin(uv.x * 32.0 + _Time.y * _EffectSpeed * 3.0) * 0.5 + 0.5);
-                    float wobble = sin(uv.y * 18.0 + _Time.y * _EffectSpeed * 2.5) * 0.015 * _EffectStrength;
-                    fixed4 warped = SampleMain(uv + float2(wobble, 0.0), IN.color);
-                    color = warped;
-                    color.rgb = lerp(color.rgb, SampleGradientRamp(uv), (drop * 0.22 + edge * 0.18) * color.a);
-                }
+
+                // --- 5. UI 裁剪与最终输出 ---
+                finalColor.a *= IN.color.a;
 
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
+                finalColor.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
 
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(color.a - 0.001);
+                clip(finalColor.a - 0.001);
                 #endif
 
-                return saturate(color);
+                return saturate(finalColor);
             }
             ENDCG
         }
