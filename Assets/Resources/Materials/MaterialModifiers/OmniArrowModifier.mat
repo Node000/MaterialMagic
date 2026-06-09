@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: OmniArrowModifier
-  m_Shader: {fileID: 4800000, guid: 8b47cc3ddd1fe2f4aa860e1645ed76b6, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8d113afb3d0cfc54c9b03bd2bae5966e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

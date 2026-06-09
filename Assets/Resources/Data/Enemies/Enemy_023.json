@@ -23,7 +23,7 @@
             {
               "actionType": 9,
               "value": 1,
-              "displayType": "spAttack"
+              "displayType": "special"
             },
             {
               "actionType": 9,
@@ -38,7 +38,7 @@
             {
               "actionType": 9,
               "value": 2,
-              "displayType": "spAttack"
+              "displayType": "special"
             },
             {
               "actionType": 9,
@@ -53,7 +53,7 @@
             {
               "actionType": 9,
               "value": 3,
-              "displayType": "spAttack"
+              "displayType": "special"
             },
             {
               "actionType": 9,
@@ -68,7 +68,7 @@
             {
               "actionType": 9,
               "value": 4,
-              "displayType": "spDefend"
+              "displayType": "special"
             },
             {
               "actionType": 9,

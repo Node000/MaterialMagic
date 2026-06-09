@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: SturdyModifier
-  m_Shader: {fileID: 4800000, guid: efbd178b5e18d974db908d9490bb81f6, type: 3}
+  m_Shader: {fileID: 4800000, guid: 39bb63eba22510747af88e321c7b4c93, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

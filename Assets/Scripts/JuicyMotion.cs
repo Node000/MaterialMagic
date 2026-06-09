@@ -80,6 +80,13 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         hoverTiltAngle = angle;
     }
 
+    public void SetBaseScale(Vector3 scale, bool applyImmediately)
+    {
+        originalScale = scale;
+        if (applyImmediately)
+            transform.localScale = originalScale;
+    }
+
     public void Play()
     {
         StopMotion();

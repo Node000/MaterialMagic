@@ -379,6 +379,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             scrollRect.content = scrollContent;
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
+            EnsureScrollDragArea(viewport);
         }
 
         if (contentRoot == null)
@@ -420,6 +421,18 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (gridRoot == null)
             gridRoot = FindOrCreateRect("GridRoot", new Vector2(0f, -278f), new Vector2(430f, 430f));
         EnsurePlayerMarkerRoot();
+    }
+
+    private void EnsureScrollDragArea(RectTransform viewport)
+    {
+        if (viewport == null)
+            return;
+
+        Image image = viewport.GetComponent<Image>();
+        if (image == null)
+            image = viewport.gameObject.AddComponent<Image>();
+        image.color = new Color(0f, 0f, 0f, 0f);
+        image.raycastTarget = true;
     }
 
     private void ConfigureScrollContent()

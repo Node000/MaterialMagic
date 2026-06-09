@@ -1,7 +1,29 @@
 public class RainbowEnemyModel : EnemyModel
 {
+    private const int DirectionDamageIntentValue = 1;
+    private const int DirectionWeakIntentValue = 2;
+    private const int DirectionDrawIntentValue = 3;
+    private const int DirectionShieldIntentValue = 4;
+    private const int RandomFollowupIntentValue = 5;
+
+    private int randomFollowupDisplayType;
+
     public RainbowEnemyModel(EnemyData data) : base(data)
     {
+    }
+
+    protected override void OnCurrentIntentsUpdated()
+    {
+        randomFollowupDisplayType = 0;
+        for (int i = 0; i < CurrentIntents.Count; i++)
+        {
+            EnemyIntentData intent = CurrentIntents[i];
+            if (intent != null && intent.actionType == EnemyActionType.Special && intent.value == RandomFollowupIntentValue)
+            {
+                randomFollowupDisplayType = NextRandomInt(1, 5);
+                intent.displayType = GetRandomFollowupDisplayType(randomFollowupDisplayType);
+            }
+        }
     }
 
     public override string GetSpecialIntentDisplayValue(EnemyIntentData intent, PlayerState playerState)
@@ -11,16 +33,16 @@ public class RainbowEnemyModel : EnemyModel
 
         switch (intent.value)
         {
-            case 1:
+            case DirectionDamageIntentValue:
                 return "3";
-            case 2:
+            case DirectionWeakIntentValue:
                 return "2";
-            case 3:
+            case DirectionDrawIntentValue:
                 return "1";
-            case 4:
+            case DirectionShieldIntentValue:
                 return "3";
-            case 5:
-                return "?";
+            case RandomFollowupIntentValue:
+                return GetRandomFollowupDisplayValue();
             default:
                 return string.Empty;
         }
@@ -28,7 +50,7 @@ public class RainbowEnemyModel : EnemyModel
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
-        return intent != null && intent.value == 5 ? "意图：随机特殊效果" : "意图：方向强化";
+        return intent != null && intent.value == RandomFollowupIntentValue ? GetRandomFollowupTooltipTitle() : "意图：方向强化";
     }
 
     protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
@@ -38,16 +60,16 @@ public class RainbowEnemyModel : EnemyModel
 
         switch (intent.value)
         {
-            case 1:
+            case DirectionDamageIntentValue:
                 return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionDamageBonus, 3);
-            case 2:
+            case DirectionWeakIntentValue:
                 return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionWeakBonus, 2);
-            case 3:
+            case DirectionDrawIntentValue:
                 return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionExtraDraw, 1);
-            case 4:
+            case DirectionShieldIntentValue:
                 return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionShieldBonus, 3);
-            case 5:
-                return "这个敌人将随机造成14点伤害、获得10点护盾、施加5层虚弱或施加6层易伤";
+            case RandomFollowupIntentValue:
+                return GetRandomFollowupTooltipDescription();
             default:
                 return base.GetSpecialIntentTooltipDescription(intent, playerState);
         }
@@ -60,19 +82,19 @@ public class RainbowEnemyModel : EnemyModel
 
         switch (value)
         {
-            case 1:
+            case DirectionDamageIntentValue:
                 playerState.AddBuff(BuffEnum.DirectionDamageBonus, 3);
                 break;
-            case 2:
+            case DirectionWeakIntentValue:
                 playerState.AddBuff(BuffEnum.DirectionWeakBonus, 2);
                 break;
-            case 3:
+            case DirectionDrawIntentValue:
                 playerState.AddBuff(BuffEnum.DirectionExtraDraw, 1);
                 break;
-            case 4:
+            case DirectionShieldIntentValue:
                 playerState.AddBuff(BuffEnum.DirectionShieldBonus, 3);
                 break;
-            case 5:
+            case RandomFollowupIntentValue:
                 ResolveRandomFollowup(playerState);
                 break;
         }
@@ -80,21 +102,89 @@ public class RainbowEnemyModel : EnemyModel
 
     private void ResolveRandomFollowup(PlayerState playerState)
     {
-        int roll = playerState is PlayerStatus status ? status.NextRunRandomInt(0, 4) : UnityEngine.Random.Range(0, 4);
-        switch (roll)
+        if (randomFollowupDisplayType == 0)
+            randomFollowupDisplayType = NextRandomInt(1, 5);
+
+        switch (randomFollowupDisplayType)
         {
-            case 0:
+            case 1:
                 playerState.TakeDamage(14, new CombatantModel(this));
                 break;
-            case 1:
+            case 2:
                 GainShield(10);
                 break;
-            case 2:
+            case 3:
                 playerState.AddBuff(BuffEnum.Weak, 5);
                 break;
             default:
                 playerState.AddBuff(BuffEnum.Vulnerable, 6);
                 break;
+        }
+    }
+
+    private string GetRandomFollowupDisplayValue()
+    {
+        switch (randomFollowupDisplayType)
+        {
+            case 1:
+                return "14";
+            case 2:
+                return "10";
+            case 3:
+                return "5";
+            case 4:
+                return "6";
+            default:
+                return string.Empty;
+        }
+    }
+
+    private string GetRandomFollowupDisplayType(int value)
+    {
+        switch (value)
+        {
+            case 1:
+                return "bigAttack";
+            case 2:
+                return "bigDefend";
+            case 3:
+            case 4:
+                return "debuff";
+            default:
+                return "spAttack";
+        }
+    }
+
+    private string GetRandomFollowupTooltipTitle()
+    {
+        switch (randomFollowupDisplayType)
+        {
+            case 1:
+                return "意图：攻击";
+            case 2:
+                return "意图：防御";
+            case 3:
+            case 4:
+                return "意图：负面效果";
+            default:
+                return "意图：随机特殊效果";
+        }
+    }
+
+    private string GetRandomFollowupTooltipDescription()
+    {
+        switch (randomFollowupDisplayType)
+        {
+            case 1:
+                return "这个敌人将造成14点伤害";
+            case 2:
+                return "这个敌人将获得10点护盾";
+            case 3:
+                return "这个敌人将对玩家施加" + FormatBuffStack(BuffEnum.Weak, 5);
+            case 4:
+                return "这个敌人将对玩家施加" + FormatBuffStack(BuffEnum.Vulnerable, 6);
+            default:
+                return "这个敌人将随机造成14点伤害、获得10点护盾、施加5层虚弱或施加6层易伤";
         }
     }
 }

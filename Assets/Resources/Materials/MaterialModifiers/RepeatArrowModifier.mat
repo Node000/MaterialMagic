@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RepeatArrowModifier
-  m_Shader: {fileID: 4800000, guid: 5df4743c287d7c04a88b3bd036689689, type: 3}
+  m_Shader: {fileID: 4800000, guid: bde771b81a439aa4ca14d2e0617da52f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

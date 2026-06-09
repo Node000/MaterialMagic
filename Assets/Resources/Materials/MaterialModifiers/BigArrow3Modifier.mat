@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BigArrow3Modifier
-  m_Shader: {fileID: 4800000, guid: 5df4743c287d7c04a88b3bd036689689, type: 3}
+  m_Shader: {fileID: 4800000, guid: 547d221a583092947b2b0cc6dfb0c13a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

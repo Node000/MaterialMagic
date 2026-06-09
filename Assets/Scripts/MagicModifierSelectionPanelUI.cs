@@ -10,10 +10,13 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private readonly List<Button> optionButtons = new List<Button>();
     private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
     private readonly List<SpringLineHighlightUI> optionBackgrounds = new List<SpringLineHighlightUI>();
-    private readonly List<SpringLineHighlightUI> optionHoverHighlights = new List<SpringLineHighlightUI>();
     private readonly List<SpringLineHighlightUI> optionSelectedHighlights = new List<SpringLineHighlightUI>();
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
     private readonly List<MaterialModifierData> currentMaterialChoices = new List<MaterialModifierData>();
+
+    private const float OptionWidth = 168f;
+    private const float OptionHeight = 89.6f;
+    private const float SelectedOptionScale = 1.06f;
 
     private HandSystemUI owner;
     private RectTransform panel;
@@ -318,7 +321,10 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         Transform option = optionButtons[index].transform;
         option.DOKill(false);
-        Vector3 scale = selected ? Vector3.one * 1.08f : Vector3.one;
+        Vector3 scale = selected ? Vector3.one * SelectedOptionScale : Vector3.one;
+        JuicyMotion motion = optionButtons[index].GetComponent<JuicyMotion>();
+        if (motion != null)
+            motion.SetBaseScale(scale, instant);
         if (instant)
             option.localScale = scale;
         else
@@ -333,7 +339,6 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         optionButtons.Clear();
         optionTexts.Clear();
         optionBackgrounds.Clear();
-        optionHoverHighlights.Clear();
         optionSelectedHighlights.Clear();
         if (optionRoot == null)
             return;
@@ -347,14 +352,18 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             ConfigureOptionButton(button);
             optionButtons.Add(button);
             optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
-            optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", Color.black, true, true));
-            optionHoverHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringHoverHighlight", Color.white, false, false, button.gameObject));
+            optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", Color.white, true, true));
+            RemoveOptionSpring(button.transform as RectTransform, "SpringHoverHighlight");
             optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", Color.white, false, false));
         }
     }
 
     private void ConfigureOptionButton(Button button)
     {
+        RectTransform rect = button.transform as RectTransform;
+        if (rect != null)
+            rect.sizeDelta = new Vector2(OptionWidth, OptionHeight);
+
         Image image = button.GetComponent<Image>();
         if (image != null)
         {
@@ -403,6 +412,21 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             spring.SetHoverTarget(hoverTarget);
         spring.gameObject.SetActive(active);
         return spring;
+    }
+
+    private void RemoveOptionSpring(RectTransform optionRect, string name)
+    {
+        if (optionRect == null)
+            return;
+
+        Transform existing = optionRect.Find(name);
+        if (existing == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(existing.gameObject);
+        else
+            DestroyImmediate(existing.gameObject);
     }
 
     private void CachePopupReferences()

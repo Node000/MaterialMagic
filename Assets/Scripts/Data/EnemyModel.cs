@@ -346,12 +346,18 @@ public class EnemyModel : UnitModel
         {
             for (int i = 0; i < group.intents.Length; i++)
                 currentIntents.Add(NormalizeIntent(group.intents[i]));
+            OnCurrentIntentsUpdated();
             return;
         }
 
         EnemyActionData action = GetCurrentAction();
         if (action != null)
             currentIntents.Add(CreateIntentFromAction(action));
+        OnCurrentIntentsUpdated();
+    }
+
+    protected virtual void OnCurrentIntentsUpdated()
+    {
     }
 
     private EnemyIntentGroupData GetCurrentIntentGroup()
@@ -436,7 +442,7 @@ public class EnemyModel : UnitModel
         return null;
     }
 
-    private int NextRandomInt(int minInclusive, int maxExclusive)
+    protected int NextRandomInt(int minInclusive, int maxExclusive)
     {
         PlayerState playerState = BattleManager.Instance?.PlayerState;
         if (playerState is PlayerStatus status)

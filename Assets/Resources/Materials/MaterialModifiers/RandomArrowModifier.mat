@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RandomArrowModifier
-  m_Shader: {fileID: 4800000, guid: 5df4743c287d7c04a88b3bd036689689, type: 3}
+  m_Shader: {fileID: 4800000, guid: d8c9b43402314a147a4333d2ff2bb1b3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

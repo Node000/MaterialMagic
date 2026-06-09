@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TemporaryModifier
-  m_Shader: {fileID: 4800000, guid: 7ee35c3814705e54dbc8016c1592f387, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8e337282d31213c4783fab1d22f63dc9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
