@@ -48,11 +48,9 @@ Material:
     - _ArrowDirection: 0
     - _ColorMask: 15
     - _CopyCount: 1
-    - _EarthLineAngle: 315
     - _EffectMode: 1
     - _EffectSpeed: 1.5
-    - _EffectStrength: 0.04
-    - _FireLineAngle: 45
+    - _EffectStrength: 0.084
     - _GradientAngle: 0.7854
     - _GradientIntensity: 0
     - _GradientOffset: 0
@@ -60,8 +58,8 @@ Material:
     - _GradientPosition3: 0.66
     - _GradientScale: 1
     - _GradientScrollSpeed: 0
-    - _LineAngle: 45
-    - _LineLength: 1.5
+    - _LineAngle: 30
+    - _LineLength: 0.64
     - _LineWidth: 0.02
     - _Stencil: 0
     - _StencilComp: 8
@@ -70,8 +68,6 @@ Material:
     - _StencilWriteMask: 255
     - _UseUIAlphaClip: 0
     - _VisibleSide: 0
-    - _WaterLineAngle: 225
-    - _WindLineAngle: 135
     m_Colors:
     - _AuraColor: {r: 0.78039217, g: 0.9490196, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
