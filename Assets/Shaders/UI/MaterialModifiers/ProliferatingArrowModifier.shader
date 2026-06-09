@@ -1,35 +1,35 @@
-Shader "UI/MaterialModifiers/BigArrow4Modifier"
+Shader "UI/MaterialModifiers/PixelSlimeClone"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
-        _Color ("Tint", Color) = (1,1,1,1)
+        _Color ("Tint Color", Color) = (1,1,1,1)
+
+        [Header(Clone Animation)]
+        _CycleLength ("动画周期时长 (秒)", Float) = 3.0
+        _SplitDistance ("复制体分裂距离", Range(0.0, 1.0)) = 0.4
+        _SplitAngle ("复制体旋转角度", Range(0.0, 1.5)) = 0.5
+
+        // 【修复点】：去除了 Header 中的特殊符号 &，防止 Unity 解析器崩溃
+        [Header(Pixel Art And Slime Settings)]
+        _PixelRes ("像素网格分辨率 (匹配你的素材)", Float) = 32.0
+        _BridgeWidth ("粘液拉丝粗细", Range(0.01, 0.5)) = 0.15
+        _MetaballThreshold ("融球融合阈值 (决定粘稠度)", Range(0.1, 1.5)) = 0.8
+        _GooNoise ("粘液边缘不规则度", Range(0.0, 0.2)) = 0.05
         
-        [Header(Arrow Spread Settings)]
-        _CopyCount ("Copy Count (1 to 20)", Range(1, 20)) = 4
-        _GroupScale ("Group Scale (Fit to UI)", Range(0.1, 2.0)) = 0.8
-        // --- 新增的层级遮挡控制 ---
-        [Enum(Right Over Left (Default), 0, Left Over Right, 1)] _OverlapOrder ("Overlap Order", Float) = 0
-        
-        [Header(Animation Settings)]
-        _BaseSpacing ("Base Spacing", Range(0, 0.5)) = 0.1
-        _AnimAmplitude ("Animation Amplitude", Range(0, 0.5)) = 0.05
-        _AnimSpeed ("Animation Speed", Float) = 2.0
+        // 【修复点】：增加了 [HDR] 后面的空格
+        [HDR] _GooColor ("粘连部分颜色 (建议取箭头主色)", Color) = (0.8, 0.2, 0.3, 1)
 
-        [Header(Metaball Settings)]
-        _BlobThreshold ("Blob Threshold", Range(0,10)) = 1.5
-        _BlobSoftness ("Blob Softness", Range(0.001,1)) = 0.1
-        _BlobIntensity ("Blob Intensity", Range(0,10)) = 2
-        _PixelSteps ("Pixel Alpha Steps", Range(2,8)) = 4
+        [Header(System)]
+        _ExpandBounds ("画布膨胀系数 (防裁切)", Float) = 2.0
 
-
-        // UI 遮罩相关参数保留以兼容 UGUI 机制
-        _StencilComp ("Stencil Comparison", Float) = 8
-        _Stencil ("Stencil ID", Float) = 0
-        _StencilOp ("Stencil Operation", Float) = 0
-        _StencilWriteMask ("Stencil Write Mask", Float) = 255
-        _StencilReadMask ("Stencil Read Mask", Float) = 255
-        _ColorMask ("Color Mask", Float) = 15
+        // UI 模板保留
+        [HideInInspector] _StencilComp ("Stencil Comparison", Float) = 8
+        [HideInInspector] _Stencil ("Stencil ID", Float) = 0
+        [HideInInspector] _StencilOp ("Stencil Operation", Float) = 0
+        [HideInInspector] _StencilWriteMask ("Stencil Write Mask", Float) = 255
+        [HideInInspector] _StencilReadMask ("Stencil Read Mask", Float) = 255
+        [HideInInspector] _ColorMask ("Color Mask", Float) = 15
         [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
     }
 
@@ -66,7 +66,7 @@ Shader "UI/MaterialModifiers/BigArrow4Modifier"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -93,41 +93,39 @@ Shader "UI/MaterialModifiers/BigArrow4Modifier"
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
+
+            float _CycleLength;
+            float _SplitDistance;
+            float _SplitAngle;
             
-            // 用户控制参数
-            float _CopyCount;
-            float _GroupScale;
-            float _OverlapOrder;
-            float _BaseSpacing;
-            float _AnimAmplitude;
-            float _AnimSpeed;
-            float _BlobThreshold;
-            float _BlobSoftness;
-            float _BlobIntensity;
-            float _PixelSteps;
+            float _PixelRes;
+            float _BridgeWidth;
+            float _MetaballThreshold;
+            float _GooNoise;
+            
+            fixed4 _GooColor;
+            float _ExpandBounds;
 
-            float InsideUv(float2 uv)
+            // --- 旋转矩阵 ---
+            float2 rotate(float2 v, float a) 
             {
-                return step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
+                float s = sin(a);
+                float c = cos(a);
+                return float2(v.x * c - v.y * s, v.x * s + v.y * c);
             }
 
-            fixed4 SampleMain(float2 uv, fixed4 vertexColor)
+            // --- 线段距离场 (用于计算拉丝骨架) ---
+            float sdLine(float2 p, float2 a, float2 b) 
             {
-                float inside = InsideUv(uv);
-                fixed4 color = (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
-                color.a *= inside;
-                return color;
+                float2 pa = p - a, ba = b - a;
+                float h = clamp(dot(pa, ba) / max(0.0001, dot(ba, ba)), 0.0, 1.0);
+                return length(pa - ba * h);
             }
 
-            // 透明度混合公式 (源覆盖目标)
-            fixed4 Over(fixed4 bottom, fixed4 top)
+            // --- 防止超出 [0,1] 产生重复平铺的裁切遮罩 ---
+            float boundsMask(float2 uv) 
             {
-                float alpha = top.a + bottom.a * (1.0 - top.a);
-                float3 rgb = top.rgb * top.a + bottom.rgb * bottom.a * (1.0 - top.a);
-                fixed4 result;
-                result.rgb = alpha > 0.0001 ? rgb / alpha : 0;
-                result.a = alpha;
-                return result;
+                return step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
             }
 
             v2f vert(appdata_t v)
@@ -135,132 +133,88 @@ Shader "UI/MaterialModifiers/BigArrow4Modifier"
                 v2f OUT;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
+                
+                v.vertex.xy *= _ExpandBounds;
+                
                 OUT.worldPosition = v.vertex;
                 OUT.vertex = UnityObjectToClipPos(v.vertex);
-                OUT.texcoord = v.texcoord;
+                OUT.texcoord = (v.texcoord - 0.5) * _ExpandBounds + 0.5;
                 OUT.color = v.color * _Color;
                 return OUT;
             }
 
-fixed4 frag(v2f IN) : SV_Target
-{
-    float2 uv = IN.texcoord;
+            fixed4 frag(v2f IN) : SV_Target
+            {
+                float2 rawUV = IN.texcoord;
+                float2 pixelUV = floor(rawUV * _PixelRes) / max(1.0, _PixelRes);
 
-    float field = 0;
+                float t = frac(_Time.y / max(0.1, _CycleLength));
+                
+                float splitProg = 0.0;
+                if (t < 0.1) {
+                    splitProg = 0.0; 
+                } else if (t < 0.5) {
+                    float normT = (t - 0.1) / 0.4;
+                    splitProg = pow(normT, 1.5); 
+                } else if (t < 0.6) {
+                    splitProg = 1.0; 
+                } else {
+                    float normT = (t - 0.6) / 0.4;
+                    splitProg = exp(-10.0 * normT) * cos(35.0 * normT);
+                }
 
-    float3 colorAccum = 0;
-    float weightAccum = 0;
+                float2 splitDir = normalize(float2(1.0, 0.4));
+                float2 c1 = float2(0.5, 0.5) - splitDir * (_SplitDistance * splitProg * 0.15);
+                float2 c2 = float2(0.5, 0.5) + splitDir * (_SplitDistance * splitProg);
+                
+                float angle1 = 0.0;
+                float angle2 = -_SplitAngle * splitProg; 
 
-    float animOffset =
-        sin(_Time.y * _AnimSpeed)
-        * _AnimAmplitude;
+                float2 uv1 = rotate(pixelUV - c1, angle1) + float2(0.5, 0.5);
+                float2 uv2 = rotate(pixelUV - c2, angle2) + float2(0.5, 0.5);
 
-    float currentSpacing =
-        _BaseSpacing + animOffset;
+                fixed4 col1 = (tex2D(_MainTex, uv1) + _TextureSampleAdd) * boundsMask(uv1);
+                fixed4 col2 = (tex2D(_MainTex, uv2) + _TextureSampleAdd) * boundsMask(uv2);
 
-    int copies =
-        clamp((int)_CopyCount, 1, 20);
+                float lineDist = sdLine(pixelUV, c1, c2);
 
-    float totalSpan =
-        (copies - 1.0) * currentSpacing;
+                float noise = sin(pixelUV.x * 45.0 + _Time.y * 15.0) * cos(pixelUV.y * 35.0 - _Time.y * 12.0);
+                lineDist += noise * _GooNoise * splitProg;
 
-    float shiftToCenter =
-        totalSpan * 0.5;
+                float currentBridgeW = _BridgeWidth * max(0.0, 1.0 - pow(abs(splitProg), 1.5));
+                float bridgeDensity = max(0.0, 1.0 - lineDist / max(0.001, currentBridgeW));
 
-    for (int i = 0; i < 20; i++)
-    {
-        if (i >= copies)
-            break;
+                float totalDensity = col1.a + col2.a + bridgeDensity;
+                float alphaMask = step(_MetaballThreshold, totalDensity);
 
-        int drawIndex =
-            (_OverlapOrder == 0.0)
-            ? (copies - 1 - i)
-            : i;
+                fixed4 finalCol = fixed4(0, 0, 0, 0);
 
-        float displacement =
-            drawIndex * currentSpacing;
+                if (col2.a > 0.5) 
+                {
+                    finalCol = col2;
+                }
+                else if (col1.a > 0.5) 
+                {
+                    finalCol = col1;
+                }
+                else 
+                {
+                    finalCol = _GooColor;
+                }
 
-        float2 currentUV = uv;
+                finalCol.a = alphaMask * IN.color.a;
+                finalCol.rgb *= IN.color.rgb;
 
-        currentUV.x += displacement - shiftToCenter;
+                #ifdef UNITY_UI_CLIP_RECT
+                finalCol.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
+                #endif
 
-        currentUV =
-            (currentUV - 0.5)
-            / _GroupScale
-            + 0.5;
+                #ifdef UNITY_UI_ALPHACLIP
+                clip(finalCol.a - 0.001);
+                #endif
 
-        fixed4 sampleCol =
-            SampleMain(currentUV, IN.color);
-
-        float a = sampleCol.a;
-
-        if (a > 0.001)
-        {
-            float2 centerUV =
-                float2(
-                    0.5 + displacement - shiftToCenter,
-                    0.5
-                );
-
-            centerUV =
-                (centerUV - 0.5)
-                / _GroupScale
-                + 0.5;
-
-            float dist =
-                distance(uv, centerUV);
-
-            float metaball =
-                a *
-                exp(-dist * 8.0);
-
-            field +=
-                metaball *
-                _BlobIntensity;
-        }
-
-        colorAccum += sampleCol.rgb * a;
-        weightAccum += a;
-    }
-
-    fixed4 finalColor;
-
-    float blobAlpha =
-        smoothstep(
-            _BlobThreshold - _BlobSoftness,
-            _BlobThreshold + _BlobSoftness,
-            field
-        );
-
-    //
-    // 像素化 Alpha
-    //
-    blobAlpha =
-        floor(blobAlpha * _PixelSteps)
-        / _PixelSteps;
-
-    float3 blobColor =
-        weightAccum > 0.001
-        ? colorAccum / weightAccum
-        : 0;
-
-    finalColor.rgb = blobColor;
-    finalColor.a = blobAlpha;
-
-#ifdef UNITY_UI_CLIP_RECT
-    finalColor.a *=
-        UnityGet2DClipping(
-            IN.worldPosition.xy,
-            _ClipRect
-        );
-#endif
-
-#ifdef UNITY_UI_ALPHACLIP
-    clip(finalColor.a - 0.001);
-#endif
-
-    return saturate(finalColor);
-}
+                return finalCol;
+            }
             ENDCG
         }
     }

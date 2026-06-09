@@ -32,7 +32,7 @@ Material:
     - _ColorMask: 15
     - _EdgeIntensity: 0.45
     - _PulseSpeed: 2.1
-    - _PulseStrength: 0.16
+    - _PulseStrength: 0.066
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

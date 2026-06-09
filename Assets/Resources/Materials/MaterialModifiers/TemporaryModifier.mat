@@ -30,16 +30,24 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
+    - _Disturbance: 0.5
+    - _DotRes: 30
+    - _DotShape: 1
     - _EffectMode: 3
     - _EffectSpeed: 1.45
     - _EffectStrength: 0.5
+    - _FillAmount: 0.569
+    - _GlowIntensity: 1.14
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
     - _UseUIAlphaClip: 0
+    - _WaveScale: 0.3
+    - _WaveSpeed: 3
     m_Colors:
     - _AuraColor: {r: 0.72156864, g: 0.72156864, b: 0.72156864, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _VoidColor: {r: 0.031446517, g: 0.031446517, b: 0.031446517, a: 1}
   m_BuildTextureStacks: []
