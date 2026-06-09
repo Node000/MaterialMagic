@@ -4991,6 +4991,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 404303965}
     m_Modifications:
+    - target: {fileID: 1879345082700865081, guid: 5fe22c4a9b197154e9ff5fe67ab80249, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1984523040925604073, guid: 5fe22c4a9b197154e9ff5fe67ab80249, type: 3}
       propertyPath: m_Name
       value: PopupDragonWindowBackground
@@ -5186,7 +5190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8666667, g: 0.15294117, b: 0.8532406, a: 1}
+  m_Color: {r: 0.11372549, g: 0.4745098, b: 0.98039216, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6420,7 +6424,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: dfe80093f7a302a41b4bf23578f17edc, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 94c198cf91756274a9304501fe5d6dc1, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
