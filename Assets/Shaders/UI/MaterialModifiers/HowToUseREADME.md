@@ -26,7 +26,7 @@
 - `_MainTex`：卡牌/箭头贴图，由 Image 自动传入。
 - `_Color`：整体乘色，一般保持白色。
 - `_ArrowDirection`：运行时根据素材方向覆盖，火=上、水=下、风=左、土=右。
-- `_CopyCount`：大箭头数量，BigArrow2/3/4 对应 2/3/4，一般不要改。
+- `_CopyCount`：多重箭头数量，BigArrow2/3/4 对应 2/3/4，一般不要改。
 - `_AltTex1~4`：随机箭头使用的四张基础箭头贴图，运行时会自动设置。
 - `_Stencil*`、`_ColorMask`、`_UseUIAlphaClip`：UGUI Mask/裁剪参数，不要改。
 
@@ -87,7 +87,7 @@
 - 材质：`Assets/Resources/Materials/MaterialModifiers/RepeatArrowModifier.mat`
 - 效果：重复箭头，在原箭头后方叠一层半透明残影。
 - 主要调：`_EffectStrength` 控制残影明显程度，`_EffectSpeed` 控制残影流动。
-- 建议：残影太强会像多箭头；如果和 BigArrow 混淆，降低强度。
+- 建议：残影太强会像多重箭头；如果和 BigArrow 混淆，降低强度。
 
 ### BigArrow2Modifier / BigArrow3Modifier / BigArrow4Modifier
 
@@ -117,8 +117,8 @@
 
 - Shader：`UI/MaterialModifiers/RandomArrowModifier`
 - 材质：`Assets/Resources/Materials/MaterialModifiers/RandomArrowModifier.mat`
-- 效果：随机箭头，在四种基础箭头贴图间循环渐变，并叠加闪点。
-- 主要调：`_EffectSpeed` 控制切换速度，`_EffectStrength` 控制闪点和混合强度。
+- 效果：随机箭头，在四种基础箭头贴图间循环渐变。
+- 主要调：`_EffectSpeed` 控制切换速度。
 - 不建议改：`_AltTex1~4`，运行时会自动填入四张基础箭头。
 
 ### RetainedArrowModifier

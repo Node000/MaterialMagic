@@ -37,21 +37,21 @@
 
 - Shader：`UI/MaterialModifiers/BigArrow2Modifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/BigArrow2Modifier.shader`
-- 用途：二重大箭头：显示 2 个横向排列的箭头拷贝。
+- 用途：双重箭头：显示 2 个横向排列的箭头拷贝。
 - 美术参数：主要调 `_AuraColor`、`_EffectSpeed`、`_EffectStrength`。
 
 ## BigArrow3Modifier
 
 - Shader：`UI/MaterialModifiers/BigArrow3Modifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/BigArrow3Modifier.shader`
-- 用途：三重大箭头：显示 3 个横向排列的箭头拷贝。
+- 用途：三重箭头：显示 3 个横向排列的箭头拷贝。
 - 美术参数：主要调 `_AuraColor`、`_EffectSpeed`、`_EffectStrength`。
 
 ## BigArrow4Modifier
 
 - Shader：`UI/MaterialModifiers/BigArrow4Modifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/BigArrow4Modifier.shader`
-- 用途：四重大箭头/多箭头：按 `_CopyCount` 在 1-20 个之间复制箭头，通过 `_GroupScale` 控制整体缩放适配 UI 框，`_BaseSpacing`/`_AnimAmplitude`/`_AnimSpeed` 控制横向间距循环动画，`_OverlapOrder` 控制左右层级覆盖顺序。
+- 用途：四重箭头：按 `_CopyCount` 在 1-20 个之间复制箭头，通过 `_GroupScale` 控制整体缩放适配 UI 框，`_BaseSpacing`/`_AnimAmplitude`/`_AnimSpeed` 控制横向间距循环动画，`_OverlapOrder` 控制左右层级覆盖顺序。
 - 美术参数：主要调 `_CopyCount`、`_GroupScale`、`_OverlapOrder`、`_BaseSpacing`、`_AnimAmplitude`、`_AnimSpeed`。
 
 ## ProliferatingArrowModifier

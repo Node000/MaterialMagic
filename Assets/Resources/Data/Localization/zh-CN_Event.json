@@ -618,7 +618,7 @@
     },
     {
       "key": "event.printer_accident.wrong_size.1",
-      "text": "打印比例被拉大了。选择一张箭头，把它变成更占配方格的大箭头。"
+      "text": "打印比例被拉大了。选择一张箭头，把它变成更占配方格的多重箭头。"
     },
     {
       "key": "event.printer_accident.misaligned.1",

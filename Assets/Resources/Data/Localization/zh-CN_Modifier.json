@@ -90,7 +90,7 @@
     },
     {
       "key": "modifier.big_arrow_2.name",
-      "text": "大箭头x2"
+      "text": "双重箭头"
     },
     {
       "key": "modifier.big_arrow_2.desc",
@@ -98,7 +98,7 @@
     },
     {
       "key": "modifier.big_arrow_3.name",
-      "text": "大箭头x3"
+      "text": "三重箭头"
     },
     {
       "key": "modifier.big_arrow_3.desc",
@@ -106,7 +106,7 @@
     },
     {
       "key": "modifier.big_arrow_4.name",
-      "text": "大箭头x4"
+      "text": "四重箭头"
     },
     {
       "key": "modifier.big_arrow_4.desc",

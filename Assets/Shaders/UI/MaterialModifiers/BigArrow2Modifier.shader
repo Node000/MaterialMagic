@@ -1,5 +1,5 @@
 // Auto-split per modifier shader. Source behavior derived from UI/MaterialModifierArrowShape.
-// 二重大箭头：显示 2 个横向排列的箭头拷贝。
+// 双重箭头：显示 2 个横向排列的箭头拷贝。
 Shader "UI/MaterialModifiers/BigArrow2Modifier"
 {
     Properties

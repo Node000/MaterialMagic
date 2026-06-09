@@ -45,12 +45,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AnimAmplitude: 0.05
+    - _AnimSpeed: 2
     - _ArrowDirection: 0
+    - _BaseSpacing: 0.1
     - _ColorMask: 15
     - _CopyCount: 4
     - _EffectMode: 3
     - _EffectSpeed: 1
     - _EffectStrength: 0.42
+    - _GroupScale: 0.75
+    - _OverlapOrder: 0
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
