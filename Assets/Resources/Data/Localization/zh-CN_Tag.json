@@ -122,11 +122,11 @@
     },
     {
       "key": "tag.repeat_spell.name",
-      "text": "法术重复"
+      "text": "道具重复"
     },
     {
       "key": "tag.repeat_spell.desc",
-      "text": "本回合每个法术额外释放等同层数次。"
+      "text": "本回合每个道具额外释放等同层数次。"
     },
     {
       "key": "tag.draw_on_enemy_attack.name",

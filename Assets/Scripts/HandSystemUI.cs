@@ -43,7 +43,7 @@ public class HandSystemUI : MonoBehaviour
 
 		public RectTransform buffRoot;
 
-		public Image focusMarker;
+		public Graphic focusMarker;
 
 		public RectTransform intentRoot;
 
@@ -1322,43 +1322,31 @@ public class HandSystemUI : MonoBehaviour
             GetUIManager().MaterialListPanel?.HideModifierTooltip(cardView.RectTransform);
     }
 
-	private Image EnsureFocusMarker(RectTransform enemyView)
+	private Graphic EnsureFocusMarker(RectTransform enemyView)
 	{
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Expected O, but got Unknown
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected O, but got Unknown
 		Transform val = ((Transform)enemyView).Find("FocusMarker");
-		Image image = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Image>() : null);
-		if ((Object)image == (Object)null)
+		Graphic marker = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Graphic>() : null);
+		if ((Object)marker == (Object)null)
 		{
-			image = new GameObject("FocusMarker", new Type[3]
+			marker = new GameObject("FocusMarker", new Type[3]
 			{
 				typeof(RectTransform),
 				typeof(CanvasRenderer),
-				typeof(Image)
-			}).GetComponent<Image>();
-			((Component)image).transform.SetParent((Transform)enemyView, false);
+				typeof(SpringLineHighlightUI)
+			}).GetComponent<Graphic>();
+			((Component)marker).transform.SetParent((Transform)enemyView, false);
 		}
-		image.color = new Color(1f, 0.08f, 0.06f, 1f);
-		image.raycastTarget = false;
-		RectTransform component = ((Component)image).GetComponent<RectTransform>();
+		marker.color = new Color(1f, 0.08f, 0.06f, 1f);
+		marker.raycastTarget = false;
+		RectTransform component = ((Component)marker).GetComponent<RectTransform>();
 		component.anchorMin = new Vector2(0.5f, 0.5f);
 		component.anchorMax = new Vector2(0.5f, 0.5f);
 		component.pivot = new Vector2(0.5f, 0.5f);
 		component.anchoredPosition = new Vector2(0f, 40f);
 		component.sizeDelta = new Vector2(34f, 34f);
-		((Transform)component).localEulerAngles = new Vector3(0f, 0f, 45f);
-		((Component)image).gameObject.SetActive(false);
-		return image;
+		((Transform)component).localEulerAngles = Vector3.zero;
+		((Component)marker).gameObject.SetActive(false);
+		return marker;
 	}
 
 	private RectTransform EnsureBuffRoot(RectTransform parent, Vector2 anchoredPosition)
@@ -5297,14 +5285,14 @@ public class HandSystemUI : MonoBehaviour
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (magic == null)
         {
-            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.empty_slot", "这个法术槽是空的！"));
+            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.empty_slot", "这个道具槽是空的！"));
             return false;
         }
 
         MagicModifierModel modifier = MagicModifierFactory.Create(pendingMagicModifier);
         if (modifier == null || !magic.AddModifier(modifier))
         {
-            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.not_applicable", "这个强化不能用于该法术！"));
+            panel?.ShowPopup(LocalizationSystem.GetText("ui.magic_modifier.not_applicable", "这个强化不能用于该道具！"));
             return false;
         }
 

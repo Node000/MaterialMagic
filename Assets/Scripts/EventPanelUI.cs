@@ -726,9 +726,9 @@ public class EventPanelUI : MonoBehaviour
         else if (option.resultId == 300)
             effect = "恢复30%最大生命";
         else if (option.resultId == 301)
-            effect = LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个法术上");
+            effect = LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个道具上");
         else if (option.resultId == 302)
-            effect = LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个法术上");
+            effect = LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个道具上");
 
         return "效果：" + effect;
     }
@@ -747,9 +747,9 @@ public class EventPanelUI : MonoBehaviour
             case EventRewardType.GainGold:
                 return "获得" + GetEffectAmountText(effect, 1) + "金币";
             case EventRewardType.GainMagic:
-                return "获得一次法术奖励";
+                return "获得一次道具奖励";
             case EventRewardType.GainMagicModifier:
-                return "获得一次法术强化";
+                return "获得一次道具强化";
             case EventRewardType.IncreaseMaxHealth:
                 return "生命上限+" + GetEffectAmountText(effect, 5);
             case EventRewardType.GainMaterial:
@@ -852,7 +852,7 @@ public class EventPanelUI : MonoBehaviour
         MaterialEnum[] materials = EventModel.ParseRecipe(option != null ? option.recipe : null);
         if (option != null && option.isExitOption)
             materials = System.Array.Empty<MaterialEnum>();
-        float spacing = 30f;
+        float spacing = 60f;
         float startX = materials.Length > 1 ? -spacing * (materials.Length - 1) * 0.5f : 0f;
         for (int i = 0; i < materials.Length; i++)
         {
@@ -868,7 +868,7 @@ public class EventPanelUI : MonoBehaviour
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.pivot = new Vector2(0.5f, 0.5f);
             iconRect.anchoredPosition = new Vector2(startX + spacing * i, 0f);
-            iconRect.sizeDelta = new Vector2(48f, 48f);
+            iconRect.sizeDelta = new Vector2(96f, 96f);
         }
     }
 

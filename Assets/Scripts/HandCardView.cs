@@ -16,6 +16,9 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     [SerializeField] private float hoverTilt = 0f;
     [SerializeField] private float feedbackDuration = 0.18f;
     [SerializeField] private Ease feedbackEase = Ease.OutBack;
+    [Header("Modifier标签布局")]
+    [SerializeField] private Vector2 modifierTextAnchoredPosition = new Vector2(0f, 8f);
+    [SerializeField] private Vector2 modifierTextSizeDelta = new Vector2(0f, 22f);
 
     private HandSystemUI owner;
     private RectTransform rectTransform;
@@ -153,6 +156,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             string modifierLabel = GetModifierLabel();
             modifierText.text = modifierLabel;
             modifierText.gameObject.SetActive(!string.IsNullOrEmpty(modifierLabel));
+            ApplyModifierTextLayout();
         }
 
         RefreshSpringHighlight();
@@ -236,6 +240,19 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         return text;
     }
 
+    private void ApplyModifierTextLayout()
+    {
+        if (modifierText == null)
+            return;
+
+        RectTransform rect = modifierText.rectTransform;
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = modifierTextAnchoredPosition;
+        rect.sizeDelta = modifierTextSizeDelta;
+    }
+
     private void EnsureModifierText()
     {
         if (modifierText != null)
@@ -250,12 +267,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         modifierText.raycastTarget = false;
         modifierText.enableWordWrapping = false;
         modifierText.overflowMode = TextOverflowModes.Overflow;
-        RectTransform rect = modifierText.rectTransform;
-        rect.anchorMin = new Vector2(0f, 0f);
-        rect.anchorMax = new Vector2(1f, 0f);
-        rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -6f);
-        rect.sizeDelta = new Vector2(0f, 22f);
+        ApplyModifierTextLayout();
     }
 
     private void PlayFeedback(bool instant)

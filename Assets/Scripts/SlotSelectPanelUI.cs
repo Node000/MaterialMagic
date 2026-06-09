@@ -31,7 +31,7 @@ public class SlotSelectPanelUI : MonoBehaviour
         transform.SetAsLastSibling();
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = "选择要填入的法术槽";
+            title.text = "选择要填入的道具槽";
 
         for (int i = 0; i < owner.PlayerState.MagicBookSlotCount; i++)
         {

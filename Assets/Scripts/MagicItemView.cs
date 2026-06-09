@@ -131,10 +131,10 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 magicNameText.text = "空槽";
 
             if (tooltipNameText != null)
-                tooltipNameText.text = "空法术槽";
+                tooltipNameText.text = "空道具槽";
 
             if (tooltipDescriptionText != null)
-                tooltipDescriptionText.text = "选择奖励法术后，可以填入或覆盖此位置。";
+                tooltipDescriptionText.text = "选择奖励道具后，可以填入或覆盖此位置。";
 
             if (tagTooltipText != null)
                 tagTooltipText.text = string.Empty;
@@ -214,6 +214,10 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private void CacheMissingReferences()
     {
+        Graphic raycastGraphic = GetComponent<Graphic>();
+        if (raycastGraphic != null)
+            raycastGraphic.raycastTarget = true;
+
         if (backgroundImage == null)
             backgroundImage = GetComponent<Image>();
 

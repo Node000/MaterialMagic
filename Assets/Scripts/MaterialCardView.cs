@@ -11,13 +11,15 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private TMP_Text labelText;
     [SerializeField] private RectTransform enhancementRoot;
     [SerializeField] private SpringLineHighlightUI springHighlight;
+    [Header("Modifier标签布局")]
+    [SerializeField] private float enhancementLineHeight = 16f;
+    [SerializeField] private float enhancementLineSpacing = 2f;
     [Header("动画参数")]
     [SerializeField] private float consumedPunchScale = 0.035f;
     [SerializeField] private float consumedPunchDuration = 0.32f;
     [SerializeField] private int consumedPunchVibrato = 4;
     [SerializeField] private float consumedPunchElasticity = 0.45f;
 
-    private readonly Color emptyEnhancementColor = new Color(0.08f, 0.08f, 0.1f, 1f);
     private readonly System.Collections.Generic.List<TMP_Text> enhancementTexts = new System.Collections.Generic.List<TMP_Text>();
     private MaterialModel materialModel;
     private MaterialListPanelUI owner;
@@ -235,31 +237,27 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             return;
 
         CacheEnhancementTexts();
+        EnsureEnhancementRootLayout();
 
         for (int i = 0; i < enhancementRoot.childCount; i++)
             enhancementRoot.GetChild(i).gameObject.SetActive(false);
 
         if (materialModel == null || (materialModel.enhancementIds.Count == 0 && materialModel.modifiers.Count == 0))
-        {
-            Image empty = enhancementRoot.childCount > 0 ? enhancementRoot.GetChild(0).GetComponent<Image>() : null;
-            if (empty == null)
-                empty = CreateEnhancementBlock("EmptyTag");
-            empty.gameObject.SetActive(true);
-            empty.color = emptyEnhancementColor;
             return;
-        }
 
         int tagIndex = 0;
         for (int i = 0; i < materialModel.enhancementIds.Count; i++)
         {
-            TMP_Text tagText = GetEnhancementText(tagIndex++);
+            TMP_Text tagText = GetEnhancementText(tagIndex);
+            ApplyEnhancementTextLayout(tagText, tagIndex++);
             tagText.gameObject.SetActive(true);
             tagText.text = materialModel.enhancementIds[i];
         }
 
         for (int i = 0; i < materialModel.modifiers.Count; i++)
         {
-            TMP_Text tagText = GetEnhancementText(tagIndex++);
+            TMP_Text tagText = GetEnhancementText(tagIndex);
+            ApplyEnhancementTextLayout(tagText, tagIndex++);
             tagText.gameObject.SetActive(true);
             tagText.text = LocalizationKeys.GetModifierName(materialModel.modifiers[i]);
         }
@@ -279,6 +277,31 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         }
     }
 
+    private void EnsureEnhancementRootLayout()
+    {
+        if (enhancementRoot == null)
+            return;
+
+        HorizontalLayoutGroup horizontalLayout = enhancementRoot.GetComponent<HorizontalLayoutGroup>();
+        if (horizontalLayout != null)
+            horizontalLayout.enabled = false;
+    }
+
+    private void ApplyEnhancementTextLayout(TMP_Text tagText, int index)
+    {
+        if (tagText == null)
+            return;
+
+        tagText.enableWordWrapping = false;
+        tagText.overflowMode = TextOverflowModes.Overflow;
+        RectTransform rect = tagText.rectTransform;
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -index * (enhancementLineHeight + enhancementLineSpacing));
+        rect.sizeDelta = new Vector2(0f, enhancementLineHeight);
+    }
+
     private TMP_Text GetEnhancementText(int index)
     {
         while (enhancementTexts.Count <= index)
@@ -290,29 +313,13 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             tagText.alignment = TextAlignmentOptions.Center;
             tagText.color = Color.white;
             tagText.raycastTarget = false;
-            RectTransform rect = tagText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -enhancementTexts.Count * 18f);
-            rect.sizeDelta = new Vector2(0f, 16f);
+            tagText.enableWordWrapping = false;
+            tagText.overflowMode = TextOverflowModes.Overflow;
+            ApplyEnhancementTextLayout(tagText, enhancementTexts.Count);
             enhancementTexts.Add(tagText);
         }
 
         return enhancementTexts[index];
-    }
-
-    private Image CreateEnhancementBlock(string name)
-    {
-        Image image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-        image.transform.SetParent(enhancementRoot, false);
-        image.raycastTarget = false;
-        RectTransform rect = image.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0f, 0f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        return image;
     }
 
     private static string GetCardLabel(MaterialModel materialModel)

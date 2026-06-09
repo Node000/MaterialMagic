@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "对敌方造成2点伤害，本回合内每触发一次法术，使本伤害+1"
+      "text": "对敌方造成2点伤害，本回合内每触发一次道具，使本伤害+1"
     },
     {
       "key": "magic.burning_wind.name",
@@ -86,7 +86,7 @@
     },
     {
       "key": "magic.burning_wind.desc",
-      "text": "本回合所有法术【法术重复】1次"
+      "text": "本回合所有道具【道具重复】1次"
     },
     {
       "key": "magic.lightning.name",

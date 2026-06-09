@@ -135,6 +135,6 @@
     }
   ],
   "iconName": "南极洲",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "南极洲atlas",
   "animationFrameRate": 8.0
 }

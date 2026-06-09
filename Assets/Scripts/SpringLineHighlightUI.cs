@@ -188,6 +188,47 @@ public class SpringLineHighlightUI : MaskableGraphic
         SetVerticesDirty();
     }
 
+    public void SetLineCount(int value)
+    {
+        lineCount = Mathf.Clamp(value, 1, 8);
+        SetVerticesDirty();
+    }
+
+    public void SetSamplesPerLine(int value)
+    {
+        samplesPerLine = Mathf.Clamp(value, 16, 256);
+        SetVerticesDirty();
+    }
+
+    public void SetLineWidth(float value)
+    {
+        lineWidth = Mathf.Max(0.5f, value);
+        SetVerticesDirty();
+    }
+
+    public void SetLineSpacing(float value)
+    {
+        lineSpacing = Mathf.Max(0f, value);
+        SetVerticesDirty();
+    }
+
+    public void SetFill(bool enabled, Color value)
+    {
+        fillEnabled = enabled;
+        fillColor = value;
+        SetVerticesDirty();
+    }
+
+    public void SetHideOnAwake(bool value)
+    {
+        hideOnAwake = value;
+    }
+
+    public void SetBindHoverTarget(bool value)
+    {
+        bindHoverTarget = value;
+    }
+
     public void Show()
     {
         gameObject.SetActive(true);

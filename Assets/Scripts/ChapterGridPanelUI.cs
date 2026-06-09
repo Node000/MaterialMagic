@@ -91,6 +91,8 @@ public class ChapterGridPanelUI : MonoBehaviour
     private Vector2 shownAnchoredPosition;
     private bool shownPositionCached;
     private bool inputLocked;
+    private int ignoreOutsideClickFrame = -1;
+    private readonly List<RaycastResult> pointerRaycastResults = new List<RaycastResult>();
 
     public float EnterLevelDelayAfterMove => enterLevelDelayAfterMove;
 
@@ -135,6 +137,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         CacheReferences();
         currentGrid = grid;
         inputLocked = false;
+        ignoreOutsideClickFrame = Time.frameCount;
         gameObject.SetActive(true);
         BuildGrid();
         RefreshTexts();
@@ -149,6 +152,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     public void Hide()
     {
         inputLocked = true;
+        scrollTween?.Kill(false);
         markerTween?.Kill(false);
         bossSequence?.Kill(false);
         ClearDirectionButtons();
@@ -260,6 +264,83 @@ public class ChapterGridPanelUI : MonoBehaviour
         owner?.OnChapterMapDirectionClicked(material);
     }
 
+    private void LateUpdate()
+    {
+        if (!gameObject.activeSelf || inputLocked || Time.frameCount == ignoreOutsideClickFrame)
+            return;
+
+        if (IsMapSelectionActive())
+            return;
+
+        if (!TryGetPointerDownPosition(out Vector2 pointerPosition))
+            return;
+
+        if (IsPointerInsidePanel(pointerPosition) || IsPointerOnDirectionButton(pointerPosition))
+            return;
+
+        Hide();
+    }
+
+    private bool TryGetPointerDownPosition(out Vector2 pointerPosition)
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            pointerPosition = Input.mousePosition;
+            return true;
+        }
+
+        for (int i = 0; i < Input.touchCount; i++)
+        {
+            Touch touch = Input.GetTouch(i);
+            if (touch.phase == TouchPhase.Began)
+            {
+                pointerPosition = touch.position;
+                return true;
+            }
+        }
+
+        pointerPosition = default;
+        return false;
+    }
+
+    private bool IsPointerInsidePanel(Vector2 pointerPosition)
+    {
+        CacheReferences();
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        return rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, pointerPosition, eventCamera);
+    }
+
+    private bool IsPointerOnDirectionButton(Vector2 pointerPosition)
+    {
+        if (EventSystem.current == null || directionButtons.Count == 0)
+            return false;
+
+        PointerEventData eventData = new PointerEventData(EventSystem.current)
+        {
+            position = pointerPosition
+        };
+        pointerRaycastResults.Clear();
+        EventSystem.current.RaycastAll(eventData, pointerRaycastResults);
+        for (int i = 0; i < pointerRaycastResults.Count; i++)
+        {
+            Transform hit = pointerRaycastResults[i].gameObject.transform;
+            foreach (RectTransform button in directionButtons.Values)
+            {
+                if (button != null && (hit == button || hit.IsChildOf(button)))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsMapSelectionActive()
+    {
+        RunManager currentRun = RunManager.Current;
+        return currentRun != null && currentRun.State == RunFlowState.MapSelection;
+    }
+
     private void CacheReferences()
     {
         if (rectTransform == null)
@@ -350,7 +431,8 @@ public class ChapterGridPanelUI : MonoBehaviour
         scrollContent.anchorMin = new Vector2(0f, 1f);
         scrollContent.anchorMax = new Vector2(1f, 1f);
         scrollContent.pivot = new Vector2(0.5f, 1f);
-        scrollContent.anchoredPosition = Vector2.zero;
+        if (!gameObject.activeSelf)
+            scrollContent.anchoredPosition = Vector2.zero;
         scrollContent.sizeDelta = new Vector2(0f, viewportSize.y);
     }
 

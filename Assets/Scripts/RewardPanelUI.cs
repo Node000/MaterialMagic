@@ -118,7 +118,7 @@ public class RewardPanelUI : MonoBehaviour
 
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         if (hint != null)
-            hint.text = "选择奖励；法术奖励选中后，点击场景中的法术槽覆盖。";
+            hint.text = "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。";
 
         CacheReferences();
         HideMagicChoices();
@@ -145,11 +145,11 @@ public class RewardPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = "法术奖励";
+            title.text = "道具奖励";
 
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         if (hint != null)
-            hint.text = "选择一个法术后，点击场景中的法术槽覆盖。";
+            hint.text = "选择一个道具后，点击场景中的道具槽覆盖。";
 
         CacheReferences();
         HideMagicChoices();
@@ -201,7 +201,7 @@ public class RewardPanelUI : MonoBehaviour
             if (optionViews.Count > 0)
             {
                 if (!magicClaimed)
-                    optionViews[0].Bind("获得法术", ShowMagicChoices);
+                    optionViews[0].Bind("获得道具", ShowMagicChoices);
                 else
                     optionViews[0].Hide();
             }
@@ -220,14 +220,14 @@ public class RewardPanelUI : MonoBehaviour
             if (optionViews.Count > 1)
             {
                 if (!magicClaimed && !goldClaimInProgress)
-                    optionViews[1].Bind("获得法术", ShowMagicChoices);
+                    optionViews[1].Bind("获得道具", ShowMagicChoices);
                 else
                     optionViews[1].Hide();
             }
             if (optionViews.Count > 2)
             {
                 if (eliteExtraRewardKind == RewardOptionKind.MagicModifier && !goldClaimInProgress)
-                    optionViews[2].Bind("法术强化", ClaimEliteMagicModifierReward);
+                    optionViews[2].Bind("道具强化", ClaimEliteMagicModifierReward);
                 else if (eliteExtraRewardKind == RewardOptionKind.ArrowModifier && !goldClaimInProgress)
                     optionViews[2].Bind("箭头附魔", ClaimEliteArrowModifierReward);
                 else
@@ -287,7 +287,11 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null || goldClaimInProgress)
             return;
 
-        owner.ClaimEliteMagicModifierReward(RefreshOptions);
+        owner.ClaimEliteMagicModifierReward(() =>
+        {
+            eliteExtraRewardKind = RewardOptionKind.None;
+            RefreshOptions();
+        });
     }
 
     private void ClaimEliteArrowModifierReward()
@@ -295,7 +299,11 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null || goldClaimInProgress)
             return;
 
-        owner.ClaimEliteArrowModifierReward(RefreshOptions);
+        owner.ClaimEliteArrowModifierReward(() =>
+        {
+            eliteExtraRewardKind = RewardOptionKind.None;
+            RefreshOptions();
+        });
     }
 
     private void ClaimGoldReward()
@@ -530,9 +538,9 @@ public class RewardPanelUI : MonoBehaviour
         panelImage.color = new Color(0.02f, 0.02f, 0.04f, 1f);
         panelImage.raycastTarget = true;
 
-        TMP_Text title = CreatePanelText(magicChoicePanel, "Title", "选择一个法术", 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
+        TMP_Text title = CreatePanelText(magicChoicePanel, "Title", "选择一个道具", 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
         title.color = new Color(1f, 0.9f, 0.55f, 1f);
-        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", "选择后点击下方/场景中的法术槽覆盖；可重新选择。", 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
+        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。", 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
         hint.color = new Color(0.82f, 0.84f, 0.9f, 1f);
 
         magicChoiceBackButton = CreatePanelButton(magicChoicePanel, "BackButton", "返回", new Vector2(-360f, 112f), new Vector2(110f, 42f));
@@ -558,6 +566,13 @@ public class RewardPanelUI : MonoBehaviour
     {
         if (magicChoicePanel == null)
             return;
+
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(magicChoicePanel, "Title");
+        if (title != null)
+            title.text = "选择一个道具";
+        TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(magicChoicePanel, "Hint");
+        if (hint != null)
+            hint.text = "选择后点击下方/场景中的道具槽覆盖；可重新选择。";
 
         magicChoiceBackButton = UIManager.FindChildComponent<Button>(magicChoicePanel, "BackButton");
         if (magicChoiceBackButton != null)

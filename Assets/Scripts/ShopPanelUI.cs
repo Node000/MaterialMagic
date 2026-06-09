@@ -89,7 +89,7 @@ public class ShopPanelUI : MonoBehaviour
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, "商店");
         if (hintText != null)
-            hintText.text = "每件商品只能购买一次。道具购买后点击已有法术槽完成覆盖。";
+            hintText.text = "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。";
         if (messageText != null)
             messageText.text = string.Empty;
 
@@ -689,7 +689,7 @@ public class ShopPanelUI : MonoBehaviour
         if (offer.magicData == null)
             return;
 
-        ShowMessage("点击法术槽完成购买");
+        ShowMessage("点击道具槽完成购买");
         selectedOffer = offer;
         waitingForSelection = true;
         purchaseInProgress = false;

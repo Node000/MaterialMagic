@@ -1,64 +1,71 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class EnemySpriteAnimatorUI : MonoBehaviour
 {
-    private const float DefaultFrameRate = 8f;
+    private const string EnemyAnimatorRoot = "Animations/Enemies/";
 
     [SerializeField] private Image targetImage;
     [SerializeField] private EnemyViewUI owner;
+    [SerializeField] private Animator animator;
 
-    private Sprite[] frames = Array.Empty<Sprite>();
     private EnemyData boundData;
-    private Vector2 currentNativeSize;
-    private float imageScale = 1f;
-    private float frameInterval;
-    private float elapsed;
-    private int frameIndex;
 
     private void Awake()
     {
-        if (targetImage == null)
-            targetImage = GetComponent<Image>();
-        if (owner == null)
-            owner = GetComponentInParent<EnemyViewUI>();
+        CacheReferences();
     }
 
     public void Bind(EnemyData data)
     {
+        CacheReferences();
+
+        boundData = data;
+        Sprite sprite = EnemyVisualLoader.LoadStaticSpriteOrSample(data);
+        ApplySprite(sprite);
+        ApplyAnimator(data);
+    }
+
+    public void RefreshLayoutFromAnimatedSprite()
+    {
+        if (targetImage == null || targetImage.sprite == null)
+            return;
+
+        ApplySprite(targetImage.sprite);
+    }
+
+    private void CacheReferences()
+    {
         if (targetImage == null)
             targetImage = GetComponent<Image>();
         if (owner == null)
             owner = GetComponentInParent<EnemyViewUI>();
-
-        boundData = data;
-        frames = EnemyVisualLoader.LoadAnimationFrames(data);
-        float frameRate = data != null && data.animationFrameRate > 0f ? data.animationFrameRate : DefaultFrameRate;
-        frameInterval = 1f / frameRate;
-        elapsed = 0f;
-        frameIndex = 0;
-        currentNativeSize = Vector2.zero;
-        imageScale = data != null && data.imageScale > 0f ? data.imageScale : 1f;
-
-        Sprite sprite = frames.Length > 0 ? frames[0] : EnemyVisualLoader.LoadStaticSpriteOrSample(data);
-        ApplySprite(sprite);
-
-        enabled = targetImage != null && frames.Length > 1;
+        if (animator == null)
+            animator = GetComponent<Animator>();
     }
 
-    private void Update()
+    private void ApplyAnimator(EnemyData data)
     {
-        elapsed += Time.deltaTime;
-        if (elapsed < frameInterval)
+        RuntimeAnimatorController controller = EnemyVisualLoader.LoadAnimatorController(data);
+        if (controller == null)
+        {
+            if (animator != null)
+            {
+                animator.runtimeAnimatorController = null;
+                animator.enabled = false;
+            }
             return;
+        }
 
-        int step = (int)(elapsed / frameInterval);
-        elapsed -= step * frameInterval;
-        frameIndex = (frameIndex + step) % frames.Length;
-        ApplySprite(frames[frameIndex]);
+        if (animator == null)
+            animator = gameObject.AddComponent<Animator>();
+
+        animator.runtimeAnimatorController = controller;
+        animator.enabled = true;
+        animator.Rebind();
+        animator.Update(0f);
+        RefreshLayoutFromAnimatedSprite();
     }
 
     private void ApplySprite(Sprite sprite)
@@ -72,37 +79,38 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
             return;
 
         targetImage.color = Color.white;
-        Vector2 spriteSize = sprite.rect.size * imageScale;
-        if (spriteSize != currentNativeSize)
-        {
-            targetImage.rectTransform.sizeDelta = spriteSize;
-            currentNativeSize = spriteSize;
-        }
+        targetImage.rectTransform.sizeDelta = sprite.rect.size * GetImageScale();
         if (owner == null)
             owner = GetComponentInParent<EnemyViewUI>();
         if (owner != null)
             owner.ApplyDataLayout(boundData);
+    }
+
+    private float GetImageScale()
+    {
+        return boundData != null && boundData.imageScale > 0f ? boundData.imageScale : 1f;
     }
 }
 
 public static class EnemyVisualLoader
 {
     private const string EnemyImageRoot = "Images/Enemies/";
+    private const string EnemyAnimatorRoot = "Animations/Enemies/";
     private const string SampleIconName = "Sample";
 
-    private static readonly Dictionary<string, Sprite[]> FrameCache = new Dictionary<string, Sprite[]>();
-    private static readonly Dictionary<string, Sprite> StaticSpriteCache = new Dictionary<string, Sprite>();
-
-    public static Sprite[] LoadAnimationFrames(EnemyData data)
+    public static RuntimeAnimatorController LoadAnimatorController(EnemyData data)
     {
         if (data == null)
-            return Array.Empty<Sprite>();
+            return null;
 
-        Sprite[] frames = LoadFrames(data.spriteAnimationPath);
-        if (frames.Length > 0)
-            return frames;
+        RuntimeAnimatorController controller = LoadAnimatorController(data.spriteAnimationPath);
+        return controller != null ? controller : LoadAnimatorController(data.iconName);
+    }
 
-        return LoadFrames(data.iconName);
+    public static RuntimeAnimatorController LoadAnimatorController(string pathOrName)
+    {
+        string path = NormalizeEnemyAnimatorPath(pathOrName);
+        return string.IsNullOrEmpty(path) ? null : Resources.Load<RuntimeAnimatorController>(path);
     }
 
     public static Sprite LoadStaticSpriteOrSample(EnemyData data)
@@ -114,34 +122,7 @@ public static class EnemyVisualLoader
     public static Sprite LoadStaticSprite(string iconName)
     {
         string path = NormalizeEnemyImagePath(iconName);
-        if (string.IsNullOrEmpty(path))
-            return null;
-
-        if (StaticSpriteCache.TryGetValue(path, out Sprite cachedSprite))
-            return cachedSprite;
-
-        Sprite sprite = Resources.Load<Sprite>(path);
-        StaticSpriteCache[path] = sprite;
-        return sprite;
-    }
-
-    private static Sprite[] LoadFrames(string pathOrName)
-    {
-        string path = NormalizeEnemyImagePath(pathOrName);
-        if (string.IsNullOrEmpty(path))
-            return Array.Empty<Sprite>();
-
-        if (FrameCache.TryGetValue(path, out Sprite[] cachedFrames))
-            return cachedFrames;
-
-        Sprite[] loadedFrames = Resources.LoadAll<Sprite>(path);
-        if (loadedFrames == null || loadedFrames.Length == 0)
-            loadedFrames = Array.Empty<Sprite>();
-        else
-            Array.Sort(loadedFrames, CompareSpriteNames);
-
-        FrameCache[path] = loadedFrames;
-        return loadedFrames;
+        return string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
     }
 
     private static string NormalizeEnemyImagePath(string pathOrName)
@@ -149,11 +130,14 @@ public static class EnemyVisualLoader
         if (string.IsNullOrEmpty(pathOrName))
             return null;
 
-        return pathOrName.StartsWith(EnemyImageRoot, StringComparison.Ordinal) ? pathOrName : EnemyImageRoot + pathOrName;
+        return pathOrName.StartsWith(EnemyImageRoot, System.StringComparison.Ordinal) ? pathOrName : EnemyImageRoot + pathOrName;
     }
 
-    private static int CompareSpriteNames(Sprite left, Sprite right)
+    private static string NormalizeEnemyAnimatorPath(string pathOrName)
     {
-        return string.Compare(left != null ? left.name : string.Empty, right != null ? right.name : string.Empty, StringComparison.Ordinal);
+        if (string.IsNullOrEmpty(pathOrName))
+            return null;
+
+        return pathOrName.StartsWith(EnemyAnimatorRoot, System.StringComparison.Ordinal) ? pathOrName : EnemyAnimatorRoot + pathOrName;
     }
 }

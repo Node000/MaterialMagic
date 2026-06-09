@@ -9,6 +9,9 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 {
     private readonly List<Button> optionButtons = new List<Button>();
     private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
+    private readonly List<SpringLineHighlightUI> optionBackgrounds = new List<SpringLineHighlightUI>();
+    private readonly List<SpringLineHighlightUI> optionHoverHighlights = new List<SpringLineHighlightUI>();
+    private readonly List<SpringLineHighlightUI> optionSelectedHighlights = new List<SpringLineHighlightUI>();
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
     private readonly List<MaterialModifierData> currentMaterialChoices = new List<MaterialModifierData>();
 
@@ -59,10 +62,10 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
         if (titleText != null)
-            titleText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.title", "选择法术强化");
+            titleText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.title", "选择道具强化");
         if (hintText != null)
-            hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.hint", "选择一个强化后，点击一个已有法术完成附魔。每个法术只能附魔一次。");
-        RefreshSelectedHint();
+            hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.hint", "选择一个强化后，点击一个已有道具完成附魔。每个道具只能附魔一次。");
+        HideSelectedHint();
         RefreshOptions();
     }
 
@@ -88,7 +91,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             titleText.text = "选择箭头附魔";
         if (hintText != null)
             hintText.text = "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。";
-        RefreshSelectedHint();
+        HideSelectedHint();
         RefreshOptions();
     }
 
@@ -141,8 +144,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         titleText = titleText != null ? titleText : UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         hintText = hintText != null ? hintText : UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         selectedHintText = selectedHintText != null ? selectedHintText : UIManager.FindChildComponent<TMP_Text>(transform, "SelectedHint");
-        if (selectedHintText == null)
-            selectedHintText = CreateSelectedHintText();
+        HideSelectedHint();
         optionRoot = optionRoot != null ? optionRoot : UIManager.FindChildRect(transform, "OptionArea");
         backButton = backButton != null ? backButton : UIManager.FindChildComponent<Button>(transform, "BackButton");
         CacheOptionReferences();
@@ -174,7 +176,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].gameObject.SetActive(true);
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
-                optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用法术强化");
+                optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用道具强化");
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
@@ -288,7 +290,6 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         selectedModifier = currentChoices[index];
         owner?.SelectPendingMagicModifier(selectedModifier);
-        RefreshSelectedHint();
         for (int i = 0; i < optionButtons.Count; i++)
             SetOptionSelected(i, i == index, false);
     }
@@ -299,56 +300,15 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             return;
 
         selectedMaterialModifier = currentMaterialChoices[index];
-        RefreshSelectedHint();
         for (int i = 0; i < optionButtons.Count; i++)
             SetOptionSelected(i, i == index, false);
         materialModifierSelected?.Invoke(selectedMaterialModifier);
     }
 
-    private void RefreshSelectedHint()
+    private void HideSelectedHint()
     {
-        if (selectedHintText == null)
-            return;
-
-        if (materialModifierMode)
-        {
-            if (selectedMaterialModifier == null)
-            {
-                selectedHintText.text = "未选择附魔";
-                return;
-            }
-
-            string name = !string.IsNullOrEmpty(selectedMaterialModifier.nameKey) ? LocalizationSystem.GetText(selectedMaterialModifier.nameKey, selectedMaterialModifier.id) : selectedMaterialModifier.id;
-            selectedHintText.text = "已选择：" + name + "，请继续选择一个箭头";
-            return;
-        }
-
-        if (selectedModifier == null)
-        {
-            selectedHintText.text = "未选择强化";
-            return;
-        }
-
-        string magicModifierName = LocalizationSystem.GetText(selectedModifier.nameKey, selectedModifier.id);
-        selectedHintText.text = "已选择：" + magicModifierName + "，请点击右侧法术槽应用";
-    }
-
-    private TMP_Text CreateSelectedHintText()
-    {
-        RectTransform rect = new GameObject("SelectedHint", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<RectTransform>();
-        rect.SetParent(transform, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(0f, -106f);
-        rect.sizeDelta = new Vector2(420f, 34f);
-        TMP_Text text = rect.GetComponent<TMP_Text>();
-        text.font = UIManager.GetDefaultTMPFont();
-        text.fontSize = 17;
-        text.alignment = TextAlignmentOptions.Center;
-        text.color = new Color(1f, 0.92f, 0.55f, 1f);
-        text.raycastTarget = false;
-        return text;
+        if (selectedHintText != null)
+            selectedHintText.gameObject.SetActive(false);
     }
 
     private void SetOptionSelected(int index, bool selected, bool instant)
@@ -358,17 +318,23 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         Transform option = optionButtons[index].transform;
         option.DOKill(false);
-        Vector3 scale = selected ? Vector3.one * 1.12f : Vector3.one;
+        Vector3 scale = selected ? Vector3.one * 1.08f : Vector3.one;
         if (instant)
             option.localScale = scale;
         else
             option.DOScale(scale, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
+
+        if (index < optionSelectedHighlights.Count && optionSelectedHighlights[index] != null)
+            optionSelectedHighlights[index].gameObject.SetActive(selected);
     }
 
     private void CacheOptionReferences()
     {
         optionButtons.Clear();
         optionTexts.Clear();
+        optionBackgrounds.Clear();
+        optionHoverHighlights.Clear();
+        optionSelectedHighlights.Clear();
         if (optionRoot == null)
             return;
 
@@ -378,9 +344,65 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             if (button == null)
                 continue;
 
+            ConfigureOptionButton(button);
             optionButtons.Add(button);
             optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
+            optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", Color.black, true, true));
+            optionHoverHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringHoverHighlight", Color.white, false, false, button.gameObject));
+            optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", Color.white, false, false));
         }
+    }
+
+    private void ConfigureOptionButton(Button button)
+    {
+        Image image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = new Color(0f, 0f, 0f, 0f);
+            image.raycastTarget = true;
+        }
+        button.transition = Selectable.Transition.None;
+    }
+
+    private SpringLineHighlightUI EnsureOptionSpring(RectTransform optionRect, string name, Color color, bool fill, bool active, GameObject hoverTarget = null)
+    {
+        if (optionRect == null)
+            return null;
+
+        Transform existing = optionRect.Find(name);
+        SpringLineHighlightUI spring = existing != null ? existing.GetComponent<SpringLineHighlightUI>() : null;
+        if (spring == null)
+        {
+            GameObject obj = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(SpringLineHighlightUI));
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            rect.SetParent(optionRect, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            spring = obj.GetComponent<SpringLineHighlightUI>();
+        }
+
+        if (fill)
+            spring.transform.SetAsFirstSibling();
+        else
+            spring.transform.SetAsLastSibling();
+        spring.color = color;
+        spring.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
+        spring.SetLineCount(fill ? 5 : 3);
+        spring.SetSamplesPerLine(120);
+        spring.SetLineWidth(fill ? 3f : 4f);
+        spring.SetLineSpacing(fill ? 3f : 4f);
+        spring.SetOutset(fill ? 0f : 5f);
+        spring.SetWobbleAmplitude(fill ? 4f : 6f);
+        spring.SetFill(fill, Color.black);
+        spring.SetHideOnAwake(false);
+        spring.SetBindHoverTarget(hoverTarget != null);
+        if (hoverTarget != null)
+            spring.SetHoverTarget(hoverTarget);
+        spring.gameObject.SetActive(active);
+        return spring;
     }
 
     private void CachePopupReferences()

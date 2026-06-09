@@ -91,6 +91,6 @@
     }
   ],
   "iconName": "彩虹",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "彩虹atlas",
   "animationFrameRate": 8.0
 }

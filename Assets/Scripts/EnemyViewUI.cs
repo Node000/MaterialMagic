@@ -16,7 +16,7 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private Image shieldFill;
     [SerializeField] private TMP_Text healthText;
     [SerializeField] private RectTransform buffRoot;
-    [SerializeField] private Image focusMarker;
+    [SerializeField] private Graphic focusMarker;
     [SerializeField] private RectTransform intentRoot;
 
     public RectTransform BodyRoot => bodyRoot;
@@ -30,7 +30,7 @@ public class EnemyViewUI : MonoBehaviour
     public Image ShieldFill => shieldFill;
     public TMP_Text HealthText => healthText;
     public RectTransform BuffRoot => buffRoot;
-    public Image FocusMarker => focusMarker;
+    public Graphic FocusMarker => focusMarker;
     public RectTransform IntentRoot => intentRoot;
 
     private void Awake()
@@ -72,7 +72,7 @@ public class EnemyViewUI : MonoBehaviour
         if (buffRoot == null)
             buffRoot = FindRect("BuffRoot");
         if (focusMarker == null)
-            focusMarker = FindImage("FocusMarker");
+            focusMarker = FindGraphic("FocusMarker");
         if (intentRoot == null)
             intentRoot = FindRect("IntentRoot");
     }
@@ -129,6 +129,17 @@ public class EnemyViewUI : MonoBehaviour
         {
             if (texts[i].name == childName)
                 return texts[i];
+        }
+        return null;
+    }
+
+    private Graphic FindGraphic(string childName)
+    {
+        Graphic[] graphics = GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i].name == childName)
+                return graphics[i];
         }
         return null;
     }

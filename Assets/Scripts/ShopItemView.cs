@@ -157,10 +157,8 @@ public class ShopItemView : MonoBehaviour
         switch (offer.kind)
         {
             case ShopItemKind.Magic:
-                return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "法术";
+                return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "道具";
             case ShopItemKind.Material:
-                if (offer.materialModifierData != null)
-                    return GetMaterialModifierName(offer.materialModifierData) + "·" + GetMaterialArrowTitle(offer.material);
                 return GetMaterialArrowTitle(offer.material);
             case ShopItemKind.RemoveMaterial:
                 return "删牌";
@@ -186,12 +184,6 @@ public class ShopItemView : MonoBehaviour
         }
     }
 
-    private static string GetMaterialModifierName(MaterialModifierData data)
-    {
-        if (data == null)
-            return "箭头附魔";
-        return !string.IsNullOrEmpty(data.nameKey) ? LocalizationSystem.GetText(data.nameKey, data.id) : data.id;
-    }
 
     private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse, bool selected)
     {
@@ -200,7 +192,7 @@ public class ShopItemView : MonoBehaviour
         if (selected)
         {
             if (offer != null && offer.kind == ShopItemKind.Magic)
-                return "点击法术槽购买";
+                return "点击道具槽购买";
             if (offer != null && offer.kind == ShopItemKind.RemoveMaterial)
                 return "选择要删的牌";
         }

@@ -192,6 +192,8 @@ MonoBehaviour:
   hoverTilt: 0
   feedbackDuration: 0.18
   feedbackEase: 27
+  modifierTextAnchoredPosition: {x: 0, y: 36}
+  modifierTextSizeDelta: {x: 0, y: 20}
 --- !u!114 &1074096415492471437
 MonoBehaviour:
   m_ObjectHideFlags: 0
