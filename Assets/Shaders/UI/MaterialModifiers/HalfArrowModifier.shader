@@ -7,11 +7,11 @@ Shader "UI/MaterialModifiers/HalfArrowModifier"
         
         // --- 新增的控制参数 ---
         [Enum(Show Both,0,Show Upper Half,1,Show Lower Half,2)] _VisibleSide ("Visible Side", Float) = 0
-        _LineAngle ("Fallback Line Angle (Degrees)", Range(0, 360)) = 45.0
-        _FireLineAngle ("Fire/Up Line Angle (Degrees)", Range(0, 360)) = 45.0
-        _WaterLineAngle ("Water/Down Line Angle (Degrees)", Range(0, 360)) = 225.0
-        _WindLineAngle ("Wind/Left Line Angle (Degrees)", Range(0, 360)) = 135.0
-        _EarthLineAngle ("Earth/Right Line Angle (Degrees)", Range(0, 360)) = 315.0
+        _LineAngle ("Fallback Line Angle (Degrees)", Range(0, 360)) = 30.0
+        _FireLineAngle ("Fire/Up Line Angle (Degrees)", Range(0, 360)) = 30.0
+        _WaterLineAngle ("Water/Down Line Angle (Degrees)", Range(0, 360)) = 210.0
+        _WindLineAngle ("Wind/Left Line Angle (Degrees)", Range(0, 360)) = 120.0
+        _EarthLineAngle ("Earth/Right Line Angle (Degrees)", Range(0, 360)) = 300.0
         _ArrowDirection ("Arrow Direction", Float) = 0
         _LineWidth ("Line Width", Range(0, 0.5)) = 0.02
         _LineLength ("Line Length", Float) = 1.5

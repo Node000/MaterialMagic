@@ -533,10 +533,6 @@ public class ChapterGridPanelUI : MonoBehaviour
         float stepY = cellSize.y + CellSpacing;
         float gridWidth = stepX * (currentGrid.width - 1) + cellSize.x;
         float gridHeight = stepY * (currentGrid.height - 1) + cellSize.y;
-        float contentHeight = Mathf.Max(viewportHeight, gridHeight + 160f);
-        if (scrollContent != null)
-            scrollContent.sizeDelta = new Vector2(0f, contentHeight);
-        contentRoot.sizeDelta = new Vector2(contentRoot.sizeDelta.x, contentHeight);
         gridRoot.anchorMin = new Vector2(0.5f, 1f);
         gridRoot.anchorMax = new Vector2(0.5f, 1f);
         gridRoot.pivot = new Vector2(0.5f, 0.5f);
@@ -544,6 +540,10 @@ public class ChapterGridPanelUI : MonoBehaviour
         gridRoot.anchoredPosition = new Vector2(0f, -80f - gridHeight * 0.5f + cellSize.y * 0.5f);
         float firstX = -gridWidth * 0.5f + cellSize.x * 0.5f;
         float firstY = -gridHeight * 0.5f + cellSize.y * 0.5f;
+        float contentHeight = GetRequiredContentHeight(viewportHeight, cellSize, firstY, stepY);
+        if (scrollContent != null)
+            scrollContent.sizeDelta = new Vector2(0f, contentHeight);
+        contentRoot.sizeDelta = new Vector2(contentRoot.sizeDelta.x, contentHeight);
 
         for (int i = 0; i < currentGrid.cells.Count; i++)
         {
@@ -571,6 +571,15 @@ public class ChapterGridPanelUI : MonoBehaviour
                 size.y = fallbackSize;
         }
         return size;
+    }
+
+    private float GetRequiredContentHeight(float viewportHeight, Vector2 cellSize, float firstY, float stepY)
+    {
+        float minCellY = gridRoot.anchoredPosition.y + firstY;
+        float maxCellY = minCellY + stepY * (currentGrid.height - 1);
+        float topPadding = Mathf.Max(80f, maxCellY + cellSize.y * 0.5f);
+        float bottomExtent = Mathf.Max(0f, -minCellY + cellSize.y * 0.5f);
+        return Mathf.Max(viewportHeight, topPadding + bottomExtent + viewportHeight * 0.5f);
     }
 
     private CellView CreateCell(RunMapCellModel model, Vector2 anchoredPosition, Vector2 cellSize)

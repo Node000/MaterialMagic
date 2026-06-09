@@ -918,6 +918,7 @@ GameObject:
   - component: {fileID: 4573497668543786585}
   - component: {fileID: 3259466051367603900}
   - component: {fileID: 5236706169927280686}
+  - component: {fileID: 9065479141566281456}
   m_Layer: 0
   m_Name: InfoBackFrame
   m_TagString: Untagged
@@ -998,6 +999,29 @@ MonoBehaviour:
   hoverTarget: {fileID: 0}
   bindHoverTarget: 0
   hideOnAwake: 0
+--- !u!223 &9065479141566281456
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7905309429635620348}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: -10
+  m_TargetDisplay: 0
 --- !u!1 &8199781216497724746
 GameObject:
   m_ObjectHideFlags: 0

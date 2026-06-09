@@ -60,6 +60,7 @@ public class AudioManager : MonoBehaviour
     };
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
+    [SerializeField, Range(0f, 1f)] private float musicVolumeMultiplier = 0.5f;
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
@@ -123,9 +124,7 @@ public class AudioManager : MonoBehaviour
     {
         MusicVolume = Mathf.Clamp01(value);
         PlayerPrefs.SetFloat(MusicVolumeKey, MusicVolume);
-        ApplyMixerVolume(MusicMixerParameter, MusicVolume);
-        if (musicSource != null)
-            musicSource.volume = MusicVolume;
+        ApplyMusicVolume();
     }
 
     public void SetSfxVolume(float value)
@@ -297,7 +296,7 @@ public class AudioManager : MonoBehaviour
 
         musicSource.clip = clip;
         musicSource.loop = true;
-        musicSource.volume = MusicVolume;
+        musicSource.volume = GetEffectiveMusicVolume();
         musicSource.Play();
     }
 
@@ -397,6 +396,19 @@ public class AudioManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void ApplyMusicVolume()
+    {
+        float effectiveVolume = GetEffectiveMusicVolume();
+        ApplyMixerVolume(MusicMixerParameter, effectiveVolume);
+        if (musicSource != null)
+            musicSource.volume = effectiveVolume;
+    }
+
+    private float GetEffectiveMusicVolume()
+    {
+        return MusicVolume * Mathf.Clamp01(musicVolumeMultiplier);
     }
 
     private void ApplyMixerVolume(string parameterName, float value)

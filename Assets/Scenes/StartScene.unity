@@ -1432,6 +1432,7 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 18df38a00e9560344844b41681079454, type: 3}
   defaultMusicVolume: 0.8
   defaultSfxVolume: 0.8
+  musicVolumeMultiplier: 0.5
 --- !u!4 &311232527
 Transform:
   m_ObjectHideFlags: 0

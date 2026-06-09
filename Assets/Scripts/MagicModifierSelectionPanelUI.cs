@@ -17,6 +17,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private const float OptionWidth = 168f;
     private const float OptionHeight = 89.6f;
     private const float SelectedOptionScale = 1.06f;
+    private static readonly Color OptionFrameColor = new Color(0.72f, 0.72f, 0.72f, 1f);
+    private static readonly Color SelectedOptionFrameColor = Color.white;
 
     private HandSystemUI owner;
     private RectTransform panel;
@@ -31,6 +33,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private Tween popupTween;
     private MagicModifierData selectedModifier;
     private MaterialModifierData selectedMaterialModifier;
+    private int hoveredOptionIndex = -1;
     private Action completed;
     private Action<MaterialModifierData> materialModifierSelected;
     private bool materialModifierMode;
@@ -51,6 +54,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         materialModifierMode = false;
         materialModifierSelected = null;
         selectedMaterialModifier = null;
+        hoveredOptionIndex = -1;
         this.completed = completed;
         selectedModifier = null;
         currentChoices.Clear();
@@ -79,6 +83,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         this.completed = completed;
         selectedModifier = null;
         selectedMaterialModifier = null;
+        hoveredOptionIndex = -1;
         currentChoices.Clear();
         currentMaterialChoices.Clear();
         for (int i = 0; choices != null && i < choices.Count; i++)
@@ -102,6 +107,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     {
         selectedModifier = null;
         selectedMaterialModifier = null;
+        hoveredOptionIndex = -1;
         materialModifierSelected = null;
         popupTween?.Kill(false);
         popupTween = null;
@@ -332,6 +338,37 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         if (index < optionSelectedHighlights.Count && optionSelectedHighlights[index] != null)
             optionSelectedHighlights[index].gameObject.SetActive(selected);
+        RefreshOptionFrameColor(index);
+    }
+
+    public void SetOptionHovered(int index, bool hovered)
+    {
+        if (index < 0 || index >= optionButtons.Count)
+            return;
+
+        if (hovered)
+            hoveredOptionIndex = index;
+        else if (hoveredOptionIndex == index)
+            hoveredOptionIndex = -1;
+
+        RefreshOptionFrameColor(index);
+    }
+
+    private void RefreshOptionFrameColor(int index)
+    {
+        if (index < 0 || index >= optionBackgrounds.Count || optionBackgrounds[index] == null)
+            return;
+
+        optionBackgrounds[index].color = hoveredOptionIndex == index || IsOptionSelected(index) ? SelectedOptionFrameColor : OptionFrameColor;
+        optionBackgrounds[index].SetVerticesDirty();
+    }
+
+    private bool IsOptionSelected(int index)
+    {
+        if (materialModifierMode)
+            return index >= 0 && index < currentMaterialChoices.Count && currentMaterialChoices[index] == selectedMaterialModifier;
+
+        return index >= 0 && index < currentChoices.Count && currentChoices[index] == selectedModifier;
     }
 
     private void CacheOptionReferences()
@@ -350,11 +387,12 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
                 continue;
 
             ConfigureOptionButton(button);
+            ConfigureOptionHover(button, optionButtons.Count);
             optionButtons.Add(button);
             optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
-            optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", Color.white, true, true));
+            optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", OptionFrameColor, true, true));
             RemoveOptionSpring(button.transform as RectTransform, "SpringHoverHighlight");
-            optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", Color.white, false, false));
+            optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", SelectedOptionFrameColor, false, false));
         }
     }
 
@@ -371,6 +409,14 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             image.raycastTarget = true;
         }
         button.transition = Selectable.Transition.None;
+    }
+
+    private void ConfigureOptionHover(Button button, int index)
+    {
+        MagicModifierOptionHoverUI hover = button.GetComponent<MagicModifierOptionHoverUI>();
+        if (hover == null)
+            hover = button.gameObject.AddComponent<MagicModifierOptionHoverUI>();
+        hover.Initialize(this, index);
     }
 
     private SpringLineHighlightUI EnsureOptionSpring(RectTransform optionRect, string name, Color color, bool fill, bool active, GameObject hoverTarget = null)
@@ -399,10 +445,10 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             spring.transform.SetAsLastSibling();
         spring.color = color;
         spring.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
-        spring.SetLineCount(fill ? 5 : 3);
+        spring.SetLineCount(fill ? 2 : 1);
         spring.SetSamplesPerLine(120);
-        spring.SetLineWidth(fill ? 3f : 4f);
-        spring.SetLineSpacing(fill ? 3f : 4f);
+        spring.SetLineWidth(fill ? 1.5f : 2f);
+        spring.SetLineSpacing(fill ? 1.5f : 2f);
         spring.SetOutset(fill ? 0f : 5f);
         spring.SetWobbleAmplitude(fill ? 4f : 6f);
         spring.SetFill(fill, Color.black);

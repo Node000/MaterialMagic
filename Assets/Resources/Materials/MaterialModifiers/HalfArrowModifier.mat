@@ -48,10 +48,12 @@ Material:
     - _ArrowDirection: 0
     - _ColorMask: 15
     - _CopyCount: 1
+    - _EarthLineAngle: 300
     - _EffectMode: 0
     - _EffectSpeed: 1.5
     - _EffectStrength: 0.055
-    - _LineAngle: 72
+    - _FireLineAngle: 30
+    - _LineAngle: 30
     - _LineLength: 0.48
     - _LineWidth: 0.03
     - _Stencil: 0
@@ -61,6 +63,8 @@ Material:
     - _StencilWriteMask: 255
     - _UseUIAlphaClip: 0
     - _VisibleSide: 1
+    - _WaterLineAngle: 210
+    - _WindLineAngle: 120
     m_Colors:
     - _AuraColor: {r: 0.6901961, g: 0.6901961, b: 0.6901961, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
