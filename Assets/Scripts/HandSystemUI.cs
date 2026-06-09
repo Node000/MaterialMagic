@@ -1012,7 +1012,7 @@ public class HandSystemUI : MonoBehaviour
 		BonusLevelData bonusData = GetBonusLevelData(level);
 		GetUIManager().RewardGridPanel?.ShowNewGrid(bonusData, playerState);
 		refreshUsedThisTurn = false;
-		playerState.DrawCards(bonusData != null && bonusData.drawCount > 0 ? bonusData.drawCount : 5);
+		playerState.DrawBasicMaterialCards(bonusData != null && bonusData.drawCount > 0 ? bonusData.drawCount : 5);
 		RefreshStaticUI();
 		RefreshMaterialListPanel();
 		RebuildCards(animateFromCurrent: true);
@@ -1214,6 +1214,16 @@ public class HandSystemUI : MonoBehaviour
 
 		GetUIManager().HideBuffTooltip(slot);
 	}
+
+    public void ShowEnemyIntentTooltip(EnemyIntentView view, EnemyModel enemy, EnemyIntentData intent, PlayerState intentPlayerState)
+    {
+        GetUIManager().ShowEnemyIntentTooltip(view, enemy, intent, intentPlayerState);
+    }
+
+    public void HideEnemyIntentTooltip(EnemyIntentView view)
+    {
+        GetUIManager().HideEnemyIntentTooltip(view);
+    }
 
     public void TogglePinnedBuffTooltip(BuffSlotView slot, BuffModel buff)
     {
@@ -2183,7 +2193,8 @@ public class HandSystemUI : MonoBehaviour
         battleManager.EnemyAdded += OnBattleEnemyAdded;
 		((UnityEvent)refreshButton.onClick).AddListener(new UnityAction(RefreshSelectedCards));
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
-        CacheEndTurnButtonText();
+		CacheEndTurnButtonText();
+        EnsureActionButtonMotion();
 		GetUIManager();
 		EnsurePileButtons();
 			CreateTopBar();
@@ -2697,6 +2708,10 @@ public class HandSystemUI : MonoBehaviour
 			playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), forcedMaterial));
 			refreshResult = new PlayerState.RefreshHandResult(1, 1);
 		}
+		else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
+		{
+			refreshResult = playerState.RefreshBasicMaterialHandCards(selectedCards, list2);
+		}
 		else
 		{
 			refreshResult = playerState.RefreshHandCards(selectedCards, list2, battleManager);
@@ -3080,6 +3095,15 @@ public class HandSystemUI : MonoBehaviour
             case EventRewardType.GainNextBattleStartShield:
                 ApplyEventNextBattleStartShield(GetEventEffectAmount(effect, 1));
                 break;
+            case EventRewardType.SpendAllGold:
+                ApplyEventSpendAllGold();
+                break;
+            case EventRewardType.RandomizeDeckBasicMaterials:
+                ApplyEventRandomizeDeckBasicMaterials();
+                break;
+            case EventRewardType.GainRandomSyntaxMaterial:
+                AddEventRandomSyntaxMaterial();
+                break;
 		}
 	}
 
@@ -3173,6 +3197,61 @@ public class HandSystemUI : MonoBehaviour
     {
         playerState.AddBuff(BuffEnum.PreparedShield, amount);
         SaveRunProgress();
+    }
+
+    private void ApplyEventSpendAllGold()
+    {
+        if (playerState == null || playerState.Gold <= 0)
+            return;
+
+        playerState.AddGold(-playerState.Gold);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private void ApplyEventRandomizeDeckBasicMaterials()
+    {
+        if (playerState == null)
+            return;
+
+        bool changed = false;
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            MaterialModel card = playerState.Deck[i];
+            if (card == null || card.material == MaterialEnum.None || card.material == MaterialEnum.Wild)
+                continue;
+
+            MaterialEnum material = GetRandomBasicMaterial();
+            if (card.material != material)
+                changed = true;
+            card.material = material;
+        }
+
+        if (!changed)
+            return;
+
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private void AddEventRandomSyntaxMaterial()
+    {
+        AddEventMaterial(MaterialEnum.Wild, 1, GetRandomSyntaxModifierId());
+    }
+
+    private string GetRandomSyntaxModifierId()
+    {
+        switch (NextRunRandomInt(0, 3))
+        {
+            case 0:
+                return "period_arrow";
+            case 1:
+                return "return_arrow";
+            default:
+                return "pack_arrow";
+        }
     }
 
 	private void AddEventRandomMaterials(int count)
@@ -3957,6 +4036,14 @@ public class HandSystemUI : MonoBehaviour
         return false;
     }
 
+    private void EnsureActionButtonMotion()
+    {
+        if ((Object)refreshButton != (Object)null)
+            AddJuicyMotion(((Component)refreshButton).transform);
+        if ((Object)endTurnButton != (Object)null)
+            AddJuicyMotion(((Component)endTurnButton).transform);
+    }
+
 	private void EnsurePileButtons()
 	{
 		BindPileButton(deckPileArea, ToggleMaterialListPanel);
@@ -4435,8 +4522,16 @@ public class HandSystemUI : MonoBehaviour
                 state.viewRect.anchoredPosition = new Vector2(((float)automaticPositionIndex - (float)(automaticPositionCount - 1) * 0.5f) * 250f, 0f);
                 automaticPositionIndex++;
             }
-            ((Transform)state.viewRect).localScale = visibleCount >= 3 ? Vector3.one * 0.88f : Vector3.one;
+            ((Transform)state.viewRect).localScale = GetEnemyViewScale(state.model, visibleCount);
         }
+    }
+
+    private Vector3 GetEnemyViewScale(EnemyModel model, int visibleCount)
+    {
+        float scale = visibleCount >= 3 ? 0.88f : 1f;
+        if (model != null && model.IsMinion)
+            scale *= 0.6f;
+        return Vector3.one * scale;
     }
 
 	private void CreateEnemyViews()
@@ -4490,7 +4585,7 @@ public class HandSystemUI : MonoBehaviour
 		val.anchoredPosition = model.HasSpawnPosition
 			? new Vector2(model.SpawnPositionX, model.SpawnPositionY)
 			: new Vector2(((float)index - (float)(count - 1) * 0.5f) * 250f, 0f);
-		((Transform)val).localScale = ((count >= 3) ? (Vector3.one * 0.88f) : Vector3.one);
+		((Transform)val).localScale = GetEnemyViewScale(model, count);
 		EnemyViewState enemyViewState = new EnemyViewState();
 		enemyViewState.model = model;
 		enemyViewState.viewRect = val;
@@ -5304,13 +5399,18 @@ public class HandSystemUI : MonoBehaviour
 
     public void AddShopMaterialAnimated(MaterialEnum material, RectTransform sourceRect, Action onComplete)
     {
-        StartCoroutine(AddShopMaterialAnimatedRoutine(material, sourceRect, onComplete));
+        AddShopMaterialAnimated(material, null, sourceRect, onComplete);
     }
 
-    private IEnumerator AddShopMaterialAnimatedRoutine(MaterialEnum material, RectTransform sourceRect, Action onComplete)
+    public void AddShopMaterialAnimated(MaterialEnum material, MaterialModifierData modifierData, RectTransform sourceRect, Action onComplete)
+    {
+        StartCoroutine(AddShopMaterialAnimatedRoutine(material, modifierData, sourceRect, onComplete));
+    }
+
+    private IEnumerator AddShopMaterialAnimatedRoutine(MaterialEnum material, MaterialModifierData modifierData, RectTransform sourceRect, Action onComplete)
     {
         yield return PlayMaterialAcquireAnimation(material, sourceRect);
-        AddShopMaterial(material);
+        AddShopMaterial(material, modifierData);
         onComplete?.Invoke();
     }
 
@@ -5322,13 +5422,54 @@ public class HandSystemUI : MonoBehaviour
 
     public void AddShopMaterial(MaterialEnum material)
     {
+        AddShopMaterial(material, null);
+    }
+
+    public void AddShopMaterial(MaterialEnum material, MaterialModifierData modifierData)
+    {
         if (material == MaterialEnum.None)
             return;
 
-        playerState.AddDeckMaterial(material);
+        playerState.AddDeckMaterial(material, MaterialModifierFactory.Create(modifierData));
         RefreshMaterialListPanel();
         RefreshStaticUI();
         SaveRunProgress();
+    }
+
+    public int CountShopMaterialModifierTargets()
+    {
+        if (playerState == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            if (IsShopMaterialModifierTargetSelectable(playerState.Deck[i]))
+                count++;
+        }
+        return count;
+    }
+
+    public bool IsShopMaterialModifierTargetSelectable(MaterialModel materialModel)
+    {
+        return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && materialModel.material != MaterialEnum.None;
+    }
+
+    public bool ApplyShopMaterialModifier(MaterialModel target, MaterialModifierData modifierData)
+    {
+        if (!IsShopMaterialModifierTargetSelectable(target))
+            return false;
+
+        MaterialModifierModel modifier = MaterialModifierFactory.Create(modifierData);
+        if (modifier == null)
+            return false;
+
+        target.AddModifier(modifier);
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+        return true;
     }
 
     public bool RemoveShopMaterial(MaterialModel material)
@@ -5560,7 +5701,7 @@ public class HandSystemUI : MonoBehaviour
 
     private bool IsEliteArrowModifierRewardData(MaterialModifierData data)
     {
-        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null && data.id != "temporary" && data.id != "sturdy" && data.id != "doom" && data.id != "lazy" && data.id != "half_arrow" && data.id != "linked_arrow";
+        return data != null && data.inArrowModifierRewardPool && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
     }
 
     private int CountSelectableArrowModifierTargets()
@@ -6425,7 +6566,7 @@ public class HandSystemUI : MonoBehaviour
 			if (!visible)
 				continue;
 
-            view.Bind(state.model, intents[i], playerState, phaseStart + i, totalIntentCount);
+            view.Bind(this, state.model, intents[i], playerState, phaseStart + i, totalIntentCount);
             totalWidth += view.LayoutWidth;
             if (i < intents.Count - 1)
                 totalWidth += intentSpacing;

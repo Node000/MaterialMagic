@@ -132,6 +132,7 @@ public static class GameDataDatabase
     private static Dictionary<int, BonusLevelData> bonusLevelData;
     private static Dictionary<int, ChapterData> chapterData;
     private static Dictionary<int, EconomyConfigData> economyConfigData;
+    private static Dictionary<int, ShopProductPoolData> shopProductPoolData;
     private static Dictionary<string, TagData> tagData;
     private static Dictionary<string, MagicModifierData> magicModifierData;
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
@@ -144,6 +145,7 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, BonusLevelData> BonusLevelData => bonusLevelData ??= GameDataReader.LoadNumericDictionary<BonusLevelData>("BonusLevelData");
     public static IReadOnlyDictionary<int, ChapterData> ChapterData => chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData");
     public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
+    public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
     public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
     public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
@@ -188,6 +190,11 @@ public static class GameDataDatabase
         return EconomyConfigData.TryGetValue(id, out data);
     }
 
+    public static bool TryGetShopProductPoolData(int id, out ShopProductPoolData data)
+    {
+        return ShopProductPoolData.TryGetValue(id, out data);
+    }
+
     public static EconomyConfigData GetDefaultEconomyConfig()
     {
         if (TryGetEconomyConfigData(1, out EconomyConfigData data))
@@ -226,6 +233,7 @@ public static class GameDataDatabase
         bonusLevelData = null;
         chapterData = null;
         economyConfigData = null;
+        shopProductPoolData = null;
         tagData = null;
         magicModifierData = null;
         playerStartConfigData = null;

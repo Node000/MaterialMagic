@@ -766,6 +766,12 @@ public class EventPanelUI : MonoBehaviour
                 return "下场战斗开始时，获得" + GetEffectAmountText(effect, 1) + "点护盾";
             case EventRewardType.GainMaterialModifier:
                 return "选择1张箭头获得" + GetMaterialModifierNameText(effect.modifierId) + "";
+            case EventRewardType.SpendAllGold:
+                return "失去所有金币";
+            case EventRewardType.RandomizeDeckBasicMaterials:
+                return "随机变化所有箭头方向";
+            case EventRewardType.GainRandomSyntaxMaterial:
+                return "获得1张随机句法符号";
             default:
                 return string.Empty;
         }

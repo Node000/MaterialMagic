@@ -6,9 +6,11 @@ public class MaterialModifierContext
 
 public class MaterialModifierModel
 {
+    private bool removeModifierAfterBattle;
+
     public MaterialModel model;
 
-    public virtual bool RemoveModifierAfterBattle => false;
+    public virtual bool RemoveModifierAfterBattle => removeModifierAfterBattle;
     public virtual bool RemoveCardAfterBattle => false;
 
     public virtual void OnDraw()
@@ -125,6 +127,11 @@ public class MaterialModifierModel
         MaterialModifierModel clone = (MaterialModifierModel)MemberwiseClone();
         clone.model = null;
         return clone;
+    }
+
+    public void MarkRemoveAfterBattle()
+    {
+        removeModifierAfterBattle = true;
     }
 
     protected MaterialModifierContext Context => CurrentContext;

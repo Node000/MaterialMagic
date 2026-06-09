@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine;
 
 public class EnemyModel : UnitModel
 {
@@ -510,6 +512,183 @@ public class EnemyModel : UnitModel
         return string.Empty;
     }
 
+    public virtual string GetIntentTooltipTitle(EnemyIntentData intent)
+    {
+        if (intent == null)
+            return string.Empty;
+
+        switch (intent.actionType)
+        {
+            case EnemyActionType.Attack:
+                return GetIntentHitCount(intent) > 1 ? "意图：连击" : "意图：攻击";
+            case EnemyActionType.AttackAll:
+                return GetIntentHitCount(intent) > 1 ? "意图：群体连击" : "意图：群体攻击";
+            case EnemyActionType.GainShield:
+                return "意图：防御";
+            case EnemyActionType.ApplyBuff:
+                return "意图：强化";
+            case EnemyActionType.ApplyDebuff:
+                return "意图：负面效果";
+            case EnemyActionType.Summon:
+                return "意图：召唤";
+            case EnemyActionType.Stunned:
+                return "意图：眩晕";
+            case EnemyActionType.Special:
+                return GetSpecialIntentTooltipTitle(intent);
+            default:
+                return "意图：未知";
+        }
+    }
+
+    public virtual string GetIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return string.Empty;
+
+        string dataDescription = GetDataIntentDescription(intent, playerState);
+        if (!string.IsNullOrEmpty(dataDescription))
+            return dataDescription;
+
+        switch (intent.actionType)
+        {
+            case EnemyActionType.Attack:
+                return GetAttackIntentTooltipDescription(intent, playerState, false);
+            case EnemyActionType.AttackAll:
+                return GetAttackIntentTooltipDescription(intent, playerState, true);
+            case EnemyActionType.GainShield:
+                return $"这个敌人将获得{GetIntentShieldValue(intent)}点护盾";
+            case EnemyActionType.ApplyBuff:
+            {
+                string buffText = FormatBuffStacks(intent.buffs);
+                return string.IsNullOrEmpty(buffText) ? "这个敌人将获得强化效果" : $"这个敌人将获得{buffText}";
+            }
+            case EnemyActionType.ApplyDebuff:
+            {
+                string buffText = FormatBuffStacks(intent.buffs);
+                return string.IsNullOrEmpty(buffText) ? "这个敌人将对玩家施加负面效果" : $"这个敌人将对玩家施加{buffText}";
+            }
+            case EnemyActionType.Summon:
+                return GetSummonIntentTooltipDescription(intent);
+            case EnemyActionType.Stunned:
+                return "这个敌人本回合不会行动";
+            case EnemyActionType.Special:
+                return GetSpecialIntentTooltipDescription(intent, playerState);
+            default:
+                return string.Empty;
+        }
+    }
+
+    protected virtual string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
+    {
+        if (intent != null && intent.displayType == "spDefend")
+            return "意图：特殊防御";
+        if (intent != null && intent.displayType == "summon")
+            return "意图：召唤";
+        return "意图：特殊攻击";
+    }
+
+    protected virtual string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
+    {
+        string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
+        if (intent != null && intent.displayType == "spDefend")
+            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并施加特殊效果" : "这个敌人将进行特殊防御，并施加特殊效果";
+        if (intent != null && intent.displayType == "summon")
+            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将召唤{displayValue}个援军，并施加特殊效果" : "这个敌人将召唤援军，并施加特殊效果";
+        return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将造成{displayValue}点伤害，并施加特殊效果" : "这个敌人将施加特殊效果";
+    }
+
+    private string GetAttackIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState, bool attackAll)
+    {
+        int attackValue = GetIntentAttackValue(intent, playerState);
+        int hitCount = GetIntentHitCount(intent);
+        if (attackAll)
+            return hitCount > 1 ? $"这个敌人将对所有目标造成{hitCount}次{attackValue}点伤害" : $"这个敌人将对所有目标造成{attackValue}点伤害";
+        return hitCount > 1 ? $"这个敌人将造成{hitCount}次{attackValue}点伤害" : $"这个敌人将造成{attackValue}点伤害";
+    }
+
+    private string GetSummonIntentTooltipDescription(EnemyIntentData intent)
+    {
+        int count = intent.summonCount > 0 ? intent.summonCount : 1;
+        string summonName = GetSummonEnemyName(intent);
+        return count > 1 ? $"这个敌人将召唤{count}个{summonName}" : $"这个敌人将召唤{summonName}";
+    }
+
+    private string GetDataIntentDescription(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null || string.IsNullOrEmpty(intent.descriptionKey))
+            return string.Empty;
+
+        string description = LocalizationSystem.GetText(intent.descriptionKey, string.Empty);
+        if (string.IsNullOrEmpty(description))
+            return string.Empty;
+
+        try
+        {
+            return string.Format(description, GetIntentTooltipDisplayValue(intent, playerState), GetIntentHitCount(intent), intent.value);
+        }
+        catch (System.FormatException)
+        {
+            return description;
+        }
+    }
+
+    private string GetIntentTooltipDisplayValue(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return string.Empty;
+        if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
+            return GetIntentAttackValue(intent, playerState).ToString();
+        if (intent.actionType == EnemyActionType.GainShield)
+            return GetIntentShieldValue(intent).ToString();
+        if (intent.actionType == EnemyActionType.Special)
+            return GetSpecialIntentDisplayValue(intent, playerState);
+        if (intent.actionType == EnemyActionType.Summon)
+            return (intent.summonCount > 0 ? intent.summonCount : 1).ToString();
+        return intent.value > 0 ? intent.value.ToString() : string.Empty;
+    }
+
+    private static string GetSummonEnemyName(EnemyIntentData intent)
+    {
+        int enemyId = intent.summonEnemyId > 0 ? intent.summonEnemyId : intent.value;
+        if (enemyId > 0 && GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
+            return LocalizationSystem.GetText(data.nameKey, data.Id);
+        return "敌人";
+    }
+
+    protected static string FormatBuffStacks(BuffStackData[] buffs)
+    {
+        if (buffs == null || buffs.Length == 0)
+            return string.Empty;
+
+        string text = string.Empty;
+        for (int i = 0; i < buffs.Length; i++)
+        {
+            BuffStackData buff = buffs[i];
+            if (buff == null || buff.buffType == BuffEnum.None)
+                continue;
+
+            string buffText = FormatBuffStack(buff.buffType, buff.stack);
+            if (string.IsNullOrEmpty(buffText))
+                continue;
+
+            if (!string.IsNullOrEmpty(text))
+                text += "、";
+            text += buffText;
+        }
+        return text;
+    }
+
+    protected static string FormatBuffStack(BuffEnum buffType, int stack)
+    {
+        string name = LocalizationKeys.GetBuffName(buffType);
+        if (string.IsNullOrEmpty(name))
+            name = buffType.ToString();
+
+        BuffModel buff = BuffModel.Create(buffType, stack);
+        string stackText = buff.GetTooltipStackText();
+        return !string.IsNullOrEmpty(stackText) ? name + " " + stackText : name;
+    }
+
     protected int GetSpecialDamagePreviewValue(int rawDamage, PlayerState playerState)
     {
         int damageValue = rawDamage;
@@ -680,9 +859,8 @@ public class EnemyModel : UnitModel
 
             if (HasSpawnPosition)
             {
-                float spacing = 180f;
-                float offset = count == 1 ? spacing : (i - (count - 1) * 0.5f) * spacing;
-                summoned.SetSpawnPosition(SpawnPositionX + offset, SpawnPositionY);
+                Vector2 position = BattleManager.GetSummonPosition(SpawnPositionX, SpawnPositionY, i, count);
+                summoned.SetSpawnPosition(position.x, position.y);
             }
             summoned.SetMinion(true);
             manager.SpawnEnemy(summoned);

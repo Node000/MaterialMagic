@@ -107,7 +107,11 @@ public class ShopItemView : MonoBehaviour
                     rect.anchoredPosition = new Vector2(0f, -30f);
                     rect.sizeDelta = new Vector2(82f, 118f);
                     materialView = rect.GetComponent<MaterialCardView>();
-                    materialView?.Bind(new MaterialModel("shop_preview_" + offer.material, offer.material));
+                    MaterialModel preview = new MaterialModel("shop_preview_" + offer.material, offer.material);
+                    MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
+                    if (modifier != null)
+                        preview.AddModifier(modifier);
+                    materialView?.Bind(preview);
                     JuicyMotion motion = rect.GetComponent<JuicyMotion>();
                     if (motion != null)
                         motion.enabled = false;
@@ -155,9 +159,11 @@ public class ShopItemView : MonoBehaviour
             case ShopItemKind.Magic:
                 return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "法术";
             case ShopItemKind.Material:
+                if (offer.materialModifierData != null)
+                    return GetMaterialModifierName(offer.materialModifierData) + "·" + GetMaterialArrowTitle(offer.material);
                 return GetMaterialArrowTitle(offer.material);
             case ShopItemKind.RemoveMaterial:
-                return "删素材";
+                return "删牌";
             default:
                 return string.Empty;
         }
@@ -180,12 +186,24 @@ public class ShopItemView : MonoBehaviour
         }
     }
 
+    private static string GetMaterialModifierName(MaterialModifierData data)
+    {
+        if (data == null)
+            return "箭头附魔";
+        return !string.IsNullOrEmpty(data.nameKey) ? LocalizationSystem.GetText(data.nameKey, data.id) : data.id;
+    }
+
     private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse, bool selected)
     {
         if (offer != null && offer.purchased)
             return "已购买";
         if (selected)
-            return "点击法术槽购买";
+        {
+            if (offer != null && offer.kind == ShopItemKind.Magic)
+                return "点击法术槽购买";
+            if (offer != null && offer.kind == ShopItemKind.RemoveMaterial)
+                return "选择要删的牌";
+        }
         if (!canUse)
             return "不可用";
         return canAfford ? "点击购买" : "金币不足";

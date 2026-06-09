@@ -150,7 +150,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "本回合每对敌方造成一次生命伤害，获得1层【额外抽牌】"
+      "text": "本回合每累计对敌方造成两次生命伤害，获得1层【额外抽牌】"
     },
     {
       "key": "magic.boiling_rain.name",

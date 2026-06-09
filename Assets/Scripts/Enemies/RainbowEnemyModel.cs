@@ -26,6 +26,33 @@ public class RainbowEnemyModel : EnemyModel
         }
     }
 
+    protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
+    {
+        return intent != null && intent.value == 5 ? "意图：随机特殊效果" : "意图：方向强化";
+    }
+
+    protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return string.Empty;
+
+        switch (intent.value)
+        {
+            case 1:
+                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionDamageBonus, 3);
+            case 2:
+                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionWeakBonus, 2);
+            case 3:
+                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionExtraDraw, 1);
+            case 4:
+                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionShieldBonus, 3);
+            case 5:
+                return "这个敌人将随机造成14点伤害、获得10点护盾、施加5层虚弱或施加6层易伤";
+            default:
+                return base.GetSpecialIntentTooltipDescription(intent, playerState);
+        }
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (playerState == null)

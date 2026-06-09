@@ -270,7 +270,7 @@
     },
     {
       "key": "buff.extra_draw_on_enemy_damage.desc",
-      "text": "本回合每对敌方造成一次生命伤害，下回合额外抽{0}张牌。"
+      "text": "本回合每对敌方造成两次生命伤害，下回合额外抽{0}张牌。"
     },
     {
       "key": "buff.shield_reflect_boost.name",

@@ -23,7 +23,9 @@ public class KindlingNextDrawBuffModel : BuffModel
                 return;
         }
 
-        card.AddModifier(new KindlingModifier());
+        KindlingModifier modifier = new KindlingModifier();
+        modifier.MarkRemoveAfterBattle();
+        card.AddModifier(modifier);
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

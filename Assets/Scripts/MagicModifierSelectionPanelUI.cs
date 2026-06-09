@@ -170,6 +170,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         if (currentChoices.Count == 0)
         {
+            LayoutOptionButtons(1);
             optionButtons[0].gameObject.SetActive(true);
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
@@ -180,6 +181,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         }
 
         int visibleCount = Mathf.Min(currentChoices.Count, optionButtons.Count);
+        LayoutOptionButtons(visibleCount);
         for (int i = 0; i < optionButtons.Count; i++)
         {
             bool visible = i < visibleCount;
@@ -205,6 +207,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
         if (currentMaterialChoices.Count == 0)
         {
+            LayoutOptionButtons(1);
             optionButtons[0].gameObject.SetActive(true);
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
@@ -215,6 +218,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         }
 
         int visibleCount = Mathf.Min(currentMaterialChoices.Count, optionButtons.Count);
+        LayoutOptionButtons(visibleCount);
         for (int i = 0; i < optionButtons.Count; i++)
         {
             bool visible = i < visibleCount;
@@ -231,6 +235,36 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[i].onClick.AddListener(() => SelectMaterialModifierOption(index));
             SetOptionSelected(i, data == selectedMaterialModifier, true);
         }
+    }
+
+    private void LayoutOptionButtons(int visibleCount)
+    {
+        if (visibleCount <= 0 || optionButtons.Count == 0)
+            return;
+
+        float spacing = GetOptionSpacing();
+        float startX = visibleCount > 1 ? -spacing * (visibleCount - 1) * 0.5f : 0f;
+        for (int i = 0; i < optionButtons.Count; i++)
+        {
+            RectTransform rect = optionButtons[i] != null ? optionButtons[i].transform as RectTransform : null;
+            if (rect == null)
+                continue;
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            if (i < visibleCount)
+                rect.anchoredPosition = new Vector2(startX + spacing * i, rect.anchoredPosition.y);
+        }
+    }
+
+    private float GetOptionSpacing()
+    {
+        RectTransform first = optionButtons[0] != null ? optionButtons[0].transform as RectTransform : null;
+        if (first == null || first.sizeDelta.x <= 0f)
+            return 230f;
+
+        return first.sizeDelta.x + 20f;
     }
 
     private string BuildOptionText(MagicModifierData data)

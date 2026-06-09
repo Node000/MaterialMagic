@@ -20,6 +20,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private MagicModifierSelectionPanelUI magicModifierSelectionPanelUI;
     [SerializeField] private SlotSelectPanelUI slotSelectPanelUI;
     [SerializeField] private BuffTooltipUI buffTooltipUI;
+    [SerializeField] private EnemyIntentTooltipUI enemyIntentTooltipUI;
     [SerializeField] private PlayerStatusUI playerStatusUI;
     [SerializeField] private PlayAreaUI playAreaUI;
     [SerializeField] private PlayerFeedbackUI playerFeedbackUI;
@@ -42,6 +43,7 @@ public class UIManager : MonoBehaviour
     public MagicModifierSelectionPanelUI MagicModifierSelectionPanel => magicModifierSelectionPanelUI;
     public SlotSelectPanelUI SlotSelectPanel => slotSelectPanelUI;
     public BuffTooltipUI BuffTooltip => buffTooltipUI;
+    public EnemyIntentTooltipUI EnemyIntentTooltip => enemyIntentTooltipUI;
     public PlayerStatusUI PlayerStatus => playerStatusUI;
     public PlayAreaUI PlayArea => playAreaUI;
     public PlayerFeedbackUI PlayerFeedback => playerFeedbackUI;
@@ -66,6 +68,7 @@ public class UIManager : MonoBehaviour
         magicModifierSelectionPanelUI = GetOrAddPanel<MagicModifierSelectionPanelUI>(root, "MagicModifierSelectionPanel", magicModifierSelectionPanelUI);
         slotSelectPanelUI = GetOrAddPanel<SlotSelectPanelUI>(root, "SlotSelectPanel", slotSelectPanelUI);
         buffTooltipUI = GetOrAddPanel<BuffTooltipUI>(root, "BuffTooltip", buffTooltipUI);
+        enemyIntentTooltipUI = GetOrAddPanel<EnemyIntentTooltipUI>(root, "EnemyIntentTooltip", enemyIntentTooltipUI);
         playerStatusUI = GetOrAddPanelInChildren<PlayerStatusUI>(root, "PlayerStatus", playerStatusUI);
         playAreaUI = GetOrAddPanelInChildren<PlayAreaUI>(root, "PlayArea", playAreaUI);
         playerFeedbackUI = GetOrAddOnRoot(root, playerFeedbackUI);
@@ -88,6 +91,7 @@ public class UIManager : MonoBehaviour
         magicModifierSelectionPanelUI?.Initialize(owner);
         slotSelectPanelUI?.Initialize(owner);
         buffTooltipUI?.Initialize(owner);
+        enemyIntentTooltipUI?.Initialize(owner);
         playerStatusUI?.Initialize(owner);
         playAreaUI?.Initialize(owner);
         playerFeedbackUI?.Initialize(owner, root);
@@ -310,6 +314,16 @@ public class UIManager : MonoBehaviour
     public void HideBuffTooltip(BuffSlotView slot)
     {
         buffTooltipUI?.Hide(slot);
+    }
+
+    public void ShowEnemyIntentTooltip(EnemyIntentView view, EnemyModel enemy, EnemyIntentData intent, PlayerState playerState)
+    {
+        enemyIntentTooltipUI?.Show(view, enemy, intent, playerState);
+    }
+
+    public void HideEnemyIntentTooltip(EnemyIntentView view)
+    {
+        enemyIntentTooltipUI?.Hide(view);
     }
 
     internal static RectTransform FindChildRect(Transform root, string name)

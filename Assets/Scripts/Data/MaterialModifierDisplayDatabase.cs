@@ -10,6 +10,7 @@ public class MaterialModifierData : IDataRecord
     public string nameKey;
     public string descriptionKey;
     public string lineColor;
+    public bool inArrowModifierRewardPool;
 
     public string Id => id;
 }

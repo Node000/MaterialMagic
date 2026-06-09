@@ -10,6 +10,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text labelText;
     [SerializeField] private RectTransform enhancementRoot;
+    [SerializeField] private SpringLineHighlightUI springHighlight;
     [Header("动画参数")]
     [SerializeField] private float consumedPunchScale = 0.035f;
     [SerializeField] private float consumedPunchDuration = 0.32f;
@@ -23,6 +24,8 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     private CanvasGroup canvasGroup;
     private Tween consumedTween;
     private bool inactive;
+    private bool selected;
+    private bool hovered;
 
     public RectTransform RectTransform => (RectTransform)transform;
     public MaterialModel MaterialModel => materialModel;
@@ -34,10 +37,14 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         CacheEnhancementTexts();
+        CacheSpringHighlight();
+        RefreshSpringHighlight();
     }
 
     private void OnDisable()
     {
+        hovered = false;
+        RefreshSpringHighlight();
         owner?.HideModifierTooltip(this);
         consumedTween?.Kill(false);
         consumedTween = null;
@@ -54,6 +61,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         this.iconImage = iconImage;
         this.labelText = labelText;
         this.enhancementRoot = enhancementRoot;
+        CacheSpringHighlight();
     }
 
     public void Initialize(MaterialListPanelUI owner)
@@ -70,10 +78,18 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     {
         this.materialModel = materialModel;
         this.inactive = consumed;
+        selected = false;
+        hovered = false;
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
         CacheEnhancementTexts();
         RefreshVisual();
+    }
+
+    public void SetSelectionVisual(bool value, bool instant)
+    {
+        selected = value;
+        RefreshSpringHighlight();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -84,11 +100,15 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        hovered = true;
+        RefreshSpringHighlight();
         owner?.ShowModifierTooltip(this, materialModel);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        hovered = false;
+        RefreshSpringHighlight();
         owner?.HideModifierTooltip(this);
     }
     public static Color GetMaterialColor(MaterialEnum material)
@@ -149,6 +169,64 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         }
 
         RebuildEnhancements();
+        RefreshSpringHighlight();
+    }
+
+    private void CacheSpringHighlight()
+    {
+        if (springHighlight == null)
+            springHighlight = GetComponentInChildren<SpringLineHighlightUI>(true);
+
+        if (springHighlight == null)
+            springHighlight = CreateSpringHighlight();
+
+        if (springHighlight == null)
+            return;
+
+        springHighlight.raycastTarget = false;
+        springHighlight.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
+        springHighlight.SetOutset(6f);
+        springHighlight.SetWobbleAmplitude(5f);
+    }
+
+    private SpringLineHighlightUI CreateSpringHighlight()
+    {
+        GameObject highlightObject = new GameObject("SpringLineHighlight", typeof(RectTransform), typeof(CanvasRenderer), typeof(SpringLineHighlightUI));
+        RectTransform rect = highlightObject.GetComponent<RectTransform>();
+        rect.SetParent(transform, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.SetAsLastSibling();
+        highlightObject.SetActive(false);
+        return highlightObject.GetComponent<SpringLineHighlightUI>();
+    }
+
+    private void RefreshSpringHighlight()
+    {
+        CacheSpringHighlight();
+        if (springHighlight == null)
+            return;
+
+        springHighlight.color = GetSpringHighlightColor();
+        springHighlight.gameObject.SetActive(selected || hovered);
+    }
+
+    private Color GetSpringHighlightColor()
+    {
+        Color color = Color.white;
+        if (materialModel == null || materialModel.modifiers == null)
+            return color;
+
+        for (int i = 0; i < materialModel.modifiers.Count; i++)
+        {
+            MaterialModifierModel modifier = materialModel.modifiers[i];
+            if (modifier != null && MaterialModifierDisplayDatabase.TryGetLineColor(modifier, out Color modifierColor))
+                color = modifierColor;
+        }
+        return color;
     }
 
     private void RebuildEnhancements()

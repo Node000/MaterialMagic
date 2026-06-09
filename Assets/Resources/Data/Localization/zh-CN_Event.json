@@ -642,7 +642,7 @@
     },
     {
       "key": "event.website_emergency.option.reversed_direction",
-      "text": "方向反了"
+      "text": "网页未响应"
     },
     {
       "key": "event.website_emergency.option.popups",
@@ -654,11 +654,83 @@
     },
     {
       "key": "event.website_emergency.reversed_direction.1",
-      "text": "网页把方向箭头渲染反了。你获得一张返回符号。"
+      "text": "网页卡死在加载圈里。选择一张箭头，让它在回合结束时继续留在手牌。"
     },
     {
       "key": "event.website_emergency.popups.1",
       "text": "弹窗越关越多。选择一张箭头，让它学会在打出后复制自己。"
+    },
+    {
+      "key": "event.neon_wayfinding.title",
+      "text": "全向夜航牌"
+    },
+    {
+      "key": "event.neon_wayfinding.start.1",
+      "text": "凌晨三点，废弃商场的导视牌还亮着。粉紫色箭头在空荡走廊里来回切换：出口、厕所、电玩厅、地下停车场……最后所有箭头同时指向你。"
+    },
+    {
+      "key": "event.neon_wayfinding.option.follow_all_arrows",
+      "text": "跟着所有箭头走"
+    },
+    {
+      "key": "event.neon_wayfinding.option.take_photo",
+      "text": "只拍一张照"
+    },
+    {
+      "key": "event.neon_wayfinding.follow_all_arrows.1",
+      "text": "导视牌同时熄灭，又在你手里重新亮起。你获得一张万向符号。"
+    },
+    {
+      "key": "event.neon_wayfinding.take_photo.1",
+      "text": "照片糊得只剩紫色光斑，但有人愿意为这张怪照片付钱。"
+    },
+    {
+      "key": "event.suspected_trojan.title",
+      "text": "疑似木马？"
+    },
+    {
+      "key": "event.suspected_trojan.start.1",
+      "text": "一个不断变化着的箭头在你的手机上闪动着。似乎是因为下载了什么木马程序？不过因为型号老旧，它也没能找到攻击的途径，只能徒劳地闪烁着。"
+    },
+    {
+      "key": "event.suspected_trojan.option.keep_it",
+      "text": "这样就好"
+    },
+    {
+      "key": "event.suspected_trojan.option.reinstall_system",
+      "text": "重装系统"
+    },
+    {
+      "key": "event.suspected_trojan.keep_it.1",
+      "text": "你决定不管它。那枚闪动的箭头跳进牌组，继续变化着方向。"
+    },
+    {
+      "key": "event.suspected_trojan.reinstall_system.1",
+      "text": "进度条跑到百分之一百，你的钱包也被清空。所有箭头都像刚刷完机一样换了方向。"
+    },
+    {
+      "key": "event.missing_fonts.title",
+      "text": "字体丢失"
+    },
+    {
+      "key": "event.missing_fonts.start.1",
+      "text": "夜班打印店的电脑弹出一串乱码，所有字体都丢了，只剩几个符号还顽固地显示着。你一通操作，弹出了一个“是否关闭兼容模式”的弹窗。"
+    },
+    {
+      "key": "event.missing_fonts.option.disable_compatibility",
+      "text": "关闭兼容模式"
+    },
+    {
+      "key": "event.missing_fonts.option.keep_compatibility",
+      "text": "保持兼容模式"
+    },
+    {
+      "key": "event.missing_fonts.disable_compatibility.1",
+      "text": "屏幕黑了一下，随后吐出一个还没来得及变成文字的符号。你获得一张随机句法符号。"
+    },
+    {
+      "key": "event.missing_fonts.keep_compatibility.1",
+      "text": "你保持原样。打印店老板对你的克制表示感谢，塞给你几枚硬币。"
     }
   ]
 }

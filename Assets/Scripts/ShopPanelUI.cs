@@ -18,6 +18,7 @@ public class ShopOffer
     public int price;
     public MagicData magicData;
     public MaterialEnum material;
+    public MaterialModifierData materialModifierData;
     public bool purchased;
 }
 
@@ -48,10 +49,13 @@ public class ShopPanelUI : MonoBehaviour
     private readonly List<ShopItemView> itemViews = new List<ShopItemView>();
     private readonly List<ShopOffer> offers = new List<ShopOffer>();
     private readonly List<MagicData> magicPool = new List<MagicData>();
-    private readonly List<MaterialEnum> materialPool = new List<MaterialEnum>();
+    private readonly List<ShopMaterialOfferData> strongMaterialOfferPool = new List<ShopMaterialOfferData>();
+    private readonly List<ShopMaterialOfferData> normalMaterialOfferPool = new List<ShopMaterialOfferData>();
+    private readonly List<ShopMaterialOfferData> weakMaterialOfferPool = new List<ShopMaterialOfferData>();
     private HandSystemUI owner;
     private EconomyConfigData config;
-    private ShopOffer selectedMagicOffer;
+    private ShopProductPoolData productPool;
+    private ShopOffer selectedOffer;
     private bool waitingForSelection;
     private bool purchaseInProgress;
     private Vector2 panelOpenPosition;
@@ -75,7 +79,7 @@ public class ShopPanelUI : MonoBehaviour
 
         CacheReferences();
         config = GameDataDatabase.GetDefaultEconomyConfig() ?? new EconomyConfigData();
-        selectedMagicOffer = null;
+        selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
         owner.ClearPendingShopMagic();
@@ -85,7 +89,7 @@ public class ShopPanelUI : MonoBehaviour
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, "商店");
         if (hintText != null)
-            hintText.text = "每件商品只能购买一次。法术购买后点击已有法术槽完成覆盖。";
+            hintText.text = "每件商品只能购买一次。道具购买后点击已有法术槽完成覆盖。";
         if (messageText != null)
             messageText.text = string.Empty;
 
@@ -98,7 +102,7 @@ public class ShopPanelUI : MonoBehaviour
     public void Hide()
     {
         owner?.ClearPendingShopMagic();
-        selectedMagicOffer = null;
+        selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
         if (leaveButton != null)
@@ -207,29 +211,49 @@ public class ShopPanelUI : MonoBehaviour
     private void BuildOffers()
     {
         offers.Clear();
+        productPool = GetShopProductPool();
         BuildMagicPool();
-        BuildMaterialPool();
+        BuildMaterialOfferPools();
 
         for (int i = 0; i < 3; i++)
             AddMagicOffer();
-        for (int i = 0; i < 2; i++)
-            AddMaterialOffer();
+        AddStrongMaterialOffer();
+        for (int i = 0; i < 3; i++)
+            AddNormalMaterialOffer();
         offers.Add(new ShopOffer { kind = ShopItemKind.RemoveMaterial, price = config.shopRemoveMaterialPrice });
+    }
+
+    private ShopProductPoolData GetShopProductPool()
+    {
+        if (config != null && config.shopProductPoolId > 0 && GameDataDatabase.TryGetShopProductPoolData(config.shopProductPoolId, out ShopProductPoolData configuredPool))
+            return configuredPool;
+
+        foreach (ShopProductPoolData poolData in GameDataDatabase.ShopProductPoolData.Values)
+        {
+            if (poolData != null)
+                return poolData;
+        }
+        return null;
     }
 
     private void BuildMagicPool()
     {
         magicPool.Clear();
-        RewardPoolData rewardPool = null;
-        if (config.shopMagicRewardPoolId > 0)
-            GameDataDatabase.TryGetRewardPoolData(config.shopMagicRewardPoolId, out rewardPool);
-
-        if (rewardPool != null && rewardPool.magicIds != null && rewardPool.magicIds.Length > 0)
+        if (productPool != null && productPool.magicIds != null && productPool.magicIds.Length > 0)
         {
-            for (int i = 0; i < rewardPool.magicIds.Length; i++)
+            for (int i = 0; i < productPool.magicIds.Length; i++)
+                AddMagicPoolData(productPool.magicIds[i]);
+        }
+        else
+        {
+            RewardPoolData rewardPool = null;
+            if (config.shopMagicRewardPoolId > 0)
+                GameDataDatabase.TryGetRewardPoolData(config.shopMagicRewardPoolId, out rewardPool);
+
+            if (rewardPool != null && rewardPool.magicIds != null && rewardPool.magicIds.Length > 0)
             {
-                if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out MagicData data) && !magicPool.Contains(data))
-                    magicPool.Add(data);
+                for (int i = 0; i < rewardPool.magicIds.Length; i++)
+                    AddMagicPoolData(rewardPool.magicIds[i]);
             }
         }
 
@@ -243,26 +267,125 @@ public class ShopPanelUI : MonoBehaviour
         }
     }
 
-    private void BuildMaterialPool()
+    private void AddMagicPoolData(int magicId)
     {
-        materialPool.Clear();
-        if (config.shopMaterialPool != null && config.shopMaterialPool.Length > 0)
+        if (GameDataDatabase.TryGetMagicData(magicId, out MagicData data) && data != null && !magicPool.Contains(data))
+            magicPool.Add(data);
+    }
+
+    private void BuildMaterialOfferPools()
+    {
+        strongMaterialOfferPool.Clear();
+        normalMaterialOfferPool.Clear();
+        weakMaterialOfferPool.Clear();
+
+        if (productPool != null)
         {
-            for (int i = 0; i < config.shopMaterialPool.Length; i++)
-            {
-                MaterialEnum material = config.shopMaterialPool[i];
-                if (material != MaterialEnum.None && !materialPool.Contains(material))
-                    materialPool.Add(material);
-            }
+            AddMaterialOffers(productPool.strongMaterialOffers, strongMaterialOfferPool, ShopMaterialPoolKind.Strong);
+            AddMaterialOffers(productPool.normalMaterialOffers, normalMaterialOfferPool, ShopMaterialPoolKind.Normal);
+            AddMaterialOffers(productPool.weakMaterialOffers, weakMaterialOfferPool, ShopMaterialPoolKind.Weak);
         }
 
-        if (materialPool.Count == 0)
+        if (normalMaterialOfferPool.Count == 0)
         {
-            materialPool.Add(MaterialEnum.Fire);
-            materialPool.Add(MaterialEnum.Wind);
-            materialPool.Add(MaterialEnum.Water);
-            materialPool.Add(MaterialEnum.Earth);
+            normalMaterialOfferPool.Add(new ShopMaterialOfferData { material = MaterialEnum.Fire, price = config.shopMaterialPrice });
+            normalMaterialOfferPool.Add(new ShopMaterialOfferData { material = MaterialEnum.Wind, price = config.shopMaterialPrice });
+            normalMaterialOfferPool.Add(new ShopMaterialOfferData { material = MaterialEnum.Water, price = config.shopMaterialPrice });
+            normalMaterialOfferPool.Add(new ShopMaterialOfferData { material = MaterialEnum.Earth, price = config.shopMaterialPrice });
         }
+    }
+
+    private enum ShopMaterialPoolKind
+    {
+        Normal,
+        Weak,
+        Strong
+    }
+
+    private void AddMaterialOffers(ShopMaterialOfferData[] source, List<ShopMaterialOfferData> target, ShopMaterialPoolKind kind)
+    {
+        for (int i = 0; source != null && i < source.Length; i++)
+        {
+            ShopMaterialOfferData offer = source[i];
+            if (IsValidShopMaterialOffer(offer, kind))
+                target.Add(offer);
+        }
+    }
+
+    private bool IsValidShopMaterialOffer(ShopMaterialOfferData offer, ShopMaterialPoolKind kind)
+    {
+        if (offer == null || offer.material == MaterialEnum.None)
+            return false;
+
+        if (string.IsNullOrEmpty(offer.modifierId))
+            return kind == ShopMaterialPoolKind.Normal;
+
+        if (!IsValidShopModifierId(offer.modifierId))
+            return false;
+
+        bool weak = IsWeakShopModifierId(offer.modifierId);
+        if (kind == ShopMaterialPoolKind.Weak)
+            return weak;
+        if (kind == ShopMaterialPoolKind.Strong)
+            return !weak;
+        return false;
+    }
+
+    private bool IsValidShopModifierId(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId) || IsExcludedShopModifierId(modifierId))
+            return false;
+
+        MaterialModifierData data = GetMaterialModifierDataById(modifierId);
+        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
+    }
+
+    private static bool IsWeakShopModifierId(string modifierId)
+    {
+        switch (modifierId)
+        {
+            case "half_arrow":
+            case "temporary":
+            case "doom":
+            case "lazy":
+            case "fragile_arrow":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsExcludedShopModifierId(string modifierId)
+    {
+        switch (modifierId)
+        {
+            case "omni_arrow":
+            case "return_arrow":
+            case "period_arrow":
+            case "pack_arrow":
+            case "linked_arrow":
+            case "random_arrow":
+            case "eternal_arrow":
+            case "repeat_arrow":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private MaterialModifierData GetMaterialModifierDataById(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return null;
+
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (data != null && data.id == modifierId)
+                return data;
+        }
+        return null;
     }
 
     private void AddMagicOffer()
@@ -276,15 +399,47 @@ public class ShopPanelUI : MonoBehaviour
         offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = config.shopSpellPrice, magicData = data });
     }
 
-    private void AddMaterialOffer()
+    private void AddStrongMaterialOffer()
     {
-        if (materialPool.Count == 0)
+        if (strongMaterialOfferPool.Count == 0)
             return;
 
-        int index = NextRunRandomInt(0, materialPool.Count);
-        MaterialEnum material = materialPool[index];
-        materialPool.RemoveAt(index);
-        offers.Add(new ShopOffer { kind = ShopItemKind.Material, price = config.shopMaterialPrice, material = material });
+        AddMaterialOfferFromPool(strongMaterialOfferPool);
+    }
+
+    private void AddNormalMaterialOffer()
+    {
+        List<ShopMaterialOfferData> pool = ShouldUseWeakMaterialOffer() && weakMaterialOfferPool.Count > 0 ? weakMaterialOfferPool : normalMaterialOfferPool;
+        AddMaterialOfferFromPool(pool);
+    }
+
+    private bool ShouldUseWeakMaterialOffer()
+    {
+        float chance = productPool != null ? productPool.weakMaterialChance : 0.1f;
+        if (chance <= 0f)
+            return false;
+        if (chance >= 1f)
+            return true;
+
+        int threshold = Mathf.RoundToInt(chance * 10000f);
+        return NextRunRandomInt(0, 10000) < threshold;
+    }
+
+    private void AddMaterialOfferFromPool(List<ShopMaterialOfferData> pool)
+    {
+        if (pool.Count == 0)
+            return;
+
+        int index = NextRunRandomInt(0, pool.Count);
+        ShopMaterialOfferData offerData = pool[index];
+        pool.RemoveAt(index);
+        MaterialModifierData modifierData = GetMaterialModifierDataById(offerData.modifierId);
+        offers.Add(new ShopOffer { kind = ShopItemKind.Material, price = GetOfferPrice(offerData.price), material = offerData.material, materialModifierData = modifierData });
+    }
+
+    private int GetOfferPrice(int price)
+    {
+        return price > 0 ? price : config.shopMaterialPrice;
     }
 
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
@@ -309,9 +464,23 @@ public class ShopPanelUI : MonoBehaviour
 
             ShopOffer offer = offers[i];
             bool canAfford = owner.PlayerState != null && owner.PlayerState.Gold >= offer.price;
-            bool selected = offer == selectedMagicOffer;
-            bool canUse = !purchaseInProgress && (!waitingForSelection || selected) && (offer.kind != ShopItemKind.RemoveMaterial || HasRemovableMaterial());
+            bool selected = offer == selectedOffer;
+            bool canUse = !purchaseInProgress && (!waitingForSelection || selected) && CanUseOffer(offer);
             itemViews[i].Bind(this, offer, canAfford, canUse, selected, OnOfferClicked);
+        }
+    }
+
+    private bool CanUseOffer(ShopOffer offer)
+    {
+        if (offer == null)
+            return false;
+
+        switch (offer.kind)
+        {
+            case ShopItemKind.RemoveMaterial:
+                return HasRemovableMaterial();
+            default:
+                return true;
         }
     }
 
@@ -521,7 +690,7 @@ public class ShopPanelUI : MonoBehaviour
             return;
 
         ShowMessage("点击法术槽完成购买");
-        selectedMagicOffer = offer;
+        selectedOffer = offer;
         waitingForSelection = true;
         purchaseInProgress = false;
         owner.SelectPendingShopMagic(offer.magicData, slotIndex => CompleteMagicPurchase(offer, slotIndex));
@@ -534,13 +703,13 @@ public class ShopPanelUI : MonoBehaviour
         owner.ClearPendingShopMagic();
         if (offer == null || offer.purchased || offer.magicData == null)
         {
-            selectedMagicOffer = null;
+            selectedOffer = null;
             Refresh();
             return;
         }
         if (!owner.TrySpendShopGold(offer.price))
         {
-            selectedMagicOffer = null;
+            selectedOffer = null;
             PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
             Refresh();
@@ -554,7 +723,7 @@ public class ShopPanelUI : MonoBehaviour
         owner.SetShopMagicAtSlotAnimated(offer.magicData, slotIndex, sourceRect, () =>
         {
             purchaseInProgress = false;
-            selectedMagicOffer = null;
+            selectedOffer = null;
             offer.purchased = true;
             ShowMessage("购买成功");
             Refresh();
@@ -575,7 +744,7 @@ public class ShopPanelUI : MonoBehaviour
         purchaseInProgress = true;
         Refresh();
         RectTransform sourceRect = GetMaterialOfferRect(offer);
-        owner.AddShopMaterialAnimated(offer.material, sourceRect, () =>
+        owner.AddShopMaterialAnimated(offer.material, offer.materialModifierData, sourceRect, () =>
         {
             purchaseInProgress = false;
             offer.purchased = true;
@@ -593,21 +762,22 @@ public class ShopPanelUI : MonoBehaviour
             return;
         }
 
-        selectedMagicOffer = null;
+        selectedOffer = offer;
         owner.ClearPendingShopMagic();
-        ShowMessage("选择一张素材删除");
+        ShowMessage("选择一张箭头删除");
         waitingForSelection = true;
         Refresh();
         MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialListPanel;
-        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelRemoveMaterialPurchase);
+        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelSelectionPurchase, "选择要删的牌");
         RectTransform materialRect = materialListPanel != null ? materialListPanel.transform as RectTransform : null;
         if (materialRect != null)
             PopupLayerUtility.ApplyTo(materialRect);
     }
 
-    private void CancelRemoveMaterialPurchase()
+    private void CancelSelectionPurchase()
     {
         waitingForSelection = false;
+        selectedOffer = null;
         ShowMessage(string.Empty);
         Refresh();
     }
@@ -620,6 +790,7 @@ public class ShopPanelUI : MonoBehaviour
     private void CompleteRemoveMaterialPurchase(ShopOffer offer, IReadOnlyList<MaterialModel> selected)
     {
         waitingForSelection = false;
+        selectedOffer = null;
         if (offer == null || offer.purchased || selected == null || selected.Count == 0)
         {
             Refresh();

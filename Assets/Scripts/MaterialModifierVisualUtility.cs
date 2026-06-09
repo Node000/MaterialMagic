@@ -8,7 +8,8 @@ public static class MaterialModifierVisualUtility
     private const string ShapeShaderName = "UI/MaterialModifierArrowShape";
     private const string ScreenShaderName = "UI/MaterialModifierScreenEffect";
     private const string ElementShaderName = "UI/MaterialModifierElementAura";
-    private const string ResourceMaterialPath = "Materials/MaterialModifierAura";
+    private const string DefaultAuraMaterialPath = "Materials/MaterialModifierAura";
+    private const string ModifierMaterialFolder = "Materials/MaterialModifiers";
 
     private static readonly Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
     private static readonly Dictionary<MaterialEnum, Texture> arrowTextureCache = new Dictionary<MaterialEnum, Texture>();
@@ -70,15 +71,33 @@ public static class MaterialModifierVisualUtility
         if (materialCache.TryGetValue(key, out Material cached))
             return cached;
 
-        Material material = CreateMaterial(profile.ShaderName);
+        Material material = CreateMaterial(modifier, profile, out bool fromAsset);
         if (material == null)
             return null;
 
         material.name = "MaterialModifierVisual_" + modifier.GetType().Name;
         material.hideFlags = HideFlags.DontSave;
-        ConfigureMaterial(material, modifier, color, profile, arrowDirection);
+        ConfigureMaterial(material, modifier, color, profile, arrowDirection, fromAsset);
         materialCache.Add(key, material);
         return material;
+    }
+
+    private static Material CreateMaterial(MaterialModifierModel modifier, VisualProfile profile, out bool fromAsset)
+    {
+        fromAsset = false;
+        Material template = Resources.Load<Material>(GetModifierMaterialPath(modifier));
+        if (template != null)
+        {
+            fromAsset = true;
+            return new Material(template);
+        }
+
+        return CreateMaterial(profile.ShaderName);
+    }
+
+    private static string GetModifierMaterialPath(MaterialModifierModel modifier)
+    {
+        return ModifierMaterialFolder + "/" + modifier.GetType().Name;
     }
 
     private static Material CreateMaterial(string shaderName)
@@ -88,7 +107,7 @@ public static class MaterialModifierVisualUtility
             return new Material(shader);
 
         if (baseMaterial == null)
-            baseMaterial = Resources.Load<Material>(ResourceMaterialPath);
+            baseMaterial = Resources.Load<Material>(DefaultAuraMaterialPath);
 
         if (baseMaterial != null)
             return new Material(baseMaterial);
@@ -97,10 +116,16 @@ public static class MaterialModifierVisualUtility
         return shader != null ? new Material(shader) : null;
     }
 
-    private static void ConfigureMaterial(Material material, MaterialModifierModel modifier, Color color, VisualProfile profile, float arrowDirection)
+    private static void ConfigureMaterial(Material material, MaterialModifierModel modifier, Color color, VisualProfile profile, float arrowDirection, bool fromAsset)
     {
         if (material == null)
             return;
+
+        if (fromAsset)
+        {
+            ConfigureRuntimeMaterialProperties(material, profile, arrowDirection);
+            return;
+        }
 
         color.a = 1f;
         SetColor(material, "_AuraColor", color);
@@ -111,14 +136,21 @@ public static class MaterialModifierVisualUtility
             SetFloat(material, "_EffectSpeed", profile.Speed);
             SetFloat(material, "_EffectStrength", profile.Strength);
             SetFloat(material, "_CopyCount", profile.CopyCount);
-            SetFloat(material, "_ArrowDirection", arrowDirection);
-
-            if (profile.UsesArrowCycleTextures)
-                ConfigureArrowCycleTextures(material);
+            ConfigureRuntimeMaterialProperties(material, profile, arrowDirection);
             return;
         }
 
         ConfigureAuraMaterial(material, modifier, color);
+    }
+
+    private static void ConfigureRuntimeMaterialProperties(Material material, VisualProfile profile, float arrowDirection)
+    {
+        if (!material.HasProperty("_EffectMode"))
+            return;
+
+        SetFloat(material, "_ArrowDirection", arrowDirection);
+        if (profile.UsesArrowCycleTextures)
+            ConfigureArrowCycleTextures(material);
     }
 
     private static void ConfigureAuraMaterial(Material material, MaterialModifierModel modifier, Color color)

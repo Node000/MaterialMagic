@@ -29,6 +29,35 @@ public class DeerManEnemyModel : EnemyModel
         return string.Empty;
     }
 
+    protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
+    {
+        if (intent != null && intent.value == 1)
+            return "意图：特殊防御";
+        if (intent != null && intent.value == 2)
+            return "意图：特殊攻击";
+        return base.GetSpecialIntentTooltipTitle(intent);
+    }
+
+    protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return string.Empty;
+
+        if (intent.value == 1)
+        {
+            string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
+            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并禁用一种基础素材" : "这个敌人将获得护盾，并禁用一种基础素材";
+        }
+
+        if (intent.value == 2)
+        {
+            string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
+            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将造成{displayValue}点伤害，伤害基于玩家最多的基础素材数量" : "这个敌人将造成特殊伤害，伤害基于玩家最多的基础素材数量";
+        }
+
+        return base.GetSpecialIntentTooltipDescription(intent, playerState);
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (playerState == null)

@@ -1,9 +1,10 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
-public class EnemyIntentView : MonoBehaviour
+public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text valueText;
@@ -27,6 +28,11 @@ public class EnemyIntentView : MonoBehaviour
     private float phase;
     private Material rippleMaterial;
     private Tween fadeTween;
+    private HandSystemUI owner;
+    private EnemyModel boundEnemy;
+    private EnemyIntentData boundIntent;
+    private PlayerState boundPlayerState;
+    private Image hitImage;
     private bool hidden;
 
     public RectTransform RectTransform => rectTransform != null ? rectTransform : (RectTransform)transform;
@@ -57,13 +63,28 @@ public class EnemyIntentView : MonoBehaviour
         rectTransform.anchoredPosition = baseAnchoredPosition + Vector2.up * (Mathf.Sin(Time.time * floatFrequency + phase) * floatAmplitude);
     }
 
+    public void SetOwner(HandSystemUI owner)
+    {
+        this.owner = owner;
+    }
+
     public void Bind(EnemyModel enemy, EnemyIntentData intent, int phaseIndex, int phaseCount)
     {
-        Bind(enemy, intent, null, phaseIndex, phaseCount);
+        Bind(owner, enemy, intent, null, phaseIndex, phaseCount);
     }
 
     public void Bind(EnemyModel enemy, EnemyIntentData intent, PlayerState playerState, int phaseIndex, int phaseCount)
     {
+        Bind(owner, enemy, intent, playerState, phaseIndex, phaseCount);
+    }
+
+    public void Bind(HandSystemUI owner, EnemyModel enemy, EnemyIntentData intent, PlayerState playerState, int phaseIndex, int phaseCount)
+    {
+        this.owner = owner;
+        boundEnemy = enemy;
+        boundIntent = intent;
+        boundPlayerState = playerState;
+
         int intentValue = 0;
         string intentDisplayValue = null;
         if (enemy != null && intent != null)
@@ -95,6 +116,7 @@ public class EnemyIntentView : MonoBehaviour
 
         fadeTween?.Kill(false);
         hidden = false;
+        SetRaycastEnabled(true);
 
         if (iconImage != null)
         {
@@ -158,6 +180,8 @@ public class EnemyIntentView : MonoBehaviour
             return null;
 
         hidden = true;
+        owner?.HideEnemyIntentTooltip(this);
+        SetRaycastEnabled(false);
         float duration = durationOverride > 0f ? durationOverride : fadeOutDuration;
         fadeTween?.Kill(false);
         Sequence sequence = DOTween.Sequence().SetTarget(this);
@@ -182,6 +206,21 @@ public class EnemyIntentView : MonoBehaviour
             valueText = UIManager.FindChildComponent<TMP_Text>(transform, "ValueText");
         if (rippleImage == null)
             rippleImage = UIManager.FindChildComponent<Image>(transform, "Ripple");
+        if (hitImage == null)
+        {
+            hitImage = GetComponent<Image>();
+            if (hitImage == null)
+                hitImage = gameObject.AddComponent<Image>();
+            hitImage.sprite = null;
+            hitImage.color = Color.clear;
+            hitImage.maskable = false;
+        }
+    }
+
+    private void SetRaycastEnabled(bool enabled)
+    {
+        if (hitImage != null)
+            hitImage.raycastTarget = enabled;
     }
 
     private void EnsureRippleMaterial()
@@ -329,6 +368,22 @@ public class EnemyIntentView : MonoBehaviour
         if (intent.value > 0)
             return intent.value.ToString();
         return string.Empty;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (!hidden && boundEnemy != null && boundIntent != null)
+            owner?.ShowEnemyIntentTooltip(this, boundEnemy, boundIntent, boundPlayerState);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        owner?.HideEnemyIntentTooltip(this);
+    }
+
+    private void OnDisable()
+    {
+        owner?.HideEnemyIntentTooltip(this);
     }
 
     private void OnDestroy()

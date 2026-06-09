@@ -121,6 +121,7 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         selectedMaterials.Add(materialModel);
+        RefreshSelectionVisuals();
         if (selectedMaterials.Count < selectionCount)
             return;
 
@@ -458,6 +459,7 @@ public class MaterialListPanelUI : MonoBehaviour
             view.Initialize(this);
             bool inactive = selectionCompleted != null ? !IsSelectableInCurrentSelection(materialModel) : displayMode == DisplayMode.FullDeck && IsConsumedInCurrentBattle(materialModel);
             view.Bind(materialModel, inactive);
+            view.SetSelectionVisual(selectedMaterials.Contains(materialModel), true);
         }
 
         JuicyMotion motion = cardRect.GetComponent<JuicyMotion>();
@@ -509,6 +511,18 @@ public class MaterialListPanelUI : MonoBehaviour
         selectionLocked = false;
         selectionCount = 0;
         selectedMaterials.Clear();
+        RefreshSelectionVisuals();
+    }
+
+    private void RefreshSelectionVisuals()
+    {
+        MaterialCardView[] cardViews = GetComponentsInChildren<MaterialCardView>(true);
+        for (int i = 0; i < cardViews.Length; i++)
+        {
+            MaterialCardView cardView = cardViews[i];
+            if (cardView != null)
+                cardView.SetSelectionVisual(cardView.MaterialModel != null && selectedMaterials.Contains(cardView.MaterialModel), false);
+        }
     }
 
     private void EnsureModifierTooltip()
@@ -584,7 +598,7 @@ public class MaterialListPanelUI : MonoBehaviour
             case MaterialEnum.Earth:
                 return "单独打出（右）：获得3点护盾";
             case MaterialEnum.Wild:
-                return "单独打出：按具体Wild箭头机制结算";
+                return "特殊效果";
             default:
                 return "单独打出：无基础效果";
         }

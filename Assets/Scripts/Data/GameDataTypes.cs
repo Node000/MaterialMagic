@@ -19,14 +19,37 @@ public class EconomyConfigData : INumericDataRecord
     public int numericId;
     public string id;
     public int shopSpellPrice = 4;
-    public int shopMaterialPrice = 7;
+    public int shopMaterialPrice = 6;
     public int shopRemoveMaterialPrice = 7;
+    public int shopProductPoolId = 1;
     public int battleGoldMin = 1;
     public int battleGoldMax = 2;
     public int eliteBattleGoldMin = 4;
     public int eliteBattleGoldMax = 5;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
+
+    public int NumericId => numericId;
+}
+
+[Serializable]
+public class ShopMaterialOfferData
+{
+    public MaterialEnum material;
+    public string modifierId;
+    public int price;
+}
+
+[Serializable]
+public class ShopProductPoolData : INumericDataRecord
+{
+    public int numericId;
+    public string id;
+    public int[] magicIds = Array.Empty<int>();
+    public ShopMaterialOfferData[] strongMaterialOffers = Array.Empty<ShopMaterialOfferData>();
+    public ShopMaterialOfferData[] normalMaterialOffers = Array.Empty<ShopMaterialOfferData>();
+    public ShopMaterialOfferData[] weakMaterialOffers = Array.Empty<ShopMaterialOfferData>();
+    public float weakMaterialChance = 0.1f;
 
     public int NumericId => numericId;
 }
@@ -158,7 +181,10 @@ public enum EventRewardType
     IncreaseDrawCount = 13,
     RemoveMaterial = 14,
     GainNextBattleStartShield = 15,
-    GainMaterialModifier = 16
+    GainMaterialModifier = 16,
+    SpendAllGold = 17,
+    RandomizeDeckBasicMaterials = 18,
+    GainRandomSyntaxMaterial = 19
 }
 
 public enum BonusRewardType

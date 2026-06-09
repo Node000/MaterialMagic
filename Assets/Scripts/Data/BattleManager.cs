@@ -112,13 +112,45 @@ public class BattleManager
 
     public EnemyModel SpawnMinion(int enemyId)
     {
+        return SpawnMinion(enemyId, null, 0, 1);
+    }
+
+    public EnemyModel SpawnMinion(int enemyId, EnemyModel summoner, int summonIndex, int summonCount)
+    {
         if (!GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
             return null;
 
         EnemyModel enemy = EnemyFactory.Create(data);
         if (enemy != null)
+        {
             enemy.SetMinion(true);
+            if (summoner != null && summoner.HasSpawnPosition)
+            {
+                Vector2 position = GetSummonPosition(summoner.SpawnPositionX, summoner.SpawnPositionY, summonIndex, summonCount);
+                enemy.SetSpawnPosition(position.x, position.y);
+            }
+        }
         return SpawnEnemy(enemy);
+    }
+
+    public static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount)
+    {
+        const float horizontalSpacing = 180f;
+        const float verticalSpacing = 110f;
+        int count = summonCount > 0 ? summonCount : 1;
+        int index = summonIndex < 0 ? 0 : summonIndex;
+
+        if (count == 1)
+            return new Vector2(centerX + horizontalSpacing, centerY);
+        if (count == 2)
+            return new Vector2(centerX + (index == 0 ? -horizontalSpacing : horizontalSpacing), centerY);
+
+        int pairIndex = index / 2 + 1;
+        float x = centerX + (index % 2 == 0 ? -horizontalSpacing * pairIndex : horizontalSpacing * pairIndex);
+        float y = centerY;
+        if (index >= 4)
+            y += index % 4 < 2 ? verticalSpacing : -verticalSpacing;
+        return new Vector2(x, y);
     }
 
     public EnemyModel SpawnEnemy(LevelEnemyData placement)

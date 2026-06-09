@@ -750,10 +750,8 @@
               "ignoreOrder": true,
               "effects": [
                 {
-                  "rewardType": 10,
-                  "count": 1,
-                  "material": 5,
-                  "modifierId": "return_arrow"
+                  "rewardType": 16,
+                  "modifierId": "retained_arrow"
                 }
               ],
               "nextNodeId": "reversed_direction"
@@ -978,6 +976,179 @@
         }
       ],
       "numericId": 109
+    },
+    {
+      "id": "event_neon_wayfinding",
+      "titleKey": "event.neon_wayfinding.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.neon_wayfinding.start.1"
+          ],
+          "options": [
+            {
+              "id": "follow_all_arrows",
+              "titleKey": "event.neon_wayfinding.option.follow_all_arrows",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 5,
+                  "modifierId": "omni_arrow"
+                }
+              ],
+              "nextNodeId": "follow_all_arrows"
+            },
+            {
+              "id": "take_photo",
+              "titleKey": "event.neon_wayfinding.option.take_photo",
+              "nextNodeId": "take_photo",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "follow_all_arrows",
+          "textKeys": [
+            "event.neon_wayfinding.follow_all_arrows.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "take_photo",
+          "textKeys": [
+            "event.neon_wayfinding.take_photo.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 113
+    },
+    {
+      "id": "event_suspected_trojan",
+      "titleKey": "event.suspected_trojan.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.suspected_trojan.start.1"
+          ],
+          "options": [
+            {
+              "id": "keep_it",
+              "titleKey": "event.suspected_trojan.option.keep_it",
+              "nextNodeId": "keep_it",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "material": 5,
+                  "modifierId": "random_arrow"
+                }
+              ]
+            },
+            {
+              "id": "reinstall_system",
+              "titleKey": "event.suspected_trojan.option.reinstall_system",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 17
+                },
+                {
+                  "rewardType": 18
+                }
+              ],
+              "nextNodeId": "reinstall_system"
+            }
+          ]
+        },
+        {
+          "id": "keep_it",
+          "textKeys": [
+            "event.suspected_trojan.keep_it.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "reinstall_system",
+          "textKeys": [
+            "event.suspected_trojan.reinstall_system.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 114
+    },
+    {
+      "id": "event_missing_fonts",
+      "titleKey": "event.missing_fonts.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.missing_fonts.start.1"
+          ],
+          "options": [
+            {
+              "id": "disable_compatibility",
+              "titleKey": "event.missing_fonts.option.disable_compatibility",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 19
+                }
+              ],
+              "nextNodeId": "disable_compatibility"
+            },
+            {
+              "id": "keep_compatibility",
+              "titleKey": "event.missing_fonts.option.keep_compatibility",
+              "nextNodeId": "keep_compatibility",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "disable_compatibility",
+          "textKeys": [
+            "event.missing_fonts.disable_compatibility.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "keep_compatibility",
+          "textKeys": [
+            "event.missing_fonts.keep_compatibility.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 115
     }
   ]
 }
