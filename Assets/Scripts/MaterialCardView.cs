@@ -180,30 +180,9 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             springHighlight = GetComponentInChildren<SpringLineHighlightUI>(true);
 
         if (springHighlight == null)
-            springHighlight = CreateSpringHighlight();
-
-        if (springHighlight == null)
             return;
 
         springHighlight.raycastTarget = false;
-        springHighlight.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
-        springHighlight.SetOutset(6f);
-        springHighlight.SetWobbleAmplitude(5f);
-    }
-
-    private SpringLineHighlightUI CreateSpringHighlight()
-    {
-        GameObject highlightObject = new GameObject("SpringLineHighlight", typeof(RectTransform), typeof(CanvasRenderer), typeof(SpringLineHighlightUI));
-        RectTransform rect = highlightObject.GetComponent<RectTransform>();
-        rect.SetParent(transform, false);
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.SetAsLastSibling();
-        highlightObject.SetActive(false);
-        return highlightObject.GetComponent<SpringLineHighlightUI>();
     }
 
     private void RefreshSpringHighlight()
