@@ -7,6 +7,17 @@ Shader "UI/MaterialModifiers/PackArrowModifier"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _AuraColor ("Aura Color", Color) = (1,0.8,0.35,1)
+        _GradientColor1 ("Gradient Color 1", Color) = (1,1,1,1)
+        _GradientColor2 ("Gradient Color 2", Color) = (1,0.75,0.25,1)
+        _GradientColor3 ("Gradient Color 3", Color) = (1,0.25,0.75,1)
+        _GradientColor4 ("Gradient Color 4", Color) = (0.25,0.75,1,1)
+        _GradientPosition2 ("Gradient Position 2", Range(0,1)) = 0.33
+        _GradientPosition3 ("Gradient Position 3", Range(0,1)) = 0.66
+        _GradientAngle ("Gradient Angle", Range(0,6.28318)) = 0.7854
+        _GradientScale ("Gradient Scale", Float) = 1
+        _GradientOffset ("Gradient Offset", Float) = 0
+        _GradientScrollSpeed ("Gradient Scroll Speed", Float) = 0
+        _GradientIntensity ("Gradient Intensity", Range(0,1)) = 0
         _PulseSpeed ("Pulse Speed", Float) = 2.2
         _PulseStrength ("Pulse Strength", Range(0,1)) = 0.18
         _SweepSpeed ("Sweep Speed", Float) = 1.2
@@ -82,6 +93,17 @@ Shader "UI/MaterialModifiers/PackArrowModifier"
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             fixed4 _AuraColor;
+            fixed4 _GradientColor1;
+            fixed4 _GradientColor2;
+            fixed4 _GradientColor3;
+            fixed4 _GradientColor4;
+            float _GradientPosition2;
+            float _GradientPosition3;
+            float _GradientAngle;
+            float _GradientScale;
+            float _GradientOffset;
+            float _GradientScrollSpeed;
+            float _GradientIntensity;
             float4 _ClipRect;
             float _PulseSpeed;
             float _PulseStrength;
@@ -89,6 +111,21 @@ Shader "UI/MaterialModifiers/PackArrowModifier"
             float _SweepWidth;
             float _SweepIntensity;
             float _EdgeIntensity;
+
+
+            fixed3 SampleGradientRamp(float2 uv)
+            {
+                float2 direction = float2(cos(_GradientAngle), sin(_GradientAngle));
+                float t = dot(uv - 0.5, direction) * max(_GradientScale, 0.0001) + 0.5 + _GradientOffset + _Time.y * _GradientScrollSpeed;
+                t = frac(t);
+                float p2 = saturate(_GradientPosition2);
+                float p3 = max(saturate(_GradientPosition3), p2 + 0.0001);
+                fixed3 c12 = lerp(_GradientColor1.rgb, _GradientColor2.rgb, saturate(t / max(p2, 0.0001)));
+                fixed3 c23 = lerp(_GradientColor2.rgb, _GradientColor3.rgb, saturate((t - p2) / max(p3 - p2, 0.0001)));
+                fixed3 c34 = lerp(_GradientColor3.rgb, _GradientColor4.rgb, saturate((t - p3) / max(1.0 - p3, 0.0001)));
+                fixed3 ramp = t < p2 ? c12 : (t < p3 ? c23 : c34);
+                return lerp(_AuraColor.rgb, ramp, saturate(_GradientIntensity));
+            }
 
             v2f vert(appdata_t v)
             {
@@ -118,7 +155,7 @@ Shader "UI/MaterialModifiers/PackArrowModifier"
 
                 float pulse = 1.0 + sin(_Time.y * _PulseSpeed) * _PulseStrength;
                 float aura = saturate((edge + sweep) * sourceAlpha);
-                color.rgb = saturate(color.rgb * pulse + _AuraColor.rgb * aura * _AuraColor.a);
+                color.rgb = saturate(color.rgb * pulse + SampleGradientRamp(uv) * aura * _AuraColor.a);
 
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);

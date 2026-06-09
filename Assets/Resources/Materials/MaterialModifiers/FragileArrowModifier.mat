@@ -51,6 +51,13 @@ Material:
     - _EffectMode: 1
     - _EffectSpeed: 4.2
     - _EffectStrength: 0.7
+    - _GradientAngle: 0.7854
+    - _GradientIntensity: 0
+    - _GradientOffset: 0
+    - _GradientPosition2: 0.33
+    - _GradientPosition3: 0.66
+    - _GradientScale: 1
+    - _GradientScrollSpeed: 0
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -60,4 +67,8 @@ Material:
     m_Colors:
     - _AuraColor: {r: 0.78039217, g: 0.9490196, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _GradientColor1: {r: 1, g: 1, b: 1, a: 1}
+    - _GradientColor2: {r: 1, g: 0.75, b: 0.24999997, a: 1}
+    - _GradientColor3: {r: 1, g: 0.24999997, b: 0.75, a: 1}
+    - _GradientColor4: {r: 0.24999997, g: 0.75, b: 1, a: 1}
   m_BuildTextureStacks: []
