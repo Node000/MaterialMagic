@@ -25,13 +25,15 @@
 
 - `_MainTex`：卡牌/箭头贴图，由 Image 自动传入。
 - `_Color`：整体乘色，一般保持白色。
-- `_ArrowDirection`：运行时根据素材方向覆盖，火=上、水=下、风=左、土=右。
+- `_ArrowDirection`：运行时根据素材方向覆盖，火=上、水=下、风=左、土=右。Half/Fragile 会用它选择对应方向的切线角度。
 - `_CopyCount`：多重箭头数量，BigArrow2/3/4 对应 2/3/4，一般不要改。
 - `_AltTex1~4`：随机箭头使用的四张基础箭头贴图，运行时会自动设置。
 - `_Stencil*`、`_ColorMask`、`_UseUIAlphaClip`：UGUI Mask/裁剪参数，不要改。
 
 ### 常用可调
 
+- `_LineAngle`：Half/Fragile 的兜底切线角度。
+- `_FireLineAngle` / `_WaterLineAngle` / `_WindLineAngle` / `_EarthLineAngle`：Half/Fragile 每种箭头方向的切线角度，运行时按当前素材方向自动选择。
 - `_EffectSpeed`：动画速度。越大越快；建议 `0.6~2.5`，闪电/碎裂类可到 `4`。
 - `_EffectStrength`：特效强度。越大越明显；建议 `0.2~0.75`，超过 `0.85` 容易影响箭头识别。
 - `_AuraColor`：主发光色。注意：运行时通常会被 `MaterialModifierData.json` 里的 `lineColor` 覆盖，所以如果要稳定改颜色，应同时改数据表颜色。
@@ -70,20 +72,18 @@
 - Shader：`UI/MaterialModifiers/HalfArrowModifier`
 - 材质：`Assets/Resources/Materials/MaterialModifiers/HalfArrowModifier.mat`
 - 效果：半箭头，按当前方向切去半边，并用发光色强调切线。
-- 主要调：`_EffectStrength` 控制切线/缺损存在感，`_EffectSpeed` 控制切线闪动速度。
+- 主要调：`_LineAngle`、`_FireLineAngle`、`_WaterLineAngle`、`_WindLineAngle`、`_EarthLineAngle` 控制不同方向的切线角度，`_EffectStrength` 控制切线/缺损存在感，`_EffectSpeed` 控制切线闪动速度。
 - 建议：强度不要太高，避免看起来像箭头断裂错误。
 
 ### FragileArrowModifier
 
 - Shader：`UI/MaterialModifiers/FragileArrowModifier`
 - 材质：`Assets/Resources/Materials/MaterialModifiers/FragileArrowModifier.mat`
-- 效果：易碎箭头，沿方向裂开，两片轻微错位并高亮裂缝。
-- 主要调：`_EffectStrength` 控制裂缝和错位，`_EffectSpeed` 控制抖动。
+- 效果：易碎箭头，按当前方向选择切线角度，两片轻微错位并高亮裂缝。
+- 主要调：`_LineAngle`、`_FireLineAngle`、`_WaterLineAngle`、`_WindLineAngle`、`_EarthLineAngle` 控制不同方向的切线角度，`_EffectStrength` 控制裂缝和错位，`_EffectSpeed` 控制抖动。
 - 建议：这是反馈强的特效，可以比普通附魔更亮，但不要让原箭头断成不可读。
 
 ### RepeatArrowModifier
-
-- Shader：`UI/MaterialModifiers/RepeatArrowModifier`
 - 材质：`Assets/Resources/Materials/MaterialModifiers/RepeatArrowModifier.mat`
 - 效果：重复箭头，在原箭头后方叠一层半透明残影。
 - 主要调：`_EffectStrength` 控制残影明显程度，`_EffectSpeed` 控制残影流动。

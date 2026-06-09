@@ -8,7 +8,9 @@
 - `_AuraColor`：附魔主色/高光色；运行时会按 `MaterialModifierData.json` 的 `lineColor` 覆盖。
 - `_EffectSpeed`：动画速度，数值越大越快。
 - `_EffectStrength`：效果强度，通常 0-1；过高会影响箭头可读性。
-- `_ArrowDirection`：运行时按素材卡方向覆盖，火=0、水=1、风=2、土=3；美术通常不用手调。
+- `_ArrowDirection`：运行时按素材卡方向覆盖，火=0、水=1、风=2、土=3；Half/Fragile 会用它选择对应方向的切线角度。
+- `_LineAngle`：Half/Fragile 的兜底切线角度。
+- `_FireLineAngle` / `_WaterLineAngle` / `_WindLineAngle` / `_EarthLineAngle`：Half/Fragile 每种箭头方向的切线角度，运行时按当前素材方向自动选择。
 - `_CopyCount`：仅 BigArrow2/3/4 使用，对应 2/3/4。
 - `_AltTex1..4`：仅 RandomArrow 使用，四张基础箭头循环贴图。
 - `_Stencil*`、`_ColorMask`、`_UseUIAlphaClip`：UGUI Mask/裁剪兼容参数，不建议修改。
@@ -17,14 +19,14 @@
 - Shader：`UI/MaterialModifiers/HalfArrowModifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/HalfArrowModifier.shader`
 - 用途：半箭头：沿斜切线隐藏其中一半，保留黑色切割线；斜切线会周期偏移。当前材质 `_VisibleSide=1`。
-- 美术参数：主要调 `_VisibleSide`、`_LineAngle`、`_LineWidth`、`_LineLength`、`_EffectSpeed`、`_EffectStrength`。
+- 美术参数：主要调 `_VisibleSide`、`_LineAngle`、`_FireLineAngle`、`_WaterLineAngle`、`_WindLineAngle`、`_EarthLineAngle`、`_LineWidth`、`_LineLength`、`_EffectSpeed`、`_EffectStrength`。
 
 ## FragileArrowModifier
 
 - Shader：`UI/MaterialModifiers/HalfArrowModifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/HalfArrowModifier.shader`
 - 用途：脆弱箭头：复用半箭头 Shader，沿斜切线切开，两部分都显示，并沿斜切线方向循环错位偏移。当前材质 `_VisibleSide=0`。
-- 美术参数：主要调 `_LineAngle`、`_LineWidth`、`_LineLength`、`_EffectSpeed`、`_EffectStrength`。
+- 美术参数：主要调 `_LineAngle`、`_FireLineAngle`、`_WaterLineAngle`、`_WindLineAngle`、`_EarthLineAngle`、`_LineWidth`、`_LineLength`、`_EffectSpeed`、`_EffectStrength`。
 
 ## RepeatArrowModifier
 

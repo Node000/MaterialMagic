@@ -145,10 +145,8 @@ public static class MaterialModifierVisualUtility
 
     private static void ConfigureRuntimeMaterialProperties(Material material, VisualProfile profile, float arrowDirection)
     {
-        if (!material.HasProperty("_EffectMode"))
-            return;
-
         SetFloat(material, "_ArrowDirection", arrowDirection);
+
         if (profile.UsesArrowCycleTextures)
             ConfigureArrowCycleTextures(material);
     }

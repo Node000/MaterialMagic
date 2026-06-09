@@ -7,7 +7,12 @@ Shader "UI/MaterialModifiers/HalfArrowModifier"
         
         // --- 新增的控制参数 ---
         [Enum(Show Both,0,Show Upper Half,1,Show Lower Half,2)] _VisibleSide ("Visible Side", Float) = 0
-        _LineAngle ("Line Angle (Degrees)", Range(0, 360)) = 45.0
+        _LineAngle ("Fallback Line Angle (Degrees)", Range(0, 360)) = 45.0
+        _FireLineAngle ("Fire/Up Line Angle (Degrees)", Range(0, 360)) = 45.0
+        _WaterLineAngle ("Water/Down Line Angle (Degrees)", Range(0, 360)) = 225.0
+        _WindLineAngle ("Wind/Left Line Angle (Degrees)", Range(0, 360)) = 135.0
+        _EarthLineAngle ("Earth/Right Line Angle (Degrees)", Range(0, 360)) = 315.0
+        _ArrowDirection ("Arrow Direction", Float) = 0
         _LineWidth ("Line Width", Range(0, 0.5)) = 0.02
         _LineLength ("Line Length", Float) = 1.5
         
@@ -89,6 +94,11 @@ Shader "UI/MaterialModifiers/HalfArrowModifier"
             // 我们的新参数
             float _VisibleSide;
             float _LineAngle;
+            float _FireLineAngle;
+            float _WaterLineAngle;
+            float _WindLineAngle;
+            float _EarthLineAngle;
+            float _ArrowDirection;
             float _LineWidth;
             float _LineLength;
             float _EffectSpeed;
@@ -125,7 +135,17 @@ Shader "UI/MaterialModifiers/HalfArrowModifier"
                 float2 p = uv - 0.5; 
 
                 // 1. 计算角度与方向
-                float rad = _LineAngle * 0.0174532925; 
+                float selectedLineAngle = _LineAngle;
+                if (_ArrowDirection > 0.5 && _ArrowDirection < 1.5)
+                    selectedLineAngle = _WaterLineAngle;
+                else if (_ArrowDirection > 1.5 && _ArrowDirection < 2.5)
+                    selectedLineAngle = _WindLineAngle;
+                else if (_ArrowDirection > 2.5)
+                    selectedLineAngle = _EarthLineAngle;
+                else
+                    selectedLineAngle = _FireLineAngle;
+
+                float rad = selectedLineAngle * 0.0174532925; 
                 float2 dir = float2(cos(rad), sin(rad));       
                 float2 normal = float2(-sin(rad), cos(rad));   
 
