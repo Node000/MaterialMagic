@@ -2,6 +2,7 @@ public class MaterialModifierContext
 {
     public PlayerState PlayerState;
     public BattleManager BattleManager;
+    public bool EnemyBuffChanged;
 }
 
 public class MaterialModifierModel

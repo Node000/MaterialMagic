@@ -1,0 +1,37 @@
+{
+  "numericId": 1002,
+  "string_id": "tutorial_dummy_xxl",
+  "nameKey": "enemy.tutorial_dummy_xxl.name",
+  "maxHealth": 40,
+  "baseAttack": 0,
+  "imageScale": 0.8,
+  "healthBarWidth": 180.0,
+  "isMinion": false,
+  "initialBuffs": [],
+  "phases": [
+    {
+      "phase": 0,
+      "intentGroups": [
+        {
+          "id": 1,
+          "intents": [
+            {
+              "intentType": 2,
+              "actionType": 2,
+              "value": 4,
+              "displayType": "defend"
+            }
+          ]
+        }
+      ],
+      "intentLoop": [
+        {
+          "groupId": 1
+        }
+      ]
+    }
+  ],
+  "iconName": "假人",
+  "spriteAnimationPath": "",
+  "animationFrameRate": 8.0
+}

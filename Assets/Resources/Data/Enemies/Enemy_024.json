@@ -4,7 +4,7 @@
   "nameKey": "enemy.024.name",
   "maxHealth": 151,
   "baseAttack": 14,
-  "imageScale": 0.6,
+  "imageScale": 0.8,
   "healthBarWidth": 150.0,
   "isMinion": false,
   "initialBuffs": [

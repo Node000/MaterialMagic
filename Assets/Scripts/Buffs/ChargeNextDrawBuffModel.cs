@@ -1,8 +1,8 @@
-public class VortexNextDrawBuffModel : BuffModel
+public class ChargeNextDrawBuffModel : BuffModel
 {
     private bool pendingNextTurn = true;
 
-    public VortexNextDrawBuffModel(int stack) : base(BuffEnum.VortexNextDraw, stack)
+    public ChargeNextDrawBuffModel(int stack) : base(BuffEnum.ChargeNextDraw, stack)
     {
     }
 
@@ -17,11 +17,9 @@ public class VortexNextDrawBuffModel : BuffModel
         if (pendingNextTurn || card == null || stack <= 0)
             return;
 
-        VortexModifier modifier = new VortexModifier();
+        ChargeModifier modifier = new ChargeModifier();
         modifier.MarkRemoveAfterBattle();
         card.AddModifier(modifier);
-        if (card.isPlayed)
-            modifier.OnJoin();
         ConsumeStack(1);
     }
 

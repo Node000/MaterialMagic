@@ -85,7 +85,6 @@ public class PlayerSaveData
     public int gold;
     public int drawCount;
     public int maxPlayCount;
-    public int magicBookSlotCount;
     public BuffStackData[] preparedBuffs = Array.Empty<BuffStackData>();
     public int runRandomSeed;
     public int runRandomStep;
@@ -120,6 +119,7 @@ public static class RunSaveSystem
     private const string MapSelectionState = "MapSelection";
     private const string BeforeNodeState = "BeforeNode";
     private static bool forceNewRun;
+    private static bool startingTutorialRun;
     private static int currentSlotIndex = 1;
 
     private static string SaveDirectory => Path.Combine(Application.persistentDataPath, "Save");
@@ -158,13 +158,34 @@ public static class RunSaveSystem
     public static void BeginNewRun()
     {
         forceNewRun = true;
+        startingTutorialRun = false;
         ClearCurrentRun();
+    }
+
+    public static void BeginNewTutorialRun()
+    {
+        forceNewRun = true;
+        startingTutorialRun = true;
+        ClearCurrentRun();
+    }
+
+    public static bool ConsumeStartingTutorialRun()
+    {
+        bool value = startingTutorialRun;
+        startingTutorialRun = false;
+        return value;
     }
 
     public static bool IsTutorialCompleted()
     {
         RunSaveData data = LoadSummary(currentSlotIndex);
         return data != null && data.tutorialCompleted;
+    }
+
+    public static bool ShouldShowTutorialEntry()
+    {
+        RunSaveData data = LoadSummary(currentSlotIndex);
+        return data == null || !data.tutorialCompleted;
     }
 
     public static bool IsTutorialEventShown()
@@ -260,7 +281,7 @@ public static class RunSaveSystem
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
 
-        RunSaveData previousData = LoadCurrentRun();
+        RunSaveData previousData = LoadSummary(currentSlotIndex);
         string now = DateTime.UtcNow.ToString("o");
         RunSaveData data = new RunSaveData
         {
@@ -310,7 +331,6 @@ public static class RunSaveSystem
             player.TakeDirectDamage(playerData.maxHealth - playerData.currentHealth);
         player.DrawCount = playerData.drawCount;
         player.MaxPlayCount = playerData.maxPlayCount;
-        player.MagicBookSlotCount = playerData.magicBookSlotCount;
         ApplyPreparedBuffs(player, playerData.preparedBuffs);
         player.SetRunRandomState(playerData.runRandomSeed, playerData.runRandomStep);
         player.Deck.Clear();
@@ -486,7 +506,6 @@ public static class RunSaveSystem
             gold = player.Gold,
             drawCount = player.DrawCount,
             maxPlayCount = player.MaxPlayCount,
-            magicBookSlotCount = player.MagicBookSlotCount,
             preparedBuffs = ExportPreparedBuffs(player.Buffs),
             runRandomSeed = player is PlayerStatus status ? status.RunRandomSeed : 0,
             runRandomStep = player is PlayerStatus statusForStep ? statusForStep.RunRandomStep : 0,

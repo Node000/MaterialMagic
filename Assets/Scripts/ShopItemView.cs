@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class ShopItemView : MonoBehaviour
+public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text priceText;
@@ -17,6 +18,8 @@ public class ShopItemView : MonoBehaviour
     private MagicItemView magicView;
     private MaterialCardView materialView;
     private TMP_Text removeText;
+    private JuicyMotion motion;
+    private bool pointerInside;
 
     public RectTransform MagicVisualRect => magicView != null ? magicView.transform as RectTransform : null;
     public RectTransform MaterialVisualRect => materialView != null ? materialView.transform as RectTransform : null;
@@ -31,12 +34,12 @@ public class ShopItemView : MonoBehaviour
         if (titleText != null)
             titleText.text = GetTitle(offer);
         if (priceText != null)
-            priceText.text = offer.price + " 金币";
+            priceText.text = offer.price + "$";
         if (stateText != null)
             stateText.text = GetStateText(offer, canAfford, canUse, selected);
         if (backgroundImage != null)
             backgroundImage.color = selected ? new Color(0.16f, 0.12f, 0.2f, 1f) : offer.purchased ? new Color(0.035f, 0.035f, 0.045f, 1f) : new Color(0.08f, 0.08f, 0.12f, 1f);
-        transform.localScale = selected ? Vector3.one * 1.1f : Vector3.one;
+        ApplyBaseScale(selected);
 
         CreateVisual(panel, offer);
         if (button != null)
@@ -61,6 +64,36 @@ public class ShopItemView : MonoBehaviour
             stateText = UIManager.FindChildComponent<TMP_Text>(transform, "State");
         if (visualRoot == null)
             visualRoot = UIManager.FindChildRect(transform, "VisualRoot");
+        if (motion == null)
+            motion = GetComponent<JuicyMotion>();
+    }
+
+    private void OnDisable()
+    {
+        pointerInside = false;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        pointerInside = true;
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        pointerInside = false;
+    }
+
+    private void ApplyBaseScale(bool selected)
+    {
+        Vector3 baseScale = selected ? Vector3.one * 1.1f : Vector3.one;
+        if (motion != null)
+        {
+            motion.SetBaseScale(baseScale, !pointerInside);
+            return;
+        }
+
+        if (!pointerInside)
+            transform.localScale = baseScale;
     }
 
     private void ClearVisual()
@@ -92,6 +125,7 @@ public class ShopItemView : MonoBehaviour
                     rect.pivot = new Vector2(0.5f, 0.5f);
                     rect.anchoredPosition = Vector2.zero;
                     rect.sizeDelta = new Vector2(196f, 92f);
+                    rect.localScale = Vector3.one * 0.8f;
                     magicView = rect.GetComponent<MagicItemView>();
                     magicView?.Bind(MagicFactory.Create(offer.magicData));
                 }

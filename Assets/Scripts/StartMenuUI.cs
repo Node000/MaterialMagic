@@ -13,6 +13,7 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private StartTutorialPanelUI tutorialPanelUI;
     [SerializeField] private StartForumPanelUI forumPanelUI;
     [SerializeField] private Button tutorialButton;
+    [SerializeField] private Button skipTutorialButton;
     [SerializeField] private Button forumButton;
     [SerializeField] private Button changeSaveButton;
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
@@ -22,6 +23,7 @@ public class StartMenuUI : MonoBehaviour
     private PointerEventData pointerEventData;
     private PlayerStartConfigData selectedConfig;
     private bool selectingStartConfig;
+    private bool startingTutorial;
     private bool confirmingExit;
 
     private void Awake()
@@ -35,6 +37,8 @@ public class StartMenuUI : MonoBehaviour
         startConfigSelectionUI.ConfigSelected += SelectConfig;
         if (tutorialButton != null)
             tutorialButton.onClick.AddListener(OpenTutorial);
+        if (skipTutorialButton != null)
+            skipTutorialButton.onClick.AddListener(SkipTutorial);
         if (forumButton != null)
             forumButton.onClick.AddListener(OpenForum);
         if (changeSaveButton != null)
@@ -55,6 +59,8 @@ public class StartMenuUI : MonoBehaviour
             startConfigSelectionUI.ConfigSelected -= SelectConfig;
         if (tutorialButton != null)
             tutorialButton.onClick.RemoveListener(OpenTutorial);
+        if (skipTutorialButton != null)
+            skipTutorialButton.onClick.RemoveListener(SkipTutorial);
         if (forumButton != null)
             forumButton.onClick.RemoveListener(OpenForum);
         if (changeSaveButton != null)
@@ -82,16 +88,19 @@ public class StartMenuUI : MonoBehaviour
         if (forumPanelUI == null)
             forumPanelUI = GetComponentInChildren<StartForumPanelUI>(true);
         if (tutorialButton == null)
-            tutorialButton = transform.Find("TutorialButton")?.GetComponent<Button>();
+            tutorialButton = UIManager.FindChildComponent<Button>(transform, "TutorialButton");
+        if (skipTutorialButton == null)
+            skipTutorialButton = UIManager.FindChildComponent<Button>(transform, "SkipTutorialButton");
         if (forumButton == null)
-            forumButton = transform.Find("ForumButton")?.GetComponent<Button>();
+            forumButton = UIManager.FindChildComponent<Button>(transform, "ForumButton");
         if (changeSaveButton == null)
-            changeSaveButton = transform.Find("ChangeSaveButton")?.GetComponent<Button>();
+            changeSaveButton = UIManager.FindChildComponent<Button>(transform, "ChangeSaveButton");
         if (settingsPanelUI == null)
             settingsPanelUI = GetComponentInChildren<StartSettingsPanelUI>(true);
         if (exitConfirmPanelUI == null)
             exitConfirmPanelUI = GetComponentInChildren<StartExitConfirmPanelUI>(true);
         buttonGroupUI.RefreshContinueButton(RunSaveSystem.HasCurrentRun());
+        RefreshTutorialStartState();
     }
 
     private void ContinueSavedRun()
@@ -120,6 +129,7 @@ public class StartMenuUI : MonoBehaviour
     {
         RunSaveSystem.SelectSlot(slotIndex);
         buttonGroupUI.RefreshContinueButton(RunSaveSystem.HasCurrentRun());
+        RefreshTutorialStartState();
     }
 
     private void HandleStartClicked()
@@ -147,7 +157,10 @@ public class StartMenuUI : MonoBehaviour
         PlayerState.SelectedStartConfigId = selectedConfig.id;
 
         PlayerState.ContinueSavedRun = false;
-        RunSaveSystem.BeginNewRun();
+        if (startingTutorial)
+            RunSaveSystem.BeginNewTutorialRun();
+        else
+            RunSaveSystem.BeginNewRun();
 
         if (SceneTransitionManager.Instance != null)
             SceneTransitionManager.Instance.LoadSceneWithTransition(gameSceneName);
@@ -158,6 +171,7 @@ public class StartMenuUI : MonoBehaviour
     private void ShowStartConfigSelection()
     {
         selectingStartConfig = true;
+        startingTutorial = RunSaveSystem.ShouldShowTutorialEntry();
         selectedConfig = null;
         buttonGroupUI.SetStartConfigMode(true, false);
         HideExitConfirm();
@@ -165,7 +179,10 @@ public class StartMenuUI : MonoBehaviour
         HideForum();
         settingsPanelUI.Hide();
         saveSlotSelectionPanelUI.Hide();
-        startConfigSelectionUI.Show();
+        if (startingTutorial)
+            startConfigSelectionUI.ShowOnly("balanced");
+        else
+            startConfigSelectionUI.Show();
     }
 
     private void HideStartConfigSelection()
@@ -174,6 +191,7 @@ public class StartMenuUI : MonoBehaviour
             return;
 
         selectingStartConfig = false;
+        startingTutorial = false;
         selectedConfig = null;
         buttonGroupUI.SetStartConfigMode(false, false);
         startConfigSelectionUI.Hide();
@@ -184,6 +202,20 @@ public class StartMenuUI : MonoBehaviour
         selectedConfig = config;
         if (selectingStartConfig)
             buttonGroupUI.SetStartConfigSelected(selectedConfig != null);
+    }
+
+    private void SkipTutorial()
+    {
+        RunSaveSystem.SetTutorialCompleted(true);
+        RefreshTutorialStartState();
+    }
+
+    private void RefreshTutorialStartState()
+    {
+        bool tutorialPending = RunSaveSystem.ShouldShowTutorialEntry();
+        buttonGroupUI.SetTutorialStartMode(tutorialPending);
+        if (skipTutorialButton != null)
+            skipTutorialButton.gameObject.SetActive(tutorialPending);
     }
 
     private void OpenSettings()
@@ -305,6 +337,7 @@ public class StartMenuUI : MonoBehaviour
             Transform hit = raycastResults[i].gameObject.transform;
             if (buttonGroupUI.Contains(hit) ||
                 (tutorialButton != null && hit.IsChildOf(tutorialButton.transform)) ||
+                (skipTutorialButton != null && hit.IsChildOf(skipTutorialButton.transform)) ||
                 (forumButton != null && hit.IsChildOf(forumButton.transform)) ||
                 (changeSaveButton != null && hit.IsChildOf(changeSaveButton.transform)) ||
                 startConfigSelectionUI.Contains(hit) ||

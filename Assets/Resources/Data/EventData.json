@@ -1149,6 +1149,83 @@
         }
       ],
       "numericId": 115
+    },
+    {
+      "id": "event_tutorial_signpost",
+      "titleKey": "event.tutorial_signpost.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.tutorial_signpost.start.1"
+          ],
+          "options": [
+            {
+              "id": "left",
+              "titleKey": "event.tutorial_signpost.option.left",
+              "recipe": "2",
+              "effects": [
+                {
+                  "rewardType": 9,
+                  "amount": 10
+                }
+              ],
+              "nextNodeId": "left"
+            },
+            {
+              "id": "right",
+              "titleKey": "event.tutorial_signpost.option.right",
+              "recipe": "4",
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 5
+                },
+                {
+                  "rewardType": 14,
+                  "choiceCount": 1
+                }
+              ],
+              "nextNodeId": "right"
+            },
+            {
+              "id": "straight",
+              "titleKey": "event.tutorial_signpost.option.straight",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "straight"
+            }
+          ]
+        },
+        {
+          "id": "left",
+          "textKeys": [
+            "event.tutorial_signpost.left.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "right",
+          "textKeys": [
+            "event.tutorial_signpost.right.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "straight",
+          "textKeys": [
+            "event.tutorial_signpost.straight.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 1001
     }
   ]
 }

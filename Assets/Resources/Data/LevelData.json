@@ -645,6 +645,53 @@
       "numericId": 502,
       "enemyIds": [],
       "eventPoolId": 109
+    },
+    {
+      "id": "level_tutorial_battle",
+      "titleKey": "level.tutorial_battle.title",
+      "levelType": 0,
+      "numericId": 1001,
+      "rewardPoolId": 1,
+      "enemyIds": [
+        1001
+      ],
+      "enemies": [
+        {
+          "enemyId": 1001,
+          "x": 0,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "id": "level_tutorial_event_signpost",
+      "titleKey": "level.tutorial_event.title",
+      "levelType": 1,
+      "numericId": 1002,
+      "eventPoolId": 1001
+    },
+    {
+      "id": "level_tutorial_shop",
+      "titleKey": "level.tutorial_shop.title",
+      "levelType": 2,
+      "numericId": 1003
+    },
+    {
+      "id": "level_tutorial_boss",
+      "titleKey": "level.tutorial_boss.title",
+      "levelType": 0,
+      "numericId": 1005,
+      "rewardPoolId": 1,
+      "enemyIds": [
+        1002
+      ],
+      "enemies": [
+        {
+          "enemyId": 1002,
+          "x": 0,
+          "y": 0
+        }
+      ]
     }
   ]
 }

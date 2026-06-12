@@ -121,6 +121,8 @@ public static class LocalizationKeys
             case BuffEnum.MagicAttackAll: return "magic_attack_all";
             case BuffEnum.NextMagicRepeat: return "next_magic_repeat";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
+            case BuffEnum.ChargeNextDraw: return "charge_next_draw";
+            case BuffEnum.TutorialDeath: return "tutorial_death";
             case BuffEnum.Claw: return "claw";
             default: return buffType.ToString().ToLowerInvariant();
         }

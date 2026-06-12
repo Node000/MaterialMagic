@@ -108,9 +108,13 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        bool touchPointer = IsTouchPointer(eventData);
+
         if (clickOverride != null)
         {
             clickOverride(this, eventData);
+            if (touchPointer)
+                ClearHoverAndHideTooltip();
             return;
         }
 
@@ -120,11 +124,16 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if (eventData.button == PointerEventData.InputButton.Right)
         {
             owner.OnCardPlayRequested(this);
+            if (touchPointer)
+                ClearHoverAndHideTooltip();
             return;
         }
 
         if (eventData.button == PointerEventData.InputButton.Left)
             owner.OnCardLeftClicked(this);
+
+        if (touchPointer)
+            ClearHoverAndHideTooltip();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -136,6 +145,19 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     }
 
     public void OnPointerExit(PointerEventData eventData)
+    {
+        hovered = false;
+        RefreshSpringHighlight();
+        PlayFeedback(false);
+        owner?.HideModifierTooltip(this);
+    }
+
+    private bool IsTouchPointer(PointerEventData eventData)
+    {
+        return Input.touchCount > 0 || (eventData != null && eventData.pointerId >= 0);
+    }
+
+    private void ClearHoverAndHideTooltip()
     {
         hovered = false;
         RefreshSpringHighlight();

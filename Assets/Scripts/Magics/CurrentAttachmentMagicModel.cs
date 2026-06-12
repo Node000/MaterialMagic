@@ -6,6 +6,6 @@ public class CurrentAttachmentMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         playerState.AddBuff(BuffEnum.SpellPower, 1);
-        AddMaterialNextTurn(playerState, MaterialEnum.Wind, new ChargeModifier());
+        playerState.AddBuff(BuffEnum.ChargeNextDraw, 1);
     }
 }

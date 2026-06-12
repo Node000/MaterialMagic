@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BigArrow3Modifier
-  m_Shader: {fileID: 4800000, guid: 547d221a583092947b2b0cc6dfb0c13a, type: 3}
+  m_Shader: {fileID: 4800000, guid: d0e426d8b4949f24fb25e712d8e4d40e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -45,12 +45,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AnimAmplitude: 0.01
+    - _AnimSpeed: 2
     - _ArrowDirection: 0
+    - _BaseSpacing: 0.06
     - _ColorMask: 15
     - _CopyCount: 3
     - _EffectMode: 3
     - _EffectSpeed: 1
     - _EffectStrength: 0.42
+    - _GroupScale: 0.75
+    - _OverlapOrder: 1
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

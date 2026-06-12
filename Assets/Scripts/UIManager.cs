@@ -288,13 +288,13 @@ public class UIManager : MonoBehaviour
         slotSelectPanelUI?.Hide();
     }
 
-    public void ShowVictoryPanel(float playSeconds, IReadOnlyList<string> magicNames)
+    public void ShowVictoryPanel(float playSeconds, IReadOnlyList<string> magicNames, bool tutorialVictory = false)
     {
         RunResultPanelUI panel = VictoryResultPanel;
         RunResultPanelUI otherPanel = DefeatResultPanel;
         if (otherPanel != null && otherPanel != panel)
             otherPanel.Hide();
-        panel?.ShowVictory(playSeconds, magicNames);
+        panel?.ShowVictory(playSeconds, magicNames, tutorialVictory);
     }
 
     public void ShowDefeatPanel(string defeatingEnemyName = null)

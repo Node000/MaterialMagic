@@ -34,17 +34,21 @@ public class RunResultPanelUI : MonoBehaviour
 
     public void ShowVictory()
     {
-        ShowVictory(0f, null);
+        ShowVictory(0f, null, false);
     }
 
-    public void ShowVictory(float playSeconds, IReadOnlyList<string> magicNames)
+    public void ShowVictory(float playSeconds, IReadOnlyList<string> magicNames, bool tutorialVictory = false)
     {
-        string bodyTemplate = LocalizationSystem.GetText(
-            "ui.run_result.victory.body",
-            "你花费了{0}，通过了全部的关卡\n你携带的东西有{1}\n真是一场令人喜悦的胜利\n现在，该休息一会儿了");
+        string bodyTemplate = tutorialVictory
+            ? LocalizationSystem.GetText("ui.run_result.victory.tutorial.body", "恭喜你完成了新手教程！")
+            : LocalizationSystem.GetText(
+                "ui.run_result.victory.body",
+                "你花费了{0}，通过了全部的关卡\n你携带的东西有{1}\n真是一场令人喜悦的胜利\n现在，该休息一会儿了");
+        if (!tutorialVictory)
+            bodyTemplate = bodyTemplate.Replace("{0}", FormatPlayTime(playSeconds)).Replace("{1}", FormatMagicList(magicNames));
         Show(
             LocalizationSystem.GetText("ui.run_result.victory.title", "胜利"),
-            bodyTemplate.Replace("{0}", FormatPlayTime(playSeconds)).Replace("{1}", FormatMagicList(magicNames)),
+            bodyTemplate,
             LocalizationSystem.GetText("ui.run_result.victory.return_button", "结束"));
     }
 

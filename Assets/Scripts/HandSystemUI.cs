@@ -310,6 +310,13 @@ public class HandSystemUI : MonoBehaviour
     [Range(0f, 1f)]
     private float playInputScreenHeightThreshold = 0.5f;
 
+    [Header("移动端道具奖励确认")]
+    [SerializeField]
+    private bool mobileRewardMagicConfirmEnabled = true;
+
+    [SerializeField]
+    private bool forceMobileRewardMagicConfirmInEditor;
+
 	private readonly List<HandCardView> cardViews = new List<HandCardView>();
 
 	private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
@@ -403,7 +410,34 @@ public class HandSystemUI : MonoBehaviour
 
 	private MagicData pendingRewardMagic;
 
+    [SerializeField]
+    private RectTransform rewardMagicConfirmPanel;
+
+    [SerializeField]
+    private RectTransform rewardMagicConfirmExistingRoot;
+
+    [SerializeField]
+    private RectTransform rewardMagicConfirmNewRoot;
+
+    [SerializeField]
+    private Button rewardMagicConfirmButton;
+
+    [SerializeField]
+    private Button rewardMagicConfirmCancelButton;
+
+    private int rewardMagicConfirmSlotIndex = -1;
+
+    private RectTransform rewardMagicConfirmSourceRect;
+
     private MagicData pendingShopMagic;
+
+    private int undoRewardMagicSlotIndex = -1;
+
+    private MagicModel undoRewardPreviousMagic;
+
+    private bool undoRewardAvailable;
+
+    private readonly List<MaterialEnum> forcedRefreshMaterials = new List<MaterialEnum>();
 
     private Action<int> pendingShopMagicSlotChosen;
 
@@ -472,6 +506,10 @@ public class HandSystemUI : MonoBehaviour
 	public PlayerState PlayerState => playerState;
 
     public RunManager RunManager => runManager;
+
+    public int ActiveChapterNumericId => activeChapter != null ? activeChapter.numericId : 0;
+
+    public int MagicSlotViewCount => magicViews.Count > 0 ? magicViews.Count : (magicBookArea != null ? magicBookArea.GetComponentsInChildren<MagicItemView>(true).Length : 0);
 
     public void DebugDealDamageToTarget(int damage)
     {
@@ -619,7 +657,7 @@ public class HandSystemUI : MonoBehaviour
 
     private bool ShouldActivateBossMapForCurrentSelection(RunMapGridModel grid)
     {
-        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1;
+        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1 && (activeChapter == null || activeChapter.numericId != TutorialManagerUI.TutorialChapterNumericId || runManager != null && runManager.MapGrid != null && runManager.MapGrid.playerY >= 4);
     }
 
     private void ActivateBossMapForCurrentSelection(ChapterGridPanelUI panel)
@@ -851,13 +889,12 @@ public class HandSystemUI : MonoBehaviour
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
         ClearEnemyViews();
-		bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(currentMapNodeIndex);
+		bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(level);
 		if (tutorialBattle)
 		{
-			battleManager.SpawnEnemy(TutorialManager.CreateTutorialEnemy());
 			TutorialManager.BeginTutorialBattle();
 		}
-        else if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
+        if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
         {
             LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
             if (group != null && group.enemies != null)
@@ -915,7 +952,8 @@ public class HandSystemUI : MonoBehaviour
 		ResetBattleDeckState();
 		currentLevel = level;
 		runManager?.BeginLevel(level);
-		currentEvent = null;
+        currentEvent = null;
+        HideRewardMagicConfirmPanel(false);
         pendingRewardMagic = null;
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
@@ -942,6 +980,7 @@ public class HandSystemUI : MonoBehaviour
         RefreshStaticUI();
 		RefreshMaterialListPanel();
 		GetUIManager().ShowShopPanel(level);
+        TutorialManager?.OnShopPanelShown();
 		refreshUsedThisTurn = false;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -1100,7 +1139,21 @@ public class HandSystemUI : MonoBehaviour
 		int drawCount = currentEvent.Data.drawCount >= 0 ? currentEvent.Data.drawCount : playerState.DrawCount;
 		GameLog.Data($"Draw event options hand count={drawCount}");
 		refreshUsedThisTurn = false;
-		playerState.DrawCards(drawCount);
+        if (TutorialManager != null && TutorialManager.ShouldUseTutorialEventFixedDraw(currentEvent.Data))
+        {
+            playerState.Hand.Clear();
+            playerState.PlayZone.Clear();
+            playerState.DrawPile.Clear();
+            playerState.DiscardPile.Clear();
+            playerState.ConsumedPile.Clear();
+            playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), MaterialEnum.Wind));
+            playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), MaterialEnum.Wind));
+            TutorialManager.OnEventOptionsShown();
+        }
+        else
+        {
+		    playerState.DrawCards(drawCount);
+        }
 		RefreshStaticUI();
 		RefreshMaterialListPanel();
 		RebuildCards(animateFromCurrent: true);
@@ -1662,6 +1715,14 @@ public class HandSystemUI : MonoBehaviour
         for (int i = 0; i < cellCount; i++)
             levels.Add(null);
 
+        if (chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId)
+        {
+            BuildTutorialChapterMapGrid(levels, width, height);
+            runManager.BuildMapGrid(chapter, levels);
+            ApplyTutorialChapterMapCellFlags();
+            return;
+        }
+
         LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
         if (width == 5 && height == 8)
             BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel);
@@ -1671,6 +1732,37 @@ public class HandSystemUI : MonoBehaviour
         runManager.BuildMapGrid(chapter, levels);
         if (width == 5 && height == 8)
             ApplyDesignedChapterMapCellFlags();
+    }
+
+    private void BuildTutorialChapterMapGrid(List<LevelData> levels, int width, int height)
+    {
+        SetMapGridLevel(levels, width, 0, 1, GetLevelData(TutorialManagerUI.TutorialBattleLevelId));
+        SetMapGridLevel(levels, width, 0, 2, GetLevelData(TutorialManagerUI.TutorialEventLevelId));
+        SetMapGridLevel(levels, width, 0, 3, GetLevelData(TutorialManagerUI.TutorialShopLevelId));
+        SetMapGridLevel(levels, width, 0, 4, GetLevelData(TutorialManagerUI.TutorialRestLevelId));
+    }
+
+    private void ApplyTutorialChapterMapCellFlags()
+    {
+        RunMapGridModel grid = ChapterMapGrid;
+        if (grid == null)
+            return;
+
+        for (int i = 0; i < grid.cells.Count; i++)
+        {
+            RunMapCellModel cell = grid.cells[i];
+            if (cell == null)
+                continue;
+
+            cell.isAvailable = true;
+            cell.isBoss = false;
+            cell.isRevealed = true;
+        }
+    }
+
+    private static LevelData GetLevelData(int numericId)
+    {
+        return GameDataDatabase.TryGetLevelData(numericId, out LevelData level) ? level : null;
     }
 
     private void BuildWeightedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel)
@@ -2169,7 +2261,13 @@ public class HandSystemUI : MonoBehaviour
         loadedRunPlaySeconds = saveData != null ? Mathf.Max(0f, saveData.totalPlaySeconds) : 0f;
         runStartRealtime = Time.realtimeSinceStartup;
 
+        bool startingTutorialRun = !continueSavedRun && RunSaveSystem.ConsumeStartingTutorialRun();
+        if (startingTutorialRun && GameDataDatabase.TryGetChapterData(TutorialManagerUI.TutorialChapterNumericId, out ChapterData tutorialChapter))
+            activeChapter = tutorialChapter;
+
         PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
+        if (startingTutorialRun && playerStatus.Gold < 10)
+            playerStatus.AddGold(10 - playerStatus.Gold);
 		playerState = playerStatus;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
@@ -2244,9 +2342,19 @@ public class HandSystemUI : MonoBehaviour
 			ToggleSettingsPanel();
 		}
 
+#if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.U))
         {
             DebugApplyRandomMaterialModifiersToDeck();
+        }
+#endif
+
+        if (Input.GetKeyDown(KeyCode.Backspace))
+        {
+            if (TryUndoRewardMagicClaim())
+                return;
+            if (GetUIManager().ShopPanel != null && GetUIManager().ShopPanel.TryUndoLastPurchase())
+                return;
         }
 
 		if (IsPlaySelectedCardsInputDown())
@@ -2355,11 +2463,15 @@ public class HandSystemUI : MonoBehaviour
 		}
 		if (cardView.InPlayZone)
 		{
-			if (playerState.TryMovePlayCardToHand(cardView.Card))
-			{
+            if (TutorialManager != null && !TutorialManager.CanMovePlayCardToHand(cardView.Card))
+                return;
+
+            if (playerState.TryMovePlayCardToHand(cardView.Card))
+            {
+                TutorialManager?.OnBattleCardCanceled(playerState.PlayZone);
                 RefreshPlayerAnimationState();
-				RebuildCards(animateFromCurrent: true);
-			}
+                RebuildCards(animateFromCurrent: true);
+            }
 			return;
 		}
         if (playerState.IsMaterialDisabled(cardView.Card))
@@ -2379,13 +2491,14 @@ public class HandSystemUI : MonoBehaviour
 				selectedCards.Add(cardView.Card);
 			}
 		}
-		else
-		{
-			selectedCards.Remove(cardView.Card);
-		}
+			else
+			{
+				selectedCards.Remove(cardView.Card);
+			}
         RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
-	}
+        TutorialManager?.OnBattleCardsSelected(selectedCards);
+		}
 
 	public void OnCardPlayRequested(HandCardView cardView)
 	{
@@ -2622,22 +2735,36 @@ public class HandSystemUI : MonoBehaviour
 			return;
 		}
 		bool flag = false;
-		for (int i = 0; i < playerState.Hand.Count; i++)
-		{
-			MaterialModel materialModel = playerState.Hand[i];
-			if (selectedCards.Contains(materialModel) && !playerState.IsMaterialDisabled(materialModel) && (TutorialManager == null || TutorialManager.CanMoveCardToPlay(materialModel, playerState.PlayZone)))
-			{
-				bool moved = playerState.TryMoveHandCardToPlay(materialModel);
-				flag |= moved;
-				if (moved)
-					i--;
-			}
-		}
+        MaterialModifierContext previousContext = MaterialModifierModel.CurrentContext;
+        MaterialModifierContext modifierContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
+        MaterialModifierModel.CurrentContext = modifierContext;
+        try
+        {
+		    for (int i = 0; i < playerState.Hand.Count; i++)
+		    {
+			    MaterialModel materialModel = playerState.Hand[i];
+			    if (selectedCards.Contains(materialModel) && !playerState.IsMaterialDisabled(materialModel) && (TutorialManager == null || TutorialManager.CanMoveCardToPlay(materialModel, playerState.PlayZone)))
+			    {
+				    bool moved = playerState.TryMoveHandCardToPlay(materialModel);
+				    flag |= moved;
+				    if (moved)
+					    i--;
+			    }
+		    }
+        }
+        finally
+        {
+            MaterialModifierModel.CurrentContext = previousContext;
+        }
 		selectedCards.Clear();
         RefreshEndTurnButtonText();
         RefreshPlayerAnimationState();
 		if (flag)
 		{
+            TutorialManager?.OnBattleCardsPlayed(playerState.PlayZone);
+            TutorialManager?.OnBattleReadyToEndTurn(playerState.PlayZone);
+            if (modifierContext.EnemyBuffChanged)
+                RefreshEnemyUI();
 			RebuildCards(animateFromCurrent: true);
 		}
 	}
@@ -2650,11 +2777,27 @@ public class HandSystemUI : MonoBehaviour
 		if (TutorialManager != null && !TutorialManager.CanMoveCardToPlay(card, playerState.PlayZone))
 			return;
 
-		if (playerState.TryMoveHandCardToPlay(card))
+        MaterialModifierContext previousContext = MaterialModifierModel.CurrentContext;
+        MaterialModifierContext modifierContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
+        MaterialModifierModel.CurrentContext = modifierContext;
+        bool moved;
+        try
+        {
+            moved = playerState.TryMoveHandCardToPlay(card);
+        }
+        finally
+        {
+            MaterialModifierModel.CurrentContext = previousContext;
+        }
+		if (moved)
 		{
 			selectedCards.Remove(card);
+            TutorialManager?.OnBattleCardsPlayed(playerState.PlayZone);
+            TutorialManager?.OnBattleReadyToEndTurn(playerState.PlayZone);
             RefreshEndTurnButtonText();
             RefreshPlayerAnimationState();
+            if (modifierContext.EnemyBuffChanged)
+                RefreshEnemyUI();
 			RebuildCards(animateFromCurrent: true);
 		}
 	}
@@ -2690,12 +2833,13 @@ public class HandSystemUI : MonoBehaviour
 		}
 		List<MaterialModel> list2 = new List<MaterialModel>();
 		PlayerState.RefreshHandResult refreshResult;
-		if (TutorialManager != null && TutorialManager.ShouldForceRefreshEarth(out MaterialEnum forcedMaterial))
-		{
-			playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
-			playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), forcedMaterial));
-			refreshResult = new PlayerState.RefreshHandResult(1, 1);
-		}
+			if (TutorialManager != null && TutorialManager.TryGetForcedRefreshMaterials(selectedCards.Count, forcedRefreshMaterials))
+			{
+				playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
+				for (int i = 0; i < forcedRefreshMaterials.Count; i++)
+					playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), forcedRefreshMaterials[i]));
+				refreshResult = new PlayerState.RefreshHandResult(forcedRefreshMaterials.Count, selectedCards.Count);
+			}
 		else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
 		{
 			refreshResult = playerState.RefreshBasicMaterialHandCards(selectedCards, list2);
@@ -2753,6 +2897,8 @@ public class HandSystemUI : MonoBehaviour
 
 		if (TutorialManager != null && !TutorialManager.CanEndTurn(playerState.PlayZone))
 			return;
+
+        TutorialManager?.OnBattleEndTurnStarted();
 
 		GameLog.Data((currentEvent != null) ? "Click end turn in event" : "Click end turn in battle");
 		selectedCards.Clear();
@@ -2813,6 +2959,16 @@ public class HandSystemUI : MonoBehaviour
 			yield return null;
 		}
 		bool enemyTurnBannerShown = false;
+        if (TutorialManager != null && TutorialManager.ShouldKillTutorialEnemyAfterPlayerTurn)
+        {
+            battleManager?.EndPlayerResolveRules();
+            for (int i = 0; i < enemyModels.Count; i++)
+                enemyModels[i]?.Kill(new CombatantModel(playerState));
+            RefreshEnemyUI((RectTransform)null, false);
+            yield return PlayPendingEnemyDeaths();
+            yield return FinishBattleRoutine();
+            yield break;
+        }
         battleManager?.BeginEnemyTurn();
 		for (int num = 0; num < enemyModels.Count; num++)
 		{
@@ -4428,9 +4584,9 @@ public class HandSystemUI : MonoBehaviour
 		if (!((Object)magicBookArea == (Object)null))
 		{
 			magicViews.Clear();
-			MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
-			for (int i = 0; i < componentsInChildren.Length && i < playerState.MagicBookSlotCount; i++)
-			{
+				MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+				for (int i = 0; i < componentsInChildren.Length; i++)
+				{
 				((Component)componentsInChildren[i]).gameObject.SetActive(true);
 				AddJuicyMotion(((Component)componentsInChildren[i]).transform);
 				MagicSlotClickHandler clickHandler = ((Component)componentsInChildren[i]).GetComponent<MagicSlotClickHandler>();
@@ -5003,6 +5159,7 @@ public class HandSystemUI : MonoBehaviour
 		SetButtonsInteractable(interactable: false);
         if (ShouldCompleteRunAfterCurrentBattle())
         {
+            TutorialManager?.CompleteTutorial(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
             ShowVictoryPanel();
             yield break;
         }
@@ -5216,6 +5373,7 @@ public class HandSystemUI : MonoBehaviour
 
 	public void SelectPendingRewardMagic(MagicData rewardMagic)
 	{
+        HideRewardMagicConfirmPanel(false);
 		pendingRewardMagic = rewardMagic;
         RefreshPlayerAnimationState();
         if (rewardMagic != null)
@@ -5251,6 +5409,279 @@ public class HandSystemUI : MonoBehaviour
         return true;
     }
 
+	public bool TryPlacePendingRewardMagic(int slotIndex)
+	{
+		if (pendingRewardMagic == null)
+			return false;
+
+        MagicData rewardMagic = pendingRewardMagic;
+        RectTransform sourceRect = GetUIManager().RewardPanel != null ? GetUIManager().RewardPanel.SelectedMagicRect : null;
+        if (ShouldConfirmRewardMagicOnMobile() && ShowRewardMagicConfirmPanel(rewardMagic, slotIndex, sourceRect))
+            return true;
+
+        pendingRewardMagic = null;
+        RefreshPlayerAnimationState();
+        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
+		return true;
+	}
+
+    private bool ShouldConfirmRewardMagicOnMobile()
+    {
+        if (!mobileRewardMagicConfirmEnabled)
+            return false;
+        if (Application.isMobilePlatform)
+            return true;
+#if UNITY_EDITOR
+        return forceMobileRewardMagicConfirmInEditor;
+#else
+        return false;
+#endif
+    }
+
+    private bool ShowRewardMagicConfirmPanel(MagicData rewardMagic, int slotIndex, RectTransform sourceRect)
+    {
+        EnsureRewardMagicConfirmPanel();
+        if (rewardMagicConfirmPanel == null)
+            return false;
+
+        rewardMagicConfirmSlotIndex = slotIndex;
+        rewardMagicConfirmSourceRect = sourceRect;
+        BindRewardMagicConfirmView(rewardMagicConfirmExistingRoot, playerState.GetMagicAtSlot(slotIndex));
+        BindRewardMagicConfirmView(rewardMagicConfirmNewRoot, MagicFactory.Create(rewardMagic, slotIndex));
+
+        if (rewardMagicConfirmButton != null)
+        {
+            rewardMagicConfirmButton.onClick.RemoveAllListeners();
+            rewardMagicConfirmButton.onClick.AddListener(ConfirmRewardMagicPlacement);
+        }
+        if (rewardMagicConfirmCancelButton != null)
+        {
+            rewardMagicConfirmCancelButton.onClick.RemoveAllListeners();
+            rewardMagicConfirmCancelButton.onClick.AddListener(CancelRewardMagicPlacementConfirm);
+        }
+
+        rewardMagicConfirmPanel.gameObject.SetActive(true);
+        rewardMagicConfirmPanel.SetAsLastSibling();
+        return true;
+    }
+
+    private void ConfirmRewardMagicPlacement()
+    {
+        if (pendingRewardMagic == null || rewardMagicConfirmSlotIndex < 0)
+        {
+            HideRewardMagicConfirmPanel(false);
+            return;
+        }
+
+        MagicData rewardMagic = pendingRewardMagic;
+        int slotIndex = rewardMagicConfirmSlotIndex;
+        RectTransform sourceRect = rewardMagicConfirmSourceRect;
+        HideRewardMagicConfirmPanel(false);
+        pendingRewardMagic = null;
+        RefreshPlayerAnimationState();
+        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
+    }
+
+    private void CancelRewardMagicPlacementConfirm()
+    {
+        HideRewardMagicConfirmPanel(false);
+    }
+
+    private void HideRewardMagicConfirmPanel(bool clearPendingReward)
+    {
+        if (clearPendingReward)
+        {
+            pendingRewardMagic = null;
+            RefreshPlayerAnimationState();
+        }
+
+        rewardMagicConfirmSlotIndex = -1;
+        rewardMagicConfirmSourceRect = null;
+        if (rewardMagicConfirmPanel != null)
+            rewardMagicConfirmPanel.gameObject.SetActive(false);
+    }
+
+    private void EnsureRewardMagicConfirmPanel()
+    {
+        if (rewardMagicConfirmPanel != null)
+            return;
+
+        RectTransform existingPanel = UIManager.FindChildRecursive(transform, "RewardMagicConfirmPanel") as RectTransform;
+        if (existingPanel != null)
+        {
+            rewardMagicConfirmPanel = existingPanel;
+            CacheRewardMagicConfirmPanelReferences();
+            rewardMagicConfirmPanel.gameObject.SetActive(false);
+            return;
+        }
+
+        RectTransform parent = transform as RectTransform;
+        if (parent == null)
+            return;
+
+        TMP_Text overlayBlocker = new GameObject("RewardMagicConfirmPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+        rewardMagicConfirmPanel = overlayBlocker.rectTransform;
+        rewardMagicConfirmPanel.SetParent(parent, false);
+        rewardMagicConfirmPanel.anchorMin = Vector2.zero;
+        rewardMagicConfirmPanel.anchorMax = Vector2.one;
+        rewardMagicConfirmPanel.offsetMin = Vector2.zero;
+        rewardMagicConfirmPanel.offsetMax = Vector2.zero;
+        overlayBlocker.text = string.Empty;
+        overlayBlocker.color = Color.white;
+        overlayBlocker.raycastTarget = true;
+        PopupLayerUtility.ApplyTo(rewardMagicConfirmPanel);
+
+        RectTransform window = CreateRewardMagicConfirmWindow(rewardMagicConfirmPanel);
+        RectTransform content = GetPopupContent(window);
+        CreateRewardMagicConfirmText(content, "Title", "确认替换道具？", 28, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(420f, 42f));
+        CreateRewardMagicConfirmText(content, "Hint", "确认后才会覆盖；取消后可以重新选择道具槽。", 16, FontStyles.Normal, new Vector2(0f, 76f), new Vector2(560f, 28f));
+        CreateRewardMagicConfirmText(content, "ExistingLabel", "已有道具", 18, FontStyles.Bold, new Vector2(-160f, 36f), new Vector2(160f, 28f));
+        CreateRewardMagicConfirmText(content, "NewLabel", "新道具", 18, FontStyles.Bold, new Vector2(160f, 36f), new Vector2(160f, 28f));
+        rewardMagicConfirmExistingRoot = CreateRewardMagicConfirmRoot(content, "ExistingMagic", new Vector2(-160f, -34f));
+        rewardMagicConfirmNewRoot = CreateRewardMagicConfirmRoot(content, "NewMagic", new Vector2(160f, -34f));
+        rewardMagicConfirmCancelButton = CreateRewardMagicConfirmButton(content, "CancelButton", "取消", new Vector2(-90f, -130f), new Vector2(130f, 44f), new Color(0.09f, 0.09f, 0.14f, 1f));
+        rewardMagicConfirmButton = CreateRewardMagicConfirmButton(content, "ConfirmButton", "确认", new Vector2(90f, -130f), new Vector2(130f, 44f), new Color(0.1f, 0.95f, 0.25f, 1f));
+        rewardMagicConfirmPanel.gameObject.SetActive(false);
+    }
+
+    private void CacheRewardMagicConfirmPanelReferences()
+    {
+        rewardMagicConfirmExistingRoot = UIManager.FindChildRecursive(rewardMagicConfirmPanel, "ExistingMagic") as RectTransform;
+        rewardMagicConfirmNewRoot = UIManager.FindChildRecursive(rewardMagicConfirmPanel, "NewMagic") as RectTransform;
+        rewardMagicConfirmButton = GetRewardMagicConfirmButton("ConfirmButton");
+        rewardMagicConfirmCancelButton = GetRewardMagicConfirmButton("CancelButton");
+        ApplyRewardMagicConfirmButtonColor(rewardMagicConfirmButton, new Color(0.1f, 0.95f, 0.25f, 1f));
+        ApplyRewardMagicConfirmButtonColor(rewardMagicConfirmCancelButton, new Color(0.09f, 0.09f, 0.14f, 1f));
+    }
+
+    private Button GetRewardMagicConfirmButton(string name)
+    {
+        Transform child = UIManager.FindChildRecursive(rewardMagicConfirmPanel, name);
+        return child != null ? child.GetComponent<Button>() : null;
+    }
+
+    private static void ApplyRewardMagicConfirmButtonColor(Button button, Color color)
+    {
+        if (button == null)
+            return;
+
+        Graphic targetGraphic = button.targetGraphic;
+        if (targetGraphic != null)
+            targetGraphic.color = color;
+    }
+
+    private RectTransform CreateRewardMagicConfirmWindow(RectTransform parent)
+    {
+        RectTransform prefab = GetPopupDragonWindowBlankPrefab();
+        RectTransform window;
+        if (prefab != null)
+        {
+            window = Object.Instantiate(prefab, parent);
+            window.name = "PopupDragonWindowBlank";
+        }
+        else
+        {
+            Image image = new GameObject("PopupDragonWindowBlank", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            image.color = new Color(0.02f, 0.02f, 0.04f, 1f);
+            image.raycastTarget = true;
+            window = image.rectTransform;
+            window.SetParent(parent, false);
+        }
+
+        window.anchorMin = new Vector2(0.5f, 0.5f);
+        window.anchorMax = new Vector2(0.5f, 0.5f);
+        window.pivot = new Vector2(0.5f, 0.5f);
+        window.anchoredPosition = Vector2.zero;
+        window.sizeDelta = new Vector2(680f, 380f);
+        window.localScale = Vector3.one;
+        window.SetAsLastSibling();
+        return window;
+    }
+
+    private RectTransform GetPopupContent(RectTransform window)
+    {
+        Transform contentTransform = UIManager.FindChildRecursive(window, "Content");
+        RectTransform content = contentTransform as RectTransform;
+        if (content != null)
+            return content;
+        return window;
+    }
+
+    private RectTransform GetPopupDragonWindowBlankPrefab()
+    {
+        PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
+        return library != null ? library.PopupDragonWindowBlankPrefab : null;
+    }
+
+    private TMP_Text CreateRewardMagicConfirmText(RectTransform parent, string name, string text, int fontSize, FontStyles fontStyle, Vector2 anchoredPosition, Vector2 size)
+    {
+        TMP_Text label = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+        label.transform.SetParent(parent, false);
+        label.font = GetDefaultFont();
+        label.fontSize = fontSize;
+        label.fontStyle = fontStyle;
+        label.alignment = TextAlignmentOptions.Center;
+        label.color = fontStyle == FontStyles.Bold ? new Color(1f, 0.9f, 0.55f, 1f) : new Color(0.86f, 0.88f, 0.94f, 1f);
+        label.text = text;
+        label.raycastTarget = false;
+        RectTransform rect = label.rectTransform;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        return label;
+    }
+
+    private RectTransform CreateRewardMagicConfirmRoot(RectTransform parent, string name, Vector2 anchoredPosition)
+    {
+        RectTransform root = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+        root.SetParent(parent, false);
+        root.anchorMin = new Vector2(0.5f, 0.5f);
+        root.anchorMax = new Vector2(0.5f, 0.5f);
+        root.pivot = new Vector2(0.5f, 0.5f);
+        root.anchoredPosition = anchoredPosition;
+        root.sizeDelta = new Vector2(196f, 92f);
+        return root;
+    }
+
+    private Button CreateRewardMagicConfirmButton(RectTransform parent, string name, string text, Vector2 anchoredPosition, Vector2 size, Color color)
+    {
+        Image image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(JuicyMotion)).GetComponent<Image>();
+        image.transform.SetParent(parent, false);
+        image.color = color;
+        RectTransform rect = image.rectTransform;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        TMP_Text label = CreateRewardMagicConfirmText(rect, "Text", text, 18, FontStyles.Bold, Vector2.zero, size);
+        label.color = Color.white;
+        return image.GetComponent<Button>();
+    }
+
+    private void BindRewardMagicConfirmView(RectTransform root, MagicModel magic)
+    {
+        if (root == null || magicViewPrefab == null)
+            return;
+
+        for (int i = root.childCount - 1; i >= 0; i--)
+            Object.Destroy(root.GetChild(i).gameObject);
+
+        RectTransform viewRect = Object.Instantiate(magicViewPrefab, root);
+        viewRect.gameObject.SetActive(true);
+        viewRect.anchorMin = new Vector2(0.5f, 0.5f);
+        viewRect.anchorMax = new Vector2(0.5f, 0.5f);
+        viewRect.pivot = new Vector2(0.5f, 0.5f);
+        viewRect.anchoredPosition = Vector2.zero;
+        viewRect.sizeDelta = new Vector2(196f, 92f);
+        MagicItemView view = viewRect.GetComponent<MagicItemView>();
+        if (view != null)
+            view.Bind(magic);
+        UIManager.RemoveJuicyMotion(viewRect.transform);
+    }
+
     public void SelectPendingMagicModifier(MagicModifierData modifierData)
     {
         pendingMagicModifier = modifierData;
@@ -5262,19 +5693,6 @@ public class HandSystemUI : MonoBehaviour
     public bool HasPendingShopMagic => pendingShopMagic != null;
 
     public bool HasPendingMagicModifier => pendingMagicModifier != null;
-
-	public bool TryPlacePendingRewardMagic(int slotIndex)
-	{
-		if (pendingRewardMagic == null)
-			return false;
-
-        MagicData rewardMagic = pendingRewardMagic;
-        RectTransform sourceRect = GetUIManager().RewardPanel != null ? GetUIManager().RewardPanel.SelectedMagicRect : null;
-        pendingRewardMagic = null;
-        RefreshPlayerAnimationState();
-        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
-		return true;
-	}
 
     public bool TryApplyPendingMagicModifier(int slotIndex)
     {
@@ -5313,11 +5731,34 @@ public class HandSystemUI : MonoBehaviour
 		if (rewardMagic == null)
 			return;
 
+        HideRewardMagicConfirmPanel(false);
+        undoRewardMagicSlotIndex = slotIndex;
+        undoRewardPreviousMagic = playerState.GetMagicAtSlot(slotIndex);
+        undoRewardAvailable = true;
 		playerState.SetMagicAtSlot(MagicFactory.Create(rewardMagic, slotIndex), slotIndex);
 		CreateMagicViews();
 		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
 		TutorialManager?.OnRewardMagicEquipped(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
 	}
+
+    private bool TryUndoRewardMagicClaim()
+    {
+        if (!undoRewardAvailable || currentLevel == null || GetUIManager().RewardPanel == null || undoRewardMagicSlotIndex < 0)
+            return false;
+
+        if (undoRewardPreviousMagic != null)
+            playerState.SetMagicAtSlot(undoRewardPreviousMagic, undoRewardMagicSlotIndex);
+        else
+            playerState.ClearMagicSlot(undoRewardMagicSlotIndex);
+        undoRewardMagicSlotIndex = -1;
+        undoRewardPreviousMagic = null;
+        undoRewardAvailable = false;
+        CreateMagicViews();
+        GetUIManager().RewardPanel.UndoMagicRewardClaim();
+        RefreshStaticUI();
+        SaveRunProgress();
+        return true;
+    }
 
     public IEnumerator GainGoldAnimated(int amount, RectTransform sourceRect)
     {
@@ -5460,6 +5901,19 @@ public class HandSystemUI : MonoBehaviour
         return true;
     }
 
+    public void RefreshShopUndoUI()
+    {
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    public void CreateMagicViewsForShopUndo()
+    {
+        CreateMagicViews();
+    }
+
     public bool RemoveShopMaterial(MaterialModel material)
     {
         if (material == null || playerState == null)
@@ -5483,6 +5937,10 @@ public class HandSystemUI : MonoBehaviour
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
         bool finishedBossMapLevel = currentChapterMapBossLevel;
+        HideRewardMagicConfirmPanel(false);
+        undoRewardAvailable = false;
+        undoRewardMagicSlotIndex = -1;
+        undoRewardPreviousMagic = null;
 		pendingRewardMagic = null;
         pendingShopMagic = null;
         pendingShopMagicSlotChosen = null;
@@ -6021,6 +6479,8 @@ public class HandSystemUI : MonoBehaviour
 		if (runEnded)
 			return;
 
+        ChapterData chapter = victory ? (activeChapter ?? GetActiveChapter()) : null;
+        bool tutorialVictory = chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId;
         float playSeconds = victory ? GetCurrentRunPlaySeconds() : 0f;
         List<string> magicNames = victory ? GetVictoryMagicNames() : null;
         if (victory)
@@ -6035,12 +6495,13 @@ public class HandSystemUI : MonoBehaviour
             AudioManager.Instance.PlayGameplayMusic();
 		GetUIManager().HideLevelSelect();
 		GetUIManager().HideMapPanel();
+        HideRewardMagicConfirmPanel(false);
 		GetUIManager().HideRewardPanel();
 		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
 		ResetContinuousCastCounterUI();
 		if (victory)
-			GetUIManager().ShowVictoryPanel(playSeconds, magicNames);
+            GetUIManager().ShowVictoryPanel(playSeconds, magicNames, tutorialVictory);
 		else
 			GetUIManager().ShowDefeatPanel(playerState?.LastDamageSourceEnemy?.Name);
 	}
@@ -6053,12 +6514,11 @@ public class HandSystemUI : MonoBehaviour
     private List<string> GetVictoryMagicNames()
     {
         List<string> names = new List<string>();
-        if (playerState == null)
-            return names;
+	        if (playerState == null)
+	            return names;
 
-        int slotCount = Mathf.Min(6, playerState.MagicBookSlotCount);
-        for (int i = 0; i < slotCount; i++)
-        {
+		for (int i = 0; i < magicViews.Count; i++)
+	        {
             MagicModel magic = playerState.GetMagicAtSlot(i);
             if (magic != null && !string.IsNullOrEmpty(magic.Name))
                 names.Add(magic.Name);
@@ -7012,17 +7472,24 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0058: Expected O, but got Unknown
 		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
 		//IL_009e: Expected O, but got Unknown
+		List<HandCardView> returningViews = new List<HandCardView>();
+		for (int i = 0; i < views.Count; i++)
+		{
+			HandCardView view = views[i];
+			if ((Object)view != (Object)null && (view.Card == null || !playerState.Hand.Contains(view.Card)))
+				returningViews.Add(view);
+		}
 		if (removedTemporaryCards == null || removedTemporaryCards.Count == 0)
 		{
-			AnimateViewsToArea(views, returnArea, onComplete);
+			AnimateViewsToArea(returningViews, returnArea, onComplete);
 			return;
 		}
 		List<HandCardView> list = new List<HandCardView>();
-        List<HandCardView> consumedViews = new List<HandCardView>();
+		List<HandCardView> consumedViews = new List<HandCardView>();
 		List<HandCardView> temporaryViews = new List<HandCardView>();
-		for (int i = 0; i < views.Count; i++)
+		for (int i = 0; i < returningViews.Count; i++)
 		{
-			HandCardView handCardView = views[i];
+			HandCardView handCardView = returningViews[i];
 			if (!((Object)handCardView == (Object)null))
 			{
 				if (removedTemporaryCards.Contains(handCardView.Card))

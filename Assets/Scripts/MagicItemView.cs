@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private Image backgroundImage;
@@ -16,6 +16,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private TMP_Text tooltipNameText;
     [SerializeField] private TMP_Text tooltipDescriptionText;
     [SerializeField] private TMP_Text tooltipEffectText;
+    [SerializeField] private Vector2 tooltipSize = new Vector2(230f, 108f);
+    [SerializeField] private float tooltipDescriptionVerticalPadding = 54f;
     [SerializeField] private RectTransform modifierTooltipRoot;
     [SerializeField] private TMP_Text modifierTooltipText;
     [SerializeField] private Vector2 modifierTooltipSize = new Vector2(230f, 76f);
@@ -66,7 +68,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Tween pulseTween;
     private Tween modifierMarkerTween;
     private bool tooltipInitialized;
+    private float tooltipBottomAnchoredY;
     private bool warnedMissingBackgroundImage;
+    private bool tooltipPinned;
+    private static MagicItemView pinnedTooltipView;
+    private static readonly List<RaycastResult> pointerRaycastResults = new List<RaycastResult>(8);
+    private static PointerEventData pointerEventData;
+    private static EventSystem pointerEventSystem;
 
     public MagicModel Magic => magic;
 
@@ -89,6 +97,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
             tooltipRoot.pivot = new Vector2(0.5f, 0.5f);
             tooltipRoot.anchoredPosition += new Vector2(0f, tooltipRoot.sizeDelta.y * 0.5f);
+            tooltipBottomAnchoredY = tooltipRoot.anchoredPosition.y - tooltipRoot.sizeDelta.y * tooltipRoot.pivot.y;
             tooltipRoot.localScale = tooltipHiddenScale;
             tooltipRoot.gameObject.SetActive(false);
             tooltipCanvasGroup.alpha = 0f;
@@ -100,6 +109,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private void OnDisable()
     {
+        UnpinTooltip(false);
         HideTooltip(true);
         HideModifierTooltipImmediate();
         pulseTween?.Kill(false);
@@ -210,7 +220,108 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        HideTooltip(false);
+        if (!tooltipPinned)
+            HideTooltip(false);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
+            return;
+
+        PinTooltip();
+        ForwardClickToParentButton(eventData);
+    }
+
+    private void ForwardClickToParentButton(PointerEventData eventData)
+    {
+        Transform current = transform.parent;
+        while (current != null)
+        {
+            Button button = current.GetComponent<Button>();
+            if (button != null && button.IsActive() && button.interactable)
+            {
+                button.OnPointerClick(eventData);
+                return;
+            }
+            current = current.parent;
+        }
+    }
+
+    private void Update()
+    {
+        if (!tooltipPinned || !IsPointerDownThisFrame(out Vector2 screenPosition))
+            return;
+
+        if (!IsPointerOverThisMagicView(screenPosition))
+            UnpinTooltip(true);
+    }
+
+    private void PinTooltip()
+    {
+        if (pinnedTooltipView != null && pinnedTooltipView != this)
+            pinnedTooltipView.UnpinTooltip(true);
+
+        pinnedTooltipView = this;
+        tooltipPinned = true;
+        ShowTooltip();
+    }
+
+    private void UnpinTooltip(bool hide)
+    {
+        if (pinnedTooltipView == this)
+            pinnedTooltipView = null;
+
+        tooltipPinned = false;
+        if (hide)
+            HideTooltip(false);
+    }
+
+    private static bool IsPointerDownThisFrame(out Vector2 screenPosition)
+    {
+        screenPosition = default;
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase != TouchPhase.Began)
+                return false;
+
+            screenPosition = touch.position;
+            return true;
+        }
+
+        if (!Input.GetMouseButtonDown(0))
+            return false;
+
+        screenPosition = Input.mousePosition;
+        return true;
+    }
+
+    private bool IsPointerOverThisMagicView(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return false;
+
+        if (pointerEventData == null || pointerEventSystem != eventSystem)
+        {
+            pointerEventSystem = eventSystem;
+            pointerEventData = new PointerEventData(eventSystem);
+        }
+
+        pointerEventData.Reset();
+        pointerEventData.position = screenPosition;
+        pointerRaycastResults.Clear();
+        eventSystem.RaycastAll(pointerEventData, pointerRaycastResults);
+
+        for (int i = 0; i < pointerRaycastResults.Count; i++)
+        {
+            GameObject hitObject = pointerRaycastResults[i].gameObject;
+            if (hitObject != null && hitObject.transform.IsChildOf(transform))
+                return true;
+        }
+
+        return false;
     }
 
     private void CacheMissingReferences()
@@ -357,6 +468,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         tagTooltipTween?.Kill(false);
         tooltipRoot.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(tooltipRoot);
+        UpdateTooltipSize();
         tooltipRoot.localScale = tooltipHiddenScale;
 
         Sequence sequence = DOTween.Sequence().SetTarget(this);
@@ -366,6 +478,32 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         ShowModifierTooltip();
         ShowTagTooltip();
+    }
+
+    private void UpdateTooltipSize()
+    {
+        if (tooltipRoot == null)
+            return;
+
+        Vector2 size = GetTooltipSize();
+        tooltipRoot.sizeDelta = size;
+        tooltipRoot.anchoredPosition = new Vector2(tooltipRoot.anchoredPosition.x, tooltipBottomAnchoredY + size.y * tooltipRoot.pivot.y);
+    }
+
+    private Vector2 GetTooltipSize()
+    {
+        float width = tooltipSize.x > 0f ? tooltipSize.x : tooltipRoot.sizeDelta.x;
+        float minHeight = tooltipSize.y > 0f ? tooltipSize.y : tooltipRoot.sizeDelta.y;
+        if (tooltipDescriptionText == null || string.IsNullOrEmpty(tooltipDescriptionText.text))
+            return new Vector2(width, minHeight);
+
+        tooltipRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        RectTransform descriptionRect = tooltipDescriptionText.rectTransform;
+        descriptionRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(0f, width + descriptionRect.sizeDelta.x));
+        Canvas.ForceUpdateCanvases();
+
+        float height = Mathf.Max(minHeight, tooltipDescriptionText.preferredHeight + tooltipDescriptionVerticalPadding);
+        return new Vector2(width, height);
     }
 
     private void ShowModifierTooltip()

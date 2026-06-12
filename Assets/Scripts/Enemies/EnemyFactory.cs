@@ -31,6 +31,8 @@ public static class EnemyFactory
             case 22: return new EyeballEnemyModel(data);
             case 23: return new RainbowEnemyModel(data);
             case 24: return new AntarcticaEnemyModel(data);
+            case 1001: return new TutorialDummyLEnemyModel(data);
+            case 1002: return new TutorialDummyXXLEnemyModel(data);
             default: return new EnemyModel(data);
         }
     }

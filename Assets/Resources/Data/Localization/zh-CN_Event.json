@@ -731,6 +731,38 @@
     {
       "key": "event.missing_fonts.keep_compatibility.1",
       "text": "你保持原样。打印店老板对你的克制表示感谢，塞给你几枚硬币。"
+    },
+    {
+      "key": "event.tutorial_signpost.title",
+      "text": "路牌"
+    },
+    {
+      "key": "event.tutorial_signpost.start.1",
+      "text": "你来到了一个三岔路口。面前有一个路牌，上面写着“天才往左，疯子往右”。"
+    },
+    {
+      "key": "event.tutorial_signpost.option.left",
+      "text": "走左边"
+    },
+    {
+      "key": "event.tutorial_signpost.option.right",
+      "text": "走右边"
+    },
+    {
+      "key": "event.tutorial_signpost.option.straight",
+      "text": "为什么要转弯？"
+    },
+    {
+      "key": "event.tutorial_signpost.left.1",
+      "text": "你选择了左边。生命上限提高了。"
+    },
+    {
+      "key": "event.tutorial_signpost.right.1",
+      "text": "你选择了右边。疼痛和取舍都很真实。"
+    },
+    {
+      "key": "event.tutorial_signpost.straight.1",
+      "text": "你拒绝转弯，于是获得了一次道具奖励。"
     }
   ]
 }

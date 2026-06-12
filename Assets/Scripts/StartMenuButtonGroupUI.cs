@@ -16,6 +16,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     [SerializeField] private string startTextKey = "ui.start_menu.start";
     [SerializeField] private string chooseStartConfigTextKey = "ui.start_menu.choose_start_config";
     [SerializeField] private string selectedStartConfigTextKey = "ui.start_menu.start_with_config";
+    [SerializeField] private string tutorialStartTextKey = "ui.start_menu.start_tutorial";
+    [SerializeField] private string tutorialStartWithConfigTextKey = "ui.start_menu.start_tutorial_with_config";
     [SerializeField] private string confirmStartText = "选择一个游戏配置";
     [SerializeField] private string selectedStartConfigText = "开始游戏www！";
     [SerializeField] private string confirmExitTextKey = "ui.start_menu.confirm_exit";
@@ -46,6 +48,9 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     private Image startButtonImage;
     private string originalStartText;
     private string originalExitText;
+    private string tutorialStartText;
+    private string tutorialStartWithConfigText;
+    private bool tutorialStartMode;
     private bool startConfigMode;
     private bool startConfigSelected;
     private int selectedOptionIndex = -1;
@@ -72,11 +77,13 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         originalStartText = LocalizationSystem.GetText(startTextKey, startButtonText != null && !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
         confirmStartText = LocalizationSystem.GetText(chooseStartConfigTextKey, confirmStartText);
         selectedStartConfigText = LocalizationSystem.GetText(selectedStartConfigTextKey, selectedStartConfigText);
+        tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
+        tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程www！");
         originalExitText = exitButtonText != null ? exitButtonText.text : "退出游戏";
         confirmExitText = LocalizationSystem.GetText(confirmExitTextKey, confirmExitText);
 
         if (startButtonText != null)
-            startButtonText.text = originalStartText;
+            RefreshStartButtonText();
         if (exitButtonText != null && string.IsNullOrEmpty(exitButtonText.text))
             exitButtonText.text = originalExitText;
         if (startButtonImage != null)
@@ -109,6 +116,12 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     public bool Contains(Transform hit)
     {
         return buttonGroup != null && hit != null && hit.IsChildOf(buttonGroup);
+    }
+
+    public void SetTutorialStartMode(bool enabled)
+    {
+        tutorialStartMode = enabled;
+        RefreshStartButtonText();
     }
 
     public void SetStartConfigMode(bool selecting, bool hasSelectedConfig = false)
@@ -160,7 +173,13 @@ public class StartMenuButtonGroupUI : MonoBehaviour
 
         if (!startConfigMode)
         {
-            startButtonText.text = originalStartText;
+            startButtonText.text = tutorialStartMode ? tutorialStartText : originalStartText;
+            return;
+        }
+
+        if (tutorialStartMode && startConfigSelected)
+        {
+            startButtonText.text = tutorialStartWithConfigText;
             return;
         }
 

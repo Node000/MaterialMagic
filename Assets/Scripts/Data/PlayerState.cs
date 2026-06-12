@@ -20,7 +20,6 @@ public class PlayerState
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
     public bool KeepHandOnEndTurn { get; set; }
-    public int MagicBookSlotCount { get; set; } = 6;
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
     public List<MaterialModel> DrawPile { get; } = new List<MaterialModel>();
@@ -61,7 +60,6 @@ public class PlayerState
 
         state.DrawCount = config.drawCount;
         state.MaxPlayCount = config.maxPlayCount;
-        state.MagicBookSlotCount = config.magicBookSlotCount;
 
         for (int i = 0; i < config.initialMaterials.Length; i++)
         {
@@ -1148,9 +1146,18 @@ public class PlayerState
         return true;
     }
 
+    public void ClearMagicSlot(int slotIndex)
+    {
+        for (int i = MagicBook.Count - 1; i >= 0; i--)
+        {
+            if (MagicBook[i] != null && MagicBook[i].SlotIndex == slotIndex)
+                MagicBook.RemoveAt(i);
+        }
+    }
+
     public void SetMagicAtSlot(MagicModel magic, int slotIndex)
     {
-        if (magic == null || slotIndex < 0 || slotIndex >= MagicBookSlotCount)
+        if (magic == null || slotIndex < 0)
             return;
 
         magic.SlotIndex = slotIndex;

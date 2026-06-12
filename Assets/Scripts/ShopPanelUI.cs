@@ -58,6 +58,13 @@ public class ShopPanelUI : MonoBehaviour
     private ShopOffer selectedOffer;
     private bool waitingForSelection;
     private bool purchaseInProgress;
+    private ShopOffer undoOffer;
+    private int undoGold;
+    private int undoMagicSlotIndex = -1;
+    private MagicModel undoPreviousMagic;
+    private MaterialModel undoAddedMaterial;
+    private MaterialModel undoRemovedMaterial;
+    private bool undoAvailable;
     private Vector2 panelOpenPosition;
     private Vector2 panelSize;
     private bool hasPanelLayout;
@@ -82,6 +89,7 @@ public class ShopPanelUI : MonoBehaviour
         selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
+        ClearUndoPurchase();
         owner.ClearPendingShopMagic();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
@@ -102,6 +110,7 @@ public class ShopPanelUI : MonoBehaviour
     public void Hide()
     {
         owner?.ClearPendingShopMagic();
+        ClearUndoPurchase();
         selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
@@ -202,7 +211,7 @@ public class ShopPanelUI : MonoBehaviour
             return;
 
         leaveButton.onClick.RemoveAllListeners();
-        leaveButton.onClick.AddListener(owner.FinishReward);
+        leaveButton.onClick.AddListener(LeaveShop);
         TMP_Text text = UIManager.FindChildComponent<TMP_Text>(leaveButton.transform, "Text");
         if (text != null)
             text.text = "离开";
@@ -453,11 +462,12 @@ public class ShopPanelUI : MonoBehaviour
         if (goldText != null)
             goldText.gameObject.SetActive(false);
         if (leaveButton != null)
-            leaveButton.interactable = !waitingForSelection && !purchaseInProgress;
+            leaveButton.interactable = !purchaseInProgress;
 
+        bool blockingSelection = waitingForSelection && selectedOffer != null && selectedOffer.kind != ShopItemKind.Magic;
         for (int i = 0; i < itemViews.Count; i++)
         {
-            bool visible = i < offers.Count;
+            bool visible = i < offers.Count && !offers[i].purchased;
             itemViews[i].gameObject.SetActive(visible);
             if (!visible)
                 continue;
@@ -465,7 +475,7 @@ public class ShopPanelUI : MonoBehaviour
             ShopOffer offer = offers[i];
             bool canAfford = owner.PlayerState != null && owner.PlayerState.Gold >= offer.price;
             bool selected = offer == selectedOffer;
-            bool canUse = !purchaseInProgress && (!waitingForSelection || selected) && CanUseOffer(offer);
+            bool canUse = !purchaseInProgress && (!blockingSelection || selected) && CanUseOffer(offer);
             itemViews[i].Bind(this, offer, canAfford, canUse, selected, OnOfferClicked);
         }
     }
@@ -657,16 +667,36 @@ public class ShopPanelUI : MonoBehaviour
         return owner != null && owner.PlayerState != null && owner.PlayerState.Deck.Count > 0;
     }
 
+    private void LeaveShop()
+    {
+        CancelMagicPurchaseSelection(false);
+        ClearUndoPurchase();
+        owner.FinishReward();
+    }
+
     private void OnOfferClicked(ShopOffer offer)
     {
         if (offer == null || offer.purchased || owner == null || owner.PlayerState == null)
             return;
 
+        if (purchaseInProgress)
+            return;
+
+        if (waitingForSelection && selectedOffer != null && selectedOffer.kind == ShopItemKind.Magic)
+        {
+            if (offer == selectedOffer)
+            {
+                CancelMagicPurchaseSelection(true);
+                return;
+            }
+
+            CancelMagicPurchaseSelection(false);
+        }
+
         if (owner.PlayerState.Gold < offer.price)
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
             ShowMessage("金币不足");
-            Refresh();
             return;
         }
 
@@ -689,12 +719,25 @@ public class ShopPanelUI : MonoBehaviour
         if (offer.magicData == null)
             return;
 
-        ShowMessage("点击道具槽完成购买");
+        ShowMessage("已选中，再次点击可取消");
         selectedOffer = offer;
         waitingForSelection = true;
         purchaseInProgress = false;
         owner.SelectPendingShopMagic(offer.magicData, slotIndex => CompleteMagicPurchase(offer, slotIndex));
         Refresh();
+    }
+
+    private void CancelMagicPurchaseSelection(bool refresh)
+    {
+        if (selectedOffer == null || selectedOffer.kind != ShopItemKind.Magic)
+            return;
+
+        owner.ClearPendingShopMagic();
+        selectedOffer = null;
+        waitingForSelection = false;
+        ShowMessage(string.Empty);
+        if (refresh)
+            Refresh();
     }
 
     private void CompleteMagicPurchase(ShopOffer offer, int slotIndex)
@@ -707,6 +750,8 @@ public class ShopPanelUI : MonoBehaviour
             Refresh();
             return;
         }
+        int goldBefore = owner.PlayerState.Gold;
+        MagicModel previousMagic = owner.PlayerState.GetMagicAtSlot(slotIndex);
         if (!owner.TrySpendShopGold(offer.price))
         {
             selectedOffer = null;
@@ -725,6 +770,7 @@ public class ShopPanelUI : MonoBehaviour
             purchaseInProgress = false;
             selectedOffer = null;
             offer.purchased = true;
+            RegisterUndoMagicPurchase(offer, goldBefore, slotIndex, previousMagic);
             ShowMessage("购买成功");
             Refresh();
         });
@@ -732,6 +778,8 @@ public class ShopPanelUI : MonoBehaviour
 
     private void CompleteMaterialPurchase(ShopOffer offer)
     {
+        int goldBefore = owner.PlayerState.Gold;
+        int deckCountBefore = owner.PlayerState.Deck.Count;
         if (!owner.TrySpendShopGold(offer.price))
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
@@ -748,6 +796,8 @@ public class ShopPanelUI : MonoBehaviour
         {
             purchaseInProgress = false;
             offer.purchased = true;
+            MaterialModel added = owner.PlayerState.Deck.Count > deckCountBefore ? owner.PlayerState.Deck[owner.PlayerState.Deck.Count - 1] : null;
+            RegisterUndoMaterialPurchase(offer, goldBefore, added);
             ShowMessage("购买成功");
             Refresh();
         });
@@ -796,6 +846,8 @@ public class ShopPanelUI : MonoBehaviour
             Refresh();
             return;
         }
+        int goldBefore = owner.PlayerState.Gold;
+        MaterialModel removedMaterial = selected[0];
         if (!owner.TrySpendShopGold(offer.price))
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
@@ -808,6 +860,7 @@ public class ShopPanelUI : MonoBehaviour
         {
             PlayShopSfx(GameSfxId.Buy);
             offer.purchased = true;
+            RegisterUndoRemoveMaterialPurchase(offer, goldBefore, removedMaterial);
             ShowMessage("已删除素材");
         }
         Refresh();
@@ -835,6 +888,79 @@ public class ShopPanelUI : MonoBehaviour
     {
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySfx(id);
+    }
+
+    public bool TryUndoLastPurchase()
+    {
+        if (!undoAvailable || owner == null || owner.PlayerState == null || purchaseInProgress)
+            return false;
+
+        int goldDelta = undoGold - owner.PlayerState.Gold;
+        if (goldDelta != 0)
+            owner.PlayerState.AddGold(goldDelta);
+
+        if (undoMagicSlotIndex >= 0)
+        {
+            if (undoPreviousMagic != null)
+                owner.PlayerState.SetMagicAtSlot(undoPreviousMagic, undoMagicSlotIndex);
+            else
+                owner.PlayerState.ClearMagicSlot(undoMagicSlotIndex);
+        }
+        if (undoAddedMaterial != null)
+            owner.PlayerState.RemoveCardEverywhere(undoAddedMaterial);
+        if (undoRemovedMaterial != null && !owner.PlayerState.Deck.Contains(undoRemovedMaterial))
+            owner.PlayerState.Deck.Add(undoRemovedMaterial);
+        if (undoOffer != null)
+            undoOffer.purchased = false;
+
+        owner.CreateMagicViewsForShopUndo();
+        owner.RefreshShopUndoUI();
+        ClearUndoPurchase();
+        ShowMessage("已撤回本次购买");
+        Refresh();
+        return true;
+    }
+
+    private void RegisterUndoMagicPurchase(ShopOffer offer, int goldBefore, int slotIndex, MagicModel previousMagic)
+    {
+        ClearUndoPurchase();
+        undoOffer = offer;
+        undoGold = goldBefore;
+        undoMagicSlotIndex = slotIndex;
+        undoPreviousMagic = previousMagic;
+        undoAvailable = true;
+        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
+    }
+
+    private void RegisterUndoMaterialPurchase(ShopOffer offer, int goldBefore, MaterialModel addedMaterial)
+    {
+        ClearUndoPurchase();
+        undoOffer = offer;
+        undoGold = goldBefore;
+        undoAddedMaterial = addedMaterial;
+        undoAvailable = true;
+        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
+    }
+
+    private void RegisterUndoRemoveMaterialPurchase(ShopOffer offer, int goldBefore, MaterialModel removedMaterial)
+    {
+        ClearUndoPurchase();
+        undoOffer = offer;
+        undoGold = goldBefore;
+        undoRemovedMaterial = removedMaterial;
+        undoAvailable = true;
+        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
+    }
+
+    private void ClearUndoPurchase()
+    {
+        undoOffer = null;
+        undoGold = 0;
+        undoMagicSlotIndex = -1;
+        undoPreviousMagic = null;
+        undoAddedMaterial = null;
+        undoRemovedMaterial = null;
+        undoAvailable = false;
     }
 
     private void ShowMessage(string text)

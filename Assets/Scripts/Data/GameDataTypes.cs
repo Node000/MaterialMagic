@@ -105,7 +105,9 @@ public enum BuffEnum
     MagicAttackAll = 39,
     NextMagicRepeat = 40,
     Claw = 41,
-    LazyNextDraw = 42
+    LazyNextDraw = 42,
+    ChargeNextDraw = 43,
+    TutorialDeath = 44
 }
 
 public enum BuffKindEnum
@@ -228,7 +230,6 @@ public class PlayerStartConfigData : IDataRecord
     public int gold;
     public int drawCount = 4;
     public int maxPlayCount = 3;
-    public int magicBookSlotCount = 6;
     public PlayerStartMaterialData[] initialMaterials = Array.Empty<PlayerStartMaterialData>();
     public PlayerStartMagicData[] initialMagics = Array.Empty<PlayerStartMagicData>();
 

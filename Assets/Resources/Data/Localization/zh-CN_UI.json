@@ -1,26 +1,260 @@
 {
   "items": [
-    { "key": "ui.run_result.victory.title", "text": "胜利" },
-    { "key": "ui.run_result.victory.body", "text": "你花费了{0}，通过了全部的关卡\n你携带的东西有{1}\n真是一场令人喜悦的胜利\n现在，该休息一会儿了" },
-    { "key": "ui.run_result.victory.return_button", "text": "结束" },
-    { "key": "ui.run_result.victory.magic_separator", "text": "、" },
-    { "key": "ui.run_result.victory.empty_magic_list", "text": "无" },
-    { "key": "ui.run_result.defeat.title", "text": "游戏结束" },
-    { "key": "ui.run_result.defeat.body", "text": "你到达了，最后被{0}击败。\n显然，你的精神已经非常疲惫。\n现在该睡觉了" },
-    { "key": "ui.run_result.defeat.return_button", "text": "结束" },
-    { "key": "ui.run_result.unknown_enemy", "text": "未知敌人" },
-    { "key": "ui.run_result.time.hours_minutes_seconds", "text": "{0}小时{1}分钟{2}秒" },
-    { "key": "ui.run_result.time.minutes_seconds", "text": "{0}分钟{1}秒" },
-    { "key": "ui.run_result.time.seconds", "text": "{0}秒" },
-    { "key": "ui.start_menu.start", "text": "开始游戏" },
-    { "key": "ui.start_menu.choose_start_config", "text": "选择一个游戏配置" },
-    { "key": "ui.start_menu.start_with_config", "text": "开始游戏www！" },
-    { "key": "ui.start_menu.confirm_exit", "text": "确认退出" },
-    { "key": "ui.start_config.select", "text": "选择" },
-    { "key": "ui.start_config.selected", "text": "已选" },
-    { "key": "ui.start_config.health", "text": "生命值 {0}" },
-    { "key": "ui.battle.end_turn.prepare", "text": "预备…" },
-    { "key": "ui.battle.end_turn.resolve", "text": "出手！" },
-    { "key": "ui.battle.card_disabled", "text": "这张牌本回合无法打出！" }
+    {
+      "key": "ui.run_result.victory.title",
+      "text": "胜利"
+    },
+    {
+      "key": "ui.run_result.victory.body",
+      "text": "你花费了{0}，通过了全部的关卡\n你携带的东西有{1}\n真是一场令人喜悦的胜利\n现在，该休息一会儿了"
+    },
+    {
+      "key": "ui.run_result.victory.tutorial.body",
+      "text": "恭喜你完成了新手教程！"
+    },
+    {
+      "key": "ui.run_result.victory.return_button",
+      "text": "结束"
+    },
+    {
+      "key": "ui.run_result.victory.magic_separator",
+      "text": "、"
+    },
+    {
+      "key": "ui.run_result.victory.empty_magic_list",
+      "text": "无"
+    },
+    {
+      "key": "ui.run_result.defeat.title",
+      "text": "游戏结束"
+    },
+    {
+      "key": "ui.run_result.defeat.body",
+      "text": "你到达了，最后被{0}击败。\n显然，你的精神已经非常疲惫。\n现在该睡觉了"
+    },
+    {
+      "key": "ui.run_result.defeat.return_button",
+      "text": "结束"
+    },
+    {
+      "key": "ui.run_result.unknown_enemy",
+      "text": "未知敌人"
+    },
+    {
+      "key": "ui.run_result.time.hours_minutes_seconds",
+      "text": "{0}小时{1}分钟{2}秒"
+    },
+    {
+      "key": "ui.run_result.time.minutes_seconds",
+      "text": "{0}分钟{1}秒"
+    },
+    {
+      "key": "ui.run_result.time.seconds",
+      "text": "{0}秒"
+    },
+    {
+      "key": "ui.start_menu.start",
+      "text": "开始游戏"
+    },
+    {
+      "key": "ui.start_menu.choose_start_config",
+      "text": "选择一个游戏配置"
+    },
+    {
+      "key": "ui.start_menu.start_with_config",
+      "text": "开始游戏www！"
+    },
+    {
+      "key": "ui.start_menu.confirm_exit",
+      "text": "确认退出"
+    },
+    {
+      "key": "ui.start_config.select",
+      "text": "选择"
+    },
+    {
+      "key": "ui.start_config.selected",
+      "text": "已选"
+    },
+    {
+      "key": "ui.start_config.health",
+      "text": "生命值 {0}"
+    },
+    {
+      "key": "ui.battle.end_turn.prepare",
+      "text": "预备…"
+    },
+    {
+      "key": "ui.battle.end_turn.resolve",
+      "text": "出手！"
+    },
+    {
+      "key": "ui.battle.card_disabled",
+      "text": "这张牌本回合无法打出！"
+    },
+    {
+      "key": "ui.start_menu.start_tutorial",
+      "text": "开始教程"
+    },
+    {
+      "key": "ui.start_menu.start_tutorial_with_config",
+      "text": "开始教程www！"
+    },
+    {
+      "key": "ui.start_menu.skip_tutorial",
+      "text": "跳过教程"
+    },
+    {
+      "key": "tutorial.reward.undo_hint",
+      "text": "如果道具换错了，可以按退格键撤回奖励获取"
+    },
+    {
+      "key": "tutorial.shop.undo_hint",
+      "text": "如果买错了，可以按退格键撤回本次购买，但是在离开商店后就无法撤回了"
+    },
+    {
+      "key": "tutorial.battle.info.title",
+      "text": "玩家信息"
+    },
+    {
+      "key": "tutorial.battle.info.body",
+      "text": "左上角会显示你的生命、护盾、金币和当前状态。先记住自己的资源，再决定这一回合怎么出牌。"
+    },
+    {
+      "key": "tutorial.battle.magic_book.title",
+      "text": "玩家道具栏"
+    },
+    {
+      "key": "tutorial.battle.magic_book.body",
+      "text": "右侧是你的道具栏。出牌区的箭头组合满足道具配方时，会按顺序触发对应道具效果。"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.title",
+      "text": "敌人信息"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.body",
+      "text": "敌人上方会显示生命值、护盾和意图。教学人偶只会防御，不会主动攻击你。"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.title",
+      "text": "基础箭头"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.body",
+      "text": "基础素材卡的方向是：火=上，水=下，风=左，土=右。先按顺序把箭头放入出牌区。"
+    },
+    {
+      "key": "tutorial.battle.magic_combo.title",
+      "text": "触发道具"
+    },
+    {
+      "key": "tutorial.battle.magic_combo.body",
+      "text": "出牌区里的箭头会从左到右依次组合。组合满足右侧道具的配方时，会自动触发对应道具效果。"
+    },
+    {
+      "key": "tutorial.battle.play.title",
+      "text": "打出箭头"
+    },
+    {
+      "key": "tutorial.battle.play.body",
+      "text": "点击手牌区的箭头可以选中；点击上方可以打出选中的箭头；点击出牌区的箭头可以取消出牌。尝试打出所有箭头，然后按右下角按钮确认出牌。"
+    },
+    {
+      "key": "tutorial.battle.play_confirm.title",
+      "text": "打出箭头"
+    },
+    {
+      "key": "tutorial.battle.play_confirm.body",
+      "text": "很好。现在点击上方出牌区，或按鼠标右键，把选中的箭头全部打出。"
+    },
+    {
+      "key": "tutorial.battle.cancel.title",
+      "text": "取消出牌"
+    },
+    {
+      "key": "tutorial.battle.cancel.body",
+      "text": "如果箭头放错了，点击出牌区里的箭头即可把它拿回手牌。请先取消一次出牌，再重新把两张上打出去。"
+    },
+    {
+      "key": "tutorial.battle.end_turn.title",
+      "text": "结束回合"
+    },
+    {
+      "key": "tutorial.battle.end_turn.body",
+      "text": "箭头顺序确认后，点击“出手！”结束回合。接下来敌人回合不会显示教程。"
+    },
+    {
+      "key": "tutorial.battle.refresh.title",
+      "text": "换牌"
+    },
+    {
+      "key": "tutorial.battle.refresh.body",
+      "text": "第二回合会抽到三张右。请先选中全部三张右。"
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.title",
+      "text": "换牌"
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.body",
+      "text": "三张右已经全部选中。现在点击换牌按钮，换牌后会得到上、上、下。"
+    },
+    {
+      "key": "tutorial.reward.claim.title",
+      "text": "结算奖励"
+    },
+    {
+      "key": "tutorial.reward.claim.body",
+      "text": "战斗胜利后会出现结算奖励。点击奖励按钮可以领取金币或打开道具三选一。"
+    },
+    {
+      "key": "tutorial.reward.equip_magic.title",
+      "text": "更换道具"
+    },
+    {
+      "key": "tutorial.reward.equip_magic.body",
+      "text": "选择道具奖励后，点击右侧道具栏中的一个槽位进行更换。"
+    },
+    {
+      "key": "tutorial.reward.undo_hint.title",
+      "text": "撤回奖励"
+    },
+    {
+      "key": "tutorial.reward.undo_hint.body",
+      "text": "如果道具换错了，可以按退格键撤回奖励获取。撤回后奖励按钮会再次出现，内容不会变化。"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.title",
+      "text": "商店购买"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.body",
+      "text": "购买道具后，需要点击右侧道具栏确认放入槽位；再次点击可以取消道具选择。购买箭头和删牌会立刻生效。"
+    },
+    {
+      "key": "tutorial.shop.undo_hint.title",
+      "text": "撤回购买"
+    },
+    {
+      "key": "tutorial.shop.undo_hint.body",
+      "text": "如果买错了，可以按退格键撤回本次购买，但是在离开商店后就无法撤回了。"
+    },
+    {
+      "key": "tutorial.event.options.title",
+      "text": "事件选项"
+    },
+    {
+      "key": "tutorial.event.options.body",
+      "text": "事件页面会显示事件内容和可选选项。选项前面的箭头表示需求，出牌区满足需求后才能触发该选项。"
+    },
+    {
+      "key": "tutorial.event.refresh.title",
+      "text": "事件换牌"
+    },
+    {
+      "key": "tutorial.event.refresh.body",
+      "text": "事件中也可以换牌。这个教学事件会先给你两张左；如果换牌，换上来的牌一定是右。"
+    }
   ]
 }

@@ -166,6 +166,19 @@ public class RewardPanelUI : MonoBehaviour
 
     public RectTransform SelectedMagicRect => selectedMagicView != null ? selectedMagicView.transform as RectTransform : null;
 
+    public void UndoMagicRewardClaim()
+    {
+        if (!magicClaimed)
+            return;
+
+        magicClaimed = false;
+        selectedMagicView = null;
+        hoveredMagicView = null;
+        owner?.SelectPendingRewardMagic(null);
+        HideMagicChoices();
+        RefreshOptions();
+    }
+
     public void CompleteMagicRewardSelection()
     {
         magicClaimed = true;

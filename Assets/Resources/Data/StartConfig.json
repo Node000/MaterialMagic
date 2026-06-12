@@ -9,7 +9,6 @@
       "gold": 0,
       "drawCount": 4,
       "maxPlayCount": 3,
-      "magicBookSlotCount": 6,
       "initialMaterials": [
         { "material": 1, "count": 4 },
         { "material": 2, "count": 4 },
@@ -32,7 +31,6 @@
       "gold": 0,
       "drawCount": 4,
       "maxPlayCount": 3,
-      "magicBookSlotCount": 6,
       "initialMaterials": [
         { "material": 1, "count": 5 },
         { "material": 2, "count": 3 },
@@ -54,7 +52,6 @@
       "gold": 0,
       "drawCount": 4,
       "maxPlayCount": 3,
-      "magicBookSlotCount": 6,
       "initialMaterials": [
         { "material": 1, "count": 3 },
         { "material": 2, "count": 5 },

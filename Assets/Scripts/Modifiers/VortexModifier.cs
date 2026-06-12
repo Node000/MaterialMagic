@@ -3,8 +3,8 @@ public class VortexModifier : MaterialModifierModel
     public override void OnJoin()
     {
         MaterialModifierContext context = Context;
-        if (context != null && context.BattleManager != null)
-            context.BattleManager.AddRandomDebuffToRandomEnemy(1);
+        if (context != null && context.BattleManager != null && context.BattleManager.AddRandomDebuffToRandomEnemy(1))
+            context.EnemyBuffChanged = true;
     }
 
     public override void OnEnd()

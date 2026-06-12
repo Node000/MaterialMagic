@@ -261,27 +261,31 @@ public class BattleManager
             target.AddBuff(BuffEnum.Burning, stack);
     }
 
-    public void AddArcToRandomEnemy(int stack)
+    public bool AddArcToRandomEnemy(int stack)
     {
         if (stack <= 0)
-            return;
-
-        EnemyModel target = SelectRandomEnemy();
-        if (target != null)
-            target.AddBuff(BuffEnum.Arc, stack);
-    }
-
-    public void AddRandomDebuffToRandomEnemy(int stack)
-    {
-        if (stack <= 0)
-            return;
+            return false;
 
         EnemyModel target = SelectRandomEnemy();
         if (target == null)
-            return;
+            return false;
+
+        target.AddBuff(BuffEnum.Arc, stack);
+        return true;
+    }
+
+    public bool AddRandomDebuffToRandomEnemy(int stack)
+    {
+        if (stack <= 0)
+            return false;
+
+        EnemyModel target = SelectRandomEnemy();
+        if (target == null)
+            return false;
 
         int index = NextRandomInt(0, 3);
         target.AddBuff(index == 0 ? BuffEnum.Weak : index == 1 ? BuffEnum.Slow : BuffEnum.Vulnerable, stack);
+        return true;
     }
 
     public void ResetContinuousCastCount()

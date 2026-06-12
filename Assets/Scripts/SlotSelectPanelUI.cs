@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -8,10 +9,20 @@ public class SlotSelectPanelUI : MonoBehaviour
     private HandSystemUI owner;
     private MagicData pendingRewardMagic;
     private Action<int> slotChosen;
+    private readonly List<Button> slotButtons = new List<Button>();
+    private Vector2 initialPanelSize;
+
+    private const float SlotButtonSpacingX = 120f;
+    private const float SlotButtonSpacingY = 72f;
+    private const float SlotButtonBaseY = -24f;
+    private const int MaxSlotButtonsPerRow = 6;
 
     public void Initialize(HandSystemUI owner)
     {
         this.owner = owner;
+        RectTransform rect = transform as RectTransform;
+        if (rect != null)
+            initialPanelSize = rect.sizeDelta;
         gameObject.SetActive(false);
     }
 
@@ -33,13 +44,20 @@ public class SlotSelectPanelUI : MonoBehaviour
         if (title != null)
             title.text = "选择要填入的道具槽";
 
-        for (int i = 0; i < owner.PlayerState.MagicBookSlotCount; i++)
+        EnsureSlotButtons(owner.MagicSlotViewCount);
+        LayoutSlotButtons(owner.MagicSlotViewCount);
+
+        for (int i = 0; i < slotButtons.Count; i++)
         {
-            Button button = UIManager.FindChildComponent<Button>(transform, "Slot" + i);
+            Button button = slotButtons[i];
             if (button == null)
                 continue;
 
-            button.gameObject.SetActive(true);
+            bool visible = i < owner.MagicSlotViewCount;
+            button.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+
             int slotIndex = i;
             MagicModel magic = owner.PlayerState.GetMagicAtSlot(i);
             TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
@@ -48,6 +66,57 @@ public class SlotSelectPanelUI : MonoBehaviour
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => ChooseSlot(slotIndex));
+        }
+    }
+
+    private void EnsureSlotButtons(int slotCount)
+    {
+        slotButtons.Clear();
+        for (int i = 0; ; i++)
+        {
+            Button button = UIManager.FindChildComponent<Button>(transform, "Slot" + i);
+            if (button == null)
+                break;
+
+            slotButtons.Add(button);
+        }
+
+        if (slotButtons.Count == 0)
+            return;
+
+        Button template = slotButtons[0];
+        Transform parent = template.transform.parent;
+        for (int i = slotButtons.Count; i < slotCount; i++)
+        {
+            Button button = Instantiate(template, parent);
+            button.name = "Slot" + i;
+            slotButtons.Add(button);
+        }
+    }
+
+    private void LayoutSlotButtons(int slotCount)
+    {
+        int columns = Mathf.Min(MaxSlotButtonsPerRow, Mathf.Max(1, slotCount));
+        int rows = Mathf.Max(1, Mathf.CeilToInt(slotCount / (float)columns));
+        RectTransform panelRect = transform as RectTransform;
+        if (panelRect != null)
+        {
+            if (initialPanelSize == Vector2.zero)
+                initialPanelSize = panelRect.sizeDelta;
+            panelRect.sizeDelta = new Vector2(initialPanelSize.x, Mathf.Max(initialPanelSize.y, 118f + rows * SlotButtonSpacingY));
+        }
+
+        for (int i = 0; i < slotButtons.Count; i++)
+        {
+            RectTransform rect = slotButtons[i] != null ? slotButtons[i].transform as RectTransform : null;
+            if (rect == null || i >= slotCount)
+                continue;
+
+            int row = i / columns;
+            int column = i % columns;
+            float x = (column - (columns - 1) * 0.5f) * SlotButtonSpacingX;
+            float y = SlotButtonBaseY - (row - (rows - 1) * 0.5f) * SlotButtonSpacingY;
+            rect.anchoredPosition = new Vector2(x, y);
         }
     }
 

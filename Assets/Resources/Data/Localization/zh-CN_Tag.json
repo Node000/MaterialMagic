@@ -102,7 +102,7 @@
     },
     {
       "key": "tag.spell_power.desc",
-      "text": "每层使攻击和道具造成伤害提高1，回合结束时清除。"
+      "text": "伤害提升 X：造成伤害+X，回合结束时清除。"
     },
     {
       "key": "tag.defense_power.name",

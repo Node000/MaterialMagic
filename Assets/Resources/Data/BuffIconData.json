@@ -131,6 +131,10 @@
     {
       "buffType": 41,
       "iconName": "Claw"
+    },
+    {
+      "buffType": 44,
+      "iconName": "redStar"
     }
   ]
 }

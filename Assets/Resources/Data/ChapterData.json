@@ -50,7 +50,6 @@
           "endProgress": 6,
           "levelPoolIds": [
             4,
-            5,
             6,
             7,
             8
@@ -60,6 +59,7 @@
           "startProgress": 7,
           "endProgress": 14,
           "levelPoolIds": [
+            5,
             9,
             10,
             11,
@@ -118,12 +118,12 @@
       ],
       "MidPool": [
         4,
-        5,
         6,
         7,
         8
       ],
       "NormalPool": [
+        5,
         9,
         10,
         11,
@@ -165,6 +165,50 @@
       "shopMapLevelWeight": 4,
       "removeMapLevelWeight": 2,
       "addMapLevelWeight": 2
+    },
+    {
+      "numericId": 100,
+      "id": "chapter_tutorial",
+      "nameKey": "chapter.tutorial.name",
+      "levelLength": 4,
+      "mapWidth": 1,
+      "mapHeight": 5,
+      "startMapX": 0,
+      "startMapY": 0,
+      "hiddenLevelWeight": 0.0,
+      "levelPoolIds": [
+        1001,
+        1002,
+        1003,
+        201,
+        1005
+      ],
+      "levelPoolRanges": [],
+      "fixed_level": [],
+      "eventPoolIds": [
+        1002
+      ],
+      "BeginPool": [
+        1001
+      ],
+      "MidPool": [],
+      "NormalPool": [],
+      "EventPool": [
+        1002
+      ],
+      "ElitePool": [],
+      "BossPool": [
+        1005
+      ],
+      "battleMapLevelWeight": 0,
+      "eliteMapLevelWeight": 0,
+      "eventMapLevelWeight": 0,
+      "restMapLevelWeight": 0,
+      "rewardMapLevelWeight": 0,
+      "defaultMapLevelWeight": 0,
+      "shopMapLevelWeight": 0,
+      "removeMapLevelWeight": 0,
+      "addMapLevelWeight": 0
     }
   ]
 }

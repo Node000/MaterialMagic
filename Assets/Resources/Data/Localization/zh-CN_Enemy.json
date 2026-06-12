@@ -95,6 +95,14 @@
     {
       "key": "enemy.024.name",
       "text": "南极洲"
+    },
+    {
+      "key": "enemy.tutorial_dummy_l.name",
+      "text": "教学人偶L"
+    },
+    {
+      "key": "enemy.tutorial_dummy_xxl.name",
+      "text": "教学人偶XXL"
     }
   ]
 }

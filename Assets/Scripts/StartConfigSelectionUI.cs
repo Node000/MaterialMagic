@@ -17,6 +17,7 @@ public class StartConfigSelectionUI : MonoBehaviour
 
     private readonly List<StartConfigBookmarkUI> bookmarks = new List<StartConfigBookmarkUI>();
     private readonly List<PlayerStartConfigData> startConfigs = new List<PlayerStartConfigData>();
+    private string visibleOnlyConfigId;
     private bool configsLoaded;
 
     public PlayerStartConfigData SelectedConfig { get; private set; }
@@ -27,7 +28,7 @@ public class StartConfigSelectionUI : MonoBehaviour
         get
         {
             LoadStartConfigs();
-            return startConfigs.Count;
+            return GetVisibleConfigCount();
         }
     }
     public bool HasExpectedConfigWindows => root != null && root.gameObject.activeSelf && CountVisibleBookmarks() == ExpectedConfigWindowCount;
@@ -67,10 +68,21 @@ public class StartConfigSelectionUI : MonoBehaviour
 
     public void Show()
     {
+        ShowInternal(null);
+    }
+
+    public void ShowOnly(string configId)
+    {
+        ShowInternal(configId);
+    }
+
+    private void ShowInternal(string onlyConfigId)
+    {
         ResolveReferences();
         if (root == null || startConfigBookmarkPrefab == null)
             return;
 
+        visibleOnlyConfigId = onlyConfigId;
         LoadStartConfigs();
         SelectedConfig = null;
         root.gameObject.SetActive(true);
@@ -83,7 +95,11 @@ public class StartConfigSelectionUI : MonoBehaviour
             if (bookmark == null)
                 continue;
 
-            bookmark.gameObject.SetActive(true);
+            bool visible = IsConfigVisible(bookmark.Config);
+            bookmark.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+
             bookmark.RectTransform.anchoredPosition = new Vector2(bookmarkReadyX, -i * bookmarkVerticalSpacing);
             bookmark.SetSelectedImmediate(false);
             bookmark.Show(bookmarkInitialX, bookmarkReadyX, i * bookmarkShowStagger);
@@ -93,6 +109,7 @@ public class StartConfigSelectionUI : MonoBehaviour
     public void Hide()
     {
         SelectedConfig = null;
+        visibleOnlyConfigId = null;
         if (CountVisibleBookmarks() == 0)
         {
             if (root != null)
@@ -121,18 +138,19 @@ public class StartConfigSelectionUI : MonoBehaviour
         LoadStartConfigs();
         if (root.gameObject.activeSelf)
             EnsureBookmarkPool();
-        if (root.gameObject.activeSelf && CountVisibleBookmarks() == startConfigs.Count)
+        int expectedVisibleCount = GetVisibleConfigCount();
+        if (root.gameObject.activeSelf && CountVisibleBookmarks() == expectedVisibleCount)
         {
             ApplySelectionVisuals();
             return true;
         }
 
         string selectedId = SelectedConfig != null ? SelectedConfig.id : string.Empty;
-        Show();
+        ShowInternal(visibleOnlyConfigId);
         PlayerStartConfigData restoredConfig = FindConfigById(selectedId);
         if (restoredConfig != null)
             SelectConfig(restoredConfig);
-        return CountVisibleBookmarks() == startConfigs.Count;
+        return CountVisibleBookmarks() == expectedVisibleCount;
     }
 
     public bool Contains(Transform hit)
@@ -252,6 +270,23 @@ public class StartConfigSelectionUI : MonoBehaviour
                 return config;
         }
         return null;
+    }
+
+    private int GetVisibleConfigCount()
+    {
+        LoadStartConfigs();
+        int count = 0;
+        for (int i = 0; i < startConfigs.Count; i++)
+        {
+            if (IsConfigVisible(startConfigs[i]))
+                count++;
+        }
+        return count;
+    }
+
+    private bool IsConfigVisible(PlayerStartConfigData config)
+    {
+        return config != null && (string.IsNullOrEmpty(visibleOnlyConfigId) || config.id == visibleOnlyConfigId);
     }
 
     private int CountVisibleBookmarks()

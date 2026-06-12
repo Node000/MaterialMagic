@@ -110,7 +110,7 @@
     },
     {
       "key": "magic.current_attachment.desc",
-      "text": "本回合【伤害提升】+1，下回合额外获得1张带有【电荷】的左"
+      "text": "本回合获得1层【伤害提升】，下回合抽到的第1张素材获得【电荷】"
     },
     {
       "key": "magic.sandstorm.name",
@@ -379,6 +379,26 @@
     {
       "key": "magic.spring.desc",
       "text": "获得2层【下个道具重复】"
+    },
+    {
+      "key": "chapter.tutorial.name",
+      "text": "教学章节"
+    },
+    {
+      "key": "level.tutorial_battle.title",
+      "text": "教学战斗"
+    },
+    {
+      "key": "level.tutorial_event.title",
+      "text": "路牌"
+    },
+    {
+      "key": "level.tutorial_shop.title",
+      "text": "教学商店"
+    },
+    {
+      "key": "level.tutorial_boss.title",
+      "text": "教学Boss"
     }
   ]
 }

@@ -54,7 +54,15 @@
     },
     {
       "key": "buff.spell_power.desc",
-      "text": "每层使攻击和道具造成伤害提高1；玩家回合结束时清除，敌人获得后持续生效。"
+      "text": "造成伤害+{0}，回合结束时清除。"
+    },
+    {
+      "key": "buff.charge_next_draw.name",
+      "text": "下次电荷"
+    },
+    {
+      "key": "buff.charge_next_draw.desc",
+      "text": "下回合抽到的前{0}张素材获得【电荷】。"
     },
     {
       "key": "buff.burning_next_turn.name",
@@ -311,6 +319,22 @@
     {
       "key": "buff.claw.desc",
       "text": "该敌人不会计入胜利条件；击败所有非爪牙敌人后会立刻死亡。"
+    },
+    {
+      "key": "buff.tutorialdeath.name",
+      "text": "教学中"
+    },
+    {
+      "key": "buff.tutorialdeath.desc",
+      "text": "{0}回合后死亡。"
+    },
+    {
+      "key": "buff.tutorial_death.name",
+      "text": "教学中"
+    },
+    {
+      "key": "buff.tutorial_death.desc",
+      "text": "{0}回合后死亡。"
     }
   ]
 }
