@@ -29,10 +29,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BlockSize: 24
+    - _ChromaShift: 0.0107
     - _ColorMask: 15
     - _EffectMode: 1
     - _EffectSpeed: 3.04
     - _EffectStrength: 0.833
+    - _IdleAmplitude: 0.0475
+    - _IdleSpeed: 5
+    - _MoshFPS: 4
+    - _MoshIntensity: 0.363
+    - _Padding: 0.02
+    - _SmearLength: 0.087
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

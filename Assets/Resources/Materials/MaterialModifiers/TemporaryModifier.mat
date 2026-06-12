@@ -32,7 +32,7 @@ Material:
     - _ColorMask: 15
     - _Disturbance: 0.5
     - _DotRes: 30
-    - _DotShape: 1
+    - _DotShape: 0
     - _EffectMode: 3
     - _EffectSpeed: 1.45
     - _EffectStrength: 0.5

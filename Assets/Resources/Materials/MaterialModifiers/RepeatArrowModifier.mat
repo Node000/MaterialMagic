@@ -54,8 +54,9 @@ Material:
     - _EffectStrength: 0.4
     - _FlashSteps: 3
     - _GlitchFPS: 15
-    - _ImpactDepth: 10
-    - _JumpHeight: 10
+    - _ImpactDepth: 2
+    - _JumpHeight: 0
+    - _Padding: 0.06
     - _ShakeIntensity: 0.05
     - _SquashAmount: 0.5
     - _Stencil: 0

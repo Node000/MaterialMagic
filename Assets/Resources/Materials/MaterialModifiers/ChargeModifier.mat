@@ -34,10 +34,14 @@ Material:
     - _EffectMode: 2
     - _EffectSpeed: 1.8
     - _EffectStrength: 0.65
+    - _FlickerFPS: 24
     - _FlickerSpeed: 2.21
-    - _FrizzleDistance: 0.201
+    - _FrizzleDistance: 0.064
     - _Intensity: 0.715
-    - _ParticleSize: 0.026
+    - _Padding: 0.02
+    - _ParticleGlow: 1.5
+    - _ParticleRes: 45
+    - _ParticleSize: 0.014
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -47,5 +51,5 @@ Material:
     m_Colors:
     - _AuraColor: {r: 1, g: 0.89411765, b: 0.36078432, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ElectricColor: {r: 0.19999996, g: 0.6, b: 1, a: 1}
+    - _ElectricColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

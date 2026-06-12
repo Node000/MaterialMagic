@@ -35,7 +35,9 @@ Material:
     - _ColorSteps: 12.39
     - _EdgeIntensity: 0.45
     - _MetalContrast: 0.78
-    - _Perspective: 0.002
+    - _Padding: 0.02
+    - _Perspective: 0.00195
+    - _PerspectiveDist: 1.5
     - _PixelResolution: 20
     - _PulseSpeed: 2.1
     - _PulseStrength: 0.16
@@ -48,8 +50,9 @@ Material:
     - _SweepIntensity: 0.55
     - _SweepSpeed: 1.1
     - _SweepWidth: 0.11
-    - _TiltAmount: 0.143
+    - _TiltAmount: 0.343
     - _TiltSpeed: 1.5
+    - _UIAspect: 0.7
     - _UseUIAlphaClip: 0
     m_Colors:
     - _AuraColor: {r: 0.84705883, g: 0.84705883, b: 0.84705883, a: 1}

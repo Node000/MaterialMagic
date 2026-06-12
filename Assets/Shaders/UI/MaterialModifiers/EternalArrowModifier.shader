@@ -1,20 +1,31 @@
-// Auto-split per modifier shader. Source behavior derived from UI/MaterialModifierScreenEffect.
-// 永恒箭头：周期性反相闪烁。
-Shader "UI/MaterialModifiers/EternalArrowModifier"
+Shader "UI/MaterialModifiers/CardEternityDatamosh"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _AuraColor ("Aura Color", Color) = (1,1,1,1)
-        _EffectSpeed ("Effect Speed", Float) = 1
-        _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
-        _StencilComp ("Stencil Comparison", Float) = 8
-        _Stencil ("Stencil ID", Float) = 0
-        _StencilOp ("Stencil Operation", Float) = 0
-        _StencilWriteMask ("Stencil Write Mask", Float) = 255
-        _StencilReadMask ("Stencil Read Mask", Float) = 255
-        _ColorMask ("Color Mask", Float) = 15
+
+        [Header(Virtual Bounds System)]
+        _Padding ("内部透明边距 (防止位移被切边)", Range(0.0, 0.4)) = 0.2
+
+        [Header(Idle Animation)]
+        _IdleSpeed ("待机游离速度", Float) = 1.5
+        _IdleAmplitude ("待机游离幅度", Range(0.0, 0.2)) = 0.03
+
+        [Header(Datamosh Glitch Controls)]
+        _MoshIntensity ("【核心】凝滞撕裂强度", Range(0.0, 1.0)) = 0.3
+        _BlockSize ("视频压缩区块分辨率 (越小块越大)", Float) = 24.0
+        _MoshFPS ("凝滞刷新帧率 (卡顿感)", Float) = 8.0
+        _SmearLength ("像素拖拽滞留长度", Range(0.0, 0.5)) = 0.2
+        _ChromaShift ("色度分离/绿紫溢出强度", Range(0.0, 0.1)) = 0.03
+
+        // UI 遮罩相关参数保留
+        [HideInInspector] _StencilComp ("Stencil Comparison", Float) = 8
+        [HideInInspector] _Stencil ("Stencil ID", Float) = 0
+        [HideInInspector] _StencilOp ("Stencil Operation", Float) = 0
+        [HideInInspector] _StencilWriteMask ("Stencil Write Mask", Float) = 255
+        [HideInInspector] _StencilReadMask ("Stencil Read Mask", Float) = 255
+        [HideInInspector] _ColorMask ("Color Mask", Float) = 15
         [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
     }
 
@@ -51,7 +62,7 @@ Shader "UI/MaterialModifiers/EternalArrowModifier"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -76,39 +87,32 @@ Shader "UI/MaterialModifiers/EternalArrowModifier"
 
             sampler2D _MainTex;
             fixed4 _Color;
-            fixed4 _TextureSampleAdd;
-            fixed4 _AuraColor;
+            
+            float _Padding;
+            float _IdleSpeed;
+            float _IdleAmplitude;
+
+            float _MoshIntensity;
+            float _BlockSize;
+            float _MoshFPS;
+            float _SmearLength;
+            float _ChromaShift;
+            
             float4 _ClipRect;
-            float _EffectSpeed;
-            float _EffectStrength;
 
-            float hash21(float2 p)
+            // --- 核心算法：高频无序哈希 ---
+            float hash12(float2 p)
             {
-                p = frac(p * float2(123.34, 456.21));
-                p += dot(p, p + 45.32);
-                return frac(p.x * p.y);
+                float3 p3  = frac(float3(p.xyx) * .1031);
+                p3 += dot(p3, p3.yzx + 33.33);
+                return frac((p3.x + p3.y) * p3.z);
             }
 
-            float InsideUv(float2 uv)
+            float2 hash22(float2 p)
             {
-                return step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
-            }
-
-            fixed4 SampleMain(float2 uv, fixed4 vertexColor)
-            {
-                float inside = InsideUv(uv);
-                fixed4 color = (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor;
-                color.a *= inside;
-                return color;
-            }
-
-            float2 SwirlUv(float2 uv, float amount)
-            {
-                float2 centered = uv - 0.5;
-                float radius = length(centered);
-                float angle = atan2(centered.y, centered.x);
-                angle += (1.0 - saturate(radius * 2.0)) * amount;
-                return 0.5 + float2(cos(angle), sin(angle)) * radius;
+                float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
+                p3 += dot(p3, p3.yzx+33.33);
+                return frac((p3.xx+p3.yz)*p3.zy);
             }
 
             v2f vert(appdata_t v)
@@ -126,75 +130,74 @@ Shader "UI/MaterialModifiers/EternalArrowModifier"
             fixed4 frag(v2f IN) : SV_Target
             {
                 float2 uv = IN.texcoord;
-                float mode = 1.0;
-                fixed4 color = SampleMain(uv, IN.color);
+                
+                // --- 1. 防止越界切边的内部空间缩放 ---
+                float2 paddedUV = (uv - _Padding) / max(0.001, 1.0 - 2.0 * _Padding);
 
-                if (mode < 0.5)
+                // --- 2. 待机幽灵游离 (Idle Wobble) ---
+                // 基于时间的正弦波让卡牌在局部 UV 空间内持续进行类似呼吸的 8 字形微漂移
+                float timeFloat = _Time.y * _IdleSpeed;
+                float2 idleOffset = float2(sin(timeFloat), cos(timeFloat * 0.73)) * _IdleAmplitude;
+                float2 baseUV = paddedUV + idleOffset;
+
+                // --- 3. 视频压缩宏区块网格 (Macroblock Grid) ---
+                // 模拟 MPEG 视频压缩时 16x16 的宏区块
+                float2 gridUV = floor(paddedUV * _BlockSize) / _BlockSize;
+                
+                // 强制将时间降低为极低的帧率 (比如 8 FPS)
+                // 这会导致区块的变化是“一卡一卡”的，这是凝滞感的核心！
+                float tGrid = floor(_Time.y * _MoshFPS);
+
+                // --- 4. 生成 Datamosh 错误运动向量 ---
+                // 每个区块生成一个随机数，决定它当前帧是否发生“解码故障”
+                float blockNoise = hash12(gridUV + tGrid);
+                // 用 Intensity 控制故障区块的数量
+                float isMoshed = step(1.0 - _MoshIntensity, blockNoise);
+
+                // 如果发生故障，生成一个用于拖拽像素的“滞留向量 (Smear Vector)”
+                // 我们让向量偏向于卡牌闲置移动的相反方向，制造“上一帧留在原地”的错觉
+                float2 randomDir = hash22(gridUV + tGrid * 0.5) * 2.0 - 1.0;
+                float2 smearOffset = (randomDir * 0.5 - idleOffset * 2.0) * _SmearLength;
+
+                // --- 5. 组合扭曲 UV ---
+                // 正常区块使用 baseUV 移动；故障区块的 UV 被强制拖拽偏移
+                float2 finalUV = baseUV + smearOffset * isMoshed;
+
+                // 边界检测：防止采样到贴图外部出现循环伪影
+                float inBounds = step(0.0, finalUV.x) * step(finalUV.x, 1.0) * step(0.0, finalUV.y) * step(finalUV.y, 1.0);
+                if (inBounds < 0.5) return fixed4(0,0,0,0);
+
+                // --- 6. 采样与色度分离 (Chroma Shift / YUV Error) ---
+                fixed4 finalColor = fixed4(0,0,0,0);
+                
+                if (isMoshed > 0.5)
                 {
-                    float lineId = floor(uv.y * 90.0);
-                    float stepTime = floor(_Time.y * _EffectSpeed * 12.0);
-                    float glitch = step(hash21(float2(lineId, stepTime)), 0.08 + _EffectStrength * 0.08);
-                    float shift = (hash21(float2(lineId, stepTime + 17.0)) * 2.0 - 1.0) * 0.022 * glitch;
-                    fixed4 baseColor = SampleMain(uv + float2(shift, 0.0), IN.color);
-                    fixed4 red = SampleMain(uv + float2(0.006, 0.0), IN.color);
-                    fixed4 cyan = SampleMain(uv - float2(0.006, 0.0), IN.color);
-                    float scan = sin(uv.y * 720.0 + _Time.y * _EffectSpeed * 8.0) * 0.5 + 0.5;
-                    baseColor.rgb = lerp(baseColor.rgb, baseColor.rgb * (0.72 + _EffectStrength * 0.16), scan);
-                    baseColor.rgb += red.r * float3(0.32, 0.02, 0.02) + cyan.b * float3(0.02, 0.18, 0.32);
-                    baseColor.rgb = lerp(baseColor.rgb, _AuraColor.rgb, baseColor.a * 0.12);
-                    color = baseColor;
-                }
-                else if (mode < 1.5)
-                {
-                    float pulse = (sin(_Time.y * _EffectSpeed * 2.0) * 0.5 + 0.5) * _EffectStrength;
-                    float3 inverted = 1.0 - color.rgb;
-                    color.rgb = lerp(color.rgb, inverted, pulse);
-                }
-                else if (mode < 2.5)
-                {
-                    float gray = dot(color.rgb, float3(0.299, 0.587, 0.114));
-                    float noise = hash21(floor((uv + _Time.y * 0.04) * 24.0));
-                    float stripe = step(0.58, frac(uv.y * 18.0 + _Time.y * _EffectSpeed));
-                    color.rgb = lerp(color.rgb, float3(gray, gray, gray) * 0.72, 0.86);
-                    color.rgb = lerp(color.rgb, float3(0.05, 0.05, 0.06), stripe * color.a * 0.22);
-                    color.rgb += (noise - 0.5) * 0.08 * _EffectStrength;
-                    color.rgb = lerp(color.rgb, _AuraColor.rgb * 0.45, color.a * 0.12);
-                }
-                else if (mode < 3.5)
-                {
-                    float breath = sin(_Time.y * _EffectSpeed * 2.0) * 0.5 + 0.5;
-                    color.a *= lerp(0.56, 1.0, breath);
-                    color.rgb = lerp(color.rgb, _AuraColor.rgb, color.a * breath * 0.28);
-                }
-                else if (mode < 4.5)
-                {
-                    float wave = sin(uv.x * 18.0 + _Time.y * _EffectSpeed * 3.0);
-                    float2 warpedUv = uv + float2(0.0, wave * 0.022 * max(_EffectStrength, 0.25));
-                    color = SampleMain(warpedUv, IN.color);
-                    float wobbleLine = abs(frac(uv.x * 3.0 - _Time.y * _EffectSpeed * 0.35) - 0.5);
-                    color.rgb = lerp(color.rgb, _AuraColor.rgb, (1.0 - smoothstep(0.0, 0.28, wobbleLine)) * color.a * 0.22);
+                    // 当区块处于凝滞状态时，产生 YUV 视频特有的颜色分离（偏品红/偏绿）
+                    // 我们分别错位采样 R 和 B 通道，保留 G 通道
+                    float2 chromaVec = randomDir * _ChromaShift;
+                    
+                    fixed r = tex2D(_MainTex, saturate(finalUV + chromaVec)).r;
+                    fixed4 gCol = tex2D(_MainTex, saturate(finalUV));
+                    fixed b = tex2D(_MainTex, saturate(finalUV - chromaVec)).b;
+                    
+                    finalColor = fixed4(r, gCol.g, b, gCol.a) * IN.color;
                 }
                 else
                 {
-                    float swirlAmount = sin(_Time.y * _EffectSpeed) * 0.8 + 1.2;
-                    float2 swirlUv = SwirlUv(uv, swirlAmount * max(_EffectStrength, 0.25));
-                    color = SampleMain(swirlUv, IN.color);
-                    float2 centered = uv - 0.5;
-                    float radius = length(centered);
-                    float ring = sin(radius * 36.0 - _Time.y * _EffectSpeed * 5.0) * 0.5 + 0.5;
-                    float centerGlow = 1.0 - smoothstep(0.04, 0.48, radius);
-                    color.rgb = lerp(color.rgb, _AuraColor.rgb, ring * centerGlow * color.a * 0.42);
+                    // 正常区块直接采样
+                    finalColor = tex2D(_MainTex, finalUV) * IN.color;
                 }
 
+                // UI 裁剪逻辑
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
+                finalColor.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
 
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(color.a - 0.001);
+                clip(finalColor.a - 0.001);
                 #endif
 
-                return saturate(color);
+                return finalColor;
             }
             ENDCG
         }

@@ -1,27 +1,29 @@
-Shader "UI/MaterialModifiers/StaticElectricArrowDisplace"
+Shader "UI/MaterialModifiers/StaticTexturePixelDiscrete"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _ElectricColor ("Lightning Color", Color) = (0.2, 0.6, 1.0, 1.0)
+        
+        [Header(Bounds Settings)]
+        _Padding ("防止超框的内部边距", Range(0.0, 0.4)) = 0.2
 
-        [Header(Static Frizzle Controls)]
-        _ParticleSize ("Particle Size (0.1 is coarse)", Range(0.01, 0.5)) = 0.08
-        _FrizzleDistance ("Frizzle Dist (Displacement)", Range(0, 1)) = 0.25
-        _Intensity ("Electric Intensity", Range(0, 1)) = 0.6
-        _FlickerSpeed ("Flicker Speed", Float) = 8.0
+        [Header(Discrete Pixel Controls)]
+        _ParticleRes ("离散颗粒分辨率 (越高方块越小)", Float) = 64.0
+        _FrizzleDistance ("像素撕裂逸出距离", Range(0.0, 0.5)) = 0.15
+        _Intensity ("剥离/撕裂像素密度", Range(0.0, 1.0)) = 0.3
+        _FlickerFPS ("像素跳跃刷新帧率", Float) = 24.0
+        
+        [Header(Glow Effect)]
+        _ParticleGlow ("飞出粒子的亮度倍率 (1为原图亮度)", Range(1.0, 5.0)) = 1.5
 
-        [Header(Transparency Option)]
-        [Enum(Particles Fade Out, 0, Keep Solid Pixel, 1)] _AlphaMode ("Alpha Mode", Float) = 0
-
-        // UI 遮罩相关参数保留以兼容 UGUI 机制
-        _StencilComp ("Stencil Comparison", Float) = 8
-        _Stencil ("Stencil ID", Float) = 0
-        _StencilOp ("Stencil Operation", Float) = 0
-        _StencilWriteMask ("Stencil Write Mask", Float) = 255
-        _StencilReadMask ("Stencil Read Mask", Float) = 255
-        _ColorMask ("Color Mask", Float) = 15
+        // UI 遮罩相关参数保留
+        [HideInInspector] _StencilComp ("Stencil Comparison", Float) = 8
+        [HideInInspector] _Stencil ("Stencil ID", Float) = 0
+        [HideInInspector] _StencilOp ("Stencil Operation", Float) = 0
+        [HideInInspector] _StencilWriteMask ("Stencil Write Mask", Float) = 255
+        [HideInInspector] _StencilReadMask ("Stencil Read Mask", Float) = 255
+        [HideInInspector] _ColorMask ("Color Mask", Float) = 15
         [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
     }
 
@@ -83,42 +85,28 @@ Shader "UI/MaterialModifiers/StaticElectricArrowDisplace"
 
             sampler2D _MainTex;
             fixed4 _Color;
-            fixed4 _ElectricColor;
-            fixed4 _TextureSampleAdd;
-            float4 _ClipRect;
             
-            float _ParticleSize;
+            float _Padding;
+            float _ParticleRes;
             float _FrizzleDistance;
             float _Intensity;
-            float _FlickerSpeed;
-            float _AlphaMode;
+            float _FlickerFPS;
+            float _ParticleGlow;
+            float4 _ClipRect;
 
-            // --- 核心算法：程序化高频噪声 ---
-            float2 hash2(float2 p)
+            // --- 核心算法：高频无序哈希 (Hash) ---
+            float hash12(float2 p)
             {
-                p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
-                return frac(sin(p) * 43758.5453);
+                float3 p3  = frac(float3(p.xyx) * .1031);
+                p3 += dot(p3, p3.yzx + 33.33);
+                return frac((p3.x + p3.y) * p3.z);
             }
 
-            float gradientNoise(float2 p)
+            float2 hash22(float2 p)
             {
-                float2 i = floor(p);
-                float2 f = frac(p);
-                float2 u = f*f*(3.0-2.0*f);
-                return lerp( lerp( dot( hash2(i + float2(0.0,0.0)), f - float2(0.0,0.0) ), 
-                                   dot( hash2(i + float2(1.0,0.0)), f - float2(1.0,0.0) ), u.x),
-                             lerp( dot( hash2(i + float2(0.0,1.0)), f - float2(0.0,1.0) ), 
-                                   dot( hash2(i + float2(1.0,1.0)), f - float2(1.0,1.0) ), u.x), u.y);
-            }
-
-            float InsideUv(float2 uv)
-            {
-                return step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
-            }
-
-            fixed4 SampleMain(float2 uv, fixed4 vertexColor)
-            {
-                return (tex2D(_MainTex, saturate(uv)) + _TextureSampleAdd) * vertexColor * InsideUv(uv);
+                float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
+                p3 += dot(p3, p3.yzx+33.33);
+                return frac((p3.xx+p3.yz)*p3.zy);
             }
 
             v2f vert(appdata_t v)
@@ -135,58 +123,61 @@ Shader "UI/MaterialModifiers/StaticElectricArrowDisplace"
 
             fixed4 frag(v2f IN) : SV_Target
             {
+                // --- 1. 计算边距防止超框 ---
                 float2 uv = IN.texcoord;
-                float time = _Time.y * _FlickerSpeed;
+                float2 paddedUV = (uv - _Padding) / max(0.001, 1.0 - 2.0 * _Padding);
+                float inBounds = step(0.0, paddedUV.x) * step(paddedUV.x, 1.0) * step(0.0, paddedUV.y) * step(paddedUV.y, 1.0);
 
-                // --- 1. 计算向四周扩散的放射单位向量 ---
-                float2 centerDir = uv - 0.5;
-                float distFromCenter = length(centerDir);
-                float2 radialDir = distFromCenter > 0.001 ? centerDir / distFromCenter : float2(1.0, 0.0);
-
-                // --- 2. 生成程序化噪声 ---
-                float noiseScale = 1.0 / max(_ParticleSize, 0.001);
-                float rawNoise = gradientNoise(uv * noiseScale + time);
-                float elecMask = saturate(rawNoise + 0.5);
-
-                // --- 3. 核心修改：让箭头自身的像素采样产生静电位移变化 ---
-                // 基于静电强度和噪声，直接计算当前像素坐标的偏移量
-                float displacementFactor = elecMask * _Intensity;
-                float individualLeap = displacementFactor * _FrizzleDistance;
-                
-                // 向中心方向进行逆向采样错位 (- radialDir)
-                // 这会导致原本处于箭头内部的实体像素被“推”向外部，产生由于电荷自扩散导致的炸毛、解体效果
-                float2 distortedUV = uv - radialDir * individualLeap;
-
-                // 直接对形变后的 UV 坐标进行采样，使整个箭头本体粒子化
-                fixed4 finalColor = SampleMain(distortedUV, IN.color);
-
-                // --- 4. 动态电荷染色与边缘透明度处理 ---
-                if (finalColor.a > 0.01)
+                // --- 2. 底图渲染 (绝对不膨胀变形) ---
+                fixed4 baseColor = fixed4(0,0,0,0);
+                if (inBounds > 0.5) 
                 {
-                    // 当局部噪声强度较高时，将形变后的像素染上静电颜色
-                    float electricThresh = 1.0 - _Intensity * 0.7;
-                    if (elecMask > electricThresh)
-                    {
-                        float colorLerp = saturate((elecMask - electricThresh) / max(1.0 - electricThresh, 0.001));
-                        finalColor.rgb = lerp(finalColor.rgb, _ElectricColor.rgb, colorLerp * 0.75);
-                    }
+                    baseColor = tex2D(_MainTex, paddedUV) * IN.color;
+                }
 
-                    // 透明度模式控制
-                    if (_AlphaMode == 0.0)
+                // --- 3. 离散网格化 (Pixelation Grid) ---
+                float2 gridUV = floor(paddedUV * _ParticleRes) / _ParticleRes;
+                float t = floor(_Time.y * _FlickerFPS);
+
+                // --- 4. 生成乱数偏移，抓取真正的贴图纹理 ---
+                float noiseVal = hash12(gridUV + t);
+                float isSpark = step(1.0 - _Intensity, noiseVal);
+
+                // 决定这个网格块将要“偷取”哪里的原图象素
+                float2 randomDir = hash22(gridUV + t + 15.0) * 2.0 - 1.0;
+                
+                // ⚠️ 关键点：用平滑的 paddedUV 加上网格化的偏移，
+                // 这样飞出去的粒子方块内部，依然保留着原贴图的高清细节纹理！
+                float2 distUV = paddedUV + randomDir * _FrizzleDistance;
+                float distInBounds = step(0.0, distUV.x) * step(distUV.x, 1.0) * step(0.0, distUV.y) * step(distUV.y, 1.0);
+                
+                fixed4 finalColor = baseColor;
+
+                // --- 5. 覆盖离散像素块 ---
+                if (isSpark > 0.5 && distInBounds > 0.5)
+                {
+                    // 直接对偏移后的 UV 采样原始贴图
+                    fixed4 sparkColor = tex2D(_MainTex, distUV) * IN.color;
+                    
+                    // 只有当抓取到的地方是实体（非透明）像素时，才显示飞出块
+                    if (sparkColor.a > 0.05)
                     {
-                        // 随着飞出/错位距离拉长，像素自然淡出，形成电荷消散的视觉毛边
-                        finalColor.a *= saturate(1.0 - displacementFactor * 0.8);
-                    }
-                    else
-                    {
-                        // 硬边模式：确保飞出的扭曲像素在末端依然保持完整的实心切片感
-                        finalColor.a = step(0.01, finalColor.a);
+                        // 将抓取到的像素覆盖上去，并乘以提亮倍率
+                        finalColor.rgb = lerp(finalColor.rgb, sparkColor.rgb * _ParticleGlow, sparkColor.a);
+                        finalColor.a = max(finalColor.a, sparkColor.a);
                     }
                 }
 
-                // --- 5. UI 裁剪与最终输出 ---
-                finalColor.a *= IN.color.a;
+                // --- 6. 表面像素的闪烁躁动 (Optional) ---
+                // 不使用任何杂色，仅仅让卡牌本体的某些像素块亮度跳动，增加电流干扰的错觉
+                float surfaceNoise = hash12(gridUV - t * 2.0);
+                float isSurfaceStatic = step(1.0 - _Intensity * 0.2, surfaceNoise) * step(0.1, baseColor.a);
+                if (isSurfaceStatic > 0.5)
+                {
+                    finalColor.rgb *= 1.3; // 原图象素瞬间高亮
+                }
 
+                // UI 裁剪逻辑
                 #ifdef UNITY_UI_CLIP_RECT
                 finalColor.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
@@ -195,7 +186,7 @@ Shader "UI/MaterialModifiers/StaticElectricArrowDisplace"
                 clip(finalColor.a - 0.001);
                 #endif
 
-                return saturate(finalColor);
+                return finalColor;
             }
             ENDCG
         }
