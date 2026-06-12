@@ -30,7 +30,6 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private TMP_Text goldText;
-    [SerializeField] private TMP_Text messageText;
     [SerializeField] private Button leaveButton;
     [SerializeField] private RectTransform revealMask;
     [SerializeField] private RectTransform contentRoot;
@@ -92,14 +91,11 @@ public class ShopPanelUI : MonoBehaviour
         ClearUndoPurchase();
         owner.ClearPendingShopMagic();
         gameObject.SetActive(true);
-        transform.SetAsLastSibling();
 
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, "商店");
         if (hintText != null)
             hintText.text = "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。";
-        if (messageText != null)
-            messageText.text = string.Empty;
 
         BuildOffers();
         BindLeaveButton();
@@ -144,8 +140,6 @@ public class ShopPanelUI : MonoBehaviour
             goldText = FindChildComponentRecursive<TMP_Text>(searchRoot, "GoldText");
         if (goldText != null)
             goldText.gameObject.SetActive(false);
-        if (messageText == null)
-            messageText = FindChildComponentRecursive<TMP_Text>(searchRoot, "MessageText");
         if (leaveButton == null)
             leaveButton = FindChildComponentRecursive<Button>(searchRoot, "LeaveButton");
         if (materialCardPrefab == null)
@@ -459,6 +453,8 @@ public class ShopPanelUI : MonoBehaviour
     private void Refresh()
     {
         CacheReferences();
+        if (hintText != null)
+            hintText.gameObject.SetActive(!(waitingForSelection && selectedOffer != null && selectedOffer.kind == ShopItemKind.Magic));
         if (goldText != null)
             goldText.gameObject.SetActive(false);
         if (leaveButton != null)
@@ -696,7 +692,6 @@ public class ShopPanelUI : MonoBehaviour
         if (owner.PlayerState.Gold < offer.price)
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
-            ShowMessage("金币不足");
             return;
         }
 
@@ -719,7 +714,6 @@ public class ShopPanelUI : MonoBehaviour
         if (offer.magicData == null)
             return;
 
-        ShowMessage("已选中，再次点击可取消");
         selectedOffer = offer;
         waitingForSelection = true;
         purchaseInProgress = false;
@@ -735,7 +729,6 @@ public class ShopPanelUI : MonoBehaviour
         owner.ClearPendingShopMagic();
         selectedOffer = null;
         waitingForSelection = false;
-        ShowMessage(string.Empty);
         if (refresh)
             Refresh();
     }
@@ -756,7 +749,6 @@ public class ShopPanelUI : MonoBehaviour
         {
             selectedOffer = null;
             PlayShopSfx(GameSfxId.NotEnoughMoney);
-            ShowMessage("金币不足");
             Refresh();
             return;
         }
@@ -771,7 +763,6 @@ public class ShopPanelUI : MonoBehaviour
             selectedOffer = null;
             offer.purchased = true;
             RegisterUndoMagicPurchase(offer, goldBefore, slotIndex, previousMagic);
-            ShowMessage("购买成功");
             Refresh();
         });
     }
@@ -783,7 +774,6 @@ public class ShopPanelUI : MonoBehaviour
         if (!owner.TrySpendShopGold(offer.price))
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
-            ShowMessage("金币不足");
             Refresh();
             return;
         }
@@ -798,7 +788,6 @@ public class ShopPanelUI : MonoBehaviour
             offer.purchased = true;
             MaterialModel added = owner.PlayerState.Deck.Count > deckCountBefore ? owner.PlayerState.Deck[owner.PlayerState.Deck.Count - 1] : null;
             RegisterUndoMaterialPurchase(offer, goldBefore, added);
-            ShowMessage("购买成功");
             Refresh();
         });
     }
@@ -807,14 +796,12 @@ public class ShopPanelUI : MonoBehaviour
     {
         if (!HasRemovableMaterial())
         {
-            ShowMessage("没有可删除的素材");
             Refresh();
             return;
         }
 
         selectedOffer = offer;
         owner.ClearPendingShopMagic();
-        ShowMessage("选择一张箭头删除");
         waitingForSelection = true;
         Refresh();
         MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialListPanel;
@@ -828,7 +815,6 @@ public class ShopPanelUI : MonoBehaviour
     {
         waitingForSelection = false;
         selectedOffer = null;
-        ShowMessage(string.Empty);
         Refresh();
     }
 
@@ -851,7 +837,6 @@ public class ShopPanelUI : MonoBehaviour
         if (!owner.TrySpendShopGold(offer.price))
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
-            ShowMessage("金币不足");
             Refresh();
             return;
         }
@@ -861,7 +846,6 @@ public class ShopPanelUI : MonoBehaviour
             PlayShopSfx(GameSfxId.Buy);
             offer.purchased = true;
             RegisterUndoRemoveMaterialPurchase(offer, goldBefore, removedMaterial);
-            ShowMessage("已删除素材");
         }
         Refresh();
     }
@@ -916,7 +900,6 @@ public class ShopPanelUI : MonoBehaviour
         owner.CreateMagicViewsForShopUndo();
         owner.RefreshShopUndoUI();
         ClearUndoPurchase();
-        ShowMessage("已撤回本次购买");
         Refresh();
         return true;
     }
@@ -961,11 +944,5 @@ public class ShopPanelUI : MonoBehaviour
         undoAddedMaterial = null;
         undoRemovedMaterial = null;
         undoAvailable = false;
-    }
-
-    private void ShowMessage(string text)
-    {
-        if (messageText != null)
-            messageText.text = text;
     }
 }

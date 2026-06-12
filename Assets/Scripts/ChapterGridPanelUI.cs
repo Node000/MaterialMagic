@@ -178,6 +178,12 @@ public class ChapterGridPanelUI : MonoBehaviour
     public void SetInputLocked(bool locked)
     {
         inputLocked = locked;
+        if (!gameObject.activeInHierarchy || !IsMapSelectionActive())
+        {
+            ClearDirectionButtons();
+            return;
+        }
+
         RefreshDirectionButtons();
     }
 

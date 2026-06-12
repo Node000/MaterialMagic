@@ -94,6 +94,56 @@ public class PlayerState
         return DrawCardsToHand(count, true, IsBasicMaterialCard);
     }
 
+    public int DrawSpecificMaterialsToHand(IReadOnlyList<MaterialEnum> materials, bool createTemporaryIfMissing)
+    {
+        if (materials == null)
+            return 0;
+
+        int drawnCount = 0;
+        for (int i = 0; i < materials.Count; i++)
+        {
+            MaterialEnum material = materials[i];
+            if (material == MaterialEnum.None)
+                continue;
+
+            MaterialModel card = TakeMaterialFromPile(DrawPile, material);
+            if (card == null)
+                card = TakeMaterialFromPile(DiscardPile, material);
+            if (card == null && createTemporaryIfMissing)
+            {
+                card = new MaterialModel("temporary_tutorial_" + material + "_" + temporaryMaterialIndex++, material);
+                card.AddModifier(new TemporaryModifier());
+            }
+            if (card == null)
+                continue;
+
+            card.isPlayed = false;
+            Hand.Add(card);
+            card.TriggerOnDraw();
+            TriggerAfterDraw(card);
+            drawnCount++;
+            GameLog.Data($"Draw fixed material {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
+        }
+        return drawnCount;
+    }
+
+    private static MaterialModel TakeMaterialFromPile(List<MaterialModel> pile, MaterialEnum material)
+    {
+        if (pile == null)
+            return null;
+
+        for (int i = 0; i < pile.Count; i++)
+        {
+            MaterialModel card = pile[i];
+            if (card != null && card.material == material)
+            {
+                pile.RemoveAt(i);
+                return card;
+            }
+        }
+        return null;
+    }
+
     public RefreshHandResult RefreshBasicMaterialHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
         return RefreshHandCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);

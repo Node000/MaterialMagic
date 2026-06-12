@@ -226,7 +226,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (selected)
         {
             if (offer != null && offer.kind == ShopItemKind.Magic)
-                return "点击道具槽购买";
+                return "已选中";
             if (offer != null && offer.kind == ShopItemKind.RemoveMaterial)
                 return "选择要删的牌";
         }

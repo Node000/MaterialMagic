@@ -116,20 +116,42 @@ public class MagicSlotSaveData
 public static class RunSaveSystem
 {
     private const int CurrentVersion = 3;
+    private const string CurrentSlotPlayerPrefsKey = "RunSaveSystem.CurrentSlotIndex";
     private const string MapSelectionState = "MapSelection";
     private const string BeforeNodeState = "BeforeNode";
     private static bool forceNewRun;
     private static bool startingTutorialRun;
     private static int currentSlotIndex = 1;
+    private static bool currentSlotIndexLoaded;
 
     private static string SaveDirectory => Path.Combine(Application.persistentDataPath, "Save");
     public static string SaveFolderPath => SaveDirectory;
-    public static int CurrentSlotIndex => currentSlotIndex;
-    private static string RunSavePath => GetRunSavePath(currentSlotIndex);
+    public static int CurrentSlotIndex
+    {
+        get
+        {
+            EnsureCurrentSlotIndexLoaded();
+            return currentSlotIndex;
+        }
+    }
+    private static string RunSavePath => GetRunSavePath(CurrentSlotIndex);
 
     public static void SelectSlot(int slotIndex)
     {
+        EnsureCurrentSlotIndexLoaded();
         currentSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
+        currentSlotIndexLoaded = true;
+        PlayerPrefs.SetInt(CurrentSlotPlayerPrefsKey, currentSlotIndex);
+        PlayerPrefs.Save();
+    }
+
+    private static void EnsureCurrentSlotIndexLoaded()
+    {
+        if (currentSlotIndexLoaded)
+            return;
+
+        currentSlotIndex = Mathf.Clamp(PlayerPrefs.GetInt(CurrentSlotPlayerPrefsKey, 1), 1, 3);
+        currentSlotIndexLoaded = true;
     }
 
     public static string GetRunSavePath(int slotIndex)
@@ -178,25 +200,25 @@ public static class RunSaveSystem
 
     public static bool IsTutorialCompleted()
     {
-        RunSaveData data = LoadSummary(currentSlotIndex);
+        RunSaveData data = LoadSummary(CurrentSlotIndex);
         return data != null && data.tutorialCompleted;
     }
 
     public static bool ShouldShowTutorialEntry()
     {
-        RunSaveData data = LoadSummary(currentSlotIndex);
+        RunSaveData data = LoadSummary(CurrentSlotIndex);
         return data == null || !data.tutorialCompleted;
     }
 
     public static bool IsTutorialEventShown()
     {
-        RunSaveData data = LoadSummary(currentSlotIndex);
+        RunSaveData data = LoadSummary(CurrentSlotIndex);
         return data != null && data.tutorialEventShown;
     }
 
     public static void SetTutorialCompleted(bool completed)
     {
-        RunSaveData data = LoadSummary(currentSlotIndex) ?? CreateEmptySlotData();
+        RunSaveData data = LoadSummary(CurrentSlotIndex) ?? CreateEmptySlotData();
         data.tutorialCompleted = completed;
         if (!completed)
             data.tutorialEventShown = false;
@@ -205,7 +227,7 @@ public static class RunSaveSystem
 
     public static void SetTutorialEventShown(bool shown)
     {
-        RunSaveData data = LoadSummary(currentSlotIndex) ?? CreateEmptySlotData();
+        RunSaveData data = LoadSummary(CurrentSlotIndex) ?? CreateEmptySlotData();
         data.tutorialEventShown = shown;
         SaveSummaryOnly(data);
     }
@@ -238,7 +260,7 @@ public static class RunSaveSystem
     private static void SaveSummaryOnly(RunSaveData data)
     {
         Directory.CreateDirectory(SaveDirectory);
-        string path = Path.Combine(SaveDirectory, $"summary_slot_{currentSlotIndex}.json");
+        string path = Path.Combine(SaveDirectory, $"summary_slot_{CurrentSlotIndex}.json");
         File.WriteAllText(path, JsonUtility.ToJson(data, true));
     }
 
@@ -273,7 +295,7 @@ public static class RunSaveSystem
 
     public static RunSaveData LoadCurrentRun()
     {
-        return LoadRun(currentSlotIndex);
+        return LoadRun(CurrentSlotIndex);
     }
 
     public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f)
@@ -281,12 +303,12 @@ public static class RunSaveSystem
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
 
-        RunSaveData previousData = LoadSummary(currentSlotIndex);
+        RunSaveData previousData = LoadSummary(CurrentSlotIndex);
         string now = DateTime.UtcNow.ToString("o");
         RunSaveData data = new RunSaveData
         {
             version = CurrentVersion,
-            slotIndex = currentSlotIndex,
+            slotIndex = CurrentSlotIndex,
             runId = previousData != null && !string.IsNullOrEmpty(previousData.runId) ? previousData.runId : Guid.NewGuid().ToString("N"),
             createdAtUtc = previousData != null && !string.IsNullOrEmpty(previousData.createdAtUtc) ? previousData.createdAtUtc : now,
             lastSavedAtUtc = now,
@@ -437,7 +459,7 @@ public static class RunSaveSystem
         return new RunSaveData
         {
             version = CurrentVersion,
-            slotIndex = currentSlotIndex,
+            slotIndex = CurrentSlotIndex,
             runId = Guid.NewGuid().ToString("N"),
             createdAtUtc = now,
             lastSavedAtUtc = now,

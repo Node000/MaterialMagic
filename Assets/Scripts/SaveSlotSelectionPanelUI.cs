@@ -125,16 +125,17 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
                 continue;
 
             RunSaveData data = RunSaveSystem.LoadSummary(i + 1);
-            string active = RunSaveSystem.CurrentSlotIndex == i + 1 ? "（当前）" : string.Empty;
+            bool isActive = RunSaveSystem.CurrentSlotIndex == i + 1;
+            string slotTitle = isActive ? $"▶ 当前存档 {i + 1}" : $"存档 {i + 1}";
             if (data == null)
             {
-                text.text = $"存档 {i + 1}{active}\n通关次数：0\n游戏时间：0分钟\n最后游玩：无";
+                text.text = $"{slotTitle}\n通关次数：0\n游戏时间：0分钟\n最后游玩：无";
                 continue;
             }
 
             int minutes = Mathf.FloorToInt(data.totalPlaySeconds / 60f);
             string lastPlayed = string.IsNullOrEmpty(data.lastPlayedAtUtc) ? "无" : data.lastPlayedAtUtc;
-            text.text = $"存档 {i + 1}{active}\n通关次数：{data.victoryCount}\n游戏时间：{minutes}分钟\n最后游玩：{lastPlayed}";
+            text.text = $"{slotTitle}\n通关次数：{data.victoryCount}\n游戏时间：{minutes}分钟\n最后游玩：{lastPlayed}";
         }
     }
 }

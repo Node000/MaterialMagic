@@ -93,11 +93,29 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private RectTransform buffSlotPrefab;
 
-	[SerializeField]
-	private Button refreshButton;
+		[SerializeField]
+		private Button refreshButton;
 
-	[SerializeField]
-	private Button endTurnButton;
+		[SerializeField]
+		private Image refreshChanceBadgeImage;
+
+		[SerializeField]
+		private TMP_Text refreshChanceText;
+
+		[SerializeField]
+		private Color refreshChanceBadgeColor = new Color(0.95f, 0.42f, 0.16f, 1f);
+
+		[SerializeField]
+		private Color refreshChanceBadgeDisabledColor = new Color(0.35f, 0.35f, 0.35f, 1f);
+
+		[SerializeField]
+		private Color refreshChanceTextColor = Color.white;
+
+		[SerializeField]
+		private Color refreshChanceTextDisabledColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+
+		[SerializeField]
+		private Button endTurnButton;
 
 	private TMP_Text endTurnButtonText;
 
@@ -637,6 +655,7 @@ public class HandSystemUI : MonoBehaviour
         if (panel != null)
             panel.SetDirectionCardSource(handArea, cardPrefab, cardSpacing);
         GetUIManager().ShowChapterGridPanel(grid);
+        TutorialManager?.OnLevelSelectShown(currentMapNodeIndex);
         if (ShouldActivateBossMapForCurrentSelection(grid))
         {
             if (panel != null)
@@ -657,7 +676,8 @@ public class HandSystemUI : MonoBehaviour
 
     private bool ShouldActivateBossMapForCurrentSelection(RunMapGridModel grid)
     {
-        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1 && (activeChapter == null || activeChapter.numericId != TutorialManagerUI.TutorialChapterNumericId || runManager != null && runManager.MapGrid != null && runManager.MapGrid.playerY >= 4);
+        ChapterData chapter = activeChapter ?? GetActiveChapter();
+        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId) && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1;
     }
 
     private void ActivateBossMapForCurrentSelection(ChapterGridPanelUI panel)
@@ -1141,13 +1161,10 @@ public class HandSystemUI : MonoBehaviour
 		refreshUsedThisTurn = false;
         if (TutorialManager != null && TutorialManager.ShouldUseTutorialEventFixedDraw(currentEvent.Data))
         {
-            playerState.Hand.Clear();
-            playerState.PlayZone.Clear();
-            playerState.DrawPile.Clear();
-            playerState.DiscardPile.Clear();
-            playerState.ConsumedPile.Clear();
-            playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), MaterialEnum.Wind));
-            playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), MaterialEnum.Wind));
+            List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
+            playerState.ReturnHandCardsToDiscardPile(new List<MaterialModel>(playerState.Hand), removedTemporaryCards);
+            playerState.ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+            playerState.DrawSpecificMaterialsToHand(new[] { MaterialEnum.Wind, MaterialEnum.Wind }, true);
             TutorialManager.OnEventOptionsShown();
         }
         else
@@ -1740,6 +1757,7 @@ public class HandSystemUI : MonoBehaviour
         SetMapGridLevel(levels, width, 0, 2, GetLevelData(TutorialManagerUI.TutorialEventLevelId));
         SetMapGridLevel(levels, width, 0, 3, GetLevelData(TutorialManagerUI.TutorialShopLevelId));
         SetMapGridLevel(levels, width, 0, 4, GetLevelData(TutorialManagerUI.TutorialRestLevelId));
+        SetMapGridLevel(levels, width, 0, 5, GetLevelData(TutorialManagerUI.TutorialBossLevelId));
     }
 
     private void ApplyTutorialChapterMapCellFlags()
@@ -1754,10 +1772,12 @@ public class HandSystemUI : MonoBehaviour
             if (cell == null)
                 continue;
 
-            cell.isAvailable = true;
-            cell.isBoss = false;
-            cell.isRevealed = true;
+            bool isStartCell = cell.x == grid.playerX && cell.y == grid.playerY;
+            cell.isAvailable = isStartCell || cell.level != null;
+            cell.isBoss = cell.level != null && cell.level.numericId == TutorialManagerUI.TutorialBossLevelId;
+            cell.isRevealed = cell.isBoss;
         }
+        runManager?.RevealCurrentMapNeighbors();
     }
 
     private static LevelData GetLevelData(int numericId)
@@ -1915,7 +1935,7 @@ public class HandSystemUI : MonoBehaviour
 
     public void OnChapterMapDirectionClicked(MaterialEnum material)
     {
-        if (runManager == null || chapterMapMoveInProgress || currentLevel != null || runManager.State != RunFlowState.MapSelection)
+        if (runManager == null || chapterMapMoveInProgress || currentLevel != null || runManager.State != RunFlowState.MapSelection || TutorialManager != null && TutorialManager.IsMapTutorialBlockingInput)
             return;
 
         StartCoroutine(ChapterMapMoveRoutine(material));
@@ -2220,7 +2240,34 @@ public class HandSystemUI : MonoBehaviour
 	{
 		GetUIManager().HideMapPanel();
         GetUIManager().HideChapterGridPanel();
+        ClearMapDirectionCardsFromHandArea();
 	}
+
+    private void ClearMapDirectionCardsFromHandArea()
+    {
+        if (handArea == null)
+            return;
+
+        for (int i = handArea.childCount - 1; i >= 0; i--)
+        {
+            Transform child = handArea.GetChild(i);
+            if (IsMapDirectionCardObject(child))
+                Destroy(child.gameObject);
+        }
+    }
+
+    private static bool IsMapDirectionCardObject(Transform child)
+    {
+        if (child == null)
+            return false;
+
+        if (child.name.StartsWith("MapDirection_"))
+            return true;
+
+        HandCardView cardView = child.GetComponent<HandCardView>();
+        MaterialModel card = cardView != null ? cardView.Card : null;
+        return card != null && !string.IsNullOrEmpty(card.instanceId) && card.instanceId.StartsWith("map_direction_");
+    }
 
 	private void CreateTopBar()
 	{
@@ -2835,10 +2882,9 @@ public class HandSystemUI : MonoBehaviour
 		PlayerState.RefreshHandResult refreshResult;
 			if (TutorialManager != null && TutorialManager.TryGetForcedRefreshMaterials(selectedCards.Count, forcedRefreshMaterials))
 			{
-				playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
-				for (int i = 0; i < forcedRefreshMaterials.Count; i++)
-					playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), forcedRefreshMaterials[i]));
-				refreshResult = new PlayerState.RefreshHandResult(forcedRefreshMaterials.Count, selectedCards.Count);
+				int returnedCount = playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
+				int drawnCount = playerState.DrawSpecificMaterialsToHand(forcedRefreshMaterials, true);
+				refreshResult = new PlayerState.RefreshHandResult(drawnCount, returnedCount);
 			}
 		else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
 		{
@@ -3915,6 +3961,7 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
 		//IL_009f: Expected O, but got Unknown
+        ClearMapDirectionCardsFromHandArea();
 		for (int num = cardViews.Count - 1; num >= 0; num--)
 		{
 			HandCardView view = cardViews[num];
@@ -4141,11 +4188,49 @@ public class HandSystemUI : MonoBehaviour
 		{
 			consumedCountText.text = playerState != null ? $"消耗堆\n{playerState.ConsumedPile.Count}" : "消耗堆";
 		}
-        RefreshEndTurnButtonText();
-        RefreshPlayerAnimationState();
-	}
+	        RefreshEndTurnButtonText();
+	        RefreshRefreshChanceUI();
+	        RefreshPlayerAnimationState();
+		}
 
-    private void CacheEndTurnButtonText()
+	    private int GetRemainingRefreshChanceCount()
+	    {
+	        if (playerState == null)
+	            return 0;
+
+	        int remaining = refreshUsedThisTurn ? 0 : 1;
+	        return remaining + playerState.GetBuffStack(BuffEnum.ExtraRefresh);
+	    }
+
+	    private void CacheRefreshChanceViews()
+	    {
+	        if ((Object)refreshButton == (Object)null)
+	            return;
+
+	        Transform refreshButtonTransform = ((Component)refreshButton).transform;
+	        if ((Object)refreshChanceBadgeImage == (Object)null)
+	            refreshChanceBadgeImage = UIManager.FindChildComponent<Image>(refreshButtonTransform, "RefreshChanceBadge");
+	        if ((Object)refreshChanceText == (Object)null)
+	            refreshChanceText = UIManager.FindChildComponent<TMP_Text>(refreshButtonTransform, "RefreshChanceBadge/CountText");
+	    }
+
+	    private void RefreshRefreshChanceUI()
+	    {
+	        CacheRefreshChanceViews();
+	        int remaining = GetRemainingRefreshChanceCount();
+	        bool active = remaining > 0 && (Object)refreshButton != (Object)null && refreshButton.interactable;
+
+	        if ((Object)refreshChanceText != (Object)null)
+	        {
+	            refreshChanceText.text = remaining.ToString();
+	            refreshChanceText.color = active ? refreshChanceTextColor : refreshChanceTextDisabledColor;
+	        }
+
+	        if ((Object)refreshChanceBadgeImage != (Object)null)
+	            refreshChanceBadgeImage.color = active ? refreshChanceBadgeColor : refreshChanceBadgeDisabledColor;
+		}
+
+	    private void CacheEndTurnButtonText()
     {
         if ((Object)endTurnButtonText != (Object)null || (Object)endTurnButton == (Object)null)
             return;
@@ -5140,6 +5225,7 @@ public class HandSystemUI : MonoBehaviour
 		List<HandCardView> views = new List<HandCardView>(cardViews);
 		List<MaterialModel> battleEndRemovedTemporaryCards = new List<MaterialModel>();
 		battleManager?.FinishBattleRules(battleEndRemovedTemporaryCards);
+        TutorialManager?.EndTutorialBattle();
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
 		ResetMagicHighlights();
@@ -7727,11 +7813,13 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0011: Expected O, but got Unknown
 		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0050: Expected O, but got Unknown
-		if ((Object)refreshButton != (Object)null)
-		{
-			refreshButton.interactable = interactable && (!refreshUsedThisTurn || playerState.GetBuffStack(BuffEnum.ExtraRefresh) > 0);
-		}
-		if ((Object)endTurnButton != (Object)null)
+			if ((Object)refreshButton != (Object)null)
+			{
+				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.GetBuffStack(BuffEnum.ExtraRefresh) > 0);
+				refreshButton.interactable = interactable && canRefresh;
+			}
+	        RefreshRefreshChanceUI();
+			if ((Object)endTurnButton != (Object)null)
 		{
 			endTurnButton.interactable = interactable;
             if (!interactable && (Object)playerCastAnimator != (Object)null)

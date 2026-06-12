@@ -118,7 +118,7 @@
     },
     {
       "key": "tutorial.battle.info.body",
-      "text": "左上角会显示你的生命、护盾、金币和当前状态。先记住自己的资源，再决定这一回合怎么出牌。"
+      "text": "左侧是你的生命值、Buff情况和金币数量。\n\n正下方会显示你的手牌和出牌情况。\n\n右侧是你的换牌和出牌按钮，以及各种牌堆。"
     },
     {
       "key": "tutorial.battle.magic_book.title",
@@ -126,7 +126,7 @@
     },
     {
       "key": "tutorial.battle.magic_book.body",
-      "text": "右侧是你的道具栏。出牌区的箭头组合满足道具配方时，会按顺序触发对应道具效果。"
+      "text": "这是你的道具栏。出牌区的箭头组合满足道具配方时，会按顺序触发对应道具效果。（从短到长触发）"
     },
     {
       "key": "tutorial.battle.enemy_info.title",
@@ -134,7 +134,7 @@
     },
     {
       "key": "tutorial.battle.enemy_info.body",
-      "text": "敌人上方会显示生命值、护盾和意图。教学人偶只会防御，不会主动攻击你。"
+      "text": "这里是敌人，敌人头顶显示的图标和数值代表了其下一回合的意图。\n\n若有多个敌人存在，可以通过点击敌人进行集火。（道具的默认释放对象是最左边的敌人）"
     },
     {
       "key": "tutorial.battle.arrow_base.title",
@@ -158,7 +158,7 @@
     },
     {
       "key": "tutorial.battle.play.body",
-      "text": "点击手牌区的箭头可以选中；点击上方可以打出选中的箭头；点击出牌区的箭头可以取消出牌。尝试打出所有箭头，然后按右下角按钮确认出牌。"
+      "text": "点击选中手牌区的箭头，然后点击上方区域即可出牌。\n\n点击出牌区的箭头可以取消出牌。\n\n请尝试打出所有箭头，并按右下方的“出手！”按钮确认出牌。"
     },
     {
       "key": "tutorial.battle.play_confirm.title",
@@ -190,7 +190,7 @@
     },
     {
       "key": "tutorial.battle.refresh.body",
-      "text": "第二回合会抽到三张右。请先选中全部三张右。"
+      "text": "在抽到不想要的箭头时，可以选中这些箭头并点击右侧的换牌按钮重新抽取。\n\n你的回合开始时，换牌次数会重置为1，通过某些方式可以临时或永久增加换牌次数。\n\n现在，请尝试更换所有手牌。"
     },
     {
       "key": "tutorial.battle.refresh_confirm.title",
@@ -206,7 +206,7 @@
     },
     {
       "key": "tutorial.reward.claim.body",
-      "text": "战斗胜利后会出现结算奖励。点击奖励按钮可以领取金币或打开道具三选一。"
+      "text": "战斗胜利后会出现结算奖励，点击领取。"
     },
     {
       "key": "tutorial.reward.equip_magic.title",
@@ -214,7 +214,7 @@
     },
     {
       "key": "tutorial.reward.equip_magic.body",
-      "text": "选择道具奖励后，点击右侧道具栏中的一个槽位进行更换。"
+      "text": "选择道具奖励后，点击右侧道具栏中的槽位进行更换。"
     },
     {
       "key": "tutorial.reward.undo_hint.title",
@@ -222,7 +222,7 @@
     },
     {
       "key": "tutorial.reward.undo_hint.body",
-      "text": "如果道具换错了，可以按退格键撤回奖励获取。撤回后奖励按钮会再次出现，内容不会变化。"
+      "text": "如果出现了决策失误，可以按退格键撤回本次奖励获取。"
     },
     {
       "key": "tutorial.shop.buy_hint.title",
@@ -230,7 +230,7 @@
     },
     {
       "key": "tutorial.shop.buy_hint.body",
-      "text": "购买道具后，需要点击右侧道具栏确认放入槽位；再次点击可以取消道具选择。购买箭头和删牌会立刻生效。"
+      "text": "你可以在商店内购买道具和箭头，或者删除多余的箭头。\n\n购买道具需要在选中道具后，点击右侧的道具栏以确认购买。"
     },
     {
       "key": "tutorial.shop.undo_hint.title",
@@ -238,7 +238,7 @@
     },
     {
       "key": "tutorial.shop.undo_hint.body",
-      "text": "如果买错了，可以按退格键撤回本次购买，但是在离开商店后就无法撤回了。"
+      "text": "如果买错了道具，可以按退格键撤回本次购买。\n\n注意，箭头购买是无法撤回的。"
     },
     {
       "key": "tutorial.event.options.title",
@@ -246,7 +246,7 @@
     },
     {
       "key": "tutorial.event.options.body",
-      "text": "事件页面会显示事件内容和可选选项。选项前面的箭头表示需求，出牌区满足需求后才能触发该选项。"
+      "text": "每个事件会有多个处理选项，通过打出对应的箭头组合来选定选项。\n\n选项的需求大多是随机的，所以不存在删牌后一定无法触发某些选项的情况。"
     },
     {
       "key": "tutorial.event.refresh.title",
@@ -254,7 +254,31 @@
     },
     {
       "key": "tutorial.event.refresh.body",
-      "text": "事件中也可以换牌。这个教学事件会先给你两张左；如果换牌，换上来的牌一定是右。"
+      "text": "每个事件的抽牌数都是不一样的。\n\n在事件中同样可以进行一次任意数量的换牌。"
+    },
+    {
+      "key": "tutorial.map.panel.title",
+      "text": "地图面板"
+    },
+    {
+      "key": "tutorial.map.panel.body",
+      "text": "游戏的最终目标是击败Boss，你可以通过观察地图来规划路线。\n\n地图上初始只会揭示Boss格位，你仅能解锁相邻格位的信息。"
+    },
+    {
+      "key": "tutorial.map.movement.title",
+      "text": "地图移动"
+    },
+    {
+      "key": "tutorial.map.movement.body",
+      "text": "通过打出上、下、左、右方向的箭头，可以在地图上移动到相邻格子。\n\n若你抵达的格子不为空，则会触发相应的内容。"
+    },
+    {
+      "key": "tutorial.map.step_limit.title",
+      "text": "步数限制"
+    },
+    {
+      "key": "tutorial.map.step_limit.body",
+      "text": "当经过的关卡数达到上限时，所有格位都会变成Boss格位，强制进入Boss战。请在此之前做好准备。"
     }
   ]
 }

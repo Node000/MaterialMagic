@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum TutorialStep
 {
@@ -10,7 +11,9 @@ public enum TutorialStep
     BattleEnemyInfo,
     BattlePlay,
     BattleRefresh,
-    BattleRefreshConfirm,
+    MapPanel,
+    MapMovement,
+    MapStepLimit,
     RewardClaim,
     RewardEquipMagic,
     RewardUndoHint,
@@ -27,7 +30,7 @@ public class TutorialManagerUI : MonoBehaviour
     public const int TutorialBattleLevelId = 1001;
     public const int TutorialEventLevelId = 1002;
     public const int TutorialShopLevelId = 1003;
-    public const int TutorialRestLevelId = 1004;
+    public const int TutorialRestLevelId = 201;
     public const int TutorialBossLevelId = 1005;
     public const int TutorialEventNumericId = 1001;
     public const int TutorialDummyLEnemyId = 1001;
@@ -35,13 +38,18 @@ public class TutorialManagerUI : MonoBehaviour
 
     [SerializeField] private RectTransform stepsRoot;
     [SerializeField] private TutorialCutoutMaskUI cutoutMask;
+    [SerializeField] private Image inputBlocker;
 
+    private HandSystemUI owner;
     private readonly Dictionary<TutorialStep, GameObject> stepObjects = new Dictionary<TutorialStep, GameObject>();
     private TutorialStep currentStep;
     private bool mainTutorialRunning;
     private bool tutorialBattleRunning;
     private bool waitingForStepClick;
     private int battleTurnIndex;
+    private bool tutorialBattleInputUnlocked;
+    private bool mapTutorialShown;
+    private bool shopUndoHintShown;
 
     public TutorialStep CurrentStep => currentStep;
     public bool MainTutorialRunning => mainTutorialRunning;
@@ -49,13 +57,17 @@ public class TutorialManagerUI : MonoBehaviour
     public bool ShouldKillTutorialEnemyAfterPlayerTurn => tutorialBattleRunning && battleTurnIndex >= 2;
     public bool IsCompleted => RunSaveSystem.IsTutorialCompleted();
     public bool IsTutorialRun { get; private set; }
+    public bool IsMapTutorialBlockingInput => currentStep == TutorialStep.MapPanel || currentStep == TutorialStep.MapMovement || currentStep == TutorialStep.MapStepLimit;
 
     public void Initialize(HandSystemUI owner)
     {
+        this.owner = owner;
         CacheSteps();
         CacheCutoutMask();
+        CacheInputBlocker();
         LocalizeSteps();
         HideAllSteps();
+        SetMapTutorialInputLocked(false);
         IsTutorialRun = owner != null && owner.ActiveChapterNumericId == TutorialChapterNumericId;
         mainTutorialRunning = IsTutorialRun && !RunSaveSystem.IsTutorialCompleted();
     }
@@ -73,6 +85,11 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnLevelSelectShown(int nodeIndex)
     {
+        if (!mainTutorialRunning || mapTutorialShown || nodeIndex != 0)
+            return;
+
+        mapTutorialShown = true;
+        ShowStep(TutorialStep.MapPanel, true);
     }
 
     public bool ShouldUseTutorialBattle(LevelData level)
@@ -84,7 +101,17 @@ public class TutorialManagerUI : MonoBehaviour
     {
         tutorialBattleRunning = true;
         battleTurnIndex = 0;
+        tutorialBattleInputUnlocked = false;
         HideAllSteps();
+    }
+
+    public void EndTutorialBattle()
+    {
+        tutorialBattleRunning = false;
+        tutorialBattleInputUnlocked = false;
+        battleTurnIndex = 0;
+        if (currentStep == TutorialStep.BattleInfo || currentStep == TutorialStep.BattleMagicBook || currentStep == TutorialStep.BattleEnemyInfo || currentStep == TutorialStep.BattlePlay || currentStep == TutorialStep.BattleRefresh)
+            HideAllSteps();
     }
 
     public bool TryApplyFixedTurnHand(PlayerState playerState)
@@ -93,6 +120,7 @@ public class TutorialManagerUI : MonoBehaviour
             return false;
 
         battleTurnIndex++;
+        tutorialBattleInputUnlocked = false;
         switch (battleTurnIndex)
         {
             case 1:
@@ -110,7 +138,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public bool CanMoveCardToPlay(MaterialModel card, IReadOnlyList<MaterialModel> playZone)
     {
-        if (!tutorialBattleRunning)
+        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
             return true;
         if (waitingForStepClick)
             return false;
@@ -126,7 +154,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public bool CanMovePlayCardToHand(MaterialModel card)
     {
-        if (!tutorialBattleRunning)
+        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
             return true;
         if (waitingForStepClick)
             return false;
@@ -136,7 +164,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public bool CanRefreshSelected(IReadOnlyList<MaterialModel> selectedCards)
     {
-        return tutorialBattleRunning && currentStep == TutorialStep.BattleRefreshConfirm && selectedCards != null && selectedCards.Count == 3;
+        return tutorialBattleRunning && (tutorialBattleInputUnlocked || currentStep == TutorialStep.BattleRefresh && selectedCards != null && selectedCards.Count == 3);
     }
 
     public bool TryGetForcedRefreshMaterials(int selectedCount, List<MaterialEnum> materials)
@@ -145,7 +173,7 @@ public class TutorialManagerUI : MonoBehaviour
             return false;
 
         materials.Clear();
-        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefreshConfirm && selectedCount == 3)
+        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh && selectedCount == 3)
         {
             materials.Add(MaterialEnum.Fire);
             materials.Add(MaterialEnum.Fire);
@@ -165,9 +193,9 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRefreshCompleted(PlayerState playerState)
     {
-        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefreshConfirm)
+        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh)
         {
-            SetFixedHand(playerState, MaterialEnum.Fire, MaterialEnum.Fire, MaterialEnum.Water);
+            tutorialBattleInputUnlocked = true;
             HideAllSteps();
             return;
         }
@@ -178,7 +206,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public bool CanEndTurn(IReadOnlyList<MaterialModel> playZone)
     {
-        if (!tutorialBattleRunning)
+        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
             return true;
         if (waitingForStepClick)
             return false;
@@ -190,35 +218,24 @@ public class TutorialManagerUI : MonoBehaviour
     {
         if (!tutorialBattleRunning || selectedCards == null)
             return;
-
-        if (currentStep == TutorialStep.BattleRefresh && CountMaterial(selectedCards, MaterialEnum.Earth) == 3 && selectedCards.Count == 3)
-            ShowStep(TutorialStep.BattleRefreshConfirm, false);
     }
 
     public void OnBattleCardsPlayed(IReadOnlyList<MaterialModel> playZone)
     {
         if (!tutorialBattleRunning)
             return;
-
-        if (currentStep == TutorialStep.BattlePlay && CountMaterial(playZone, MaterialEnum.Fire) == 2 && playZone.Count == 2)
-            HideCurrentStepVisual();
     }
 
     public void OnBattleCardCanceled(IReadOnlyList<MaterialModel> playZone)
     {
         if (!tutorialBattleRunning || currentStep != TutorialStep.BattlePlay)
             return;
-
-        HideCurrentStepVisual();
     }
 
     public void OnBattleReadyToEndTurn(IReadOnlyList<MaterialModel> playZone)
     {
         if (!tutorialBattleRunning || currentStep != TutorialStep.BattlePlay)
             return;
-
-        if (CountMaterial(playZone, MaterialEnum.Fire) == 2 && playZone.Count == 2)
-            HideCurrentStepVisual();
     }
 
     public void OnBattleEndTurnStarted()
@@ -246,8 +263,6 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnMagicRewardChoicesShown()
     {
-        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted())
-            ShowStep(TutorialStep.RewardClaim, true);
     }
 
     public void OnRewardMagicSelected()
@@ -306,8 +321,11 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnShopPurchaseCompleted()
     {
-        if (IsTutorialRun && ShouldShowKeyboardUndoHint())
+        if (IsTutorialRun && !shopUndoHintShown && ShouldShowKeyboardUndoHint())
+        {
+            shopUndoHintShown = true;
             ShowStep(TutorialStep.ShopUndoHint, true);
+        }
     }
 
     private void AdvanceStepByClick()
@@ -326,6 +344,15 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleEnemyInfo:
                 ShowStep(TutorialStep.BattlePlay, false);
                 break;
+            case TutorialStep.MapPanel:
+                ShowStep(TutorialStep.MapMovement, true);
+                break;
+            case TutorialStep.MapMovement:
+                ShowStep(TutorialStep.MapStepLimit, true);
+                break;
+            case TutorialStep.MapStepLimit:
+                HideAllSteps();
+                break;
             case TutorialStep.EventOptions:
                 ShowStep(TutorialStep.EventRefresh, false);
                 break;
@@ -340,13 +367,10 @@ public class TutorialManagerUI : MonoBehaviour
         if (playerState == null)
             return;
 
-        playerState.Hand.Clear();
-        playerState.PlayZone.Clear();
-        playerState.DrawPile.Clear();
-        playerState.DiscardPile.Clear();
-        playerState.ConsumedPile.Clear();
-        for (int i = 0; i < materials.Length; i++)
-            playerState.Hand.Add(new MaterialModel(System.Guid.NewGuid().ToString("N"), materials[i]));
+        List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
+        playerState.ReturnHandCardsToDiscardPile(new List<MaterialModel>(playerState.Hand), removedTemporaryCards);
+        playerState.ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+        playerState.DrawSpecificMaterialsToHand(materials, true);
     }
 
     private int CountMaterial(IReadOnlyList<MaterialModel> cards, MaterialEnum material)
@@ -375,7 +399,9 @@ public class TutorialManagerUI : MonoBehaviour
         AddStep(root, TutorialStep.BattleEnemyInfo, "Battle_EnemyInfo");
         AddStep(root, TutorialStep.BattlePlay, "Battle_Play");
         AddStep(root, TutorialStep.BattleRefresh, "Battle_Refresh");
-        AddStep(root, TutorialStep.BattleRefreshConfirm, "Battle_RefreshConfirm");
+        AddStep(root, TutorialStep.MapPanel, "Map_Panel");
+        AddStep(root, TutorialStep.MapMovement, "Map_Movement");
+        AddStep(root, TutorialStep.MapStepLimit, "Map_StepLimit");
         AddStep(root, TutorialStep.RewardClaim, "Reward_Claim");
         AddStep(root, TutorialStep.RewardEquipMagic, "Reward_EquipMagic");
         AddStep(root, TutorialStep.RewardUndoHint, "Reward_UndoHint");
@@ -406,10 +432,24 @@ public class TutorialManagerUI : MonoBehaviour
         if (stepObject == null || string.IsNullOrEmpty(key))
             return;
 
-        Transform child = stepObject.transform.Find(childName);
-        TMP_Text text = child != null ? child.GetComponent<TMP_Text>() : null;
+        TMP_Text text = FindStepText(stepObject.transform, childName);
         if (text != null)
             text.text = LocalizationSystem.GetText(key, text.text);
+    }
+
+    private TMP_Text FindStepText(Transform root, string name)
+    {
+        if (root == null)
+            return null;
+
+        TMP_Text[] texts = root.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text text = texts[i];
+            if (text != null && text.name == name)
+                return text;
+        }
+        return null;
     }
 
     private string GetStepTitleKey(TutorialStep step)
@@ -421,7 +461,9 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleEnemyInfo: return "tutorial.battle.enemy_info.title";
             case TutorialStep.BattlePlay: return "tutorial.battle.play.title";
             case TutorialStep.BattleRefresh: return "tutorial.battle.refresh.title";
-            case TutorialStep.BattleRefreshConfirm: return "tutorial.battle.refresh_confirm.title";
+            case TutorialStep.MapPanel: return "tutorial.map.panel.title";
+            case TutorialStep.MapMovement: return "tutorial.map.movement.title";
+            case TutorialStep.MapStepLimit: return "tutorial.map.step_limit.title";
             case TutorialStep.RewardClaim: return "tutorial.reward.claim.title";
             case TutorialStep.RewardEquipMagic: return "tutorial.reward.equip_magic.title";
             case TutorialStep.RewardUndoHint: return "tutorial.reward.undo_hint.title";
@@ -442,7 +484,9 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleEnemyInfo: return "tutorial.battle.enemy_info.body";
             case TutorialStep.BattlePlay: return "tutorial.battle.play.body";
             case TutorialStep.BattleRefresh: return "tutorial.battle.refresh.body";
-            case TutorialStep.BattleRefreshConfirm: return "tutorial.battle.refresh_confirm.body";
+            case TutorialStep.MapPanel: return "tutorial.map.panel.body";
+            case TutorialStep.MapMovement: return "tutorial.map.movement.body";
+            case TutorialStep.MapStepLimit: return "tutorial.map.step_limit.body";
             case TutorialStep.RewardClaim: return "tutorial.reward.claim.body";
             case TutorialStep.RewardEquipMagic: return "tutorial.reward.equip_magic.body";
             case TutorialStep.RewardUndoHint: return "tutorial.reward.undo_hint.body";
@@ -462,33 +506,89 @@ public class TutorialManagerUI : MonoBehaviour
         currentStep = step;
         waitingForStepClick = waitForClick;
         foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
-            pair.Value.SetActive(pair.Key == step);
+        {
+            bool active = pair.Key == step;
+            pair.Value.SetActive(active);
+            SetStepRaycastTarget(pair.Value, active && waitForClick);
+        }
         UpdateCutoutTarget(step);
+        SetInputBlockerActive(waitForClick);
+        SetMapTutorialInputLocked(IsMapTutorialBlockingInput);
     }
 
-    private void HideCurrentStepVisual()
+    private void SetStepRaycastTarget(GameObject stepObject, bool raycastTarget)
     {
-        waitingForStepClick = false;
-        foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
-            pair.Value.SetActive(false);
-        if (cutoutMask != null)
-            cutoutMask.gameObject.SetActive(false);
+        if (stepObject == null)
+            return;
+
+        Graphic[] graphics = stepObject.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = raycastTarget;
     }
 
     private void HideAllSteps()
     {
+        bool wasBlockingMapInput = IsMapTutorialBlockingInput;
         currentStep = TutorialStep.None;
         waitingForStepClick = false;
         foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
             pair.Value.SetActive(false);
         if (cutoutMask != null)
             cutoutMask.gameObject.SetActive(false);
+        SetInputBlockerActive(false);
+        if (wasBlockingMapInput)
+            SetMapTutorialInputLocked(false);
+    }
+
+    private void SetMapTutorialInputLocked(bool locked)
+    {
+        if (owner == null)
+            return;
+
+        owner.GetUIManager().ChapterGridPanel?.SetInputLocked(locked);
     }
 
     private void CacheCutoutMask()
     {
         if (cutoutMask == null)
             cutoutMask = GetComponentInChildren<TutorialCutoutMaskUI>(true);
+    }
+
+    private void CacheInputBlocker()
+    {
+        if (inputBlocker == null)
+        {
+            Transform existing = transform.Find("InputBlocker");
+            if (existing != null)
+                inputBlocker = existing.GetComponent<Image>();
+        }
+
+        if (inputBlocker == null)
+        {
+            GameObject blocker = new GameObject("InputBlocker", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            blocker.transform.SetParent(transform, false);
+            RectTransform rectTransform = blocker.GetComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            inputBlocker = blocker.GetComponent<Image>();
+            inputBlocker.color = new Color(0f, 0f, 0f, 0f);
+        }
+
+        inputBlocker.raycastTarget = true;
+        inputBlocker.transform.SetAsFirstSibling();
+        inputBlocker.gameObject.SetActive(false);
+    }
+
+    private void SetInputBlockerActive(bool active)
+    {
+        if (inputBlocker == null)
+            return;
+
+        inputBlocker.gameObject.SetActive(active);
+        if (active)
+            inputBlocker.transform.SetAsFirstSibling();
     }
 
     private void UpdateCutoutTarget(TutorialStep step)
@@ -538,7 +638,7 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleEnemyInfo:
                 return "EnemyArea";
             case TutorialStep.BattleRefresh:
-            case TutorialStep.BattleRefreshConfirm:
+            case TutorialStep.MapMovement:
             case TutorialStep.EventRefresh:
                 return "HandArea";
             case TutorialStep.BattleMagicBook:
@@ -547,6 +647,9 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.RewardClaim:
             case TutorialStep.RewardUndoHint:
                 return "RewardPanel";
+            case TutorialStep.MapPanel:
+            case TutorialStep.MapStepLimit:
+                return "MapPanel";
             case TutorialStep.EventOptions:
                 return "EventPanel";
             case TutorialStep.ShopBuyHint:
@@ -562,7 +665,7 @@ public class TutorialManagerUI : MonoBehaviour
 #if UNITY_IOS || UNITY_ANDROID
         return false;
 #else
-        return true;
+        return !Application.isMobilePlatform;
 #endif
     }
 }

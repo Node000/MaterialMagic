@@ -10,6 +10,7 @@ public class SceneTransitionManager : MonoBehaviour
     [SerializeField] private Image transitionImage;
     [SerializeField] private Material transitionMaterial;
     [SerializeField] private float transitionDuration = 0.6f;
+    [SerializeField] private int revealDelayFramesAfterLoad = 2;
     [SerializeField] private Color transitionColor = Color.black;
 
     private const string ProgressProperty = "_Progress";
@@ -67,9 +68,22 @@ public class SceneTransitionManager : MonoBehaviour
         while (!operation.isDone)
             yield return null;
 
+        yield return WaitForLoadedSceneToSettle();
         yield return PlayTransition(1f, 0f);
         transitionImage.raycastTarget = false;
         transitioning = false;
+    }
+
+    private IEnumerator WaitForLoadedSceneToSettle()
+    {
+        SetProgress(1f);
+
+        int frameCount = Mathf.Max(0, revealDelayFramesAfterLoad);
+        for (int i = 0; i < frameCount; i++)
+            yield return null;
+
+        Canvas.ForceUpdateCanvases();
+        yield return new WaitForEndOfFrame();
     }
 
     private IEnumerator PlayTransition(float from, float to)
