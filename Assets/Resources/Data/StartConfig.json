@@ -17,9 +17,8 @@
       ],
       "initialMagics": [
         { "slotIndex": 0, "magicId": 2 },
-        { "slotIndex": 1, "magicId": 10 },
-        { "slotIndex": 2, "magicId": 17 },
-        { "slotIndex": 3, "magicId": 26 }
+        { "slotIndex": 1, "magicId": 14 },
+        { "slotIndex": 2, "magicId": 26 }
       ]
     },
     {
@@ -64,5 +63,6 @@
         { "slotIndex": 2, "magicId": 26 }
       ]
     }
+   
   ]
 }

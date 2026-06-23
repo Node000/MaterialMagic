@@ -46,9 +46,9 @@
         "kindling"
       ],
       "recipe": [
+        1,
         2,
-        4,
-        1
+        4
       ],
       "playPlayerCastAnimation": true
     },
@@ -64,8 +64,8 @@
         "burning"
       ],
       "recipe": [
-        4,
-        1
+        1,
+        4
       ],
       "playPlayerCastAnimation": true
     },
@@ -375,9 +375,9 @@
         "vortex"
       ],
       "recipe": [
-        4,
+        3,
         2,
-        3
+        4
       ],
       "playPlayerCastAnimation": false
     },
@@ -460,8 +460,8 @@
         "burning"
       ],
       "recipe": [
-        1,
-        4
+        4,
+        1
       ],
       "playPlayerCastAnimation": true
     },
@@ -566,8 +566,8 @@
       ],
       "recipe": [
         2,
-        1,
-        4
+        4,
+        1
       ],
       "playPlayerCastAnimation": false
     },
@@ -583,8 +583,8 @@
         "temporary"
       ],
       "recipe": [
-        1,
         3,
+        1,
         2
       ],
       "playPlayerCastAnimation": false
@@ -601,8 +601,8 @@
         "magic_attack_all"
       ],
       "recipe": [
-        3,
         2,
+        3,
         1
       ],
       "playPlayerCastAnimation": false
@@ -621,7 +621,7 @@
       "recipe": [
         4,
         2,
-        1
+        3
       ],
       "playPlayerCastAnimation": false
     }

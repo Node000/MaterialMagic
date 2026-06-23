@@ -843,6 +843,7 @@ MonoBehaviour:
   transitionImage: {fileID: 0}
   transitionMaterial: {fileID: 2100000, guid: c1dc0d2a87db78d40aa3723e4180f264, type: 2}
   transitionDuration: 0.65
+  revealDelayFramesAfterLoad: 2
   transitionColor: {r: 1, g: 0, b: 0.7058824, a: 1}
 --- !u!4 &111238023
 Transform:
@@ -3679,8 +3680,8 @@ RectTransform:
   m_GameObject: {fileID: 922573836}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.78, y: 1.78, z: 1.78}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 939732670}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
