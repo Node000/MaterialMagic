@@ -18,6 +18,7 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private RectTransform buffRoot;
     [SerializeField] private Graphic focusMarker;
     [SerializeField] private RectTransform intentRoot;
+    [SerializeField] private BuffPopupEffectController buffPopupEffect;
 
     public RectTransform BodyRoot => bodyRoot;
     public RectTransform MotionRoot => motionRoot != null ? motionRoot : bodyRoot;
@@ -32,6 +33,7 @@ public class EnemyViewUI : MonoBehaviour
     public RectTransform BuffRoot => buffRoot;
     public Graphic FocusMarker => focusMarker;
     public RectTransform IntentRoot => intentRoot;
+    public BuffPopupEffectController BuffPopupEffect => buffPopupEffect;
 
     private void Awake()
     {
@@ -75,6 +77,8 @@ public class EnemyViewUI : MonoBehaviour
             focusMarker = FindGraphic("FocusMarker");
         if (intentRoot == null)
             intentRoot = FindRect("IntentRoot");
+        if (buffPopupEffect == null)
+            buffPopupEffect = GetComponentInChildren<BuffPopupEffectController>(true);
     }
 
     public void ApplyDataLayout(EnemyData data)

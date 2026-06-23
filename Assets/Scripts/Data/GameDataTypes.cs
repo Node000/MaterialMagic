@@ -882,6 +882,12 @@ public class MaterialModel
             modifiers[i].OnInvoke();
     }
 
+    public void TriggerOnTokenInvoke(ArrowReadToken token, ArrowReadStep step)
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+            modifiers[i].OnTokenInvoke(token, step);
+    }
+
     public void RemoveModifiers<T>() where T : MaterialModifierModel
     {
         for (int i = modifiers.Count - 1; i >= 0; i--)

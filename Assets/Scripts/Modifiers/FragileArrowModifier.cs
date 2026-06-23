@@ -7,6 +7,6 @@ public class FragileArrowModifier : MaterialModifierModel
 
     public override int GetArrowMatchTokenCount(int tokenCount)
     {
-        return 0;
+        return tokenCount;
     }
 }

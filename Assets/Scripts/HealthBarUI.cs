@@ -24,6 +24,8 @@ public class HealthBarUI : MonoBehaviour
     [SerializeField] private Ease healthEase = Ease.OutQuad;
 
     private int displayedHealth;
+    private int displayedMaxHealth;
+    private int displayedShield;
     private Tween healthNumberTween;
 
     public TMP_Text HealthText => healthText;
@@ -38,6 +40,8 @@ public class HealthBarUI : MonoBehaviour
         healthText = text;
         healthFill = fill;
         displayedHealth = currentHealth;
+        displayedMaxHealth = currentHealth;
+        displayedShield = 0;
         CacheLayers();
         Setup(currentHealth, currentHealth, 0, true);
     }
@@ -56,10 +60,29 @@ public class HealthBarUI : MonoBehaviour
     public void UpdateValue(int currentHealth, int maxHealth, int shield, bool instant)
     {
         UpdateHealthBar(healthFill, healthBufferFill, shieldFill, currentHealth, maxHealth, shield, instant, healthFillDuration, healthBufferDecreaseDuration, healthBufferIncreaseDuration, healthEase);
-        int totalHealthTextValue = GetHealthTextValue(currentHealth, shield);
-        ApplyHealthTextColor(shield > 0);
+        int targetHealth = Mathf.Max(0, currentHealth);
+        int targetMaxHealth = Mathf.Max(0, maxHealth);
+        int targetShield = Mathf.Max(0, shield);
+        ApplyHealthTextColor(targetShield > 0);
         healthNumberTween?.Kill(false);
-        healthNumberTween = UpdateHealthText(healthText, displayedHealth, totalHealthTextValue, instant, value => displayedHealth = value, this, healthTextDuration, healthEase);
+        healthNumberTween = UpdateHealthText(
+            healthText,
+            displayedHealth,
+            displayedMaxHealth,
+            displayedShield,
+            targetHealth,
+            targetMaxHealth,
+            targetShield,
+            instant,
+            (healthValue, maxHealthValue, shieldValue) =>
+            {
+                displayedHealth = healthValue;
+                displayedMaxHealth = maxHealthValue;
+                displayedShield = shieldValue;
+            },
+            this,
+            healthTextDuration,
+            healthEase);
     }
 
     private void CacheLayers()
@@ -162,9 +185,13 @@ public class HealthBarUI : MonoBehaviour
         text.raycastTarget = false;
     }
 
-    public static int GetHealthTextValue(int currentHealth, int shield)
+    public static string GetHealthTextValue(int currentHealth, int maxHealth, int shield)
     {
-        return Mathf.Max(0, currentHealth) + Mathf.Max(0, shield);
+        int health = Mathf.Max(0, currentHealth);
+        int max = Mathf.Max(0, maxHealth);
+        if (shield > 0)
+            return health + "+" + Mathf.Max(0, shield) + "/" + max;
+        return health + "/" + max;
     }
 
     public static void SetHealthTextColor(TMP_Text text, bool shielded)
@@ -278,28 +305,43 @@ public class HealthBarUI : MonoBehaviour
         rect.DOAnchorMax(new Vector2(end, 1f), duration).SetEase(ease);
     }
 
-    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget)
+    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int displayedMaxHealth, int displayedShield, int targetHealth, int targetMaxHealth, int targetShield, bool instant, Action<int, int, int> setDisplayedValues, object tweenTarget)
     {
-        return UpdateHealthText(text, displayedHealth, targetHealth, instant, setDisplayedHealth, tweenTarget, 0.35f, Ease.OutQuad);
+        return UpdateHealthText(text, displayedHealth, displayedMaxHealth, displayedShield, targetHealth, targetMaxHealth, targetShield, instant, setDisplayedValues, tweenTarget, 0.35f, Ease.OutQuad);
     }
 
-    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int targetHealth, bool instant, Action<int> setDisplayedHealth, object tweenTarget, float duration, Ease ease)
+    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int displayedMaxHealth, int displayedShield, int targetHealth, int targetMaxHealth, int targetShield, bool instant, Action<int, int, int> setDisplayedValues, object tweenTarget, float duration, Ease ease)
     {
         if (text == null)
             return null;
 
         if (instant)
         {
-            setDisplayedHealth(targetHealth);
-            text.text = targetHealth.ToString();
+            setDisplayedValues(targetHealth, targetMaxHealth, targetShield);
+            text.text = GetHealthTextValue(targetHealth, targetMaxHealth, targetShield);
             return null;
         }
 
-        return DOVirtual.Int(displayedHealth, targetHealth, duration, value =>
+        float elapsed = 0f;
+        int startHealth = displayedHealth;
+        int startMaxHealth = displayedMaxHealth;
+        int startShield = displayedShield;
+        return DOVirtual.Float(0f, 1f, duration, value =>
         {
-            setDisplayedHealth(value);
-            text.text = value.ToString();
-        }).SetEase(ease).SetTarget(tweenTarget);
+            elapsed = value;
+            int healthValue = Mathf.RoundToInt(Mathf.Lerp(startHealth, targetHealth, value));
+            int maxHealthValue = Mathf.RoundToInt(Mathf.Lerp(startMaxHealth, targetMaxHealth, value));
+            int shieldValue = Mathf.RoundToInt(Mathf.Lerp(startShield, targetShield, value));
+            setDisplayedValues(healthValue, maxHealthValue, shieldValue);
+            text.text = GetHealthTextValue(healthValue, maxHealthValue, shieldValue);
+        }).SetEase(ease).SetTarget(tweenTarget).OnComplete(() =>
+        {
+            if (elapsed < 1f)
+            {
+                setDisplayedValues(targetHealth, targetMaxHealth, targetShield);
+                text.text = GetHealthTextValue(targetHealth, targetMaxHealth, targetShield);
+            }
+        });
     }
 
     public static void SetImageAlpha(Image image, float alpha)

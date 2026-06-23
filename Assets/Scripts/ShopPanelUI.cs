@@ -20,6 +20,19 @@ public class ShopOffer
     public MaterialEnum material;
     public MaterialModifierData materialModifierData;
     public bool purchased;
+
+    public ShopOfferSaveData Export()
+    {
+        return new ShopOfferSaveData
+        {
+            kind = (int)kind,
+            price = price,
+            magicNumericId = magicData != null ? magicData.numericId : 0,
+            material = (int)material,
+            materialModifierId = materialModifierData != null ? materialModifierData.id : string.Empty,
+            purchased = purchased
+        };
+    }
 }
 
 public class ShopPanelUI : MonoBehaviour
@@ -80,6 +93,11 @@ public class ShopPanelUI : MonoBehaviour
 
     public void Show(LevelData level)
     {
+        Show(level, null);
+    }
+
+    public void Show(LevelData level, ShopNodeSaveData savedState)
+    {
         if (owner == null)
             return;
 
@@ -98,6 +116,8 @@ public class ShopPanelUI : MonoBehaviour
             hintText.text = "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。";
 
         BuildOffers();
+        if (savedState != null)
+            RestoreState(savedState);
         BindLeaveButton();
         Refresh();
         PlayOpenAnimation();
@@ -120,6 +140,23 @@ public class ShopPanelUI : MonoBehaviour
         }
 
         PlayCloseAnimation();
+    }
+
+    public void ShowMaterialTooltip(ShopItemView itemView, ShopOffer offer)
+    {
+        if (itemView == null || offer == null || offer.kind != ShopItemKind.Material)
+            return;
+
+        MaterialModel preview = new MaterialModel("shop_tooltip_" + offer.material, offer.material);
+        MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
+        if (modifier != null)
+            preview.AddModifier(modifier);
+        owner.GetUIManager().MaterialListPanel?.ShowModifierTooltip(itemView.MaterialVisualRect != null ? itemView.MaterialVisualRect : itemView.transform as RectTransform, preview);
+    }
+
+    public void HideMaterialTooltip(ShopItemView itemView)
+    {
+        owner.GetUIManager().MaterialListPanel?.HideModifierTooltip(itemView != null ? (itemView.MaterialVisualRect != null ? itemView.MaterialVisualRect : itemView.transform as RectTransform) : null);
     }
 
     private void CacheReferences()
@@ -848,6 +885,216 @@ public class ShopPanelUI : MonoBehaviour
             RegisterUndoRemoveMaterialPurchase(offer, goldBefore, removedMaterial);
         }
         Refresh();
+    }
+
+    public static bool TryExportCurrentState(PlayerState player, out ShopNodeSaveData data)
+    {
+        data = null;
+        if (player == null)
+            return false;
+
+        ShopPanelUI panel = UnityEngine.Object.FindObjectOfType<ShopPanelUI>(true);
+        if (panel == null || !panel.gameObject.activeInHierarchy)
+            return false;
+
+        data = panel.ExportState();
+        return data != null;
+    }
+
+    public ShopNodeSaveData ExportState()
+    {
+        ShopNodeSaveData data = new ShopNodeSaveData
+        {
+            offers = new ShopOfferSaveData[offers.Count],
+            selectedOfferIndex = selectedOffer != null ? offers.IndexOf(selectedOffer) : -1,
+            waitingForSelection = waitingForSelection,
+            purchaseInProgress = purchaseInProgress,
+            undo = ExportUndoState()
+        };
+
+        for (int i = 0; i < offers.Count; i++)
+            data.offers[i] = offers[i] != null ? offers[i].Export() : null;
+
+        return data;
+    }
+
+    private void RestoreState(ShopNodeSaveData savedState)
+    {
+        if (savedState == null)
+            return;
+
+        int count = Mathf.Min(offers.Count, savedState.offers != null ? savedState.offers.Length : 0);
+        for (int i = 0; i < count; i++)
+        {
+            ShopOffer target = offers[i];
+            ShopOfferSaveData source = savedState.offers[i];
+            if (target == null || source == null)
+                continue;
+
+            target.price = source.price;
+            target.purchased = source.purchased;
+            ApplySavedOfferData(target, source);
+        }
+
+        selectedOffer = savedState.selectedOfferIndex >= 0 && savedState.selectedOfferIndex < offers.Count ? offers[savedState.selectedOfferIndex] : null;
+        waitingForSelection = savedState.waitingForSelection;
+        purchaseInProgress = false;
+        RestoreUndoState(savedState.undo);
+
+        if (waitingForSelection && selectedOffer != null && selectedOffer.kind == ShopItemKind.Magic && selectedOffer.magicData != null)
+            owner.SelectPendingShopMagic(selectedOffer.magicData, slotIndex => CompleteMagicPurchase(selectedOffer, slotIndex));
+        else if (!waitingForSelection)
+            owner.ClearPendingShopMagic();
+    }
+
+    private void ApplySavedOfferData(ShopOffer target, ShopOfferSaveData source)
+    {
+        target.kind = (ShopItemKind)source.kind;
+        target.material = (MaterialEnum)source.material;
+        if (source.magicNumericId > 0)
+            GameDataDatabase.TryGetMagicData(source.magicNumericId, out target.magicData);
+        else
+            target.magicData = null;
+        target.materialModifierData = !string.IsNullOrEmpty(source.materialModifierId) ? GetMaterialModifierDataById(source.materialModifierId) : null;
+    }
+
+    private ShopUndoSaveData ExportUndoState()
+    {
+        if (!undoAvailable)
+            return null;
+
+        return new ShopUndoSaveData
+        {
+            offerIndex = undoOffer != null ? offers.IndexOf(undoOffer) : -1,
+            gold = undoGold,
+            magicSlotIndex = undoMagicSlotIndex,
+            previousMagicNumericId = undoPreviousMagic != null ? undoPreviousMagic.NumericId : 0,
+            previousMagicModifierId = undoPreviousMagic != null && undoPreviousMagic.PrimaryModifier != null ? undoPreviousMagic.PrimaryModifier.Id : string.Empty,
+            addedMaterial = ExportUndoMaterial(undoAddedMaterial),
+            removedMaterial = ExportUndoMaterial(undoRemovedMaterial)
+        };
+    }
+
+    private void RestoreUndoState(ShopUndoSaveData data)
+    {
+        ClearUndoPurchase();
+        if (data == null)
+            return;
+
+        undoOffer = data.offerIndex >= 0 && data.offerIndex < offers.Count ? offers[data.offerIndex] : null;
+        undoGold = data.gold;
+        undoMagicSlotIndex = data.magicSlotIndex;
+        undoPreviousMagic = CreateUndoMagic(data.previousMagicNumericId, data.previousMagicModifierId, data.magicSlotIndex);
+        undoAddedMaterial = CreateUndoMaterial(data.addedMaterial);
+        undoRemovedMaterial = CreateUndoMaterial(data.removedMaterial);
+        undoAvailable = undoOffer != null || undoAddedMaterial != null || undoRemovedMaterial != null || undoMagicSlotIndex >= 0;
+    }
+
+    private static MaterialCardSaveData ExportUndoMaterial(MaterialModel material)
+    {
+        if (material == null)
+            return null;
+
+        return new MaterialCardSaveData
+        {
+            instanceId = material.instanceId,
+            material = (int)material.material,
+            alternateMaterial = (int)material.alternateMaterial,
+            enhancementIds = material.enhancementIds.ToArray(),
+            modifierIds = ExportModifierIds(material.modifiers),
+            linkedCards = Array.Empty<MaterialCardSaveData>(),
+            isTemporary = material.isTemporary,
+            isRetained = material.isRetained
+        };
+    }
+
+    private static string[] ExportModifierIds(IReadOnlyList<MaterialModifierModel> modifiers)
+    {
+        List<string> ids = new List<string>();
+        for (int i = 0; modifiers != null && i < modifiers.Count; i++)
+        {
+            string id = RunSaveSystem_GetMaterialModifierId(modifiers[i]);
+            if (!string.IsNullOrEmpty(id))
+                ids.Add(id);
+        }
+        return ids.ToArray();
+    }
+
+    private static MaterialModel CreateUndoMaterial(MaterialCardSaveData data)
+    {
+        if (data == null)
+            return null;
+
+        MaterialModel card = new MaterialModel(data.instanceId, (MaterialEnum)data.material)
+        {
+            alternateMaterial = (MaterialEnum)data.alternateMaterial,
+            isRetained = data.isRetained
+        };
+        if (data.enhancementIds != null)
+            card.enhancementIds.AddRange(data.enhancementIds);
+        for (int i = 0; data.modifierIds != null && i < data.modifierIds.Length; i++)
+        {
+            MaterialModifierData modifierData = !string.IsNullOrEmpty(data.modifierIds[i]) ? panelModifierDataLookup(data.modifierIds[i]) : null;
+            MaterialModifierModel modifier = modifierData != null ? MaterialModifierFactory.Create(modifierData) : null;
+            if (modifier != null)
+                card.AddModifier(modifier);
+        }
+        if (data.isTemporary && !card.isTemporary)
+            card.AddModifier(new TemporaryModifier());
+        return card;
+    }
+
+    private MagicModel CreateUndoMagic(int magicNumericId, string modifierId, int slotIndex)
+    {
+        if (magicNumericId <= 0 || !GameDataDatabase.TryGetMagicData(magicNumericId, out MagicData data))
+            return null;
+
+        MagicModel magic = MagicFactory.Create(data, slotIndex);
+        if (!string.IsNullOrEmpty(modifierId) && GameDataDatabase.TryGetMagicModifierData(modifierId, out MagicModifierData modifierData))
+            magic.AddModifier(MagicModifierFactory.Create(modifierData));
+        return magic;
+    }
+
+    private static MaterialModifierData panelModifierDataLookup(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return null;
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (data != null && data.id == modifierId)
+                return data;
+        }
+        return null;
+    }
+
+    private static string RunSaveSystem_GetMaterialModifierId(MaterialModifierModel modifier)
+    {
+        if (modifier is KindlingModifier) return "kindling";
+        if (modifier is FlowModifier) return "flow";
+        if (modifier is LiquefyModifier) return "liquefy";
+        if (modifier is ChargeModifier) return "charge";
+        if (modifier is VortexModifier) return "vortex";
+        if (modifier is RepeatArrowModifier) return "repeat_arrow";
+        if (modifier is OmniArrowModifier) return "omni_arrow";
+        if (modifier is PeriodArrowModifier) return "period_arrow";
+        if (modifier is PackArrowModifier) return "pack_arrow";
+        if (modifier is LinkedArrowModifier) return "linked_arrow";
+        if (modifier is BigArrow2Modifier) return "big_arrow_2";
+        if (modifier is BigArrow3Modifier) return "big_arrow_3";
+        if (modifier is BigArrow4Modifier) return "big_arrow_4";
+        if (modifier is ReturnArrowModifier) return "return_arrow";
+        if (modifier is RandomArrowModifier) return "random_arrow";
+        if (modifier is ProliferatingArrowModifier) return "proliferating_arrow";
+        if (modifier is EternalArrowModifier) return "eternal_arrow";
+        if (modifier is FragileArrowModifier) return "fragile_arrow";
+        if (modifier is RetainedArrowModifier) return "retained_arrow";
+        if (modifier is HalfArrowModifier) return "half_arrow";
+        if (modifier is DoomModifier) return "doom";
+        if (modifier is LazyModifier) return "lazy";
+        if (modifier is TemporaryModifier) return "temporary";
+        return string.Empty;
     }
 
     private RectTransform GetMagicOfferRect(ShopOffer offer)

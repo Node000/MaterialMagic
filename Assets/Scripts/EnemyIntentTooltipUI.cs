@@ -14,7 +14,9 @@ public class EnemyIntentTooltipUI : MonoBehaviour
     [SerializeField] private Ease tooltipHideEase = Ease.InBack;
     [SerializeField] private float tooltipXOffset = 24f;
     [SerializeField] private float tooltipYOffset = 0f;
+    [SerializeField] private bool controlTooltipSizeInCode = false;
     [SerializeField] private Vector2 tooltipSize = new Vector2(380f, 168f);
+    [SerializeField] private bool controlDescriptionWidthInCode = false;
     [SerializeField] private float descriptionWidth = 300f;
 
     private CanvasGroup canvasGroup;
@@ -44,12 +46,16 @@ public class EnemyIntentTooltipUI : MonoBehaviour
             descriptionText.text = enemy.GetIntentTooltipDescription(intent, playerState);
 
         RectTransform rect = (RectTransform)transform;
-        rect.sizeDelta = tooltipSize;
+        if (controlTooltipSizeInCode)
+            rect.sizeDelta = tooltipSize;
         gameObject.SetActive(true);
         transform.localScale = HiddenScale;
         canvasGroup.alpha = 0f;
+        Vector2 resolvedTooltipSize = rect.rect.size;
+        if (resolvedTooltipSize.x <= 0f || resolvedTooltipSize.y <= 0f)
+            resolvedTooltipSize = tooltipSize;
         Vector3 localLeftPosition = new Vector3(
-            -view.RectTransform.rect.width * 0.5f - tooltipSize.x * 0.5f - tooltipXOffset,
+            -view.RectTransform.rect.width * 0.5f - resolvedTooltipSize.x * 0.5f - tooltipXOffset,
             tooltipYOffset,
             0f);
         rect.position = view.RectTransform.TransformPoint(localLeftPosition);
@@ -100,7 +106,8 @@ public class EnemyIntentTooltipUI : MonoBehaviour
         if (descriptionText != null)
         {
             descriptionText.enableWordWrapping = true;
-            descriptionText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, descriptionWidth);
+            if (controlDescriptionWidthInCode)
+                descriptionText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, descriptionWidth);
         }
     }
 

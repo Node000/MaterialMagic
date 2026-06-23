@@ -17,6 +17,13 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
         if (eventData.button != PointerEventData.InputButton.Left)
             return;
 
+        if (owner != null)
+        {
+            TutorialManagerUI tutorialManager = owner.GetUIManager().TutorialManager;
+            if (tutorialManager != null && tutorialManager.ConsumeBlockingTutorialClick(eventData))
+                return;
+        }
+
         if (owner != null && owner.HasPendingMagicModifier)
             owner.TryApplyPendingMagicModifier(slotIndex);
         else if (owner != null && owner.HasPendingShopMagic)

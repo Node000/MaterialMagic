@@ -75,6 +75,40 @@ public class RunPoolSaveData
 public class CurrentNodeSaveData
 {
     public int levelId;
+    public ShopNodeSaveData shop;
+}
+
+[Serializable]
+public class ShopNodeSaveData
+{
+    public ShopOfferSaveData[] offers = Array.Empty<ShopOfferSaveData>();
+    public int selectedOfferIndex = -1;
+    public bool waitingForSelection;
+    public bool purchaseInProgress;
+    public ShopUndoSaveData undo;
+}
+
+[Serializable]
+public class ShopOfferSaveData
+{
+    public int kind;
+    public int price;
+    public int magicNumericId;
+    public int material;
+    public string materialModifierId;
+    public bool purchased;
+}
+
+[Serializable]
+public class ShopUndoSaveData
+{
+    public int offerIndex = -1;
+    public int gold;
+    public int magicSlotIndex = -1;
+    public int previousMagicNumericId;
+    public string previousMagicModifierId;
+    public MaterialCardSaveData addedMaterial;
+    public MaterialCardSaveData removedMaterial;
 }
 
 [Serializable]
@@ -325,7 +359,7 @@ public static class RunSaveSystem
             mapGrid = ExportMapGrid(RunManager.Current != null ? RunManager.Current.MapGrid : null),
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
             player = ExportPlayer(player),
-            currentNode = currentLevel != null ? new CurrentNodeSaveData { levelId = currentLevel.numericId } : null
+            currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player) : null
         };
 
         Directory.CreateDirectory(SaveDirectory);
@@ -467,6 +501,22 @@ public static class RunSaveSystem
             runState = MapSelectionState,
             startConfigId = PlayerState.SelectedStartConfigId
         };
+    }
+
+    private static CurrentNodeSaveData ExportCurrentNode(LevelData currentLevel, PlayerState player)
+    {
+        if (currentLevel == null)
+            return null;
+
+        CurrentNodeSaveData data = new CurrentNodeSaveData
+        {
+            levelId = currentLevel.numericId
+        };
+
+        if (currentLevel.levelType == LevelType.Shop && ShopPanelUI.TryExportCurrentState(player, out ShopNodeSaveData shopData))
+            data.shop = shopData;
+
+        return data;
     }
 
     private static RunMapNodeSaveData[] ExportMapNodes(IReadOnlyList<RunMapNodeModel> mapNodes)

@@ -1,6 +1,6 @@
 public class VortexModifier : MaterialModifierModel
 {
-    public override void OnJoin()
+    public override void OnTokenInvoke(ArrowReadToken token, ArrowReadStep step)
     {
         MaterialModifierContext context = Context;
         if (context != null && context.BattleManager != null && context.BattleManager.AddRandomDebuffToRandomEnemy(1))

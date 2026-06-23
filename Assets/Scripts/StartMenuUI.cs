@@ -206,8 +206,10 @@ public class StartMenuUI : MonoBehaviour
 
     private void SkipTutorial()
     {
+        HideStartConfigSelection();
         RunSaveSystem.SetTutorialCompleted(true);
         RefreshTutorialStartState();
+        buttonGroupUI.ClearActiveOption();
     }
 
     private void RefreshTutorialStartState()

@@ -463,13 +463,18 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (tooltipRoot == null || tooltipCanvasGroup == null)
             return;
 
+        tooltipRoot.DOKill(false);
+        if (!tooltipRoot.gameObject.activeSelf)
+            tooltipRoot.localScale = tooltipHiddenScale;
+        else if (tooltipRoot.localScale.x > 1f || tooltipRoot.localScale.y > 1f)
+            tooltipRoot.localScale = Vector3.one;
+
         EnsureTagTooltip();
         tooltipTween?.Kill(false);
         tagTooltipTween?.Kill(false);
         tooltipRoot.gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo(tooltipRoot);
         UpdateTooltipSize();
-        tooltipRoot.localScale = tooltipHiddenScale;
 
         Sequence sequence = DOTween.Sequence().SetTarget(this);
         sequence.Join(tooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
@@ -518,7 +523,11 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         PopupLayerUtility.ApplyTo(modifierTooltipRoot);
         modifierTooltipRoot.SetAsLastSibling();
         modifierTooltipRoot.anchoredPosition = GetModifierTooltipShownPosition();
-        modifierTooltipRoot.localScale = tooltipHiddenScale;
+        modifierTooltipRoot.DOKill(false);
+        if (!modifierTooltipRoot.gameObject.activeSelf)
+            modifierTooltipRoot.localScale = tooltipHiddenScale;
+        else if (modifierTooltipRoot.localScale.x > 1f || modifierTooltipRoot.localScale.y > 1f)
+            modifierTooltipRoot.localScale = Vector3.one;
         modifierTooltipCanvasGroup.alpha = 0f;
         modifierTooltipTween?.Kill(false);
 

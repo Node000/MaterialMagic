@@ -120,6 +120,8 @@ public class RainbowEnemyModel : EnemyModel
                 playerState.AddBuff(BuffEnum.Vulnerable, 6);
                 break;
         }
+
+        playerState.ShufflePlayZone();
     }
 
     private string GetRandomFollowupDisplayValue()

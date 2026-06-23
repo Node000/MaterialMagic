@@ -106,11 +106,11 @@
     },
     {
       "key": "tutorial.reward.undo_hint",
-      "text": "如果道具换错了，可以按退格键撤回奖励获取"
+      "text": "如果道具换错了，可以按R键撤回奖励获取"
     },
     {
       "key": "tutorial.shop.undo_hint",
-      "text": "如果买错了，可以按退格键撤回本次购买，但是在离开商店后就无法撤回了"
+      "text": "如果买错了，可以按R键撤回本次购买，但是在离开商店后就无法撤回了"
     },
     {
       "key": "tutorial.battle.info.title",
@@ -222,7 +222,7 @@
     },
     {
       "key": "tutorial.reward.undo_hint.body",
-      "text": "如果出现了决策失误，可以按退格键撤回本次奖励获取。"
+      "text": "如果出现了决策失误，可以按R键撤回本次奖励获取。"
     },
     {
       "key": "tutorial.shop.buy_hint.title",
@@ -238,7 +238,7 @@
     },
     {
       "key": "tutorial.shop.undo_hint.body",
-      "text": "如果买错了道具，可以按退格键撤回本次购买。\n\n注意，箭头购买是无法撤回的。"
+      "text": "如果买错了道具，可以按R键撤回本次购买。\n\n注意，箭头购买是无法撤回的。"
     },
     {
       "key": "tutorial.event.options.title",

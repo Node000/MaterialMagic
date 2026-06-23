@@ -1,11 +1,14 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine;
 
 public class EnemyModel : UnitModel
 {
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
     private readonly HashSet<int> consumedOnlyOnceIntentIds = new HashSet<int>();
+    private int lastResolvedIntentGroupId = -1;
+
+    public event Action<EnemyModel, BuffEnum, int> BuffAdded;
 
     public EnemyData Data { get; }
     public override int CurrentHealth { get; protected set; }
@@ -59,7 +62,7 @@ public class EnemyModel : UnitModel
 
     public void Kill(CombatantModel attacker = null)
     {
-        if (IsDead)
+        if (dead || CurrentHealth <= 0)
             return;
 
         CurrentHealth = 0;
@@ -301,6 +304,7 @@ public class EnemyModel : UnitModel
         else
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
         GameLog.Data($"Enemy {Id} add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
+        BuffAdded?.Invoke(this, buffType, stack);
     }
 
     public void ApplyBurning(int stack)
@@ -375,10 +379,11 @@ public class EnemyModel : UnitModel
         while (checkedCount < pool.Length)
         {
             EnemyIntentGroupData group = pool[index];
-            if (group != null && (!group.onlyOnce || group.id == 0 || !consumedOnlyOnceIntentIds.Contains(group.id)))
+            if (group != null && (!group.onlyOnce || group.id == 0 || !consumedOnlyOnceIntentIds.Contains(group.id)) && CanUseIntentGroup(group.id, pool.Length))
             {
                 if (group.onlyOnce && group.id != 0)
                     consumedOnlyOnceIntentIds.Add(group.id);
+                lastResolvedIntentGroupId = group.id;
                 return group;
             }
 
@@ -401,15 +406,16 @@ public class EnemyModel : UnitModel
             EnemyIntentLoopData entry = loop[index];
             if (entry != null)
             {
-                int groupId = ResolveLoopGroupId(entry);
+                int groupId = ResolveLoopGroupId(entry, groups);
                 int onceKey = -(index + 1);
-                if (groupId != 0 && (!entry.onlyOnce || !consumedOnlyOnceIntentIds.Contains(onceKey)))
+                if (groupId != 0 && (!entry.onlyOnce || !consumedOnlyOnceIntentIds.Contains(onceKey)) && CanUseIntentGroup(groupId, groups.Length))
                 {
                     EnemyIntentGroupData group = FindIntentGroup(groups, groupId);
                     if (group != null)
                     {
                         if (entry.onlyOnce)
                             consumedOnlyOnceIntentIds.Add(onceKey);
+                        lastResolvedIntentGroupId = groupId;
                         return group;
                     }
                 }
@@ -422,12 +428,33 @@ public class EnemyModel : UnitModel
         return null;
     }
 
-    private int ResolveLoopGroupId(EnemyIntentLoopData entry)
+    private int ResolveLoopGroupId(EnemyIntentLoopData entry, EnemyIntentGroupData[] groups)
     {
         if (entry.randomGroupIds != null && entry.randomGroupIds.Length > 0)
-            return entry.randomGroupIds[NextRandomInt(0, entry.randomGroupIds.Length)];
+        {
+            if (entry.randomGroupIds.Length == 1)
+                return entry.randomGroupIds[0];
+
+            int[] candidates = entry.randomGroupIds;
+            int fallback = candidates[NextRandomInt(0, candidates.Length)];
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                int candidate = candidates[NextRandomInt(0, candidates.Length)];
+                if (CanUseIntentGroup(candidate, groups != null ? groups.Length : candidates.Length))
+                    return candidate;
+            }
+            return fallback;
+        }
 
         return entry.groupId;
+    }
+
+    private bool CanUseIntentGroup(int groupId, int totalGroupCount)
+    {
+        if (groupId == 0 || totalGroupCount <= 1 || lastResolvedIntentGroupId == -1)
+            return true;
+
+        return groupId != lastResolvedIntentGroupId;
     }
 
     private static EnemyIntentGroupData FindIntentGroup(EnemyIntentGroupData[] groups, int groupId)

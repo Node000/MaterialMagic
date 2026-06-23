@@ -14,7 +14,7 @@ public class KindlingNextDrawBuffModel : BuffModel
 
     public override void AfterDraw(CombatantModel self, MaterialModel card)
     {
-        if (pendingNextTurn || self?.Player == null || card == null)
+        if (pendingNextTurn || self?.Player == null || card == null || stack <= 0)
             return;
 
         for (int i = 0; i < card.modifiers.Count; i++)
@@ -26,9 +26,10 @@ public class KindlingNextDrawBuffModel : BuffModel
         KindlingModifier modifier = new KindlingModifier();
         modifier.MarkRemoveAfterBattle();
         card.AddModifier(modifier);
+        ConsumeStack(1);
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    public override void AfterTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (!pendingNextTurn)
             stack = 0;

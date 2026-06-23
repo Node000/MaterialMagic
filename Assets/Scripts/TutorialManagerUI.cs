@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public enum TutorialStep
@@ -50,6 +51,8 @@ public class TutorialManagerUI : MonoBehaviour
     private bool tutorialBattleInputUnlocked;
     private bool mapTutorialShown;
     private bool shopUndoHintShown;
+    private bool rewardEquipHintShown;
+    private bool consumedStepClickThisFrame;
 
     public TutorialStep CurrentStep => currentStep;
     public bool MainTutorialRunning => mainTutorialRunning;
@@ -74,6 +77,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     private void Update()
     {
+        consumedStepClickThisFrame = false;
         if (Input.GetMouseButtonDown(0))
             AdvanceStepByClick();
     }
@@ -267,8 +271,11 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRewardMagicSelected()
     {
-        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted())
+        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted() && !rewardEquipHintShown)
+        {
+            rewardEquipHintShown = true;
             ShowStep(TutorialStep.RewardEquipMagic, true);
+        }
     }
 
     public void OnRewardMagicEquipped(PlayerState playerState, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
@@ -326,6 +333,23 @@ public class TutorialManagerUI : MonoBehaviour
             shopUndoHintShown = true;
             ShowStep(TutorialStep.ShopUndoHint, true);
         }
+    }
+
+    public bool ConsumeBlockingTutorialClick(PointerEventData eventData)
+    {
+        if (!waitingForStepClick)
+            return false;
+        if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
+            return false;
+
+        AdvanceStepByClick();
+        consumedStepClickThisFrame = true;
+        return true;
+    }
+
+    public bool WasTutorialClickConsumedThisFrame()
+    {
+        return consumedStepClickThisFrame;
     }
 
     private void AdvanceStepByClick()

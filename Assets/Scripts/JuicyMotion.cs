@@ -27,12 +27,12 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     private void Awake()
     {
-        originalScale = transform.localScale;
-        originalLocalEulerAngles = transform.localEulerAngles;
+        CaptureCurrentTransformAsBase();
     }
 
     private void OnEnable()
     {
+        CaptureCurrentTransformAsBase();
         if (loopOnEnable)
             PlayLoop();
     }
@@ -83,8 +83,20 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void SetBaseScale(Vector3 scale, bool applyImmediately)
     {
         originalScale = scale;
+        originalLocalEulerAngles = transform.localEulerAngles;
         if (applyImmediately)
             transform.localScale = originalScale;
+    }
+
+    public void CaptureCurrentTransformAsBase(bool applyImmediately = false)
+    {
+        originalScale = transform.localScale;
+        originalLocalEulerAngles = transform.localEulerAngles;
+        if (applyImmediately)
+        {
+            transform.localScale = originalScale;
+            transform.localEulerAngles = originalLocalEulerAngles;
+        }
     }
 
     public void Play()

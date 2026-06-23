@@ -437,8 +437,8 @@ public class BattleManager
         BeginPlayerTurn();
         result.CapturePlayerBefore(PlayerState);
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
-        PlayerState.ClearShield();
         PlayerState.TriggerOnTurnStart(opponent);
+        PlayerState.ClearShield();
         PlayerState.TriggerAfterTurnStart(opponent);
         TriggerMagicTurnStart();
         result.CapturePlayerAfter(PlayerState);

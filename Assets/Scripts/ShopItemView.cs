@@ -13,6 +13,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [SerializeField] private Button button;
     [SerializeField] private Image backgroundImage;
 
+    private ShopPanelUI owner;
     private Action<ShopOffer> clicked;
     private ShopOffer offer;
     private MagicItemView magicView;
@@ -26,6 +27,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     public void Bind(ShopPanelUI panel, ShopOffer offer, bool canAfford, bool canUse, bool selected, Action<ShopOffer> clicked)
     {
+        owner = panel;
         this.offer = offer;
         this.clicked = clicked;
         CacheReferences();
@@ -71,16 +73,22 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void OnDisable()
     {
         pointerInside = false;
+        if (offer != null && offer.kind == ShopItemKind.Material)
+            owner?.HideMaterialTooltip(this);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         pointerInside = true;
+        if (offer != null && offer.kind == ShopItemKind.Material)
+            owner?.ShowMaterialTooltip(this, offer);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         pointerInside = false;
+        if (offer != null && offer.kind == ShopItemKind.Material)
+            owner?.HideMaterialTooltip(this);
     }
 
     private void ApplyBaseScale(bool selected)

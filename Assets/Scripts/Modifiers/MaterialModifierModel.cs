@@ -2,6 +2,8 @@ public class MaterialModifierContext
 {
     public PlayerState PlayerState;
     public BattleManager BattleManager;
+    public ArrowReadToken Token;
+    public ArrowReadStep Step;
     public bool EnemyBuffChanged;
 }
 
@@ -43,6 +45,10 @@ public class MaterialModifierModel
     }
 
     public virtual void OnInvoke()
+    {
+    }
+
+    public virtual void OnTokenInvoke(ArrowReadToken token, ArrowReadStep step)
     {
     }
 

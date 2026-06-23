@@ -268,6 +268,11 @@ public class UIManager : MonoBehaviour
         shopPanelUI?.Show(level);
     }
 
+    public void ShowShopPanel(LevelData level, ShopNodeSaveData savedState)
+    {
+        shopPanelUI?.Show(level, savedState);
+    }
+
     public void HideShopPanel()
     {
         shopPanelUI?.Hide();

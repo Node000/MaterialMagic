@@ -20,12 +20,10 @@ public class VortexNextDrawBuffModel : BuffModel
         VortexModifier modifier = new VortexModifier();
         modifier.MarkRemoveAfterBattle();
         card.AddModifier(modifier);
-        if (card.isPlayed)
-            modifier.OnJoin();
         ConsumeStack(1);
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    public override void AfterTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (!pendingNextTurn)
             stack = 0;

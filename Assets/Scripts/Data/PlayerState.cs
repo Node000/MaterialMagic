@@ -528,17 +528,51 @@ public class PlayerState
 
     public void ReturnPlayZoneCardsToDrawPile()
     {
-        ReturnPlayZoneCardsToDiscardPile(null);
+        ReturnPlayZoneCardsToDrawPile(null);
     }
 
     public void ReturnPlayZoneCardsToDrawPile(List<MaterialModel> removedTemporaryCards)
     {
-        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+        if (PlayZone.Count == 0)
+            return;
+
+        for (int i = 0; i < PlayZone.Count; i++)
+        {
+            MaterialModel card = PlayZone[i];
+            card.TriggerOnPlayedDiscard();
+            card.TriggerOnDiscard();
+            TriggerAfterDiscard(card);
+            if (card.isTemporary)
+            {
+                removedTemporaryCards?.Add(card);
+                AddConsumedCard(card);
+                GameLog.Data($"Return play zone removes temporary card {DescribeMaterial(card)}.");
+            }
+            else
+            {
+                DrawPile.Add(card);
+                GameLog.Data($"Return play zone card {DescribeMaterial(card)} to draw pile. drawPile={DrawPile.Count}");
+            }
+        }
+
+        PlayZone.Clear();
     }
 
-    public void ReturnPlayZoneCardsToDiscardPile()
+    public bool ShufflePlayZone()
     {
-        ReturnPlayZoneCardsToDiscardPile(null);
+        if (PlayZone.Count <= 1)
+            return false;
+
+        for (int i = PlayZone.Count - 1; i > 0; i--)
+        {
+            int swapIndex = NextRunRandomInt(0, i + 1);
+            MaterialModel temp = PlayZone[i];
+            PlayZone[i] = PlayZone[swapIndex];
+            PlayZone[swapIndex] = temp;
+        }
+
+        GameLog.Data($"Shuffle play zone count={PlayZone.Count}");
+        return true;
     }
 
     public void ReturnPlayZoneCardsToDiscardPile(List<MaterialModel> removedTemporaryCards)
@@ -710,6 +744,17 @@ public class PlayerState
         if (CurrentHealth > MaxHealth)
             CurrentHealth = MaxHealth;
         GameLog.Data($"Player max health change={amount} hp={CurrentHealth}/{MaxHealth}");
+    }
+
+    public void IncreaseMaxHealthOnly(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        MaxHealth += amount;
+        if (CurrentHealth > MaxHealth)
+            CurrentHealth = MaxHealth;
+        GameLog.Data($"Player max health only change={amount} hp={CurrentHealth}/{MaxHealth}");
     }
 
     public int GainShield(int amount)

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b3a3dbe1f134d01a8b9d5f7c3a1e9b2, type: 3}
+  m_Name: BuffPopupEffectSettings
+  m_EditorClassIdentifier: 
+  fadeInDuration: 0.12
+  fadeOutDuration: 0.18
+  displayDuration: 0.25
+  interval: 0.08
+  startScale: 1
+  endScale: 1.5
+  peakAlpha: 0.5

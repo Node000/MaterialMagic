@@ -57,7 +57,7 @@ public class EventModel
         return new EventModel(data);
     }
 
-    public bool TryGetMatchedOption(IReadOnlyList<MaterialModel> sequence, out EventOptionData option)
+    public bool TryGetMatchedOption(IReadOnlyList<ArrowReadToken> sequence, out EventOptionData option)
     {
         option = null;
         EventOptionData[] options = CurrentOptions;
@@ -134,7 +134,7 @@ public class EventModel
         return count;
     }
 
-    public bool IsOptionMatch(EventOptionData option, IReadOnlyList<MaterialModel> sequence)
+    public bool IsOptionMatch(EventOptionData option, IReadOnlyList<ArrowReadToken> sequence)
     {
         MaterialEnum[] recipe = ParseRecipe(option != null ? option.recipe : null);
         if (option == null || recipe.Length == 0 || sequence == null || recipe.Length != sequence.Count)
@@ -345,35 +345,35 @@ public class EventModel
         return nodes.ContainsKey(ImplicitDefaultEndNodeId) ? ImplicitDefaultEndNodeId : null;
     }
 
-    private static bool IsOrderedMatch(MaterialEnum[] recipe, IReadOnlyList<MaterialModel> sequence)
+    private static bool IsOrderedMatch(MaterialEnum[] recipe, IReadOnlyList<ArrowReadToken> sequence)
     {
         for (int i = 0; i < recipe.Length; i++)
         {
-            MaterialModel card = sequence[i];
-            if (card == null || !card.CanActAs(recipe[i]))
+            ArrowReadToken token = sequence[i];
+            if (token == null || !token.CanActAs(recipe[i]))
                 return false;
         }
 
         return true;
     }
 
-    private static bool IsUnorderedMatch(MaterialEnum[] recipe, IReadOnlyList<MaterialModel> sequence)
+    private static bool IsUnorderedMatch(MaterialEnum[] recipe, IReadOnlyList<ArrowReadToken> sequence)
     {
         bool[] used = new bool[sequence.Count];
 
         for (int recipeIndex = 0; recipeIndex < recipe.Length; recipeIndex++)
         {
             bool found = false;
-            for (int cardIndex = 0; cardIndex < sequence.Count; cardIndex++)
+            for (int tokenIndex = 0; tokenIndex < sequence.Count; tokenIndex++)
             {
-                if (used[cardIndex])
+                if (used[tokenIndex])
                     continue;
 
-                MaterialModel card = sequence[cardIndex];
-                if (card == null || !card.CanActAs(recipe[recipeIndex]))
+                ArrowReadToken token = sequence[tokenIndex];
+                if (token == null || !token.CanActAs(recipe[recipeIndex]))
                     continue;
 
-                used[cardIndex] = true;
+                used[tokenIndex] = true;
                 found = true;
                 break;
             }
