@@ -2525,7 +2525,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 560, y: -79}
+  m_AnchoredPosition: {x: 560, y: -59}
   m_SizeDelta: {x: 1320, y: 118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &87023438
@@ -21309,7 +21309,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 560, y: -237}
+  m_AnchoredPosition: {x: 560, y: -177}
   m_SizeDelta: {x: 1320, y: 118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &728968583
@@ -30029,7 +30029,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4287425535
   m_fontColor: {r: 1, g: 0.92, b: 0.55, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -30042,7 +30042,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -41637,7 +41637,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 560, y: -553}
+  m_AnchoredPosition: {x: 560, y: -531}
   m_SizeDelta: {x: 1320, y: 118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1437286096
@@ -53946,7 +53946,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 560, y: -395}
+  m_AnchoredPosition: {x: 560, y: -295}
   m_SizeDelta: {x: 1320, y: 118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1827751685
@@ -56720,9 +56720,9 @@ MonoBehaviour:
   arcHeight: 180
   startSpread: {x: 32, y: 12}
   targetSpread: {x: 26, y: 14}
-  projectileSize: 18
-  materialFillProjectileScale: 2.5
-  magicProjectileSize: 56
+  projectileSize: 28
+  materialFillProjectileScale: 3
+  magicProjectileSize: 120
   trailWidth: 10
   projectileColor: {r: 1, g: 0.55, b: 0.12, a: 1}
   trailColor: {r: 1, g: 0.36, b: 0.08, a: 0.55}
@@ -64788,7 +64788,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 560, y: -553}
+  m_AnchoredPosition: {x: 560, y: -413}
   m_SizeDelta: {x: 1320, y: 118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2138448423

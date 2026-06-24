@@ -18,4 +18,4 @@ MonoBehaviour:
   interval: 0.08
   startScale: 1
   endScale: 1.5
-  peakAlpha: 0.5
+  peakAlpha: 1
