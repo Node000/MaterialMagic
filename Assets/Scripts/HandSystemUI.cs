@@ -3527,11 +3527,17 @@ public class HandSystemUI : MonoBehaviour
         }
     }
 
-	private void AddEventRandomMaterials(int count)
-	{
-		for (int i = 0; i < count; i++)
-			AddEventMaterial(GetRandomBasicMaterial(), 1);
-	}
+		private void AddEventRandomMaterials(int count)
+		{
+			for (int i = 0; i < count; i++)
+				AddEventMaterial(GetRandomBasicMaterial(), 1);
+		}
+
+        private bool CanSelectDisabledMaterialForNonBattleAction(MaterialModel materialModel)
+        {
+            return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel);
+        }
+
 
 	private void AddEventMaterial(MaterialEnum material, int count)
 	{
@@ -3658,16 +3664,17 @@ public class HandSystemUI : MonoBehaviour
 		SetButtonsInteractable(interactable: false);
 	}
 
-	private bool IsEventChoiceSelectable(MaterialModel materialModel)
-	{
+		private bool IsEventChoiceSelectable(MaterialModel materialModel)
+		{
         if (materialModel == null || playerState == null)
             return false;
 
         if (pendingChoiceOption != null && pendingChoiceOption.resultId == 100)
-            return playerState.Deck.Contains(materialModel);
+            return CanSelectDisabledMaterialForNonBattleAction(materialModel);
 
-		return playerState.Hand.Contains(materialModel);
-	}
+			return playerState.Hand.Contains(materialModel);
+		}
+
 
 	private void OnEventMaterialListSelectionCompleted(IReadOnlyList<MaterialModel> materials)
 	{
@@ -5940,6 +5947,8 @@ public class HandSystemUI : MonoBehaviour
 
     public bool HasPendingMagicModifier => pendingMagicModifier != null;
 
+    public bool HasPendingMaterialModifier => pendingMaterialModifier != null;
+
     public bool TryApplyPendingMagicModifier(int slotIndex)
     {
         if (pendingMagicModifier == null)
@@ -5965,6 +5974,21 @@ public class HandSystemUI : MonoBehaviour
         CreateMagicViews();
         panel?.CompleteSelection();
         return true;
+    }
+
+    public bool TryApplyPendingMaterialModifierToSelectedHandCard(int handCardIndex)
+    {
+        if (pendingMaterialModifier == null || playerState == null)
+            return false;
+
+        if (handCardIndex < 0 || handCardIndex >= playerState.Hand.Count)
+            return false;
+
+        MaterialModel target = playerState.Hand[handCardIndex];
+        bool applied = TryApplyPendingMaterialModifier(target);
+        if (applied)
+            GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
+        return applied;
     }
 
 	public void ShowSlotSelect(MagicData rewardMagic)
@@ -6119,7 +6143,7 @@ public class HandSystemUI : MonoBehaviour
         int count = 0;
         for (int i = 0; i < playerState.Deck.Count; i++)
         {
-            if (IsShopMaterialModifierTargetSelectable(playerState.Deck[i]))
+            if (CanSelectDisabledMaterialForNonBattleAction(playerState.Deck[i]))
                 count++;
         }
         return count;
@@ -6127,7 +6151,7 @@ public class HandSystemUI : MonoBehaviour
 
     public bool IsShopMaterialModifierTargetSelectable(MaterialModel materialModel)
     {
-        return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && materialModel.material != MaterialEnum.None;
+        return CanSelectDisabledMaterialForNonBattleAction(materialModel);
     }
 
     public bool ApplyShopMaterialModifier(MaterialModel target, MaterialModifierData modifierData)
@@ -6436,23 +6460,12 @@ public class HandSystemUI : MonoBehaviour
         pendingMaterialModifier = selectedModifier;
         MagicModifierSelectionPanelUI modifierPanel = GetUIManager().MagicModifierSelectionPanel;
         modifierPanel?.Hide();
-        MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
-        if (panel == null)
-        {
-            completed?.Invoke();
-            return;
-        }
-
-        panel.BeginSelection(1, IsArrowModifierTargetSelectable, materials =>
-        {
-            MaterialModel target = materials != null && materials.Count > 0 ? materials[0] : null;
-            TryApplyPendingMaterialModifier(target);
-            completed?.Invoke();
-        }, () =>
-        {
-            pendingMaterialModifier = null;
-            completed?.Invoke();
-        }, "选择箭头");
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshPlayerAnimationState();
+        busy = false;
+        SetButtonsInteractable(interactable: true);
+        completed?.Invoke();
     }
 
     private bool TryApplyPendingMaterialModifier(MaterialModel target)

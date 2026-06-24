@@ -31,6 +31,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         this.offer = offer;
         this.clicked = clicked;
         CacheReferences();
+        ResetMotionState();
         ClearVisual();
 
         if (titleText != null)
@@ -73,6 +74,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private void OnDisable()
     {
         pointerInside = false;
+        ResetMotionState();
         if (offer != null && offer.kind == ShopItemKind.Material)
             owner?.HideMaterialTooltip(this);
     }
@@ -97,11 +99,25 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (motion != null)
         {
             motion.SetBaseScale(baseScale, !pointerInside);
+            if (!pointerInside)
+                transform.localEulerAngles = Vector3.zero;
             return;
         }
 
         if (!pointerInside)
+        {
             transform.localScale = baseScale;
+            transform.localEulerAngles = Vector3.zero;
+        }
+    }
+
+    private void ResetMotionState()
+    {
+        transform.localEulerAngles = Vector3.zero;
+        if (!pointerInside)
+            transform.localScale = Vector3.one;
+
+        motion?.CaptureCurrentTransformAsBase(true);
     }
 
     private void ClearVisual()

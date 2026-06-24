@@ -26,6 +26,8 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
 
         if (owner != null && owner.HasPendingMagicModifier)
             owner.TryApplyPendingMagicModifier(slotIndex);
+        else if (owner != null && owner.HasPendingMaterialModifier)
+            owner.TryApplyPendingMaterialModifierToSelectedHandCard(slotIndex);
         else if (owner != null && owner.HasPendingShopMagic)
             owner.TryPlacePendingShopMagic(slotIndex);
         else

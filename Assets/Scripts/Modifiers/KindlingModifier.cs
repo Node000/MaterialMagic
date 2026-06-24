@@ -1,6 +1,6 @@
 public class KindlingModifier : MaterialModifierModel
 {
-    public override void OnInvoke()
+    public override void OnTokenInvoke(ArrowReadToken token, ArrowReadStep step)
     {
         MaterialModifierContext context = Context;
         if (context != null && context.BattleManager != null)

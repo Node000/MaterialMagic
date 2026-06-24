@@ -1,6 +1,7 @@
 public class DeerManEnemyModel : EnemyModel
 {
     private MaterialEnum pendingDisabledMaterial;
+    private MaterialEnum lastDisabledMaterial;
     private int pendingDisabledActionIndex = -1;
     private int pendingDisabledPhase = -1;
 
@@ -81,17 +82,24 @@ public class DeerManEnemyModel : EnemyModel
     {
         if (pendingDisabledActionIndex != ActionIndex || pendingDisabledPhase != Phase || pendingDisabledMaterial == MaterialEnum.None)
         {
-            pendingDisabledMaterial = SelectRandomBasicMaterial(playerState);
+            pendingDisabledMaterial = SelectRandomBasicMaterial(playerState, lastDisabledMaterial);
+            lastDisabledMaterial = pendingDisabledMaterial;
             pendingDisabledActionIndex = ActionIndex;
             pendingDisabledPhase = Phase;
         }
         return pendingDisabledMaterial;
     }
 
-    private static MaterialEnum SelectRandomBasicMaterial(PlayerState playerState)
+    private static MaterialEnum SelectRandomBasicMaterial(PlayerState playerState, MaterialEnum excludeMaterial)
     {
-        int index = playerState is PlayerStatus status ? status.NextRunRandomInt(1, 5) : UnityEngine.Random.Range(1, 5);
-        return (MaterialEnum)index;
+        int materialCount = 4;
+        int first = playerState is PlayerStatus status ? status.NextRunRandomInt(1, materialCount + 1) : UnityEngine.Random.Range(1, materialCount + 1);
+        MaterialEnum result = (MaterialEnum)first;
+        if (excludeMaterial == MaterialEnum.None || materialCount <= 1 || result != excludeMaterial)
+            return result;
+
+        int rerolled = first % materialCount + 1;
+        return (MaterialEnum)rerolled;
     }
 
     private static int CountDeckMaterial(PlayerState playerState, MaterialEnum material)

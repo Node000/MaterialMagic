@@ -227,6 +227,18 @@ public class PlayerState
             alternateMaterial = source.alternateMaterial,
             removeCardAfterBattle = true
         };
+
+        for (int i = 0; i < source.modifiers.Count; i++)
+        {
+            MaterialModifierModel sourceModifier = source.modifiers[i];
+            if (sourceModifier == null || sourceModifier is FragileArrowModifier || sourceModifier is HalfArrowModifier)
+                continue;
+
+            MaterialModifierModel clonedModifier = sourceModifier.Clone();
+            if (clonedModifier != null)
+                half.AddModifier(clonedModifier);
+        }
+
         half.AddModifier(new HalfArrowModifier());
         DiscardPile.Add(half);
     }
