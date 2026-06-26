@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "BuffPopupEffectSettings", menuName = "GlobalConfig/Buff Popup Effect Settings")]
+[CreateAssetMenu(fileName = "BuffPopupEffectSettings", menuName = "Config/Buff Popup Effect Settings")]
 public class BuffPopupEffectSettings : ScriptableObject
 {
     [SerializeField] private float fadeInDuration = 0.12f;

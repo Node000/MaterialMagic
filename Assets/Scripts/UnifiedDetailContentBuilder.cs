@@ -14,6 +14,20 @@ public enum UnifiedDetailSourceType
     BonusReward = 6
 }
 
+public enum UnifiedDetailAddedDetailType
+{
+    Keyword = 0,
+    Enhancement = 1,
+    Modifier = 2
+}
+
+public struct UnifiedDetailAddedDetail
+{
+    public UnifiedDetailAddedDetailType Type;
+    public string Title;
+    public string Body;
+}
+
 public struct UnifiedDetailContent
 {
     public UnifiedDetailSourceType SourceType;
@@ -21,6 +35,7 @@ public struct UnifiedDetailContent
     public string Title;
     public string Body;
     public Color AccentColor;
+    public List<UnifiedDetailAddedDetail> AddedDetails;
 }
 
 public static class UnifiedDetailContentBuilder
@@ -45,7 +60,8 @@ public static class UnifiedDetailContentBuilder
             Title = magic != null ? magic.Name : string.Empty,
             Body = BuildMagicBody(magic),
             AccentColor = Color.white,
-            Icon = LoadMagicIcon(magic)
+            Icon = LoadMagicIcon(magic),
+            AddedDetails = BuildMagicAddedDetails(magic)
         };
         return content;
     }
@@ -72,7 +88,8 @@ public static class UnifiedDetailContentBuilder
             Title = GetMaterialTitle(material, displayMaterial),
             Body = BuildMaterialBody(material),
             AccentColor = GetMaterialAccentColor(material, displayMaterial),
-            Icon = MaterialCardView.GetMaterialIcon(displayMaterial)
+            Icon = MaterialCardView.GetMaterialIcon(displayMaterial),
+            AddedDetails = BuildMaterialAddedDetails(material)
         };
         return content;
     }
@@ -117,7 +134,8 @@ public static class UnifiedDetailContentBuilder
             Title = enemy != null ? enemy.GetIntentTooltipTitle(intent) : string.Empty,
             Body = BuildEnemyIntentBody(enemy, intent, playerState),
             AccentColor = new Color(1f, 0.48f, 0.9f, 1f),
-            Icon = LoadEnemyIntentIcon(intent)
+            Icon = LoadEnemyIntentIcon(intent),
+            AddedDetails = BuildIntentBuffDetails(enemy != null ? enemy.GetIntentTooltipBuffs(intent, playerState) : null)
         };
         return content;
     }
@@ -129,7 +147,6 @@ public static class UnifiedDetailContentBuilder
 
         StringBuilder builder = new StringBuilder();
         AppendParagraph(builder, enemy.GetIntentTooltipDescription(intent, playerState));
-        AppendParagraph(builder, BuildIntentBuffBody(enemy.GetIntentTooltipBuffs(intent, playerState)));
         return builder.ToString();
     }
 
@@ -174,7 +191,8 @@ public static class UnifiedDetailContentBuilder
             Title = option != null ? LocalizationSystem.GetText(option.titleKey, option.id) : string.Empty,
             Body = BuildEventOptionBody(option),
             AccentColor = new Color(0.94f, 0.76f, 0.34f, 1f),
-            Icon = null
+            Icon = null,
+            AddedDetails = BuildTagDetails(option != null ? option.tagIds : null)
         };
         return content;
     }
@@ -199,15 +217,6 @@ public static class UnifiedDetailContentBuilder
 
         StringBuilder builder = new StringBuilder();
         AppendParagraph(builder, magic.Description);
-
-        if (magic.HasModifier && magic.PrimaryModifier != null)
-        {
-            string name = magic.PrimaryModifier.Name;
-            string description = magic.PrimaryModifier.Description;
-            AppendParagraph(builder, FormatLabelValue(TextConfig.ModifierSectionTitle, name, false, description));
-        }
-
-        AppendParagraph(builder, BuildTagBody(magic.Data != null ? magic.Data.tagIds : Array.Empty<string>()));
         return builder.ToString();
     }
 
@@ -223,8 +232,92 @@ public static class UnifiedDetailContentBuilder
         if (displayMaterial != material.material && displayMaterial != MaterialEnum.None)
             AppendParagraph(builder, FormatInlineLabelValue(TextConfig.DisplayDirectionLabel, GetMaterialDirectionToken(displayMaterial)));
 
-        AppendParagraph(builder, BuildMaterialModifierBody(material));
         return builder.ToString();
+    }
+
+    private static List<UnifiedDetailAddedDetail> BuildMagicAddedDetails(MagicModel magic)
+    {
+        List<UnifiedDetailAddedDetail> details = BuildTagDetails(magic != null && magic.Data != null ? magic.Data.tagIds : null);
+        if (magic != null && magic.HasModifier && magic.PrimaryModifier != null)
+            AddDetail(details, UnifiedDetailAddedDetailType.Enhancement, magic.PrimaryModifier.Name, magic.PrimaryModifier.Description);
+        return details;
+    }
+
+    private static List<UnifiedDetailAddedDetail> BuildMaterialAddedDetails(MaterialModel material)
+    {
+        List<UnifiedDetailAddedDetail> details = new List<UnifiedDetailAddedDetail>();
+        if (material == null)
+            return details;
+
+        for (int i = 0; i < material.enhancementIds.Count; i++)
+            AddDetail(details, UnifiedDetailAddedDetailType.Enhancement, material.enhancementIds[i], string.Empty);
+
+        if (material.modifiers != null)
+        {
+            for (int i = 0; i < material.modifiers.Count; i++)
+            {
+                MaterialModifierModel modifier = material.modifiers[i];
+                if (modifier == null)
+                    continue;
+
+                AddDetail(details, UnifiedDetailAddedDetailType.Modifier, LocalizationKeys.GetModifierName(modifier), LocalizationKeys.GetModifierDescription(modifier));
+            }
+        }
+        return details;
+    }
+
+    private static List<UnifiedDetailAddedDetail> BuildIntentBuffDetails(IReadOnlyList<BuffStackData> buffs)
+    {
+        List<UnifiedDetailAddedDetail> details = new List<UnifiedDetailAddedDetail>();
+        if (buffs == null)
+            return details;
+
+        for (int i = 0; i < buffs.Count; i++)
+        {
+            BuffStackData buffData = buffs[i];
+            if (buffData == null || buffData.buffType == BuffEnum.None)
+                continue;
+
+            BuffModel buff = BuffModel.Create(buffData.buffType, buffData.stack);
+            if (buff == null)
+                continue;
+
+            string name = LocalizationKeys.GetBuffName(buffData.buffType);
+            if (string.IsNullOrEmpty(name))
+                name = buffData.buffType.ToString();
+            AddDetail(details, UnifiedDetailAddedDetailType.Keyword, name, buff.GetDesc());
+        }
+        return details;
+    }
+
+    private static List<UnifiedDetailAddedDetail> BuildTagDetails(string[] tagIds)
+    {
+        List<UnifiedDetailAddedDetail> details = new List<UnifiedDetailAddedDetail>();
+        if (tagIds == null)
+            return details;
+
+        for (int i = 0; i < tagIds.Length; i++)
+        {
+            string tagId = tagIds[i];
+            if (string.IsNullOrEmpty(tagId) || !GameDataDatabase.TryGetTagData(tagId, out TagData tag))
+                continue;
+
+            AddDetail(details, UnifiedDetailAddedDetailType.Keyword, LocalizationKeys.GetTagName(tag), LocalizationKeys.GetTagDescription(tag));
+        }
+        return details;
+    }
+
+    private static void AddDetail(List<UnifiedDetailAddedDetail> details, UnifiedDetailAddedDetailType type, string title, string body)
+    {
+        if (details == null || string.IsNullOrEmpty(title))
+            return;
+
+        details.Add(new UnifiedDetailAddedDetail
+        {
+            Type = type,
+            Title = title,
+            Body = body
+        });
     }
 
     private static string BuildMaterialArrowEffectBody(MaterialModel material)
@@ -333,7 +426,6 @@ public static class UnifiedDetailContentBuilder
 
         StringBuilder builder = new StringBuilder();
         AppendParagraph(builder, EventDetailTextUtility.GetOptionEffectText(option));
-        AppendParagraph(builder, BuildTagBody(option.tagIds));
         return builder.ToString();
     }
 

@@ -9,11 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c23ec4fb0760f7a4cb8b4be9ea9b2093, type: 3}
-  m_Name: UnifiedDetailPopupTheme
+  m_Script: {fileID: 11500000, guid: d3486ca8b6772da43b52045bac6e6453, type: 3}
+  m_Name: MaterialListPanelLayoutConfig
   m_EditorClassIdentifier: 
-  hiddenScale: {x: 0.82, y: 0.82, z: 1}
-  fadeDuration: 0.12
-  scaleDuration: 0.18
-  showEase: 27
-  hideEase: 26
+  arrowRowTotalLength: 780
+  arrowDefaultScale: 0.72
+  arrowHoverScale: 1.18

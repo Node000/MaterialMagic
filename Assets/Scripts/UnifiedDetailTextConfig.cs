@@ -16,7 +16,7 @@ public struct UnifiedDetailLocalizedText
     }
 }
 
-[CreateAssetMenu(fileName = "UnifiedDetailTextConfig", menuName = "GlobalConfig/Unified Detail Text Config")]
+[CreateAssetMenu(fileName = "UnifiedDetailTextConfig", menuName = "Config/Unified Detail Text Config")]
 public class UnifiedDetailTextConfig : ScriptableObject
 {
     [Header("Section Titles")]
@@ -40,6 +40,13 @@ public class UnifiedDetailTextConfig : ScriptableObject
     [SerializeField] private Color arrowEffectTitleColor = new Color(0.68f, 1f, 0.42f, 1f);
     [SerializeField] private Color enhancementTextColor = new Color(0.48f, 0.86f, 1f, 1f);
     [SerializeField] private Color modifierTextColor = new Color(1f, 0.62f, 0.22f, 1f);
+
+    [Header("Added Detail Frames")]
+    [SerializeField] private Color keywordFrameColor = new Color(0.48f, 0.86f, 1f, 1f);
+    [SerializeField] private Color enhancementFrameColor = new Color(0.68f, 1f, 0.42f, 1f);
+    [SerializeField] private Color modifierFrameColor = new Color(1f, 0.62f, 0.22f, 1f);
+    [SerializeField] private float addedDetailFirstYOffset = -292f;
+    [SerializeField] private float addedDetailYSpacing = -118f;
 
     [Header("Buff / Fallback")]
     [SerializeField] private string buffTitleStackSeparator = "  ";
@@ -82,6 +89,11 @@ public class UnifiedDetailTextConfig : ScriptableObject
     public Color EnhancementTextColor => enhancementTextColor;
     public Color ModifierTextColor => modifierTextColor;
     public Color KeywordTextColor => tagTitleColor;
+    public Color KeywordFrameColor => keywordFrameColor;
+    public Color EnhancementFrameColor => enhancementFrameColor;
+    public Color ModifierFrameColor => modifierFrameColor;
+    public float AddedDetailFirstYOffset => addedDetailFirstYOffset;
+    public float AddedDetailYSpacing => addedDetailYSpacing;
 
     public string GetRewardGoldText(int amount)
     {

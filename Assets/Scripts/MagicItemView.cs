@@ -86,7 +86,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 backgroundImage.color = emptyBackgroundColor;
 
             if (magicNameText != null)
-                magicNameText.text = LocalizationSystem.GetText("ui.magic.empty_slot.label", "空槽");
+                magicNameText.text = string.Empty;
 
             SetModifierMarkerVisible(false);
             SetHoverHighlightEnabled(false);

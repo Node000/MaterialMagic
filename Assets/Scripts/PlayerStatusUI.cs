@@ -6,6 +6,7 @@ using TMPro;
 public class PlayerStatusUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text healthText;
+    [SerializeField] private TMP_Text shieldText;
     [SerializeField] private Image healthFill;
     [SerializeField] private RectTransform buffRoot;
 
@@ -14,6 +15,7 @@ public class PlayerStatusUI : MonoBehaviour
 
     public RectTransform BuffRoot => buffRoot;
     public TMP_Text HealthText => healthText;
+    public TMP_Text ShieldText => shieldText;
     public Image HealthFill => healthFill;
 
     public void Initialize(HandSystemUI owner)
@@ -29,7 +31,7 @@ public class PlayerStatusUI : MonoBehaviour
         CacheReferences();
         if (healthBar == null)
             healthBar = gameObject.GetComponent<HealthBarUI>() ?? gameObject.AddComponent<HealthBarUI>();
-        healthBar.Initialize(healthText, healthFill, playerState.CurrentHealth);
+        healthBar.Initialize(healthText, healthFill, shieldText, playerState.CurrentHealth);
         healthBar.UpdateValue(playerState.CurrentHealth, playerState.MaxHealth, playerState.Shield, instant);
     }
 
@@ -48,6 +50,8 @@ public class PlayerStatusUI : MonoBehaviour
     {
         if (healthText == null)
             healthText = UIManager.FindChildComponent<TMP_Text>(transform, "HealthText");
+        if (shieldText == null)
+            shieldText = UIManager.FindChildComponent<TMP_Text>(transform, "ShieldText");
         if (healthFill == null)
             healthFill = UIManager.FindChildComponent<Image>(transform, "HealthBarBack/HealthFill");
         if (buffRoot == null)

@@ -7,6 +7,7 @@ using TMPro;
 public class HealthBarUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text healthText;
+    [SerializeField] private TMP_Text shieldText;
     [SerializeField] private Image healthFill;
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
@@ -29,6 +30,7 @@ public class HealthBarUI : MonoBehaviour
     private Tween healthNumberTween;
 
     public TMP_Text HealthText => healthText;
+    public TMP_Text ShieldText => shieldText;
     public Image HealthFill => healthFill;
     public Image HealthBufferFill => healthBufferFill;
     public Image ShieldFill => shieldFill;
@@ -37,7 +39,13 @@ public class HealthBarUI : MonoBehaviour
 
     public void Initialize(TMP_Text text, Image fill, int currentHealth)
     {
+        Initialize(text, fill, null, currentHealth);
+    }
+
+    public void Initialize(TMP_Text text, Image fill, TMP_Text shieldValueText, int currentHealth)
+    {
         healthText = text;
+        shieldText = shieldValueText;
         healthFill = fill;
         displayedHealth = currentHealth;
         displayedMaxHealth = currentHealth;
@@ -63,7 +71,8 @@ public class HealthBarUI : MonoBehaviour
         int targetHealth = Mathf.Max(0, currentHealth);
         int targetMaxHealth = Mathf.Max(0, maxHealth);
         int targetShield = Mathf.Max(0, shield);
-        ApplyHealthTextColor(targetShield > 0);
+        ApplyHealthTextColor();
+        ApplyShieldTextColor();
         healthNumberTween?.Kill(false);
         healthNumberTween = UpdateHealthText(
             healthText,
@@ -82,7 +91,8 @@ public class HealthBarUI : MonoBehaviour
             },
             this,
             healthTextDuration,
-            healthEase);
+            healthEase,
+            shieldText);
     }
 
     private void CacheLayers()
@@ -106,12 +116,20 @@ public class HealthBarUI : MonoBehaviour
             shieldFill.raycastTarget = false;
     }
 
-    private void ApplyHealthTextColor(bool shielded)
+    private void ApplyHealthTextColor()
     {
         if (healthText == null)
             return;
 
-        healthText.color = shielded ? shieldFillColor : healthFillColor;
+        healthText.color = healthFillColor;
+    }
+
+    private void ApplyShieldTextColor()
+    {
+        if (shieldText == null)
+            return;
+
+        shieldText.color = shieldFillColor;
     }
 
     public static Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
@@ -189,9 +207,21 @@ public class HealthBarUI : MonoBehaviour
     {
         int health = Mathf.Max(0, currentHealth);
         int max = Mathf.Max(0, maxHealth);
-        if (shield > 0)
-            return health + "+" + Mathf.Max(0, shield) + "/" + max;
         return health + "/" + max;
+    }
+
+    public static string GetShieldTextValue(int shield)
+    {
+        int value = Mathf.Max(0, shield);
+        return value > 0 ? value.ToString() : string.Empty;
+    }
+
+    public static void ApplyShieldText(TMP_Text text, int shield)
+    {
+        if (text == null)
+            return;
+
+        text.text = GetShieldTextValue(shield);
     }
 
     public static void SetHealthTextColor(TMP_Text text, bool shielded)
@@ -310,7 +340,7 @@ public class HealthBarUI : MonoBehaviour
         return UpdateHealthText(text, displayedHealth, displayedMaxHealth, displayedShield, targetHealth, targetMaxHealth, targetShield, instant, setDisplayedValues, tweenTarget, 0.35f, Ease.OutQuad);
     }
 
-    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int displayedMaxHealth, int displayedShield, int targetHealth, int targetMaxHealth, int targetShield, bool instant, Action<int, int, int> setDisplayedValues, object tweenTarget, float duration, Ease ease)
+    public static Tween UpdateHealthText(TMP_Text text, int displayedHealth, int displayedMaxHealth, int displayedShield, int targetHealth, int targetMaxHealth, int targetShield, bool instant, Action<int, int, int> setDisplayedValues, object tweenTarget, float duration, Ease ease, TMP_Text shieldText = null)
     {
         if (text == null)
             return null;
@@ -319,6 +349,7 @@ public class HealthBarUI : MonoBehaviour
         {
             setDisplayedValues(targetHealth, targetMaxHealth, targetShield);
             text.text = GetHealthTextValue(targetHealth, targetMaxHealth, targetShield);
+            ApplyShieldText(shieldText, targetShield);
             return null;
         }
 
@@ -334,12 +365,14 @@ public class HealthBarUI : MonoBehaviour
             int shieldValue = Mathf.RoundToInt(Mathf.Lerp(startShield, targetShield, value));
             setDisplayedValues(healthValue, maxHealthValue, shieldValue);
             text.text = GetHealthTextValue(healthValue, maxHealthValue, shieldValue);
+            ApplyShieldText(shieldText, shieldValue);
         }).SetEase(ease).SetTarget(tweenTarget).OnComplete(() =>
         {
             if (elapsed < 1f)
             {
                 setDisplayedValues(targetHealth, targetMaxHealth, targetShield);
                 text.text = GetHealthTextValue(targetHealth, targetMaxHealth, targetShield);
+                ApplyShieldText(shieldText, targetShield);
             }
         });
     }

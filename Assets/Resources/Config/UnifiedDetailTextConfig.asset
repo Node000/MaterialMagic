@@ -45,6 +45,11 @@ MonoBehaviour:
   arrowEffectTitleColor: {r: 0.68, g: 1, b: 0.42, a: 1}
   enhancementTextColor: {r: 0.48, g: 0.86, b: 1, a: 1}
   modifierTextColor: {r: 1, g: 0.62, b: 0.22, a: 1}
+  keywordFrameColor: {r: 0.48, g: 0.86, b: 1, a: 1}
+  enhancementFrameColor: {r: 0.68, g: 1, b: 0.42, a: 1}
+  modifierFrameColor: {r: 1, g: 0.62, b: 0.22, a: 1}
+  addedDetailFirstYOffset: -300
+  addedDetailYSpacing: -120
   buffTitleStackSeparator: '  '
   fallbackMaterialTitle:
     key: ui.unified_detail.material.fallback_title

@@ -15,6 +15,7 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
     [SerializeField] private TMP_Text healthText;
+    [SerializeField] private TMP_Text shieldText;
     [SerializeField] private RectTransform buffRoot;
     [SerializeField] private Graphic focusMarker;
     [SerializeField] private RectTransform intentRoot;
@@ -35,6 +36,7 @@ public class EnemyViewUI : MonoBehaviour
     public Image HealthBufferFill => healthBufferFill;
     public Image ShieldFill => shieldFill;
     public TMP_Text HealthText => healthText;
+    public TMP_Text ShieldText => shieldText;
     public RectTransform BuffRoot => buffRoot;
     public Graphic FocusMarker => focusMarker;
     public RectTransform IntentRoot => intentRoot;
@@ -76,6 +78,8 @@ public class EnemyViewUI : MonoBehaviour
             shieldFill = FindImage("ShieldFill");
         if (healthText == null)
             healthText = FindText("HealthText");
+        if (shieldText == null)
+            shieldText = FindText("ShieldText");
         if (buffRoot == null)
             buffRoot = FindRect("BuffRoot");
         if (focusMarker == null)

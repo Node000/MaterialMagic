@@ -17,6 +17,7 @@ public class BattleMaterialRowUI : MonoBehaviour
     [SerializeField] private float hoverYOffset = 32f;
     [SerializeField] private float hoverScale = 1.18f;
     [SerializeField] private float normalScale = 0.72f;
+    [SerializeField] private bool hoverSelectionOutlineEnabled = true;
     [SerializeField] private float inactiveAlpha = 0.45f;
     [SerializeField] private float animationDuration = 0.16f;
     [SerializeField] private Ease animationEase = Ease.OutCubic;
@@ -37,6 +38,18 @@ public class BattleMaterialRowUI : MonoBehaviour
         this.materialCardPrefab = materialCardPrefab;
         this.cardSize = cardSize;
         this.fixedContentWidth = fixedContentWidth;
+    }
+
+    public void ConfigureArrowRowLayout(float totalLength, float defaultScale, float hoverScale)
+    {
+        fixedContentWidth = Mathf.Max(0f, totalLength);
+        normalScale = Mathf.Max(0.01f, defaultScale);
+        this.hoverScale = Mathf.Max(0.01f, hoverScale);
+    }
+
+    public void SetHoverSelectionOutlineEnabled(bool enabled)
+    {
+        hoverSelectionOutlineEnabled = enabled;
     }
 
     public void Refresh(string title, IReadOnlyList<MaterialModel> materials, Predicate<MaterialModel> selectablePredicate, IReadOnlyList<MaterialModel> selectedMaterials, bool hideUnselectable)
@@ -145,6 +158,7 @@ public class BattleMaterialRowUI : MonoBehaviour
         {
             view.Bind(material, !selectable);
             view.SetSelectionVisual(IsSelected(material), true);
+            view.SetSpringHighlightEnabled(hoverSelectionOutlineEnabled);
         }
 
         CanvasGroup canvasGroup = item.GetComponent<CanvasGroup>();

@@ -399,10 +399,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
                 iconImage.preserveAspect = true;
             }
         }
-
-        Transform enhancementRoot = cardRect.Find("EnhancementRoot");
-        if (enhancementRoot != null)
-            enhancementRoot.gameObject.SetActive(false);
     }
 
     private static MagicModel GetMagicForSlot(PlayerStartMagicData[] magics, int slotIndex)

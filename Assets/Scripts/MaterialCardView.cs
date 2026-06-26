@@ -9,21 +9,13 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text labelText;
-    [SerializeField] private RectTransform enhancementRoot;
     [SerializeField] private SpringLineHighlightUI springHighlight;
-    [Header("Modifier标签布局")]
-    [SerializeField] private float enhancementLineHeight = 16f;
-    [SerializeField] private float enhancementLineSpacing = 2f;
     [Header("动画参数")]
     [SerializeField] private float consumedPunchScale = 0.035f;
     [SerializeField] private float consumedPunchDuration = 0.32f;
     [SerializeField] private int consumedPunchVibrato = 4;
     [SerializeField] private float consumedPunchElasticity = 0.45f;
 
-    private const string DetailTextConfigResourcePath = "Config/UnifiedDetailTextConfig";
-
-    private static UnifiedDetailTextConfig cachedDetailTextConfig;
-    private readonly System.Collections.Generic.List<TMP_Text> enhancementTexts = new System.Collections.Generic.List<TMP_Text>();
     private MaterialModel materialModel;
     private MaterialListPanelUI owner;
     private CanvasGroup canvasGroup;
@@ -31,6 +23,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     private bool inactive;
     private bool selected;
     private bool hovered;
+    private bool springHighlightEnabled = true;
 
     public RectTransform RectTransform => (RectTransform)transform;
     public MaterialModel MaterialModel => materialModel;
@@ -41,7 +34,6 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-        CacheEnhancementTexts();
         CacheSpringHighlight();
         RefreshSpringHighlight();
     }
@@ -60,12 +52,11 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         consumedTween?.Kill(false);
     }
 
-    public void Initialize(Image frameImage, Image iconImage, TMP_Text labelText, RectTransform enhancementRoot)
+    public void Initialize(Image frameImage, Image iconImage, TMP_Text labelText)
     {
         this.frameImage = frameImage;
         this.iconImage = iconImage;
         this.labelText = labelText;
-        this.enhancementRoot = enhancementRoot;
         CacheSpringHighlight();
     }
 
@@ -87,13 +78,18 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         hovered = false;
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
-        CacheEnhancementTexts();
         RefreshVisual();
     }
 
     public void SetSelectionVisual(bool value, bool instant)
     {
         selected = value;
+        RefreshSpringHighlight();
+    }
+
+    public void SetSpringHighlightEnabled(bool enabled)
+    {
+        springHighlightEnabled = enabled;
         RefreshSpringHighlight();
     }
 
@@ -180,7 +176,6 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             }
         }
 
-        RebuildEnhancements();
         RefreshSpringHighlight();
     }
 
@@ -196,9 +191,6 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             return;
 
         springHighlight.raycastTarget = false;
-        springHighlight.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
-        springHighlight.SetOutset(6f);
-        springHighlight.SetWobbleAmplitude(5f);
     }
 
     private SpringLineHighlightUI CreateSpringHighlight()
@@ -223,7 +215,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             return;
 
         springHighlight.color = GetSpringHighlightColor();
-        springHighlight.gameObject.SetActive(selected || hovered);
+        springHighlight.gameObject.SetActive(springHighlightEnabled && (selected || hovered));
     }
 
     private Color GetSpringHighlightColor()
@@ -241,128 +233,12 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         return color;
     }
 
-    private void RebuildEnhancements()
-    {
-        if (enhancementRoot == null)
-            return;
-
-        CacheEnhancementTexts();
-        EnsureEnhancementRootLayout();
-
-        for (int i = 0; i < enhancementRoot.childCount; i++)
-            enhancementRoot.GetChild(i).gameObject.SetActive(false);
-
-        if (materialModel == null || (materialModel.enhancementIds.Count == 0 && materialModel.modifiers.Count == 0))
-            return;
-
-        int tagIndex = 0;
-        for (int i = 0; i < materialModel.enhancementIds.Count; i++)
-        {
-            TMP_Text tagText = GetEnhancementText(tagIndex);
-            ApplyEnhancementTextLayout(tagText, tagIndex++);
-            tagText.color = GetEnhancementTextColor();
-            tagText.gameObject.SetActive(true);
-            tagText.text = materialModel.enhancementIds[i];
-        }
-
-        for (int i = 0; i < materialModel.modifiers.Count; i++)
-        {
-            TMP_Text tagText = GetEnhancementText(tagIndex);
-            ApplyEnhancementTextLayout(tagText, tagIndex++);
-            tagText.color = GetModifierTextColor();
-            tagText.gameObject.SetActive(true);
-            tagText.text = LocalizationKeys.GetModifierName(materialModel.modifiers[i]);
-        }
-    }
-
-    private void CacheEnhancementTexts()
-    {
-        enhancementTexts.Clear();
-        if (enhancementRoot == null)
-            return;
-
-        for (int i = 0; i < enhancementRoot.childCount; i++)
-        {
-            TMP_Text text = enhancementRoot.GetChild(i).GetComponent<TMP_Text>();
-            if (text != null)
-                enhancementTexts.Add(text);
-        }
-    }
-
-    private void EnsureEnhancementRootLayout()
-    {
-        if (enhancementRoot == null)
-            return;
-
-        HorizontalLayoutGroup horizontalLayout = enhancementRoot.GetComponent<HorizontalLayoutGroup>();
-        if (horizontalLayout != null)
-            horizontalLayout.enabled = false;
-    }
-
-    private void ApplyEnhancementTextLayout(TMP_Text tagText, int index)
-    {
-        if (tagText == null)
-            return;
-
-        tagText.enableWordWrapping = false;
-        tagText.overflowMode = TextOverflowModes.Overflow;
-        RectTransform rect = tagText.rectTransform;
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -index * (enhancementLineHeight + enhancementLineSpacing));
-        rect.sizeDelta = new Vector2(0f, enhancementLineHeight);
-    }
-
-    private TMP_Text GetEnhancementText(int index)
-    {
-        while (enhancementTexts.Count <= index)
-        {
-            TMP_Text tagText = new GameObject("EnhancementTag", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-            tagText.transform.SetParent(enhancementRoot, false);
-            tagText.font = labelText != null && labelText.font != null ? labelText.font : UIManager.GetDefaultTMPFont();
-            tagText.fontSize = 12;
-            tagText.alignment = TextAlignmentOptions.Center;
-            tagText.color = Color.white;
-            tagText.raycastTarget = false;
-            tagText.enableWordWrapping = false;
-            tagText.overflowMode = TextOverflowModes.Overflow;
-            ApplyEnhancementTextLayout(tagText, enhancementTexts.Count);
-            enhancementTexts.Add(tagText);
-        }
-
-        return enhancementTexts[index];
-    }
-
-    private static Color GetEnhancementTextColor()
-    {
-        return DetailTextConfig != null ? DetailTextConfig.EnhancementTextColor : Color.white;
-    }
-
-    private static Color GetModifierTextColor()
-    {
-        return DetailTextConfig != null ? DetailTextConfig.ModifierTextColor : Color.white;
-    }
-
-    private static UnifiedDetailTextConfig DetailTextConfig
-    {
-        get
-        {
-            if (cachedDetailTextConfig == null)
-                cachedDetailTextConfig = Resources.Load<UnifiedDetailTextConfig>(DetailTextConfigResourcePath);
-            return cachedDetailTextConfig;
-        }
-    }
-
     private static string GetCardLabel(MaterialModel materialModel)
     {
         if (materialModel == null)
             return GetMaterialName(MaterialEnum.None);
 
-        string text = GetMaterialName(materialModel.material);
-        if (materialModel.isTemporary)
-            text += " " + LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
-        return text;
+        return GetMaterialName(materialModel.material);
     }
 
     private static readonly System.Collections.Generic.Dictionary<MaterialEnum, Sprite> materialIconCache = new System.Collections.Generic.Dictionary<MaterialEnum, Sprite>();

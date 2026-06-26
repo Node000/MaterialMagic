@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class BuffPopupEffectController : MonoBehaviour
 {
-    private const string SettingsResourcePath = "GlobalConfig/BuffPopupEffectSettings";
+    private const string SettingsResourcePath = "Config/BuffPopupEffectSettings";
 
     [SerializeField] private RectTransform effectRoot;
     [SerializeField] private Image iconImage;

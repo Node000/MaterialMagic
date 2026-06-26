@@ -10,15 +10,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text labelText;
-    [SerializeField] private TMP_Text modifierText;
     [SerializeField] private SpringLineHighlightUI springHighlight;
     [SerializeField] private float selectedScale = 1f;
     [SerializeField] private float hoverTilt = 0f;
     [SerializeField] private float feedbackDuration = 0.18f;
     [SerializeField] private Ease feedbackEase = Ease.OutBack;
-    [Header("Modifier标签布局")]
-    [SerializeField] private Vector2 modifierTextAnchoredPosition = new Vector2(0f, 8f);
-    [SerializeField] private Vector2 modifierTextSizeDelta = new Vector2(0f, 22f);
 
     private HandSystemUI owner;
     private RectTransform rectTransform;
@@ -211,15 +207,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if (labelText != null)
             labelText.text = MaterialCardView.GetMaterialName(card.material);
 
-        EnsureModifierText();
-        if (modifierText != null)
-        {
-            string modifierLabel = GetModifierLabel();
-            modifierText.text = modifierLabel;
-            modifierText.gameObject.SetActive(!string.IsNullOrEmpty(modifierLabel));
-            ApplyModifierTextLayout();
-        }
-
         RefreshSpringHighlight();
 
         if (iconImage != null)
@@ -271,64 +258,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
                 color = modifierColor;
         }
         return color;
-    }
-
-    private string GetModifierLabel()
-    {
-        string text = string.Empty;
-        bool hasTemporaryModifier = false;
-        for (int i = 0; i < card.modifiers.Count; i++)
-        {
-            MaterialModifierModel modifier = card.modifiers[i];
-            if (modifier == null)
-                continue;
-
-            if (modifier is TemporaryModifier)
-                hasTemporaryModifier = true;
-
-            if (!string.IsNullOrEmpty(text))
-                text += " ";
-            text += LocalizationKeys.GetModifierName(modifier);
-        }
-
-        if (card.isTemporary && !hasTemporaryModifier)
-        {
-            if (!string.IsNullOrEmpty(text))
-                text += " ";
-            text += LocalizationKeys.GetModifierName(MaterialModifierDisplayKind.Temporary);
-        }
-
-        return text;
-    }
-
-    private void ApplyModifierTextLayout()
-    {
-        if (modifierText == null)
-            return;
-
-        RectTransform rect = modifierText.rectTransform;
-        rect.anchorMin = new Vector2(0f, 0f);
-        rect.anchorMax = new Vector2(1f, 0f);
-        rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = modifierTextAnchoredPosition;
-        rect.sizeDelta = modifierTextSizeDelta;
-    }
-
-    private void EnsureModifierText()
-    {
-        if (modifierText != null)
-            return;
-
-        modifierText = new GameObject("ModifierTagText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-        modifierText.transform.SetParent(transform, false);
-        modifierText.font = labelText != null && labelText.font != null ? labelText.font : UIManager.GetDefaultTMPFont();
-        modifierText.fontSize = 13;
-        modifierText.alignment = TextAlignmentOptions.Center;
-        modifierText.color = Color.white;
-        modifierText.raycastTarget = false;
-        modifierText.enableWordWrapping = false;
-        modifierText.overflowMode = TextOverflowModes.Overflow;
-        ApplyModifierTextLayout();
     }
 
     private void PlayFeedback(bool instant)

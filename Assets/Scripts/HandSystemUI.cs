@@ -41,7 +41,10 @@ public class HandSystemUI : MonoBehaviour
 
 		public TMP_Text healthText;
 
+		public TMP_Text shieldText;
+	
 			public RectTransform buffRoot;
+
 
 			public BuffPopupEffectController buffPopupEffect;
 
@@ -438,7 +441,10 @@ public class HandSystemUI : MonoBehaviour
 
 	private TMP_Text enemyHealthText;
 
+	private TMP_Text enemyShieldText;
+	
 	private int displayedEnemyHealth;
+
 
 	private Tween enemyHealthNumberTween;
 
@@ -4677,15 +4683,8 @@ public class HandSystemUI : MonoBehaviour
 		{
 			enemyHealthText = ((Component)val).GetComponent<TMP_Text>();
 		}
-		Transform shieldTextTransform = ((Transform)enemyView).Find("ShieldText");
-		if ((Object)shieldTextTransform != (Object)null)
-		{
-			TMP_Text shieldText = ((Component)shieldTextTransform).GetComponent<TMP_Text>();
-			if ((Object)shieldText != (Object)null)
-				shieldText.text = string.Empty;
-			((Component)shieldTextTransform).gameObject.SetActive(false);
-		}
-		SetupHealthText(enemyHealthText);
+			SetupHealthText(enemyHealthText);
+
 		if ((Object)enemyHealthFill == (Object)null)
 		{
 			return;
@@ -4712,13 +4711,53 @@ public class HandSystemUI : MonoBehaviour
 
 			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
 			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
-			SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
-            if (!preserveLayout)
-				HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
-		}
-	}
+				SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
+				enemyShieldText = FindEnemyShieldText(enemyView);
+				if ((Object)enemyShieldText == (Object)null)
+					enemyShieldText = CreateEnemyShieldText(val2);
+				SetupShieldText(enemyShieldText);
+	            if (!preserveLayout)
+					HealthBarUI.PositionHealthTextRightOfBar(enemyHealthText, val2, EnemyHealthTextWidth);
 
-	private Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
+		}
+		}
+
+		private TMP_Text FindEnemyShieldText(RectTransform enemyView)
+		{
+			TMP_Text[] texts = ((Component)enemyView).GetComponentsInChildren<TMP_Text>(true);
+			for (int i = 0; i < texts.Length; i++)
+			{
+				if (((Object)texts[i]).name == "ShieldText")
+					return texts[i];
+			}
+			return null;
+		}
+
+		private TMP_Text CreateEnemyShieldText(RectTransform barBack)
+		{
+			TMP_Text text = new GameObject("ShieldText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+			text.transform.SetParent((Transform)barBack, false);
+			RectTransform rect = ((Component)text).GetComponent<RectTransform>();
+			rect.anchorMin = new Vector2(0.5f, 0f);
+			rect.anchorMax = new Vector2(0.5f, 0f);
+			rect.pivot = new Vector2(0.5f, 1f);
+			rect.anchoredPosition = new Vector2(0f, -4f);
+			rect.sizeDelta = new Vector2(56f, 24f);
+			return text;
+		}
+
+		private void SetupShieldText(TMP_Text text)
+		{
+			if ((Object)text == (Object)null)
+				return;
+
+			SetupHealthText(text);
+			text.alignment = TextAlignmentOptions.Top;
+			text.color = new Color(0.2f, 0.55f, 1f, 1f);
+		}
+	
+		private Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
+
 	{
 		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0014: Expected O, but got Unknown
@@ -4844,8 +4883,9 @@ public class HandSystemUI : MonoBehaviour
 		{
 			TweenExtensions.Kill(val, false);
 		}
-		HealthBarUI.SetHealthTextColor(enemyHealthText, enemyModel.Shield > 0);
-			enemyHealthNumberTween = UpdateHealthText(enemyHealthText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.Data.maxHealth, enemyModel.Shield, instant, delegate(int healthValue)
+			HealthBarUI.SetHealthTextColor(enemyHealthText, false);
+				enemyHealthNumberTween = UpdateHealthText(enemyHealthText, enemyShieldText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.Data.maxHealth, enemyModel.Shield, instant, delegate(int healthValue)
+
 			{
 				displayedEnemyHealth = healthValue;
 			});
@@ -4936,7 +4976,8 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-		private Tween UpdateHealthText(TMP_Text text, int displayedHealth, int currentHealth, int maxHealth, int shield, bool instant, Action<int> setDisplayedHealth)
+			private Tween UpdateHealthText(TMP_Text text, TMP_Text shieldText, int displayedHealth, int currentHealth, int maxHealth, int shield, bool instant, Action<int> setDisplayedHealth)
+
 		{
 			if ((Object)text == (Object)null)
 			{
@@ -4945,13 +4986,17 @@ public class HandSystemUI : MonoBehaviour
 			if (instant)
 			{
 				setDisplayedHealth(Mathf.Max(0, currentHealth));
-				text.text = HealthBarUI.GetHealthTextValue(currentHealth, maxHealth, shield);
+					text.text = HealthBarUI.GetHealthTextValue(currentHealth, maxHealth, shield);
+					HealthBarUI.ApplyShieldText(shieldText, shield);
+
 				return null;
 			}
 			return (Tween)TweenSettingsExtensions.SetTarget<Tweener>(TweenSettingsExtensions.SetEase<Tweener>(DOVirtual.Int(displayedHealth, Mathf.Max(0, currentHealth), enemyHealthTextDuration, (TweenCallback<int>)delegate(int value)
 			{
-				setDisplayedHealth(value);
-				text.text = HealthBarUI.GetHealthTextValue(value, maxHealth, shield);
+					setDisplayedHealth(value);
+					text.text = HealthBarUI.GetHealthTextValue(value, maxHealth, shield);
+					HealthBarUI.ApplyShieldText(shieldText, shield);
+
 			}), enemyHealthEase), (object)this);
 		}
 
@@ -5170,8 +5215,10 @@ public class HandSystemUI : MonoBehaviour
             enemyViewState.healthFill = enemyViewState.viewUI.HealthFill;
             enemyViewState.healthBufferFill = enemyViewState.viewUI.HealthBufferFill;
             enemyViewState.shieldFill = enemyViewState.viewUI.ShieldFill;
-            enemyViewState.healthText = enemyViewState.viewUI.HealthText;
-            enemyViewState.bodyImage = enemyViewState.viewUI.BodyImage;
+	            enemyViewState.healthText = enemyViewState.viewUI.HealthText;
+	            enemyViewState.shieldText = enemyViewState.viewUI.ShieldText;
+	            enemyViewState.bodyImage = enemyViewState.viewUI.BodyImage;
+
             enemyViewState.focusMarker = enemyViewState.viewUI.FocusMarker;
 		    enemyViewState.buffRoot = enemyViewState.viewUI.BuffRoot;
 		    enemyViewState.buffPopupEffect = enemyViewState.viewUI.BuffPopupEffect;
@@ -5210,8 +5257,10 @@ public class HandSystemUI : MonoBehaviour
 		enemyHealthFill = enemyViewState.healthFill;
 		enemyHealthBufferFill = enemyViewState.healthBufferFill;
 		enemyShieldFill = enemyViewState.shieldFill;
-		enemyHealthText = enemyViewState.healthText;
-		enemyIntentIcon = enemyViewState.intentIcon;
+			enemyHealthText = enemyViewState.healthText;
+			enemyShieldText = enemyViewState.shieldText;
+			enemyIntentIcon = enemyViewState.intentIcon;
+
 		enemyBodyImage = enemyViewState.bodyImage;
 		enemyBodyBaseColor = enemyViewState.bodyBaseColor;
 		EnsureEnemyIntentView(val);
@@ -5221,9 +5270,12 @@ public class HandSystemUI : MonoBehaviour
 			enemyViewState.healthBufferFill = enemyHealthBufferFill;
 		if ((Object)enemyShieldFill != (Object)null)
 			enemyViewState.shieldFill = enemyShieldFill;
-        if ((Object)enemyHealthText != (Object)null)
-            enemyViewState.healthText = enemyHealthText;
-	        enemyViewState.displayedHealth = Mathf.Max(0, model.CurrentHealth);
+	        if ((Object)enemyHealthText != (Object)null)
+	            enemyViewState.healthText = enemyHealthText;
+			if ((Object)enemyShieldText != (Object)null)
+				enemyViewState.shieldText = enemyShieldText;
+		        enemyViewState.displayedHealth = Mathf.Max(0, model.CurrentHealth);
+
 
 		EnemyViewClickHandler enemyViewClickHandler = ((Component)val).GetComponent<EnemyViewClickHandler>();
 		if ((Object)enemyViewClickHandler == (Object)null)
@@ -7510,8 +7562,9 @@ public class HandSystemUI : MonoBehaviour
 		{
 			TweenExtensions.Kill(healthNumberTween, false);
 		}
-		HealthBarUI.SetHealthTextColor(state.healthText, state.model.Shield > 0);
-			state.healthNumberTween = UpdateHealthText(state.healthText, state.displayedHealth, state.model.CurrentHealth, state.model.Data.maxHealth, state.model.Shield, instant, delegate(int healthValue)
+			HealthBarUI.SetHealthTextColor(state.healthText, false);
+				state.healthNumberTween = UpdateHealthText(state.healthText, state.shieldText, state.displayedHealth, state.model.CurrentHealth, state.model.Data.maxHealth, state.model.Shield, instant, delegate(int healthValue)
+
 			{
 				state.displayedHealth = healthValue;
 			});

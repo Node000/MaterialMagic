@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -20,6 +21,9 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     [SerializeField] private ScrollRect bodyScrollRect;
     [SerializeField] private RectTransform bodyViewport;
     [SerializeField] private RectTransform bodyContent;
+    [SerializeField] private UnifiedDetailTextConfig textConfig;
+    [SerializeField] private AddedDetailedUI addedDetailPrefab;
+    [SerializeField] private RectTransform addedDetailRoot;
     [SerializeField] private float autoScrollStartDelay = 1.2f;
     [SerializeField] private float autoScrollDuration = 3f;
     [SerializeField] private float autoScrollPause = 1.2f;
@@ -29,6 +33,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private Tween autoScrollTween;
     private object currentAnchor;
     private bool pinned;
+    private readonly List<AddedDetailedUI> addedDetailItems = new List<AddedDetailedUI>();
     private bool draggingBody;
     private float manualScrollResumeTime;
     private bool bodyCanScroll;
@@ -84,8 +89,19 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     public bool ContainsScreenPoint(Vector2 screenPosition)
     {
+        Camera eventCamera = GetEventCamera();
         RectTransform rectTransform = transform as RectTransform;
-        return rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, GetEventCamera());
+        if (rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, eventCamera))
+            return true;
+
+        for (int i = 0; i < addedDetailItems.Count; i++)
+        {
+            AddedDetailedUI item = addedDetailItems[i];
+            RectTransform itemRect = item != null && item.gameObject.activeInHierarchy ? item.RectTransform : null;
+            if (itemRect != null && RectTransformUtility.RectangleContainsScreenPoint(itemRect, screenPosition, eventCamera))
+                return true;
+        }
+        return false;
     }
 
     public void Hide(object anchor)
@@ -158,42 +174,78 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     private void ApplyContent(UnifiedDetailContent content)
     {
-        UnifiedDetailStyle style = ResolveStyle(content.SourceType);
-        if (backgroundImage != null)
-            backgroundImage.color = style.backgroundColor;
-        if (borderImage != null)
-            borderImage.color = style.lineColor;
-        if (borderGraphic != null)
-        {
-            borderGraphic.color = style.lineColor;
-            if (borderGraphic is SpringLineHighlightUI springLine)
-                springLine.SetFill(true, style.backgroundColor);
-        }
         if (titleText != null)
-        {
-            titleText.color = style.titleColor;
-            titleText.richText = true;
             titleText.text = InlineIconTextFormatter.Format(content.Title);
-        }
         if (bodyText != null)
-        {
-            bodyText.color = style.bodyColor;
-            bodyText.richText = true;
-            bodyText.enableWordWrapping = true;
-            bodyText.overflowMode = TextOverflowModes.Overflow;
             bodyText.text = InlineIconTextFormatter.Format(content.Body);
-        }
         if (iconImage != null)
         {
             iconImage.sprite = content.Icon;
             iconImage.gameObject.SetActive(content.Icon != null);
-            iconImage.color = ResolveIconColor(style, content.AccentColor);
+        }
+        ApplyAddedDetails(content.AddedDetails);
+    }
+
+    private void ApplyAddedDetails(IReadOnlyList<UnifiedDetailAddedDetail> details)
+    {
+        int count = details != null ? details.Count : 0;
+        for (int i = 0; i < addedDetailItems.Count; i++)
+            addedDetailItems[i].gameObject.SetActive(false);
+
+        if (count == 0 || addedDetailRoot == null || addedDetailPrefab == null)
+            return;
+
+        UnifiedDetailTextConfig config = GetTextConfig();
+        float firstYOffset = config != null ? config.AddedDetailFirstYOffset : 0f;
+        float ySpacing = config != null ? config.AddedDetailYSpacing : 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            AddedDetailedUI item = GetAddedDetailItem(i);
+            RectTransform itemRect = item.RectTransform;
+            if (itemRect != null)
+                itemRect.anchoredPosition = new Vector2(itemRect.anchoredPosition.x, firstYOffset + i * ySpacing);
+            item.gameObject.SetActive(true);
+            UnifiedDetailAddedDetail detail = details[i];
+            item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type));
         }
     }
 
-    private UnifiedDetailStyle ResolveStyle(UnifiedDetailSourceType type)
+    private AddedDetailedUI GetAddedDetailItem(int index)
     {
-        return theme != null ? theme.GetStyle(type) : new UnifiedDetailStyle { sourceType = type };
+        while (addedDetailItems.Count <= index)
+        {
+            AddedDetailedUI item = Instantiate(addedDetailPrefab, addedDetailRoot);
+            item.gameObject.name = "AddedDetailed" + addedDetailItems.Count;
+            addedDetailItems.Add(item);
+        }
+        return addedDetailItems[index];
+    }
+
+    private Color GetAddedDetailColor(UnifiedDetailAddedDetailType type)
+    {
+        UnifiedDetailTextConfig config = GetTextConfig();
+        if (config == null)
+            return Color.white;
+
+        switch (type)
+        {
+            case UnifiedDetailAddedDetailType.Keyword:
+                return config.KeywordFrameColor;
+            case UnifiedDetailAddedDetailType.Enhancement:
+                return config.EnhancementFrameColor;
+            case UnifiedDetailAddedDetailType.Modifier:
+                return config.ModifierFrameColor;
+            default:
+                return Color.white;
+        }
+    }
+
+    private UnifiedDetailTextConfig GetTextConfig()
+    {
+        if (textConfig == null)
+            textConfig = Resources.Load<UnifiedDetailTextConfig>("Config/UnifiedDetailTextConfig");
+        return textConfig;
     }
 
     private void CacheReferences()
@@ -240,6 +292,8 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             bodyContent = bodyScrollRect.content;
         if (bodyContent == null && bodyText != null)
             bodyContent = bodyText.rectTransform;
+        if (addedDetailRoot == null)
+            addedDetailRoot = FindChildRectRecursive("AddedDetailRoot");
         if (bodyScrollRect != null)
         {
             if (bodyViewport != null)
@@ -288,28 +342,6 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     private void ApplyThemeLayout()
     {
-        if (theme == null)
-            return;
-
-        if (frameRoot != null)
-            frameRoot.sizeDelta = theme.PopupSize;
-        if (iconRect != null)
-            iconRect.sizeDelta = theme.IconSize;
-        if (titleText != null)
-        {
-            if (theme.TitleFont != null)
-                titleText.font = theme.TitleFont;
-            titleText.fontSize = theme.TitleFontSize;
-            titleText.fontStyle = theme.TitleFontStyle;
-        }
-        if (bodyText != null)
-        {
-            if (theme.BodyFont != null)
-                bodyText.font = theme.BodyFont;
-            bodyText.fontSize = theme.BodyFontSize;
-            bodyText.fontStyle = theme.BodyFontStyle;
-            bodyText.lineSpacing = theme.BodyLineSpacing;
-        }
     }
 
     private void RefreshBodyScroll()
@@ -467,21 +499,6 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     {
         autoScrollTween?.Kill(false);
         autoScrollTween = null;
-    }
-
-    private Color ResolveIconColor(UnifiedDetailStyle style, Color accentColor)
-    {
-        switch (style.iconTintMode)
-        {
-            case UnifiedDetailIconTintMode.Accent:
-                return accentColor;
-            case UnifiedDetailIconTintMode.StyleLineColor:
-                return style.lineColor;
-            case UnifiedDetailIconTintMode.None:
-                return iconImage != null ? iconImage.color : Color.white;
-            default:
-                return Color.white;
-        }
     }
 
     private Vector3 GetHiddenScale()

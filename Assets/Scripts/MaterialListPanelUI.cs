@@ -26,6 +26,8 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private BattleMaterialRowUI discardPileRow;
     [SerializeField] private BattleMaterialRowUI consumedPileRow;
     [SerializeField] private BattleMaterialRowUI selectionRow;
+    [Header("箭头行布局")]
+    [SerializeField] private MaterialListPanelLayoutConfig layoutConfig;
     [Header("动画参数")]
     [SerializeField] private float tooltipFadeDuration = 0.12f;
     [SerializeField] private float tooltipScaleDuration = 0.18f;
@@ -34,7 +36,10 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
     [SerializeField] private float tooltipYOffset = 30f;
 
+    private const string LayoutConfigResourcePath = "Config/MaterialListPanelLayoutConfig";
+
     private HandSystemUI owner;
+    private MaterialListPanelLayoutConfig cachedLayoutConfig;
     private TMP_Text titleText;
     private readonly List<BattleMaterialRowUI> activeRows = new List<BattleMaterialRowUI>();
     private readonly List<MaterialModel> selectionCandidates = new List<MaterialModel>();
@@ -192,7 +197,23 @@ public class MaterialListPanelUI : MonoBehaviour
         row.MaterialHovered += ShowRowMaterialTooltip;
         row.MaterialUnhovered += HideRowMaterialTooltip;
         row.MaterialClicked += HandleMaterialClicked;
+        MaterialListPanelLayoutConfig config = GetLayoutConfig();
+        float rowTotalLength = config != null ? config.ArrowRowTotalLength : 780f;
+        float defaultScale = config != null ? config.ArrowDefaultScale : 0.72f;
+        float hoverScale = config != null ? config.ArrowHoverScale : 1.18f;
+        row.ConfigureArrowRowLayout(rowTotalLength, defaultScale, hoverScale);
+        row.SetHoverSelectionOutlineEnabled(false);
         row.Refresh(title, materials, predicate, selectedMaterials, hideUnselectable);
+    }
+
+    private MaterialListPanelLayoutConfig GetLayoutConfig()
+    {
+        if (layoutConfig != null)
+            return layoutConfig;
+
+        if (cachedLayoutConfig == null)
+            cachedLayoutConfig = Resources.Load<MaterialListPanelLayoutConfig>(LayoutConfigResourcePath);
+        return cachedLayoutConfig;
     }
 
     private void BuildSelectionCandidates()
