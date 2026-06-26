@@ -342,19 +342,19 @@
     },
     {
       "key": "ui.unified_detail.map_move.fire.body",
-      "text": "向上移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+      "text": "向上移动一格。"
     },
     {
       "key": "ui.unified_detail.map_move.wind.body",
-      "text": "向左移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+      "text": "向左移动一格。"
     },
     {
       "key": "ui.unified_detail.map_move.water.body",
-      "text": "向下移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+      "text": "向下移动一格。"
     },
     {
       "key": "ui.unified_detail.map_move.earth.body",
-      "text": "向右移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+      "text": "向右移动一格。"
     }
   ]
 }

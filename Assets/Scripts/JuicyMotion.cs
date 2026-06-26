@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,6 +10,7 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private bool triggerOnClick = false;
     [SerializeField] private bool loopOnEnable = false;
     [SerializeField] private bool loopTilt = false;
+    [SerializeField] private GameObject hoverEventTarget;
 
     [Header("效果")]
     [SerializeField] private float scaleAmount = 0.15f;
@@ -24,21 +26,25 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private Vector3 originalLocalEulerAngles;
     private Sequence motionSequence;
     private Tween hoverTween;
+    private JuicyMotionHoverTargetRelay hoverTargetRelay;
 
     private void Awake()
     {
         CaptureCurrentTransformAsBase();
+        BindHoverEventTarget();
     }
 
     private void OnEnable()
     {
         CaptureCurrentTransformAsBase();
+        BindHoverEventTarget();
         if (loopOnEnable)
             PlayLoop();
     }
 
     private void OnDisable()
     {
+        UnbindHoverEventTarget();
         StopMotion();
         StopHoverMotion();
         transform.localScale = originalScale;
@@ -47,13 +53,14 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     private void OnDestroy()
     {
+        UnbindHoverEventTarget();
         StopMotion();
         StopHoverMotion();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (!triggerOnHover)
+        if (!triggerOnHover || hoverEventTarget != null)
             return;
 
         PlayHoverMotion(true);
@@ -61,7 +68,7 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (!triggerOnHover)
+        if (!triggerOnHover || hoverEventTarget != null)
             return;
 
         PlayHoverMotion(false);
@@ -78,6 +85,16 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void SetHoverTiltAngle(float angle)
     {
         hoverTiltAngle = angle;
+    }
+
+    public void SetHoverEventTarget(GameObject target)
+    {
+        if (hoverEventTarget == target)
+            return;
+
+        UnbindHoverEventTarget();
+        hoverEventTarget = target;
+        BindHoverEventTarget();
     }
 
     public void SetBaseScale(Vector3 scale, bool applyImmediately)
@@ -149,6 +166,34 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         motionSequence = null;
     }
 
+    internal void SetHoverFromExternalTarget(bool hovering)
+    {
+        if (!triggerOnHover || hoverEventTarget == null || !isActiveAndEnabled)
+            return;
+
+        PlayHoverMotion(hovering);
+    }
+
+    private void BindHoverEventTarget()
+    {
+        if (!triggerOnHover || hoverEventTarget == null)
+            return;
+
+        hoverTargetRelay = hoverEventTarget.GetComponent<JuicyMotionHoverTargetRelay>();
+        if (hoverTargetRelay == null)
+            hoverTargetRelay = hoverEventTarget.AddComponent<JuicyMotionHoverTargetRelay>();
+        hoverTargetRelay.Register(this);
+    }
+
+    private void UnbindHoverEventTarget()
+    {
+        if (hoverTargetRelay == null)
+            return;
+
+        hoverTargetRelay.Unregister(this);
+        hoverTargetRelay = null;
+    }
+
     private void PlayHoverMotion(bool hovering)
     {
         StopHoverMotion();
@@ -177,5 +222,47 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
         hoverTween.Kill(false);
         hoverTween = null;
+    }
+}
+
+[DisallowMultipleComponent]
+public class JuicyMotionHoverTargetRelay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    private readonly List<JuicyMotion> motions = new List<JuicyMotion>();
+
+    public void Register(JuicyMotion motion)
+    {
+        if (motion != null && !motions.Contains(motion))
+            motions.Add(motion);
+    }
+
+    public void Unregister(JuicyMotion motion)
+    {
+        motions.Remove(motion);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        SetHovering(true);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        SetHovering(false);
+    }
+
+    private void SetHovering(bool hovering)
+    {
+        for (int i = motions.Count - 1; i >= 0; i--)
+        {
+            JuicyMotion motion = motions[i];
+            if (motion == null)
+            {
+                motions.RemoveAt(i);
+                continue;
+            }
+
+            motion.SetHoverFromExternalTarget(hovering);
+        }
     }
 }

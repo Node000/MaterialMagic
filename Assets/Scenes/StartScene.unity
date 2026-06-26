@@ -651,6 +651,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -809,6 +810,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -2285,6 +2287,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 5
@@ -5130,6 +5133,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -5617,6 +5621,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 0
@@ -6509,6 +6514,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -6599,6 +6605,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 5
@@ -7563,6 +7570,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -8425,6 +8433,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -8810,6 +8819,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -8914,6 +8924,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.08
   shakeAmount: 0
   hoverTiltAngle: 0
@@ -9300,6 +9311,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 5
@@ -9823,8 +9835,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1030, y: -280}
-  m_SizeDelta: {x: 340, y: 330}
+  m_AnchoredPosition: {x: 1105, y: -290}
+  m_SizeDelta: {x: 490, y: 320}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1924682938
 MonoBehaviour:
@@ -9846,8 +9858,8 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 1
-  m_CellSize: {x: 156.8, y: 72}
-  m_Spacing: {x: 24, y: 32}
+  m_CellSize: {x: 240, y: 72}
+  m_Spacing: {x: 40, y: 38}
   m_Constraint: 2
   m_ConstraintCount: 4
 --- !u!1 &1927353536
@@ -9974,8 +9986,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 189, y: 60}
-  m_SizeDelta: {x: -522, y: 64}
+  m_AnchoredPosition: {x: 189, y: 72}
+  m_SizeDelta: {x: -522, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1948635518
 MonoBehaviour:
@@ -10564,8 +10576,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -140, y: 0}
-  m_SizeDelta: {x: 1320, y: 780}
+  m_AnchoredPosition: {x: 0, y: -20}
+  m_SizeDelta: {x: 1440, y: 780}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2077385134
 MonoBehaviour:
@@ -10590,6 +10602,7 @@ MonoBehaviour:
   magicViewPrefab: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
   arrowRowUI: {fileID: 886622678}
   defaultMagicSlotCount: 8
+  filledMagicSlotOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &2077385135
 MonoBehaviour:
   m_ObjectHideFlags: 0

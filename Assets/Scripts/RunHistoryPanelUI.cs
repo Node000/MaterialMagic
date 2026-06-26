@@ -19,6 +19,7 @@ public class RunHistoryPanelUI : MonoBehaviour
     [SerializeField] private MagicItemView magicViewPrefab;
     [SerializeField] private RunHistoryArrowRowUI arrowRowUI;
     [SerializeField] private int defaultMagicSlotCount = 8;
+    [SerializeField] private Color filledMagicSlotOutlineColor = Color.white;
 
     private readonly List<RunHistoryRecordItemUI> recordItems = new List<RunHistoryRecordItemUI>();
     private readonly List<RunHistoryRecordData> recordItemRecords = new List<RunHistoryRecordData>();
@@ -143,9 +144,37 @@ public class RunHistoryPanelUI : MonoBehaviour
         {
             MagicItemView view = Instantiate(magicViewPrefab, magicRoot);
             view.gameObject.SetActive(true);
-            view.Bind(CreateMagicForSlot(record.magicBook, slotIndex));
+            MagicModel magic = CreateMagicForSlot(record.magicBook, slotIndex);
+            view.Bind(magic);
+            SetMagicOutlineVisible(view, magic != null);
             magicViews.Add(view);
         }
+    }
+
+    private void SetMagicOutlineVisible(MagicItemView view, bool visible)
+    {
+        SpringLineHighlightUI outline = FindMagicOutline(view);
+        if (outline == null)
+            return;
+
+        HoverHighlightTargetRelayUI relay = view.GetComponent<HoverHighlightTargetRelayUI>();
+        relay?.Unregister(outline.gameObject);
+        outline.color = filledMagicSlotOutlineColor;
+        outline.gameObject.SetActive(visible);
+    }
+
+    private static SpringLineHighlightUI FindMagicOutline(MagicItemView view)
+    {
+        if (view == null)
+            return null;
+
+        SpringLineHighlightUI[] outlines = view.GetComponentsInChildren<SpringLineHighlightUI>(true);
+        for (int i = 0; i < outlines.Length; i++)
+        {
+            if (outlines[i] != null && outlines[i].transform != view.transform)
+                return outlines[i];
+        }
+        return null;
     }
 
     private void RefreshArrowViews(RunHistoryRecordData record)

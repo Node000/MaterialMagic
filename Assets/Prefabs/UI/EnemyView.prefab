@@ -394,6 +394,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 6298381252650872349}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 0
@@ -417,6 +418,7 @@ MonoBehaviour:
   bodyImage: {fileID: 2621147124886107005}
   bodyAnimator: {fileID: 6173196678319013998}
   nameText: {fileID: 9150367666621930423}
+  infoBackFrame: {fileID: 4573497668543786585}
   healthBarRoot: {fileID: 8938106231670031390}
   healthFill: {fileID: 8309581445313561765}
   healthBufferFill: {fileID: 495966370801937026}

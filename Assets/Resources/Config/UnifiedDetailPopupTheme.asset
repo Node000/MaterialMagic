@@ -15,5 +15,6 @@ MonoBehaviour:
   hiddenScale: {x: 0.82, y: 0.82, z: 1}
   fadeDuration: 0.12
   scaleDuration: 0.18
+  hoverExitHideDelay: 0.15
   showEase: 27
   hideEase: 26

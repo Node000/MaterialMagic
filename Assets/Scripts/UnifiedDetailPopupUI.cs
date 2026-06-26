@@ -31,7 +31,9 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     private Tween tween;
     private Tween autoScrollTween;
+    private Tween hideDelayTween;
     private object currentAnchor;
+    private object pendingHideAnchor;
     private bool pinned;
     private readonly List<AddedDetailedUI> addedDetailItems = new List<AddedDetailedUI>();
     private bool draggingBody;
@@ -52,14 +54,16 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     public void Show(object anchor, UnifiedDetailContent content)
     {
+        CancelScheduledHide();
         if (pinned)
         {
+            currentAnchor = anchor;
             UpdateVisibleContent(content, true);
             return;
         }
 
         currentAnchor = anchor;
-        if (gameObject.activeSelf)
+        if (IsPopupVisibleOrTransitioning())
             UpdateVisibleContent(content, false);
         else
             ShowInternal(content, false);
@@ -67,10 +71,11 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     public void Pin(object anchor, UnifiedDetailContent content)
     {
+        CancelScheduledHide();
         pinned = true;
         pinnedFrame = Time.frameCount;
         currentAnchor = anchor;
-        if (gameObject.activeSelf)
+        if (IsPopupVisibleOrTransitioning() || IsPopupShowingAnimation())
             UpdateVisibleContent(content, true);
         else
             ShowInternal(content, true);
@@ -79,7 +84,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     public void Unpin()
     {
         pinned = false;
-        Hide(null);
+        BeginHideAnimation(true);
     }
 
     public bool IsPinnedFor(object anchor)
@@ -110,9 +115,52 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             return;
         if (anchor != null && currentAnchor != null && !ReferenceEquals(anchor, currentAnchor))
             return;
-        if (!gameObject.activeSelf)
+        if (!IsPopupVisibleOrTransitioning())
             return;
 
+        ScheduleHide(anchor);
+    }
+
+    private void ScheduleHide(object anchor)
+    {
+        CancelScheduledHide();
+        float delay = GetHoverExitHideDelay();
+        if (delay <= 0f)
+        {
+            BeginHideAnimation(false);
+            return;
+        }
+
+        pendingHideAnchor = anchor;
+        hideDelayTween = DOVirtual.DelayedCall(delay, CompleteScheduledHide, true).SetTarget(this);
+    }
+
+    private void CompleteScheduledHide()
+    {
+        hideDelayTween = null;
+        if (pinned)
+            return;
+        if (pendingHideAnchor != null && currentAnchor != null && !ReferenceEquals(pendingHideAnchor, currentAnchor))
+        {
+            pendingHideAnchor = null;
+            return;
+        }
+
+        pendingHideAnchor = null;
+        BeginHideAnimation(false);
+    }
+
+    private void CancelScheduledHide()
+    {
+        pendingHideAnchor = null;
+        hideDelayTween?.Kill(false);
+        hideDelayTween = null;
+    }
+
+    private void BeginHideAnimation(bool cancelScheduled)
+    {
+        if (cancelScheduled)
+            CancelScheduledHide();
         currentAnchor = null;
         StopAutoScroll();
         tween?.Kill(false);
@@ -127,6 +175,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     {
         currentAnchor = null;
         pinned = false;
+        CancelScheduledHide();
         StopAutoScroll();
         tween?.Kill(false);
         CacheReferences();
@@ -135,8 +184,19 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         gameObject.SetActive(false);
     }
 
+    private bool IsPopupShowingAnimation()
+    {
+        return tween != null && tween.IsActive() && tween.IsPlaying() && canvasGroup != null && canvasGroup.alpha < 0.999f;
+    }
+
+    private bool IsPopupVisibleOrTransitioning()
+    {
+        return gameObject.activeSelf || (canvasGroup != null && canvasGroup.alpha > 0.001f);
+    }
+
     private void ShowInternal(UnifiedDetailContent content, bool pinnedDisplay)
     {
+        CancelScheduledHide();
         CacheReferences();
         ApplyThemeLayout();
         ApplyContent(content);
@@ -158,13 +218,14 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     private void UpdateVisibleContent(UnifiedDetailContent content, bool pinnedDisplay)
     {
+        CancelScheduledHide();
+        tween?.Kill(false);
+        gameObject.SetActive(true);
         CacheReferences();
         ApplyThemeLayout();
         ApplyContent(content);
-        gameObject.SetActive(true);
         PopupLayerUtility.ApplyTo((RectTransform)transform);
         transform.SetAsLastSibling();
-        tween?.Kill(false);
         transform.localScale = Vector3.one;
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = pinnedDisplay;
@@ -379,10 +440,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private void Update()
     {
         if (pinned && currentAnchor is UnityEngine.Object anchorObject && anchorObject == null)
-        {
-            Unpin();
-            return;
-        }
+            currentAnchor = null;
 
         HidePinnedPopupOnOutsideClick();
 
@@ -516,6 +574,11 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         return theme != null ? theme.ScaleDuration : 0.18f;
     }
 
+    private float GetHoverExitHideDelay()
+    {
+        return theme != null ? theme.HoverExitHideDelay : 0.15f;
+    }
+
     private Ease GetShowEase()
     {
         return theme != null ? theme.ShowEase : Ease.OutBack;
@@ -529,6 +592,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private void OnDestroy()
     {
         tween?.Kill(false);
+        hideDelayTween?.Kill(false);
         StopAutoScroll();
     }
 }

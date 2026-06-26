@@ -10,6 +10,7 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private Image bodyImage;
     [SerializeField] private EnemySpriteAnimatorUI bodyAnimator;
     [SerializeField] private TMP_Text nameText;
+    [SerializeField] private RectTransform infoBackFrame;
     [SerializeField] private RectTransform healthBarRoot;
     [SerializeField] private Image healthFill;
     [SerializeField] private Image healthBufferFill;
@@ -22,6 +23,8 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private BuffPopupEffectController buffPopupEffect;
 
     private bool baseLayoutCached;
+    private Vector2 baseInfoBackFrameAnchoredPosition;
+    private Vector2 baseInfoBackFrameSizeDelta;
     private Vector2 baseHealthBarAnchoredPosition;
     private Vector2 baseHealthBarSizeDelta;
     private Vector2 baseIntentRootAnchoredPosition;
@@ -31,6 +34,7 @@ public class EnemyViewUI : MonoBehaviour
     public Image BodyImage => bodyImage;
     public EnemySpriteAnimatorUI BodyAnimator => bodyAnimator;
     public TMP_Text NameText => nameText;
+    public RectTransform InfoBackFrame => infoBackFrame;
     public RectTransform HealthBarRoot => healthBarRoot;
     public Image HealthFill => healthFill;
     public Image HealthBufferFill => healthBufferFill;
@@ -68,6 +72,8 @@ public class EnemyViewUI : MonoBehaviour
             motionRoot = bodyRoot;
         if (nameText == null)
             nameText = FindText("NameText");
+        if (infoBackFrame == null)
+            infoBackFrame = FindRect("InfoBackFrame");
         if (healthBarRoot == null)
             healthBarRoot = FindRect("HealthBarBack");
         if (healthFill == null)
@@ -118,6 +124,11 @@ public class EnemyViewUI : MonoBehaviour
         if (baseLayoutCached)
             return;
 
+        if (infoBackFrame != null)
+        {
+            baseInfoBackFrameAnchoredPosition = infoBackFrame.anchoredPosition;
+            baseInfoBackFrameSizeDelta = infoBackFrame.sizeDelta;
+        }
         if (healthBarRoot != null)
         {
             baseHealthBarAnchoredPosition = healthBarRoot.anchoredPosition;
@@ -130,22 +141,55 @@ public class EnemyViewUI : MonoBehaviour
 
     private void ApplyEnemyDataOverrides(EnemyData data)
     {
+        if (infoBackFrame != null)
+        {
+            infoBackFrame.anchoredPosition = baseInfoBackFrameAnchoredPosition + GetInfoBoxOffset(data);
+            infoBackFrame.sizeDelta = GetInfoBoxSizeDelta(data);
+        }
+
         if (healthBarRoot != null)
         {
-            healthBarRoot.anchoredPosition = baseHealthBarAnchoredPosition + GetHealthBarOffset(data);
-            if (data != null && data.healthBarWidth > 0f)
-                healthBarRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, data.healthBarWidth);
-            else
-                healthBarRoot.sizeDelta = baseHealthBarSizeDelta;
+            healthBarRoot.anchoredPosition = GetHealthBarAnchoredPosition(data);
+            healthBarRoot.sizeDelta = GetHealthBarSizeDelta(data);
         }
 
         if (intentRoot != null)
             intentRoot.anchoredPosition = baseIntentRootAnchoredPosition + GetIntentOffset(data);
     }
 
-    private static Vector2 GetHealthBarOffset(EnemyData data)
+    private bool HasInfoBoxWidthOverride(EnemyData data)
     {
-        return data != null ? new Vector2(data.healthBarOffsetX, data.healthBarOffsetY) : Vector2.zero;
+        return data != null && data.infoBoxSize.x > 0f;
+    }
+
+    private bool HasInfoBoxHeightOverride(EnemyData data)
+    {
+        return data != null && data.infoBoxSize.y > 0f;
+    }
+
+    private Vector2 GetInfoBoxSizeDelta(EnemyData data)
+    {
+        return new Vector2(
+            HasInfoBoxWidthOverride(data) ? data.infoBoxSize.x : baseInfoBackFrameSizeDelta.x,
+            HasInfoBoxHeightOverride(data) ? data.infoBoxSize.y : baseInfoBackFrameSizeDelta.y);
+    }
+
+    private Vector2 GetHealthBarAnchoredPosition(EnemyData data)
+    {
+        return baseHealthBarAnchoredPosition + GetInfoBoxOffset(data);
+    }
+
+    private Vector2 GetHealthBarSizeDelta(EnemyData data)
+    {
+        float width = data != null && data.healthBarWidth > 0f
+            ? data.healthBarWidth
+            : HasInfoBoxWidthOverride(data) ? data.infoBoxSize.x : baseHealthBarSizeDelta.x;
+        return new Vector2(width, baseHealthBarSizeDelta.y);
+    }
+
+    private static Vector2 GetInfoBoxOffset(EnemyData data)
+    {
+        return data != null ? data.infoBoxOffset : Vector2.zero;
     }
 
     private static Vector2 GetIntentOffset(EnemyData data)

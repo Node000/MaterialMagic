@@ -1547,10 +1547,6 @@ public class HandSystemUI : MonoBehaviour
         if (pinnedBuffTooltipSlot != slot)
             return;
 
-        UIManager uiManager = GetUIManager();
-        UnifiedDetailPopupUI popup = uiManager != null ? uiManager.UnifiedDetailPopup : null;
-        if (popup != null && popup.IsPinnedFor(slot))
-            uiManager.UnpinUnifiedDetailPopup();
         pinnedBuffTooltipSlot = null;
     }
 
@@ -4693,19 +4689,24 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform val2 = (RectTransform)((parent is RectTransform) ? parent : null);
 		if (!((Object)val2 == (Object)null))
 		{
-			float healthBarWidth = enemyData != null ? enemyData.healthBarWidth : 0f;
-			if (!preserveLayout)
-			{
-				val2.anchorMin = new Vector2(0.5f, 0.5f);
-				val2.anchorMax = new Vector2(0.5f, 0.5f);
-				val2.pivot = new Vector2(0.5f, 0.5f);
-				val2.anchoredPosition = new Vector2(0f, -56f);
-				val2.sizeDelta = new Vector2(healthBarWidth > 0f ? healthBarWidth : 150f, val2.sizeDelta.y > 0f ? val2.sizeDelta.y : 14f);
-			}
-			else if (healthBarWidth > 0f)
-			{
-				val2.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, healthBarWidth);
-			}
+				bool hasInfoBoxWidthOverride = enemyData != null && enemyData.infoBoxSize.x > 0f;
+				Vector2 infoBoxOffset = enemyData != null ? enemyData.infoBoxOffset : Vector2.zero;
+				float healthBarWidth = enemyData != null && enemyData.healthBarWidth > 0f
+					? enemyData.healthBarWidth
+					: hasInfoBoxWidthOverride ? enemyData.infoBoxSize.x : 0f;
+				if (!preserveLayout)
+				{
+					val2.anchorMin = new Vector2(0.5f, 0.5f);
+					val2.anchorMax = new Vector2(0.5f, 0.5f);
+					val2.pivot = new Vector2(0.5f, 0.5f);
+					val2.anchoredPosition = new Vector2(0f, -56f) + infoBoxOffset;
+					val2.sizeDelta = new Vector2(healthBarWidth > 0f ? healthBarWidth : 150f, val2.sizeDelta.y > 0f ? val2.sizeDelta.y : 14f);
+				}
+				else if (healthBarWidth > 0f)
+				{
+					val2.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, healthBarWidth);
+				}
+
 
 			SetupFillImage(enemyHealthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
 
@@ -5241,9 +5242,9 @@ public class HandSystemUI : MonoBehaviour
 				enemyViewState.bodyImage = componentsInChildren[i];
 			}
 		}
-		if ((Object)enemyViewState.bodyImage != (Object)null)
-		{
-			EnemySpriteAnimatorUI bodyAnimator = (Object)enemyViewState.viewUI != (Object)null ? enemyViewState.viewUI.BodyAnimator : null;
+			if ((Object)enemyViewState.bodyImage != (Object)null)
+			{
+				EnemySpriteAnimatorUI bodyAnimator = (Object)enemyViewState.viewUI != (Object)null ? enemyViewState.viewUI.BodyAnimator : null;
             if ((Object)bodyAnimator == (Object)null)
                 bodyAnimator = ((Component)enemyViewState.bodyImage).GetComponent<EnemySpriteAnimatorUI>();
 			if ((Object)bodyAnimator == (Object)null)

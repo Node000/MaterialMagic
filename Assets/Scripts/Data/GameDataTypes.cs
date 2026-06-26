@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public enum LevelType
 {
@@ -343,9 +344,9 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public int maxHealth;
     public int baseAttack;
     public float imageScale = 1f;
+    public Vector2 infoBoxSize;
+    public Vector2 infoBoxOffset;
     public float healthBarWidth;
-    public float healthBarOffsetX;
-    public float healthBarOffsetY;
     public float intentOffsetX;
     public float intentOffsetY;
     public bool isMinion;

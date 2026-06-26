@@ -96,15 +96,11 @@ public static class UnifiedDetailContentBuilder
 
     public static UnifiedDetailContent BuildMapMove(MaterialEnum material)
     {
-        StringBuilder body = new StringBuilder();
-        AppendParagraph(body, TextConfig.GetMapMoveBody(material));
-        AppendParagraph(body, BuildMaterialArrowEffectBody(new MaterialModel("map_move_" + material, material)));
-
         UnifiedDetailContent content = new UnifiedDetailContent
         {
             SourceType = UnifiedDetailSourceType.Material,
             Title = TextConfig.MapMoveTitle,
-            Body = body.ToString(),
+            Body = TextConfig.GetMapMoveBody(material),
             AccentColor = MaterialCardView.GetMaterialColor(material),
             Icon = MaterialCardView.GetMaterialIcon(material)
         };

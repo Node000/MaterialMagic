@@ -4,10 +4,17 @@
   "nameKey": "enemy.024.name",
   "maxHealth": 157,
   "baseAttack": 14,
-  "imageScale": 1.4,
+  "imageScale": 4,
+  "infoBoxSize": {
+    "x": 80.0,
+    "y": 120.0
+  },
   "healthBarWidth": 320.0,
-  "healthBarOffsetY": -20.0,
-  "intentOffsetY": -280.0,
+  "infoBoxOffset": {
+    "x": -100.0,
+    "y": -60.0
+  },
+  "intentOffsetY": -680.0,
   "isMinion": false,
   "initialBuffs": [
     {
