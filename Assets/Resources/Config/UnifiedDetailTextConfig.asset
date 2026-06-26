@@ -27,8 +27,8 @@ MonoBehaviour:
   eventEffectPrefix:
     key: ui.unified_detail.event.effect_prefix
     fallback: "\u6548\u679C\uFF1A"
-  inlineIconScale: 1.5
-  inlineIconVerticalOffsetEm: -0.08
+  inlineIconScale: 3
+  inlineIconVerticalOffsetEm: -0.8
   paragraphSeparator: '
 
 
@@ -39,17 +39,17 @@ MonoBehaviour:
   bulletPrefix: "\u2022 "
   titleValueSeparator: "\uFF1A"
   tintSectionTitles: 1
-  sectionTitleColor: {r: 1, g: 0.91, b: 0.62, a: 1}
-  modifierTitleColor: {r: 1, g: 0.62, b: 0.22, a: 1}
-  tagTitleColor: {r: 0.48, g: 0.86, b: 1, a: 1}
-  arrowEffectTitleColor: {r: 0.68, g: 1, b: 0.42, a: 1}
-  enhancementTextColor: {r: 0.48, g: 0.86, b: 1, a: 1}
-  modifierTextColor: {r: 1, g: 0.62, b: 0.22, a: 1}
-  keywordFrameColor: {r: 0.48, g: 0.86, b: 1, a: 1}
-  enhancementFrameColor: {r: 0.68, g: 1, b: 0.42, a: 1}
-  modifierFrameColor: {r: 1, g: 0.62, b: 0.22, a: 1}
-  addedDetailFirstYOffset: -300
-  addedDetailYSpacing: -120
+  sectionTitleColor: {r: 1, g: 0.89019614, b: 0.3372549, a: 1}
+  modifierTitleColor: {r: 0.9450981, g: 0.4156863, b: 0.16470589, a: 1}
+  tagTitleColor: {r: 0.3362998, g: 0.6047366, b: 0.9811321, a: 1}
+  arrowEffectTitleColor: {r: 0.43529415, g: 0.7686275, b: 0.08627451, a: 1}
+  enhancementTextColor: {r: 0.3372549, g: 0.60784316, b: 0.9843137, a: 1}
+  modifierTextColor: {r: 0.9450981, g: 0.4156863, b: 0.16470589, a: 1}
+  keywordFrameColor: {r: 0.1137255, g: 0.47450984, b: 0.9803922, a: 1}
+  enhancementFrameColor: {r: 0.43529415, g: 0.7686275, b: 0.08627451, a: 1}
+  modifierFrameColor: {r: 0.9450981, g: 0.4156863, b: 0.16470589, a: 1}
+  addedDetailFirstYOffset: 140
+  addedDetailYSpacing: 160
   buffTitleStackSeparator: '  '
   fallbackMaterialTitle:
     key: ui.unified_detail.material.fallback_title
@@ -68,16 +68,16 @@ MonoBehaviour:
     fallback: "\u5730\u56FE\u79FB\u52A8"
   fireMapMoveBody:
     key: ui.unified_detail.map_move.fire.body
-    fallback: "\u70B9\u51FB\u540E\u5411\u4E0A\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+    fallback: "\u70B9\u51FB\u540E\u5411\u4E0A\u79FB\u52A8\u4E00\u683C\u3002"
   windMapMoveBody:
     key: ui.unified_detail.map_move.wind.body
-    fallback: "\u70B9\u51FB\u540E\u5411\u5DE6\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+    fallback: "\u70B9\u51FB\u540E\u5411\u5DE6\u79FB\u52A8\u4E00\u683C\u3002"
   waterMapMoveBody:
     key: ui.unified_detail.map_move.water.body
-    fallback: "\u70B9\u51FB\u540E\u5411\u4E0B\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+    fallback: "\u70B9\u51FB\u540E\u5411\u4E0B\u79FB\u52A8\u4E00\u683C\u3002"
   earthMapMoveBody:
     key: ui.unified_detail.map_move.earth.body
-    fallback: "\u70B9\u51FB\u540E\u5411\u53F3\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+    fallback: "\u70B9\u51FB\u540E\u5411\u53F3\u79FB\u52A8\u4E00\u683C\u3002"
   fireSinglePlay:
     key: material.fire.single_play
     fallback: "\u5355\u72EC\u6253\u51FA\uFF08<fire>\uFF09\uFF1A\u9020\u6210<attack>3\u70B9\u4F24\u5BB3"

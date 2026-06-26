@@ -2,7 +2,7 @@
   "numericId": 19,
   "string_id": "enemy_019",
   "nameKey": "enemy.019.name",
-  "maxHealth": 46,
+  "maxHealth": 47,
   "baseAttack": 9,
   "imageScale": 0.6,
   "isMinion": false,

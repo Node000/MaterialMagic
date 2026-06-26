@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: MaterialListPanelLayoutConfig
   m_EditorClassIdentifier: 
   arrowRowTotalLength: 780
-  arrowDefaultScale: 0.72
-  arrowHoverScale: 1.18
+  arrowDefaultScale: 1.5
+  arrowHoverScale: 2

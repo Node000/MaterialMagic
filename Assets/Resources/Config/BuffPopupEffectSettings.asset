@@ -17,5 +17,5 @@ MonoBehaviour:
   displayDuration: 0.25
   interval: 0.08
   startScale: 1
-  endScale: 1.5
+  endScale: 1.3
   peakAlpha: 1

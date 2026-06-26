@@ -2,7 +2,7 @@
   "numericId": 8,
   "string_id": "enemy_008",
   "nameKey": "enemy.008.name",
-  "maxHealth": 36,
+  "maxHealth": 37,
   "baseAttack": 5,
   "imageScale": 0.6,
   "isMinion": false,
