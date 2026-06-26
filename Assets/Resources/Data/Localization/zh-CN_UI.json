@@ -69,6 +69,14 @@
       "text": "确认退出"
     },
     {
+      "key": "ui.start_menu.abandon_run",
+      "text": "放弃本局游戏"
+    },
+    {
+      "key": "ui.start_menu.confirm_abandon_run",
+      "text": "确认放弃"
+    },
+    {
       "key": "ui.start_config.select",
       "text": "选择"
     },
@@ -142,7 +150,7 @@
     },
     {
       "key": "tutorial.battle.arrow_base.body",
-      "text": "基础素材卡的方向是：火=上，水=下，风=左，土=右。先按顺序把箭头放入出牌区。"
+      "text": "基础箭头的方向是：上、下、左、右。先按顺序把箭头放入出牌区。"
     },
     {
       "key": "tutorial.battle.magic_combo.title",
@@ -279,6 +287,74 @@
     {
       "key": "tutorial.map.step_limit.body",
       "text": "当经过的关卡数达到上限时，所有格位都会变成Boss格位，强制进入Boss战。请在此之前做好准备。"
+    },
+    {
+      "key": "ui.unified_detail.section.modifier",
+      "text": "强化效果"
+    },
+    {
+      "key": "ui.unified_detail.section.arrow_effect",
+      "text": "箭头效果"
+    },
+    {
+      "key": "ui.unified_detail.section.tag",
+      "text": "关键词"
+    },
+    {
+      "key": "ui.unified_detail.material.display_direction",
+      "text": "显示方向"
+    },
+    {
+      "key": "ui.unified_detail.event.effect_prefix",
+      "text": "效果："
+    },
+    {
+      "key": "ui.unified_detail.material.fallback_title",
+      "text": "箭头"
+    },
+    {
+      "key": "ui.unified_detail.reward.none",
+      "text": "无"
+    },
+    {
+      "key": "ui.unified_detail.reward.gold",
+      "text": "获得金币 ×{0}"
+    },
+    {
+      "key": "ui.unified_detail.reward.heal",
+      "text": "恢复生命 ×{0}"
+    },
+    {
+      "key": "ui.magic.empty_slot.label",
+      "text": "空槽"
+    },
+    {
+      "key": "ui.magic.empty_slot.title",
+      "text": "空道具栏"
+    },
+    {
+      "key": "ui.magic.empty_slot.body",
+      "text": "可以放入新的道具"
+    },
+    {
+      "key": "ui.unified_detail.map_move.title",
+      "text": "地图移动"
+    },
+    {
+      "key": "ui.unified_detail.map_move.fire.body",
+      "text": "向上移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+    },
+    {
+      "key": "ui.unified_detail.map_move.wind.body",
+      "text": "向左移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+    },
+    {
+      "key": "ui.unified_detail.map_move.water.body",
+      "text": "向下移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
+    },
+    {
+      "key": "ui.unified_detail.map_move.earth.body",
+      "text": "向右移动一格。\n\n如果目标格有事件或战斗，会在移动后进入该格内容。"
     }
   ]
 }

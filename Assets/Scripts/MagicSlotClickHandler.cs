@@ -14,7 +14,13 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
+        if (eventData != null && eventData.button == PointerEventData.InputButton.Right)
+        {
+            owner?.ShowDebugMagicReplacementDropdown(slotIndex, eventData.position);
+            return;
+        }
+
+        if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
             return;
 
         if (owner != null)

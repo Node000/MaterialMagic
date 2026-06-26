@@ -47,7 +47,8 @@ public class DeerManEnemyModel : EnemyModel
         if (intent.value == 1)
         {
             string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
-            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并禁用一种基础素材" : "这个敌人将获得护盾，并禁用一种基础素材";
+            string disabledBuff = FormatBuffStack(BuffEnum.AttributeDisabled, (int)GetPendingDisabledMaterial(playerState));
+            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并施加{disabledBuff}" : $"这个敌人将获得护盾，并施加{disabledBuff}";
         }
 
         if (intent.value == 2)
@@ -57,6 +58,13 @@ public class DeerManEnemyModel : EnemyModel
         }
 
         return base.GetSpecialIntentTooltipDescription(intent, playerState);
+    }
+
+    public override System.Collections.Generic.IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent != null && intent.value == 1 && playerState != null)
+            return new[] { new BuffStackData { buffType = BuffEnum.AttributeDisabled, stack = (int)GetPendingDisabledMaterial(playerState) } };
+        return base.GetIntentTooltipBuffs(intent, playerState);
     }
 
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)

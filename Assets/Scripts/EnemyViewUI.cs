@@ -20,6 +20,11 @@ public class EnemyViewUI : MonoBehaviour
     [SerializeField] private RectTransform intentRoot;
     [SerializeField] private BuffPopupEffectController buffPopupEffect;
 
+    private bool baseLayoutCached;
+    private Vector2 baseHealthBarAnchoredPosition;
+    private Vector2 baseHealthBarSizeDelta;
+    private Vector2 baseIntentRootAnchoredPosition;
+
     public RectTransform BodyRoot => bodyRoot;
     public RectTransform MotionRoot => motionRoot != null ? motionRoot : bodyRoot;
     public Image BodyImage => bodyImage;
@@ -84,10 +89,13 @@ public class EnemyViewUI : MonoBehaviour
     public void ApplyDataLayout(EnemyData data)
     {
         CacheMissingReferences();
+        CacheBaseLayout();
 
         Vector2 bodySize = GetBodySize(data);
         if (bodyRoot != null)
             bodyRoot.sizeDelta = bodySize;
+
+        ApplyEnemyDataOverrides(data);
 
         if (bodyImage != null)
         {
@@ -99,6 +107,46 @@ public class EnemyViewUI : MonoBehaviour
             bodyRect.sizeDelta = Vector2.zero;
             bodyImage.preserveAspect = true;
         }
+    }
+
+    private void CacheBaseLayout()
+    {
+        if (baseLayoutCached)
+            return;
+
+        if (healthBarRoot != null)
+        {
+            baseHealthBarAnchoredPosition = healthBarRoot.anchoredPosition;
+            baseHealthBarSizeDelta = healthBarRoot.sizeDelta;
+        }
+        if (intentRoot != null)
+            baseIntentRootAnchoredPosition = intentRoot.anchoredPosition;
+        baseLayoutCached = true;
+    }
+
+    private void ApplyEnemyDataOverrides(EnemyData data)
+    {
+        if (healthBarRoot != null)
+        {
+            healthBarRoot.anchoredPosition = baseHealthBarAnchoredPosition + GetHealthBarOffset(data);
+            if (data != null && data.healthBarWidth > 0f)
+                healthBarRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, data.healthBarWidth);
+            else
+                healthBarRoot.sizeDelta = baseHealthBarSizeDelta;
+        }
+
+        if (intentRoot != null)
+            intentRoot.anchoredPosition = baseIntentRootAnchoredPosition + GetIntentOffset(data);
+    }
+
+    private static Vector2 GetHealthBarOffset(EnemyData data)
+    {
+        return data != null ? new Vector2(data.healthBarOffsetX, data.healthBarOffsetY) : Vector2.zero;
+    }
+
+    private static Vector2 GetIntentOffset(EnemyData data)
+    {
+        return data != null ? new Vector2(data.intentOffsetX, data.intentOffsetY) : Vector2.zero;
     }
 
     private Vector2 GetBodySize(EnemyData data)

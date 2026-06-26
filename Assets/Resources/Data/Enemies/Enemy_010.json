@@ -5,7 +5,6 @@
   "maxHealth": 42,
   "baseAttack": 6,
   "imageScale": 0.6,
-  "healthBarWidth": 150.0,
   "isMinion": false,
   "initialBuffs": [],
   "phases": [

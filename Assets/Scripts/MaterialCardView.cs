@@ -20,6 +20,9 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     [SerializeField] private int consumedPunchVibrato = 4;
     [SerializeField] private float consumedPunchElasticity = 0.45f;
 
+    private const string DetailTextConfigResourcePath = "Config/UnifiedDetailTextConfig";
+
+    private static UnifiedDetailTextConfig cachedDetailTextConfig;
     private readonly System.Collections.Generic.List<TMP_Text> enhancementTexts = new System.Collections.Generic.List<TMP_Text>();
     private MaterialModel materialModel;
     private MaterialListPanelUI owner;
@@ -47,7 +50,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     {
         hovered = false;
         RefreshSpringHighlight();
-        owner?.HideModifierTooltip(this);
+        owner?.GetComponentInParent<UIManager>()?.HideUnifiedDetailPopup(this);
         consumedTween?.Kill(false);
         consumedTween = null;
     }
@@ -97,21 +100,28 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            UIManager uiManager = owner != null ? owner.GetComponentInParent<UIManager>() : GetComponentInParent<UIManager>();
+            if (materialModel != null)
+                uiManager?.PinUnifiedDetailPopup(this, UnifiedDetailContentBuilder.Build(materialModel));
             owner?.OnMaterialCardClicked(this);
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         hovered = true;
         RefreshSpringHighlight();
-        owner?.ShowModifierTooltip(this, materialModel);
+        UIManager uiManager = owner != null ? owner.GetComponentInParent<UIManager>() : null;
+        if (materialModel != null)
+            uiManager?.ShowUnifiedDetailPopup(this, UnifiedDetailContentBuilder.Build(materialModel));
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
         RefreshSpringHighlight();
-        owner?.HideModifierTooltip(this);
+        owner?.GetComponentInParent<UIManager>()?.HideUnifiedDetailPopup(this);
     }
     public static Color GetMaterialColor(MaterialEnum material)
     {
@@ -250,6 +260,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         {
             TMP_Text tagText = GetEnhancementText(tagIndex);
             ApplyEnhancementTextLayout(tagText, tagIndex++);
+            tagText.color = GetEnhancementTextColor();
             tagText.gameObject.SetActive(true);
             tagText.text = materialModel.enhancementIds[i];
         }
@@ -258,6 +269,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         {
             TMP_Text tagText = GetEnhancementText(tagIndex);
             ApplyEnhancementTextLayout(tagText, tagIndex++);
+            tagText.color = GetModifierTextColor();
             tagText.gameObject.SetActive(true);
             tagText.text = LocalizationKeys.GetModifierName(materialModel.modifiers[i]);
         }
@@ -320,6 +332,26 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         }
 
         return enhancementTexts[index];
+    }
+
+    private static Color GetEnhancementTextColor()
+    {
+        return DetailTextConfig != null ? DetailTextConfig.EnhancementTextColor : Color.white;
+    }
+
+    private static Color GetModifierTextColor()
+    {
+        return DetailTextConfig != null ? DetailTextConfig.ModifierTextColor : Color.white;
+    }
+
+    private static UnifiedDetailTextConfig DetailTextConfig
+    {
+        get
+        {
+            if (cachedDetailTextConfig == null)
+                cachedDetailTextConfig = Resources.Load<UnifiedDetailTextConfig>(DetailTextConfigResourcePath);
+            return cachedDetailTextConfig;
+        }
     }
 
     private static string GetCardLabel(MaterialModel materialModel)

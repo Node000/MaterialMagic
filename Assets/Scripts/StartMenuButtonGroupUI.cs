@@ -18,8 +18,12 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     [SerializeField] private string selectedStartConfigTextKey = "ui.start_menu.start_with_config";
     [SerializeField] private string tutorialStartTextKey = "ui.start_menu.start_tutorial";
     [SerializeField] private string tutorialStartWithConfigTextKey = "ui.start_menu.start_tutorial_with_config";
+    [SerializeField] private string abandonRunTextKey = "ui.start_menu.abandon_run";
+    [SerializeField] private string confirmAbandonRunTextKey = "ui.start_menu.confirm_abandon_run";
     [SerializeField] private string confirmStartText = "选择一个游戏配置";
     [SerializeField] private string selectedStartConfigText = "开始游戏www！";
+    [SerializeField] private string abandonRunText = "放弃本局游戏";
+    [SerializeField] private string confirmAbandonRunText = "确认放弃";
     [SerializeField] private string confirmExitTextKey = "ui.start_menu.confirm_exit";
     [SerializeField] private string confirmExitText = "确认退出";
     [SerializeField] private Color startButtonNormalColor = new Color(0.28f, 0.19f, 0.45f, 1f);
@@ -53,6 +57,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     private bool tutorialStartMode;
     private bool startConfigMode;
     private bool startConfigSelected;
+    private bool hasCurrentRun;
+    private bool startAbandonConfirmMode;
     private int selectedOptionIndex = -1;
     private int activeOptionIndex = -1;
     private Tween buttonGroupTween;
@@ -79,6 +85,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         selectedStartConfigText = LocalizationSystem.GetText(selectedStartConfigTextKey, selectedStartConfigText);
         tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
         tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程www！");
+        abandonRunText = LocalizationSystem.GetText(abandonRunTextKey, abandonRunText);
+        confirmAbandonRunText = LocalizationSystem.GetText(confirmAbandonRunTextKey, confirmAbandonRunText);
         originalExitText = exitButtonText != null ? exitButtonText.text : "退出游戏";
         confirmExitText = LocalizationSystem.GetText(confirmExitTextKey, confirmExitText);
 
@@ -128,6 +136,7 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     {
         startConfigMode = selecting;
         startConfigSelected = selecting && hasSelectedConfig;
+        startAbandonConfirmMode = false;
         int startIndex = GetOptionIndex(startButton);
         if (startIndex >= 0 && startIndex < optionBaseColors.Count)
             optionBaseColors[startIndex] = selecting ? startButtonConfirmColor : startButtonNormalColor;
@@ -161,6 +170,16 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         activeOptionIndex = confirming ? exitIndex : activeOptionIndex == exitIndex ? -1 : activeOptionIndex;
     }
 
+    public void SetStartAbandonConfirmMode(bool confirming)
+    {
+        int startIndex = GetOptionIndex(startButton);
+        startAbandonConfirmMode = confirming && hasCurrentRun && !startConfigMode;
+        activeOptionIndex = startAbandonConfirmMode ? startIndex : activeOptionIndex == startIndex ? -1 : activeOptionIndex;
+        RefreshStartButtonText();
+        if (startButtonImage != null)
+            startButtonImage.color = startAbandonConfirmMode ? startButtonConfirmColor : startButtonNormalColor;
+    }
+
     public void ClearActiveOption()
     {
         activeOptionIndex = -1;
@@ -168,12 +187,27 @@ public class StartMenuButtonGroupUI : MonoBehaviour
 
     private void RefreshStartButtonText()
     {
+        CacheStartButtonReferences();
         if (startButtonText == null)
             return;
 
+        if (string.IsNullOrEmpty(originalStartText))
+            originalStartText = LocalizationSystem.GetText(startTextKey, !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
+        if (string.IsNullOrEmpty(tutorialStartText))
+            tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
+        if (string.IsNullOrEmpty(tutorialStartWithConfigText))
+            tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程www！");
+        if (string.IsNullOrEmpty(abandonRunText))
+            abandonRunText = LocalizationSystem.GetText(abandonRunTextKey, "放弃本局游戏");
+        if (string.IsNullOrEmpty(confirmAbandonRunText))
+            confirmAbandonRunText = LocalizationSystem.GetText(confirmAbandonRunTextKey, "确认放弃");
+
         if (!startConfigMode)
         {
-            startButtonText.text = tutorialStartMode ? tutorialStartText : originalStartText;
+            if (hasCurrentRun)
+                startButtonText.text = startAbandonConfirmMode ? confirmAbandonRunText : abandonRunText;
+            else
+                startButtonText.text = tutorialStartMode ? tutorialStartText : originalStartText;
             return;
         }
 
@@ -184,6 +218,16 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         }
 
         startButtonText.text = startConfigSelected ? selectedStartConfigText : confirmStartText;
+    }
+
+    private void CacheStartButtonReferences()
+    {
+        if (startButton == null)
+            ResolveReferences();
+        if (startButtonText == null && startButton != null)
+            startButtonText = startButton.GetComponentInChildren<TMP_Text>(true);
+        if (startButtonImage == null && startButton != null)
+            startButtonImage = startButton.GetComponent<Image>();
     }
 
     private void ResolveReferences()
@@ -345,8 +389,14 @@ public class StartMenuButtonGroupUI : MonoBehaviour
 
     public void RefreshContinueButton(bool hasRun)
     {
+        hasCurrentRun = hasRun;
+        if (!hasCurrentRun)
+            startAbandonConfirmMode = false;
         if (continueButton != null)
             continueButton.interactable = hasRun;
+        RefreshStartButtonText();
+        if (startButtonImage != null && !startAbandonConfirmMode && !startConfigMode)
+            startButtonImage.color = startButtonNormalColor;
     }
 
     private int GetOptionIndex(Button button)

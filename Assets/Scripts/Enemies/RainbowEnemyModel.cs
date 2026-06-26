@@ -75,6 +75,31 @@ public class RainbowEnemyModel : EnemyModel
         }
     }
 
+    public override System.Collections.Generic.IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent == null)
+            return base.GetIntentTooltipBuffs(intent, playerState);
+
+        switch (intent.value)
+        {
+            case DirectionDamageIntentValue:
+                return new[] { new BuffStackData { buffType = BuffEnum.DirectionDamageBonus, stack = 3 } };
+            case DirectionWeakIntentValue:
+                return new[] { new BuffStackData { buffType = BuffEnum.DirectionWeakBonus, stack = 2 } };
+            case DirectionDrawIntentValue:
+                return new[] { new BuffStackData { buffType = BuffEnum.DirectionExtraDraw, stack = 1 } };
+            case DirectionShieldIntentValue:
+                return new[] { new BuffStackData { buffType = BuffEnum.DirectionShieldBonus, stack = 3 } };
+            case RandomFollowupIntentValue:
+                if (randomFollowupDisplayType == 3)
+                    return new[] { new BuffStackData { buffType = BuffEnum.Weak, stack = 5 } };
+                if (randomFollowupDisplayType == 4)
+                    return new[] { new BuffStackData { buffType = BuffEnum.Vulnerable, stack = 6 } };
+                break;
+        }
+        return base.GetIntentTooltipBuffs(intent, playerState);
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (playerState == null)

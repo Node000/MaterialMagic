@@ -8,9 +8,11 @@ public class SettingsPanelUI : MonoBehaviour
 
     private Slider musicSlider;
     private Slider sfxSlider;
+    private HandSystemUI owner;
 
     public void Initialize(HandSystemUI owner)
     {
+        this.owner = owner;
         BindControls();
     }
 
@@ -83,6 +85,12 @@ public class SettingsPanelUI : MonoBehaviour
 
     private void ReturnToStartMenu()
     {
+        if (owner != null)
+        {
+            owner.SaveCurrentRunAndReturnToStart(startSceneName);
+            return;
+        }
+
         if (SceneTransitionManager.Instance != null)
             SceneTransitionManager.Instance.LoadSceneWithTransition(startSceneName);
         else

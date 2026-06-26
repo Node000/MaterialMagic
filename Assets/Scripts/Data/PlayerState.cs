@@ -801,6 +801,35 @@ public class PlayerState
         GameLog.Data("Player clear shield");
     }
 
+    public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn)
+    {
+        Shield = Mathf.Max(0, shield);
+        Hand.Clear();
+        DrawPile.Clear();
+        DiscardPile.Clear();
+        PlayZone.Clear();
+        ConsumedPile.Clear();
+        TemporaryMaterialsNextTurn.Clear();
+        AddCombatCards(Hand, hand, false);
+        AddCombatCards(DrawPile, drawPile, false);
+        AddCombatCards(DiscardPile, discardPile, false);
+        AddCombatCards(PlayZone, playZone, true);
+        AddCombatCards(ConsumedPile, consumedPile, false);
+        AddCombatCards(TemporaryMaterialsNextTurn, temporaryMaterialsNextTurn, false);
+    }
+
+    private static void AddCombatCards(List<MaterialModel> target, IReadOnlyList<MaterialModel> source, bool isPlayed)
+    {
+        for (int i = 0; source != null && i < source.Count; i++)
+        {
+            MaterialModel card = source[i];
+            if (card == null)
+                continue;
+            card.isPlayed = isPlayed;
+            target.Add(card);
+        }
+    }
+
     public void ClearBuffs()
     {
         buffs.Clear();

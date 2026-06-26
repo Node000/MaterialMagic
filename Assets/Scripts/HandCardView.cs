@@ -29,6 +29,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private float baseZRotation;
     private MaterialModel card;
     private Action<HandCardView, PointerEventData> clickOverride;
+    private UnifiedDetailContent tooltipContentOverride;
+    private bool hasTooltipContentOverride;
 
     public MaterialModel Card => card;
     public bool Selected => selected;
@@ -51,7 +53,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     {
         hovered = false;
         RefreshSpringHighlight();
-        owner?.HideModifierTooltip(this);
+        owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
         feedbackTween?.Kill(false);
         feedbackTween = null;
     }
@@ -106,12 +108,26 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         clickOverride = handler;
     }
 
+    public void SetTooltipContentOverride(UnifiedDetailContent content)
+    {
+        tooltipContentOverride = content;
+        hasTooltipContentOverride = true;
+    }
+
+    public void ClearTooltipContentOverride()
+    {
+        tooltipContentOverride = default;
+        hasTooltipContentOverride = false;
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
         bool touchPointer = IsTouchPointer(eventData);
 
         if (clickOverride != null)
         {
+            if (TryGetTooltipContent(out UnifiedDetailContent content))
+                owner?.GetUIManager()?.PinUnifiedDetailPopup(this, content);
             clickOverride(this, eventData);
             if (touchPointer)
                 ClearHoverAndHideTooltip();
@@ -130,7 +146,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         }
 
         if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (TryGetTooltipContent(out UnifiedDetailContent content))
+                owner.GetUIManager()?.PinUnifiedDetailPopup(this, content);
             owner.OnCardLeftClicked(this);
+        }
 
         if (touchPointer)
             ClearHoverAndHideTooltip();
@@ -141,7 +161,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         hovered = true;
         RefreshSpringHighlight();
         PlayFeedback(false);
-        owner?.ShowModifierTooltip(this, card);
+        if (TryGetTooltipContent(out UnifiedDetailContent content))
+            owner?.GetUIManager()?.ShowUnifiedDetailPopup(this, content);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -149,7 +170,25 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         hovered = false;
         RefreshSpringHighlight();
         PlayFeedback(false);
-        owner?.HideModifierTooltip(this);
+        owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
+    }
+
+    private bool TryGetTooltipContent(out UnifiedDetailContent content)
+    {
+        if (hasTooltipContentOverride)
+        {
+            content = tooltipContentOverride;
+            return true;
+        }
+
+        if (card != null)
+        {
+            content = UnifiedDetailContentBuilder.Build(card);
+            return true;
+        }
+
+        content = default;
+        return false;
     }
 
     private bool IsTouchPointer(PointerEventData eventData)
@@ -162,7 +201,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         hovered = false;
         RefreshSpringHighlight();
         PlayFeedback(false);
-        owner?.HideModifierTooltip(this);
+        owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
     }
 
     private void RefreshVisual()

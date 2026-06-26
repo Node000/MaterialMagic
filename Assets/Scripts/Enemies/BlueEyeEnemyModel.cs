@@ -25,6 +25,13 @@ public class BlueEyeEnemyModel : EnemyModel
         return $"这个敌人将召唤{summonText}，并获得{FormatBuffStack(BuffEnum.DefensePower, 2)}";
     }
 
+    public override System.Collections.Generic.IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)
+    {
+        if (intent != null && intent.value == 1)
+            return new[] { new BuffStackData { buffType = BuffEnum.DefensePower, stack = 2 } };
+        return base.GetIntentTooltipBuffs(intent, playerState);
+    }
+
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)
     {
         if (value != 1)

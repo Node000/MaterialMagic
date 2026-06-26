@@ -60,6 +60,30 @@ public class EnemyModel : UnitModel
             AddBuff(BuffEnum.Claw, 1);
     }
 
+    public void RestoreBattleState(EnemyBattleSaveData data)
+    {
+        if (data == null)
+            return;
+
+        CurrentHealth = Mathf.Clamp(data.currentHealth, 0, MaxHealth);
+        Shield = Mathf.Max(0, data.shield);
+        ActionIndex = Mathf.Max(0, data.actionIndex);
+        Phase = Mathf.Max(0, data.phase);
+        dead = data.deathHandled;
+        CanActThisEnemyTurn = data.canActThisEnemyTurn;
+        IsMinion = data.isMinion;
+        if (data.hasSpawnPosition)
+            SetSpawnPosition(data.spawnPositionX, data.spawnPositionY);
+        buffs.Clear();
+        for (int i = 0; data.buffs != null && i < data.buffs.Length; i++)
+        {
+            BuffStackData buff = data.buffs[i];
+            if (buff != null && buff.buffType != BuffEnum.None && buff.stack > 0)
+                buffs[buff.buffType] = BuffModel.Create(buff.buffType, buff.stack);
+        }
+        UpdateCurrentIntents();
+    }
+
     public void Kill(CombatantModel attacker = null)
     {
         if (dead || CurrentHealth <= 0)
@@ -630,6 +654,11 @@ public class EnemyModel : UnitModel
         return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将造成{displayValue}点伤害，并施加特殊效果" : "这个敌人将施加特殊效果";
     }
 
+    public virtual IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)
+    {
+        return intent != null ? intent.buffs : null;
+    }
+
     private string GetAttackIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState, bool attackAll)
     {
         int attackValue = GetIntentAttackValue(intent, playerState);
@@ -719,7 +748,8 @@ public class EnemyModel : UnitModel
 
         BuffModel buff = BuffModel.Create(buffType, stack);
         string stackText = buff.GetTooltipStackText();
-        return !string.IsNullOrEmpty(stackText) ? name + " " + stackText : name;
+        string keywordName = "【" + name + "】";
+        return !string.IsNullOrEmpty(stackText) ? keywordName + " " + stackText : keywordName;
     }
 
     protected int GetSpecialDamagePreviewValue(int rawDamage, PlayerState playerState)

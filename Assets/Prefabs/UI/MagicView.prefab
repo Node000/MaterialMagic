@@ -414,17 +414,6 @@ MonoBehaviour:
   backgroundImage: {fileID: 0}
   magicNameText: {fileID: 1340398558595696215}
   recipeRoot: {fileID: 2714448743960716031}
-  tooltipRoot: {fileID: 8567014346742742353}
-  tooltipNameText: {fileID: 1742214259019776607}
-  tooltipDescriptionText: {fileID: 1802210053773372698}
-  tooltipEffectText: {fileID: 2675315260679234447}
-  tooltipSize: {x: 230, y: 108}
-  tooltipDescriptionVerticalPadding: 54
-  modifierTooltipRoot: {fileID: 0}
-  modifierTooltipText: {fileID: 0}
-  modifierTooltipSize: {x: 230, y: 76}
-  modifierTooltipVerticalPadding: 22
-  modifierTooltipGap: 8
   modifierMarkerImage: {fileID: 3061875667698673557}
   UpBackgroundColor: {r: 0.106918216, g: 0.106918216, b: 0.106918216, a: 1}
   LeftBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
@@ -663,8 +652,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82.805756, y: -12}
-  m_SizeDelta: {x: -94.8058, y: 28}
+  m_AnchoredPosition: {x: 85.1, y: -6}
+  m_SizeDelta: {x: -97.100044, y: 30}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &5727689174406608873
 CanvasRenderer:
@@ -694,7 +683,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "\u6D4B\u8BD5"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}
@@ -721,8 +710,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
-  m_fontSizeBase: 18
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 10

@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 535bb448613bad94380430f33b124f37, type: 3}
+  m_Name: UnifiedDetailTextConfig
+  m_EditorClassIdentifier: 
+  modifierSectionTitle:
+    key: ui.unified_detail.section.modifier
+    fallback: "\u5F3A\u5316\u6548\u679C"
+  arrowEffectSectionTitle:
+    key: ui.unified_detail.section.arrow_effect
+    fallback: "\u7BAD\u5934\u6548\u679C"
+  tagSectionTitle:
+    key: ui.unified_detail.section.tag
+    fallback: "\u5173\u952E\u8BCD"
+  displayDirectionLabel:
+    key: ui.unified_detail.material.display_direction
+    fallback: "\u663E\u793A\u65B9\u5411"
+  eventEffectPrefix:
+    key: ui.unified_detail.event.effect_prefix
+    fallback: "\u6548\u679C\uFF1A"
+  inlineIconScale: 1.5
+  inlineIconVerticalOffsetEm: -0.08
+  paragraphSeparator: '
+
+
+'
+  lineBreak: '
+
+'
+  bulletPrefix: "\u2022 "
+  titleValueSeparator: "\uFF1A"
+  tintSectionTitles: 1
+  sectionTitleColor: {r: 1, g: 0.91, b: 0.62, a: 1}
+  modifierTitleColor: {r: 1, g: 0.62, b: 0.22, a: 1}
+  tagTitleColor: {r: 0.48, g: 0.86, b: 1, a: 1}
+  arrowEffectTitleColor: {r: 0.68, g: 1, b: 0.42, a: 1}
+  enhancementTextColor: {r: 0.48, g: 0.86, b: 1, a: 1}
+  modifierTextColor: {r: 1, g: 0.62, b: 0.22, a: 1}
+  buffTitleStackSeparator: '  '
+  fallbackMaterialTitle:
+    key: ui.unified_detail.material.fallback_title
+    fallback: "\u7BAD\u5934"
+  fallbackBonusRewardNone:
+    key: ui.unified_detail.reward.none
+    fallback: "\u65E0"
+  rewardGoldText:
+    key: ui.unified_detail.reward.gold
+    fallback: "\u83B7\u5F97\u91D1\u5E01 \xD7{0}"
+  rewardHealText:
+    key: ui.unified_detail.reward.heal
+    fallback: "\u6062\u590D\u751F\u547D \xD7{0}"
+  mapMoveTitle:
+    key: ui.unified_detail.map_move.title
+    fallback: "\u5730\u56FE\u79FB\u52A8"
+  fireMapMoveBody:
+    key: ui.unified_detail.map_move.fire.body
+    fallback: "\u70B9\u51FB\u540E\u5411\u4E0A\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+  windMapMoveBody:
+    key: ui.unified_detail.map_move.wind.body
+    fallback: "\u70B9\u51FB\u540E\u5411\u5DE6\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+  waterMapMoveBody:
+    key: ui.unified_detail.map_move.water.body
+    fallback: "\u70B9\u51FB\u540E\u5411\u4E0B\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+  earthMapMoveBody:
+    key: ui.unified_detail.map_move.earth.body
+    fallback: "\u70B9\u51FB\u540E\u5411\u53F3\u79FB\u52A8\u4E00\u683C\u3002\n\n\u5982\u679C\u76EE\u6807\u683C\u6709\u4E8B\u4EF6\u6216\u6218\u6597\uFF0C\u4F1A\u5728\u79FB\u52A8\u540E\u8FDB\u5165\u8BE5\u683C\u5185\u5BB9\u3002"
+  fireSinglePlay:
+    key: material.fire.single_play
+    fallback: "\u5355\u72EC\u6253\u51FA\uFF08<fire>\uFF09\uFF1A\u9020\u6210<attack>3\u70B9\u4F24\u5BB3"
+  waterSinglePlay:
+    key: material.water.single_play
+    fallback: "\u5355\u72EC\u6253\u51FA\uFF08<water>\uFF09\uFF1A\u968F\u673A\u65BD\u52A01\u5C42<buff_weak>\u6216<buff_slow>"
+  windSinglePlay:
+    key: material.wind.single_play
+    fallback: "\u5355\u72EC\u6253\u51FA\uFF08<wind>\uFF09\uFF1A\u4E0B\u56DE\u5408\u989D\u5916\u62BD1\u5F20\u724C"
+  earthSinglePlay:
+    key: material.earth.single_play
+    fallback: "\u5355\u72EC\u6253\u51FA\uFF08<earth>\uFF09\uFF1A\u83B7\u5F97<shield>3"
+  wildSinglePlay:
+    key: material.wild.single_play
+    fallback: "\u8FD9\u662F\u4E00\u5F20\u7279\u6B8A\u7BAD\u5934"
+  noneSinglePlay:
+    key: material.none.single_play
+    fallback: "\u5355\u72EC\u6253\u51FA\uFF1A\u65E0\u57FA\u7840\u6548\u679C"

@@ -74,19 +74,19 @@
     },
     {
       "key": "event.test_crossroad.option.gain_fire",
-      "text": "取走火素材"
+      "text": "取走上箭头"
     },
     {
       "key": "event.test_crossroad.option.gain_wind",
-      "text": "取走风素材"
+      "text": "取走左箭头"
     },
     {
       "key": "event.test_crossroad.option.gain_water",
-      "text": "取走水素材"
+      "text": "取走下箭头"
     },
     {
       "key": "event.test_crossroad.option.gain_earth",
-      "text": "取走土素材"
+      "text": "取走右箭头"
     },
     {
       "key": "event.test_crossroad.option.kindling",
@@ -150,19 +150,19 @@
     },
     {
       "key": "event.test_crossroad.gain_fire.1",
-      "text": "一枚温热的火素材落入你的素材序列。"
+      "text": "一枚向上的箭头落入你的箭头序列。"
     },
     {
       "key": "event.test_crossroad.gain_wind.1",
-      "text": "一枚轻盈的风素材落入你的素材序列。"
+      "text": "一枚向左的箭头落入你的箭头序列。"
     },
     {
       "key": "event.test_crossroad.gain_water.1",
-      "text": "一枚澄澈的水素材落入你的素材序列。"
+      "text": "一枚向下的箭头落入你的箭头序列。"
     },
     {
       "key": "event.test_crossroad.gain_earth.1",
-      "text": "一枚厚重的土素材落入你的素材序列。"
+      "text": "一枚向右的箭头落入你的箭头序列。"
     },
     {
       "key": "event.test_crossroad.kindling.1",
@@ -174,7 +174,7 @@
     },
     {
       "key": "event.test_crossroad.liquefy.1",
-      "text": "素材边缘泛起水光，也可作为水素材使用。"
+      "text": "箭头边缘泛起流光，也可作为下箭头使用。"
     },
     {
       "key": "event.common.option.leave",
@@ -562,7 +562,7 @@
     },
     {
       "key": "event.screen_protector_stall.start.2",
-      "text": "他熟练地甩出刮板，气泡在霓虹灯下像小型魔法事故。"
+      "text": "他熟练地甩出刮板，气泡在霓虹灯下像小型道具事故。"
     },
     {
       "key": "event.screen_protector_stall.option.free",

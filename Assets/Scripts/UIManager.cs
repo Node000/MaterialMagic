@@ -14,13 +14,13 @@ public class UIManager : MonoBehaviour
     [SerializeField] private LevelSelectPanelUI levelSelectPanelUI;
     [SerializeField] private SettingsPanelUI settingsPanelUI;
     [SerializeField] private MaterialListPanelUI materialListPanelUI;
+    [SerializeField] private MaterialListPanelUI materialSelectionPanelUI;
     [SerializeField] private RewardPanelUI rewardPanelUI;
     [SerializeField] private RewardGridPanelUI rewardGridPanelUI;
     [SerializeField] private ShopPanelUI shopPanelUI;
     [SerializeField] private MagicModifierSelectionPanelUI magicModifierSelectionPanelUI;
     [SerializeField] private SlotSelectPanelUI slotSelectPanelUI;
-    [SerializeField] private BuffTooltipUI buffTooltipUI;
-    [SerializeField] private EnemyIntentTooltipUI enemyIntentTooltipUI;
+    [SerializeField] private UnifiedDetailPopupUI unifiedDetailPopupUI;
     [SerializeField] private PlayerStatusUI playerStatusUI;
     [SerializeField] private PlayAreaUI playAreaUI;
     [SerializeField] private PlayerFeedbackUI playerFeedbackUI;
@@ -37,13 +37,13 @@ public class UIManager : MonoBehaviour
     public LevelSelectPanelUI LevelSelectPanel => levelSelectPanelUI;
     public SettingsPanelUI SettingsPanel => settingsPanelUI;
     public MaterialListPanelUI MaterialListPanel => materialListPanelUI;
+    public MaterialListPanelUI MaterialSelectionPanel => materialSelectionPanelUI != null ? materialSelectionPanelUI : materialListPanelUI;
     public RewardPanelUI RewardPanel => rewardPanelUI;
     public RewardGridPanelUI RewardGridPanel => rewardGridPanelUI;
     public ShopPanelUI ShopPanel => shopPanelUI;
     public MagicModifierSelectionPanelUI MagicModifierSelectionPanel => magicModifierSelectionPanelUI;
     public SlotSelectPanelUI SlotSelectPanel => slotSelectPanelUI;
-    public BuffTooltipUI BuffTooltip => buffTooltipUI;
-    public EnemyIntentTooltipUI EnemyIntentTooltip => enemyIntentTooltipUI;
+    public UnifiedDetailPopupUI UnifiedDetailPopup => unifiedDetailPopupUI;
     public PlayerStatusUI PlayerStatus => playerStatusUI;
     public PlayAreaUI PlayArea => playAreaUI;
     public PlayerFeedbackUI PlayerFeedback => playerFeedbackUI;
@@ -62,13 +62,13 @@ public class UIManager : MonoBehaviour
         levelSelectPanelUI = GetOrAddPanel<LevelSelectPanelUI>(root, "LevelSelectPanel", levelSelectPanelUI);
         settingsPanelUI = GetOrAddPanel<SettingsPanelUI>(root, "SettingsPanel", settingsPanelUI);
         materialListPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "MaterialListPanel", materialListPanelUI);
+        materialSelectionPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "SelectionShowPanel", materialSelectionPanelUI);
         rewardPanelUI = GetOrAddPanel<RewardPanelUI>(root, "RewardPanel", rewardPanelUI);
         rewardGridPanelUI = GetOrAddPanel<RewardGridPanelUI>(root, "RewardGridPanel", rewardGridPanelUI);
         shopPanelUI = GetOrAddPanel<ShopPanelUI>(root, "ShopPanel", shopPanelUI);
         magicModifierSelectionPanelUI = GetOrAddPanel<MagicModifierSelectionPanelUI>(root, "MagicModifierSelectionPanel", magicModifierSelectionPanelUI);
         slotSelectPanelUI = GetOrAddPanel<SlotSelectPanelUI>(root, "SlotSelectPanel", slotSelectPanelUI);
-        buffTooltipUI = GetOrAddPanel<BuffTooltipUI>(root, "BuffTooltip", buffTooltipUI);
-        enemyIntentTooltipUI = GetOrAddPanel<EnemyIntentTooltipUI>(root, "EnemyIntentTooltip", enemyIntentTooltipUI);
+        unifiedDetailPopupUI = GetOrAddPanelInChildren<UnifiedDetailPopupUI>(root, "UnifiedDetailPopup", unifiedDetailPopupUI);
         playerStatusUI = GetOrAddPanelInChildren<PlayerStatusUI>(root, "PlayerStatus", playerStatusUI);
         playAreaUI = GetOrAddPanelInChildren<PlayAreaUI>(root, "PlayArea", playAreaUI);
         playerFeedbackUI = GetOrAddOnRoot(root, playerFeedbackUI);
@@ -85,13 +85,13 @@ public class UIManager : MonoBehaviour
         levelSelectPanelUI?.Initialize(owner);
         settingsPanelUI?.Initialize(owner);
         materialListPanelUI?.Initialize(owner);
+        materialSelectionPanelUI?.Initialize(owner);
         rewardPanelUI?.Initialize(owner);
         rewardGridPanelUI?.Initialize(owner);
         shopPanelUI?.Initialize(owner);
         magicModifierSelectionPanelUI?.Initialize(owner);
         slotSelectPanelUI?.Initialize(owner);
-        buffTooltipUI?.Initialize(owner);
-        enemyIntentTooltipUI?.Initialize(owner);
+        unifiedDetailPopupUI?.Initialize();
         playerStatusUI?.Initialize(owner);
         playAreaUI?.Initialize(owner);
         playerFeedbackUI?.Initialize(owner, root);
@@ -235,22 +235,23 @@ public class UIManager : MonoBehaviour
 
     public void ToggleMaterialListPanel()
     {
-        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.DrawPile);
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
     }
 
     public void ToggleDiscardPilePanel()
     {
-        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.DiscardPile);
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
     }
 
     public void ToggleConsumedPilePanel()
     {
-        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.ConsumedPile);
+        materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
     }
 
     public void RefreshMaterialListPanel()
     {
         materialListPanelUI?.Refresh();
+        materialSelectionPanelUI?.Refresh();
     }
 
     public void ShowRewardPanel()
@@ -313,22 +314,60 @@ public class UIManager : MonoBehaviour
 
     public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)
     {
-        buffTooltipUI?.Show(slot, buff);
+        if (buff == null)
+            return;
+        unifiedDetailPopupUI?.Show(slot, UnifiedDetailContentBuilder.Build(buff));
+    }
+
+    public void PinBuffTooltip(BuffSlotView slot, BuffModel buff)
+    {
+        if (buff == null)
+            return;
+        unifiedDetailPopupUI?.Pin(slot, UnifiedDetailContentBuilder.Build(buff));
     }
 
     public void HideBuffTooltip(BuffSlotView slot)
     {
-        buffTooltipUI?.Hide(slot);
+        unifiedDetailPopupUI?.Hide(slot);
     }
 
     public void ShowEnemyIntentTooltip(EnemyIntentView view, EnemyModel enemy, EnemyIntentData intent, PlayerState playerState)
     {
-        enemyIntentTooltipUI?.Show(view, enemy, intent, playerState);
+        if (enemy == null || intent == null)
+            return;
+        unifiedDetailPopupUI?.Show(view, UnifiedDetailContentBuilder.Build(enemy, intent, playerState));
+    }
+
+    public void PinEnemyIntentTooltip(EnemyIntentView view, EnemyModel enemy, EnemyIntentData intent, PlayerState playerState)
+    {
+        if (enemy == null || intent == null)
+            return;
+        unifiedDetailPopupUI?.Pin(view, UnifiedDetailContentBuilder.Build(enemy, intent, playerState));
     }
 
     public void HideEnemyIntentTooltip(EnemyIntentView view)
     {
-        enemyIntentTooltipUI?.Hide(view);
+        unifiedDetailPopupUI?.Hide(view);
+    }
+
+    public void ShowUnifiedDetailPopup(object anchor, UnifiedDetailContent content)
+    {
+        unifiedDetailPopupUI?.Show(anchor, content);
+    }
+
+    public void PinUnifiedDetailPopup(object anchor, UnifiedDetailContent content)
+    {
+        unifiedDetailPopupUI?.Pin(anchor, content);
+    }
+
+    public void UnpinUnifiedDetailPopup()
+    {
+        unifiedDetailPopupUI?.Unpin();
+    }
+
+    public void HideUnifiedDetailPopup(object anchor)
+    {
+        unifiedDetailPopupUI?.Hide(anchor);
     }
 
     internal static RectTransform FindChildRect(Transform root, string name)

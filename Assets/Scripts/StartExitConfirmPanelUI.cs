@@ -34,11 +34,16 @@ public class StartExitConfirmPanelUI : MonoBehaviour
 
     public void Show()
     {
+        Show(prompt);
+    }
+
+    public void Show(string message)
+    {
         if (panelRect == null)
             return;
 
         if (promptText != null)
-            promptText.text = prompt;
+            promptText.text = message;
         gameObject.SetActive(true);
         moveTween?.Kill(false);
         panelRect.anchoredPosition = hiddenPosition;

@@ -757,6 +757,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         if (directionButtons.TryGetValue(material, out RectTransform rect) && rect != null)
         {
             ApplyDirectionCardLayout(rect, index);
+            ApplyDirectionCardTooltip(rect, material);
             return;
         }
 
@@ -778,6 +779,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         {
             handCardView.Initialize(owner);
             handCardView.Bind(new MaterialModel("map_direction_" + material, material), false);
+            handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
             handCardView.SetClickOverride((view, eventData) =>
             {
                 if (eventData.button == PointerEventData.InputButton.Left || eventData.button == PointerEventData.InputButton.Right)
@@ -813,6 +815,13 @@ public class ChapterGridPanelUI : MonoBehaviour
             handler.Initialize(this, material);
         }
         return rect;
+    }
+
+    private void ApplyDirectionCardTooltip(RectTransform rect, MaterialEnum material)
+    {
+        HandCardView handCardView = rect != null ? rect.GetComponent<HandCardView>() : null;
+        if (handCardView != null)
+            handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
     }
 
     private void ApplyDirectionCardLayout(RectTransform rect, int index)

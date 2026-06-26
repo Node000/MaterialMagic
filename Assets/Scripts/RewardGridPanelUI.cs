@@ -81,7 +81,7 @@ public class RewardGridPanelUI : MonoBehaviour
         if (titleText != null)
             titleText.text = "奖励关卡";
         if (hintText != null)
-            hintText.text = "打出素材，按火上 / 风左 / 水下 / 土右移动。";
+            hintText.text = "打出箭头，按上 / 左 / 下 / 右移动。";
         if (resultText != null)
             resultText.text = "从中心出发。";
         gameObject.SetActive(true);
@@ -179,31 +179,23 @@ public class RewardGridPanelUI : MonoBehaviour
 
     public void ShowRewardTooltip(RectTransform anchor, BonusRewardData rewardData)
     {
-        if (anchor == null || rewardData == null)
+        if (anchor == null || rewardData == null || owner == null)
             return;
 
-        EnsureRewardTooltip();
-        if (rewardTooltip == null)
-            return;
-
-        if (rewardTooltipTitle != null)
-            rewardTooltipTitle.text = GetRewardSummary(rewardData);
-        if (rewardTooltipDescription != null)
-            rewardTooltipDescription.text = GetRewardDescription(rewardData);
-
-        rewardTooltip.gameObject.SetActive(true);
-        rewardTooltipCanvasGroup.alpha = 1f;
-        rewardTooltip.position = anchor.position + new Vector3(0f, 42f, 0f);
-        PopupLayerUtility.ApplyTo(rewardTooltip);
-        rewardTooltip.SetAsLastSibling();
+        owner.GetUIManager().ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(rewardData));
     }
 
     public void HideRewardTooltip()
     {
-        if (rewardTooltip == null)
+        owner?.GetUIManager().HideUnifiedDetailPopup(null);
+    }
+
+    public void PinRewardTooltip(RectTransform anchor, BonusRewardData rewardData)
+    {
+        if (anchor == null || rewardData == null || owner == null)
             return;
 
-        rewardTooltip.gameObject.SetActive(false);
+        owner.GetUIManager().PinUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(rewardData));
     }
 
     private void CacheReferences()

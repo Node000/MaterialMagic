@@ -58,6 +58,87 @@ public class EventModel
         return new EventModel(data);
     }
 
+    public EventNodeSaveData ExportSaveData(int levelId)
+    {
+        List<EventOptionRecipeSaveData> recipes = new List<EventOptionRecipeSaveData>();
+        foreach (KeyValuePair<string, EventNodeData> pair in nodes)
+        {
+            EventNodeData node = pair.Value;
+            if (node == null || node.options == null)
+                continue;
+
+            for (int i = 0; i < node.options.Length; i++)
+            {
+                EventOptionData option = node.options[i];
+                if (option == null || string.IsNullOrEmpty(option.id))
+                    continue;
+
+                recipes.Add(new EventOptionRecipeSaveData
+                {
+                    nodeId = node.id,
+                    optionId = option.id,
+                    recipe = option.recipe
+                });
+            }
+        }
+
+        List<EventOptionResolveCountSaveData> counts = new List<EventOptionResolveCountSaveData>();
+        foreach (KeyValuePair<string, int> pair in optionResolveCounts)
+        {
+            counts.Add(new EventOptionResolveCountSaveData
+            {
+                optionId = pair.Key,
+                count = pair.Value
+            });
+        }
+
+        return new EventNodeSaveData
+        {
+            levelId = levelId,
+            eventNumericId = Data != null ? Data.numericId : 0,
+            eventId = Data != null ? Data.id : string.Empty,
+            currentNodeId = CurrentNode != null ? CurrentNode.id : string.Empty,
+            optionRecipes = recipes.ToArray(),
+            optionResolveCounts = counts.ToArray()
+        };
+    }
+
+    public void RestoreSaveData(EventNodeSaveData data)
+    {
+        if (data == null)
+            return;
+
+        for (int i = 0; data.optionRecipes != null && i < data.optionRecipes.Length; i++)
+        {
+            EventOptionRecipeSaveData recipe = data.optionRecipes[i];
+            if (recipe == null || string.IsNullOrEmpty(recipe.nodeId) || string.IsNullOrEmpty(recipe.optionId))
+                continue;
+            if (!nodes.TryGetValue(recipe.nodeId, out EventNodeData node) || node == null || node.options == null)
+                continue;
+
+            for (int optionIndex = 0; optionIndex < node.options.Length; optionIndex++)
+            {
+                EventOptionData option = node.options[optionIndex];
+                if (option != null && option.id == recipe.optionId)
+                {
+                    option.recipe = recipe.recipe;
+                    break;
+                }
+            }
+        }
+
+        optionResolveCounts.Clear();
+        for (int i = 0; data.optionResolveCounts != null && i < data.optionResolveCounts.Length; i++)
+        {
+            EventOptionResolveCountSaveData count = data.optionResolveCounts[i];
+            if (count != null && !string.IsNullOrEmpty(count.optionId) && count.count > 0)
+                optionResolveCounts[count.optionId] = count.count;
+        }
+
+        if (!string.IsNullOrEmpty(data.currentNodeId) && nodes.TryGetValue(data.currentNodeId, out EventNodeData currentNode))
+            CurrentNode = currentNode;
+    }
+
     public bool TryGetMatchedOption(IReadOnlyList<ArrowReadToken> sequence, out EventOptionData option)
     {
         option = null;

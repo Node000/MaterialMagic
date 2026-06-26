@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "id": "attack",
+      "spriteName": "attack",
+      "fallbackText": "攻击",
+      "tint": false
+    },
+    {
+      "id": "shield",
+      "spriteName": "defend",
+      "fallbackText": "护盾",
+      "tint": false
+    },
+    {
+      "id": "buff_vulnerable",
+      "spriteName": "vulnerable",
+      "fallbackText": "易损",
+      "tint": false
+    },
+    {
+      "id": "buff_weak",
+      "spriteName": "weak",
+      "fallbackText": "虚弱",
+      "tint": false
+    },
+    {
+      "id": "buff_slow",
+      "spriteName": "slow",
+      "fallbackText": "迟缓",
+      "tint": false
+    },
+    {
+      "id": "fire",
+      "spriteName": "up",
+      "fallbackText": "上",
+      "tint": false
+    },
+    {
+      "id": "wind",
+      "spriteName": "left",
+      "fallbackText": "左",
+      "tint": false
+    },
+    {
+      "id": "water",
+      "spriteName": "down",
+      "fallbackText": "下",
+      "tint": false
+    },
+    {
+      "id": "earth",
+      "spriteName": "right",
+      "fallbackText": "右",
+      "tint": false
+    }
+  ]
+}

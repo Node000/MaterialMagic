@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c23ec4fb0760f7a4cb8b4be9ea9b2093, type: 3}
+  m_Name: UnifiedDetailPopupTheme
+  m_EditorClassIdentifier: 
+  hiddenScale: {x: 0.82, y: 0.82, z: 1}
+  fadeDuration: 0.12
+  scaleDuration: 0.18
+  showEase: 27
+  hideEase: 26
+  popupSize: {x: 660, y: 213}
+  iconSize: {x: 136, y: 136}
+  titleFont: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
+  titleFontSize: 44
+  titleFontStyle: 1
+  bodyFont: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
+  bodyFontSize: 30
+  bodyFontStyle: 0
+  bodyLineSpacing: 0
+  styles:
+  - sourceType: 1
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1
+  - sourceType: 2
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1
+  - sourceType: 3
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1
+  - sourceType: 4
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1
+  - sourceType: 5
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1
+  - sourceType: 6
+    lineColor: {r: 1, g: 1, b: 1, a: 1}
+    titleColor: {r: 1, g: 1, b: 1, a: 1}
+    bodyColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    iconTintMode: 1

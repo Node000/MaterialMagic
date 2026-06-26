@@ -3,14 +3,12 @@ public class VortexModifier : MaterialModifierModel
     public override void OnTokenInvoke(ArrowReadToken token, ArrowReadStep step)
     {
         MaterialModifierContext context = Context;
-        if (context != null && context.BattleManager != null && context.BattleManager.AddRandomDebuffToRandomEnemy(1))
-            context.EnemyBuffChanged = true;
-    }
+        if (context == null)
+            return;
 
-    public override void OnEnd()
-    {
-        MaterialModifierContext context = Context;
-        if (context != null && context.PlayerState != null)
+        if (context.BattleManager != null && context.BattleManager.AddRandomDebuffToRandomEnemy(1))
+            context.EnemyBuffChanged = true;
+        if (context.PlayerState != null)
             context.PlayerState.DrawCardsToPlayZoneTail(1);
     }
 }

@@ -18,7 +18,7 @@ public class SturdyBuffModel : BuffModel
             pendingNextTurn = false;
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    public override void AfterTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (!pendingNextTurn)
             stack = 0;

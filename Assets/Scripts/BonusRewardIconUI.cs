@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text amountText;
@@ -48,6 +48,12 @@ public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerEx
     public void OnPointerExit(PointerEventData eventData)
     {
         owner?.HideRewardTooltip();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+            owner?.PinRewardTooltip(RectTransform, rewardData);
     }
 
     private void CacheReferences()

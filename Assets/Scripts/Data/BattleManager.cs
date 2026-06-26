@@ -293,6 +293,14 @@ public class BattleManager
         ContinuousCastCount = 0;
     }
 
+    public void RestoreBattleState(BattlePhase phase, int continuousCastCount)
+    {
+        CurrentPhase = phase;
+        ContinuousCastCount = continuousCastCount < 0 ? 0 : continuousCastCount;
+        FocusTarget = null;
+        CurrentCastTarget = null;
+    }
+
     public void EndCastTarget()
     {
         CurrentCastTarget = null;
@@ -427,7 +435,7 @@ public class BattleManager
         MaterialModifierModel.CurrentContext = null;
     }
 
-    public BattleActionResult BeginPlayerTurnStartRules()
+    public BattleActionResult BeginPlayerTurnStartRules(int drawCount, Func<bool> tryApplyFixedTurnHand)
     {
         BattleActionResult result = new BattleActionResult();
         if (PlayerState == null)
@@ -439,24 +447,22 @@ public class BattleManager
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
         PlayerState.TriggerOnTurnStart(opponent);
         PlayerState.ClearShield();
+        bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
+        DrawPlayerTurnCards(drawCount, skipNormalDraw);
         PlayerState.TriggerAfterTurnStart(opponent);
         TriggerMagicTurnStart();
         result.CapturePlayerAfter(PlayerState);
         return result;
     }
 
-    public BattleActionResult DrawPlayerTurnCardsRules(int drawCount, bool skipNormalDraw)
+    private void DrawPlayerTurnCards(int drawCount, bool skipNormalDraw)
     {
-        BattleActionResult result = new BattleActionResult();
-        if (PlayerState == null)
-            return result;
-
-        result.CapturePlayerBefore(PlayerState);
         if (!skipNormalDraw)
         {
             int extraDraw = PlayerState.GetBuffStack(BuffEnum.ExtraDraw);
+            int directionExtraDraw = PlayerState.GetBuffStack(BuffEnum.DirectionExtraDraw);
             int lazyDrawReduction = PlayerState.GetBuffStack(BuffEnum.LazyNextDraw);
-            int finalDrawCount = drawCount + extraDraw - lazyDrawReduction;
+            int finalDrawCount = drawCount + extraDraw + directionExtraDraw - lazyDrawReduction;
             if (finalDrawCount < 0)
                 finalDrawCount = 0;
             PlayerState.DrawCards(finalDrawCount);
@@ -468,8 +474,6 @@ public class BattleManager
         }
         if (PlayerState.GetBuffStack(BuffEnum.Sturdy) > 0)
             PlayerState.ApplySturdyToHand();
-        result.CapturePlayerAfter(PlayerState);
-        return result;
     }
 
     public BattleActionResult EndPlayerTurnRules(List<MaterialModel> removedTemporaryCards)

@@ -5,7 +5,6 @@
   "maxHealth": 12,
   "baseAttack": 2,
   "imageScale": 0.6,
-  "healthBarWidth": 150.0,
   "isMinion": false,
   "initialBuffs": [
     {

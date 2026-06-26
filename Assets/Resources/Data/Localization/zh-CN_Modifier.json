@@ -14,7 +14,7 @@
     },
     {
       "key": "modifier.charge.desc",
-      "text": "进入出牌区时，对随机敌人施加1层电弧。"
+      "text": "以此素材触发道具时，对随机敌人施加1层电弧。"
     },
     {
       "key": "modifier.vortex.name",
@@ -22,7 +22,7 @@
     },
     {
       "key": "modifier.vortex.desc",
-      "text": "进入出牌区时，对随机敌人施加1层随机负面状态；回合结束时额外抽1张素材到出牌区。"
+      "text": "以此素材触发道具时，对随机敌人施加1层随机负面状态，并额外抽1张素材到出牌区。"
     },
     {
       "key": "modifier.kindling.name",
@@ -46,7 +46,7 @@
     },
     {
       "key": "modifier.liquefy.desc",
-      "text": "此素材也被视为水素材。"
+      "text": "此箭头也被视为下箭头。"
     },
     {
       "key": "modifier.sturdy.name",
@@ -78,7 +78,7 @@
     },
     {
       "key": "modifier.omni_arrow.desc",
-      "text": "读取时依次触发火、水、风、土四种基础效果，并可作为任意基础方向参与配方。"
+      "text": "读取时依次触发上、下、左、右四种基础效果，并可作为任意基础方向参与配方。"
     },
     {
       "key": "modifier.repeat_arrow.name",

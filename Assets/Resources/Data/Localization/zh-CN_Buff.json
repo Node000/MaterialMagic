@@ -46,7 +46,7 @@
     },
     {
       "key": "buff.arc.desc",
-      "text": "每次施法时，该目标受到层数点额外伤害，回合结束时清除。"
+      "text": "每次触发道具时，该目标受到层数点额外伤害，回合结束时清除。"
     },
     {
       "key": "buff.spell_power.name",
@@ -62,7 +62,7 @@
     },
     {
       "key": "buff.charge_next_draw.desc",
-      "text": "下回合抽到的前{0}张素材获得【电荷】。"
+      "text": "下回合抽到的前{0}张素材获得【电荷】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
     },
     {
       "key": "buff.burning_next_turn.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "buff.sturdy.desc",
-      "text": "下回合开始抽牌结束后，所有手牌获得坚固，然后回合结束时移除。"
+      "text": "下回合开始抽牌结束后，所有手牌获得【坚固】，生效后清除。"
     },
     {
       "key": "modifier.sturdy.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "modifier.sturdy.desc",
-      "text": "以此素材牌触发道具时，获得1点护盾。回合结束时移除此效果。"
+      "text": "以此素材牌触发道具时，获得1点护盾；离开手牌或出牌区时消失。"
     },
     {
       "key": "buff.stable.name",
@@ -166,7 +166,7 @@
     },
     {
       "key": "buff.vortex_next_draw.desc",
-      "text": "下回合抽到的前若干张素材牌获得漩涡。"
+      "text": "下回合抽到的前{0}张素材牌获得【漩涡】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
     },
     {
       "key": "buff.eggdeathexplosion.name",
@@ -182,7 +182,7 @@
     },
     {
       "key": "buff.shieldonhealthloss.desc",
-      "text": "生命值减少时，获得减少量×{0}的护盾。"
+      "text": "持续生效：生命值减少时，获得减少量×{0}的护盾。"
     },
     {
       "key": "buff.shufflehandoninvokechance.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "buff.shufflehandoninvokechance.desc",
-      "text": "玩家出手时，有1/{0}概率打乱玩家手牌顺序。"
+      "text": "持续生效：玩家出手时，有1/{0}概率打乱玩家手牌顺序。"
     },
     {
       "key": "buff.attributedisabled.name",
@@ -206,7 +206,7 @@
     },
     {
       "key": "buff.curse.desc",
-      "text": "回合开始时，手牌前两张获得厄运。"
+      "text": "持续生效：回合开始时，每层使抽到的前2张牌获得厄运。"
     },
     {
       "key": "buff.directiondamagebonus.name",
@@ -246,7 +246,7 @@
     },
     {
       "key": "buff.materialoverplaydebuff.desc",
-      "text": "玩家打出超过4张素材后，每多打出1张获得1层随机负面状态。"
+      "text": "持续生效：玩家打出超过4张素材后，每多打出1张获得1层随机负面状态。"
     },
     {
       "key": "buff.kindling_next_draw.name",
@@ -254,7 +254,7 @@
     },
     {
       "key": "buff.kindling_next_draw.desc",
-      "text": "下回合抽到的素材牌获得燃薪。"
+      "text": "下回合抽到的前{0}张素材牌获得【燃薪】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
     },
     {
       "key": "buff.draw_on_enemy_attack.name",
@@ -302,7 +302,7 @@
     },
     {
       "key": "buff.next_magic_repeat.desc",
-      "text": "下一个道具额外触发{0}次。"
+      "text": "下一个道具额外触发{0}次，生效后清除。"
     },
     {
       "key": "buff.lazy_next_draw.name",

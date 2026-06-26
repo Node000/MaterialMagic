@@ -3,6 +3,43 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+public enum RunHistoryResultType
+{
+    Victory,
+    Defeat,
+    Abandon
+}
+
+[Serializable]
+public class RunHistoryData
+{
+    public int version = 1;
+    public int slotIndex = 1;
+    public RunHistoryRecordData[] records = Array.Empty<RunHistoryRecordData>();
+}
+
+[Serializable]
+public class RunHistoryRecordData
+{
+    public int historyVersion = 1;
+    public string gameVersion;
+    public string runId;
+    public string resultType;
+    public string endedAtUtc;
+    public float playSeconds;
+    public int chapterNumericId;
+    public int currentMapNodeIndex;
+    public int totalMapNodeCount;
+    public int currentLevelNumericId;
+    public string progressText;
+    public int maxHealth;
+    public int currentHealth;
+    public int gold;
+    public string buildSummary;
+    public MagicSlotSaveData[] magicBook = Array.Empty<MagicSlotSaveData>();
+    public MaterialCardSaveData[] deck = Array.Empty<MaterialCardSaveData>();
+}
+
 [Serializable]
 public class RunSaveData
 {
@@ -75,7 +112,75 @@ public class RunPoolSaveData
 public class CurrentNodeSaveData
 {
     public int levelId;
+    public PlayerSaveData initialPlayer;
+    public BattleNodeSaveData battle;
     public ShopNodeSaveData shop;
+    public EventNodeSaveData eventState;
+}
+
+[Serializable]
+public class BattleNodeSaveData
+{
+    public int levelId;
+    public int phase;
+    public int continuousCastCount;
+    public EnemyBattleSaveData[] enemies = Array.Empty<EnemyBattleSaveData>();
+    public PlayerCombatSaveData playerCombat;
+}
+
+[Serializable]
+public class EnemyBattleSaveData
+{
+    public int enemyId;
+    public int currentHealth;
+    public int shield;
+    public int actionIndex;
+    public int phase;
+    public bool deathHandled;
+    public bool canActThisEnemyTurn = true;
+    public bool isMinion;
+    public bool hasSpawnPosition;
+    public float spawnPositionX;
+    public float spawnPositionY;
+    public BuffStackData[] buffs = Array.Empty<BuffStackData>();
+}
+
+[Serializable]
+public class PlayerCombatSaveData
+{
+    public int shield;
+    public MaterialCardSaveData[] hand = Array.Empty<MaterialCardSaveData>();
+    public MaterialCardSaveData[] drawPile = Array.Empty<MaterialCardSaveData>();
+    public MaterialCardSaveData[] discardPile = Array.Empty<MaterialCardSaveData>();
+    public MaterialCardSaveData[] playZone = Array.Empty<MaterialCardSaveData>();
+    public MaterialCardSaveData[] consumedPile = Array.Empty<MaterialCardSaveData>();
+    public MaterialCardSaveData[] temporaryMaterialsNextTurn = Array.Empty<MaterialCardSaveData>();
+}
+
+[Serializable]
+public class EventNodeSaveData
+{
+    public int levelId;
+    public int eventNumericId;
+    public string eventId;
+    public string currentNodeId;
+    public EventOptionRecipeSaveData[] optionRecipes = Array.Empty<EventOptionRecipeSaveData>();
+    public EventOptionResolveCountSaveData[] optionResolveCounts = Array.Empty<EventOptionResolveCountSaveData>();
+}
+
+[Serializable]
+public class EventOptionRecipeSaveData
+{
+    public string nodeId;
+    public string optionId;
+    public string recipe;
+}
+
+[Serializable]
+public class EventOptionResolveCountSaveData
+{
+    public string optionId;
+    public int count;
 }
 
 [Serializable]
@@ -150,6 +255,8 @@ public class MagicSlotSaveData
 public static class RunSaveSystem
 {
     private const int CurrentVersion = 3;
+    private const int HistoryVersion = 1;
+    private const int MaxHistoryRecords = 100;
     private const string CurrentSlotPlayerPrefsKey = "RunSaveSystem.CurrentSlotIndex";
     private const string MapSelectionState = "MapSelection";
     private const string BeforeNodeState = "BeforeNode";
@@ -191,6 +298,11 @@ public static class RunSaveSystem
     public static string GetRunSavePath(int slotIndex)
     {
         return Path.Combine(SaveDirectory, $"run_slot_{Mathf.Clamp(slotIndex, 1, 3)}.json");
+    }
+
+    public static string GetHistorySavePath(int slotIndex)
+    {
+        return Path.Combine(SaveDirectory, $"history_slot_{Mathf.Clamp(slotIndex, 1, 3)}.json");
     }
 
     public static RunSaveData LoadRun(int slotIndex)
@@ -280,12 +392,28 @@ public static class RunSaveSystem
 
     public static void RecordVictoryAndClearCurrentRun(float playSeconds = -1f)
     {
-        RunSaveData data = LoadCurrentRun();
+        RecordRunEndAndClearCurrentRun(RunHistoryResultType.Victory, null, null, 0, null, null, playSeconds);
+    }
+
+    public static void RecordCurrentRunAbandonedAndClearCurrentRun()
+    {
+        if (!HasCurrentRun())
+            return;
+
+        RecordRunEndAndClearCurrentRun(RunHistoryResultType.Abandon, null, null, 0, null, null);
+    }
+
+    public static void RecordRunEndAndClearCurrentRun(RunHistoryResultType resultType, PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f)
+    {
+        RunSaveData data = CreateRunEndSnapshot(player, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
         if (data != null)
         {
-            data.victoryCount++;
+            AppendHistoryRecord(data, resultType, playSeconds);
+            if (resultType == RunHistoryResultType.Victory)
+                data.victoryCount++;
             if (playSeconds >= 0f)
                 data.totalPlaySeconds = playSeconds;
+            data.lastPlayedAtUtc = DateTime.UtcNow.ToString("o");
             SaveSummaryOnly(data);
         }
         ClearCurrentRun();
@@ -309,6 +437,31 @@ public static class RunSaveSystem
         return JsonUtility.FromJson<RunSaveData>(File.ReadAllText(path));
     }
 
+    public static RunHistoryData LoadHistory(int slotIndex)
+    {
+        int clampedSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
+        string path = GetHistorySavePath(clampedSlotIndex);
+        if (!File.Exists(path))
+            return new RunHistoryData { version = HistoryVersion, slotIndex = clampedSlotIndex };
+
+        RunHistoryData history = JsonUtility.FromJson<RunHistoryData>(File.ReadAllText(path));
+        if (history == null)
+            return new RunHistoryData { version = HistoryVersion, slotIndex = clampedSlotIndex };
+
+        history.version = HistoryVersion;
+        history.slotIndex = clampedSlotIndex;
+        if (history.records == null)
+            history.records = Array.Empty<RunHistoryRecordData>();
+        return history;
+    }
+
+    public static void ClearHistory(int slotIndex)
+    {
+        string path = GetHistorySavePath(slotIndex);
+        if (File.Exists(path))
+            File.Delete(path);
+    }
+
     public static void ClearSlot(int slotIndex)
     {
         int clampedSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
@@ -319,6 +472,8 @@ public static class RunSaveSystem
         string summaryPath = Path.Combine(SaveDirectory, $"summary_slot_{clampedSlotIndex}.json");
         if (File.Exists(summaryPath))
             File.Delete(summaryPath);
+
+        ClearHistory(clampedSlotIndex);
     }
 
     public static void ClearCurrentRun()
@@ -332,12 +487,14 @@ public static class RunSaveSystem
         return LoadRun(CurrentSlotIndex);
     }
 
-    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f)
+    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f, BattleManager battleManager = null, EventModel currentEvent = null)
     {
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
 
         RunSaveData previousData = LoadSummary(CurrentSlotIndex);
+        bool sameCurrentNode = currentLevel != null && previousData != null && previousData.currentNode != null && previousData.currentNode.levelId == currentLevel.numericId && previousData.currentMapNodeIndex == currentMapNodeIndex;
+        bool previousHasNodeSnapshot = sameCurrentNode && HasCurrentNodeSnapshot(previousData.currentNode);
         string now = DateTime.UtcNow.ToString("o");
         RunSaveData data = new RunSaveData
         {
@@ -358,8 +515,8 @@ public static class RunSaveSystem
             mapNodes = ExportMapNodes(mapNodes),
             mapGrid = ExportMapGrid(RunManager.Current != null ? RunManager.Current.MapGrid : null),
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
-            player = ExportPlayer(player),
-            currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player) : null
+            player = sameCurrentNode && previousData.player != null ? previousData.player : ExportPlayer(player),
+            currentNode = currentLevel != null ? (previousHasNodeSnapshot ? previousData.currentNode : ExportCurrentNode(currentLevel, player, battleManager, currentEvent, sameCurrentNode ? previousData.player : null)) : null
         };
 
         Directory.CreateDirectory(SaveDirectory);
@@ -371,9 +528,30 @@ public static class RunSaveSystem
         GameLog.Data($"Save run state={data.runState} node={currentMapNodeIndex + 1}");
     }
 
+    private static bool HasCurrentNodeSnapshot(CurrentNodeSaveData node)
+    {
+        return node != null && (node.battle != null || node.shop != null || node.eventState != null);
+    }
+
     public static PlayerState CreatePlayer(RunSaveData save)
     {
         return CreatePlayerStatus(save);
+    }
+
+    public static MagicModel CreateMagic(MagicSlotSaveData slot)
+    {
+        if (slot == null || !GameDataDatabase.TryGetMagicData(slot.magicNumericId, out MagicData data))
+            return null;
+
+        MagicModel magic = MagicFactory.Create(data, slot.slotIndex);
+        if (!string.IsNullOrEmpty(slot.modifierId) && GameDataDatabase.TryGetMagicModifierData(slot.modifierId, out MagicModifierData modifierData))
+            magic.AddModifier(MagicModifierFactory.Create(modifierData));
+        return magic;
+    }
+
+    public static MaterialModel CreateMaterialCard(MaterialCardSaveData data)
+    {
+        return CreateMaterial(data);
     }
 
     public static PlayerStatus CreatePlayerStatus(RunSaveData save)
@@ -409,13 +587,9 @@ public static class RunSaveSystem
         for (int i = 0; playerData.magicBook != null && i < playerData.magicBook.Length; i++)
         {
             MagicSlotSaveData slot = playerData.magicBook[i];
-            if (slot == null || !GameDataDatabase.TryGetMagicData(slot.magicNumericId, out MagicData data))
-                continue;
-
-            MagicModel magic = MagicFactory.Create(data, slot.slotIndex);
-            if (!string.IsNullOrEmpty(slot.modifierId) && GameDataDatabase.TryGetMagicModifierData(slot.modifierId, out MagicModifierData modifierData))
-                magic.AddModifier(MagicModifierFactory.Create(modifierData));
-            player.SetMagicAtSlot(magic, slot.slotIndex);
+            MagicModel magic = CreateMagic(slot);
+            if (magic != null)
+                player.SetMagicAtSlot(magic, slot.slotIndex);
         }
 
         return player;
@@ -487,6 +661,92 @@ public static class RunSaveSystem
         return save != null && save.currentNode != null ? GetLevel(save.currentNode.levelId) : null;
     }
 
+    public static BattleNodeSaveData GetSavedBattle(RunSaveData save)
+    {
+        return save != null && save.currentNode != null ? save.currentNode.battle : null;
+    }
+
+    public static ShopNodeSaveData GetSavedShop(RunSaveData save, LevelData level)
+    {
+        return save != null && save.currentNode != null && level != null && save.currentNode.levelId == level.numericId ? save.currentNode.shop : null;
+    }
+
+    public static EventNodeSaveData GetSavedEvent(RunSaveData save, LevelData level)
+    {
+        return save != null && save.currentNode != null && level != null && save.currentNode.levelId == level.numericId ? save.currentNode.eventState : null;
+    }
+
+    public static void RestoreBattle(BattleNodeSaveData data, BattleManager battleManager, PlayerState player)
+    {
+        if (data == null || battleManager == null)
+            return;
+
+        battleManager.ClearEnemies();
+        for (int i = 0; data.enemies != null && i < data.enemies.Length; i++)
+        {
+            EnemyBattleSaveData enemyData = data.enemies[i];
+            if (enemyData == null || !GameDataDatabase.TryGetEnemyData(enemyData.enemyId, out EnemyData baseData))
+                continue;
+
+            EnemyModel enemy = EnemyFactory.Create(baseData);
+            if (enemy == null)
+                continue;
+            enemy.RestoreBattleState(enemyData);
+            battleManager.SpawnEnemy(enemy);
+        }
+
+        RestorePlayerCombat(data.playerCombat, player);
+        battleManager.RestoreBattleState((BattlePhase)data.phase, data.continuousCastCount);
+    }
+
+    private static void RestorePlayerCombat(PlayerCombatSaveData data, PlayerState player)
+    {
+        if (data == null || player == null)
+            return;
+
+        Dictionary<string, MaterialModel> deckLookup = BuildDeckLookup(player);
+        player.RestoreCombatSnapshot(
+            data.shield,
+            RestoreCards(data.hand, deckLookup),
+            RestoreCards(data.drawPile, deckLookup),
+            RestoreCards(data.discardPile, deckLookup),
+            RestoreCards(data.playZone, deckLookup),
+            RestoreCards(data.consumedPile, deckLookup),
+            RestoreCards(data.temporaryMaterialsNextTurn, deckLookup));
+    }
+
+    private static Dictionary<string, MaterialModel> BuildDeckLookup(PlayerState player)
+    {
+        Dictionary<string, MaterialModel> lookup = new Dictionary<string, MaterialModel>();
+        for (int i = 0; player != null && i < player.Deck.Count; i++)
+        {
+            MaterialModel card = player.Deck[i];
+            if (card != null && !string.IsNullOrEmpty(card.instanceId) && !lookup.ContainsKey(card.instanceId))
+                lookup.Add(card.instanceId, card);
+        }
+        return lookup;
+    }
+
+    private static List<MaterialModel> RestoreCards(MaterialCardSaveData[] data, Dictionary<string, MaterialModel> deckLookup)
+    {
+        List<MaterialModel> cards = new List<MaterialModel>();
+        for (int i = 0; data != null && i < data.Length; i++)
+        {
+            MaterialCardSaveData cardData = data[i];
+            if (cardData == null)
+                continue;
+
+            MaterialModel card = null;
+            if (!string.IsNullOrEmpty(cardData.instanceId) && deckLookup != null)
+                deckLookup.TryGetValue(cardData.instanceId, out card);
+            if (card == null)
+                card = CreateMaterial(cardData);
+            if (card != null)
+                cards.Add(card);
+        }
+        return cards;
+    }
+
     private static RunSaveData CreateEmptySlotData()
     {
         string now = DateTime.UtcNow.ToString("o");
@@ -503,20 +763,205 @@ public static class RunSaveSystem
         };
     }
 
-    private static CurrentNodeSaveData ExportCurrentNode(LevelData currentLevel, PlayerState player)
+    private static RunSaveData CreateRunEndSnapshot(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds)
+    {
+        RunSaveData previousData = LoadSummary(CurrentSlotIndex);
+        if (player == null && previousData == null)
+            return null;
+
+        string now = DateTime.UtcNow.ToString("o");
+        RunSaveData data = new RunSaveData
+        {
+            version = CurrentVersion,
+            slotIndex = CurrentSlotIndex,
+            runId = previousData != null && !string.IsNullOrEmpty(previousData.runId) ? previousData.runId : Guid.NewGuid().ToString("N"),
+            createdAtUtc = previousData != null && !string.IsNullOrEmpty(previousData.createdAtUtc) ? previousData.createdAtUtc : now,
+            lastSavedAtUtc = now,
+            lastPlayedAtUtc = now,
+            victoryCount = previousData != null ? previousData.victoryCount : 0,
+            tutorialCompleted = previousData != null && previousData.tutorialCompleted,
+            tutorialEventShown = previousData != null && previousData.tutorialEventShown,
+            totalPlaySeconds = playSeconds >= 0f ? playSeconds : (previousData != null ? previousData.totalPlaySeconds : 0f),
+            startConfigId = previousData != null && !string.IsNullOrEmpty(previousData.startConfigId) ? previousData.startConfigId : PlayerState.SelectedStartConfigId,
+            runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
+            chapterNumericId = chapter != null ? chapter.numericId : (previousData != null ? previousData.chapterNumericId : 0),
+            currentMapNodeIndex = mapNodes != null && mapNodes.Count > 0 ? currentMapNodeIndex : (previousData != null ? previousData.currentMapNodeIndex : 0),
+            mapNodes = mapNodes != null && mapNodes.Count > 0 ? ExportMapNodes(mapNodes) : (previousData != null ? previousData.mapNodes : Array.Empty<RunMapNodeSaveData>()),
+            mapGrid = RunManager.Current != null ? ExportMapGrid(RunManager.Current.MapGrid) : previousData != null ? previousData.mapGrid : null,
+            runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
+            player = player != null ? ExportPlayer(player) : previousData != null ? previousData.player : null,
+            currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player, null, null, null) : previousData != null ? previousData.currentNode : null
+        };
+        return data;
+    }
+
+    private static void AppendHistoryRecord(RunSaveData data, RunHistoryResultType resultType, float playSeconds)
+    {
+        if (data == null)
+            return;
+
+        RunHistoryData history = LoadHistory(CurrentSlotIndex);
+        RunHistoryRecordData record = CreateHistoryRecord(data, resultType, playSeconds);
+        List<RunHistoryRecordData> records = new List<RunHistoryRecordData>();
+        records.Add(record);
+        for (int i = 0; history.records != null && i < history.records.Length && records.Count < MaxHistoryRecords; i++)
+        {
+            if (history.records[i] != null)
+                records.Add(history.records[i]);
+        }
+
+        history.records = records.ToArray();
+        Directory.CreateDirectory(SaveDirectory);
+        File.WriteAllText(GetHistorySavePath(CurrentSlotIndex), JsonUtility.ToJson(history, true));
+    }
+
+    private static RunHistoryRecordData CreateHistoryRecord(RunSaveData data, RunHistoryResultType resultType, float playSeconds)
+    {
+        PlayerSaveData player = data.player;
+        int totalNodeCount = data.mapNodes != null ? data.mapNodes.Length : 0;
+        int progressNode = totalNodeCount > 0 ? Mathf.Clamp(data.currentMapNodeIndex + 1, 1, totalNodeCount) : 0;
+        string resultText = resultType.ToString();
+        return new RunHistoryRecordData
+        {
+            historyVersion = HistoryVersion,
+            gameVersion = Application.version,
+            runId = data.runId,
+            resultType = resultText,
+            endedAtUtc = DateTime.UtcNow.ToString("o"),
+            playSeconds = playSeconds >= 0f ? playSeconds : data.totalPlaySeconds,
+            chapterNumericId = data.chapterNumericId,
+            currentMapNodeIndex = data.currentMapNodeIndex,
+            totalMapNodeCount = totalNodeCount,
+            currentLevelNumericId = data.currentNode != null ? data.currentNode.levelId : 0,
+            progressText = BuildProgressText(data.chapterNumericId, progressNode, totalNodeCount, data.currentNode != null ? data.currentNode.levelId : 0),
+            maxHealth = player != null ? player.maxHealth : 0,
+            currentHealth = player != null ? player.currentHealth : 0,
+            gold = player != null ? player.gold : 0,
+            buildSummary = BuildHistoryBuildSummary(player),
+            magicBook = player != null && player.magicBook != null ? player.magicBook : Array.Empty<MagicSlotSaveData>(),
+            deck = player != null && player.deck != null ? player.deck : Array.Empty<MaterialCardSaveData>()
+        };
+    }
+
+    private static string BuildProgressText(int chapterNumericId, int progressNode, int totalNodeCount, int currentLevelId)
+    {
+        string chapterText = chapterNumericId > 0 ? $"章节 {chapterNumericId}" : "未知章节";
+        string nodeText = totalNodeCount > 0 ? $"{progressNode}/{totalNodeCount}" : "未知进度";
+        LevelData level = GetLevel(currentLevelId);
+        string levelText = level != null ? LocalizationSystem.GetText(level.titleKey, UIManager.GetLevelTypeName(level.levelType)) : string.Empty;
+        return string.IsNullOrEmpty(levelText) ? $"{chapterText} · {nodeText}" : $"{chapterText} · {nodeText} · {levelText}";
+    }
+
+    private static string BuildHistoryBuildSummary(PlayerSaveData player)
+    {
+        if (player == null)
+            return string.Empty;
+
+        int magicCount = 0;
+        for (int i = 0; player.magicBook != null && i < player.magicBook.Length; i++)
+        {
+            if (player.magicBook[i] != null && player.magicBook[i].magicNumericId > 0)
+                magicCount++;
+        }
+
+        int arrowCount = player.deck != null ? player.deck.Length : 0;
+        return $"道具 {magicCount} / 箭头 {arrowCount}";
+    }
+
+    private static CurrentNodeSaveData ExportCurrentNode(LevelData currentLevel, PlayerState player, BattleManager battleManager, EventModel currentEvent, PlayerSaveData initialPlayer)
     {
         if (currentLevel == null)
             return null;
 
         CurrentNodeSaveData data = new CurrentNodeSaveData
         {
-            levelId = currentLevel.numericId
+            levelId = currentLevel.numericId,
+            initialPlayer = initialPlayer ?? ExportPlayer(player)
         };
 
+        if ((currentLevel.levelType == LevelType.Battle || currentLevel.levelType == LevelType.Elite) && battleManager != null)
+            data.battle = ExportBattle(currentLevel, battleManager, player);
         if (currentLevel.levelType == LevelType.Shop && ShopPanelUI.TryExportCurrentState(player, out ShopNodeSaveData shopData))
             data.shop = shopData;
+        if (currentEvent != null && IsEventSnapshotLevel(currentLevel.levelType))
+            data.eventState = currentEvent.ExportSaveData(currentLevel.numericId);
 
         return data;
+    }
+
+    private static bool IsEventSnapshotLevel(LevelType levelType)
+    {
+        return levelType == LevelType.Event || levelType == LevelType.Rest || levelType == LevelType.RemoveMaterial || levelType == LevelType.AddMaterial;
+    }
+
+    private static BattleNodeSaveData ExportBattle(LevelData currentLevel, BattleManager battleManager, PlayerState player)
+    {
+        BattleNodeSaveData data = new BattleNodeSaveData
+        {
+            levelId = currentLevel != null ? currentLevel.numericId : 0,
+            phase = (int)battleManager.CurrentPhase,
+            continuousCastCount = battleManager.ContinuousCastCount,
+            playerCombat = ExportPlayerCombat(player)
+        };
+
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        data.enemies = new EnemyBattleSaveData[enemies != null ? enemies.Count : 0];
+        for (int i = 0; enemies != null && i < enemies.Count; i++)
+            data.enemies[i] = ExportEnemy(enemies[i]);
+        return data;
+    }
+
+    private static EnemyBattleSaveData ExportEnemy(EnemyModel enemy)
+    {
+        if (enemy == null)
+            return null;
+
+        return new EnemyBattleSaveData
+        {
+            enemyId = enemy.NumericId,
+            currentHealth = enemy.CurrentHealth,
+            shield = enemy.Shield,
+            actionIndex = enemy.ActionIndex,
+            phase = enemy.Phase,
+            deathHandled = enemy.DeathHandled,
+            canActThisEnemyTurn = enemy.CanActThisEnemyTurn,
+            isMinion = enemy.IsMinion,
+            hasSpawnPosition = enemy.HasSpawnPosition,
+            spawnPositionX = enemy.SpawnPositionX,
+            spawnPositionY = enemy.SpawnPositionY,
+            buffs = ExportBuffs(enemy.Buffs)
+        };
+    }
+
+    private static PlayerCombatSaveData ExportPlayerCombat(PlayerState player)
+    {
+        if (player == null)
+            return null;
+
+        return new PlayerCombatSaveData
+        {
+            shield = player.Shield,
+            hand = ExportDeck(player.Hand),
+            drawPile = ExportDeck(player.DrawPile),
+            discardPile = ExportDeck(player.DiscardPile),
+            playZone = ExportDeck(player.PlayZone),
+            consumedPile = ExportDeck(player.ConsumedPile),
+            temporaryMaterialsNextTurn = ExportDeck(player.TemporaryMaterialsNextTurn)
+        };
+    }
+
+    private static BuffStackData[] ExportBuffs(IReadOnlyDictionary<BuffEnum, BuffModel> buffs)
+    {
+        if (buffs == null || buffs.Count == 0)
+            return Array.Empty<BuffStackData>();
+
+        List<BuffStackData> results = new List<BuffStackData>();
+        foreach (BuffModel buff in buffs.Values)
+        {
+            if (buff != null && buff.buffType != BuffEnum.None && buff.stack > 0)
+                results.Add(new BuffStackData { buffType = buff.buffType, stack = buff.stack });
+        }
+        return results.ToArray();
     }
 
     private static RunMapNodeSaveData[] ExportMapNodes(IReadOnlyList<RunMapNodeModel> mapNodes)

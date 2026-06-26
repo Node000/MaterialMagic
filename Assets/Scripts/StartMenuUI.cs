@@ -12,9 +12,11 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private SaveSlotSelectionPanelUI saveSlotSelectionPanelUI;
     [SerializeField] private StartTutorialPanelUI tutorialPanelUI;
     [SerializeField] private StartForumPanelUI forumPanelUI;
+    [SerializeField] private RunHistoryPanelUI historyPanelUI;
     [SerializeField] private Button tutorialButton;
     [SerializeField] private Button skipTutorialButton;
     [SerializeField] private Button forumButton;
+    [SerializeField] private Button historyButton;
     [SerializeField] private Button changeSaveButton;
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
     [SerializeField] private StartExitConfirmPanelUI exitConfirmPanelUI;
@@ -25,6 +27,7 @@ public class StartMenuUI : MonoBehaviour
     private bool selectingStartConfig;
     private bool startingTutorial;
     private bool confirmingExit;
+    private bool confirmingAbandonRun;
 
     private void Awake()
     {
@@ -41,6 +44,8 @@ public class StartMenuUI : MonoBehaviour
             skipTutorialButton.onClick.AddListener(SkipTutorial);
         if (forumButton != null)
             forumButton.onClick.AddListener(OpenForum);
+        if (historyButton != null)
+            historyButton.onClick.AddListener(OpenHistory);
         if (changeSaveButton != null)
             changeSaveButton.onClick.AddListener(OpenSaveSlotSelection);
         settingsPanelUI.Hidden += HandleSettingsHidden;
@@ -63,6 +68,8 @@ public class StartMenuUI : MonoBehaviour
             skipTutorialButton.onClick.RemoveListener(SkipTutorial);
         if (forumButton != null)
             forumButton.onClick.RemoveListener(OpenForum);
+        if (historyButton != null)
+            historyButton.onClick.RemoveListener(OpenHistory);
         if (changeSaveButton != null)
             changeSaveButton.onClick.RemoveListener(OpenSaveSlotSelection);
         if (settingsPanelUI != null)
@@ -71,7 +78,7 @@ public class StartMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if ((selectingStartConfig || confirmingExit || settingsPanelUI.IsShowing || (tutorialPanelUI != null && tutorialPanelUI.IsShowing) || (forumPanelUI != null && forumPanelUI.IsShowing) || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
+        if ((selectingStartConfig || confirmingExit || confirmingAbandonRun || settingsPanelUI.IsShowing || (tutorialPanelUI != null && tutorialPanelUI.IsShowing) || (forumPanelUI != null && forumPanelUI.IsShowing) || (historyPanelUI != null && historyPanelUI.IsShowing) || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
             HideAllPanels();
     }
 
@@ -87,12 +94,16 @@ public class StartMenuUI : MonoBehaviour
             tutorialPanelUI = GetComponentInChildren<StartTutorialPanelUI>(true);
         if (forumPanelUI == null)
             forumPanelUI = GetComponentInChildren<StartForumPanelUI>(true);
+        if (historyPanelUI == null)
+            historyPanelUI = GetComponentInChildren<RunHistoryPanelUI>(true);
         if (tutorialButton == null)
             tutorialButton = UIManager.FindChildComponent<Button>(transform, "TutorialButton");
         if (skipTutorialButton == null)
             skipTutorialButton = UIManager.FindChildComponent<Button>(transform, "SkipTutorialButton");
         if (forumButton == null)
             forumButton = UIManager.FindChildComponent<Button>(transform, "ForumButton");
+        if (historyButton == null)
+            historyButton = UIManager.FindChildComponent<Button>(transform, "HistoryButton");
         if (changeSaveButton == null)
             changeSaveButton = UIManager.FindChildComponent<Button>(transform, "ChangeSaveButton");
         if (settingsPanelUI == null)
@@ -119,8 +130,10 @@ public class StartMenuUI : MonoBehaviour
     {
         HideStartConfigSelection();
         HideExitConfirm();
+        HideAbandonRunConfirm();
         HideTutorial();
         HideForum();
+        HideHistory();
         settingsPanelUI.Hide();
         saveSlotSelectionPanelUI.Show(SelectSaveSlot);
     }
@@ -128,12 +141,25 @@ public class StartMenuUI : MonoBehaviour
     private void SelectSaveSlot(int slotIndex)
     {
         RunSaveSystem.SelectSlot(slotIndex);
+        HideAbandonRunConfirm();
         buttonGroupUI.RefreshContinueButton(RunSaveSystem.HasCurrentRun());
         RefreshTutorialStartState();
     }
 
     private void HandleStartClicked()
     {
+        if (!selectingStartConfig && RunSaveSystem.HasCurrentRun())
+        {
+            if (!confirmingAbandonRun)
+            {
+                ShowAbandonRunConfirm();
+                return;
+            }
+
+            AbandonSavedRun();
+            return;
+        }
+
         if (!selectingStartConfig)
         {
             ShowStartConfigSelection();
@@ -175,6 +201,7 @@ public class StartMenuUI : MonoBehaviour
         selectedConfig = null;
         buttonGroupUI.SetStartConfigMode(true, false);
         HideExitConfirm();
+        HideAbandonRunConfirm();
         HideTutorial();
         HideForum();
         settingsPanelUI.Hide();
@@ -224,8 +251,10 @@ public class StartMenuUI : MonoBehaviour
     {
         HideStartConfigSelection();
         HideExitConfirm();
+        HideAbandonRunConfirm();
         HideTutorial();
         HideForum();
+        HideHistory();
         saveSlotSelectionPanelUI.Hide();
         buttonGroupUI.SetSettingsMode(true);
         settingsPanelUI.Show();
@@ -238,7 +267,9 @@ public class StartMenuUI : MonoBehaviour
 
         HideStartConfigSelection();
         HideExitConfirm();
+        HideAbandonRunConfirm();
         HideForum();
+        HideHistory();
         saveSlotSelectionPanelUI.Hide();
         settingsPanelUI.Hide();
         tutorialPanelUI.Show();
@@ -257,7 +288,9 @@ public class StartMenuUI : MonoBehaviour
 
         HideStartConfigSelection();
         HideExitConfirm();
+        HideAbandonRunConfirm();
         HideTutorial();
+        HideHistory();
         saveSlotSelectionPanelUI.Hide();
         settingsPanelUI.Hide();
         forumPanelUI.Show();
@@ -269,9 +302,30 @@ public class StartMenuUI : MonoBehaviour
             forumPanelUI.Hide();
     }
 
+    private void OpenHistory()
+    {
+        if (historyPanelUI == null)
+            return;
+
+        HideStartConfigSelection();
+        HideExitConfirm();
+        HideAbandonRunConfirm();
+        HideTutorial();
+        HideForum();
+        saveSlotSelectionPanelUI.Hide();
+        settingsPanelUI.Hide();
+        historyPanelUI.Show();
+    }
+
+    private void HideHistory()
+    {
+        if (historyPanelUI != null)
+            historyPanelUI.Hide();
+    }
+
     private void HandleSettingsHidden()
     {
-        if (!selectingStartConfig && !confirmingExit)
+        if (!selectingStartConfig && !confirmingExit && !confirmingAbandonRun)
             buttonGroupUI.SetSettingsMode(false);
     }
 
@@ -280,10 +334,12 @@ public class StartMenuUI : MonoBehaviour
         if (!confirmingExit)
         {
             HideStartConfigSelection();
+            HideAbandonRunConfirm();
             saveSlotSelectionPanelUI.Hide();
             settingsPanelUI.Hide();
             HideTutorial();
             HideForum();
+            HideHistory();
             ShowExitConfirm();
             return;
         }
@@ -297,9 +353,46 @@ public class StartMenuUI : MonoBehaviour
 
     private void ShowExitConfirm()
     {
+        HideAbandonRunConfirm();
         confirmingExit = true;
         buttonGroupUI.SetExitConfirmMode(true);
         exitConfirmPanelUI.Show();
+    }
+
+    private void ShowAbandonRunConfirm()
+    {
+        HideStartConfigSelection();
+        HideExitConfirm();
+        HideTutorial();
+        HideForum();
+        HideHistory();
+        saveSlotSelectionPanelUI.Hide();
+        settingsPanelUI.Hide();
+        confirmingAbandonRun = true;
+        buttonGroupUI.SetStartAbandonConfirmMode(true);
+        exitConfirmPanelUI.Show("是否放弃本局游戏？");
+    }
+
+    private void AbandonSavedRun()
+    {
+        RunSaveSystem.RecordCurrentRunAbandonedAndClearCurrentRun();
+        confirmingAbandonRun = false;
+        buttonGroupUI.SetStartAbandonConfirmMode(false);
+        exitConfirmPanelUI.Hide();
+        buttonGroupUI.RefreshContinueButton(RunSaveSystem.HasCurrentRun());
+        RefreshTutorialStartState();
+        buttonGroupUI.ClearActiveOption();
+    }
+
+    private void HideAbandonRunConfirm()
+    {
+        if (!confirmingAbandonRun)
+            return;
+
+        confirmingAbandonRun = false;
+        buttonGroupUI.SetStartAbandonConfirmMode(false);
+        if (!confirmingExit)
+            exitConfirmPanelUI.Hide();
     }
 
     private void HideExitConfirm()
@@ -319,8 +412,10 @@ public class StartMenuUI : MonoBehaviour
         settingsPanelUI.Hide();
         HideTutorial();
         HideForum();
+        HideHistory();
+        HideAbandonRunConfirm();
         HideExitConfirm();
-        if (!selectingStartConfig && !confirmingExit && !settingsPanelUI.IsShowing && (tutorialPanelUI == null || !tutorialPanelUI.IsShowing) && (forumPanelUI == null || !forumPanelUI.IsShowing))
+        if (!selectingStartConfig && !confirmingExit && !confirmingAbandonRun && !settingsPanelUI.IsShowing && (tutorialPanelUI == null || !tutorialPanelUI.IsShowing) && (forumPanelUI == null || !forumPanelUI.IsShowing) && (historyPanelUI == null || !historyPanelUI.IsShowing))
             buttonGroupUI.ClearActiveOption();
     }
 
@@ -341,11 +436,13 @@ public class StartMenuUI : MonoBehaviour
                 (tutorialButton != null && hit.IsChildOf(tutorialButton.transform)) ||
                 (skipTutorialButton != null && hit.IsChildOf(skipTutorialButton.transform)) ||
                 (forumButton != null && hit.IsChildOf(forumButton.transform)) ||
+                (historyButton != null && hit.IsChildOf(historyButton.transform)) ||
                 (changeSaveButton != null && hit.IsChildOf(changeSaveButton.transform)) ||
                 startConfigSelectionUI.Contains(hit) ||
                 (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.Contains(hit)) ||
                 (tutorialPanelUI != null && tutorialPanelUI.Contains(hit)) ||
                 (forumPanelUI != null && forumPanelUI.Contains(hit)) ||
+                (historyPanelUI != null && historyPanelUI.Contains(hit)) ||
                 exitConfirmPanelUI.Contains(hit) ||
                 settingsPanelUI.Contains(hit))
                 return false;

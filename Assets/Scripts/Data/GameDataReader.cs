@@ -131,6 +131,7 @@ public static class GameDataDatabase
     private static Dictionary<int, RewardPoolData> rewardPoolData;
     private static Dictionary<int, BonusLevelData> bonusLevelData;
     private static Dictionary<int, ChapterData> chapterData;
+    private static Dictionary<int, MapGenConfigData> mapGenConfigData;
     private static Dictionary<int, EconomyConfigData> economyConfigData;
     private static Dictionary<int, ShopProductPoolData> shopProductPoolData;
     private static Dictionary<string, TagData> tagData;
@@ -144,6 +145,7 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");
     public static IReadOnlyDictionary<int, BonusLevelData> BonusLevelData => bonusLevelData ??= GameDataReader.LoadNumericDictionary<BonusLevelData>("BonusLevelData");
     public static IReadOnlyDictionary<int, ChapterData> ChapterData => chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData");
+    public static IReadOnlyDictionary<int, MapGenConfigData> MapGenConfigData => mapGenConfigData ??= GameDataReader.LoadNumericDictionary<MapGenConfigData>("MapGenConfig");
     public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
     public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
@@ -183,6 +185,11 @@ public static class GameDataDatabase
     public static bool TryGetChapterData(int id, out ChapterData data)
     {
         return ChapterData.TryGetValue(id, out data);
+    }
+
+    public static bool TryGetMapGenConfigData(int id, out MapGenConfigData data)
+    {
+        return MapGenConfigData.TryGetValue(id, out data);
     }
 
     public static bool TryGetEconomyConfigData(int id, out EconomyConfigData data)
@@ -232,6 +239,7 @@ public static class GameDataDatabase
         rewardPoolData = null;
         bonusLevelData = null;
         chapterData = null;
+        mapGenConfigData = null;
         economyConfigData = null;
         shopProductPoolData = null;
         tagData = null;

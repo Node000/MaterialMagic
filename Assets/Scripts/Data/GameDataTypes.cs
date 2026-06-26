@@ -344,6 +344,10 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public int baseAttack;
     public float imageScale = 1f;
     public float healthBarWidth;
+    public float healthBarOffsetX;
+    public float healthBarOffsetY;
+    public float intentOffsetX;
+    public float intentOffsetY;
     public bool isMinion;
     public BuffStackData[] initialBuffs = Array.Empty<BuffStackData>();
     public string iconName;

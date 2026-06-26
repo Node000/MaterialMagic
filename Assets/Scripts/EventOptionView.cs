@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class EventOptionView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class EventOptionView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private TMP_Text recipeText;
     [SerializeField] private TMP_Text optionText;
@@ -28,6 +28,12 @@ public class EventOptionView : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void OnPointerExit(PointerEventData eventData)
     {
         owner?.HideOptionTooltip();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+            owner?.PinOptionTooltip((RectTransform)transform, option);
     }
 
     private TMP_Text FindText(string childName)

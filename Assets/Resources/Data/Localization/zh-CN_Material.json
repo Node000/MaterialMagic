@@ -1,10 +1,88 @@
 {
   "items": [
-    { "key": "material.none.name", "text": "无" },
-    { "key": "material.fire.name", "text": "火" },
-    { "key": "material.wind.name", "text": "风" },
-    { "key": "material.water.name", "text": "水" },
-    { "key": "material.earth.name", "text": "土" },
-    { "key": "material.wild.name", "text": "万能" }
+    {
+      "key": "material.none.name",
+      "text": "无"
+    },
+    {
+      "key": "material.fire.name",
+      "text": "上"
+    },
+    {
+      "key": "material.wind.name",
+      "text": "左"
+    },
+    {
+      "key": "material.water.name",
+      "text": "下"
+    },
+    {
+      "key": "material.earth.name",
+      "text": "右"
+    },
+    {
+      "key": "material.wild.name",
+      "text": "万能"
+    },
+    {
+      "key": "material.fire.single_play",
+      "text": "向上：造成<attack>3点伤害"
+    },
+    {
+      "key": "material.water.single_play",
+      "text": "向下：随机施加1层<buff_weak>或<buff_slow>"
+    },
+    {
+      "key": "material.wind.single_play",
+      "text": "向左：下回合额外抽1张牌"
+    },
+    {
+      "key": "material.earth.single_play",
+      "text": "向右：获得<shield>3"
+    },
+    {
+      "key": "material.wild.single_play",
+      "text": "这是一张特殊箭头"
+    },
+    {
+      "key": "material.none.single_play",
+      "text": "无基础效果"
+    },
+    {
+      "key": "material.read_rule.additional_read",
+      "text": "额外读取{0}次"
+    },
+    {
+      "key": "material.read_rule.pack_following",
+      "text": "读取时会打包后续箭头"
+    },
+    {
+      "key": "material.read_rule.linked_container",
+      "text": "这是一个连锁/容器箭头"
+    },
+    {
+      "key": "material.read_rule.remove_self",
+      "text": "读取后会移除自身"
+    },
+    {
+      "key": "material.read_rule.return_next_turn",
+      "text": "读取后下回合返回"
+    },
+    {
+      "key": "material.read_rule.consume",
+      "text": "读取后消耗"
+    },
+    {
+      "key": "material.read_rule.split_half_discard",
+      "text": "读取后拆分为半箭头并进入弃牌堆"
+    },
+    {
+      "key": "material.read_rule.linked_count",
+      "text": "内部包含{0}张连锁箭头"
+    },
+    {
+      "key": "material.read_rule.can_act_as",
+      "text": "可视为{0}"
+    }
   ]
 }

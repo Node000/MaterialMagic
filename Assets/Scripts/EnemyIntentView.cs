@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text valueText;
@@ -379,6 +379,12 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void OnPointerExit(PointerEventData eventData)
     {
         owner?.HideEnemyIntentTooltip(this);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left && !hidden && boundEnemy != null && boundIntent != null)
+            owner?.GetUIManager().PinEnemyIntentTooltip(this, boundEnemy, boundIntent, boundPlayerState);
     }
 
     private void OnDisable()

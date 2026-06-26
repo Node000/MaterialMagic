@@ -99,7 +99,6 @@ public class EventPanelUI : MonoBehaviour
         titleText = FindText(GetPanelContentRoot(), "Title");
         bodyText = FindText(GetPanelContentRoot(), "Body");
         hintText = FindText(GetPanelContentRoot(), "Hint");
-        EnsureOptionTooltip();
         Transform optionAreaTransform = GetPanelContentRoot().Find("OptionArea");
         optionArea = optionAreaTransform as RectTransform;
         if (hintText != null)
@@ -521,44 +520,23 @@ public class EventPanelUI : MonoBehaviour
         if (anchor == null || option == null)
             return;
 
-        EnsureOptionTooltip();
-        if (optionTooltip == null)
-            return;
-
-        if (optionTooltipTitle != null)
-            optionTooltipTitle.text = LocalizationSystem.GetText(option.titleKey, option.id);
-        if (optionTooltipDescription != null)
-            optionTooltipDescription.text = GetOptionEffectText(option);
-        if (optionTagTooltipText != null)
-            optionTagTooltipText.text = BuildOptionTagTooltipText(option);
-
-        optionTooltip.gameObject.SetActive(true);
-        PopupLayerUtility.ApplyTo(optionTooltip);
-        optionTooltip.SetAsLastSibling();
-        optionTooltip.anchoredPosition = GetTooltipAnchoredPosition(anchor);
-        optionTooltip.localScale = tooltipHiddenScale;
-        optionTooltipCanvasGroup.alpha = 0f;
-        optionTooltipTween?.Kill(false);
-        Sequence sequence = DOTween.Sequence().SetTarget(this);
-        sequence.Join(optionTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration));
-        sequence.Join(optionTooltip.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipShowEase));
-        optionTooltipTween = sequence;
-        ShowOptionTagTooltip();
+        UIManager uiManager = GetComponentInParent<UIManager>();
+        uiManager?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(option));
     }
 
     public void HideOptionTooltip()
     {
-        if (optionTooltip == null || !optionTooltip.gameObject.activeSelf)
+        UIManager uiManager = GetComponentInParent<UIManager>();
+        uiManager?.HideUnifiedDetailPopup(null);
+    }
+
+    public void PinOptionTooltip(RectTransform anchor, EventOptionData option)
+    {
+        if (anchor == null || option == null)
             return;
 
-        optionTooltipTween?.Kill(false);
-        optionTagTooltipTween?.Kill(false);
-        Sequence sequence = DOTween.Sequence().SetTarget(this);
-        sequence.Join(optionTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration));
-        sequence.Join(optionTooltip.DOScale(tooltipHiddenScale, tooltipScaleDuration).SetEase(tooltipHideEase));
-        sequence.OnComplete(() => optionTooltip.gameObject.SetActive(false));
-        optionTooltipTween = sequence;
-        HideOptionTagTooltip();
+        UIManager uiManager = GetComponentInParent<UIManager>();
+        uiManager?.PinUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(option));
     }
 
     private Vector2 GetTooltipAnchoredPosition(RectTransform anchor)

@@ -841,7 +841,7 @@ public class ShopPanelUI : MonoBehaviour
         owner.ClearPendingShopMagic();
         waitingForSelection = true;
         Refresh();
-        MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialListPanel;
+        MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialSelectionPanel;
         materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelSelectionPurchase, "选择要删的牌");
         RectTransform materialRect = materialListPanel != null ? materialListPanel.transform as RectTransform : null;
         if (materialRect != null)

@@ -345,9 +345,11 @@ public class HandSystemUI : MonoBehaviour
 
 	private readonly List<HandCardView> cardViews = new List<HandCardView>();
 
-	private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
+		private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
 
-	private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
+    private readonly List<int> debugMagicDropdownIds = new List<int>();
+
+		private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
 
 	private readonly List<MaterialModel> selectedCards = new List<MaterialModel>();
 
@@ -367,9 +369,15 @@ public class HandSystemUI : MonoBehaviour
 
     private BuffSlotView pinnedBuffTooltipSlot;
 
-	private BattleManager battleManager;
+		private BattleManager battleManager;
 
-    private RunManager runManager;
+    private TMP_Dropdown debugMagicDropdown;
+
+    private int debugMagicDropdownSlotIndex = -1;
+
+    private bool debugBattleActive;
+
+	    private RunManager runManager;
 
 	private readonly List<RunMapNodeModel> mapNodes = new List<RunMapNodeModel>();
 
@@ -570,6 +578,145 @@ public class HandSystemUI : MonoBehaviour
 
         playerState.GainShield(amount);
         UpdatePlayerHealthUI(false);
+    }
+
+    public void DebugStartBattleLevel(LevelData level)
+    {
+        if (level == null || battleManager == null)
+            return;
+
+        HideDebugMagicDropdown();
+        debugBattleActive = true;
+        currentLevel = level;
+        currentEvent = null;
+        refreshUsedThisTurn = false;
+        ResetBattleDeckState();
+        HideMapPanel();
+        enemyModels.Clear();
+        battleManager.ClearEnemies();
+        ClearEnemyViews();
+        SpawnDebugLevelEnemies(level);
+        if (battleManager.Enemies.Count == 0)
+            return;
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayBattleMusic();
+        battleManager.BeginBattleRules();
+				BeginPlayerTurn(playerState.DrawCount);
+                SaveRunProgress();
+				ResetMagicHighlights();
+
+        busy = false;
+        SetButtonsInteractable(true);
+    }
+
+    public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
+    {
+        if (!debugBattleActive)
+            return;
+
+        CacheDebugMagicDropdown();
+        if (debugMagicDropdown == null || playerState == null || slotIndex < 0)
+            return;
+
+        debugMagicDropdownSlotIndex = slotIndex;
+        debugMagicDropdownIds.Clear();
+        debugMagicDropdown.ClearOptions();
+        List<MagicData> magics = new List<MagicData>(GameDataDatabase.MagicData.Values);
+        magics.Sort((left, right) => left.numericId.CompareTo(right.numericId));
+        List<string> options = new List<string>(magics.Count + 1) { "选择替换道具" };
+        debugMagicDropdownIds.Add(0);
+        for (int i = 0; i < magics.Count; i++)
+        {
+            MagicData data = magics[i];
+            debugMagicDropdownIds.Add(data.numericId);
+            options.Add($"{data.numericId} {LocalizationSystem.GetText(data.nameKey, data.id)}");
+        }
+
+        debugMagicDropdown.ClearOptions();
+        debugMagicDropdown.AddOptions(options);
+        debugMagicDropdown.SetValueWithoutNotify(0);
+        debugMagicDropdown.RefreshShownValue();
+        PositionDebugMagicDropdown(screenPosition);
+        debugMagicDropdown.gameObject.SetActive(true);
+        debugMagicDropdown.Show();
+    }
+
+    private void SpawnDebugLevelEnemies(LevelData level)
+    {
+        if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
+        {
+            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+            if (group?.enemies == null)
+                return;
+            for (int i = 0; i < group.enemies.Length; i++)
+                battleManager.SpawnEnemy(group.enemies[i]);
+            return;
+        }
+
+        if (level.enemies != null && level.enemies.Length > 0)
+        {
+            for (int i = 0; i < level.enemies.Length; i++)
+                battleManager.SpawnEnemy(level.enemies[i]);
+            return;
+        }
+
+        if (level.enemyIds == null)
+            return;
+
+        for (int i = 0; i < level.enemyIds.Length; i++)
+            battleManager.SpawnEnemy(level.enemyIds[i]);
+    }
+
+    private void CacheDebugMagicDropdown()
+    {
+        if (debugMagicDropdown != null)
+            return;
+
+        Transform dropdownTransform = transform.Find("DebugMagicDropdown");
+        if (dropdownTransform == null)
+            return;
+
+        debugMagicDropdown = dropdownTransform.GetComponent<TMP_Dropdown>();
+        if (debugMagicDropdown != null)
+        {
+            debugMagicDropdown.onValueChanged.RemoveListener(OnDebugMagicDropdownValueChanged);
+            debugMagicDropdown.onValueChanged.AddListener(OnDebugMagicDropdownValueChanged);
+        }
+    }
+
+    private void PositionDebugMagicDropdown(Vector2 screenPosition)
+    {
+        RectTransform dropdownRect = debugMagicDropdown != null ? debugMagicDropdown.transform as RectTransform : null;
+        RectTransform canvasRect = transform as RectTransform;
+        if (dropdownRect == null || canvasRect == null)
+            return;
+
+        Camera camera = GetComponentInParent<Canvas>()?.worldCamera;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, camera, out Vector2 localPoint);
+        dropdownRect.anchoredPosition = localPoint;
+    }
+
+    private void OnDebugMagicDropdownValueChanged(int optionIndex)
+    {
+        if (optionIndex <= 0 || optionIndex >= debugMagicDropdownIds.Count || playerState == null || debugMagicDropdownSlotIndex < 0)
+            return;
+
+        if (GameDataDatabase.TryGetMagicData(debugMagicDropdownIds[optionIndex], out MagicData magicData))
+        {
+            playerState.SetMagicAtSlot(MagicFactory.Create(magicData, debugMagicDropdownSlotIndex), debugMagicDropdownSlotIndex);
+            CreateMagicViews();
+            RefreshStaticUI();
+        }
+
+        HideDebugMagicDropdown();
+    }
+
+    private void HideDebugMagicDropdown()
+    {
+        if (debugMagicDropdown != null)
+            debugMagicDropdown.gameObject.SetActive(false);
+        debugMagicDropdownSlotIndex = -1;
     }
 
     private void DebugApplyRandomMaterialModifiersToDeck()
@@ -869,32 +1016,59 @@ public class HandSystemUI : MonoBehaviour
         return levelType == LevelType.Event || levelType == LevelType.RemoveMaterial || levelType == LevelType.AddMaterial;
     }
 
-    private void StartLevelAfterSelectClosed(LevelData level)
-    {
-		if (IsEventLikeLevel(level.levelType))
-		{
-			StartEventLevel(level);
-		}
-		else if (level.levelType == LevelType.Shop)
-		{
-			StartShopLevel(level);
-		}
-		else if (level.levelType == LevelType.Rest)
-		{
-			StartRestLevel(level);
-		}
-		else if (level.levelType == LevelType.Reward)
-		{
-			StartRewardLevel(level);
-		}
-		else
-		{
-			StartBattleLevel(level);
-		}
-	}
+        private void StartSavedLevel(LevelData level, RunSaveData saveData)
+        {
+            if (level == null)
+                return;
 
-	private void StartBattleLevel(LevelData level)
-	{
+            currentLevel = level;
+            runManager?.SelectCurrentNodeLevel(level);
+            if (currentMapNodeIndex >= 0 && currentMapNodeIndex < mapNodes.Count)
+            {
+                mapNodes[currentMapNodeIndex].selectedLevel = level;
+                RevealSelectedMapLevel(mapNodes[currentMapNodeIndex], level);
+                GetUIManager().MapPanel?.RefreshNodeVisual(currentMapNodeIndex);
+                GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
+            }
+            busy = true;
+            SetButtonsInteractable(false);
+            HideMapPanel();
+            HideLevelSelectPanelAnimated(() => StartLevelAfterSelectClosed(level, saveData));
+        }
+
+		private void StartLevelAfterSelectClosed(LevelData level)
+        {
+            StartLevelAfterSelectClosed(level, null);
+        }
+
+		private void StartLevelAfterSelectClosed(LevelData level, RunSaveData saveData)
+	    {
+			if (IsEventLikeLevel(level.levelType))
+			{
+				StartEventLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
+			}
+			else if (level.levelType == LevelType.Shop)
+			{
+				StartShopLevel(level, RunSaveSystem.GetSavedShop(saveData, level));
+			}
+			else if (level.levelType == LevelType.Rest)
+			{
+				StartRestLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
+			}
+			else if (level.levelType == LevelType.Reward)
+			{
+				StartRewardLevel(level);
+			}
+			else
+			{
+				StartBattleLevel(level, RunSaveSystem.GetSavedBattle(saveData));
+			}
+		}
+
+
+		private void StartBattleLevel(LevelData level, BattleNodeSaveData savedBattle = null)
+		{
+
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0056: Expected O, but got Unknown
         int configuredEnemyCount = level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0
@@ -910,16 +1084,30 @@ public class HandSystemUI : MonoBehaviour
         }
 		currentLevel = level;
 		runManager?.BeginLevel(level);
+        runManager?.SetBattle(battleManager);
+			currentEvent = null;
+			refreshUsedThisTurn = false;
+			ResetBattleDeckState();
+			HideMapPanel();
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+        ClearEnemyViews();
+        if (savedBattle != null)
+        {
+            RunSaveSystem.RestoreBattle(savedBattle, battleManager, playerState);
+            RefreshStaticUI();
+            RefreshMaterialListPanel();
+            RebuildCards(true);
+            RefreshEnemyUI((RectTransform)null, true);
+            ResetMagicHighlights();
+            busy = false;
+            SetButtonsInteractable(true);
+            SaveRunProgress();
+            return;
+        }
         runManager?.AdvanceRunRandomStep();
         SaveRunProgress();
-        runManager?.SetBattle(battleManager);
-		currentEvent = null;
-		refreshUsedThisTurn = false;
-		ResetBattleDeckState();
-		HideMapPanel();
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-        ClearEnemyViews();
+
 		bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(level);
 		if (tutorialBattle)
 		{
@@ -953,30 +1141,38 @@ public class HandSystemUI : MonoBehaviour
 		if (battleManager.Enemies.Count != 0)
 		{
             battleManager.BeginBattleRules();
-			BeginPlayerTurn(playerState.DrawCount);
-			ResetMagicHighlights();
-			busy = false;
+				BeginPlayerTurn(playerState.DrawCount);
+                SaveRunProgress();
+				ResetMagicHighlights();
+				busy = false;
+
 			SetButtonsInteractable(interactable: true);
 		}
 	}
 
-	private void BeginPlayerTurn(int drawCount)
-	{
-		battleManager?.BeginPlayerTurnStartRules();
-		GetUIManager().TurnBanner?.Show("你的回合");
-		ResetContinuousCastCounterUI();
-		suppressEnemyIntentRefresh = false;
-		RefreshEnemyUI();
-        bool fixedTutorialHand = TutorialManager != null && TutorialManager.TryApplyFixedTurnHand(playerState);
-        battleManager?.DrawPlayerTurnCardsRules(drawCount, fixedTutorialHand);
-		GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
-		RefreshStaticUI();
-		RefreshMaterialListPanel();
-		RebuildCards(animateFromCurrent: true);
-	}
+		private void BeginPlayerTurn(int drawCount)
+		{
+			battleManager?.BeginPlayerTurnStartRules(drawCount, TryApplyFixedTutorialHand);
+			GetUIManager().TurnBanner?.Show("你的回合");
+			ResetContinuousCastCounterUI();
+			suppressEnemyIntentRefresh = false;
+			RefreshEnemyUI();
+			GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
+			RefreshStaticUI();
+			RefreshMaterialListPanel();
+			RebuildCards(animateFromCurrent: true);
+		}
 
-	private void StartShopLevel(LevelData level)
-	{
+		private bool TryApplyFixedTutorialHand()
+		{
+			return TutorialManager != null && TutorialManager.TryApplyFixedTurnHand(playerState);
+		}
+
+
+			private void StartShopLevel(LevelData level, ShopNodeSaveData savedShopState = null)
+
+		{
+
 		GameLog.Data("Start shop level=" + level.id);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
@@ -1010,15 +1206,20 @@ public class HandSystemUI : MonoBehaviour
 		RebuildCards(animateFromCurrent: true);
         RefreshStaticUI();
 		RefreshMaterialListPanel();
-            RunSaveData currentRunSave = RunSaveSystem.LoadCurrentRun();
-            ShopNodeSaveData savedShopState = currentRunSave != null
-                && currentRunSave.currentNode != null
-                && currentRunSave.currentNode.levelId == level.numericId
-                ? currentRunSave.currentNode.shop
-                : null;
-		GetUIManager().ShowShopPanel(level, savedShopState);
+            if (savedShopState == null)
+            {
+                RunSaveData currentRunSave = RunSaveSystem.LoadCurrentRun();
+                savedShopState = currentRunSave != null
+                    && currentRunSave.currentNode != null
+                    && currentRunSave.currentNode.levelId == level.numericId
+                    ? currentRunSave.currentNode.shop
+                    : null;
+            }
+				GetUIManager().ShowShopPanel(level, savedShopState);
+            SaveRunProgress();
 
-        TutorialManager?.OnShopPanelShown();
+	        TutorialManager?.OnShopPanelShown();
+
 		refreshUsedThisTurn = false;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -1032,8 +1233,9 @@ public class HandSystemUI : MonoBehaviour
 		return panel;
 	}
 
-	private void StartRestLevel(LevelData level)
-	{
+		private void StartRestLevel(LevelData level, EventNodeSaveData savedEvent = null)
+		{
+
 		GameLog.Data("Start rest level=" + level.id);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
@@ -1055,9 +1257,13 @@ public class HandSystemUI : MonoBehaviour
 		eventPanel = GetOrCreateEventPanel();
 		Transform transform = ((Component)this).transform;
 		eventPanel.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawRestOptionsHand);
-		currentEvent = CreateRestEventModel(level);
-		eventPanel.Bind(currentEvent);
-		refreshUsedThisTurn = false;
+			currentEvent = CreateRestEventModel(level);
+            currentEvent.RestoreSaveData(savedEvent);
+				eventPanel.Bind(currentEvent);
+            SaveRunProgress();
+
+			refreshUsedThisTurn = false;
+
 		busy = false;
 		SetButtonsInteractable(interactable: true);
 	}
@@ -1106,8 +1312,9 @@ public class HandSystemUI : MonoBehaviour
 		return null;
 	}
 
-	private void StartEventLevel(LevelData level)
-	{
+		private void StartEventLevel(LevelData level, EventNodeSaveData savedEvent = null)
+		{
+
 		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0033: Expected O, but got Unknown
 		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
@@ -1142,7 +1349,9 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return;
 		}
-		currentEvent = new EventModel(eventData);
+			currentEvent = new EventModel(eventData);
+            currentEvent.RestoreSaveData(savedEvent);
+
 		if ((Object)eventPanel != (Object)null)
 		{
 			eventPanel.Close();
@@ -1151,8 +1360,10 @@ public class HandSystemUI : MonoBehaviour
 		EventPanelUI eventPanelUI = eventPanel;
 		Transform transform = ((Component)this).transform;
 		eventPanelUI.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawEventOptionsHand);
-		eventPanel.Bind(currentEvent);
-		refreshUsedThisTurn = false;
+			eventPanel.Bind(currentEvent);
+            SaveRunProgress();
+			refreshUsedThisTurn = false;
+
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -1289,17 +1500,11 @@ public class HandSystemUI : MonoBehaviour
 
 	public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)
 	{
-        if (pinnedBuffTooltipSlot != null && pinnedBuffTooltipSlot != slot)
-            return;
-
 		GetUIManager().ShowBuffTooltip(slot, buff);
 	}
 
 	public void HideBuffTooltip(BuffSlotView slot)
 	{
-        if (pinnedBuffTooltipSlot != null && pinnedBuffTooltipSlot == slot)
-            return;
-
 		GetUIManager().HideBuffTooltip(slot);
 	}
 
@@ -1318,23 +1523,29 @@ public class HandSystemUI : MonoBehaviour
         if (slot == null || buff == null)
             return;
 
-        if (pinnedBuffTooltipSlot == slot)
+        UIManager uiManager = GetUIManager();
+        UnifiedDetailPopupUI popup = uiManager != null ? uiManager.UnifiedDetailPopup : null;
+        if (popup != null && popup.IsPinnedFor(slot))
         {
             pinnedBuffTooltipSlot = null;
-            GetUIManager().HideBuffTooltip(slot);
+            uiManager.UnpinUnifiedDetailPopup();
             return;
         }
 
-        if (pinnedBuffTooltipSlot != null)
-            GetUIManager().HideBuffTooltip(pinnedBuffTooltipSlot);
         pinnedBuffTooltipSlot = slot;
-        GetUIManager().ShowBuffTooltip(slot, buff);
+        uiManager?.PinBuffTooltip(slot, buff);
     }
 
     public void ClearPinnedBuffTooltip(BuffSlotView slot)
     {
-        if (pinnedBuffTooltipSlot == slot)
-            pinnedBuffTooltipSlot = null;
+        if (pinnedBuffTooltipSlot != slot)
+            return;
+
+        UIManager uiManager = GetUIManager();
+        UnifiedDetailPopupUI popup = uiManager != null ? uiManager.UnifiedDetailPopup : null;
+        if (popup != null && popup.IsPinnedFor(slot))
+            uiManager.UnpinUnifiedDetailPopup();
+        pinnedBuffTooltipSlot = null;
     }
 
     private void HidePinnedBuffTooltipOnOutsideClick()
@@ -1342,12 +1553,18 @@ public class HandSystemUI : MonoBehaviour
         if (pinnedBuffTooltipSlot == null || !TryGetPrimaryPointerDown(out Vector2 screenPosition))
             return;
 
+        UIManager uiManager = GetUIManager();
+        UnifiedDetailPopupUI popup = uiManager != null ? uiManager.UnifiedDetailPopup : null;
+        if (popup != null && popup.ContainsScreenPoint(screenPosition))
+            return;
+
         if (IsPointerOverBuffSlot(screenPosition))
             return;
 
         BuffSlotView slot = pinnedBuffTooltipSlot;
         pinnedBuffTooltipSlot = null;
-        GetUIManager().HideBuffTooltip(slot);
+        if (popup != null && popup.IsPinnedFor(slot))
+            uiManager.UnpinUnifiedDetailPopup();
     }
 
     private bool TryGetPrimaryPointerDown(out Vector2 screenPosition)
@@ -2367,8 +2584,9 @@ public class HandSystemUI : MonoBehaviour
 		((UnityEvent)endTurnButton.onClick).AddListener(new UnityAction(EndTurn));
 			CacheEndTurnButtonText();
         EnsureActionButtonMotion();
-			GetUIManager();
-            ApplyLetterboxCameraSettings();
+				GetUIManager();
+            CacheDebugMagicDropdown();
+	            ApplyLetterboxCameraSettings();
 			EnsurePileButtons();
 
 			CreateTopBar();
@@ -2397,12 +2615,14 @@ public class HandSystemUI : MonoBehaviour
 		CreatePlayerCastAnimator();
 		InitializePlayerUiComponents();
 		RebuildCards(animateFromCurrent: true);
-        SaveRunProgress();
-        if (RunSaveSystem.ShouldAutoStartSavedNode(saveData))
+        bool autoStartSavedNode = RunSaveSystem.ShouldAutoStartSavedNode(saveData);
+        if (!autoStartSavedNode)
+            SaveRunProgress();
+        if (autoStartSavedNode)
         {
             LevelData savedLevel = RunSaveSystem.GetSavedCurrentLevel(saveData);
             if (savedLevel != null)
-                StartLevel(savedLevel);
+                StartSavedLevel(savedLevel, saveData);
             else
                 ShowLevelSelect();
         }
@@ -3569,8 +3789,9 @@ public class HandSystemUI : MonoBehaviour
 
 	private IEnumerator RemoveEventMaterialsRoutine(int choiceCount)
 	{
-		MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
-		if ((Object)panel == (Object)null || playerState == null)
+			MaterialListPanelUI panel = GetUIManager().MaterialSelectionPanel;
+			if ((Object)panel == (Object)null || playerState == null)
+
 			yield break;
 
 		int selectableCount = 0;
@@ -3651,11 +3872,12 @@ public class HandSystemUI : MonoBehaviour
 		selectedCards.Clear();
         RefreshPlayerAnimationState();
 		choosingEventCard = true;
-		MaterialListPanelUI panel = GetUIManager().MaterialListPanel;
-		if ((Object)panel != (Object)null)
-		{
-			panel.BeginSelection(pendingChoiceCount, IsEventChoiceSelectable, OnEventMaterialListSelectionCompleted);
-		}
+			MaterialListPanelUI panel = GetUIManager().MaterialSelectionPanel;
+			if ((Object)panel != (Object)null)
+			{
+				panel.BeginSelection(pendingChoiceCount, IsEventChoiceSelectable, OnEventMaterialListSelectionCompleted);
+			}
+
 		else
 		{
 			RefreshMaterialListPanel();
@@ -4012,7 +4234,7 @@ public class HandSystemUI : MonoBehaviour
 			int insertIndex = castableMagicViews.Count;
 			for (int j = 0; j < castableMagicViews.Count; j++)
 			{
-				if (recipeLength < GetRecipeLength(castableMagicViews[j].Magic))
+				if (recipeLength > GetRecipeLength(castableMagicViews[j].Magic))
 				{
 					insertIndex = j;
 					break;
@@ -4279,15 +4501,15 @@ public class HandSystemUI : MonoBehaviour
 		RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
 		if ((Object)(object)deckCountText != (Object)null)
 		{
-			deckCountText.text = playerState != null ? $"抽牌堆\n{playerState.DrawPile.Count}" : "抽牌堆";
+			deckCountText.text = playerState != null ? $"抽牌堆：{playerState.DrawPile.Count}\n弃牌堆：{playerState.DiscardPile.Count}\n已消耗：{playerState.ConsumedPile.Count}" : "抽牌堆\n弃牌堆\n已消耗";
 		}
 		if ((Object)(object)discardCountText != (Object)null)
 		{
-			discardCountText.text = playerState != null ? $"弃牌堆\n{playerState.DiscardPile.Count}" : "弃牌堆";
+			discardCountText.text = string.Empty;
 		}
 		if ((Object)(object)consumedCountText != (Object)null)
 		{
-			consumedCountText.text = playerState != null ? $"消耗堆\n{playerState.ConsumedPile.Count}" : "消耗堆";
+			consumedCountText.text = string.Empty;
 		}
 	        RefreshEndTurnButtonText();
 	        RefreshRefreshChanceUI();
@@ -4377,8 +4599,8 @@ public class HandSystemUI : MonoBehaviour
 	private void EnsurePileButtons()
 	{
 		BindPileButton(deckPileArea, ToggleMaterialListPanel);
-		BindPileButton(discardPileArea, ToggleDiscardPilePanel);
-		BindPileButton(consumedPileArea, ToggleConsumedPilePanel);
+		UnbindPileButton(discardPileArea, ToggleDiscardPilePanel);
+		UnbindPileButton(consumedPileArea, ToggleConsumedPilePanel);
 	}
 
 	private void BindPileButton(RectTransform pileArea, UnityAction action)
@@ -4392,6 +4614,16 @@ public class HandSystemUI : MonoBehaviour
 		button.onClick.RemoveListener(action);
 		button.onClick.AddListener(action);
 		AddJuicyMotion((Transform)(object)pileArea);
+	}
+
+	private void UnbindPileButton(RectTransform pileArea, UnityAction action)
+	{
+		if (pileArea == null)
+			return;
+
+		Button button = pileArea.GetComponent<Button>();
+		if (button != null)
+			button.onClick.RemoveListener(action);
 	}
 
 	private void ToggleMaterialListPanel()
@@ -4462,16 +4694,22 @@ public class HandSystemUI : MonoBehaviour
 		RectTransform val2 = (RectTransform)((parent is RectTransform) ? parent : null);
 		if (!((Object)val2 == (Object)null))
 		{
-			float healthBarWidth = enemyData != null && enemyData.healthBarWidth > 0f ? enemyData.healthBarWidth : 150f;
-            if (!preserveLayout)
-            {
+			float healthBarWidth = enemyData != null ? enemyData.healthBarWidth : 0f;
+			if (!preserveLayout)
+			{
 				val2.anchorMin = new Vector2(0.5f, 0.5f);
 				val2.anchorMax = new Vector2(0.5f, 0.5f);
 				val2.pivot = new Vector2(0.5f, 0.5f);
 				val2.anchoredPosition = new Vector2(0f, -56f);
-            }
-			val2.sizeDelta = new Vector2(healthBarWidth, val2.sizeDelta.y > 0f ? val2.sizeDelta.y : 14f);
+				val2.sizeDelta = new Vector2(healthBarWidth > 0f ? healthBarWidth : 150f, val2.sizeDelta.y > 0f ? val2.sizeDelta.y : 14f);
+			}
+			else if (healthBarWidth > 0f)
+			{
+				val2.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, healthBarWidth);
+			}
+
 			SetupFillImage(enemyHealthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
+
 			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
 			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
 			SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
@@ -5385,12 +5623,20 @@ public class HandSystemUI : MonoBehaviour
 		while (!returnDone)
 			yield return null;
 
-		RestoreBattleDeckState();
-		RebuildCards(animateFromCurrent: true);
-		refreshUsedThisTurn = false;
-		busy = true;
-		SetButtonsInteractable(interactable: false);
-        if (ShouldCompleteRunAfterCurrentBattle())
+			RestoreBattleDeckState();
+			RebuildCards(animateFromCurrent: true);
+			refreshUsedThisTurn = false;
+            if (debugBattleActive)
+            {
+                debugBattleActive = false;
+                currentLevel = null;
+                busy = false;
+                SetButtonsInteractable(true);
+                yield break;
+            }
+			busy = true;
+			SetButtonsInteractable(interactable: false);
+	        if (ShouldCompleteRunAfterCurrentBattle())
         {
             TutorialManager?.CompleteTutorial(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
             ShowVictoryPanel();
@@ -5430,7 +5676,7 @@ public class HandSystemUI : MonoBehaviour
     private void SaveRunProgress()
     {
         if (!runEnded)
-            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds());
+            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds(), battleManager, currentEvent);
     }
 
     private void OnApplicationPause(bool paused)
@@ -6223,7 +6469,8 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().RewardGridPanel?.Hide();
 		GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
-        GetUIManager().MaterialListPanel?.EndSelectionMode();
+		GetUIManager().MaterialSelectionPanel?.EndSelectionMode();
+
 		enemyModels.Clear();
 		battleManager.ClearEnemies();
 		enemyViewStates.Clear();
@@ -6465,7 +6712,21 @@ public class HandSystemUI : MonoBehaviour
         RefreshPlayerAnimationState();
         busy = false;
         SetButtonsInteractable(interactable: true);
-        completed?.Invoke();
+
+        MaterialListPanelUI materialListPanel = GetUIManager().MaterialSelectionPanel;
+        if ((Object)materialListPanel == (Object)null)
+        {
+            pendingMaterialModifier = null;
+            completed?.Invoke();
+            return;
+        }
+
+        materialListPanel.BeginSelection(1, IsArrowModifierTargetSelectable, selectedMaterials =>
+        {
+            MaterialModel target = selectedMaterials != null && selectedMaterials.Count > 0 ? selectedMaterials[0] : null;
+            if (TryApplyPendingMaterialModifier(target))
+                GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
+        }, null, "选择要附魔的箭头");
     }
 
     private bool TryApplyPendingMaterialModifier(MaterialModel target)
@@ -6739,14 +7000,11 @@ public class HandSystemUI : MonoBehaviour
 		if (runEnded)
 			return;
 
-        ChapterData chapter = victory ? (activeChapter ?? GetActiveChapter()) : null;
-        bool tutorialVictory = chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId;
-        float playSeconds = victory ? GetCurrentRunPlaySeconds() : 0f;
+        ChapterData chapter = activeChapter ?? GetActiveChapter();
+        bool tutorialVictory = victory && chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId;
+        float playSeconds = GetCurrentRunPlaySeconds();
         List<string> magicNames = victory ? GetVictoryMagicNames() : null;
-        if (victory)
-            RunSaveSystem.RecordVictoryAndClearCurrentRun(playSeconds);
-        else
-            RunSaveSystem.ClearCurrentRun();
+        RunSaveSystem.RecordRunEndAndClearCurrentRun(victory ? RunHistoryResultType.Victory : RunHistoryResultType.Defeat, playerState, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
 		runEnded = true;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -6765,6 +7023,15 @@ public class HandSystemUI : MonoBehaviour
 		else
 			GetUIManager().ShowDefeatPanel(playerState?.LastDamageSourceEnemy?.Name);
 	}
+
+    public void SaveCurrentRunAndReturnToStart(string startSceneName)
+    {
+        SaveRunProgress();
+        if (SceneTransitionManager.Instance != null)
+            SceneTransitionManager.Instance.LoadSceneWithTransition(startSceneName);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(startSceneName);
+    }
 
     private float GetCurrentRunPlaySeconds()
     {
