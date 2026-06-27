@@ -97,6 +97,24 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         BindHoverEventTarget();
     }
 
+    public void SetHoverEffectEnabled(bool enabled)
+    {
+        if (triggerOnHover == enabled)
+            return;
+
+        triggerOnHover = enabled;
+        if (enabled)
+        {
+            BindHoverEventTarget();
+            return;
+        }
+
+        UnbindHoverEventTarget();
+        StopHoverMotion();
+        transform.localScale = originalScale;
+        transform.localEulerAngles = originalLocalEulerAngles;
+    }
+
     public void SetBaseScale(Vector3 scale, bool applyImmediately)
     {
         originalScale = scale;

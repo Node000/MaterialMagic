@@ -375,6 +375,11 @@ public class PlayerState
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
     {
+        return TryMoveHandCardToPlay(card, PlayZone.Count);
+    }
+
+    public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex)
+    {
         if (card == null)
             return false;
 
@@ -386,7 +391,7 @@ public class PlayerState
             return false;
 
         Hand.RemoveAt(index);
-        PlayZone.Add(card);
+        PlayZone.Insert(Mathf.Clamp(playZoneIndex, 0, PlayZone.Count), card);
         card.isPlayed = true;
         card.TriggerOnJoin();
         if (GetBuffStack(BuffEnum.MaterialOverplayDebuff) > 0 || HasMaterialOverplayDebuffSource())
@@ -431,6 +436,11 @@ public class PlayerState
 
     public bool TryMovePlayCardToHand(MaterialModel card)
     {
+        return TryMovePlayCardToHand(card, Hand.Count);
+    }
+
+    public bool TryMovePlayCardToHand(MaterialModel card, int handIndex)
+    {
         if (card == null)
             return false;
 
@@ -441,9 +451,49 @@ public class PlayerState
         PlayZone.RemoveAt(index);
         card.TriggerOnDiscard();
         TriggerAfterDiscard(card);
-        Hand.Add(card);
+        Hand.Insert(Mathf.Clamp(handIndex, 0, Hand.Count), card);
         GameLog.Data($"Move card {DescribeMaterial(card)} playZone->hand. hand={Hand.Count} playZone={PlayZone.Count}");
         return true;
+    }
+
+    public bool ReorderHandCard(MaterialModel card, int targetIndex)
+    {
+        return ReorderCard(Hand, card, targetIndex, "hand");
+    }
+
+    public bool ReorderPlayCard(MaterialModel card, int targetIndex)
+    {
+        return ReorderCard(PlayZone, card, targetIndex, "playZone");
+    }
+
+    private bool ReorderCard(List<MaterialModel> list, MaterialModel card, int targetIndex, string listName)
+    {
+        if (list == null || card == null)
+            return false;
+
+        int index = list.IndexOf(card);
+        if (index < 0)
+            return false;
+
+        list.RemoveAt(index);
+        int clampedIndex = Mathf.Clamp(targetIndex, 0, list.Count);
+        list.Insert(clampedIndex, card);
+        GameLog.Data($"Reorder card {DescribeMaterial(card)} in {listName}. index={clampedIndex}");
+        return index != clampedIndex;
+    }
+
+    private readonly struct RefreshCombatSlot
+    {
+        public readonly MaterialModel Card;
+        public readonly bool InPlayZone;
+        public readonly int Index;
+
+        public RefreshCombatSlot(MaterialModel card, bool inPlayZone, int index)
+        {
+            Card = card;
+            InPlayZone = inPlayZone;
+            Index = index;
+        }
     }
 
     public readonly struct RefreshHandResult
@@ -456,6 +506,120 @@ public class PlayerState
             DrawnCount = drawnCount;
             ReturnedCount = returnedCount;
         }
+    }
+
+    public RefreshHandResult RefreshBasicCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
+        return RefreshCombatCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);
+    }
+
+    public RefreshHandResult RefreshCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
+    {
+        return RefreshCombatCards(cards, removedTemporaryCards, battleManager, null);
+    }
+
+    private RefreshHandResult RefreshCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager, System.Predicate<MaterialModel> canDraw)
+    {
+        if (cards == null || cards.Count == 0)
+            return new RefreshHandResult(0, 0);
+
+        List<RefreshCombatSlot> slots = new List<RefreshCombatSlot>();
+        for (int i = 0; i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (card == null)
+                continue;
+
+            int handIndex = Hand.IndexOf(card);
+            if (handIndex >= 0)
+                slots.Add(new RefreshCombatSlot(card, false, handIndex));
+            else
+            {
+                int playZoneIndex = PlayZone.IndexOf(card);
+                if (playZoneIndex >= 0)
+                    slots.Add(new RefreshCombatSlot(card, true, playZoneIndex));
+            }
+        }
+
+        if (slots.Count == 0)
+            return new RefreshHandResult(0, 0);
+
+        slots.Sort((a, b) => a.InPlayZone == b.InPlayZone ? a.Index.CompareTo(b.Index) : a.InPlayZone.CompareTo(b.InPlayZone));
+
+        MaterialModifierContext previousContext = MaterialModifierModel.CurrentContext;
+        MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = this, BattleManager = battleManager };
+        try
+        {
+            for (int i = 0; i < slots.Count; i++)
+                slots[i].Card.TriggerOnRefresh();
+        }
+        finally
+        {
+            MaterialModifierModel.CurrentContext = previousContext;
+        }
+
+        int returnedCount = 0;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            MaterialModel card = slots[i].Card;
+            if (slots[i].InPlayZone)
+                PlayZone.Remove(card);
+            else
+                Hand.Remove(card);
+
+            card.TriggerOnDiscard();
+            TriggerAfterDiscard(card);
+            if (card.isTemporary)
+            {
+                removedTemporaryCards?.Add(card);
+                AddConsumedCard(card);
+                GameLog.Data($"Refresh removes temporary combat card {DescribeMaterial(card)}.");
+                continue;
+            }
+
+            DiscardPile.Add(card);
+            returnedCount++;
+            GameLog.Data($"Refresh discards combat card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
+        }
+
+        int drawnCount = 0;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            MaterialModel replacement = DrawCombatRefreshReplacement(canDraw);
+            if (replacement == null)
+                continue;
+
+            if (slots[i].InPlayZone)
+            {
+                replacement.isPlayed = true;
+                PlayZone.Insert(Mathf.Clamp(slots[i].Index, 0, PlayZone.Count), replacement);
+                replacement.TriggerOnJoin();
+            }
+            else
+            {
+                replacement.isPlayed = false;
+                Hand.Insert(Mathf.Clamp(slots[i].Index, 0, Hand.Count), replacement);
+            }
+            drawnCount++;
+        }
+
+        GameLog.Data($"Refresh combat cards selected={slots.Count} drawn={drawnCount} discarded={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
+        return new RefreshHandResult(drawnCount, returnedCount);
+    }
+
+    private MaterialModel DrawCombatRefreshReplacement(System.Predicate<MaterialModel> canDraw)
+    {
+        if (!EnsureDrawPileHasCards(canDraw))
+            return null;
+
+        int randomIndex = GetRandomDrawableDrawPileIndex(canDraw);
+        if (randomIndex < 0)
+            return null;
+
+        MaterialModel card = DrawPile[randomIndex];
+        DrawPile.RemoveAt(randomIndex);
+        card.TriggerOnDraw();
+        return card;
     }
 
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards)

@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class BattleMaterialRowUI : MonoBehaviour
+public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
 {
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text emptyText;
@@ -26,8 +27,18 @@ public class BattleMaterialRowUI : MonoBehaviour
     private readonly List<MaterialCardView> itemViews = new List<MaterialCardView>();
     private readonly List<MaterialModel> itemMaterials = new List<MaterialModel>();
     private readonly List<bool> itemSelectable = new List<bool>();
+    private readonly List<SortedMaterialEntry> sortedEntries = new List<SortedMaterialEntry>();
+    private MaterialListPanelUI ownerPanel;
     private IReadOnlyList<MaterialModel> selectedMaterials;
     private int hoverIndex = -1;
+    private bool touchReleaseConfirmActive;
+
+    private struct SortedMaterialEntry
+    {
+        public MaterialModel Material;
+        public bool Selectable;
+        public int OriginalIndex;
+    }
 
     public event Action<RectTransform, MaterialModel> MaterialHovered;
     public event Action<MaterialModel> MaterialClicked;
@@ -57,6 +68,7 @@ public class BattleMaterialRowUI : MonoBehaviour
         CacheReferences();
         ClearItems();
         hoverIndex = -1;
+        touchReleaseConfirmActive = false;
         this.selectedMaterials = selectedMaterials;
         if (titleText != null)
             titleText.text = title;
@@ -68,6 +80,7 @@ public class BattleMaterialRowUI : MonoBehaviour
         }
 
         int itemCount = 0;
+        sortedEntries.Clear();
         for (int i = 0; materials != null && i < materials.Count; i++)
         {
             MaterialModel material = materials[i];
@@ -78,13 +91,52 @@ public class BattleMaterialRowUI : MonoBehaviour
             if (hideUnselectable && !selectable)
                 continue;
 
-            CreateItem(material, selectable, itemCount);
-            itemCount++;
+            sortedEntries.Add(new SortedMaterialEntry
+            {
+                Material = material,
+                Selectable = selectable,
+                OriginalIndex = i
+            });
         }
+
+        MaterialArrowSortUtility.SortMaterialsByBaseDirection(sortedEntries, entry => entry.Material != null ? entry.Material.material : MaterialEnum.None, entry => entry.OriginalIndex);
+        for (int i = 0; i < sortedEntries.Count; i++)
+            CreateItem(sortedEntries[i].Material, sortedEntries[i].Selectable, itemCount++);
 
         SetEmptyActive(itemCount == 0);
         contentRoot.sizeDelta = new Vector2(GetLayoutWidth(), contentRoot.sizeDelta.y);
         ApplyLayout(true);
+    }
+
+    public void SetOwnerPanel(MaterialListPanelUI panel)
+    {
+        ownerPanel = panel;
+    }
+
+    public bool ShouldUseMobileInteraction()
+    {
+        return ownerPanel != null && ownerPanel.ShouldUseMobileInteraction();
+    }
+
+    public void BeginTouchReleaseConfirm(int index)
+    {
+        if (!ShouldUseMobileInteraction() || index < 0 || index >= itemMaterials.Count || !itemSelectable[index])
+            return;
+
+        touchReleaseConfirmActive = true;
+        SetHover(index);
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (!touchReleaseConfirmActive)
+            return;
+
+        touchReleaseConfirmActive = false;
+        if (!ShouldUseMobileInteraction() || hoverIndex < 0)
+            return;
+
+        HandleItemClicked(hoverIndex);
     }
 
     public void SetHover(int index)
@@ -170,9 +222,16 @@ public class BattleMaterialRowUI : MonoBehaviour
         Graphic[] graphics = item.GetComponentsInChildren<Graphic>(true);
         for (int i = 0; i < graphics.Length; i++)
             graphics[i].raycastTarget = false;
-        Graphic raycastGraphic = item.GetComponent<Graphic>();
-        if (raycastGraphic != null)
-            raycastGraphic.raycastTarget = true;
+        if (view != null)
+        {
+            view.RefreshRaycastTargets();
+        }
+        else
+        {
+            Graphic raycastGraphic = item.GetComponent<Graphic>();
+            if (raycastGraphic != null)
+                raycastGraphic.raycastTarget = true;
+        }
 
         SpringLineHighlightUI[] highlights = item.GetComponentsInChildren<SpringLineHighlightUI>(true);
         for (int i = 0; i < highlights.Length; i++)
@@ -208,6 +267,7 @@ public class BattleMaterialRowUI : MonoBehaviour
         itemViews.Clear();
         itemMaterials.Clear();
         itemSelectable.Clear();
+        sortedEntries.Clear();
     }
 
     private void ApplyLayout(bool instant)
@@ -218,21 +278,9 @@ public class BattleMaterialRowUI : MonoBehaviour
             if (rect == null)
                 continue;
 
-            float x = GetBaseX(i);
-            float y = 0f;
-            float scale = normalScale;
-            if (hoverIndex >= 0)
-            {
-                if (i < hoverIndex)
-                    x -= hoverSpread;
-                else if (i > hoverIndex)
-                    x += hoverSpread;
-                else
-                {
-                    y = hoverYOffset;
-                    scale = hoverScale;
-                }
-            }
+            float x = GetLayoutX(i);
+            float y = hoverIndex == i ? hoverYOffset : 0f;
+            float scale = hoverIndex == i ? hoverScale : normalScale;
 
             rect.DOKill(false);
             if (instant)
@@ -264,6 +312,15 @@ public class BattleMaterialRowUI : MonoBehaviour
             emptyText.gameObject.SetActive(active);
     }
 
+    private float GetLayoutX(int index)
+    {
+        int count = itemRects.Count;
+        float sidePadding = cardSize.x * hoverScale * 0.5f + hoverSpread;
+        float minX = sidePadding;
+        float maxX = Mathf.Max(minX, GetLayoutWidth() - sidePadding);
+        return HoverSpreadLayoutUtility.GetFixedWidthHoverX(index, count, hoverIndex, minX, maxX, GetBaseSpacing(count, sidePadding) + hoverSpread);
+    }
+
     private float GetBaseX(int index)
     {
         int count = itemRects.Count;
@@ -271,7 +328,7 @@ public class BattleMaterialRowUI : MonoBehaviour
             return GetLayoutWidth() * 0.5f;
 
         float sidePadding = cardSize.x * hoverScale * 0.5f + hoverSpread;
-        return sidePadding + index * GetBaseSpacing(count, sidePadding);
+        return HoverSpreadLayoutUtility.GetBoundedBaseX(index, count, sidePadding, GetLayoutWidth() - sidePadding);
     }
 
     private float GetBaseSpacing(int count, float sidePadding)
@@ -297,7 +354,73 @@ public class BattleMaterialRowUI : MonoBehaviour
 
     private void OnDisable()
     {
+        touchReleaseConfirmActive = false;
         for (int i = 0; i < itemRects.Count; i++)
             itemRects[i]?.DOKill(false);
+    }
+}
+
+internal static class HoverSpreadLayoutUtility
+{
+    public static float GetCenteredBaseX(int index, int count, float spacing)
+    {
+        if (count <= 1)
+            return 0f;
+
+        return -spacing * (count - 1) * 0.5f + spacing * index;
+    }
+
+    public static float GetFixedWidthHoverX(int index, int count, int hoverIndex, float spacing, float hoverExtraSpacing)
+    {
+        if (count <= 1)
+            return 0f;
+
+        float startX = GetCenteredBaseX(0, count, spacing);
+        float endX = GetCenteredBaseX(count - 1, count, spacing);
+        return GetFixedWidthHoverX(index, count, hoverIndex, startX, endX, spacing + Mathf.Max(0f, hoverExtraSpacing));
+    }
+
+    public static float GetBoundedBaseX(int index, int count, float minX, float maxX)
+    {
+        if (count <= 1)
+            return (minX + maxX) * 0.5f;
+
+        return Mathf.Lerp(minX, maxX, index / (float)(count - 1));
+    }
+
+    public static float GetFixedWidthHoverX(int index, int count, int hoverIndex, float minX, float maxX, float hoverAdjacentSpacing)
+    {
+        if (count <= 1)
+            return (minX + maxX) * 0.5f;
+
+        if (hoverIndex < 0 || hoverIndex >= count || index == hoverIndex)
+            return GetBoundedBaseX(index, count, minX, maxX);
+
+        float hoverX = GetBoundedBaseX(hoverIndex, count, minX, maxX);
+        float targetSpacing = Mathf.Max(0f, hoverAdjacentSpacing);
+        if (index < hoverIndex)
+            return GetLeftSideX(index, hoverIndex, minX, hoverX, targetSpacing);
+
+        return GetRightSideX(index, count, hoverIndex, maxX, hoverX, targetSpacing);
+    }
+
+    private static float GetLeftSideX(int index, int hoverIndex, float minX, float hoverX, float targetSpacing)
+    {
+        int leftCount = hoverIndex;
+        if (leftCount <= 1)
+            return minX;
+
+        float segmentEnd = Mathf.Clamp(hoverX - targetSpacing, minX, hoverX);
+        return Mathf.Lerp(minX, segmentEnd, index / (float)(leftCount - 1));
+    }
+
+    private static float GetRightSideX(int index, int count, int hoverIndex, float maxX, float hoverX, float targetSpacing)
+    {
+        int rightCount = count - hoverIndex - 1;
+        if (rightCount <= 1)
+            return maxX;
+
+        float segmentStart = Mathf.Clamp(hoverX + targetSpacing, hoverX, maxX);
+        return Mathf.Lerp(segmentStart, maxX, (index - hoverIndex - 1) / (float)(rightCount - 1));
     }
 }

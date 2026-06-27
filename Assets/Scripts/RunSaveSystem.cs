@@ -493,8 +493,6 @@ public static class RunSaveSystem
             return;
 
         RunSaveData previousData = LoadSummary(CurrentSlotIndex);
-        bool sameCurrentNode = currentLevel != null && previousData != null && previousData.currentNode != null && previousData.currentNode.levelId == currentLevel.numericId && previousData.currentMapNodeIndex == currentMapNodeIndex;
-        bool previousHasNodeSnapshot = sameCurrentNode && HasCurrentNodeSnapshot(previousData.currentNode);
         string now = DateTime.UtcNow.ToString("o");
         RunSaveData data = new RunSaveData
         {
@@ -515,8 +513,8 @@ public static class RunSaveSystem
             mapNodes = ExportMapNodes(mapNodes),
             mapGrid = ExportMapGrid(RunManager.Current != null ? RunManager.Current.MapGrid : null),
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
-            player = sameCurrentNode && previousData.player != null ? previousData.player : ExportPlayer(player),
-            currentNode = currentLevel != null ? (previousHasNodeSnapshot ? previousData.currentNode : ExportCurrentNode(currentLevel, player, battleManager, currentEvent, sameCurrentNode ? previousData.player : null)) : null
+            player = ExportPlayer(player),
+            currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player, battleManager, currentEvent, null) : null
         };
 
         Directory.CreateDirectory(SaveDirectory);
@@ -530,7 +528,21 @@ public static class RunSaveSystem
 
     private static bool HasCurrentNodeSnapshot(CurrentNodeSaveData node)
     {
-        return node != null && (node.battle != null || node.shop != null || node.eventState != null);
+        return node != null && (HasBattleSnapshot(node.battle) || node.shop != null || node.eventState != null);
+    }
+
+    private static bool HasBattleSnapshot(BattleNodeSaveData battle)
+    {
+        if (battle == null || battle.enemies == null)
+            return false;
+
+        for (int i = 0; i < battle.enemies.Length; i++)
+        {
+            EnemyBattleSaveData enemy = battle.enemies[i];
+            if (enemy != null && enemy.enemyId > 0)
+                return true;
+        }
+        return false;
     }
 
     public static PlayerState CreatePlayer(RunSaveData save)
@@ -663,7 +675,8 @@ public static class RunSaveSystem
 
     public static BattleNodeSaveData GetSavedBattle(RunSaveData save)
     {
-        return save != null && save.currentNode != null ? save.currentNode.battle : null;
+        BattleNodeSaveData battle = save != null && save.currentNode != null ? save.currentNode.battle : null;
+        return HasBattleSnapshot(battle) ? battle : null;
     }
 
     public static ShopNodeSaveData GetSavedShop(RunSaveData save, LevelData level)
@@ -873,6 +886,9 @@ public static class RunSaveSystem
         if (currentLevel == null)
             return null;
 
+        if (player == null)
+            return null;
+
         CurrentNodeSaveData data = new CurrentNodeSaveData
         {
             levelId = currentLevel.numericId,
@@ -880,7 +896,11 @@ public static class RunSaveSystem
         };
 
         if ((currentLevel.levelType == LevelType.Battle || currentLevel.levelType == LevelType.Elite) && battleManager != null)
-            data.battle = ExportBattle(currentLevel, battleManager, player);
+        {
+            BattleNodeSaveData battle = ExportBattle(currentLevel, battleManager, player);
+            if (HasBattleSnapshot(battle))
+                data.battle = battle;
+        }
         if (currentLevel.levelType == LevelType.Shop && ShopPanelUI.TryExportCurrentState(player, out ShopNodeSaveData shopData))
             data.shop = shopData;
         if (currentEvent != null && IsEventSnapshotLevel(currentLevel.levelType))

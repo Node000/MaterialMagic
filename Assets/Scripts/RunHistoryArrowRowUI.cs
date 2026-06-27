@@ -20,6 +20,12 @@ public class RunHistoryArrowRowUI : MonoBehaviour
     private readonly List<RectTransform> itemRects = new List<RectTransform>();
     private int hoverIndex = -1;
 
+    private struct RunHistoryArrowCardEntry
+    {
+        public MaterialCardSaveData Card;
+        public int OriginalIndex;
+    }
+
     public event Action<MaterialModel> ArrowHovered;
     public event Action ArrowUnhovered;
 
@@ -31,9 +37,10 @@ public class RunHistoryArrowRowUI : MonoBehaviour
         if (contentRoot == null || materialCardPrefab == null || cards == null)
             return;
 
-        for (int i = 0; i < cards.Length; i++)
+        List<RunHistoryArrowCardEntry> sortedCards = CreateSortedArrowCards(cards);
+        for (int i = 0; i < sortedCards.Count; i++)
         {
-            MaterialModel material = RunSaveSystem.CreateMaterialCard(cards[i]);
+            MaterialModel material = RunSaveSystem.CreateMaterialCard(sortedCards[i].Card);
             RectTransform item = Instantiate(materialCardPrefab, contentRoot);
             item.gameObject.SetActive(true);
             item.name = "Arrow_" + (i + 1);
@@ -44,15 +51,18 @@ public class RunHistoryArrowRowUI : MonoBehaviour
             item.anchoredPosition = Vector2.zero;
             item.localScale = Vector3.one * normalScale;
 
-            Graphic raycastGraphic = item.GetComponent<Graphic>();
-            if (raycastGraphic != null)
-                raycastGraphic.raycastTarget = true;
-
             MaterialCardView view = item.GetComponent<MaterialCardView>();
             if (view != null)
             {
                 view.Bind(material);
+                view.RefreshRaycastTargets();
                 view.enabled = false;
+            }
+            else
+            {
+                Graphic raycastGraphic = item.GetComponent<Graphic>();
+                if (raycastGraphic != null)
+                    raycastGraphic.raycastTarget = true;
             }
             DisableSpringHighlights(item);
             JuicyMotion motion = item.GetComponent<JuicyMotion>();
@@ -88,6 +98,22 @@ public class RunHistoryArrowRowUI : MonoBehaviour
         ArrowUnhovered?.Invoke();
     }
 
+    private static List<RunHistoryArrowCardEntry> CreateSortedArrowCards(MaterialCardSaveData[] cards)
+    {
+        List<RunHistoryArrowCardEntry> sortedCards = new List<RunHistoryArrowCardEntry>(cards.Length);
+        for (int i = 0; i < cards.Length; i++)
+        {
+            sortedCards.Add(new RunHistoryArrowCardEntry
+            {
+                Card = cards[i],
+                OriginalIndex = i
+            });
+        }
+
+        MaterialArrowSortUtility.SortMaterialsByBaseDirection(sortedCards, entry => entry.Card != null ? (MaterialEnum)entry.Card.material : MaterialEnum.None, entry => entry.OriginalIndex);
+        return sortedCards;
+    }
+
     private void CacheReferences()
     {
         if (contentRoot == null)
@@ -115,21 +141,9 @@ public class RunHistoryArrowRowUI : MonoBehaviour
             if (rect == null)
                 continue;
 
-            float x = GetBaseX(i);
-            float y = 0f;
-            float scale = normalScale;
-            if (hoverIndex >= 0)
-            {
-                if (i < hoverIndex)
-                    x -= hoverSpread;
-                else if (i > hoverIndex)
-                    x += hoverSpread;
-                else
-                {
-                    y = hoverYOffset;
-                    scale = hoverScale;
-                }
-            }
+            float x = GetLayoutX(i);
+            float y = hoverIndex == i ? hoverYOffset : 0f;
+            float scale = hoverIndex == i ? hoverScale : normalScale;
 
             rect.DOKill(false);
             if (instant)
@@ -155,6 +169,15 @@ public class RunHistoryArrowRowUI : MonoBehaviour
         }
     }
 
+    private float GetLayoutX(int index)
+    {
+        int count = itemRects.Count;
+        float sidePadding = cardSize.x * hoverScale * 0.5f + hoverSpread;
+        float minX = sidePadding;
+        float maxX = Mathf.Max(minX, GetLayoutWidth() - sidePadding);
+        return HoverSpreadLayoutUtility.GetFixedWidthHoverX(index, count, hoverIndex, minX, maxX, GetBaseSpacing(count, sidePadding) + hoverSpread);
+    }
+
     private float GetBaseX(int index)
     {
         int count = itemRects.Count;
@@ -162,7 +185,7 @@ public class RunHistoryArrowRowUI : MonoBehaviour
             return GetLayoutWidth() * 0.5f;
 
         float sidePadding = cardSize.x * hoverScale * 0.5f + hoverSpread;
-        return sidePadding + index * GetBaseSpacing(count, sidePadding);
+        return HoverSpreadLayoutUtility.GetBoundedBaseX(index, count, sidePadding, GetLayoutWidth() - sidePadding);
     }
 
     private float GetBaseSpacing(int count, float sidePadding)

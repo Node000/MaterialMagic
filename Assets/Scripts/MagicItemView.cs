@@ -59,6 +59,11 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         CacheMissingReferences();
     }
 
+    private void Start()
+    {
+        CacheMissingReferences();
+    }
+
     private void OnDisable()
     {
         pulseTween?.Kill(false);
@@ -89,7 +94,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
                 magicNameText.text = string.Empty;
 
             SetModifierMarkerVisible(false);
-            SetHoverHighlightEnabled(false);
+            SetHoverHighlightEnabled(true);
             RebuildRecipe();
             return;
         }

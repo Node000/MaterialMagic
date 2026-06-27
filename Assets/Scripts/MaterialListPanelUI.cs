@@ -116,6 +116,11 @@ public class MaterialListPanelUI : MonoBehaviour
             HandleMaterialClicked(cardView.MaterialModel);
     }
 
+    public bool ShouldUseMobileInteraction()
+    {
+        return owner != null && owner.ShouldUseMobileInteraction();
+    }
+
     public void Refresh()
     {
         CacheReferences();
@@ -172,15 +177,17 @@ public class MaterialListPanelUI : MonoBehaviour
     private void RefreshCombatPileRows()
     {
         PlayerState state = owner.PlayerState;
-        RefreshRow(drawPileRow, "抽牌堆", state.DrawPile, null, false);
-        RefreshRow(discardPileRow, "弃牌堆", state.DiscardPile, null, false);
-        RefreshRow(consumedPileRow, "已消耗", state.ConsumedPile, null, false);
+        RefreshRow(drawPileRow, LocalizationSystem.GetText("ui.material_list.draw_pile", "抽牌堆"), state.DrawPile, null, false);
+        RefreshRow(discardPileRow, LocalizationSystem.GetText("ui.material_list.discard_pile", "弃牌堆"), state.DiscardPile, null, false);
+        RefreshRow(consumedPileRow, LocalizationSystem.GetText("ui.material_list.consumed_pile", "已消耗"), state.ConsumedPile, null, false);
     }
 
     private void RefreshSelectionRow()
     {
         BuildSelectionCandidates();
-        string title = !string.IsNullOrEmpty(selectionTitleOverride) ? selectionTitleOverride : "选择素材";
+        string title = !string.IsNullOrEmpty(selectionTitleOverride)
+            ? selectionTitleOverride
+            : LocalizationSystem.GetText("ui.material_list.select_material", "选择素材");
         RefreshRow(selectionRow, title, selectionCandidates, selectionPredicate, true);
     }
 
@@ -190,6 +197,7 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         row.gameObject.SetActive(true);
+        row.SetOwnerPanel(this);
         activeRows.Add(row);
         row.MaterialHovered -= ShowRowMaterialTooltip;
         row.MaterialUnhovered -= HideRowMaterialTooltip;
@@ -202,7 +210,7 @@ public class MaterialListPanelUI : MonoBehaviour
         float defaultScale = config != null ? config.ArrowDefaultScale : 0.72f;
         float hoverScale = config != null ? config.ArrowHoverScale : 1.18f;
         row.ConfigureArrowRowLayout(rowTotalLength, defaultScale, hoverScale);
-        row.SetHoverSelectionOutlineEnabled(false);
+        row.SetHoverSelectionOutlineEnabled(selectionCompleted != null);
         row.Refresh(title, materials, predicate, selectedMaterials, hideUnselectable);
     }
 
@@ -389,11 +397,13 @@ public class MaterialListPanelUI : MonoBehaviour
 
         if (selectionCompleted != null)
         {
-            titleText.text = !string.IsNullOrEmpty(selectionTitleOverride) ? selectionTitleOverride : "选择素材";
+            titleText.text = !string.IsNullOrEmpty(selectionTitleOverride)
+                ? selectionTitleOverride
+                : LocalizationSystem.GetText("ui.material_list.select_material", "选择素材");
             return;
         }
 
-        titleText.text = "箭头牌堆";
+        titleText.text = LocalizationSystem.GetText("ui.material_list.arrow_piles", "箭头牌堆");
     }
 
     private void EnsurePanelBlocksRaycasts()

@@ -35,6 +35,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         CacheSpringHighlight();
+        RefreshRaycastTargets();
         RefreshSpringHighlight();
     }
 
@@ -154,16 +155,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             MaterialModifierVisualUtility.ApplyTo(iconImage, materialModel);
         }
 
-        if (frameImage != null)
-        {
-            frameImage.raycastTarget = false;
-        }
-
-        Graphic[] graphics = GetComponentsInChildren<Graphic>(true);
-        for (int i = 0; i < graphics.Length; i++)
-            graphics[i].raycastTarget = false;
-        if (frameImage != null)
-            frameImage.raycastTarget = true;
+        RefreshRaycastTargets();
 
         if (canvasGroup != null)
         {
@@ -177,6 +169,27 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         }
 
         RefreshSpringHighlight();
+    }
+
+    public void RefreshRaycastTargets()
+    {
+        Graphic[] graphics = GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+
+        Graphic raycastGraphic = iconImage != null ? iconImage : frameImage;
+        if (raycastGraphic != null)
+            raycastGraphic.raycastTarget = true;
+        EnsureIconRaycastFilter();
+
+        if (springHighlight != null)
+            springHighlight.raycastTarget = false;
+    }
+
+    private void EnsureIconRaycastFilter()
+    {
+        if (iconImage != null && iconImage.GetComponent<SpritePhysicsShapeRaycastFilter>() == null)
+            iconImage.gameObject.AddComponent<SpritePhysicsShapeRaycastFilter>();
     }
 
     private void CacheSpringHighlight()

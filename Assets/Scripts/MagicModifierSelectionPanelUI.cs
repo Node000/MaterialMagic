@@ -49,6 +49,11 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public bool ShouldUseMobileInteraction()
+    {
+        return owner != null && owner.ShouldUseMobileInteraction();
+    }
+
     public void Show(IReadOnlyList<MagicModifierData> choices, Action completed)
     {
         materialModifierMode = false;
@@ -66,6 +71,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         }
 
         CacheReferences();
+        ResetOptionHoverEffects();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
         if (titleText != null)
@@ -93,12 +99,13 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         }
 
         CacheReferences();
+        ResetOptionHoverEffects();
         gameObject.SetActive(true);
         transform.SetAsLastSibling();
         if (titleText != null)
-            titleText.text = "选择箭头附魔";
+            titleText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_title", "选择箭头附魔");
         if (hintText != null)
-            hintText.text = "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。";
+            hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_hint", "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。");
         HideSelectedHint();
         RefreshOptions();
     }
@@ -111,6 +118,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         materialModifierSelected = null;
         popupTween?.Kill(false);
         popupTween = null;
+        ResetOptionHoverEffects();
         if (popupRoot != null)
             popupRoot.gameObject.SetActive(false);
         gameObject.SetActive(false);
@@ -222,7 +230,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].gameObject.SetActive(true);
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
-                optionTexts[0].text = "暂无可用箭头附魔";
+                optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_empty", "暂无可用箭头附魔");
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
@@ -341,6 +349,14 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         RefreshOptionFrameColor(index);
     }
 
+    public void ConfirmTouchOption(int index)
+    {
+        if (materialModifierMode)
+            SelectMaterialModifierOption(index);
+        else
+            SelectOption(index);
+    }
+
     public void SetOptionHovered(int index, bool hovered)
     {
         if (index < 0 || index >= optionButtons.Count)
@@ -352,6 +368,28 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             hoveredOptionIndex = -1;
 
         RefreshOptionFrameColor(index);
+    }
+
+    private void ResetOptionHoverEffects()
+    {
+        hoveredOptionIndex = -1;
+        for (int i = 0; i < optionButtons.Count; i++)
+        {
+            Button button = optionButtons[i];
+            if (button == null)
+                continue;
+
+            Transform option = button.transform;
+            option.DOKill(false);
+            option.localScale = Vector3.one;
+            option.localEulerAngles = Vector3.zero;
+
+            JuicyMotion motion = button.GetComponent<JuicyMotion>();
+            if (motion != null)
+                motion.CaptureCurrentTransformAsBase(true);
+
+            RefreshOptionFrameColor(i);
+        }
     }
 
     private void RefreshOptionFrameColor(int index)

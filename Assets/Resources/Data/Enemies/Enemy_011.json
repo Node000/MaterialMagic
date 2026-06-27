@@ -5,6 +5,7 @@
   "maxHealth": 13,
   "baseAttack": 2,
   "imageScale": 0.6,
+  "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [
     {

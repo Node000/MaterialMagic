@@ -428,29 +428,6 @@ public class MagicModel
         TriggerMagicAfterGainShield(ref shieldGain);
         GameLog.Data($"Magic {Id} gain shield={shieldGain}");
         result.playerShield += shieldGain;
-        TriggerShieldAttack(playerState, battleManager, shieldGain, result);
-    }
-
-    protected static void TriggerShieldAttack(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
-    {
-        if (damage <= 0 || playerState.GetBuffStack(BuffEnum.ShieldReflect) <= 0 || battleManager == null)
-            return;
-
-        CombatantModel caster = new CombatantModel(playerState);
-        int repeatCount = 1 + playerState.GetBuffStack(BuffEnum.ShieldReflectBoost);
-        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
-        for (int repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++)
-        {
-            for (int i = 0; i < enemies.Count; i++)
-            {
-                EnemyModel target = enemies[i];
-                if (target == null || target.IsDead)
-                    continue;
-
-                CombatDamageResult damageResult = target.TakeDamageResult(damage, caster);
-                result.AddEnemyDamageHit(target, damageResult.HealthDamage, damageResult.ShieldDamage);
-            }
-        }
     }
 
     private static bool IsAnyTwoDifferentElements(IReadOnlyList<MaterialModel> sequence, int startIndex)

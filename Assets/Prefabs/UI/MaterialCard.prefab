@@ -116,6 +116,7 @@ MonoBehaviour:
   triggerOnClick: 0
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.1
   shakeAmount: 8
   hoverTiltAngle: 4
@@ -148,6 +149,7 @@ GameObject:
   - component: {fileID: 3719973467769795626}
   - component: {fileID: 325871441440049975}
   - component: {fileID: 5109444763396678307}
+  - component: {fileID: 7662056464410916529}
   m_Layer: 0
   m_Name: Icon
   m_TagString: Untagged
@@ -212,6 +214,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7662056464410916529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1436340978170505169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d705243c07596704485bcf86d0b6bf44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  extraHitDistance: 0.04
 --- !u!1 &8839555553169896967
 GameObject:
   m_ObjectHideFlags: 0

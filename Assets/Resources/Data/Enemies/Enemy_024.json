@@ -5,6 +5,7 @@
   "maxHealth": 201,
   "baseAttack": 14,
   "imageScale": 4.01,
+  "hoverEffect": false,
   "infoBoxSize": {
     "x": 80.0,
     "y": 120.0

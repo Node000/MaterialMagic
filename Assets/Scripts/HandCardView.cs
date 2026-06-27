@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
@@ -22,6 +22,10 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private bool selected;
     private bool inPlayZone;
     private bool hovered;
+    private bool dragging;
+    private bool suppressClick;
+    private bool layoutHovered;
+    private float layoutHoverScale = 1f;
     private float baseZRotation;
     private MaterialModel card;
     private Action<HandCardView, PointerEventData> clickOverride;
@@ -38,6 +42,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         rectTransform = (RectTransform)transform;
         CacheSpringHighlight();
         SetFrameTransparent();
+        RefreshRaycastTargets();
         RefreshSpringHighlight();
 
         JuicyMotion juicyMotion = GetComponent<JuicyMotion>();
@@ -48,7 +53,9 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private void OnDisable()
     {
         hovered = false;
+        layoutHovered = false;
         RefreshSpringHighlight();
+        owner?.ClearCardHover(this, true);
         owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
         feedbackTween?.Kill(false);
         feedbackTween = null;
@@ -75,8 +82,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void SetInPlayZone(bool value)
     {
         inPlayZone = value;
-        if (inPlayZone)
-            SetSelected(false, false);
     }
 
     public void SetBaseRotation(float zRotation, bool instant)
@@ -94,9 +99,30 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         PlayFeedback(instant);
     }
 
+    public void ClearPlayFeedback(bool instant)
+    {
+        selected = false;
+        hovered = false;
+        layoutHovered = false;
+        SetFrameTransparent();
+        RefreshSpringHighlight();
+        PlayFeedback(instant);
+    }
+
     public void RefreshFeedback()
     {
         PlayFeedback(false);
+    }
+
+    public void SetLayoutHover(bool value, float hoverScale, bool instant)
+    {
+        layoutHoverScale = Mathf.Max(0.01f, hoverScale);
+        if (layoutHovered == value)
+            return;
+
+        layoutHovered = value;
+        RefreshSpringHighlight();
+        PlayFeedback(instant);
     }
 
     public void SetClickOverride(Action<HandCardView, PointerEventData> handler)
@@ -118,6 +144,12 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (suppressClick)
+        {
+            suppressClick = false;
+            return;
+        }
+
         bool touchPointer = IsTouchPointer(eventData);
 
         if (clickOverride != null)
@@ -131,6 +163,9 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         }
 
         if (owner == null)
+            return;
+
+        if (owner.TryPlaySelectedCardsFromCardClick(this, eventData))
             return;
 
         if (eventData.button == PointerEventData.InputButton.Right)
@@ -154,7 +189,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (dragging || (owner != null && owner.IsCardDragActive))
+            return;
+
         hovered = true;
+        owner?.SetCardHover(this, false);
         RefreshSpringHighlight();
         PlayFeedback(false);
         if (TryGetTooltipContent(out UnifiedDetailContent content))
@@ -163,10 +202,59 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (dragging || (owner != null && owner.IsCardDragActive))
+            return;
+
         hovered = false;
+        owner?.ClearCardHover(this, false);
         RefreshSpringHighlight();
         PlayFeedback(false);
         owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (owner == null)
+            return;
+
+        if (owner.TryBeginTouchHoverPreview(this, eventData))
+        {
+            suppressClick = true;
+            return;
+        }
+
+        if (!CanBeginMouseDrag(eventData))
+            return;
+
+        suppressClick = true;
+        dragging = true;
+        hovered = false;
+        RefreshSpringHighlight();
+        PlayFeedback(false);
+        owner.OnCardDragBegin(this, eventData);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (owner != null && owner.UpdateTouchHoverPreview(eventData))
+            return;
+
+        if (!dragging || owner == null)
+            return;
+
+        owner.OnCardDragged(this, eventData);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (!dragging)
+        {
+            owner?.EndTouchHoverPreview(eventData);
+            return;
+        }
+
+        dragging = false;
+        owner?.OnCardDragEnd(this, eventData);
     }
 
     private bool TryGetTooltipContent(out UnifiedDetailContent content)
@@ -192,9 +280,15 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         return Input.touchCount > 0 || (eventData != null && eventData.pointerId >= 0);
     }
 
+    private bool CanBeginMouseDrag(PointerEventData eventData)
+    {
+        return clickOverride == null && eventData != null && eventData.button == PointerEventData.InputButton.Left && eventData.pointerId < 0;
+    }
+
     private void ClearHoverAndHideTooltip()
     {
         hovered = false;
+        owner?.ClearCardHover(this, false);
         RefreshSpringHighlight();
         PlayFeedback(false);
         owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
@@ -218,6 +312,43 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             iconImage.preserveAspect = true;
             MaterialModifierVisualUtility.ApplyTo(iconImage, card);
         }
+
+        RefreshRaycastTargets();
+    }
+
+    public void RefreshRaycastTargets()
+    {
+        Graphic[] graphics = GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+
+        Graphic raycastGraphic = iconImage != null ? iconImage : frameImage;
+        if (raycastGraphic != null)
+            raycastGraphic.raycastTarget = true;
+        EnsureIconRaycastFilter();
+
+        if (springHighlight != null)
+            springHighlight.raycastTarget = false;
+    }
+
+    public bool ContainsRaycastPoint(Vector2 screenPosition, Camera eventCamera)
+    {
+        if (iconImage != null)
+        {
+            SpritePhysicsShapeRaycastFilter filter = iconImage.GetComponent<SpritePhysicsShapeRaycastFilter>();
+            if (filter != null)
+                return filter.ContainsScreenPoint(screenPosition, eventCamera);
+
+            return RectTransformUtility.RectangleContainsScreenPoint(iconImage.rectTransform, screenPosition, eventCamera);
+        }
+
+        return rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition, eventCamera);
+    }
+
+    private void EnsureIconRaycastFilter()
+    {
+        if (iconImage != null && iconImage.GetComponent<SpritePhysicsShapeRaycastFilter>() == null)
+            iconImage.gameObject.AddComponent<SpritePhysicsShapeRaycastFilter>();
     }
 
     private void CacheSpringHighlight()
@@ -242,7 +373,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             return;
 
         springHighlight.color = GetSpringHighlightColor();
-        springHighlight.gameObject.SetActive(selected || hovered);
+        springHighlight.gameObject.SetActive(selected || hovered || layoutHovered);
     }
 
     private Color GetSpringHighlightColor()
@@ -264,7 +395,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     {
         feedbackTween?.Kill(false);
 
-        Vector3 targetScale = selected ? Vector3.one * selectedScale : Vector3.one;
+        Vector3 targetScale = layoutHovered ? Vector3.one * layoutHoverScale : selected ? Vector3.one * selectedScale : Vector3.one;
         float hoverOffset = hovered ? selected ? -hoverTilt : hoverTilt : 0f;
         Vector3 targetRotation = new Vector3(0f, 0f, baseZRotation + hoverOffset);
 

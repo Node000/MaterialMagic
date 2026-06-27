@@ -110,7 +110,7 @@
     },
     {
       "key": "magic.current_attachment.desc",
-      "text": "本回合获得1层【伤害提升】，下回合抽到的第1张素材获得【电荷】"
+      "text": "本回合后续造成伤害+1，下回合抽到的第1张素材获得【电荷】"
     },
     {
       "key": "magic.sandstorm.name",

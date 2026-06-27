@@ -17,6 +17,41 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private RectTransform materialRoot;
     [SerializeField] private MagicItemView magicViewPrefab;
     [SerializeField] private MaterialCardView materialCardPrefab;
+    [Header("魔法预览布局")]
+    [SerializeField, Min(1)] private int magicPreviewSlotCount = 6;
+    [SerializeField] private Vector2 magicItemFallbackSize = new Vector2(196f, 92f);
+    [SerializeField] private Vector2 magicItemFallbackSpacing = new Vector2(142f, 72f);
+    [SerializeField, Min(1)] private int magicItemFallbackColumns = 3;
+    [SerializeField] private float magicItemScale = 0.68f;
+    [Header("素材预览布局")]
+    [Tooltip("0 表示按 StartConfig initialMaterials 数量生成；大于 0 时固定生成该数量的道具格，不足则留空。")]
+    [SerializeField, Min(0)] private int materialPreviewSlotCount;
+    [SerializeField] private Vector2 materialItemFallbackSize = new Vector2(118f, 72f);
+    [SerializeField] private Vector2 materialItemFallbackSpacing = new Vector2(126f, 76f);
+    [SerializeField, Min(1)] private int materialItemFallbackColumns = 2;
+    [SerializeField] private float materialCardScale = 0.42f;
+    [SerializeField] private Vector2 materialCardAnchoredPosition = Vector2.zero;
+    [SerializeField] private Color materialPreviewFrameColor = Color.clear;
+    [SerializeField] private bool materialPreviewFrameRaycastTarget = true;
+    [SerializeField] private bool materialPreviewShadowEnabled;
+    [SerializeField] private Vector2 materialPreviewIconAnchorMin = new Vector2(0.5f, 0.5f);
+    [SerializeField] private Vector2 materialPreviewIconAnchorMax = new Vector2(0.5f, 0.5f);
+    [SerializeField] private Vector2 materialPreviewIconPivot = new Vector2(0.5f, 0.5f);
+    [SerializeField] private Vector2 materialPreviewIconAnchoredPosition = Vector2.zero;
+    [SerializeField] private Vector2 materialPreviewIconSize = new Vector2(96f, 96f);
+    [SerializeField] private Color materialPreviewIconColor = Color.white;
+    [SerializeField] private bool materialPreviewIconRaycastTarget;
+    [SerializeField] private bool materialPreviewIconPreserveAspect = true;
+    [SerializeField] private Vector2 materialCountTextAnchorMin = new Vector2(1f, 0.5f);
+    [SerializeField] private Vector2 materialCountTextAnchorMax = new Vector2(1f, 0.5f);
+    [SerializeField] private Vector2 materialCountTextPivot = new Vector2(1f, 0.5f);
+    [SerializeField] private Vector2 materialCountTextAnchoredPosition = new Vector2(0f, -6f);
+    [SerializeField] private Vector2 materialCountTextSize = new Vector2(52f, 28f);
+    [SerializeField] private TMP_FontAsset materialCountTextFont;
+    [SerializeField] private float materialCountTextFontSize = 22f;
+    [SerializeField] private FontStyles materialCountTextFontStyle = FontStyles.Bold;
+    [SerializeField] private TextAlignmentOptions materialCountTextAlignment = TextAlignmentOptions.MidlineRight;
+    [SerializeField] private Color materialCountTextColor = new Color(1f, 0.94f, 0.7f, 1f);
     [SerializeField] private Button button;
     [SerializeField] private Button selectButton;
     [SerializeField] private Image selectButtonImage;
@@ -311,14 +346,13 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         if (magicRoot == null || magicViewPrefab == null)
             return;
 
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < magicPreviewSlotCount; i++)
         {
             MagicItemView view = Instantiate(magicViewPrefab, magicRoot);
             view.gameObject.SetActive(true);
             RectTransform rect = view.transform as RectTransform;
-            rect.localScale = Vector3.one * 0.68f;
-            rect.sizeDelta = new Vector2(196f, 92f);
-            rect.anchoredPosition = new Vector2((i % 3) * 142f, -(i / 3) * 72f);
+            rect.localScale = Vector3.one * magicItemScale;
+            ApplyPreviewItemLayout(rect, magicRoot, i, magicItemFallbackColumns, magicItemFallbackSize, magicItemFallbackSpacing);
             view.Bind(GetMagicForSlot(magics, i));
             magicViews.Add(view);
         }
@@ -333,36 +367,42 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         }
         materialItems.Clear();
 
-        if (materialRoot == null || materialCardPrefab == null || materials == null)
+        if (materialRoot == null)
             return;
 
-        for (int i = 0; i < materials.Length; i++)
+        int slotCount = GetMaterialPreviewSlotCount(materials);
+        for (int i = 0; i < slotCount; i++)
         {
-            PlayerStartMaterialData data = materials[i];
-            if (data == null)
-                continue;
+            PlayerStartMaterialData data = materials != null && i < materials.Length ? materials[i] : null;
 
             GameObject item = new GameObject("MaterialItem", typeof(RectTransform));
             item.transform.SetParent(materialRoot, false);
             RectTransform itemRect = item.GetComponent<RectTransform>();
-            itemRect.sizeDelta = new Vector2(118f, 72f);
-            itemRect.anchoredPosition = new Vector2((i % 2) * 126f, -(i / 2) * 76f);
+            ApplyPreviewItemLayout(itemRect, materialRoot, i, materialItemFallbackColumns, materialItemFallbackSize, materialItemFallbackSpacing);
 
-            MaterialCardView card = Instantiate(materialCardPrefab, itemRect);
-            card.gameObject.SetActive(true);
-            RectTransform cardRect = card.transform as RectTransform;
-            cardRect.localScale = Vector3.one * 0.42f;
-            cardRect.anchoredPosition = new Vector2(0f, 0f);
-            card.Bind(new MaterialModel(data.material + "_preview", data.material));
-            ConfigureMaterialPreviewCard(cardRect);
+            if (data != null && materialCardPrefab != null)
+            {
+                MaterialCardView card = Instantiate(materialCardPrefab, itemRect);
+                card.gameObject.SetActive(true);
+                RectTransform cardRect = card.transform as RectTransform;
+                cardRect.localScale = Vector3.one * materialCardScale;
+                cardRect.anchoredPosition = materialCardAnchoredPosition;
+                card.Bind(new MaterialModel(data.material + "_preview", data.material));
+                ConfigureMaterialPreviewCard(cardRect);
 
-            TMP_Text countText = CreateCountText(itemRect);
-            countText.text = "×" + data.count;
+                TMP_Text countText = CreateCountText(itemRect);
+                countText.text = "×" + data.count;
+            }
             materialItems.Add(item);
         }
     }
 
-    private static void ConfigureMaterialPreviewCard(RectTransform cardRect)
+    private int GetMaterialPreviewSlotCount(PlayerStartMaterialData[] materials)
+    {
+        return materialPreviewSlotCount > 0 ? materialPreviewSlotCount : materials != null ? materials.Length : 0;
+    }
+
+    private void ConfigureMaterialPreviewCard(RectTransform cardRect)
     {
         if (cardRect == null)
             return;
@@ -370,13 +410,13 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         Image frameImage = cardRect.GetComponent<Image>();
         if (frameImage != null)
         {
-            frameImage.color = Color.clear;
-            frameImage.raycastTarget = true;
+            frameImage.color = materialPreviewFrameColor;
+            frameImage.raycastTarget = materialPreviewFrameRaycastTarget;
         }
 
         Shadow shadow = cardRect.GetComponent<Shadow>();
         if (shadow != null)
-            shadow.enabled = false;
+            shadow.enabled = materialPreviewShadowEnabled;
 
         Transform icon = cardRect.Find("Icon");
         if (icon != null)
@@ -384,21 +424,43 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             RectTransform iconRect = icon as RectTransform;
             if (iconRect != null)
             {
-                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-                iconRect.pivot = new Vector2(0.5f, 0.5f);
-                iconRect.anchoredPosition = Vector2.zero;
-                iconRect.sizeDelta = new Vector2(96f, 96f);
+                iconRect.anchorMin = materialPreviewIconAnchorMin;
+                iconRect.anchorMax = materialPreviewIconAnchorMax;
+                iconRect.pivot = materialPreviewIconPivot;
+                iconRect.anchoredPosition = materialPreviewIconAnchoredPosition;
+                iconRect.sizeDelta = materialPreviewIconSize;
             }
 
             Image iconImage = icon.GetComponent<Image>();
             if (iconImage != null)
             {
-                iconImage.color = Color.white;
-                iconImage.raycastTarget = false;
-                iconImage.preserveAspect = true;
+                iconImage.color = materialPreviewIconColor;
+                iconImage.raycastTarget = materialPreviewIconRaycastTarget;
+                iconImage.preserveAspect = materialPreviewIconPreserveAspect;
             }
         }
+    }
+
+    private static void ApplyPreviewItemLayout(RectTransform rect, RectTransform root, int index, int columns, Vector2 fallbackSize, Vector2 fallbackSpacing)
+    {
+        if (rect == null)
+            return;
+
+        if (UsesLayoutGroup(root))
+            return;
+
+        int safeColumns = Mathf.Max(1, columns);
+        rect.sizeDelta = fallbackSize;
+        rect.anchoredPosition = new Vector2((index % safeColumns) * fallbackSpacing.x, -(index / safeColumns) * fallbackSpacing.y);
+    }
+
+    private static bool UsesLayoutGroup(RectTransform root)
+    {
+        if (root == null)
+            return false;
+
+        LayoutGroup layoutGroup = root.GetComponent<LayoutGroup>();
+        return layoutGroup != null && layoutGroup.enabled;
     }
 
     private static MagicModel GetMagicForSlot(PlayerStartMagicData[] magics, int slotIndex)
@@ -414,23 +476,23 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         return null;
     }
 
-    private static TMP_Text CreateCountText(RectTransform parent)
+    private TMP_Text CreateCountText(RectTransform parent)
     {
         GameObject textObject = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         textObject.transform.SetParent(parent, false);
         RectTransform rect = textObject.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 0.5f);
-        rect.anchorMax = new Vector2(1f, 0.5f);
-        rect.pivot = new Vector2(1f, 0.5f);
-        rect.anchoredPosition = new Vector2(0f, -6f);
-        rect.sizeDelta = new Vector2(52f, 28f);
+        rect.anchorMin = materialCountTextAnchorMin;
+        rect.anchorMax = materialCountTextAnchorMax;
+        rect.pivot = materialCountTextPivot;
+        rect.anchoredPosition = materialCountTextAnchoredPosition;
+        rect.sizeDelta = materialCountTextSize;
 
         TMP_Text text = textObject.GetComponent<TMP_Text>();
-        text.font = UIManager.GetDefaultTMPFont();
-        text.fontSize = 22;
-        text.fontStyle = FontStyles.Bold;
-        text.alignment = TextAlignmentOptions.MidlineRight;
-        text.color = new Color(1f, 0.94f, 0.7f, 1f);
+        text.font = materialCountTextFont != null ? materialCountTextFont : UIManager.GetDefaultTMPFont();
+        text.fontSize = materialCountTextFontSize;
+        text.fontStyle = materialCountTextFontStyle;
+        text.alignment = materialCountTextAlignment;
+        text.color = materialCountTextColor;
         text.raycastTarget = false;
         return text;
     }

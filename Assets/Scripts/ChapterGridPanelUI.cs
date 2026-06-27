@@ -158,6 +158,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         markerTween?.Kill(false);
         bossSequence?.Kill(false);
         ClearDirectionButtons();
+        owner?.GetUIManager()?.UnifiedDetailPopup?.HideImmediate();
         if (!gameObject.activeSelf)
             return;
 
@@ -792,7 +793,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             if (background == null)
                 background = rect.gameObject.AddComponent<Image>();
             background.color = fallbackDirectionCardColor;
-            background.raycastTarget = true;
+            background.raycastTarget = false;
             Image icon = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             icon.transform.SetParent(rect, false);
             RectTransform iconRect = (RectTransform)icon.transform;
@@ -804,7 +805,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             icon.sprite = MaterialCardView.GetMaterialIcon(material);
             icon.color = Color.white;
             icon.preserveAspect = true;
-            icon.raycastTarget = false;
+            icon.raycastTarget = true;
         }
 
         if (handCardView == null)

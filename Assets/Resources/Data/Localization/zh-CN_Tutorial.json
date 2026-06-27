@@ -1,0 +1,180 @@
+{
+  "items": [
+    {
+      "key": "tutorial.reward.undo_hint",
+      "text": "如果道具换错了，可以按R键撤回奖励获取"
+    },
+    {
+      "key": "tutorial.shop.undo_hint",
+      "text": "如果买错了，可以按R键撤回本次购买，但是在离开商店后就无法撤回了"
+    },
+    {
+      "key": "tutorial.battle.info.title",
+      "text": "玩家信息"
+    },
+    {
+      "key": "tutorial.battle.info.body",
+      "text": "左侧是你的生命值、Buff情况和金币数量。\n\n正下方会显示你的手牌和出牌情况。\n\n右侧是你的换牌和出牌按钮，以及各种牌堆。"
+    },
+    {
+      "key": "tutorial.battle.magic_book.title",
+      "text": "玩家道具栏"
+    },
+    {
+      "key": "tutorial.battle.magic_book.body",
+      "text": "这是你的道具栏。出牌区的箭头组合满足道具配方时，会按顺序触发对应道具效果。（从长到短触发）"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.title",
+      "text": "敌人信息"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.body",
+      "text": "这里是敌人，敌人头顶显示的图标和数值代表了其下一回合的意图。\n\n若有多个敌人存在，可以通过点击敌人进行集火。（道具的默认释放对象是最左边的敌人）"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.title",
+      "text": "基础箭头"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.body",
+      "text": "基础箭头的方向是：上、下、左、右。先按顺序把箭头放入出牌区。"
+    },
+    {
+      "key": "tutorial.battle.magic_combo.title",
+      "text": "触发道具"
+    },
+    {
+      "key": "tutorial.battle.magic_combo.body",
+      "text": "出牌区里的箭头会从左到右依次组合。组合满足右侧道具的配方时，会自动触发对应道具效果。"
+    },
+    {
+      "key": "tutorial.battle.play.title",
+      "text": "打出箭头"
+    },
+    {
+      "key": "tutorial.battle.play.body",
+      "text": "点击选中手牌区的箭头，然后点击上方区域即可出牌，也可以拖动出牌并调整位置。\n\n点击出牌区的箭头可以取消出牌。\n\n请尝试打出所有箭头，并按右下方的“出手”按钮确认出牌。"
+    },
+    {
+      "key": "tutorial.battle.play_confirm.title",
+      "text": "打出箭头"
+    },
+    {
+      "key": "tutorial.battle.play_confirm.body",
+      "text": "很好。现在点击上方出牌区，或按鼠标右键，把选中的箭头全部打出。"
+    },
+    {
+      "key": "tutorial.battle.cancel.title",
+      "text": "取消出牌"
+    },
+    {
+      "key": "tutorial.battle.cancel.body",
+      "text": "如果箭头放错了，点击出牌区里的箭头即可把它拿回手牌。请先取消一次出牌，再重新把两张上打出去。"
+    },
+    {
+      "key": "tutorial.battle.end_turn.title",
+      "text": "结束回合"
+    },
+    {
+      "key": "tutorial.battle.end_turn.body",
+      "text": "箭头顺序确认后，点击“出手”结束回合。"
+    },
+    {
+      "key": "tutorial.battle.refresh.title",
+      "text": "换牌"
+    },
+    {
+      "key": "tutorial.battle.refresh.body",
+      "text": "在抽到不想要的箭头时，可以选中这些箭头并点击右侧的换牌按钮重新抽取。\n\n你的回合开始时，换牌次数会重置为1，通过某些方式可以临时或永久增加换牌次数。\n\n现在，请尝试更换所有手牌。"
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.title",
+      "text": "换牌"
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.body",
+      "text": "三张右已经全部选中。现在点击换牌按钮，换牌后会得到上、上、下。"
+    },
+    {
+      "key": "tutorial.reward.claim.title",
+      "text": "结算奖励"
+    },
+    {
+      "key": "tutorial.reward.claim.body",
+      "text": "战斗胜利后会出现结算奖励，点击领取。"
+    },
+    {
+      "key": "tutorial.reward.equip_magic.title",
+      "text": "更换道具"
+    },
+    {
+      "key": "tutorial.reward.equip_magic.body",
+      "text": "选择道具奖励后，点击右侧道具栏中的槽位进行更换。"
+    },
+    {
+      "key": "tutorial.reward.undo_hint.title",
+      "text": "撤回奖励"
+    },
+    {
+      "key": "tutorial.reward.undo_hint.body",
+      "text": "如果出现了决策失误，可以按R键撤回本次奖励获取。"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.title",
+      "text": "商店购买"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.body",
+      "text": "你可以在商店内购买道具和箭头，或者删除多余的箭头。\n\n购买道具需要在选中道具后，点击右侧的道具栏以确认购买。"
+    },
+    {
+      "key": "tutorial.shop.undo_hint.title",
+      "text": "撤回购买"
+    },
+    {
+      "key": "tutorial.shop.undo_hint.body",
+      "text": "如果买错了道具，可以按R键撤回本次购买。\n\n注意，箭头购买是无法撤回的。"
+    },
+    {
+      "key": "tutorial.event.options.title",
+      "text": "事件选项"
+    },
+    {
+      "key": "tutorial.event.options.body",
+      "text": "每个事件会有多个处理选项，通过打出对应的箭头组合来选定选项。\n\n选项的需求大多是随机的，所以不存在删牌后一定无法触发某些选项的情况。"
+    },
+    {
+      "key": "tutorial.event.refresh.title",
+      "text": "事件换牌"
+    },
+    {
+      "key": "tutorial.event.refresh.body",
+      "text": "每个事件的抽牌数都是不一样的。\n\n在事件中同样可以进行一次任意数量的换牌。"
+    },
+    {
+      "key": "tutorial.map.panel.title",
+      "text": "地图面板"
+    },
+    {
+      "key": "tutorial.map.panel.body",
+      "text": "游戏的最终目标是击败Boss，你可以通过观察地图来规划路线。\n\n地图上初始只会揭示Boss格位，你仅能解锁相邻格位的信息。"
+    },
+    {
+      "key": "tutorial.map.movement.title",
+      "text": "地图移动"
+    },
+    {
+      "key": "tutorial.map.movement.body",
+      "text": "通过打出上、下、左、右方向的箭头，可以在地图上移动到相邻格子。\n\n若你抵达的格子不为空，则会触发相应的内容。"
+    },
+    {
+      "key": "tutorial.map.step_limit.title",
+      "text": "步数限制"
+    },
+    {
+      "key": "tutorial.map.step_limit.body",
+      "text": "当经过的关卡数达到上限时，所有格位都会变成Boss格位，强制进入Boss战。请在此之前做好准备。"
+    }
+  ]
+}

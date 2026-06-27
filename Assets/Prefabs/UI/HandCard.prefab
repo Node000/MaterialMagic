@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7203448472467590602}
   - component: {fileID: 6388772703084736985}
   - component: {fileID: 4192182498932446655}
+  - component: {fileID: 4130723902170583363}
   m_Layer: 0
   m_Name: Icon
   m_TagString: Untagged
@@ -88,6 +89,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46172410d2d73204384a43e7bcfdcbc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4130723902170583363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990533515392709134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d705243c07596704485bcf86d0b6bf44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  extraHitDistance: 0.04
 --- !u!1 &1634854091461514528
 GameObject:
   m_ObjectHideFlags: 0
@@ -205,6 +219,7 @@ MonoBehaviour:
   triggerOnClick: 1
   loopOnEnable: 0
   loopTilt: 0
+  hoverEventTarget: {fileID: 0}
   scaleAmount: 0.15
   shakeAmount: 8
   hoverTiltAngle: 5

@@ -65,6 +65,8 @@ public class RewardOptionView : MonoBehaviour
 public class RewardPanelUI : MonoBehaviour
 {
     [SerializeField] private int battleGoldReward = 1;
+    [SerializeField] private Vector2 magicChoiceCellSize = new Vector2(196f, 92f);
+    [SerializeField] private float magicChoiceSpacing = 230f;
 
     private readonly List<MagicItemView> rewardMagicViews = new List<MagicItemView>();
     private readonly List<RewardOptionView> optionViews = new List<RewardOptionView>();
@@ -364,13 +366,17 @@ public class RewardPanelUI : MonoBehaviour
             currentRewardOptions = new RewardOptionsModel(currentGoldReward, owner.GetRewardMagicChoices(3));
 
         List<MagicData> choices = currentRewardOptions.MagicChoices;
+        int visibleChoiceCount = Mathf.Min(choices.Count, rewardMagicViews.Count);
+        Vector2 cellSize = GetMagicChoiceCellSize();
+        float spacing = GetMagicChoiceSpacing();
+        float startX = visibleChoiceCount > 1 ? -spacing * (visibleChoiceCount - 1) * 0.5f : 0f;
         for (int i = 0; i < rewardMagicViews.Count; i++)
         {
             MagicItemView view = rewardMagicViews[i];
             if (view == null)
                 continue;
 
-            bool visible = i < choices.Count;
+            bool visible = i < visibleChoiceCount;
             view.gameObject.SetActive(visible);
             if (!visible)
                 continue;
@@ -380,8 +386,8 @@ public class RewardPanelUI : MonoBehaviour
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(-230f + i * 230f, 0f);
-            rect.sizeDelta = new Vector2(196f, 92f);
+            rect.anchoredPosition = new Vector2(startX + spacing * i, 0f);
+            ApplyMagicChoiceCellSize(rect, cellSize);
             rect.localScale = GetRewardMagicTargetScale(view);
             UIManager.RemoveJuicyMotion(view.transform);
 
@@ -492,10 +498,10 @@ public class RewardPanelUI : MonoBehaviour
 
     private void ReturnFromMagicChoices()
     {
+        HideMagicChoices();
         selectedMagicView = null;
         hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
-        HideMagicChoices();
     }
 
     private void HideMagicChoices()
@@ -517,7 +523,7 @@ public class RewardPanelUI : MonoBehaviour
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
                 rect.anchoredPosition = new Vector2(-160f + i * 160f, -18f);
-                rect.sizeDelta = new Vector2(196f, 92f);
+                ApplyMagicChoiceCellSize(rect, GetMagicChoiceCellSize());
                 rect.localScale = Vector3.one;
                 SetRewardMagicHighlightVisible(rewardMagicViews[i], false);
                 rewardMagicViews[i].gameObject.SetActive(false);
@@ -525,10 +531,36 @@ public class RewardPanelUI : MonoBehaviour
         }
     }
 
+    private Vector2 GetMagicChoiceCellSize()
+    {
+        return new Vector2(Mathf.Max(1f, magicChoiceCellSize.x), Mathf.Max(1f, magicChoiceCellSize.y));
+    }
+
+    private float GetMagicChoiceSpacing()
+    {
+        return Mathf.Max(1f, magicChoiceSpacing);
+    }
+
+    private static void ApplyMagicChoiceCellSize(RectTransform rect, Vector2 size)
+    {
+        rect.sizeDelta = size;
+        LayoutElement[] layoutElements = rect.GetComponents<LayoutElement>();
+        for (int i = 0; i < layoutElements.Length; i++)
+        {
+            if (layoutElements[i] == null)
+                continue;
+            layoutElements[i].preferredWidth = size.x;
+            layoutElements[i].preferredHeight = size.y;
+        }
+    }
+
     private void EnsureMagicChoicePanel()
     {
         if (magicChoicePanel != null)
+        {
+            CacheMagicChoicePanelReferences();
             return;
+        }
 
         RectTransform existingPanel = transform.parent != null ? transform.parent.Find("RewardMagicChoicePanel") as RectTransform : null;
         if (existingPanel != null)
@@ -557,7 +589,7 @@ public class RewardPanelUI : MonoBehaviour
         hint.color = new Color(0.82f, 0.84f, 0.9f, 1f);
 
         magicChoiceBackButton = CreatePanelButton(magicChoicePanel, "BackButton", "返回", new Vector2(-360f, 112f), new Vector2(110f, 42f));
-        magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
+        BindMagicChoiceBackButton();
 
         magicChoiceContent = new GameObject("MagicChoices", typeof(RectTransform)).GetComponent<RectTransform>();
         magicChoiceContent.SetParent(magicChoicePanel, false);
@@ -587,12 +619,8 @@ public class RewardPanelUI : MonoBehaviour
         if (hint != null)
             hint.text = "选择后点击下方/场景中的道具槽覆盖；可重新选择。";
 
-        magicChoiceBackButton = UIManager.FindChildComponent<Button>(magicChoicePanel, "BackButton");
-        if (magicChoiceBackButton != null)
-        {
-            magicChoiceBackButton.onClick.RemoveAllListeners();
-            magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
-        }
+        magicChoiceBackButton = FindMagicChoiceBackButton();
+        BindMagicChoiceBackButton();
 
         magicChoiceContent = UIManager.FindChildRect(magicChoicePanel, "MagicChoices");
         if (magicChoiceContent == null)
@@ -605,6 +633,29 @@ public class RewardPanelUI : MonoBehaviour
             magicChoiceContent.anchoredPosition = new Vector2(0f, -24f);
             magicChoiceContent.sizeDelta = new Vector2(760f, 120f);
         }
+    }
+
+    private Button FindMagicChoiceBackButton()
+    {
+        if (magicChoicePanel == null)
+            return null;
+
+        Transform direct = magicChoicePanel.Find("BackButton");
+        Button button = direct != null ? direct.GetComponent<Button>() : null;
+        if (button != null)
+            return button;
+
+        Transform styled = magicChoicePanel.Find("PopupDragonWindowBackground/BackButton");
+        return styled != null ? styled.GetComponent<Button>() : null;
+    }
+
+    private void BindMagicChoiceBackButton()
+    {
+        if (magicChoiceBackButton == null)
+            return;
+
+        magicChoiceBackButton.onClick.RemoveAllListeners();
+        magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
     }
 
     private TMP_Text CreatePanelText(RectTransform parent, string name, string text, int fontSize, FontStyles fontStyle, Vector2 anchoredPosition, Vector2 size)

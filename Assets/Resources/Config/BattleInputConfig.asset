@@ -9,9 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3486ca8b6772da43b52045bac6e6453, type: 3}
-  m_Name: MaterialListPanelLayoutConfig
+  m_Script: {fileID: 11500000, guid: 7baeee35ac915254bbbfc0aab41df6ab, type: 3}
+  m_Name: BattleInputConfig
   m_EditorClassIdentifier: 
-  arrowRowTotalLength: 880
-  arrowDefaultScale: 1.5
-  arrowHoverScale: 2
+  handCardDoubleClickPlayInterval: 0.3

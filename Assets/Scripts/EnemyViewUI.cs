@@ -28,6 +28,7 @@ public class EnemyViewUI : MonoBehaviour
     private Vector2 baseHealthBarAnchoredPosition;
     private Vector2 baseHealthBarSizeDelta;
     private Vector2 baseIntentRootAnchoredPosition;
+    private JuicyMotion juicyMotion;
 
     public RectTransform BodyRoot => bodyRoot;
     public RectTransform MotionRoot => motionRoot != null ? motionRoot : bodyRoot;
@@ -94,6 +95,8 @@ public class EnemyViewUI : MonoBehaviour
             intentRoot = FindRect("IntentRoot");
         if (buffPopupEffect == null)
             buffPopupEffect = GetComponentInChildren<BuffPopupEffectController>(true);
+        if (juicyMotion == null)
+            juicyMotion = GetComponent<JuicyMotion>();
     }
 
     public void ApplyDataLayout(EnemyData data)
@@ -106,6 +109,7 @@ public class EnemyViewUI : MonoBehaviour
             bodyRoot.sizeDelta = bodySize;
 
         ApplyEnemyDataOverrides(data);
+        ApplyHoverEffect(data);
 
         if (bodyImage != null)
         {
@@ -195,6 +199,12 @@ public class EnemyViewUI : MonoBehaviour
     private static Vector2 GetIntentOffset(EnemyData data)
     {
         return data != null ? new Vector2(data.intentOffsetX, data.intentOffsetY) : Vector2.zero;
+    }
+
+    private void ApplyHoverEffect(EnemyData data)
+    {
+        if (juicyMotion != null)
+            juicyMotion.SetHoverEffectEnabled(data == null || data.hoverEffect);
     }
 
     private Vector2 GetBodySize(EnemyData data)

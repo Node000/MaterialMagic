@@ -344,6 +344,7 @@ public class EnemyData : IDataRecord, INumericDataRecord
     public int maxHealth;
     public int baseAttack;
     public float imageScale = 1f;
+    public bool hoverEffect = true;
     public Vector2 infoBoxSize;
     public Vector2 infoBoxOffset;
     public float healthBarWidth;
