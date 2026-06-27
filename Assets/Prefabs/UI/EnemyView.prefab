@@ -395,7 +395,7 @@ MonoBehaviour:
   loopOnEnable: 0
   loopTilt: 0
   hoverEventTarget: {fileID: 6298381252650872349}
-  scaleAmount: 0.15
+  scaleAmount: 0.05
   shakeAmount: 8
   hoverTiltAngle: 0
   hoverTiltDuration: 0.16
@@ -1339,9 +1339,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 2300399858145985020}
   - {fileID: 4573497668543786585}
   - {fileID: 8938106231670031390}
-  - {fileID: 2300399858145985020}
   - {fileID: 7208767624444841288}
   - {fileID: 7932675673432894242}
   - {fileID: 9207331446348273066}
