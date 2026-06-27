@@ -4,7 +4,7 @@
   "nameKey": "enemy.024.name",
   "maxHealth": 157,
   "baseAttack": 14,
-  "imageScale": 4,
+  "imageScale": 4.01,
   "infoBoxSize": {
     "x": 80.0,
     "y": 120.0
