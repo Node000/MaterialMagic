@@ -25075,7 +25075,7 @@ MonoBehaviour:
   levelSelectAfterMapHideFallbackDelay: 0.28
   uiManager: {fileID: 0}
   playInputScreenHeightThreshold: 0.28
-  simulateMobileInteractionInEditor: 1
+  simulateMobileInteractionInEditor: 0
   rewardMagicConfirmCellSize: {x: 230, y: 92}
   playerBuffPopupEffect: {fileID: 0}
   rewardMagicConfirmPanel: {fileID: 910586154}
