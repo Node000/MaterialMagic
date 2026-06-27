@@ -2414,7 +2414,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 85.1
+      value: 85.10156
       objectReference: {fileID: 0}
     - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -2424,9 +2424,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagicSlot1
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 5152379376721684798, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_IsActive
@@ -16692,6 +16696,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot7
@@ -16700,13 +16708,17 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: showTagTooltipOnLeft
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -18231,7 +18243,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -874.5504}
+  m_AnchoredPosition: {x: 0, y: -874.55054}
   m_SizeDelta: {x: 0, y: 59.100403}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &574513424
@@ -26499,7 +26511,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 57.79, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 585.8, y: 427.9}
+  m_AnchoredPosition: {x: 585.8, y: 369.8}
   m_SizeDelta: {x: 518, y: 265.59}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &774484493
@@ -26522,8 +26534,8 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 207.9, y: 80.7}
-  m_Spacing: {x: 45.7, y: 39.4}
+  m_CellSize: {x: 216, y: 80.7}
+  m_Spacing: {x: 25.6, y: 26}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &775757455
@@ -27622,6 +27634,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot4
@@ -27630,13 +27646,17 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: showTagTooltipOnLeft
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -31096,6 +31116,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot6
@@ -31104,13 +31128,17 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: showTagTooltipOnLeft
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -44364,6 +44392,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot2
@@ -44372,13 +44404,17 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: showTagTooltipOnLeft
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -52202,6 +52238,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot7
@@ -52210,13 +52250,17 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: showTagTooltipOnLeft
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -57021,6 +57065,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot5
@@ -57029,9 +57077,13 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -65804,6 +65856,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 2167574866785442199, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 85.10156
+      objectReference: {fileID: 0}
     - target: {fileID: 2370232684246684197, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_Name
       value: MagicSlot3
@@ -65812,9 +65868,13 @@ PrefabInstance:
       propertyPath: m_BlocksRaycasts
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2714448743960716031, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 82.80469
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 7.400009
+      value: 7.3984375
       objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.y
