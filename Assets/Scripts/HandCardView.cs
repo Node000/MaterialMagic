@@ -217,12 +217,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if (owner == null)
             return;
 
-        if (owner.TryBeginTouchHoverPreview(this, eventData))
-        {
-            suppressClick = true;
-            return;
-        }
-
         if (!CanBeginMouseDrag(eventData))
             return;
 
@@ -236,9 +230,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (owner != null && owner.UpdateTouchHoverPreview(eventData))
-            return;
-
         if (!dragging || owner == null)
             return;
 
@@ -248,10 +239,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void OnEndDrag(PointerEventData eventData)
     {
         if (!dragging)
-        {
-            owner?.EndTouchHoverPreview(eventData);
             return;
-        }
 
         dragging = false;
         owner?.OnCardDragEnd(this, eventData);
@@ -282,7 +270,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     private bool CanBeginMouseDrag(PointerEventData eventData)
     {
-        return clickOverride == null && eventData != null && eventData.button == PointerEventData.InputButton.Left && eventData.pointerId < 0;
+        return clickOverride == null && eventData != null && eventData.button == PointerEventData.InputButton.Left;
     }
 
     private void ClearHoverAndHideTooltip()
@@ -372,8 +360,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         if (springHighlight == null)
             return;
 
-        springHighlight.color = GetSpringHighlightColor();
-        springHighlight.gameObject.SetActive(selected || hovered || layoutHovered);
+        springHighlight.gameObject.SetActive(false);
     }
 
     private Color GetSpringHighlightColor()

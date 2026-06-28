@@ -227,8 +227,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         if (springHighlight == null)
             return;
 
-        springHighlight.color = GetSpringHighlightColor();
-        springHighlight.gameObject.SetActive(springHighlightEnabled && (selected || hovered));
+        springHighlight.gameObject.SetActive(false);
     }
 
     private Color GetSpringHighlightColor()

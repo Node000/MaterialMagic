@@ -94,7 +94,7 @@
     },
     {
       "key": "buff.extra_refresh.desc",
-      "text": "额外获得等同层数的换牌机会，换牌时层数-1，回合结束时清除。"
+      "text": "下回合开始后额外获得等同层数的换牌机会，生效后清除。"
     },
     {
       "key": "buff.sturdy.name",

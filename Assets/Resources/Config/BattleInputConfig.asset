@@ -13,3 +13,9 @@ MonoBehaviour:
   m_Name: BattleInputConfig
   m_EditorClassIdentifier: 
   handCardDoubleClickPlayInterval: 0.3
+  dragSwipeMinDistance: 30
+  dragSwipeVerticalRatio: 1.2
+  cardQueueSpreadExtraSpacing: 36
+  cardQueueSpreadFalloffPower: 1.35
+  cardQueueZoneSwitchScreenDistance: 45
+  cardQueueDropScreenPadding: {x: 80, y: 70}

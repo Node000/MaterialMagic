@@ -443,6 +443,7 @@ public class BattleManager
 
         GameLog.Data($"Begin player turn extra={PlayerState.GetBuffStack(BuffEnum.ExtraDraw)}");
         BeginPlayerTurn();
+        PlayerState.ResetExtraRefreshChancesThisTurn();
         result.CapturePlayerBefore(PlayerState);
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
         PlayerState.TriggerOnTurnStart(opponent);

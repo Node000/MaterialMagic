@@ -12,6 +12,7 @@ public class PlayerState
     public event System.Action<IReadOnlyList<MaterialModel>> DiscardPileShuffledIntoDrawPile;
 
     private int temporaryMaterialIndex;
+    private int extraRefreshChancesThisTurn;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
@@ -19,6 +20,7 @@ public class PlayerState
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
+    public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
     public bool KeepHandOnEndTurn { get; set; }
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
@@ -965,9 +967,10 @@ public class PlayerState
         GameLog.Data("Player clear shield");
     }
 
-    public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn)
+    public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn, int extraRefreshChancesThisTurn = 0)
     {
         Shield = Mathf.Max(0, shield);
+        this.extraRefreshChancesThisTurn = Mathf.Max(0, extraRefreshChancesThisTurn);
         Hand.Clear();
         DrawPile.Clear();
         DiscardPile.Clear();
@@ -1008,6 +1011,7 @@ public class PlayerState
         RemoveBattleOnlyArrowState();
         TemporaryMaterialsNextTurn.Clear();
         ConsumedPile.Clear();
+        extraRefreshChancesThisTurn = 0;
     }
 
     public void RemoveSturdyModifiers()
@@ -1437,12 +1441,27 @@ public class PlayerState
         return null;
     }
 
+    public void ResetExtraRefreshChancesThisTurn()
+    {
+        extraRefreshChancesThisTurn = 0;
+    }
+
+    public void AddExtraRefreshChances(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        extraRefreshChancesThisTurn += amount;
+        GameLog.Data($"Player extra refresh chances +={amount} now={extraRefreshChancesThisTurn}");
+    }
+
     public bool UseExtraRefreshChance()
     {
-        if (GetBuffStack(BuffEnum.ExtraRefresh) <= 0)
+        if (extraRefreshChancesThisTurn <= 0)
             return false;
 
-        ConsumeBuff(BuffEnum.ExtraRefresh, 1);
+        extraRefreshChancesThisTurn--;
+        GameLog.Data($"Player use extra refresh chance now={extraRefreshChancesThisTurn}");
         return true;
     }
 

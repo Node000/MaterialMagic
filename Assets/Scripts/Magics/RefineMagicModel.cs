@@ -6,6 +6,6 @@ public class RefineMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         while (playerState.Hand.Count > 0)
-            playerState.RemoveCardEverywhere(playerState.Hand[0]);
+            playerState.ConsumeCardForBattle(playerState.Hand[0]);
     }
 }

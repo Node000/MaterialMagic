@@ -22,7 +22,7 @@
     },
     {
       "key": "magic.flame_barrier.desc",
-      "text": "下回合抽到的素材牌获得【燃薪】"
+      "text": "下回合抽到的前3张素材牌获得【燃薪】"
     },
     {
       "key": "magic.magma.name",
@@ -246,7 +246,7 @@
     },
     {
       "key": "magic.refine.desc",
-      "text": "【移除手牌】区的素材牌"
+      "text": "【消耗】手牌区的素材牌"
     },
     {
       "key": "magic.earth_hand.name",

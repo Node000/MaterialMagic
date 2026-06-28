@@ -166,19 +166,10 @@ public class HandSystemUI : MonoBehaviour
 	private float playCardSpacing = 118f;
 
     [SerializeField]
-    private float cardHoverExtraSpacing = 42f;
-
-    [SerializeField]
     private float cardHoverYOffset = 32f;
 
     [SerializeField]
     private float cardHoverScale = 1.18f;
-
-    [SerializeField]
-    private bool touchHoverPreviewEnabled = true;
-
-    [SerializeField]
-    private float touchHoverMaxDistance = 90f;
 
     [SerializeField]
     private float playLayoutY;
@@ -383,9 +374,25 @@ public class HandSystemUI : MonoBehaviour
 
     private HandCardView layoutHoverCardView;
 
-    private bool touchHoverPreviewActive;
-
     private bool cardDragActive;
+
+    private HandCardView draggedCardView;
+
+    private MaterialModel draggedCard;
+
+    private bool dragSourceIsPlayZone;
+
+    private int dragSourceIndex = -1;
+
+    private Vector2 dragStartScreenPosition;
+
+    private bool dragPreviewActive;
+
+    private bool dragPreviewTargetIsPlayZone;
+
+    private int dragPreviewIndex = -1;
+
+    private readonly Vector3[] cardQueueWorldCorners = new Vector3[4];
 
 	private readonly HashSet<HandCardView> newCardViews = new HashSet<HandCardView>();
 
@@ -413,6 +420,10 @@ public class HandSystemUI : MonoBehaviour
 		private BattleManager battleManager;
 
     private TMP_Dropdown debugMagicDropdown;
+
+    private Coroutine debugMagicDropdownShowRoutine;
+
+    private bool debugMagicDropdownInitialized;
 
     private int debugMagicDropdownSlotIndex = -1;
 
@@ -550,9 +561,11 @@ public class HandSystemUI : MonoBehaviour
 
 	private readonly List<MaterialModel> pendingChoiceCards = new List<MaterialModel>();
 
-	private bool runEnded;
+		private bool runEnded;
 
-    private bool eliteMagicModifierRewardResolved;
+        private string lastRunCheckpointKey;
+	
+	    private bool eliteMagicModifierRewardResolved;
 
     private float loadedRunPlaySeconds;
 
@@ -682,7 +695,29 @@ public class HandSystemUI : MonoBehaviour
         debugMagicDropdown.SetValueWithoutNotify(0);
         debugMagicDropdown.RefreshShownValue();
         PositionDebugMagicDropdown(screenPosition);
+
+        bool waitForInitialization = !debugMagicDropdownInitialized;
         debugMagicDropdown.gameObject.SetActive(true);
+        if (debugMagicDropdownShowRoutine != null)
+            StopCoroutine(debugMagicDropdownShowRoutine);
+
+        if (waitForInitialization)
+        {
+            debugMagicDropdownShowRoutine = StartCoroutine(ShowDebugMagicDropdownAfterInitialization());
+            return;
+        }
+
+        debugMagicDropdown.Show();
+    }
+
+    private IEnumerator ShowDebugMagicDropdownAfterInitialization()
+    {
+        yield return null;
+        debugMagicDropdownShowRoutine = null;
+        debugMagicDropdownInitialized = true;
+        if (!debugBattleActive || debugMagicDropdown == null || playerState == null || debugMagicDropdownSlotIndex < 0 || !debugMagicDropdown.gameObject.activeInHierarchy)
+            yield break;
+
         debugMagicDropdown.Show();
     }
 
@@ -758,6 +793,12 @@ public class HandSystemUI : MonoBehaviour
 
     private void HideDebugMagicDropdown()
     {
+        if (debugMagicDropdownShowRoutine != null)
+        {
+            StopCoroutine(debugMagicDropdownShowRoutine);
+            debugMagicDropdownShowRoutine = null;
+        }
+
         if (debugMagicDropdown != null)
             debugMagicDropdown.gameObject.SetActive(false);
         debugMagicDropdownSlotIndex = -1;
@@ -1197,6 +1238,7 @@ public class HandSystemUI : MonoBehaviour
 		private void BeginPlayerTurn(int drawCount)
 		{
 			battleManager?.BeginPlayerTurnStartRules(drawCount, TryApplyFixedTutorialHand);
+			refreshUsedThisTurn = false;
 			GetUIManager().TurnBanner?.Show("你的回合");
 			ResetContinuousCastCounterUI();
 			suppressEnemyIntentRefresh = false;
@@ -1206,6 +1248,7 @@ public class HandSystemUI : MonoBehaviour
 			RefreshMaterialListPanel();
 			RebuildCards(animateFromCurrent: true);
 		}
+
 
 		private bool TryApplyFixedTutorialHand()
 		{
@@ -2234,7 +2277,6 @@ public class HandSystemUI : MonoBehaviour
         if (moveTween != null)
             yield return moveTween.WaitForCompletion();
 
-        SaveRunProgress();
         panel?.RefreshCellVisuals();
         float delay = panel != null ? panel.EnterLevelDelayAfterMove : 0.2f;
         if (delay > 0f)
@@ -2244,11 +2286,11 @@ public class HandSystemUI : MonoBehaviour
         LevelData level = pendingChapterMapBossStart ? runManager.DrawBossLevel(activeChapter ?? GetActiveChapter()) : targetCell.level;
         if (level == null)
         {
-            SaveRunProgress();
             if (panel != null)
                 panel.SetInputLocked(false);
             busy = false;
             chapterMapMoveInProgress = false;
+            SaveRunProgress();
             yield break;
         }
         runManager.ConsumeCurrentMapCellLevel();
@@ -2684,7 +2726,6 @@ public class HandSystemUI : MonoBehaviour
 		private void Update()
 			{
         HidePinnedBuffTooltipOnOutsideClick();
-        UpdateActiveTouchHoverPreview();
 
         bool tutorialClickConsumedThisFrame = TutorialManager != null && TutorialManager.WasTutorialClickConsumedThisFrame();
 
@@ -2836,13 +2877,15 @@ public class HandSystemUI : MonoBehaviour
 				selectedCards.Add(cardView.Card);
 			}
 		}
-			else
-			{
-				selectedCards.Remove(cardView.Card);
-			}
-        RefreshEndTurnButtonText();
-        RefreshPlayerAnimationState();
-        TutorialManager?.OnBattleCardsSelected(selectedCards);
+				else
+				{
+					selectedCards.Remove(cardView.Card);
+				}
+	        UpdateLayout(false);
+	        RefreshEndTurnButtonText();
+	        RefreshPlayerAnimationState();
+	        TutorialManager?.OnBattleCardsSelected(selectedCards);
+
 		}
 
 			public void OnCardPlayRequested(HandCardView cardView)
@@ -2890,84 +2933,334 @@ public class HandSystemUI : MonoBehaviour
         return battleInputConfig;
     }
 
-		    public void OnCardDragBegin(HandCardView cardView, PointerEventData eventData)
-	    {
-	        if (!CanDragCard(cardView))
-	            return;
+    public void OnCardDragBegin(HandCardView cardView, PointerEventData eventData)
+    {
+        if (!CanDragCard(cardView))
+            return;
 
         cardDragActive = true;
+        draggedCardView = cardView;
+        draggedCard = cardView.Card;
+        dragSourceIsPlayZone = cardView.InPlayZone;
+        List<MaterialModel> sourceCards = dragSourceIsPlayZone ? playerState.PlayZone : playerState.Hand;
+        dragSourceIndex = sourceCards != null ? sourceCards.IndexOf(draggedCard) : -1;
+        dragStartScreenPosition = eventData != null ? eventData.pressPosition : Vector2.zero;
+        if (eventData != null && dragStartScreenPosition == Vector2.zero)
+            dragStartScreenPosition = eventData.position;
+        dragPreviewActive = false;
+        dragPreviewTargetIsPlayZone = false;
+        dragPreviewIndex = -1;
+
         ClearCardHover(cardView, false);
-	        GetUIManager()?.HideUnifiedDetailPopup(cardView);
-	        ShortcutExtensions.DOKill((Transform)cardView.RectTransform, false);
-	        cardView.RectTransform.SetAsLastSibling();
-	    }
+        GetUIManager()?.HideUnifiedDetailPopup(cardView);
+        ShortcutExtensions.DOKill((Transform)cardView.RectTransform, false);
+        cardView.RectTransform.SetAsLastSibling();
+        UpdateLayout(false);
+    }
 
-	    public void OnCardDragged(HandCardView cardView, PointerEventData eventData)
-	    {
-	        if (!CanDragCard(cardView) || eventData == null)
-	            return;
+    public void OnCardDragged(HandCardView cardView, PointerEventData eventData)
+    {
+        if (!CanDragCard(cardView) || eventData == null || draggedCardView != cardView)
+            return;
 
-	        RectTransform parent = cardView.RectTransform.parent as RectTransform;
-	        if (parent == null)
-	            return;
+        MoveDraggedCardToPointer(cardView, eventData);
+        UpdateDragPreview(eventData);
+    }
 
-	        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(parent, eventData.position, eventData.pressEventCamera, out Vector3 worldPosition))
-	            cardView.RectTransform.position = worldPosition;
-	    }
+    public void OnCardDragEnd(HandCardView cardView, PointerEventData eventData)
+    {
+        bool wasDraggingThisCard = draggedCardView == cardView && draggedCard != null;
+        MaterialModel card = wasDraggingThisCard ? draggedCard : (cardView != null ? cardView.Card : null);
+        bool sourceIsPlayZone = wasDraggingThisCard ? dragSourceIsPlayZone : (cardView != null && cardView.InPlayZone);
+        bool canComplete = wasDraggingThisCard && eventData != null && CanDragCard(cardView);
+        bool targetIsPlayZone = sourceIsPlayZone;
+        int targetIndex = Mathf.Max(0, dragSourceIndex);
+        bool hasTarget = false;
 
-	    public void OnCardDragEnd(HandCardView cardView, PointerEventData eventData)
-	    {
-        cardDragActive = false;
-	        if (!CanDragCard(cardView) || eventData == null)
-	        {
-	            RebuildCards(animateFromCurrent: true);
-	            return;
-	        }
+        if (canComplete)
+            hasTarget = TryGetDragDropTarget(eventData, out targetIsPlayZone, out targetIndex);
 
-	        bool targetIsPlayZone;
-	        if (RectTransformUtility.RectangleContainsScreenPoint(playArea, eventData.position, eventData.pressEventCamera))
-	            targetIsPlayZone = true;
-	        else if (RectTransformUtility.RectangleContainsScreenPoint(handArea, eventData.position, eventData.pressEventCamera))
-	            targetIsPlayZone = false;
-	        else
-	            targetIsPlayZone = cardView.InPlayZone;
+        ResetCardDragState();
 
-	        int targetIndex = GetDropIndex(targetIsPlayZone ? playerState.PlayZone : playerState.Hand, targetIsPlayZone ? playArea : handArea, cardView.Card, eventData);
-	        bool changed = false;
-	        if (targetIsPlayZone)
-	        {
-	            if (cardView.InPlayZone)
-	                changed = playerState.ReorderPlayCard(cardView.Card, targetIndex);
-            else
+        if (!canComplete || card == null || !hasTarget)
+        {
+            RebuildCards(animateFromCurrent: true);
+            return;
+        }
+
+        bool changed = ApplyCardDragDrop(card, sourceIsPlayZone, targetIsPlayZone, targetIndex);
+        if (changed)
+        {
+            RefreshEndTurnButtonText();
+            RefreshPlayerAnimationState();
+        }
+        RebuildCards(animateFromCurrent: true);
+    }
+
+    private void MoveDraggedCardToPointer(HandCardView cardView, PointerEventData eventData)
+    {
+        RectTransform parent = cardView.RectTransform.parent as RectTransform;
+        if (parent == null)
+            return;
+
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(parent, eventData.position, eventData.pressEventCamera, out Vector3 worldPosition))
+            cardView.RectTransform.position = worldPosition;
+    }
+
+    private void UpdateDragPreview(PointerEventData eventData)
+    {
+        if (TryGetDragDropTarget(eventData, out bool targetIsPlayZone, out int targetIndex))
+            SetDragPreview(true, targetIsPlayZone, targetIndex);
+        else
+            SetDragPreview(false, false, -1);
+    }
+
+    private bool TryGetDragDropTarget(PointerEventData eventData, out bool targetIsPlayZone, out int targetIndex)
+    {
+        if (TryGetDragZoneSwitchTarget(eventData, out targetIsPlayZone, out targetIndex))
+            return true;
+
+        if (TryGetDragHoverDropTarget(eventData, out targetIsPlayZone, out targetIndex))
+            return true;
+
+        if (TryGetDragSwipeTarget(eventData, out targetIsPlayZone))
+        {
+            targetIndex = GetDropTailIndex(targetIsPlayZone);
+            return true;
+        }
+
+        targetIsPlayZone = false;
+        targetIndex = -1;
+        return false;
+    }
+
+    private bool TryGetDragZoneSwitchTarget(PointerEventData eventData, out bool targetIsPlayZone, out int targetIndex)
+    {
+        targetIsPlayZone = false;
+        targetIndex = -1;
+        if (eventData == null || playerState == null)
+            return false;
+
+        float threshold = GetBattleInputConfig().CardQueueZoneSwitchScreenDistance;
+        if (threshold <= 0f)
+            return false;
+
+        float deltaY = eventData.position.y - dragStartScreenPosition.y;
+        if (!dragSourceIsPlayZone && deltaY >= threshold)
+            targetIsPlayZone = true;
+        else if (dragSourceIsPlayZone && deltaY <= -threshold)
+            targetIsPlayZone = false;
+        else
+            return false;
+
+        Camera eventCamera = GetQueueDropEventCamera(eventData);
+        targetIndex = GetQueueScreenDropIndex(targetIsPlayZone ? playerState.PlayZone : playerState.Hand, eventData.position, eventCamera);
+        return true;
+    }
+
+    private bool TryGetDragHoverDropTarget(PointerEventData eventData, out bool targetIsPlayZone, out int targetIndex)
+    {
+        targetIsPlayZone = false;
+        targetIndex = -1;
+        if (eventData == null || playerState == null)
+            return false;
+
+        Camera eventCamera = GetQueueDropEventCamera(eventData);
+        bool playHit = TryGetQueueDropIndex(playerState.PlayZone, playArea, eventData.position, eventCamera, out int playIndex, out float playDistance);
+        bool handHit = TryGetQueueDropIndex(playerState.Hand, handArea, eventData.position, eventCamera, out int handIndex, out float handDistance);
+        if (playHit && (!handHit || playDistance <= handDistance))
+        {
+            targetIsPlayZone = true;
+            targetIndex = playIndex;
+            return true;
+        }
+
+        if (handHit)
+        {
+            targetIsPlayZone = false;
+            targetIndex = handIndex;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetDragSwipeTarget(PointerEventData eventData, out bool targetIsPlayZone)
+    {
+        targetIsPlayZone = false;
+        if (eventData == null)
+            return false;
+
+        Vector2 delta = eventData.position - dragStartScreenPosition;
+        float verticalDistance = Mathf.Abs(delta.y);
+        BattleInputConfig config = GetBattleInputConfig();
+        if (verticalDistance < config.DragSwipeMinDistance)
+            return false;
+
+        if (verticalDistance < Mathf.Abs(delta.x) * config.DragSwipeVerticalRatio)
+            return false;
+
+        targetIsPlayZone = delta.y > 0f;
+        return true;
+    }
+
+    private Camera GetQueueDropEventCamera(PointerEventData eventData)
+    {
+        if (eventData != null && eventData.pressEventCamera != null)
+            return eventData.pressEventCamera;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        return canvas != null ? canvas.worldCamera : null;
+    }
+
+    private bool TryGetQueueDropIndex(List<MaterialModel> cards, RectTransform area, Vector2 screenPosition, Camera eventCamera, out int targetIndex, out float verticalDistance)
+    {
+        targetIndex = 0;
+        verticalDistance = float.MaxValue;
+        if (!TryGetQueueScreenBounds(cards, area, eventCamera, out Rect bounds))
+            return false;
+
+        Vector2 padding = GetBattleInputConfig().CardQueueDropScreenPadding;
+        Rect paddedBounds = Rect.MinMaxRect(bounds.xMin - padding.x, bounds.yMin - padding.y, bounds.xMax + padding.x, bounds.yMax + padding.y);
+        if (!paddedBounds.Contains(screenPosition))
+            return false;
+
+        targetIndex = GetQueueScreenDropIndex(cards, screenPosition, eventCamera);
+        verticalDistance = Mathf.Abs(screenPosition.y - bounds.center.y);
+        return true;
+    }
+
+    private bool TryGetQueueScreenBounds(List<MaterialModel> cards, RectTransform fallbackArea, Camera eventCamera, out Rect bounds)
+    {
+        Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+        Vector2 max = new Vector2(float.MinValue, float.MinValue);
+        bool hasBounds = false;
+
+        for (int i = 0; cards != null && i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (IsCardExcludedFromLayout(card))
+                continue;
+
+            HandCardView view = FindView(card);
+            if ((Object)view != (Object)null)
+                EncapsulateScreenBounds(view.RectTransform, eventCamera, ref min, ref max, ref hasBounds);
+        }
+
+        if (!hasBounds && fallbackArea != null)
+            EncapsulateScreenBounds(fallbackArea, eventCamera, ref min, ref max, ref hasBounds);
+
+        bounds = hasBounds ? Rect.MinMaxRect(min.x, min.y, max.x, max.y) : default;
+        return hasBounds;
+    }
+
+    private void EncapsulateScreenBounds(RectTransform rectTransform, Camera eventCamera, ref Vector2 min, ref Vector2 max, ref bool hasBounds)
+    {
+        if ((Object)rectTransform == (Object)null)
+            return;
+
+        rectTransform.GetWorldCorners(cardQueueWorldCorners);
+        for (int i = 0; i < cardQueueWorldCorners.Length; i++)
+        {
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, cardQueueWorldCorners[i]);
+            min = hasBounds ? Vector2.Min(min, screenPoint) : screenPoint;
+            max = hasBounds ? Vector2.Max(max, screenPoint) : screenPoint;
+            hasBounds = true;
+        }
+    }
+
+    private int GetQueueScreenDropIndex(List<MaterialModel> cards, Vector2 screenPosition, Camera eventCamera)
+    {
+        int index = 0;
+        for (int i = 0; cards != null && i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (IsCardExcludedFromLayout(card))
+                continue;
+
+            HandCardView view = FindView(card);
+            if ((Object)view != (Object)null && screenPosition.x > GetRectScreenCenter(view.RectTransform, eventCamera).x)
+                index++;
+        }
+        return index;
+    }
+
+    private Vector2 GetRectScreenCenter(RectTransform rectTransform, Camera eventCamera)
+    {
+        if ((Object)rectTransform == (Object)null)
+            return Vector2.zero;
+
+        rectTransform.GetWorldCorners(cardQueueWorldCorners);
+        Vector2 min = RectTransformUtility.WorldToScreenPoint(eventCamera, cardQueueWorldCorners[0]);
+        Vector2 max = min;
+        for (int i = 1; i < cardQueueWorldCorners.Length; i++)
+        {
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, cardQueueWorldCorners[i]);
+            min = Vector2.Min(min, screenPoint);
+            max = Vector2.Max(max, screenPoint);
+        }
+        return (min + max) * 0.5f;
+    }
+
+    private void SetDragPreview(bool active, bool targetIsPlayZone, int targetIndex)
+    {
+        if (active)
+            targetIndex = Mathf.Clamp(targetIndex, 0, GetDropTailIndex(targetIsPlayZone));
+
+        if (dragPreviewActive == active && dragPreviewTargetIsPlayZone == targetIsPlayZone && dragPreviewIndex == targetIndex)
+            return;
+
+        dragPreviewActive = active;
+        dragPreviewTargetIsPlayZone = targetIsPlayZone;
+        dragPreviewIndex = targetIndex;
+        UpdateLayout(false);
+    }
+
+    private int GetDropTailIndex(bool targetIsPlayZone)
+    {
+        if (playerState == null)
+            return 0;
+
+        return CountLayoutCards(targetIsPlayZone ? playerState.PlayZone : playerState.Hand);
+    }
+
+    private bool ApplyCardDragDrop(MaterialModel card, bool sourceIsPlayZone, bool targetIsPlayZone, int targetIndex)
+    {
+        if (targetIsPlayZone)
+        {
+            if (sourceIsPlayZone)
+                return playerState.ReorderPlayCard(card, targetIndex);
+
+            bool changed = TryDragHandCardToPlay(card, targetIndex);
+            if (changed)
             {
-                changed = TryDragHandCardToPlay(cardView.Card, targetIndex);
-                if (changed)
-                {
-                    selectedCards.Remove(cardView.Card);
-                    ClearPlayedCardFeedback(cardView.Card);
-                }
+                selectedCards.Remove(card);
+                ClearPlayedCardFeedback(card);
             }
+            return changed;
+        }
 
-	        }
-	        else
-	        {
-	            if (cardView.InPlayZone)
-	                changed = TryDragPlayCardToHand(cardView.Card, targetIndex);
-	            else
-	                changed = playerState.ReorderHandCard(cardView.Card, targetIndex);
-	        }
+        if (sourceIsPlayZone)
+            return TryDragPlayCardToHand(card, targetIndex);
 
-	        if (changed)
-	        {
-	            RefreshEndTurnButtonText();
-	            RefreshPlayerAnimationState();
-	        }
-	        RebuildCards(animateFromCurrent: true);
-	    }
+        return playerState.ReorderHandCard(card, targetIndex);
+    }
 
-    public bool IsCardDragActive => cardDragActive;
+    private void ResetCardDragState()
+    {
+        cardDragActive = false;
+        draggedCardView = null;
+        draggedCard = null;
+        dragSourceIsPlayZone = false;
+        dragSourceIndex = -1;
+        dragStartScreenPosition = Vector2.zero;
+        dragPreviewActive = false;
+        dragPreviewTargetIsPlayZone = false;
+        dragPreviewIndex = -1;
+    }
 
-    public void SetCardHover(HandCardView cardView, bool instant)
+public bool IsCardDragActive => cardDragActive;
+
+	    public void SetCardHover(HandCardView cardView, bool instant)
     {
         if (cardDragActive || cardView == null || playerState == null || (!playerState.Hand.Contains(cardView.Card) && !playerState.PlayZone.Contains(cardView.Card)))
             return;
@@ -2993,105 +3286,6 @@ public class HandSystemUI : MonoBehaviour
         UpdateLayout(instant);
     }
 
-    public bool TryBeginTouchHoverPreview(HandCardView cardView, PointerEventData eventData)
-    {
-        if (cardDragActive || !touchHoverPreviewEnabled || !IsTouchPointer(eventData) || !CanDragCard(cardView))
-            return false;
-
-        touchHoverPreviewActive = true;
-        SetCardHover(cardView, false);
-        GetUIManager()?.HideUnifiedDetailPopup(cardView);
-        return true;
-    }
-
-    public bool UpdateTouchHoverPreview(PointerEventData eventData)
-    {
-        if (cardDragActive || !touchHoverPreviewActive)
-            return false;
-
-        if (eventData != null && TryFindHoverCard(eventData.position, eventData.pressEventCamera, out HandCardView hoverView))
-            SetCardHover(hoverView, false);
-        return true;
-    }
-
-    public void EndTouchHoverPreview(PointerEventData eventData)
-    {
-        if (!touchHoverPreviewActive)
-            return;
-
-        touchHoverPreviewActive = false;
-        if (layoutHoverCardView != null)
-            ClearCardHover(layoutHoverCardView, false);
-    }
-
-    private void UpdateActiveTouchHoverPreview()
-    {
-        if (cardDragActive)
-            return;
-
-        if (!touchHoverPreviewActive)
-            return;
-
-        if (Input.touchCount <= 0)
-        {
-            EndTouchHoverPreview(null);
-            return;
-        }
-
-        Touch touch = Input.GetTouch(0);
-        if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-        {
-            EndTouchHoverPreview(null);
-            return;
-        }
-
-        if (TryFindHoverCard(touch.position, null, out HandCardView hoverView))
-            SetCardHover(hoverView, false);
-    }
-
-    private bool TryFindHoverCard(Vector2 screenPosition, Camera eventCamera, out HandCardView hoverView)
-    {
-        hoverView = null;
-        RectTransform area = null;
-        List<MaterialModel> cards = null;
-
-        if (playArea != null && RectTransformUtility.RectangleContainsScreenPoint(playArea, screenPosition, eventCamera))
-        {
-            area = playArea;
-            cards = playerState != null ? playerState.PlayZone : null;
-        }
-        else if (handArea != null && RectTransformUtility.RectangleContainsScreenPoint(handArea, screenPosition, eventCamera))
-        {
-            area = handArea;
-            cards = playerState != null ? playerState.Hand : null;
-        }
-
-        if (area == null || cards == null || !RectTransformUtility.ScreenPointToLocalPointInRectangle(area, screenPosition, eventCamera, out Vector2 localPoint))
-            return false;
-
-        float bestDistance = float.MaxValue;
-        for (int i = 0; i < cards.Count; i++)
-        {
-            HandCardView view = FindView(cards[i]);
-            if (view == null || !view.ContainsRaycastPoint(screenPosition, eventCamera))
-                continue;
-
-            float distance = Mathf.Abs(localPoint.x - view.RectTransform.anchoredPosition.x);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                hoverView = view;
-            }
-        }
-
-        return hoverView != null;
-    }
-
-    private bool IsTouchPointer(PointerEventData eventData)
-    {
-        return Input.touchCount > 0 || (eventData != null && eventData.pointerId >= 0);
-    }
-
     private void MovePlayCardToHandByClick(HandCardView cardView)
     {
         if (!CanDragCard(cardView) || !cardView.InPlayZone)
@@ -3114,27 +3308,6 @@ public class HandSystemUI : MonoBehaviour
 	        return !busy && !choosingEventCard && cardView != null && playerState != null && (playerState.Hand.Contains(cardView.Card) || playerState.PlayZone.Contains(cardView.Card));
 	    }
 
-	    private int GetDropIndex(List<MaterialModel> cards, RectTransform area, MaterialModel draggedCard, PointerEventData eventData)
-	    {
-	        if (cards == null || area == null || eventData == null)
-	            return 0;
-
-	        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(area, eventData.position, eventData.pressEventCamera, out Vector2 localPoint))
-	            return cards.Count;
-
-	        int index = 0;
-	        for (int i = 0; i < cards.Count; i++)
-	        {
-	            MaterialModel card = cards[i];
-	            if (card == draggedCard)
-	                continue;
-
-	            HandCardView view = FindView(card);
-	            if ((Object)view != (Object)null && localPoint.x > view.RectTransform.anchoredPosition.x)
-	                index++;
-	        }
-	        return index;
-	    }
 
 	    private bool TryDragHandCardToPlay(MaterialModel card, int targetIndex)
 	    {
@@ -3230,14 +3403,18 @@ public class HandSystemUI : MonoBehaviour
 
 		if (pendingChoiceCards.Contains(cardView.Card))
 		{
-			pendingChoiceCards.Remove(cardView.Card);
-			cardView.SetSelected(false, instant: false);
-			return;
+				pendingChoiceCards.Remove(cardView.Card);
+				cardView.SetSelected(false, instant: false);
+				UpdateLayout(false);
+				return;
+
 		}
 
-		pendingChoiceCards.Add(cardView.Card);
-		cardView.SetSelected(true, instant: false);
-		if (pendingChoiceCards.Count < pendingChoiceCount)
+			pendingChoiceCards.Add(cardView.Card);
+			cardView.SetSelected(true, instant: false);
+			UpdateLayout(false);
+			if (pendingChoiceCards.Count < pendingChoiceCount)
+
 			return;
 
 		ResolveEventCardChoice();
@@ -3562,15 +3739,16 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0069: Expected O, but got Unknown
 		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0151: Expected O, but got Unknown
-		if (TutorialManager != null && TutorialManager.TutorialBattleRunning && !TutorialManager.CanRefreshSelected(selectedCards))
-		{
-			return;
-		}
-		if (busy || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.GetBuffStack(BuffEnum.ExtraRefresh) <= 0) || selectedCards.Count == 0)
-		{
-			return;
-		}
-		List<HandCardView> list = new List<HandCardView>();
+			if (TutorialManager != null && TutorialManager.TutorialBattleRunning && !TutorialManager.CanRefreshSelected(selectedCards))
+			{
+				return;
+			}
+			if (busy || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
+			{
+				return;
+			}
+			List<HandCardView> list = new List<HandCardView>();
+
 		for (int i = 0; i < selectedCards.Count; i++)
 		{
 			HandCardView handCardView = FindView(selectedCards[i]);
@@ -4741,13 +4919,16 @@ public class HandSystemUI : MonoBehaviour
                     : selectedCards.Contains(view.Card) && playerState != null && playerState.Hand.Contains(view.Card);
                 if (view.Selected != shouldBeSelected)
                     view.SetSelected(shouldBeSelected, instant);
-            }
+		            }
 
-            RefreshEndTurnButtonText();
-            RefreshPlayerAnimationState();
-        }
+		            if (playerState != null)
+		                UpdateLayout(instant);
+		            RefreshEndTurnButtonText();
+		            RefreshPlayerAnimationState();
+		        }
 
-        private void RestoreSelectedCardsFromViewState()
+		        private void RestoreSelectedCardsFromViewState()
+
         {
             if (playerState == null || choosingEventCard)
                 return;
@@ -4826,80 +5007,128 @@ public class HandSystemUI : MonoBehaviour
 
 	private void LayoutArea(List<MaterialModel> cards, RectTransform area, bool playZone, bool instant)
 	{
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Expected O, but got Unknown
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Expected O, but got Unknown
-		//IL_0085: Expected O, but got Unknown
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009a: Expected O, but got Unknown
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0104: Expected O, but got Unknown
-		//IL_0104: Expected O, but got Unknown
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cc: Expected O, but got Unknown
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Unknown result type (might be due to invalid IL or missing references)
-		int count = cards.Count;
-		float num = GetLayoutSpacing(cards, area, playZone);
-		float num2 = ((count > 1) ? ((0f - num) * (float)(count - 1) * 0.5f) : 0f);
-        int hoverIndex = GetLayoutHoverIndex(cards);
-		Vector2 val = default(Vector2);
-		for (int i = 0; i < count; i++)
+        if (cards == null || area == null)
+            return;
+
+        int visibleCount = CountLayoutCards(cards);
+        bool previewForArea = dragPreviewActive && dragPreviewTargetIsPlayZone == playZone;
+        int layoutCount = visibleCount + (previewForArea ? 1 : 0);
+        if (layoutCount <= 0)
+            return;
+
+        float spacing = GetLayoutSpacing(cards, area, playZone, layoutCount);
+        float minX = layoutCount > 1 ? -spacing * (layoutCount - 1) * 0.5f : 0f;
+        int hoverIndex = previewForArea ? -1 : GetLayoutHoverIndex(cards);
+        int previewIndex = previewForArea ? Mathf.Clamp(dragPreviewIndex, 0, visibleCount) : -1;
+        int spreadCenterIndex = previewForArea ? previewIndex : hoverIndex;
+        BattleInputConfig inputConfig = GetBattleInputConfig();
+        float spreadExtraSpacing = inputConfig.CardQueueSpreadExtraSpacing;
+        float spreadFalloffPower = inputConfig.CardQueueSpreadFalloffPower;
+        int visualIndex = 0;
+        Vector2 position = default(Vector2);
+
+		for (int i = 0; i < cards.Count; i++)
 		{
-			HandCardView handCardView = FindView(cards[i]);
+            MaterialModel card = cards[i];
+            if (IsCardExcludedFromLayout(card))
+                continue;
+
+            int layoutIndex = visualIndex;
+            if (previewForArea && layoutIndex >= previewIndex)
+                layoutIndex++;
+            visualIndex++;
+
+			HandCardView handCardView = FindView(card);
 			if (!((Object)handCardView == (Object)null))
 			{
 				if ((Object)((Transform)handCardView.RectTransform).parent != (Object)area)
 				{
 					((Transform)handCardView.RectTransform).SetParent((Transform)area, true);
 				}
-                float x = hoverIndex >= 0
-                    ? HoverSpreadLayoutUtility.GetFixedWidthHoverX(i, count, hoverIndex, num2, -num2, num + cardHoverExtraSpacing)
-                    : num2 + num * (float)i;
-                float y = GetLayoutY(playZone) + (i == hoverIndex ? cardHoverYOffset : 0f);
-				val = new Vector2(x, y);
+                bool selectedForLift = !playZone && (choosingEventCard ? pendingChoiceCards.Contains(card) : selectedCards.Contains(card));
+                float x = minX + spacing * layoutIndex + GetQueueSpreadOffset(layoutIndex, spreadCenterIndex, spreadExtraSpacing, spreadFalloffPower);
+                float y = GetLayoutY(playZone) + (layoutIndex == hoverIndex || selectedForLift ? cardHoverYOffset : 0f);
+
+				position = new Vector2(x, y);
 				handCardView.SetInPlayZone(playZone);
 				if (instant)
 				{
 					((Transform)handCardView.RectTransform).SetParent((Transform)area, false);
-                    SetCardLayoutPosition(handCardView.RectTransform, val, playZone);
+                    SetCardLayoutPosition(handCardView.RectTransform, position, playZone);
 					handCardView.SetBaseRotation(0f, instant: true);
 				}
 				else
 				{
 					bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
-					AnimateCardToLayoutTarget(handCardView, area, val, playZone, animateFromExistingView);
+					AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView);
 				}
 			}
 		}
-	}
+		}
+
+    private float GetQueueSpreadOffset(int layoutIndex, int centerIndex, float maxExtraSpacing, float falloffPower)
+    {
+        if (centerIndex < 0 || layoutIndex == centerIndex || maxExtraSpacing <= 0f)
+            return 0f;
+
+        int signedDistance = layoutIndex - centerIndex;
+        float distance = Mathf.Abs(signedDistance);
+        if (distance <= 0f)
+            return 0f;
+
+        float power = Mathf.Max(0f, falloffPower);
+        float strength = 1f / Mathf.Pow(distance, power);
+        return Mathf.Sign(signedDistance) * maxExtraSpacing * strength;
+    }
+
+    private int CountLayoutCards(List<MaterialModel> cards)
+
+    {
+        if (cards == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (!IsCardExcludedFromLayout(cards[i]))
+                count++;
+        }
+        return count;
+    }
+
+    private bool IsCardExcludedFromLayout(MaterialModel card)
+    {
+        return cardDragActive && card != null && card == draggedCard;
+    }
 
     private int GetLayoutHoverIndex(List<MaterialModel> cards)
     {
-        if (layoutHoverCardView == null || cards == null)
+        if (cardDragActive || layoutHoverCardView == null || cards == null)
             return -1;
 
+        int visualIndex = 0;
         for (int i = 0; i < cards.Count; i++)
         {
+            if (IsCardExcludedFromLayout(cards[i]))
+                continue;
+
             if (cards[i] == layoutHoverCardView.Card)
-                return i;
+                return visualIndex;
+            visualIndex++;
         }
         return -1;
     }
 
-	private float GetLayoutSpacing(List<MaterialModel> cards, RectTransform area, bool playZone)
+
+
+	private float GetLayoutSpacing(List<MaterialModel> cards, RectTransform area, bool playZone, int count)
     {
         float preferredSpacing = playZone ? playCardSpacing : cardSpacing;
-        int count = cards != null ? cards.Count : 0;
         if (count <= 1 || area == null)
             return preferredSpacing;
 
         float cardWidth = 0f;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; cards != null && i < cards.Count; i++)
         {
             HandCardView view = FindView(cards[i]);
             if (view != null)
@@ -5005,12 +5234,14 @@ public class HandSystemUI : MonoBehaviour
 
 	    private int GetRemainingRefreshChanceCount()
 	    {
-	        if (playerState == null)
-	            return 0;
+		        if (playerState == null)
+		            return 0;
 
-	        int remaining = refreshUsedThisTurn ? 0 : 1;
-	        return remaining + playerState.GetBuffStack(BuffEnum.ExtraRefresh);
-	    }
+		        int remaining = refreshUsedThisTurn ? 0 : 1;
+		        return remaining + playerState.ExtraRefreshChancesThisTurn;
+		    }
+
+
 
 	    private void CacheRefreshChanceViews()
 	    {
@@ -6255,8 +6486,54 @@ public class HandSystemUI : MonoBehaviour
 
     private void SaveRunProgress()
     {
-        if (!runEnded)
-            RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds(), battleManager, currentEvent);
+        if (runEnded || !TryBuildRunCheckpointKey(out string checkpointKey) || checkpointKey == lastRunCheckpointKey)
+            return;
+
+        RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds(), battleManager, currentEvent);
+        lastRunCheckpointKey = checkpointKey;
+    }
+
+    private bool TryBuildRunCheckpointKey(out string checkpointKey)
+    {
+        checkpointKey = null;
+        if (playerState == null || mapNodes == null || mapNodes.Count == 0)
+            return false;
+
+        if (currentLevel == null)
+        {
+            if (chapterMapMoveInProgress)
+                return false;
+
+            RunMapGridModel grid = ChapterMapGrid;
+            int mapX = grid != null ? grid.playerX : 0;
+            int mapY = grid != null ? grid.playerY : 0;
+            bool bossMapActive = grid != null && grid.bossMapActive;
+            checkpointKey = $"Map:{currentMapNodeIndex}:{mapX}:{mapY}:{bossMapActive}";
+            return true;
+        }
+
+        if (!IsCurrentLevelContentReadyForSave())
+            return false;
+
+        checkpointKey = $"Node:{currentMapNodeIndex}:{currentLevel.numericId}";
+        return true;
+    }
+
+    private bool IsCurrentLevelContentReadyForSave()
+    {
+        if (currentLevel == null)
+            return false;
+
+        if (currentLevel.levelType == LevelType.Battle || currentLevel.levelType == LevelType.Elite)
+            return battleManager != null && battleManager.Enemies != null && battleManager.Enemies.Count > 0;
+
+        if (currentLevel.levelType == LevelType.Shop)
+            return uiManager != null && uiManager.ShopPanel != null && uiManager.ShopPanel.gameObject.activeInHierarchy;
+
+        if (IsEventLikeLevel(currentLevel.levelType) || currentLevel.levelType == LevelType.Rest)
+            return currentEvent != null && eventPanel != null;
+
+        return false;
     }
 
     private void OnApplicationPause(bool paused)
@@ -8917,14 +9194,15 @@ public class HandSystemUI : MonoBehaviour
 		//IL_0011: Expected O, but got Unknown
 		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0050: Expected O, but got Unknown
-        buttonsInteractable = interactable;
+	        buttonsInteractable = interactable;
 			if ((Object)refreshButton != (Object)null)
 			{
-				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.GetBuffStack(BuffEnum.ExtraRefresh) > 0);
+				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.ExtraRefreshChancesThisTurn > 0);
 				refreshButton.interactable = interactable && canRefresh;
 			}
 	        RefreshRefreshChanceUI();
-        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());
+	        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());
+
 	}
 
 

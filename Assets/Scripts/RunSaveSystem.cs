@@ -149,6 +149,7 @@ public class EnemyBattleSaveData
 public class PlayerCombatSaveData
 {
     public int shield;
+    public int extraRefreshChancesThisTurn;
     public MaterialCardSaveData[] hand = Array.Empty<MaterialCardSaveData>();
     public MaterialCardSaveData[] drawPile = Array.Empty<MaterialCardSaveData>();
     public MaterialCardSaveData[] discardPile = Array.Empty<MaterialCardSaveData>();
@@ -725,7 +726,8 @@ public static class RunSaveSystem
             RestoreCards(data.discardPile, deckLookup),
             RestoreCards(data.playZone, deckLookup),
             RestoreCards(data.consumedPile, deckLookup),
-            RestoreCards(data.temporaryMaterialsNextTurn, deckLookup));
+            RestoreCards(data.temporaryMaterialsNextTurn, deckLookup),
+            data.extraRefreshChancesThisTurn);
     }
 
     private static Dictionary<string, MaterialModel> BuildDeckLookup(PlayerState player)
@@ -961,6 +963,7 @@ public static class RunSaveSystem
         return new PlayerCombatSaveData
         {
             shield = player.Shield,
+            extraRefreshChancesThisTurn = player.ExtraRefreshChancesThisTurn,
             hand = ExportDeck(player.Hand),
             drawPile = ExportDeck(player.DrawPile),
             discardPile = ExportDeck(player.DiscardPile),

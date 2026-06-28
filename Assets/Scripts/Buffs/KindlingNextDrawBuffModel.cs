@@ -17,15 +17,22 @@ public class KindlingNextDrawBuffModel : BuffModel
         if (pendingNextTurn || self?.Player == null || card == null || stack <= 0)
             return;
 
+        bool hasKindling = false;
         for (int i = 0; i < card.modifiers.Count; i++)
         {
             if (card.modifiers[i] is KindlingModifier)
-                return;
+            {
+                hasKindling = true;
+                break;
+            }
         }
 
-        KindlingModifier modifier = new KindlingModifier();
-        modifier.MarkRemoveAfterBattle();
-        card.AddModifier(modifier);
+        if (!hasKindling)
+        {
+            KindlingModifier modifier = new KindlingModifier();
+            modifier.MarkRemoveAfterBattle();
+            card.AddModifier(modifier);
+        }
         ConsumeStack(1);
     }
 

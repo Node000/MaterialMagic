@@ -94,7 +94,7 @@
     },
     {
       "key": "tag.extra_refresh.desc",
-      "text": "额外获得等同层数的换牌机会，换牌时层数-1，回合结束时清除。"
+      "text": "下回合开始后额外获得等同层数的换牌机会。"
     },
     {
       "key": "tag.spell_power.name",
@@ -178,11 +178,11 @@
     },
     {
       "key": "tag.remove_hand.name",
-      "text": "移除手牌"
+      "text": "消耗"
     },
     {
       "key": "tag.remove_hand.desc",
-      "text": "移除当前手牌区的素材牌。"
+      "text": "从本场战斗中移除"
     },
     {
       "key": "tag.debuff_power.name",
