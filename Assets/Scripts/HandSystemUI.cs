@@ -3747,35 +3747,37 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				return;
 			}
-			List<HandCardView> list = new List<HandCardView>();
-
-		for (int i = 0; i < selectedCards.Count; i++)
-		{
-			HandCardView handCardView = FindView(selectedCards[i]);
-			if ((Object)handCardView != (Object)null)
+				List<MaterialModel> refreshCards = new List<MaterialModel>(selectedCards);
+				bool selectedCardsOnlyInHand = AreSelectedCardsOnlyInHand();
+				List<HandCardView> list = new List<HandCardView>();
+	
+			for (int i = 0; i < refreshCards.Count; i++)
 			{
-				handCardView.SetSelected(value: false, instant: false);
-				list.Add(handCardView);
-			}
-		}
-			List<MaterialModel> list2 = new List<MaterialModel>();
-			PlayerState.RefreshHandResult refreshResult;
-				if (TutorialManager != null && AreSelectedCardsOnlyInHand() && TutorialManager.TryGetForcedRefreshMaterials(selectedCards.Count, forcedRefreshMaterials))
+				HandCardView handCardView = FindView(refreshCards[i]);
+				if ((Object)handCardView != (Object)null)
 				{
-					int returnedCount = playerState.ReturnHandCardsToDiscardPile(selectedCards, list2);
-					int drawnCount = playerState.DrawSpecificMaterialsToHand(forcedRefreshMaterials, true);
-					refreshResult = new PlayerState.RefreshHandResult(drawnCount, returnedCount);
+					list.Add(handCardView);
 				}
-			else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
-			{
-				refreshResult = playerState.RefreshBasicCombatCards(selectedCards, list2);
 			}
-			else
-			{
-				refreshResult = playerState.RefreshCombatCards(selectedCards, list2, battleManager);
-			}
-
-			ClearSelectedCards(false);
+				ClearAllCardLiftState(false);
+				List<MaterialModel> list2 = new List<MaterialModel>();
+				PlayerState.RefreshHandResult refreshResult;
+					if (TutorialManager != null && selectedCardsOnlyInHand && TutorialManager.TryGetForcedRefreshMaterials(refreshCards.Count, forcedRefreshMaterials))
+					{
+						int returnedCount = playerState.ReturnHandCardsToDiscardPile(refreshCards, list2);
+						int drawnCount = playerState.DrawSpecificMaterialsToHand(forcedRefreshMaterials, true);
+						refreshResult = new PlayerState.RefreshHandResult(drawnCount, returnedCount);
+					}
+				else if (currentLevel != null && currentLevel.levelType == LevelType.Reward)
+				{
+					refreshResult = playerState.RefreshBasicCombatCards(refreshCards, list2);
+				}
+				else
+				{
+					refreshResult = playerState.RefreshCombatCards(refreshCards, list2, battleManager);
+				}
+	
+				ClearAllCardLiftState(false);
 			if (refreshResult.DrawnCount == 0 && refreshResult.ReturnedCount == 0 && list2.Count == 0)
 
 		{
@@ -4903,6 +4905,29 @@ public bool IsCardDragActive => cardDragActive;
         {
             selectedCards.Clear();
             SynchronizeCardSelectionState(instant);
+        }
+
+        private void ClearAllCardLiftState(bool instant)
+        {
+            selectedCards.Clear();
+            if (layoutHoverCardView != null)
+            {
+                layoutHoverCardView.SetLayoutHover(false, cardHoverScale, instant);
+                GetUIManager()?.HideUnifiedDetailPopup(layoutHoverCardView);
+                layoutHoverCardView = null;
+            }
+
+            for (int i = 0; i < cardViews.Count; i++)
+            {
+                HandCardView view = cardViews[i];
+                if ((Object)view != (Object)null)
+                    view.ClearPlayFeedback(instant);
+            }
+
+            if (playerState != null)
+                UpdateLayout(instant);
+            RefreshEndTurnButtonText();
+            RefreshPlayerAnimationState();
         }
 
         private void SynchronizeCardSelectionState(bool instant)
@@ -7632,12 +7657,12 @@ public bool IsCardDragActive => cardDragActive;
         pendingMaterialModifier = null;
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (panel != null)
-            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(selected, completed), completed);
+            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(choices, selected, completed), completed);
         else
             completed?.Invoke();
     }
 
-    private void StartArrowModifierTargetSelection(MaterialModifierData selectedModifier, Action completed)
+    private void StartArrowModifierTargetSelection(IReadOnlyList<MaterialModifierData> choices, MaterialModifierData selectedModifier, Action completed)
     {
         if (selectedModifier == null)
             return;
@@ -7664,7 +7689,15 @@ public bool IsCardDragActive => cardDragActive;
             MaterialModel target = selectedMaterials != null && selectedMaterials.Count > 0 ? selectedMaterials[0] : null;
             if (TryApplyPendingMaterialModifier(target))
                 GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
-        }, null, "选择要附魔的箭头");
+        }, () => ReturnToArrowModifierChoices(choices, completed), "选择要附魔的箭头");
+    }
+
+    private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed)
+    {
+        pendingMaterialModifier = null;
+        MaterialListPanelUI materialListPanel = GetUIManager().MaterialSelectionPanel;
+        materialListPanel?.EndSelectionMode();
+        ShowArrowModifierRewardSelection(choices, completed);
     }
 
     private bool TryApplyPendingMaterialModifier(MaterialModel target)

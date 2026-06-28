@@ -259,7 +259,11 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         if (selectedMaterials.Contains(materialModel))
+        {
+            selectedMaterials.Remove(materialModel);
+            RefreshSelectionVisuals();
             return;
+        }
 
         selectedMaterials.Add(materialModel);
         RefreshSelectionVisuals();

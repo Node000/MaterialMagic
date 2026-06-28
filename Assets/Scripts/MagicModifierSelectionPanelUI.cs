@@ -338,11 +338,20 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         Vector3 scale = selected ? Vector3.one * SelectedOptionScale : Vector3.one;
         JuicyMotion motion = optionButtons[index].GetComponent<JuicyMotion>();
         if (motion != null)
+        {
+            if (!instant)
+                option.localEulerAngles = Vector3.zero;
             motion.SetBaseScale(scale, instant);
+        }
         if (instant)
+        {
             option.localScale = scale;
+        }
         else
+        {
             option.DOScale(scale, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
+            option.DOLocalRotate(Vector3.zero, 0.16f).SetEase(Ease.OutBack).SetTarget(this);
+        }
 
         if (index < optionSelectedHighlights.Count && optionSelectedHighlights[index] != null)
             optionSelectedHighlights[index].gameObject.SetActive(selected);

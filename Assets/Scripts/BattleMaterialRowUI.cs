@@ -127,7 +127,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         SetHover(index);
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public void CompleteTouchReleaseConfirm()
     {
         if (!touchReleaseConfirmActive)
             return;
@@ -137,6 +137,11 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
             return;
 
         HandleItemClicked(hoverIndex);
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        CompleteTouchReleaseConfirm();
     }
 
     public void SetHover(int index)
@@ -279,8 +284,8 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
                 continue;
 
             float x = GetLayoutX(i);
-            float y = hoverIndex == i ? hoverYOffset : 0f;
-            float scale = hoverIndex == i ? hoverScale : normalScale;
+            float y = GetLiftedY(i);
+            float scale = GetDisplayScale(i);
 
             rect.DOKill(false);
             if (instant)
@@ -304,6 +309,22 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
                 return true;
         }
         return false;
+    }
+
+    private float GetLiftedY(int index)
+    {
+        if (index < 0 || index >= itemMaterials.Count)
+            return 0f;
+
+        return hoverIndex == index || IsSelected(itemMaterials[index]) ? hoverYOffset : 0f;
+    }
+
+    private float GetDisplayScale(int index)
+    {
+        if (index < 0 || index >= itemMaterials.Count)
+            return normalScale;
+
+        return hoverIndex == index || IsSelected(itemMaterials[index]) ? hoverScale : normalScale;
     }
 
     private void SetEmptyActive(bool active)

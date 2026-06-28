@@ -117,8 +117,14 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void SetBaseScale(Vector3 scale, bool applyImmediately)
     {
+        SetBaseScale(scale, applyImmediately, false);
+    }
+
+    public void SetBaseScale(Vector3 scale, bool applyImmediately, bool captureCurrentRotation)
+    {
         originalScale = scale;
-        originalLocalEulerAngles = transform.localEulerAngles;
+        if (captureCurrentRotation)
+            originalLocalEulerAngles = transform.localEulerAngles;
         if (applyImmediately)
             transform.localScale = originalScale;
     }

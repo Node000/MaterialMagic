@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class BattleMaterialRowItemUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
+public class BattleMaterialRowItemUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
     private BattleMaterialRowUI owner;
     private int index;
@@ -32,6 +32,11 @@ public class BattleMaterialRowItemUI : MonoBehaviour, IPointerClickHandler, IPoi
     public void OnPointerEnter(PointerEventData eventData)
     {
         owner?.SetHover(index);
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        owner?.CompleteTouchReleaseConfirm();
     }
 
     public void OnPointerExit(PointerEventData eventData)
