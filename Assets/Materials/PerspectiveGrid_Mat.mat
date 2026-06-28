@@ -54,7 +54,7 @@ Material:
     - _Perspective: 12
     - _ScrollSpeed: 0
     - _Speed: 0.8
-    - _VSpacing: 2.94
+    - _VSpacing: 2.96
     - _VanishingX: 0.5
     - _VerticalCount: 20
     m_Colors:
@@ -64,5 +64,5 @@ Material:
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _GridColor: {r: 0.8666667, g: 0.15294118, b: 0.39215687, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _SkyBgColor: {r: 0.07968433, g: 0.0615284, b: 0.106918216, a: 1}
+    - _SkyBgColor: {r: 0.0627451, g: 0, b: 0.13333334, a: 1}
   m_BuildTextureStacks: []

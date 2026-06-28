@@ -15,7 +15,7 @@ MonoBehaviour:
   handCardDoubleClickPlayInterval: 0.3
   dragSwipeMinDistance: 30
   dragSwipeVerticalRatio: 1.2
-  cardQueueSpreadExtraSpacing: 36
-  cardQueueSpreadFalloffPower: 1.35
+  cardQueueSpreadExtraSpacing: 0
+  cardQueueSpreadFalloffPower: 2
   cardQueueZoneSwitchScreenDistance: 45
   cardQueueDropScreenPadding: {x: 80, y: 70}
