@@ -457,7 +457,9 @@ public class HandSystemUI : MonoBehaviour
 
 	private Color enemyBodyBaseColor;
 
-	private ISpellCastEffect spellCastEffect;
+	private ISpellCastEffect materialFillEffect;
+
+    private ISpellCastEffect playerCastEffect;
 
 	private PlayerCastAnimatorUI playerCastAnimator;
 
@@ -579,17 +581,14 @@ public class HandSystemUI : MonoBehaviour
 
 	private const int RestDeepStudyResultId = 302;
 
-	private const float RestDefaultHealRatio = 0.3f;
+    private const float RestDefaultHealRatio = 0.3f;
 
     private const float AcquireMagicAnimationDuration = 0.42f;
 
     private const float AcquireMaterialAnimationDuration = 0.42f;
 
-    private const int BuffRootColumnCount = 5;
-
-    private const int BuffRootRowCount = 2;
-
     private const float EnemyHealthTextWidth = 56f;
+
 
     private const int DiscardShuffleAnimationMaxCards = 18;
 
@@ -1764,40 +1763,47 @@ public class HandSystemUI : MonoBehaviour
 			((Transform)val2).SetParent((Transform)parent, false);
 			created = true;
 		}
-		if (created)
-		{
-			val2.anchorMin = new Vector2(0.5f, 0.5f);
-			val2.anchorMax = new Vector2(0.5f, 0.5f);
-			val2.pivot = new Vector2(0.5f, 0.5f);
-			val2.anchoredPosition = anchoredPosition;
-			float slotSize = BuffSlotSize;
-			float slotSpacing = BuffSlotSpacing;
-			val2.sizeDelta = new Vector2(slotSize * BuffRootColumnCount + slotSpacing * (BuffRootColumnCount - 1), slotSize * BuffRootRowCount + slotSpacing * (BuffRootRowCount - 1));
-		}
-		ConfigureBuffRootLayout(val2);
+        if (created)
+        {
+            val2.anchorMin = new Vector2(0.5f, 0.5f);
+            val2.anchorMax = new Vector2(0.5f, 0.5f);
+            val2.pivot = new Vector2(0.5f, 0.5f);
+            val2.anchoredPosition = anchoredPosition;
+            PlayerStatusConfig config = Resources.Load<PlayerStatusConfig>("Config/PlayerStatusConfig");
+            float slotSize = config != null ? config.BuffSlotSize : 42f;
+            float slotSpacing = config != null ? config.BuffSlotSpacing : 6f;
+            int columnCount = config != null ? config.BuffRootColumnCount : 5;
+            int rowCount = config != null ? config.BuffRootRowCount : 2;
+            val2.sizeDelta = new Vector2(slotSize * columnCount + slotSpacing * (columnCount - 1), slotSize * rowCount + slotSpacing * (rowCount - 1));
+        }
+        ConfigureBuffRootLayout(val2);
+
 		return val2;
 	}
 
-	private void ConfigureBuffRootLayout(RectTransform root)
-	{
-		if ((Object)root == (Object)null)
-			return;
+    private void ConfigureBuffRootLayout(RectTransform root)
+    {
+        if ((Object)root == (Object)null)
+            return;
 
-		float slotSize = BuffSlotSize;
-		float slotSpacing = BuffSlotSpacing;
-		GridLayoutGroup grid = ((Component)root).GetComponent<GridLayoutGroup>();
-		if ((Object)grid == (Object)null)
-			return;
+        PlayerStatusConfig config = Resources.Load<PlayerStatusConfig>("Config/PlayerStatusConfig");
+        if ((Object)config == (Object)null)
+            return;
 
-		grid.cellSize = new Vector2(slotSize, slotSize);
-		grid.spacing = new Vector2(slotSpacing, slotSpacing);
-		grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-		grid.constraintCount = BuffRootColumnCount;
-	}
+        GridLayoutGroup grid = ((Component)root).GetComponent<GridLayoutGroup>();
+        if ((Object)grid == (Object)null)
+            return;
 
-	private float BuffSlotSize => Mathf.Max(1f, buffSlotSize);
+        grid.cellSize = new Vector2(config.BuffSlotSize, config.BuffSlotSize);
+        grid.spacing = new Vector2(config.BuffSlotSpacing, config.BuffSlotSpacing);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = config.BuffRootColumnCount;
+    }
 
-	private float BuffSlotSpacing => Mathf.Max(0f, buffSlotSpacing);
+    private float BuffSlotSize => Mathf.Max(1f, buffSlotSize);
+
+    private float BuffSlotSpacing => Mathf.Max(0f, buffSlotSpacing);
+
 
 	private void RefreshBuffRoot(RectTransform root, IReadOnlyDictionary<BuffEnum, BuffModel> buffs, CombatantModel owner)
 	{
@@ -2843,7 +2849,8 @@ public class HandSystemUI : MonoBehaviour
 
 	public void SetSpellCastEffect(ISpellCastEffect effect)
 	{
-		spellCastEffect = effect;
+		materialFillEffect = effect;
+        playerCastEffect = effect;
 	}
 
 	public void OnCardLeftClicked(HandCardView cardView)
@@ -4557,7 +4564,8 @@ public bool IsCardDragActive => cardDragActive;
 				HandCardView handCardView = FindView(card);
 				if ((Object)handCardView != (Object)null)
 				{
-					TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
+							TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
+
 				}
                 GameLog.Data($"Resolve arrow from play zone material={card.material} cardIndex={step.SourceCardIndex} step={stepIndex}");
                 playerCastAnimator?.PlayMaterialAction(step.PrimaryDisplayMaterial);
@@ -4600,7 +4608,7 @@ public bool IsCardDragActive => cardDragActive;
 							HandCardView handCardView = FindView(token.SourceCard);
 							if ((Object)handCardView != (Object)null)
 							{
-								TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)this);
+								TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
 								PlayMaterialFillParticle(handCardView, matchedMagicView, token.DisplayMaterial);
 							}
 						}
@@ -4848,22 +4856,22 @@ public bool IsCardDragActive => cardDragActive;
 	{
 		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0018: Expected O, but got Unknown
-		ArcParticleImpactTester arcParticleImpactTester = spellCastEffect as ArcParticleImpactTester;
-		if (!((Object)arcParticleImpactTester != (Object)null))
-		{
-			return 0.43f;
-		}
-		return arcParticleImpactTester.BurstDuration;
+			CastParticleEffectPlayer castParticleEffectPlayer = playerCastEffect as CastParticleEffectPlayer;
+			if (!((Object)castParticleEffectPlayer != (Object)null))
+			{
+				return 0.43f;
+			}
+			return castParticleEffectPlayer.BurstDuration;
 	}
 
 	private float GetCastParticleImpactStartWait()
 	{
-		ArcParticleImpactTester arcParticleImpactTester = spellCastEffect as ArcParticleImpactTester;
-		if (!((Object)arcParticleImpactTester != (Object)null))
-		{
-			return 0.43f;
-		}
-		return arcParticleImpactTester.SingleProjectileImpactDelay;
+			CastParticleEffectPlayer castParticleEffectPlayer = playerCastEffect as CastParticleEffectPlayer;
+			if (!((Object)castParticleEffectPlayer != (Object)null))
+			{
+				return 0.43f;
+			}
+			return castParticleEffectPlayer.SingleProjectileImpactDelay;
 	}
 
 	private void RebuildCards(bool animateFromCurrent)
@@ -5184,9 +5192,11 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool playZone, bool animateFromExistingView)
 	{
-        Vector3 position = ((Transform)view.RectTransform).position;
-        Quaternion rotation = ((Transform)view.RectTransform).rotation;
+		Vector3 position = ((Transform)view.RectTransform).position;
+		Quaternion rotation = ((Transform)view.RectTransform).rotation;
+
         ShortcutExtensions.DOKill((Transform)view.RectTransform, false);
+
 
         if (!animateFromExistingView)
         {
@@ -6081,18 +6091,23 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void CreateParticleCaster()
 	{
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Expected O, but got Unknown
-		Transform val = ((Component)this).transform.Find("SpellParticleCaster");
-		ArcParticleImpactTester arcParticleImpactTester = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<ArcParticleImpactTester>() : null);
-		if (!((Object)arcParticleImpactTester == (Object)null))
-		{
-			spellCastEffect = arcParticleImpactTester;
-			arcParticleImpactTester.SetTestPlayback(playOnStart: false, loop: false);
-		}
+        Transform playerArea = ((Component)this).transform.Find("PlayerArea");
+        Transform casterTransform = playerArea != null ? playerArea.Find("SpellParticleCaster") : null;
+        CastParticleEffectCaster materialEffect = casterTransform != null ? casterTransform.GetComponent<CastParticleEffectCaster>() : null;
+        if ((Object)materialEffect != (Object)null)
+        {
+            materialFillEffect = materialEffect;
+            materialEffect.SetTestPlayback(playOnStart: false, loop: false);
+        }
 
-		Transform emitter = ((Component)this).transform.Find("SpellParticleEmitter");
-		spellParticleEmitter = ((Object)(object)emitter != (Object)null) ? (RectTransform)emitter : null;
+        Transform emitterTransform = playerArea != null ? playerArea.Find("PlayerCastAnimator/SpellParticleEmitter") : null;
+        spellParticleEmitter = emitterTransform != null ? emitterTransform.GetComponent<RectTransform>() : null;
+        CastParticleEffectPlayer castEffect = emitterTransform != null ? emitterTransform.GetComponent<CastParticleEffectPlayer>() : null;
+        if ((Object)castEffect != (Object)null)
+        {
+            playerCastEffect = castEffect;
+            castEffect.SetTestPlayback(playOnStart: false, loop: false);
+        }
 	}
 
 	private void CreatePlayerCastAnimator()
@@ -6288,7 +6303,10 @@ public bool IsCardDragActive => cardDragActive;
 		pendingCastParticleTarget = null;
 		pendingCastParticleImpactHandler = null;
 
-		if (spellCastEffect == null || magic == null || ((Object)target == (Object)null && targetCount <= 0))
+		if (playerCastEffect == null || (Object)spellParticleEmitter == (Object)null)
+            CreateParticleCaster();
+
+		if (playerCastEffect == null || magic == null || ((Object)target == (Object)null && targetCount <= 0))
         {
             pendingCastParticleTargets.Clear();
 			return;
@@ -6296,10 +6314,10 @@ public bool IsCardDragActive => cardDragActive;
 
 		if ((Object)spellParticleEmitter == (Object)null)
 		{
-			Transform emitter = ((Component)this).transform.Find("SpellParticleEmitter");
-			spellParticleEmitter = ((Object)(object)emitter != (Object)null) ? (RectTransform)emitter : null;
+            CreateParticleCaster();
 		}
-		RectTransform from = (Object)spellParticleEmitter != (Object)null ? spellParticleEmitter : target;
+
+				RectTransform from = spellParticleEmitter != null ? spellParticleEmitter : target;
         if ((Object)from == (Object)null && targetCount > 0)
             from = pendingCastParticleTargets[0];
         if ((Object)from == (Object)null)
@@ -6310,7 +6328,8 @@ public bool IsCardDragActive => cardDragActive;
 
         if (targetCount > 0)
         {
-            ISpellCastMultiTargetImpactEffect multiTargetEffect = spellCastEffect as ISpellCastMultiTargetImpactEffect;
+	            ISpellCastMultiTargetImpactEffect multiTargetEffect = playerCastEffect as ISpellCastMultiTargetImpactEffect;
+
             if (multiTargetEffect != null)
             {
                 multiTargetEffect.PlayCast(magic, from, pendingCastParticleTargets, SpellEffectTarget.Enemy, onImpact);
@@ -6318,21 +6337,25 @@ public bool IsCardDragActive => cardDragActive;
             else
             {
                 target = pendingCastParticleTargets[0];
-                ISpellCastImpactEffect impactEffect = spellCastEffect as ISpellCastImpactEffect;
+				ISpellCastImpactEffect impactEffect = playerCastEffect as ISpellCastImpactEffect;
+
                 if (impactEffect != null)
                     impactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
                 else
-                    spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+					playerCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+
             }
             pendingCastParticleTargets.Clear();
             return;
         }
 
-		ISpellCastImpactEffect singleImpactEffect = spellCastEffect as ISpellCastImpactEffect;
+			ISpellCastImpactEffect singleImpactEffect = playerCastEffect as ISpellCastImpactEffect;
+
 		if (singleImpactEffect != null)
 			singleImpactEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy, onImpact);
 		else
-			spellCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+				playerCastEffect.PlayCast(magic, from, target, SpellEffectTarget.Enemy);
+
 	}
 
 	private float GetCastReleaseWait()
@@ -6351,10 +6374,11 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
 		//IL_003c: Expected O, but got Unknown
 		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		if (spellCastEffect != null && !((Object)cardView == (Object)null) && !((Object)target == (Object)null))
-		{
-			spellCastEffect.PlayMaterialFill(cardView.RectTransform, target, material);
-		}
+		GameLog.Data($"[Particle] PlayMaterialFillParticle effect={(materialFillEffect != null ? materialFillEffect.GetType().Name : "null")} card={(cardView != null ? cardView.name : "null")} target={(target != null ? target.name : "null")} material={material}");
+		if (materialFillEffect == null)
+            CreateParticleCaster();
+		if (materialFillEffect != null && !((Object)cardView == (Object)null) && !((Object)target == (Object)null))
+			materialFillEffect.PlayMaterialFill(cardView.RectTransform, target, material);
 	}
 
 	private void PlayMaterialFillParticle(HandCardView cardView, MagicItemView magicView, MaterialEnum material)
@@ -6377,10 +6401,7 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0037: Expected O, but got Unknown
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0062: Expected O, but got Unknown
-		if ((Object)magicView == (Object)null || magicView.Magic == null)
-		{
-			return 0f;
-		}
+		GameLog.Data($"[Particle] PlayMagicCastParticle effect={(playerCastEffect != null ? playerCastEffect.GetType().Name : "null")} magicView={(magicView != null ? magicView.name : "null")} targetEnemy={(targetEnemy != null ? targetEnemy.GetType().Name : "null")}");
 
 		pendingCastParticleMagic = null;
 		pendingCastParticleTarget = null;
@@ -6399,7 +6420,10 @@ public bool IsCardDragActive => cardDragActive;
         float impactWait = 0f;
         bool targetsAllEnemies = MagicTargetsAllEnemiesForCast(magicView.Magic);
         bool shouldTryCastParticle = targetsAllEnemies || GetMagicEffectTargetType(magicView.Magic) == SpellEffectTarget.Enemy;
-        if (shouldTryCastParticle && spellCastEffect != null)
+	        if (playerCastEffect == null)
+            CreateParticleCaster();
+	        if (shouldTryCastParticle && playerCastEffect != null)
+
         {
             if (targetsAllEnemies)
             {
@@ -8811,7 +8835,6 @@ public bool IsCardDragActive => cardDragActive;
     {
         RefreshStaticUI();
         RefreshMaterialListPanel();
-        PlayDiscardPileShuffleAnimation(cards);
     }
 
     private void PlayDiscardPileShuffleAnimation(IReadOnlyList<MaterialModel> cards)
@@ -9207,11 +9230,12 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_00b1: Expected O, but got Unknown
 		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Expected O, but got Unknown
-		Vector3 position = ((Transform)view.RectTransform).position;
-		Quaternion rotation = ((Transform)view.RectTransform).rotation;
-		ShortcutExtensions.DOKill((Component)view.RectTransform, false);
-		((Transform)view.RectTransform).SetParent((Transform)targetParent, true);
+			ShortcutExtensions.DOKill((Component)view.RectTransform, false);
+			Canvas.ForceUpdateCanvases();
+			Vector3 position = GetAreaCenterWorldPosition(view.RectTransform);
+			Quaternion rotation = ((Transform)view.RectTransform).rotation;
+			((Transform)view.RectTransform).SetParent((Transform)targetParent, true);
+
 		((Transform)view.RectTransform).position = position;
 		((Transform)view.RectTransform).rotation = rotation;
 		Sequence obj = DOTween.Sequence();

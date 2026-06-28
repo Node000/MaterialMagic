@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -155,6 +156,7 @@ public class EnemyViewUI : MonoBehaviour
         {
             healthBarRoot.anchoredPosition = GetHealthBarAnchoredPosition(data);
             healthBarRoot.sizeDelta = GetHealthBarSizeDelta(data);
+            ConfigureBuffRootLayout(healthBarRoot);
         }
 
         if (intentRoot != null)
@@ -185,9 +187,13 @@ public class EnemyViewUI : MonoBehaviour
 
     private Vector2 GetHealthBarSizeDelta(EnemyData data)
     {
+        EnemyStatusConfig config = LoadConfig();
+        if (config == null)
+            return baseHealthBarSizeDelta;
+
         float width = data != null && data.healthBarWidth > 0f
             ? data.healthBarWidth
-            : HasInfoBoxWidthOverride(data) ? data.infoBoxSize.x : baseHealthBarSizeDelta.x;
+            : GetHealthBarWidthFromHealth(data != null ? data.maxHealth : 0, config);
         return new Vector2(width, baseHealthBarSizeDelta.y);
     }
 
@@ -230,6 +236,68 @@ public class EnemyViewUI : MonoBehaviour
         }
 
         return new Vector2(88f, 64f);
+    }
+
+    private static EnemyStatusConfig LoadConfig()
+    {
+        return Resources.Load<EnemyStatusConfig>("Config/EnemyStatusConfig");
+    }
+
+    private float GetHealthBarWidthFromHealth(int maxHealth, EnemyStatusConfig config)
+    {
+        float width = 0f;
+        int previousBreakpoint = 0;
+        IReadOnlyList<EnemyStatusBreakpointData> breaks = config.HealthBarGrowth;
+        for (int i = 0; i < breaks.Count; i++)
+        {
+            EnemyStatusBreakpointData entry = breaks[i];
+            int breakpoint = Mathf.Max(previousBreakpoint, entry.breakpoint);
+            if (maxHealth <= breakpoint)
+            {
+                width += (maxHealth - previousBreakpoint) * entry.growthRate;
+                return Mathf.Clamp(Mathf.Max(width, config.DefaultHealthBarWidth), config.HealthBarMinWidth, config.HealthBarMaxWidth);
+            }
+
+            width += (breakpoint - previousBreakpoint) * entry.growthRate;
+            previousBreakpoint = breakpoint;
+        }
+
+        float tailRate = breaks.Count > 0 ? breaks[breaks.Count - 1].growthRate : 1f;
+        width += (maxHealth - previousBreakpoint) * tailRate;
+        return Mathf.Clamp(Mathf.Max(width, config.DefaultHealthBarWidth), config.HealthBarMinWidth, config.HealthBarMaxWidth);
+    }
+
+    private float ClampHealthBarWidth(float width, EnemyStatusConfig config)
+    {
+        return Mathf.Clamp(Mathf.Max(width, config.DefaultHealthBarWidth), config.HealthBarMinWidth, config.HealthBarMaxWidth);
+    }
+
+    private int GetBuffColumnCountFromHealthBarWidth(float healthBarWidth, EnemyStatusConfig config)
+    {
+        float normalized = Mathf.Max(config.HealthBarMinWidth, healthBarWidth);
+        int columns = Mathf.FloorToInt(normalized / config.BuffColumnsPerHealthBarWidth);
+        return Mathf.Clamp(columns, config.BuffMinColumnCount, config.BuffMaxColumnCount);
+    }
+
+    private void ConfigureBuffRootLayout(RectTransform root)
+    {
+        if (root == null)
+            return;
+
+        EnemyStatusConfig config = LoadConfig();
+        if (config == null)
+            return;
+
+        GridLayoutGroup grid = root.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+            return;
+
+        float healthBarWidth = healthBarRoot != null ? healthBarRoot.sizeDelta.x : config.DefaultHealthBarWidth;
+        int columnCount = GetBuffColumnCountFromHealthBarWidth(healthBarWidth, config);
+        grid.cellSize = new Vector2(config.BuffSlotSize, config.BuffSlotSize);
+        grid.spacing = new Vector2(config.BuffSlotSpacing, config.BuffSlotSpacing);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = columnCount;
     }
 
     private TMP_Text FindText(string childName)

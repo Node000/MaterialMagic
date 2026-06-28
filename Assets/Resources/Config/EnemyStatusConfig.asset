@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa5f3edf5a68d4141ac794ac73215dae, type: 3}
+  m_Name: EnemyStatusConfig
+  m_EditorClassIdentifier: 
+  defaultHealthBarWidth: 130
+  healthBarGrowth:
+  - breakpoint: 100
+    growthRate: 1
+  - breakpoint: 200
+    growthRate: 0.4
+  healthBarMinWidth: 90
+  healthBarMaxWidth: 220
+  buffSlotSize: 64
+  buffSlotSpacing: 8
+  buffMinColumnCount: 1
+  buffMaxColumnCount: 5
+  buffColumnsPerHealthBarWidth: 32

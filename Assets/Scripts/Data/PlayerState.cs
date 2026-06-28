@@ -286,15 +286,20 @@ public class PlayerState
 
     private bool EnsureDrawPileHasCards()
     {
-        return EnsureDrawPileHasCards(null);
+        return EnsureDrawPileHasCards(null, true);
     }
 
     private bool EnsureDrawPileHasCards(System.Predicate<MaterialModel> canDraw)
     {
+        return EnsureDrawPileHasCards(canDraw, true);
+    }
+
+    private bool EnsureDrawPileHasCards(System.Predicate<MaterialModel> canDraw, bool allowShuffleFromDiscard)
+    {
         if (HasDrawableDrawPileCard(canDraw))
             return true;
 
-        if (DiscardPile.Count == 0)
+        if (!allowShuffleFromDiscard || DiscardPile.Count == 0)
             return false;
 
         List<MaterialModel> shuffledCards = new List<MaterialModel>(DiscardPile);
@@ -587,7 +592,7 @@ public class PlayerState
         int drawnCount = 0;
         for (int i = 0; i < slots.Count; i++)
         {
-            MaterialModel replacement = DrawCombatRefreshReplacement(canDraw);
+            MaterialModel replacement = DrawCombatRefreshReplacement(canDraw, allowShuffleFromDiscard: true);
             if (replacement == null)
                 continue;
 
@@ -609,9 +614,9 @@ public class PlayerState
         return new RefreshHandResult(drawnCount, returnedCount);
     }
 
-    private MaterialModel DrawCombatRefreshReplacement(System.Predicate<MaterialModel> canDraw)
+    private MaterialModel DrawCombatRefreshReplacement(System.Predicate<MaterialModel> canDraw, bool allowShuffleFromDiscard)
     {
-        if (!EnsureDrawPileHasCards(canDraw))
+        if (!EnsureDrawPileHasCards(canDraw, allowShuffleFromDiscard))
             return null;
 
         int randomIndex = GetRandomDrawableDrawPileIndex(canDraw);
