@@ -18,7 +18,7 @@ public class VortexNextDrawBuffModel : BuffModel
             return;
 
         VortexModifier modifier = new VortexModifier();
-        modifier.MarkRemoveAfterBattle();
+        modifier.MarkRemoveAfterTurn();
         card.AddModifier(modifier);
         ConsumeStack(1);
     }

@@ -446,8 +446,8 @@ public class BattleManager
         PlayerState.ResetExtraRefreshChancesThisTurn();
         result.CapturePlayerBefore(PlayerState);
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
-        PlayerState.TriggerOnTurnStart(opponent);
         PlayerState.ClearShield();
+        PlayerState.TriggerOnTurnStart(opponent);
         bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
         DrawPlayerTurnCards(drawCount, skipNormalDraw);
         PlayerState.TriggerAfterTurnStart(opponent);

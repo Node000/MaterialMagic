@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3486ca8b6772da43b52045bac6e6453, type: 3}
   m_Name: MaterialListPanelLayoutConfig
   m_EditorClassIdentifier: 
-  arrowRowTotalLength: 880
+  arrowRowTotalLength: 800
   arrowDefaultScale: 1.5
   arrowHoverScale: 2

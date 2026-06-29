@@ -10,6 +10,7 @@ public class PlayerState
 
     public event System.Action<BuffEnum, int> BuffAdded;
     public event System.Action<IReadOnlyList<MaterialModel>> DiscardPileShuffledIntoDrawPile;
+    public event System.Action PlayZoneShuffled;
 
     private int temporaryMaterialIndex;
     private int extraRefreshChancesThisTurn;
@@ -755,6 +756,7 @@ public class PlayerState
         }
 
         GameLog.Data($"Shuffle play zone count={PlayZone.Count}");
+        PlayZoneShuffled?.Invoke();
         return true;
     }
 

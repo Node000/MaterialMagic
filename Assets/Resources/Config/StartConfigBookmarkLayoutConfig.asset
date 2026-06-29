@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   materialCardScale: 1
   materialCardAnchoredPosition: {x: 0, y: 50}
-  materialItemFallbackSize: {x: 118, y: 72}
+  materialItemFallbackSize: {x: 220, y: 72}
   materialItemFallbackSpacing: {x: 126, y: 76}
   materialItemFallbackColumns: 2
   materialPreviewFrameColor: {r: 0, g: 0, b: 0, a: 0}

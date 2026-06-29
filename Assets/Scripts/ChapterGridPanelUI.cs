@@ -265,7 +265,7 @@ public class ChapterGridPanelUI : MonoBehaviour
             actionPowerText.gameObject.SetActive(false);
     }
 
-    private void HandleDirectionClicked(MaterialEnum material)
+    public void HandleDirectionClicked(MaterialEnum material)
     {
         if (inputLocked)
             return;
@@ -775,40 +775,31 @@ public class ChapterGridPanelUI : MonoBehaviour
         rect.gameObject.SetActive(true);
         ApplyDirectionCardLayout(rect, index);
 
-        HandCardView handCardView = rect.GetComponent<HandCardView>();
-        if (handCardView != null)
+        bool usesHandCardView = false;
+        MapDirectionCardView mapDirectionCardView = rect.GetComponent<MapDirectionCardView>();
+        if (mapDirectionCardView != null)
         {
-            handCardView.Initialize(owner);
-            handCardView.Bind(new MaterialModel("map_direction_" + material, material), false);
-            handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
-            handCardView.SetClickOverride((view, eventData) =>
-            {
-                if (eventData.button == PointerEventData.InputButton.Left || eventData.button == PointerEventData.InputButton.Right)
-                    HandleDirectionClicked(material);
-            });
+            mapDirectionCardView.Initialize(this, material);
+            mapDirectionCardView.SetInteractable(!inputLocked);
         }
         else
         {
-            Image background = rect.GetComponent<Image>();
-            if (background == null)
-                background = rect.gameObject.AddComponent<Image>();
-            background.color = fallbackDirectionCardColor;
-            background.raycastTarget = false;
-            Image icon = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-            icon.transform.SetParent(rect, false);
-            RectTransform iconRect = (RectTransform)icon.transform;
-            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-            iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.anchoredPosition = Vector2.zero;
-            iconRect.sizeDelta = new Vector2(directionCardIconSize, directionCardIconSize);
-            icon.sprite = MaterialCardView.GetMaterialIcon(material);
-            icon.color = Color.white;
-            icon.preserveAspect = true;
-            icon.raycastTarget = true;
+            HandCardView handCardView = rect.GetComponent<HandCardView>();
+            usesHandCardView = handCardView != null;
+            if (handCardView != null)
+            {
+                handCardView.Initialize(owner);
+                handCardView.Bind(new MaterialModel("map_direction_" + material, material), false);
+                handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
+                handCardView.SetClickOverride((view, eventData) =>
+                {
+                    if (eventData.button == PointerEventData.InputButton.Left || eventData.button == PointerEventData.InputButton.Right)
+                        HandleDirectionClicked(material);
+                });
+            }
         }
 
-        if (handCardView == null)
+        if (!usesHandCardView)
         {
             DirectionButtonHandler handler = rect.GetComponent<DirectionButtonHandler>();
             if (handler == null)
@@ -820,9 +811,15 @@ public class ChapterGridPanelUI : MonoBehaviour
 
     private void ApplyDirectionCardTooltip(RectTransform rect, MaterialEnum material)
     {
-        HandCardView handCardView = rect != null ? rect.GetComponent<HandCardView>() : null;
-        if (handCardView != null)
-            handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
+        MapDirectionCardView mapDirectionCardView = rect != null ? rect.GetComponent<MapDirectionCardView>() : null;
+        if (mapDirectionCardView != null)
+            mapDirectionCardView.Initialize(this, material);
+        else
+        {
+            HandCardView handCardView = rect != null ? rect.GetComponent<HandCardView>() : null;
+            if (handCardView != null)
+                handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
+        }
     }
 
     private void ApplyDirectionCardLayout(RectTransform rect, int index)

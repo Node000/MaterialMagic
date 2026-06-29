@@ -6,6 +6,13 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
+public struct BattleMaterialRowSortEntry
+{
+    public MaterialModel Material;
+    public bool Selectable;
+    public int OriginalIndex;
+}
+
 public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
 {
     [SerializeField] private TMP_Text titleText;
@@ -16,6 +23,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
     [SerializeField] private float fixedContentWidth;
     [SerializeField] private float hoverSpread = 42f;
     [SerializeField] private float hoverYOffset = 32f;
+    [SerializeField] private float hoverCurvePower = 1.35f;
     [SerializeField] private float hoverScale = 1.18f;
     [SerializeField] private float normalScale = 0.72f;
     [SerializeField] private bool hoverSelectionOutlineEnabled = true;
@@ -27,7 +35,6 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
     private readonly List<MaterialCardView> itemViews = new List<MaterialCardView>();
     private readonly List<MaterialModel> itemMaterials = new List<MaterialModel>();
     private readonly List<bool> itemSelectable = new List<bool>();
-    private readonly List<SortedMaterialEntry> sortedEntries = new List<SortedMaterialEntry>();
     private MaterialListPanelUI ownerPanel;
     private IReadOnlyList<MaterialModel> selectedMaterials;
     private int hoverIndex = -1;
@@ -53,9 +60,16 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
 
     public void ConfigureArrowRowLayout(float totalLength, float defaultScale, float hoverScale)
     {
+        ConfigureArrowRowLayout(totalLength, defaultScale, hoverScale, 32f, 1.35f);
+    }
+
+    public void ConfigureArrowRowLayout(float totalLength, float defaultScale, float hoverScale, float hoverYOffset, float hoverCurvePower)
+    {
         fixedContentWidth = Mathf.Max(0f, totalLength);
         normalScale = Mathf.Max(0.01f, defaultScale);
         this.hoverScale = Mathf.Max(0.01f, hoverScale);
+        this.hoverYOffset = Mathf.Max(0f, hoverYOffset);
+        this.hoverCurvePower = Mathf.Max(0.01f, hoverCurvePower);
     }
 
     public void SetHoverSelectionOutlineEnabled(bool enabled)
@@ -80,7 +94,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         }
 
         int itemCount = 0;
-        sortedEntries.Clear();
+        var orderedEntries = new List<BattleMaterialRowSortEntry>();
         for (int i = 0; materials != null && i < materials.Count; i++)
         {
             MaterialModel material = materials[i];
@@ -91,7 +105,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
             if (hideUnselectable && !selectable)
                 continue;
 
-            sortedEntries.Add(new SortedMaterialEntry
+            orderedEntries.Add(new BattleMaterialRowSortEntry
             {
                 Material = material,
                 Selectable = selectable,
@@ -99,9 +113,9 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
             });
         }
 
-        MaterialArrowSortUtility.SortMaterialsByBaseDirection(sortedEntries, entry => entry.Material != null ? entry.Material.material : MaterialEnum.None, entry => entry.OriginalIndex);
-        for (int i = 0; i < sortedEntries.Count; i++)
-            CreateItem(sortedEntries[i].Material, sortedEntries[i].Selectable, itemCount++);
+        MaterialArrowSortUtility.SortMaterialsByBaseDirection(orderedEntries, entry => entry.Material != null ? entry.Material.material : MaterialEnum.None, entry => entry.OriginalIndex);
+        for (int i = 0; i < orderedEntries.Count; i++)
+            CreateItem(orderedEntries[i].Material, orderedEntries[i].Selectable, itemCount++);
 
         SetEmptyActive(itemCount == 0);
         contentRoot.sizeDelta = new Vector2(GetLayoutWidth(), contentRoot.sizeDelta.y);
@@ -272,7 +286,6 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         itemViews.Clear();
         itemMaterials.Clear();
         itemSelectable.Clear();
-        sortedEntries.Clear();
     }
 
     private void ApplyLayout(bool instant)
@@ -316,7 +329,28 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         if (index < 0 || index >= itemMaterials.Count)
             return 0f;
 
-        return hoverIndex == index || IsSelected(itemMaterials[index]) ? hoverYOffset : 0f;
+        int centerIndex = hoverIndex;
+        if (centerIndex < 0)
+        {
+            for (int i = 0; i < itemMaterials.Count; i++)
+            {
+                if (IsSelected(itemMaterials[i]))
+                {
+                    centerIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (centerIndex < 0)
+            return 0f;
+
+        int distance = Mathf.Abs(index - centerIndex);
+        if (distance == 0)
+            return hoverYOffset;
+
+        float strength = 1f / Mathf.Pow(distance + 1f, Mathf.Max(0.01f, hoverCurvePower));
+        return hoverYOffset * strength;
     }
 
     private float GetDisplayScale(int index)
@@ -324,7 +358,28 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         if (index < 0 || index >= itemMaterials.Count)
             return normalScale;
 
-        return hoverIndex == index || IsSelected(itemMaterials[index]) ? hoverScale : normalScale;
+        int centerIndex = hoverIndex;
+        if (centerIndex < 0)
+        {
+            for (int i = 0; i < itemMaterials.Count; i++)
+            {
+                if (IsSelected(itemMaterials[i]))
+                {
+                    centerIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (centerIndex < 0)
+            return normalScale;
+
+        int distance = Mathf.Abs(index - centerIndex);
+        if (distance == 0)
+            return hoverScale;
+
+        float scaleStrength = 1f / Mathf.Pow(distance + 1f, Mathf.Max(0.01f, hoverCurvePower));
+        return Mathf.Lerp(normalScale, hoverScale, scaleStrength);
     }
 
     private void SetEmptyActive(bool active)

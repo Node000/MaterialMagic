@@ -792,6 +792,16 @@ public class MaterialModel
         RebuildModifierFlags();
     }
 
+    public void RemoveTurnOnlyModifiers()
+    {
+        for (int i = modifiers.Count - 1; i >= 0; i--)
+        {
+            if (modifiers[i] != null && modifiers[i].RemoveModifierAfterTurn)
+                modifiers.RemoveAt(i);
+        }
+        RebuildModifierFlags();
+    }
+
     public MaterialModel CloneForBattle(string newInstanceId)
     {
         MaterialModel clone = new MaterialModel(newInstanceId, material)

@@ -28,6 +28,7 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private BattleMaterialRowUI selectionRow;
     [Header("箭头行布局")]
     [SerializeField] private MaterialListPanelLayoutConfig layoutConfig;
+    [SerializeField] private ArrowSelectionWaveHoverConfig arrowSelectionWaveHoverConfig;
     [Header("动画参数")]
     [SerializeField] private float tooltipFadeDuration = 0.12f;
     [SerializeField] private float tooltipScaleDuration = 0.18f;
@@ -35,6 +36,12 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private Ease tooltipHideEase = Ease.InBack;
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
     [SerializeField] private float tooltipYOffset = 30f;
+    [SerializeField] private RectTransform selectionConfirmButton;
+    [SerializeField] private CanvasGroup selectionConfirmCanvasGroup;
+    [SerializeField] private Button selectionConfirmButtonComponent;
+    [SerializeField] private TMP_Text selectionConfirmButtonText;
+    [SerializeField] private float selectionConfirmDisabledAlpha = 0.35f;
+    [SerializeField] private string selectionConfirmText = "确认";
 
     private const string LayoutConfigResourcePath = "Config/MaterialListPanelLayoutConfig";
 
@@ -134,9 +141,15 @@ public class MaterialListPanelUI : MonoBehaviour
             return;
 
         if (selectionCompleted != null)
+        {
             RefreshSelectionRow();
+            EnsureSelectionConfirmButton();
+            UpdateSelectionConfirmButtonState();
+        }
         else
+        {
             RefreshCombatPileRows();
+        }
     }
 
     public void ShowModifierTooltip(MaterialCardView cardView, MaterialModel materialModel)
@@ -207,9 +220,11 @@ public class MaterialListPanelUI : MonoBehaviour
         row.MaterialClicked += HandleMaterialClicked;
         MaterialListPanelLayoutConfig config = GetLayoutConfig();
         float rowTotalLength = config != null ? config.ArrowRowTotalLength : 780f;
-        float defaultScale = config != null ? config.ArrowDefaultScale : 0.72f;
-        float hoverScale = config != null ? config.ArrowHoverScale : 1.18f;
-        row.ConfigureArrowRowLayout(rowTotalLength, defaultScale, hoverScale);
+        float defaultScale = arrowSelectionWaveHoverConfig != null ? arrowSelectionWaveHoverConfig.HoverScale : (config != null ? config.ArrowDefaultScale : 0.72f);
+        float hoverScale = arrowSelectionWaveHoverConfig != null ? arrowSelectionWaveHoverConfig.HoverScale : (config != null ? config.ArrowHoverScale : 1.18f);
+        float hoverYOffset = arrowSelectionWaveHoverConfig != null ? arrowSelectionWaveHoverConfig.HoverYOffset : 32f;
+        float hoverCurvePower = arrowSelectionWaveHoverConfig != null ? arrowSelectionWaveHoverConfig.FalloffPower : 1.35f;
+        row.ConfigureArrowRowLayout(rowTotalLength, defaultScale, hoverScale, hoverYOffset, hoverCurvePower);
         row.SetHoverSelectionOutlineEnabled(selectionCompleted != null);
         row.Refresh(title, materials, predicate, selectedMaterials, hideUnselectable);
     }
@@ -258,23 +273,20 @@ public class MaterialListPanelUI : MonoBehaviour
         if (selectionPredicate != null && !selectionPredicate(materialModel))
             return;
 
+        if (selectedMaterials.Count >= selectionCount && !selectedMaterials.Contains(materialModel))
+            return;
+
         if (selectedMaterials.Contains(materialModel))
         {
             selectedMaterials.Remove(materialModel);
             RefreshSelectionVisuals();
+            UpdateSelectionConfirmButtonState();
             return;
         }
 
         selectedMaterials.Add(materialModel);
         RefreshSelectionVisuals();
-        if (selectedMaterials.Count < selectionCount)
-            return;
-
-        Action<IReadOnlyList<MaterialModel>> completed = selectionCompleted;
-        List<MaterialModel> result = new List<MaterialModel>(selectedMaterials);
-        ClearSelectionMode();
-        gameObject.SetActive(false);
-        completed(result);
+        UpdateSelectionConfirmButtonState();
     }
 
     private void ShowRowMaterialTooltip(RectTransform anchor, MaterialModel materialModel)
@@ -294,6 +306,63 @@ public class MaterialListPanelUI : MonoBehaviour
             if (activeRows[i] != null)
                 activeRows[i].RefreshSelectionVisuals(selectedMaterials);
         }
+    }
+
+    private void UpdateSelectionConfirmButtonState()
+    {
+        bool enabled = selectionCompleted != null && selectedMaterials.Count >= selectionCount;
+        if (selectionConfirmButtonComponent != null)
+            selectionConfirmButtonComponent.interactable = enabled;
+        if (selectionConfirmCanvasGroup != null)
+        {
+            selectionConfirmCanvasGroup.alpha = enabled ? 1f : selectionConfirmDisabledAlpha;
+            selectionConfirmCanvasGroup.blocksRaycasts = enabled;
+            selectionConfirmCanvasGroup.interactable = enabled;
+        }
+        if (selectionConfirmButtonText != null)
+            selectionConfirmButtonText.text = selectionConfirmText;
+    }
+
+    private void HideSelectionConfirmButton()
+    {
+        if (selectionConfirmButton != null)
+            selectionConfirmButton.gameObject.SetActive(false);
+    }
+
+    private void EnsureSelectionConfirmButton()
+    {
+        if (selectionCompleted == null)
+            return;
+
+        if (selectionConfirmButton == null)
+            selectionConfirmButton = UIManager.FindChildRect(rowContainer, "SelectionConfirmButton");
+        if (selectionConfirmCanvasGroup == null && selectionConfirmButton != null)
+            selectionConfirmCanvasGroup = selectionConfirmButton.GetComponent<CanvasGroup>();
+        if (selectionConfirmButtonComponent == null && selectionConfirmButton != null)
+            selectionConfirmButtonComponent = selectionConfirmButton.GetComponent<Button>();
+        if (selectionConfirmButtonText == null && selectionConfirmButton != null)
+            selectionConfirmButtonText = UIManager.FindChildComponent<TMP_Text>(selectionConfirmButton, "Text");
+
+        if (selectionConfirmButtonComponent != null)
+        {
+            selectionConfirmButtonComponent.onClick.RemoveAllListeners();
+            selectionConfirmButtonComponent.onClick.AddListener(ConfirmSelection);
+        }
+
+        if (selectionConfirmButton != null)
+            selectionConfirmButton.gameObject.SetActive(true);
+    }
+
+    public void ConfirmSelection()
+    {
+        if (selectionCompleted == null || selectedMaterials.Count < selectionCount)
+            return;
+
+        Action<IReadOnlyList<MaterialModel>> completed = selectionCompleted;
+        List<MaterialModel> result = new List<MaterialModel>(selectedMaterials);
+        ClearSelectionMode();
+        gameObject.SetActive(false);
+        completed(result);
     }
 
     private void OnDisable()
@@ -432,8 +501,10 @@ public class MaterialListPanelUI : MonoBehaviour
         selectionTitleOverride = null;
         selectionLocked = false;
         selectionCount = 0;
-        selectedMaterials.Clear();
-        selectionCandidates.Clear();
+        selectionConfirmButton = null;
+        selectionConfirmCanvasGroup = null;
+        selectionConfirmButtonComponent = null;
+        selectionConfirmButtonText = null;
         RefreshSelectionVisuals();
     }
 }

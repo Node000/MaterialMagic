@@ -15,7 +15,8 @@ using TMPro;
 
 public class HandSystemUI : MonoBehaviour
 {
-	private class EnemyViewState
+    internal class EnemyViewState
+
 	{
 		public EnemyModel model;
 
@@ -166,10 +167,7 @@ public class HandSystemUI : MonoBehaviour
 	private float playCardSpacing = 118f;
 
     [SerializeField]
-    private float cardHoverYOffset = 32f;
-
-    [SerializeField]
-    private float cardHoverScale = 1.18f;
+    private CardWaveHoverConfig cardWaveHoverConfig;
 
     [SerializeField]
     private float playLayoutY;
@@ -3276,10 +3274,10 @@ public bool IsCardDragActive => cardDragActive;
             return;
 
         if (layoutHoverCardView != null)
-            layoutHoverCardView.SetLayoutHover(false, cardHoverScale, instant);
+            layoutHoverCardView.SetLayoutHover(false, GetLayoutHoverScale(), instant);
 
         layoutHoverCardView = cardView;
-        layoutHoverCardView.SetLayoutHover(true, cardHoverScale, instant);
+        layoutHoverCardView.SetLayoutHover(true, GetLayoutHoverScale(), instant);
         UpdateLayout(instant);
     }
 
@@ -3288,7 +3286,7 @@ public bool IsCardDragActive => cardDragActive;
         if (layoutHoverCardView != cardView)
             return;
 
-        layoutHoverCardView.SetLayoutHover(false, cardHoverScale, instant);
+        layoutHoverCardView.SetLayoutHover(false, GetLayoutHoverScale(), instant);
         layoutHoverCardView = null;
         UpdateLayout(instant);
     }
@@ -4920,7 +4918,7 @@ public bool IsCardDragActive => cardDragActive;
             selectedCards.Clear();
             if (layoutHoverCardView != null)
             {
-                layoutHoverCardView.SetLayoutHover(false, cardHoverScale, instant);
+                layoutHoverCardView.SetLayoutHover(false, GetLayoutHoverScale(), instant);
                 GetUIManager()?.HideUnifiedDetailPopup(layoutHoverCardView);
                 layoutHoverCardView = null;
             }
@@ -5055,8 +5053,10 @@ public bool IsCardDragActive => cardDragActive;
         int previewIndex = previewForArea ? Mathf.Clamp(dragPreviewIndex, 0, visibleCount) : -1;
         int spreadCenterIndex = previewForArea ? previewIndex : hoverIndex;
         BattleInputConfig inputConfig = GetBattleInputConfig();
+        CardWaveHoverConfig waveConfig = cardWaveHoverConfig;
         float spreadExtraSpacing = inputConfig.CardQueueSpreadExtraSpacing;
         float spreadFalloffPower = inputConfig.CardQueueSpreadFalloffPower;
+        float hoverYOffset = waveConfig != null ? waveConfig.HoverYOffset : 32f;
         int visualIndex = 0;
         Vector2 position = default(Vector2);
 
@@ -5080,7 +5080,7 @@ public bool IsCardDragActive => cardDragActive;
 				}
                 bool selectedForLift = !playZone && (choosingEventCard ? pendingChoiceCards.Contains(card) : selectedCards.Contains(card));
                 float x = minX + spacing * layoutIndex + GetQueueSpreadOffset(layoutIndex, spreadCenterIndex, spreadExtraSpacing, spreadFalloffPower);
-                float y = GetLayoutY(playZone) + (layoutIndex == hoverIndex || selectedForLift ? cardHoverYOffset : 0f);
+                float y = GetLayoutY(playZone) + (layoutIndex == hoverIndex || selectedForLift ? hoverYOffset : 0f);
 
 				position = new Vector2(x, y);
 				handCardView.SetInPlayZone(playZone);
@@ -5098,6 +5098,11 @@ public bool IsCardDragActive => cardDragActive;
 			}
 		}
 		}
+
+    private float GetLayoutHoverScale()
+    {
+        return cardWaveHoverConfig != null ? cardWaveHoverConfig.HoverScale : 1.18f;
+    }
 
     private float GetQueueSpreadOffset(int layoutIndex, int centerIndex, float maxExtraSpacing, float falloffPower)
     {

@@ -75,6 +75,10 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             layoutConfig = Resources.Load<StartConfigBookmarkLayoutConfig>("Config/StartConfigBookmarkLayoutConfig");
         if (windowCloseButton != null)
             windowCloseButton.onClick.AddListener(HandleClose);
+        if (button != null)
+            button.onClick.AddListener(HandleClick);
+        if (selectButton != null && selectButton != button)
+            selectButton.onClick.AddListener(HandleClick);
     }
 
     private StartConfigBookmarkLayoutConfig GetLayoutConfig()

@@ -10,10 +10,12 @@ public class MaterialModifierContext
 public class MaterialModifierModel
 {
     private bool removeModifierAfterBattle;
+    private bool removeModifierAfterTurn;
 
     public MaterialModel model;
 
     public virtual bool RemoveModifierAfterBattle => removeModifierAfterBattle;
+    public virtual bool RemoveModifierAfterTurn => removeModifierAfterTurn;
     public virtual bool RemoveCardAfterBattle => false;
 
     public virtual void OnDraw()
@@ -139,6 +141,11 @@ public class MaterialModifierModel
     public void MarkRemoveAfterBattle()
     {
         removeModifierAfterBattle = true;
+    }
+
+    public void MarkRemoveAfterTurn()
+    {
+        removeModifierAfterTurn = true;
     }
 
     protected MaterialModifierContext Context => CurrentContext;

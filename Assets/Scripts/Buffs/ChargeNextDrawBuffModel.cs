@@ -18,7 +18,7 @@ public class ChargeNextDrawBuffModel : BuffModel
             return;
 
         ChargeModifier modifier = new ChargeModifier();
-        modifier.MarkRemoveAfterBattle();
+        modifier.MarkRemoveAfterTurn();
         card.AddModifier(modifier);
         ConsumeStack(1);
     }

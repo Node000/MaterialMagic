@@ -377,7 +377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: -24
+    m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
@@ -385,7 +385,7 @@ MonoBehaviour:
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 220, y: 80}
-  m_Spacing: {x: -30, y: 10}
+  m_Spacing: {x: -30, y: 20}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &4910693940075120954
@@ -666,32 +666,7 @@ MonoBehaviour:
   magicItemFallbackColumns: 3
   magicItemScale: 0.68
   materialPreviewSlotCount: 0
-  materialItemFallbackSize: {x: 118, y: 72}
-  materialItemFallbackSpacing: {x: 126, y: 76}
-  materialItemFallbackColumns: 2
-  materialCardScale: 0.42
-  materialCardAnchoredPosition: {x: 0, y: 0}
-  materialPreviewFrameColor: {r: 0, g: 0, b: 0, a: 0}
-  materialPreviewFrameRaycastTarget: 1
-  materialPreviewShadowEnabled: 0
-  materialPreviewIconAnchorMin: {x: 0.5, y: 0.5}
-  materialPreviewIconAnchorMax: {x: 0.5, y: 0.5}
-  materialPreviewIconPivot: {x: 0.5, y: 0.5}
-  materialPreviewIconAnchoredPosition: {x: 0, y: 0}
-  materialPreviewIconSize: {x: 96, y: 96}
-  materialPreviewIconColor: {r: 1, g: 1, b: 1, a: 1}
-  materialPreviewIconRaycastTarget: 0
-  materialPreviewIconPreserveAspect: 1
-  materialCountTextAnchorMin: {x: 1, y: 0.5}
-  materialCountTextAnchorMax: {x: 1, y: 0.5}
-  materialCountTextPivot: {x: 1, y: 0.5}
-  materialCountTextAnchoredPosition: {x: 0, y: -6}
-  materialCountTextSize: {x: 52, y: 28}
-  materialCountTextFont: {fileID: 0}
-  materialCountTextFontSize: 22
-  materialCountTextFontStyle: 1
-  materialCountTextAlignment: 4100
-  materialCountTextColor: {r: 1, g: 0.94, b: 0.7, a: 1}
+  layoutConfig: {fileID: 0}
   button: {fileID: 8145950788074016558}
   selectButton: {fileID: 6161638558908779608}
   selectButtonImage: {fileID: 2684382611285602598}

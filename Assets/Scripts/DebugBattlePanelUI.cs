@@ -10,6 +10,7 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button damageButton;
     [SerializeField] private Button healButton;
     [SerializeField] private Button shieldButton;
+    [SerializeField] private Button drawCardButton;
     [SerializeField] private TMP_Dropdown levelDropdown;
     [SerializeField] private Button startBattleButton;
     [SerializeField] private Button closeButton;
@@ -23,6 +24,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         damageButton?.onClick.AddListener(DealDamage);
         healButton?.onClick.AddListener(HealPlayer);
         shieldButton?.onClick.AddListener(GainShield);
+        drawCardButton?.onClick.AddListener(DrawCard);
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
         closeButton?.onClick.AddListener(Hide);
     }
@@ -31,6 +33,12 @@ public class DebugBattlePanelUI : MonoBehaviour
     {
         CacheReferences();
         PopulateLevelDropdown();
+        RefreshBattleOnlyControls();
+    }
+
+    private void OnDisable()
+    {
+        RefreshBattleOnlyControls(false);
     }
 
     private void OnDestroy()
@@ -38,6 +46,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         damageButton?.onClick.RemoveListener(DealDamage);
         healButton?.onClick.RemoveListener(HealPlayer);
         shieldButton?.onClick.RemoveListener(GainShield);
+        drawCardButton?.onClick.RemoveListener(DrawCard);
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
         closeButton?.onClick.RemoveListener(Hide);
     }
@@ -65,6 +74,9 @@ public class DebugBattlePanelUI : MonoBehaviour
             levelDropdown = transform.Find("LevelDropdown")?.GetComponent<TMP_Dropdown>();
         if (startBattleButton == null)
             startBattleButton = transform.Find("StartBattleButton")?.GetComponent<Button>();
+        if (drawCardButton == null)
+            drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
+
         if (closeButton == null)
             closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
     }
@@ -103,6 +115,13 @@ public class DebugBattlePanelUI : MonoBehaviour
         levelDropdown.AddOptions(options);
         levelDropdown.SetValueWithoutNotify(0);
         levelDropdown.RefreshShownValue();
+    }
+
+    private void RefreshBattleOnlyControls(bool battleOnlyInteractable = true)
+    {
+        bool inBattle = battleOnlyInteractable && BattleManager.Instance != null && BattleManager.Instance.CurrentPhase != BattlePhase.None && BattleManager.Instance.CurrentPhase != BattlePhase.Finished;
+        if (drawCardButton != null)
+            drawCardButton.interactable = inBattle;
     }
 
     private static bool IsDebugBattleLevel(LevelData level)
@@ -188,4 +207,13 @@ public class DebugBattlePanelUI : MonoBehaviour
     {
         handSystem?.DebugGainPlayerShield(Amount);
     }
+
+    private void DrawCard()
+    {
+        if (BattleManager.Instance == null || BattleManager.Instance.CurrentPhase == BattlePhase.None || BattleManager.Instance.CurrentPhase == BattlePhase.Finished)
+            return;
+
+        handSystem?.PlayerState?.DrawCards(1);
+    }
 }
+

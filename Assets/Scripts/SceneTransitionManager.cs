@@ -52,6 +52,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         transitioning = true;
         yield return null;
+        yield return null;
         yield return PlayTransition(1f, 0f);
         transitionImage.raycastTarget = false;
         transitioning = false;
