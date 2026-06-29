@@ -30,5 +30,5 @@ MonoBehaviour:
   infoBoxMinWidth: 300
   infoBoxHorizontalPadding: 0
   infoBoxVerticalPadding: 20
-  infoBoxTextColumnWidth: 40
+  infoBoxTextColumnWidth: 120
   infoBoxOffsetY: 0

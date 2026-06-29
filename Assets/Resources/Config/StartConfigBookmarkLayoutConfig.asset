@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b961299482408469abf65560149aa8, type: 3}
+  m_Name: StartConfigBookmarkLayoutConfig
+  m_EditorClassIdentifier: 
+  materialCardScale: 1
+  materialCardAnchoredPosition: {x: 0, y: 50}
+  materialItemFallbackSize: {x: 118, y: 72}
+  materialItemFallbackSpacing: {x: 126, y: 76}
+  materialItemFallbackColumns: 2
+  materialPreviewFrameColor: {r: 0, g: 0, b: 0, a: 0}
+  materialPreviewFrameRaycastTarget: 1
+  materialPreviewShadowEnabled: 0
+  materialPreviewIconAnchorMin: {x: 0.5, y: 0.5}
+  materialPreviewIconAnchorMax: {x: 0.5, y: 0.5}
+  materialPreviewIconPivot: {x: 0.5, y: 0.5}
+  materialPreviewIconAnchoredPosition: {x: 0, y: 0}
+  materialPreviewIconSize: {x: 96, y: 96}
+  materialPreviewIconColor: {r: 1, g: 1, b: 1, a: 1}
+  materialPreviewIconRaycastTarget: 0
+  materialPreviewIconPreserveAspect: 1
+  materialCountTextAnchorMin: {x: 1, y: 0.5}
+  materialCountTextAnchorMax: {x: 1, y: 0.5}
+  materialCountTextPivot: {x: 1, y: 0.5}
+  materialCountTextAnchoredPosition: {x: 0, y: -6}
+  materialCountTextSize: {x: 52, y: 28}
+  materialCountTextFont: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
+  materialCountTextFontSize: 22
+  materialCountTextFontStyle: 1
+  materialCountTextAlignment: 4100
+  materialCountTextColor: {r: 1, g: 0.94, b: 0.7, a: 1}

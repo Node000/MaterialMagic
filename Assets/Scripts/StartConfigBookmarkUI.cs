@@ -26,32 +26,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [Header("素材预览布局")]
     [Tooltip("0 表示按 StartConfig initialMaterials 数量生成；大于 0 时固定生成该数量的道具格，不足则留空。")]
     [SerializeField, Min(0)] private int materialPreviewSlotCount;
-    [SerializeField] private Vector2 materialItemFallbackSize = new Vector2(118f, 72f);
-    [SerializeField] private Vector2 materialItemFallbackSpacing = new Vector2(126f, 76f);
-    [SerializeField, Min(1)] private int materialItemFallbackColumns = 2;
-    [SerializeField] private float materialCardScale = 0.42f;
-    [SerializeField] private Vector2 materialCardAnchoredPosition = Vector2.zero;
-    [SerializeField] private Color materialPreviewFrameColor = Color.clear;
-    [SerializeField] private bool materialPreviewFrameRaycastTarget = true;
-    [SerializeField] private bool materialPreviewShadowEnabled;
-    [SerializeField] private Vector2 materialPreviewIconAnchorMin = new Vector2(0.5f, 0.5f);
-    [SerializeField] private Vector2 materialPreviewIconAnchorMax = new Vector2(0.5f, 0.5f);
-    [SerializeField] private Vector2 materialPreviewIconPivot = new Vector2(0.5f, 0.5f);
-    [SerializeField] private Vector2 materialPreviewIconAnchoredPosition = Vector2.zero;
-    [SerializeField] private Vector2 materialPreviewIconSize = new Vector2(96f, 96f);
-    [SerializeField] private Color materialPreviewIconColor = Color.white;
-    [SerializeField] private bool materialPreviewIconRaycastTarget;
-    [SerializeField] private bool materialPreviewIconPreserveAspect = true;
-    [SerializeField] private Vector2 materialCountTextAnchorMin = new Vector2(1f, 0.5f);
-    [SerializeField] private Vector2 materialCountTextAnchorMax = new Vector2(1f, 0.5f);
-    [SerializeField] private Vector2 materialCountTextPivot = new Vector2(1f, 0.5f);
-    [SerializeField] private Vector2 materialCountTextAnchoredPosition = new Vector2(0f, -6f);
-    [SerializeField] private Vector2 materialCountTextSize = new Vector2(52f, 28f);
-    [SerializeField] private TMP_FontAsset materialCountTextFont;
-    [SerializeField] private float materialCountTextFontSize = 22f;
-    [SerializeField] private FontStyles materialCountTextFontStyle = FontStyles.Bold;
-    [SerializeField] private TextAlignmentOptions materialCountTextAlignment = TextAlignmentOptions.MidlineRight;
-    [SerializeField] private Color materialCountTextColor = new Color(1f, 0.94f, 0.7f, 1f);
+    [SerializeField] private StartConfigBookmarkLayoutConfig layoutConfig;
     [SerializeField] private Button button;
     [SerializeField] private Button selectButton;
     [SerializeField] private Image selectButtonImage;
@@ -96,19 +71,17 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     private void Awake()
     {
         ResolveReferences();
-        if (selectButton != null)
-            selectButton.onClick.AddListener(HandleClick);
+        if (layoutConfig == null)
+            layoutConfig = Resources.Load<StartConfigBookmarkLayoutConfig>("Config/StartConfigBookmarkLayoutConfig");
         if (windowCloseButton != null)
             windowCloseButton.onClick.AddListener(HandleClose);
     }
 
-    private void OnDestroy()
+    private StartConfigBookmarkLayoutConfig GetLayoutConfig()
     {
-        if (selectButton != null)
-            selectButton.onClick.RemoveListener(HandleClick);
-        if (windowCloseButton != null)
-            windowCloseButton.onClick.RemoveListener(HandleClose);
-        KillTweens();
+        if (layoutConfig == null)
+            layoutConfig = Resources.Load<StartConfigBookmarkLayoutConfig>("Config/StartConfigBookmarkLayoutConfig");
+        return layoutConfig;
     }
 
     private void Update()
@@ -351,7 +324,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             MagicItemView view = Instantiate(magicViewPrefab, magicRoot);
             view.gameObject.SetActive(true);
             RectTransform rect = view.transform as RectTransform;
-            rect.localScale = Vector3.one * magicItemScale;
+            rect.localScale = Vector3.one * GetLayoutConfig().MaterialCardScale;
             ApplyPreviewItemLayout(rect, magicRoot, i, magicItemFallbackColumns, magicItemFallbackSize, magicItemFallbackSpacing);
             view.Bind(GetMagicForSlot(magics, i));
             magicViews.Add(view);
@@ -378,15 +351,15 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             GameObject item = new GameObject("MaterialItem", typeof(RectTransform));
             item.transform.SetParent(materialRoot, false);
             RectTransform itemRect = item.GetComponent<RectTransform>();
-            ApplyPreviewItemLayout(itemRect, materialRoot, i, materialItemFallbackColumns, materialItemFallbackSize, materialItemFallbackSpacing);
+            ApplyPreviewItemLayout(itemRect, materialRoot, i, GetLayoutConfig().MaterialItemFallbackColumns, GetLayoutConfig().MaterialItemFallbackSize, GetLayoutConfig().MaterialItemFallbackSpacing);
 
             if (data != null && materialCardPrefab != null)
             {
                 MaterialCardView card = Instantiate(materialCardPrefab, itemRect);
                 card.gameObject.SetActive(true);
                 RectTransform cardRect = card.transform as RectTransform;
-                cardRect.localScale = Vector3.one * materialCardScale;
-                cardRect.anchoredPosition = materialCardAnchoredPosition;
+                cardRect.localScale = Vector3.one * GetLayoutConfig().MaterialCardScale;
+                cardRect.anchoredPosition = GetLayoutConfig().MaterialCardAnchoredPosition;
                 card.Bind(new MaterialModel(data.material + "_preview", data.material));
                 ConfigureMaterialPreviewCard(cardRect);
 
@@ -410,13 +383,13 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         Image frameImage = cardRect.GetComponent<Image>();
         if (frameImage != null)
         {
-            frameImage.color = materialPreviewFrameColor;
-            frameImage.raycastTarget = materialPreviewFrameRaycastTarget;
+            frameImage.color = GetLayoutConfig().MaterialPreviewFrameColor;
+            frameImage.raycastTarget = GetLayoutConfig().MaterialPreviewFrameRaycastTarget;
         }
 
         Shadow shadow = cardRect.GetComponent<Shadow>();
         if (shadow != null)
-            shadow.enabled = materialPreviewShadowEnabled;
+            shadow.enabled = GetLayoutConfig().MaterialPreviewShadowEnabled;
 
         Transform icon = cardRect.Find("Icon");
         if (icon != null)
@@ -424,19 +397,19 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             RectTransform iconRect = icon as RectTransform;
             if (iconRect != null)
             {
-                iconRect.anchorMin = materialPreviewIconAnchorMin;
-                iconRect.anchorMax = materialPreviewIconAnchorMax;
-                iconRect.pivot = materialPreviewIconPivot;
-                iconRect.anchoredPosition = materialPreviewIconAnchoredPosition;
-                iconRect.sizeDelta = materialPreviewIconSize;
+                iconRect.anchorMin = GetLayoutConfig().MaterialPreviewIconAnchorMin;
+                iconRect.anchorMax = GetLayoutConfig().MaterialPreviewIconAnchorMax;
+                iconRect.pivot = GetLayoutConfig().MaterialPreviewIconPivot;
+                iconRect.anchoredPosition = GetLayoutConfig().MaterialPreviewIconAnchoredPosition;
+                iconRect.sizeDelta = GetLayoutConfig().MaterialPreviewIconSize;
             }
 
             Image iconImage = icon.GetComponent<Image>();
             if (iconImage != null)
             {
-                iconImage.color = materialPreviewIconColor;
-                iconImage.raycastTarget = materialPreviewIconRaycastTarget;
-                iconImage.preserveAspect = materialPreviewIconPreserveAspect;
+                iconImage.color = GetLayoutConfig().MaterialPreviewIconColor;
+                iconImage.raycastTarget = GetLayoutConfig().MaterialPreviewIconRaycastTarget;
+                iconImage.preserveAspect = GetLayoutConfig().MaterialPreviewIconPreserveAspect;
             }
         }
     }
@@ -481,18 +454,18 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         GameObject textObject = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         textObject.transform.SetParent(parent, false);
         RectTransform rect = textObject.GetComponent<RectTransform>();
-        rect.anchorMin = materialCountTextAnchorMin;
-        rect.anchorMax = materialCountTextAnchorMax;
-        rect.pivot = materialCountTextPivot;
-        rect.anchoredPosition = materialCountTextAnchoredPosition;
-        rect.sizeDelta = materialCountTextSize;
+        rect.anchorMin = GetLayoutConfig().MaterialCountTextAnchorMin;
+        rect.anchorMax = GetLayoutConfig().MaterialCountTextAnchorMax;
+        rect.pivot = GetLayoutConfig().MaterialCountTextPivot;
+        rect.anchoredPosition = GetLayoutConfig().MaterialCountTextAnchoredPosition;
+        rect.sizeDelta = GetLayoutConfig().MaterialCountTextSize;
 
         TMP_Text text = textObject.GetComponent<TMP_Text>();
-        text.font = materialCountTextFont != null ? materialCountTextFont : UIManager.GetDefaultTMPFont();
-        text.fontSize = materialCountTextFontSize;
-        text.fontStyle = materialCountTextFontStyle;
-        text.alignment = materialCountTextAlignment;
-        text.color = materialCountTextColor;
+        text.font = GetLayoutConfig().MaterialCountTextFont != null ? GetLayoutConfig().MaterialCountTextFont : UIManager.GetDefaultTMPFont();
+        text.fontSize = GetLayoutConfig().MaterialCountTextFontSize;
+        text.fontStyle = GetLayoutConfig().MaterialCountTextFontStyle;
+        text.alignment = GetLayoutConfig().MaterialCountTextAlignment;
+        text.color = GetLayoutConfig().MaterialCountTextColor;
         text.raycastTarget = false;
         return text;
     }
