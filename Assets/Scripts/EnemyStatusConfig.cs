@@ -25,6 +25,11 @@ public class EnemyStatusConfig : ScriptableObject
     [SerializeField] private int buffMinColumnCount = 1;
     [SerializeField] private int buffMaxColumnCount = 5;
     [SerializeField] private float buffColumnsPerHealthBarWidth = 32f;
+    [SerializeField] private float infoBoxMinWidth = 150f;
+    [SerializeField] private float infoBoxHorizontalPadding = 24f;
+    [SerializeField] private float infoBoxVerticalPadding = 12f;
+    [SerializeField] private float infoBoxTextColumnWidth = 56f;
+    [SerializeField] private float infoBoxOffsetY = -56f;
 
     public float DefaultHealthBarWidth => Mathf.Max(1f, defaultHealthBarWidth);
     public IReadOnlyList<EnemyStatusBreakpointData> HealthBarGrowth => healthBarGrowth;
@@ -35,5 +40,10 @@ public class EnemyStatusConfig : ScriptableObject
     public int BuffMinColumnCount => Mathf.Max(1, buffMinColumnCount);
     public int BuffMaxColumnCount => Mathf.Max(BuffMinColumnCount, buffMaxColumnCount);
     public float BuffColumnsPerHealthBarWidth => Mathf.Max(1f, buffColumnsPerHealthBarWidth);
+    public float InfoBoxMinWidth => Mathf.Max(1f, infoBoxMinWidth);
+    public float InfoBoxHorizontalPadding => Mathf.Max(0f, infoBoxHorizontalPadding);
+    public float InfoBoxVerticalPadding => Mathf.Max(0f, infoBoxVerticalPadding);
+    public float InfoBoxTextColumnWidth => Mathf.Max(1f, infoBoxTextColumnWidth);
+    public float InfoBoxOffsetY => infoBoxOffsetY;
 }
 

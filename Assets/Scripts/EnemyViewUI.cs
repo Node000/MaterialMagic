@@ -148,7 +148,7 @@ public class EnemyViewUI : MonoBehaviour
     {
         if (infoBackFrame != null)
         {
-            infoBackFrame.anchoredPosition = baseInfoBackFrameAnchoredPosition + GetInfoBoxOffset(data);
+            infoBackFrame.anchoredPosition = GetInfoBoxAnchoredPosition(data);
             infoBackFrame.sizeDelta = GetInfoBoxSizeDelta(data);
         }
 
@@ -173,11 +173,37 @@ public class EnemyViewUI : MonoBehaviour
         return data != null && data.infoBoxSize.y > 0f;
     }
 
+    private bool HasInfoBoxOffsetOverride(EnemyData data)
+    {
+        return data != null && (data.infoBoxOffset.x != 0f || data.infoBoxOffset.y != 0f);
+    }
+
     private Vector2 GetInfoBoxSizeDelta(EnemyData data)
     {
-        return new Vector2(
-            HasInfoBoxWidthOverride(data) ? data.infoBoxSize.x : baseInfoBackFrameSizeDelta.x,
-            HasInfoBoxHeightOverride(data) ? data.infoBoxSize.y : baseInfoBackFrameSizeDelta.y);
+        EnemyStatusConfig config = LoadConfig();
+        if (config == null)
+            return baseInfoBackFrameSizeDelta;
+
+        if (HasInfoBoxWidthOverride(data) || HasInfoBoxHeightOverride(data))
+        {
+            return new Vector2(
+                HasInfoBoxWidthOverride(data) ? data.infoBoxSize.x : baseInfoBackFrameSizeDelta.x,
+                HasInfoBoxHeightOverride(data) ? data.infoBoxSize.y : baseInfoBackFrameSizeDelta.y);
+        }
+
+        return new Vector2(GetInfoBoxWidth(data, config), GetInfoBoxHeight(config));
+    }
+
+    private Vector2 GetInfoBoxAnchoredPosition(EnemyData data)
+    {
+        if (HasInfoBoxOffsetOverride(data))
+            return baseInfoBackFrameAnchoredPosition + GetInfoBoxOffset(data);
+
+        EnemyStatusConfig config = LoadConfig();
+        if (config == null)
+            return baseInfoBackFrameAnchoredPosition;
+
+        return baseInfoBackFrameAnchoredPosition + new Vector2(0f, config.InfoBoxOffsetY);
     }
 
     private Vector2 GetHealthBarAnchoredPosition(EnemyData data)
@@ -191,15 +217,31 @@ public class EnemyViewUI : MonoBehaviour
         if (config == null)
             return baseHealthBarSizeDelta;
 
-        float width = data != null && data.healthBarWidth > 0f
-            ? data.healthBarWidth
-            : GetHealthBarWidthFromHealth(data != null ? data.maxHealth : 0, config);
+        float width = GetHealthBarWidth(data, config);
         return new Vector2(width, baseHealthBarSizeDelta.y);
     }
 
     private static Vector2 GetInfoBoxOffset(EnemyData data)
     {
         return data != null ? data.infoBoxOffset : Vector2.zero;
+    }
+
+    private float GetInfoBoxWidth(EnemyData data, EnemyStatusConfig config)
+    {
+        float healthBarWidth = GetHealthBarWidth(data, config);
+        return Mathf.Max(config.InfoBoxMinWidth, healthBarWidth + config.InfoBoxHorizontalPadding * 2f + config.InfoBoxTextColumnWidth);
+    }
+
+    private float GetInfoBoxHeight(EnemyStatusConfig config)
+    {
+        return baseInfoBackFrameSizeDelta.y + config.InfoBoxVerticalPadding * 2f;
+    }
+
+    private float GetHealthBarWidth(EnemyData data, EnemyStatusConfig config)
+    {
+        return data != null && data.healthBarWidth > 0f
+            ? data.healthBarWidth
+            : GetHealthBarWidthFromHealth(data != null ? data.maxHealth : 0, config);
     }
 
     private static Vector2 GetIntentOffset(EnemyData data)
