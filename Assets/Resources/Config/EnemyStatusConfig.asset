@@ -25,3 +25,8 @@ MonoBehaviour:
   buffMinColumnCount: 1
   buffMaxColumnCount: 5
   buffColumnsPerHealthBarWidth: 32
+  infoBoxMinWidth: 150
+  infoBoxHorizontalPadding: 24
+  infoBoxVerticalPadding: 3
+  infoBoxTextColumnWidth: 108
+  infoBoxOffsetY: -24
