@@ -501,10 +501,7 @@ public class MaterialListPanelUI : MonoBehaviour
         selectionTitleOverride = null;
         selectionLocked = false;
         selectionCount = 0;
-        selectionConfirmButton = null;
-        selectionConfirmCanvasGroup = null;
-        selectionConfirmButtonComponent = null;
-        selectionConfirmButtonText = null;
+        HideSelectionConfirmButton();
         RefreshSelectionVisuals();
     }
 }

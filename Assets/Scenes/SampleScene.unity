@@ -7909,10 +7909,10 @@ RectTransform:
   - {fileID: 2141276663}
   m_Father: {fileID: 1580853700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 380, y: -249}
-  m_SizeDelta: {x: 736, y: 38}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &223453485
 MonoBehaviour:
@@ -34926,10 +34926,10 @@ MonoBehaviour:
   tooltipHideEase: 26
   tooltipHiddenScale: {x: 0.82, y: 0.82, z: 1}
   tooltipYOffset: 72
-  selectionConfirmButton: {fileID: 0}
-  selectionConfirmCanvasGroup: {fileID: 0}
-  selectionConfirmButtonComponent: {fileID: 0}
-  selectionConfirmButtonText: {fileID: 0}
+  selectionConfirmButton: {fileID: 500822725}
+  selectionConfirmCanvasGroup: {fileID: 500822726}
+  selectionConfirmButtonComponent: {fileID: 500822727}
+  selectionConfirmButtonText: {fileID: 890366349}
   selectionConfirmDisabledAlpha: 0.35
   selectionConfirmText: "\u786E\u8BA4"
 --- !u!224 &1091647596
