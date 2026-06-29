@@ -24,7 +24,7 @@ MonoBehaviour:
   materialPreviewIconAnchorMax: {x: 0.5, y: 0.5}
   materialPreviewIconPivot: {x: 0.5, y: 0.5}
   materialPreviewIconAnchoredPosition: {x: 0, y: 0}
-  materialPreviewIconSize: {x: 96, y: 96}
+  materialPreviewIconSize: {x: 108, y: 108}
   materialPreviewIconColor: {r: 1, g: 1, b: 1, a: 1}
   materialPreviewIconRaycastTarget: 0
   materialPreviewIconPreserveAspect: 1
@@ -34,7 +34,7 @@ MonoBehaviour:
   materialCountTextAnchoredPosition: {x: 0, y: -6}
   materialCountTextSize: {x: 52, y: 28}
   materialCountTextFont: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
-  materialCountTextFontSize: 22
+  materialCountTextFontSize: 33
   materialCountTextFontStyle: 1
   materialCountTextAlignment: 4100
   materialCountTextColor: {r: 1, g: 0.94, b: 0.7, a: 1}
