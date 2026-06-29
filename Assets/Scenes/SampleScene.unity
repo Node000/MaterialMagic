@@ -47286,6 +47286,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1486491836}
   - component: {fileID: 1486491837}
+  - component: {fileID: 1486491838}
   m_Layer: 0
   m_Name: SpellParticleEmitter
   m_TagString: Untagged
@@ -47332,7 +47333,7 @@ MonoBehaviour:
   arcHeight: 180
   startSpread: {x: 32, y: 12}
   targetSpread: {x: 26, y: 14}
-  projectileSize: 18
+  projectileSize: 24
   materialFillProjectileScale: 2.5
   magicProjectileSize: 56
   trailWidth: 10
@@ -47342,6 +47343,29 @@ MonoBehaviour:
   playOnStart: 0
   loop: 0
   loopDelay: 0.53
+--- !u!223 &1486491838
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486491835}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 100
+  m_TargetDisplay: 0
 --- !u!1 &1486685981
 GameObject:
   m_ObjectHideFlags: 0
@@ -63015,6 +63039,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1945885962}
   - component: {fileID: 1945885963}
+  - component: {fileID: 1945885964}
   m_Layer: 0
   m_Name: SpellParticleCaster
   m_TagString: Untagged
@@ -63061,7 +63086,7 @@ MonoBehaviour:
   arcHeight: 180
   startSpread: {x: 32, y: 12}
   targetSpread: {x: 26, y: 14}
-  projectileSize: 18
+  projectileSize: 24
   materialFillProjectileScale: 2.5
   magicProjectileSize: 56
   trailWidth: 10
@@ -63071,6 +63096,29 @@ MonoBehaviour:
   playOnStart: 0
   loop: 0
   loopDelay: 0.53
+--- !u!223 &1945885964
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945885961}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 100
+  m_TargetDisplay: 0
 --- !u!1 &1947813867
 GameObject:
   m_ObjectHideFlags: 0
