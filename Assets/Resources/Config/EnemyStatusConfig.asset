@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa5f3edf5a68d4141ac794ac73215dae, type: 3}
   m_Name: EnemyStatusConfig
   m_EditorClassIdentifier: 
-  defaultHealthBarWidth: 130
+  defaultHealthBarWidth: 0
   healthBarGrowth:
   - breakpoint: 100
-    growthRate: 1
+    growthRate: 7
   - breakpoint: 200
-    growthRate: 0.4
-  healthBarMinWidth: 90
-  healthBarMaxWidth: 220
+    growthRate: 5
+  healthBarMinWidth: 0
+  healthBarMaxWidth: 600
   buffSlotSize: 64
   buffSlotSpacing: 8
   buffMinColumnCount: 1
