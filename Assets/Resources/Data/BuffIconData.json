@@ -38,7 +38,7 @@
     },
     {
       "buffType": 13,
-      "iconName": "yellowStar"
+      "iconName": "额外抽牌"
     },
     {
       "buffType": 14,
@@ -66,11 +66,11 @@
     },
     {
       "buffType": 20,
-      "iconName": "yellowStar"
+      "iconName": "道具重复"
     },
     {
       "buffType": 21,
-      "iconName": "yellowStar"
+      "iconName": "负面强化"
     },
     {
       "buffType": 22,
@@ -86,7 +86,7 @@
     },
     {
       "buffType": 25,
-      "iconName": "yellowStar"
+      "iconName": "redStar"
     },
     {
       "buffType": 26,
@@ -126,7 +126,7 @@
     },
     {
       "buffType": 40,
-      "iconName": "yellowStar"
+      "iconName": "重复触发"
     },
     {
       "buffType": 41,
@@ -135,6 +135,10 @@
     {
       "buffType": 44,
       "iconName": "redStar"
+    },
+    {
+      "buffType": 45,
+      "iconName": "保留手牌"
     }
   ]
 }

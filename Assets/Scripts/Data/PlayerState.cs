@@ -22,7 +22,7 @@ public class PlayerState
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
     public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
-    public bool KeepHandOnEndTurn { get; set; }
+    public bool KeepHandOnEndTurn { get; private set; }
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
     public List<MaterialModel> DrawPile { get; } = new List<MaterialModel>();
@@ -40,6 +40,16 @@ public class PlayerState
         MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
         Gold = gold;
+    }
+
+    public void ResetKeepHandOnEndTurn()
+    {
+        KeepHandOnEndTurn = false;
+    }
+
+    public void KeepHandOnEndTurnOnce()
+    {
+        KeepHandOnEndTurn = true;
     }
 
     public static PlayerState CreateDefault()
@@ -97,6 +107,47 @@ public class PlayerState
         return DrawCardsToHand(count, true, IsBasicMaterialCard);
     }
 
+    public MaterialModel DrawCardToHand(bool triggerAfterDraw)
+    {
+        return DrawCardToHand(triggerAfterDraw, null);
+    }
+
+    public MaterialModel DrawCardToHand(bool triggerAfterDraw, System.Predicate<MaterialModel> canDraw)
+    {
+        if (!EnsureDrawPileHasCards(canDraw))
+            return null;
+
+        int randomIndex = GetRandomDrawableDrawPileIndex(canDraw);
+        if (randomIndex < 0)
+            return null;
+
+        MaterialModel card = DrawPile[randomIndex];
+        DrawPile.RemoveAt(randomIndex);
+        Hand.Add(card);
+        card.TriggerOnDraw();
+        if (triggerAfterDraw)
+            TriggerAfterDraw(card);
+        GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
+        return card;
+    }
+
+    private static MaterialModel TakeMaterialFromPile(List<MaterialModel> pile, MaterialEnum material)
+    {
+        if (pile == null)
+            return null;
+
+        for (int i = 0; i < pile.Count; i++)
+        {
+            MaterialModel card = pile[i];
+            if (card != null && card.material == material)
+            {
+                pile.RemoveAt(i);
+                return card;
+            }
+        }
+        return null;
+    }
+
     public int DrawSpecificMaterialsToHand(IReadOnlyList<MaterialEnum> materials, bool createTemporaryIfMissing)
     {
         if (materials == null)
@@ -130,23 +181,6 @@ public class PlayerState
         return drawnCount;
     }
 
-    private static MaterialModel TakeMaterialFromPile(List<MaterialModel> pile, MaterialEnum material)
-    {
-        if (pile == null)
-            return null;
-
-        for (int i = 0; i < pile.Count; i++)
-        {
-            MaterialModel card = pile[i];
-            if (card != null && card.material == material)
-            {
-                pile.RemoveAt(i);
-                return card;
-            }
-        }
-        return null;
-    }
-
     public RefreshHandResult RefreshBasicMaterialHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
         return RefreshHandCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);
@@ -162,21 +196,9 @@ public class PlayerState
         int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
-            if (!EnsureDrawPileHasCards(canDraw))
+            if (DrawCardToHand(triggerAfterDraw, canDraw) == null)
                 break;
-
-            int randomIndex = GetRandomDrawableDrawPileIndex(canDraw);
-            if (randomIndex < 0)
-                break;
-
-            MaterialModel card = DrawPile[randomIndex];
-            DrawPile.RemoveAt(randomIndex);
-            Hand.Add(card);
-            card.TriggerOnDraw();
-            if (triggerAfterDraw)
-                TriggerAfterDraw(card);
             drawnCount++;
-            GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
         }
 
         return drawnCount;
@@ -590,13 +612,19 @@ public class PlayerState
             GameLog.Data($"Refresh discards combat card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
         }
 
-        int drawnCount = 0;
+        List<MaterialModel> replacements = new List<MaterialModel>();
         for (int i = 0; i < slots.Count; i++)
         {
             MaterialModel replacement = DrawCombatRefreshReplacement(canDraw, allowShuffleFromDiscard: true);
             if (replacement == null)
-                continue;
+                break;
 
+            replacements.Add(replacement);
+        }
+
+        for (int i = 0; i < replacements.Count; i++)
+        {
+            MaterialModel replacement = replacements[i];
             if (slots[i].InPlayZone)
             {
                 replacement.isPlayed = true;
@@ -608,11 +636,10 @@ public class PlayerState
                 replacement.isPlayed = false;
                 Hand.Insert(Mathf.Clamp(slots[i].Index, 0, Hand.Count), replacement);
             }
-            drawnCount++;
         }
 
-        GameLog.Data($"Refresh combat cards selected={slots.Count} drawn={drawnCount} discarded={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
-        return new RefreshHandResult(drawnCount, returnedCount);
+        GameLog.Data($"Refresh combat cards selected={slots.Count} drawn={replacements.Count} discarded={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
+        return new RefreshHandResult(replacements.Count, returnedCount);
     }
 
     private MaterialModel DrawCombatRefreshReplacement(System.Predicate<MaterialModel> canDraw, bool allowShuffleFromDiscard)
@@ -705,7 +732,13 @@ public class PlayerState
         MaterialModifierModel.CurrentContext = null;
 
         int discardedCount = ReturnHandCardsToDiscardPile(cards, removedTemporaryCards);
-        int drawnCount = DrawCardsToHand(refreshCount, false, canDraw);
+        int drawnCount = 0;
+        for (int i = 0; i < refreshCount; i++)
+        {
+            if (DrawCardToHand(false, canDraw) == null)
+                break;
+            drawnCount++;
+        }
         GameLog.Data($"Refresh hand cards selected={cards.Count} drawn={drawnCount} discarded={discardedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
         return new RefreshHandResult(drawnCount, discardedCount);
     }
@@ -1099,6 +1132,25 @@ public class PlayerState
             PlayZone[i].TriggerOnEnd();
     }
 
+    public void RemoveTurnOnlyModifiers()
+    {
+        RemoveTurnOnlyModifiers(Hand);
+        RemoveTurnOnlyModifiers(PlayZone);
+        RemoveTurnOnlyModifiers(DrawPile);
+        RemoveTurnOnlyModifiers(DiscardPile);
+        RemoveTurnOnlyModifiers(ConsumedPile);
+        RemoveTurnOnlyModifiers(TemporaryMaterialsNextTurn);
+    }
+
+    private static void RemoveTurnOnlyModifiers(List<MaterialModel> cards)
+    {
+        if (cards == null)
+            return;
+
+        for (int i = 0; i < cards.Count; i++)
+            cards[i]?.RemoveTurnOnlyModifiers();
+    }
+
     public void AddGold(int amount)
     {
         Gold += amount;
@@ -1158,6 +1210,7 @@ public class PlayerState
 
     public void TriggerOnTurnStart(CombatantModel opponent)
     {
+        ResetKeepHandOnEndTurn();
         TriggerBuffs(opponent, (buff, self, target) => buff.OnTurnStart(self, target));
     }
 
@@ -1179,6 +1232,11 @@ public class PlayerState
     public void TriggerOnInvoke(CombatantModel target)
     {
         TriggerBuffs(target, (buff, self, opponent) => buff.OnInvoke(self, opponent));
+    }
+
+    public void TriggerAfterPlayerDecide(CombatantModel opponent)
+    {
+        TriggerBuffs(opponent, (buff, self, target) => buff.AfterPlayerDecide(self, target));
     }
 
     public void TriggerOnGetAction(CombatantModel opponent)

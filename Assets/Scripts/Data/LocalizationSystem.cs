@@ -120,6 +120,7 @@ public static class LocalizationKeys
             case BuffEnum.ShieldReflectBoost: return "shield_reflect_boost";
             case BuffEnum.MagicAttackAll: return "magic_attack_all";
             case BuffEnum.NextMagicRepeat: return "next_magic_repeat";
+            case BuffEnum.KeepHand: return "keep_hand";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
             case BuffEnum.ChargeNextDraw: return "charge_next_draw";
             case BuffEnum.TutorialDeath: return "tutorial_death";

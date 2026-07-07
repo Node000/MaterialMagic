@@ -79,17 +79,20 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private RectTransform magicBookArea;
 
-	[SerializeField]
-	private RectTransform enemyArea;
+		[SerializeField]
+		private RectTransform enemyArea;
 
-	[SerializeField]
-	private RectTransform cardPrefab;
+		[SerializeField]
+		private RectTransform cardPrefab;
 
-	[SerializeField]
-	private RectTransform magicViewPrefab;
+		[SerializeField]
+		private RectTransform mapDirectionCardPrefab;
 
-	[SerializeField]
-	private RectTransform enemyViewPrefab;
+		[SerializeField]
+		private RectTransform magicViewPrefab;
+
+		[SerializeField]
+		private RectTransform enemyViewPrefab;
 
 	[SerializeField]
 	private RectTransform enemyIntentViewPrefab;
@@ -551,9 +554,11 @@ public class HandSystemUI : MonoBehaviour
     private bool currentChapterMapBossLevel;
     private bool chapterMapMoveInProgress;
 
-	private bool busy;
+		private bool busy;
 
-	private bool choosingEventCard;
+        private int resolveTransitionLockCount;
+
+		private bool choosingEventCard;
 
 	private EventOptionData pendingChoiceOption;
 
@@ -893,7 +898,7 @@ public class HandSystemUI : MonoBehaviour
 
         ChapterGridPanelUI panel = GetUIManager().ChapterGridPanel;
         if (panel != null)
-            panel.SetDirectionCardSource(handArea, cardPrefab, cardSpacing);
+            panel.SetDirectionCardSource(handArea, mapDirectionCardPrefab, cardSpacing);
         GetUIManager().ShowChapterGridPanel(grid);
         TutorialManager?.OnLevelSelectShown(currentMapNodeIndex);
         if (ShouldActivateBossMapForCurrentSelection(grid))
@@ -2663,6 +2668,7 @@ public class HandSystemUI : MonoBehaviour
         runManager.AttachMapGrid(new RunMapGridModel());
         playerState.BuffAdded += OnPlayerBuffAdded;
         playerState.DiscardPileShuffledIntoDrawPile += OnDiscardPileShuffledIntoDrawPile;
+        playerState.PlayZoneShuffled += OnPlayZoneShuffled;
 		battleManager = BattleManager.Create(playerState);
         runManager.SetBattle(battleManager);
         battleManager.EnemyAdded += OnBattleEnemyAdded;
@@ -2798,6 +2804,7 @@ public class HandSystemUI : MonoBehaviour
         {
             playerState.BuffAdded -= OnPlayerBuffAdded;
             playerState.DiscardPileShuffledIntoDrawPile -= OnDiscardPileShuffledIntoDrawPile;
+            playerState.PlayZoneShuffled -= OnPlayZoneShuffled;
         }
         if (battleManager != null)
         {
@@ -3764,8 +3771,9 @@ public bool IsCardDragActive => cardDragActive;
 					list.Add(handCardView);
 				}
 			}
-				ClearAllCardLiftState(false);
-				List<MaterialModel> list2 = new List<MaterialModel>();
+			ClearAllCardLiftState(false);
+            SynchronizeCardSelectionState(false);
+			List<MaterialModel> list2 = new List<MaterialModel>();
 				PlayerState.RefreshHandResult refreshResult;
 					if (TutorialManager != null && selectedCardsOnlyInHand && TutorialManager.TryGetForcedRefreshMaterials(refreshCards.Count, forcedRefreshMaterials))
 					{
@@ -3803,15 +3811,15 @@ public bool IsCardDragActive => cardDragActive;
 		SetButtonsInteractable(interactable: false);
 		RefreshStaticUI();
 		UpdateLayout();
-		AnimateReturningViews(list, list2, GetDiscardPileArea(), (TweenCallback)delegate
-		{
-			RefreshStaticUI();
-			RefreshMaterialListPanel();
-			RebuildCards(animateFromCurrent: true);
-			TutorialManager?.OnRefreshCompleted(playerState);
-			busy = false;
-			SetButtonsInteractable(interactable: true);
-		});
+			AnimateReturningViews(list, list2, GetDiscardPileArea(), (TweenCallback)delegate
+			{
+				RefreshStaticUI();
+				RefreshMaterialListPanel();
+				RebuildCards(animateFromCurrent: true);
+				TutorialManager?.OnRefreshCompleted(playerState);
+				busy = false;
+				SetButtonsInteractable(interactable: true);
+			}, true);
 	}
 
 	private void EndTurn()
@@ -3860,9 +3868,10 @@ public bool IsCardDragActive => cardDragActive;
 	{
 		busy = true;
 		SetButtonsInteractable(interactable: false);
-		ResetMagicHighlights();
-		battleManager?.BeginPlayerResolveRules();
-		List<MaterialModel> list = new List<MaterialModel>(playerState.PlayZone);
+			ResetMagicHighlights();
+			battleManager?.BeginPlayerResolveRules();
+            yield return WaitResolveTransitionLocks();
+			List<MaterialModel> list = new List<MaterialModel>(playerState.PlayZone);
 		if (list.Count > 0)
 		{
 			yield return PlayResolveAnimation(list);
@@ -8842,6 +8851,38 @@ public bool IsCardDragActive => cardDragActive;
         RefreshMaterialListPanel();
     }
 
+    private void OnPlayZoneShuffled()
+    {
+        AcquireResolveTransitionLock();
+        ClearAllCardLiftState(false);
+        RebuildCards(animateFromCurrent: true);
+        StartCoroutine(ReleaseResolveTransitionLockAfterDelay(layoutDuration));
+    }
+
+    private void AcquireResolveTransitionLock()
+    {
+        resolveTransitionLockCount++;
+    }
+
+    private void ReleaseResolveTransitionLock()
+    {
+        if (resolveTransitionLockCount > 0)
+            resolveTransitionLockCount--;
+    }
+
+    private IEnumerator WaitResolveTransitionLocks()
+    {
+        while (resolveTransitionLockCount > 0)
+            yield return null;
+    }
+
+    private IEnumerator ReleaseResolveTransitionLockAfterDelay(float delay)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+        ReleaseResolveTransitionLock();
+    }
+
     private void PlayDiscardPileShuffleAnimation(IReadOnlyList<MaterialModel> cards)
     {
         RectTransform sourceArea = GetDiscardPileArea();
@@ -8994,19 +9035,19 @@ public bool IsCardDragActive => cardDragActive;
 		AnimateViewsToArea(views, deckPileArea, onComplete);
 	}
 
-	private void AnimateReturningViews(List<HandCardView> views, List<MaterialModel> removedTemporaryCards, RectTransform returnArea, TweenCallback onComplete)
-	{
+		private void AnimateReturningViews(List<HandCardView> views, List<MaterialModel> removedTemporaryCards, RectTransform returnArea, TweenCallback onComplete, bool forceReturnViews = false)
+		{
 		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0058: Expected O, but got Unknown
 		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
 		//IL_009e: Expected O, but got Unknown
 		List<HandCardView> returningViews = new List<HandCardView>();
-		for (int i = 0; i < views.Count; i++)
-		{
-			HandCardView view = views[i];
-			if ((Object)view != (Object)null && (view.Card == null || !playerState.Hand.Contains(view.Card)))
-				returningViews.Add(view);
-		}
+			for (int i = 0; i < views.Count; i++)
+			{
+				HandCardView view = views[i];
+				if ((Object)view != (Object)null && (forceReturnViews || view.Card == null || !playerState.Hand.Contains(view.Card)))
+					returningViews.Add(view);
+			}
 		if (removedTemporaryCards == null || removedTemporaryCards.Count == 0)
 		{
 			AnimateViewsToArea(returningViews, returnArea, onComplete);

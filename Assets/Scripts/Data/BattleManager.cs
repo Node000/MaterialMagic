@@ -418,15 +418,17 @@ public class BattleManager
         TriggerMagicBattleEnd();
         ResetContinuousCastCount();
         FinishBattle();
-        BeginPlayerResolveRules();
+        BeginPlayerResolveRules(false);
         PlayerState?.EndTurn(removedTemporaryCards);
         EndPlayerResolveRules();
         PlayerState?.ClearCombatState();
     }
 
-    public void BeginPlayerResolveRules()
+    public void BeginPlayerResolveRules(bool afterPlayerDecide = true)
     {
         MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = PlayerState, BattleManager = this };
+        if (afterPlayerDecide)
+            PlayerState?.TriggerAfterPlayerDecide(new CombatantModel(GetFirstAliveEnemy()));
         PlayerState?.TriggerMaterialBegin();
     }
 
@@ -486,6 +488,7 @@ public class BattleManager
         result.CapturePlayerBefore(PlayerState);
         PlayerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         TriggerMagicTurnEnd();
+        PlayerState.RemoveTurnOnlyModifiers();
         PlayerState.EndTurn(removedTemporaryCards);
         PlayerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         PlayerState.TriggerMaterialEnd();

@@ -1,21 +1,19 @@
-using System.Collections.Generic;
-
 public class ShuffleHandOnInvokeChanceBuffModel : BuffModel
 {
     public ShuffleHandOnInvokeChanceBuffModel(int stack) : base(BuffEnum.ShuffleHandOnInvokeChance, stack)
     {
     }
 
-    public override void OnInvoke(CombatantModel self, CombatantModel target)
+    public override void AfterPlayerDecide(CombatantModel self, CombatantModel opponent)
     {
-        if (!self.IsEnemy || stack <= 0)
+        if (!self.IsPlayer || stack <= 0)
             return;
 
-        PlayerState player = BattleManager.Instance?.PlayerState;
+        PlayerState player = self.Player;
         if (player == null || player.PlayZone.Count <= 1)
             return;
 
-        int roll = player is PlayerStatus status ? status.NextRunRandomInt(0, stack) : UnityEngine.Random.Range(0, stack);
+        int roll = player is PlayerStatus status ? status.NextRunRandomInt(0, 3) : UnityEngine.Random.Range(0, 3);
         if (roll != 0)
             return;
 

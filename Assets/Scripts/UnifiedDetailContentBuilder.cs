@@ -11,7 +11,8 @@ public enum UnifiedDetailSourceType
     Buff = 3,
     EnemyIntent = 4,
     EventOption = 5,
-    BonusReward = 6
+    BonusReward = 6,
+    MagicModifier = 7
 }
 
 public enum UnifiedDetailAddedDetailType
@@ -75,6 +76,19 @@ public static class UnifiedDetailContentBuilder
             Body = LocalizationSystem.GetText("ui.magic.empty_slot.body", "可以放入新的道具"),
             AccentColor = Color.white,
             Icon = null
+        };
+        return content;
+    }
+
+    public static UnifiedDetailContent Build(MagicModifierData modifier)
+    {
+        UnifiedDetailContent content = new UnifiedDetailContent
+        {
+            SourceType = UnifiedDetailSourceType.MagicModifier,
+            Title = modifier != null ? LocalizationSystem.GetText(modifier.nameKey, modifier.id) : string.Empty,
+            Body = modifier != null ? LocalizationSystem.GetText(modifier.descriptionKey, string.Empty) : string.Empty,
+            AccentColor = Color.white,
+            Icon = MagicModifierIconDatabase.Get(modifier)
         };
         return content;
     }

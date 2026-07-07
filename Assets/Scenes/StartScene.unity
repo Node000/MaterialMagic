@@ -395,7 +395,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: -620, y: -220}
+  m_AnchoredPosition: {x: -619.99994, y: -220}
   m_SizeDelta: {x: 430, y: 200}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &24374657
@@ -2650,9 +2650,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   root: {fileID: 476374699}
   startConfigBookmarkPrefab: {fileID: 5557082001852326864, guid: 448b1e0d392c9b644889f4cc6c33a008, type: 3}
-  rootY: 220
+  rootY: 250
   rootSize: {x: 760, y: 620}
-  bookmarkVerticalSpacing: 300
+  bookmarkVerticalSpacing: 180
   bookmarkInitialX: 340
   bookmarkReadyX: 340
   bookmarkDisplayX: 340
@@ -3599,7 +3599,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: -980, y: 0}
+  m_AnchoredPosition: {x: -979.99994, y: 0}
   m_SizeDelta: {x: 760, y: 520}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &674432408

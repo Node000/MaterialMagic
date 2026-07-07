@@ -17,9 +17,12 @@ public class ChargeNextDrawBuffModel : BuffModel
         if (pendingNextTurn || card == null || stack <= 0)
             return;
 
-        ChargeModifier modifier = new ChargeModifier();
-        modifier.MarkRemoveAfterTurn();
-        card.AddModifier(modifier);
+        if (!card.HasModifier<ChargeModifier>())
+        {
+            ChargeModifier modifier = new ChargeModifier();
+            modifier.MarkRemoveAfterBattle();
+            card.AddModifier(modifier);
+        }
         ConsumeStack(1);
     }
 

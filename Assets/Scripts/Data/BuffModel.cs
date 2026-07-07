@@ -38,6 +38,10 @@ public class BuffModel
     {
     }
 
+    public virtual void AfterPlayerDecide(CombatantModel self, CombatantModel opponent)
+    {
+    }
+
     public virtual void OnGetAction(CombatantModel self, CombatantModel opponent)
     {
     }
@@ -183,6 +187,8 @@ public class BuffModel
                 return new MagicAttackAllBuffModel(stack);
             case BuffEnum.NextMagicRepeat:
                 return new NextMagicRepeatBuffModel(stack);
+            case BuffEnum.KeepHand:
+                return new KeepHandBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -226,6 +232,7 @@ public class BuffModel
             case BuffEnum.MaterialOverplayDebuff:
             case BuffEnum.LazyNextDraw:
             case BuffEnum.TutorialDeath:
+            case BuffEnum.ShuffleHandOnInvokeChance:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
@@ -233,7 +240,6 @@ public class BuffModel
             case BuffEnum.DebuffPower:
             case BuffEnum.VortexNextDraw:
             case BuffEnum.ShieldOnHealthLoss:
-            case BuffEnum.ShuffleHandOnInvokeChance:
             case BuffEnum.DirectionDamageBonus:
             case BuffEnum.DirectionWeakBonus:
             case BuffEnum.DirectionExtraDraw:
@@ -246,6 +252,7 @@ public class BuffModel
             case BuffEnum.ShieldReflectBoost:
             case BuffEnum.MagicAttackAll:
             case BuffEnum.NextMagicRepeat:
+            case BuffEnum.KeepHand:
             case BuffEnum.Claw:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:

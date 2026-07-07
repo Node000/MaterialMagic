@@ -1,13 +1,10 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using TMPro;
 
 public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler
 {
-    [SerializeField] private Image backgroundImage;
     [SerializeField] private Image iconImage;
-    [SerializeField] private float iconSize = 68f;
 
     private ChapterGridPanelUI owner;
     private MaterialEnum material;
@@ -34,15 +31,7 @@ public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler
 
     public void RefreshVisual()
     {
-        if (backgroundImage != null)
-            backgroundImage.color = new Color(0.08f, 0.1f, 0.16f, 0.92f);
         if (iconImage != null)
-        {
             iconImage.sprite = MaterialCardView.GetMaterialIcon(material);
-            iconImage.color = Color.white;
-            RectTransform rectTransform = iconImage.rectTransform;
-            if (rectTransform != null)
-                rectTransform.sizeDelta = new Vector2(iconSize, iconSize);
-        }
     }
 }

@@ -17,9 +17,12 @@ public class VortexNextDrawBuffModel : BuffModel
         if (pendingNextTurn || card == null || stack <= 0)
             return;
 
-        VortexModifier modifier = new VortexModifier();
-        modifier.MarkRemoveAfterTurn();
-        card.AddModifier(modifier);
+        if (!card.HasModifier<VortexModifier>())
+        {
+            VortexModifier modifier = new VortexModifier();
+            modifier.MarkRemoveAfterBattle();
+            card.AddModifier(modifier);
+        }
         ConsumeStack(1);
     }
 

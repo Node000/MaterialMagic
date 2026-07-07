@@ -108,7 +108,8 @@ public enum BuffEnum
     Claw = 41,
     LazyNextDraw = 42,
     ChargeNextDraw = 43,
-    TutorialDeath = 44
+    TutorialDeath = 44,
+    KeepHand = 45
 }
 
 public enum BuffKindEnum
@@ -826,10 +827,27 @@ public class MaterialModel
         }
         return clone;
     }
+    public bool HasModifier<T>() where T : MaterialModifierModel
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] is T)
+                return true;
+        }
+        return false;
+    }
+
     public void AddModifier(MaterialModifierModel modifier)
     {
         if (modifier == null || modifiers.Contains(modifier))
             return;
+
+        Type modifierType = modifier.GetType();
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].GetType() == modifierType)
+                return;
+        }
 
         modifier.model = this;
         modifiers.Add(modifier);

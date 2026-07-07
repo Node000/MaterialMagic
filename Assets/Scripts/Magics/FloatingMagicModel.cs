@@ -6,6 +6,6 @@ public class FloatingMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         GainShield(playerState, battleManager, 3, result);
-        playerState.KeepHandOnEndTurn = true;
+        playerState.AddBuff(BuffEnum.KeepHand, 1);
     }
 }

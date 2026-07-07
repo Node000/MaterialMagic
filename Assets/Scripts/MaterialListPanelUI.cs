@@ -273,9 +273,6 @@ public class MaterialListPanelUI : MonoBehaviour
         if (selectionPredicate != null && !selectionPredicate(materialModel))
             return;
 
-        if (selectedMaterials.Count >= selectionCount && !selectedMaterials.Contains(materialModel))
-            return;
-
         if (selectedMaterials.Contains(materialModel))
         {
             selectedMaterials.Remove(materialModel);
@@ -283,6 +280,9 @@ public class MaterialListPanelUI : MonoBehaviour
             UpdateSelectionConfirmButtonState();
             return;
         }
+
+        if (selectedMaterials.Count >= selectionCount)
+            selectedMaterials.RemoveAt(0);
 
         selectedMaterials.Add(materialModel);
         RefreshSelectionVisuals();

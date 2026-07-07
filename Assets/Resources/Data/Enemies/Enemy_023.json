@@ -7,16 +7,26 @@
   "imageScale": 0.8,
   "hoverEffect": true,
   "isMinion": false,
-  "initialBuffs": [
-    {
-      "buffType": 25,
-      "stack": 3
-    }
-  ],
+  "initialBuffs": [],
   "phases": [
     {
       "phase": 0,
       "intentGroups": [
+        {
+          "id": 5,
+          "intents": [
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 25,
+                  "stack": 1
+                }
+              ],
+              "displayType": "debuff"
+            }
+          ]
+        },
         {
           "id": 1,
           "intents": [
@@ -79,6 +89,10 @@
         }
       ],
       "intentLoop": [
+        {
+          "groupId": 5,
+          "onlyOnce": true
+        },
         {
           "randomGroupIds": [
             1,

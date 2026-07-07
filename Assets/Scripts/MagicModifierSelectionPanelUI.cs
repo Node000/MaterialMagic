@@ -9,6 +9,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 {
     private readonly List<Button> optionButtons = new List<Button>();
     private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
+    private readonly List<Image> optionIcons = new List<Image>();
     private readonly List<SpringLineHighlightUI> optionBackgrounds = new List<SpringLineHighlightUI>();
     private readonly List<SpringLineHighlightUI> optionSelectedHighlights = new List<SpringLineHighlightUI>();
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
@@ -17,6 +18,9 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private const float OptionWidth = 168f;
     private const float OptionHeight = 89.6f;
     private const float SelectedOptionScale = 1.06f;
+    private const float OptionIconSize = 34f;
+    private const float OptionIconY = 13f;
+    private const float OptionNameY = -27f;
     private static readonly Color OptionFrameColor = new Color(0.72f, 0.72f, 0.72f, 1f);
     private static readonly Color SelectedOptionFrameColor = Color.white;
 
@@ -37,6 +41,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private Action completed;
     private Action<MaterialModifierData> materialModifierSelected;
     private bool materialModifierMode;
+    private Sprite fallbackModifierIcon;
 
     public MagicModifierData SelectedModifier => selectedModifier;
     public bool HasSelectedModifier => selectedModifier != null;
@@ -194,6 +199,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
                 optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用道具强化");
+            ConfigureOptionTextLayout(0, false);
+            SetOptionIconVisible(0, false);
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
@@ -212,6 +219,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[i].interactable = true;
             if (optionTexts[i] != null)
                 optionTexts[i].text = BuildOptionText(data);
+            ConfigureOptionTextLayout(i, true);
+            SetMagicModifierOptionIcon(i, data);
             int index = i;
             optionButtons[i].onClick.RemoveAllListeners();
             optionButtons[i].onClick.AddListener(() => SelectOption(index));
@@ -231,6 +240,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
                 optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_empty", "暂无可用箭头附魔");
+            ConfigureOptionTextLayout(0, false);
+            SetOptionIconVisible(0, false);
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
@@ -249,6 +260,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[i].interactable = true;
             if (optionTexts[i] != null)
                 optionTexts[i].text = BuildMaterialModifierOptionText(data);
+            ConfigureOptionTextLayout(i, false);
+            SetOptionIconVisible(i, false);
             int index = i;
             optionButtons[i].onClick.RemoveAllListeners();
             optionButtons[i].onClick.AddListener(() => SelectMaterialModifierOption(index));
@@ -288,9 +301,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     private string BuildOptionText(MagicModifierData data)
     {
-        string name = LocalizationSystem.GetText(data.nameKey, data.id);
-        string desc = LocalizationSystem.GetText(data.descriptionKey, string.Empty);
-        return string.IsNullOrEmpty(desc) ? name : name + "\n" + desc;
+        return data != null ? LocalizationSystem.GetText(data.nameKey, data.id) : string.Empty;
     }
 
     private string BuildMaterialModifierOptionText(MaterialModifierData data)
@@ -298,6 +309,54 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         string name = data != null && !string.IsNullOrEmpty(data.nameKey) ? LocalizationSystem.GetText(data.nameKey, data.id) : string.Empty;
         string desc = data != null && !string.IsNullOrEmpty(data.descriptionKey) ? LocalizationSystem.GetText(data.descriptionKey, string.Empty) : string.Empty;
         return string.IsNullOrEmpty(desc) ? name : name + "\n" + desc;
+    }
+
+    private void ConfigureOptionTextLayout(int index, bool withIcon)
+    {
+        if (index < 0 || index >= optionTexts.Count || optionTexts[index] == null)
+            return;
+
+        TMP_Text text = optionTexts[index];
+        text.alignment = TextAlignmentOptions.Center;
+        RectTransform rect = text.transform as RectTransform;
+        if (rect == null)
+            return;
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(OptionWidth - 22f, withIcon ? 28f : OptionHeight - 18f);
+        rect.anchoredPosition = new Vector2(0f, withIcon ? OptionNameY : 0f);
+    }
+
+    private void SetMagicModifierOptionIcon(int index, MagicModifierData data)
+    {
+        if (index < 0 || index >= optionIcons.Count)
+            return;
+
+        Image icon = optionIcons[index];
+        if (icon == null)
+            return;
+
+        Sprite sprite = MagicModifierIconDatabase.Get(data);
+        bool hasIcon = sprite != null;
+        icon.sprite = hasIcon ? sprite : GetFallbackModifierIcon();
+        icon.color = hasIcon ? Color.white : new Color(1f, 0.88f, 0.38f, 1f);
+        icon.preserveAspect = true;
+        icon.gameObject.SetActive(icon.sprite != null);
+    }
+
+    private void SetOptionIconVisible(int index, bool visible)
+    {
+        if (index >= 0 && index < optionIcons.Count && optionIcons[index] != null)
+            optionIcons[index].gameObject.SetActive(visible);
+    }
+
+    private Sprite GetFallbackModifierIcon()
+    {
+        if (fallbackModifierIcon == null)
+            fallbackModifierIcon = Resources.Load<Sprite>("Images/UI/箭头");
+        return fallbackModifierIcon;
     }
 
     private void SelectOption(int index)
@@ -379,6 +438,19 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         RefreshOptionFrameColor(index);
     }
 
+    public void ShowOptionDetail(int index, object anchor)
+    {
+        if (materialModifierMode || index < 0 || index >= currentChoices.Count)
+            return;
+
+        owner?.GetUIManager()?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(currentChoices[index]));
+    }
+
+    public void HideOptionDetail(object anchor)
+    {
+        owner?.GetUIManager()?.HideUnifiedDetailPopup(anchor);
+    }
+
     private void ResetOptionHoverEffects()
     {
         hoveredOptionIndex = -1;
@@ -422,6 +494,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     {
         optionButtons.Clear();
         optionTexts.Clear();
+        optionIcons.Clear();
         optionBackgrounds.Clear();
         optionSelectedHighlights.Clear();
         if (optionRoot == null)
@@ -437,6 +510,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             ConfigureOptionHover(button, optionButtons.Count);
             optionButtons.Add(button);
             optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
+            optionIcons.Add(EnsureOptionIcon(button.transform as RectTransform));
             optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", OptionFrameColor, true, true));
             RemoveOptionSpring(button.transform as RectTransform, "SpringHoverHighlight");
             optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", SelectedOptionFrameColor, false, false));
@@ -464,6 +538,33 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         if (hover == null)
             hover = button.gameObject.AddComponent<MagicModifierOptionHoverUI>();
         hover.Initialize(this, index);
+    }
+
+    private Image EnsureOptionIcon(RectTransform optionRect)
+    {
+        if (optionRect == null)
+            return null;
+
+        Transform existing = optionRect.Find("Icon");
+        Image icon = existing != null ? existing.GetComponent<Image>() : null;
+        if (icon == null)
+        {
+            GameObject obj = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            rect.SetParent(optionRect, false);
+            icon = obj.GetComponent<Image>();
+            icon.raycastTarget = false;
+        }
+
+        RectTransform iconRect = icon.transform as RectTransform;
+        iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+        iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.anchoredPosition = new Vector2(0f, OptionIconY);
+        iconRect.sizeDelta = new Vector2(OptionIconSize, OptionIconSize);
+        icon.transform.SetAsLastSibling();
+        icon.gameObject.SetActive(false);
+        return icon;
     }
 
     private SpringLineHighlightUI EnsureOptionSpring(RectTransform optionRect, string name, Color color, bool fill, bool active, GameObject hoverTarget = null)

@@ -113,8 +113,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     {
         if (root != null)
             directionRoot = root;
-        if (prefab != null)
-            directionCardPrefab = prefab;
+        directionCardPrefab = prefab;
         if (spacing > 0f)
             directionCardSpacing = spacing;
     }
@@ -775,7 +774,6 @@ public class ChapterGridPanelUI : MonoBehaviour
         rect.gameObject.SetActive(true);
         ApplyDirectionCardLayout(rect, index);
 
-        bool usesHandCardView = false;
         MapDirectionCardView mapDirectionCardView = rect.GetComponent<MapDirectionCardView>();
         if (mapDirectionCardView != null)
         {
@@ -784,28 +782,12 @@ public class ChapterGridPanelUI : MonoBehaviour
         }
         else
         {
-            HandCardView handCardView = rect.GetComponent<HandCardView>();
-            usesHandCardView = handCardView != null;
-            if (handCardView != null)
-            {
-                handCardView.Initialize(owner);
-                handCardView.Bind(new MaterialModel("map_direction_" + material, material), false);
-                handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
-                handCardView.SetClickOverride((view, eventData) =>
-                {
-                    if (eventData.button == PointerEventData.InputButton.Left || eventData.button == PointerEventData.InputButton.Right)
-                        HandleDirectionClicked(material);
-                });
-            }
-        }
-
-        if (!usesHandCardView)
-        {
             DirectionButtonHandler handler = rect.GetComponent<DirectionButtonHandler>();
             if (handler == null)
                 handler = rect.gameObject.AddComponent<DirectionButtonHandler>();
             handler.Initialize(this, material);
         }
+
         return rect;
     }
 
@@ -816,9 +798,10 @@ public class ChapterGridPanelUI : MonoBehaviour
             mapDirectionCardView.Initialize(this, material);
         else
         {
-            HandCardView handCardView = rect != null ? rect.GetComponent<HandCardView>() : null;
-            if (handCardView != null)
-                handCardView.SetTooltipContentOverride(UnifiedDetailContentBuilder.BuildMapMove(material));
+            DirectionButtonHandler handler = rect != null ? rect.GetComponent<DirectionButtonHandler>() : null;
+            if (handler == null && rect != null)
+                handler = rect.gameObject.AddComponent<DirectionButtonHandler>();
+            handler?.Initialize(this, material);
         }
     }
 

@@ -14,7 +14,7 @@
     },
     {
       "key": "buff.burning.desc",
-      "text": "回合结束时造成等同层数的伤害，然后层数减半。"
+      "text": "回合开始时造成等同层数的伤害，然后层数减半。该伤害无视护盾，且不受易损影响。"
     },
     {
       "key": "buff.weak.name",
@@ -30,7 +30,7 @@
     },
     {
       "key": "buff.vulnerable.desc",
-      "text": "每层使受到伤害+1，回合结束时层数减半。"
+      "text": "每层使受到伤害+1，回合开始时层数减半。"
     },
     {
       "key": "buff.slow.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "buff.shufflehandoninvokechance.desc",
-      "text": "持续生效：玩家出手时，有1/{0}概率打乱玩家手牌顺序。"
+      "text": "持续生效：玩家确认出牌时，有1/3概率打乱出牌区顺序。"
     },
     {
       "key": "buff.attributedisabled.name",
@@ -303,6 +303,14 @@
     {
       "key": "buff.next_magic_repeat.desc",
       "text": "下一个道具额外触发{0}次，生效后清除。"
+    },
+    {
+      "key": "buff.keep_hand.name",
+      "text": "保留手牌"
+    },
+    {
+      "key": "buff.keep_hand.desc",
+      "text": "本回合结束时保留手牌，生效后清除。"
     },
     {
       "key": "buff.lazy_next_draw.name",

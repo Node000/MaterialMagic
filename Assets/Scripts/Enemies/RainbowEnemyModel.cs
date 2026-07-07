@@ -146,7 +146,6 @@ public class RainbowEnemyModel : EnemyModel
                 break;
         }
 
-        playerState.ShufflePlayZone();
     }
 
     private string GetRandomFollowupDisplayValue()

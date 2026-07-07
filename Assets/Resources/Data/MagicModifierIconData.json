@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "modifierId": "echo_recast",
+      "iconName": "回响~"
+    },
+    {
+      "modifierId": "searing_burning",
+      "iconName": "灼烧Θ"
+    },
+    {
+      "modifierId": "pioneer_extra_draw",
+      "iconName": "先驱α"
+    }
+  ]
+}

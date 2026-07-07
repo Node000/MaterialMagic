@@ -194,6 +194,8 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
             if (itemViews[i] != null)
                 itemViews[i].SetSelectionVisual(IsSelected(itemMaterials[i]), false);
         }
+
+        ApplyLayout(false);
     }
 
     private void CacheReferences()
@@ -329,23 +331,10 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         if (index < 0 || index >= itemMaterials.Count)
             return 0f;
 
-        int centerIndex = hoverIndex;
-        if (centerIndex < 0)
-        {
-            for (int i = 0; i < itemMaterials.Count; i++)
-            {
-                if (IsSelected(itemMaterials[i]))
-                {
-                    centerIndex = i;
-                    break;
-                }
-            }
-        }
+        if (hoverIndex < 0)
+            return IsSelected(itemMaterials[index]) ? hoverYOffset : 0f;
 
-        if (centerIndex < 0)
-            return 0f;
-
-        int distance = Mathf.Abs(index - centerIndex);
+        int distance = Mathf.Abs(index - hoverIndex);
         if (distance == 0)
             return hoverYOffset;
 
@@ -355,26 +344,10 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
 
     private float GetDisplayScale(int index)
     {
-        if (index < 0 || index >= itemMaterials.Count)
+        if (index < 0 || index >= itemMaterials.Count || hoverIndex < 0)
             return normalScale;
 
-        int centerIndex = hoverIndex;
-        if (centerIndex < 0)
-        {
-            for (int i = 0; i < itemMaterials.Count; i++)
-            {
-                if (IsSelected(itemMaterials[i]))
-                {
-                    centerIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (centerIndex < 0)
-            return normalScale;
-
-        int distance = Mathf.Abs(index - centerIndex);
+        int distance = Mathf.Abs(index - hoverIndex);
         if (distance == 0)
             return hoverScale;
 

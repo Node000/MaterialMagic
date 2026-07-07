@@ -62,7 +62,23 @@
         { "slotIndex": 1, "magicId": 15 },
         { "slotIndex": 2, "magicId": 26 }
       ]
+    },
+    {
+      "id": "blank",
+      "displayName": "空白",
+      "texturePath": "",
+      "color": "#8A8A8A",
+      "maxHealth": 50,
+      "gold": 0,
+      "drawCount": 4,
+      "maxPlayCount": 3,
+      "initialMaterials": [
+        { "material": 1, "count": 3 },
+        { "material": 2, "count": 3 },
+        { "material": 3, "count": 3 },
+        { "material": 4, "count": 3 }
+      ],
+      "initialMagics": []
     }
-   
   ]
 }

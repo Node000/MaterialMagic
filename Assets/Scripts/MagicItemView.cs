@@ -51,6 +51,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Tween modifierMarkerTween;
     private bool warnedMissingBackgroundImage;
     private SpringLineHighlightUI hoverHighlight;
+    private Sprite modifierMarkerFallbackSprite;
+    private Material modifierMarkerFallbackMaterial;
+    private Color modifierMarkerFallbackColor;
 
     public MagicModel Magic => magic;
 
@@ -93,7 +96,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             if (magicNameText != null)
                 magicNameText.text = string.Empty;
 
-            SetModifierMarkerVisible(false);
+            SetModifierMarker(null);
             SetHoverHighlightEnabled(true);
             RebuildRecipe();
             return;
@@ -115,7 +118,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (magicNameText != null)
             magicNameText.text = magic.Name;
 
-        SetModifierMarkerVisible(magic.HasModifier);
+        SetModifierMarker(magic.PrimaryModifier);
         SetHoverHighlightEnabled(true);
         RebuildRecipe();
     }
@@ -272,22 +275,51 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             rect.sizeDelta = new Vector2(18f, 18f);
         }
 
-        modifierMarkerImage.color = new Color(1f, 0.88f, 0.38f, 1f);
-        Shader shader = Shader.Find("UI/MagicModifierBreath");
-        if (shader != null && modifierMarkerImage.material == null)
-            modifierMarkerImage.material = new Material(shader);
+        if (modifierMarkerFallbackSprite == null)
+            modifierMarkerFallbackSprite = modifierMarkerImage.sprite;
+        if (modifierMarkerFallbackMaterial == null)
+            modifierMarkerFallbackMaterial = modifierMarkerImage.material;
+        if (modifierMarkerFallbackColor == default)
+            modifierMarkerFallbackColor = modifierMarkerImage.color;
+
+        if (modifierMarkerFallbackMaterial == null)
+        {
+            Shader shader = Shader.Find("UI/MagicModifierBreath");
+            if (shader != null)
+            {
+                modifierMarkerFallbackMaterial = new Material(shader);
+                modifierMarkerImage.material = modifierMarkerFallbackMaterial;
+            }
+        }
     }
 
-    private void SetModifierMarkerVisible(bool visible)
+    private void SetModifierMarker(MagicModifierModel modifier)
     {
         EnsureModifierMarker();
         if (modifierMarkerImage == null)
             return;
 
         modifierMarkerTween?.Kill(false);
+        bool visible = modifier != null;
         modifierMarkerImage.gameObject.SetActive(visible);
         if (!visible)
             return;
+
+        Sprite modifierIcon = MagicModifierIconDatabase.Get(modifier);
+        if (modifierIcon != null)
+        {
+            modifierMarkerImage.sprite = modifierIcon;
+            modifierMarkerImage.material = null;
+            modifierMarkerImage.color = Color.white;
+            modifierMarkerImage.preserveAspect = true;
+        }
+        else
+        {
+            modifierMarkerImage.sprite = modifierMarkerFallbackSprite;
+            modifierMarkerImage.material = modifierMarkerFallbackMaterial;
+            modifierMarkerImage.color = modifierMarkerFallbackColor;
+            modifierMarkerImage.preserveAspect = false;
+        }
 
         Color baseColor = modifierMarkerImage.color;
         modifierMarkerImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);

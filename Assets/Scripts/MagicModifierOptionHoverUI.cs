@@ -25,6 +25,7 @@ public class MagicModifierOptionHoverUI : MonoBehaviour, IPointerEnterHandler, I
             return;
 
         owner?.SetOptionHovered(optionIndex, true);
+        owner?.ShowOptionDetail(optionIndex, this);
         if (pressActive && ShouldUseMobileInteraction())
             pressInside = true;
     }
@@ -32,6 +33,7 @@ public class MagicModifierOptionHoverUI : MonoBehaviour, IPointerEnterHandler, I
     public void OnPointerExit(PointerEventData eventData)
     {
         owner?.SetOptionHovered(optionIndex, false);
+        owner?.HideOptionDetail(this);
         if (pressActive && ShouldUseMobileInteraction())
             pressInside = false;
     }
@@ -44,6 +46,7 @@ public class MagicModifierOptionHoverUI : MonoBehaviour, IPointerEnterHandler, I
         pressActive = true;
         pressInside = true;
         owner?.SetOptionHovered(optionIndex, true);
+        owner?.ShowOptionDetail(optionIndex, this);
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -52,6 +55,8 @@ public class MagicModifierOptionHoverUI : MonoBehaviour, IPointerEnterHandler, I
             return;
 
         bool confirmSelection = pressInside && ShouldUseMobileInteraction() && IsInteractable();
+        if (confirmSelection)
+            owner?.ShowOptionDetail(optionIndex, this);
         pressActive = false;
         pressInside = false;
         if (confirmSelection)
@@ -63,6 +68,7 @@ public class MagicModifierOptionHoverUI : MonoBehaviour, IPointerEnterHandler, I
         pressActive = false;
         pressInside = false;
         owner?.SetOptionHovered(optionIndex, false);
+        owner?.HideOptionDetail(this);
     }
 
     private bool IsInteractable()

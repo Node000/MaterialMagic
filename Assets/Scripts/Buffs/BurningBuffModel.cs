@@ -4,9 +4,9 @@ public class BurningBuffModel : BuffModel
     {
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
-        self.TakeDamage(stack);
+        self.TakeDirectDamage(stack);
         HalveStack();
     }
 }

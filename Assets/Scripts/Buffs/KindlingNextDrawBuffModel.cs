@@ -30,7 +30,7 @@ public class KindlingNextDrawBuffModel : BuffModel
         if (!hasKindling)
         {
             KindlingModifier modifier = new KindlingModifier();
-            modifier.MarkRemoveAfterTurn();
+            modifier.MarkRemoveAfterBattle();
             card.AddModifier(modifier);
         }
         ConsumeStack(1);
