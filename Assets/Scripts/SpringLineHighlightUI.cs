@@ -219,6 +219,12 @@ public class SpringLineHighlightUI : MaskableGraphic
         SetVerticesDirty();
     }
 
+    public void SetFillEnabled(bool enabled)
+    {
+        fillEnabled = enabled;
+        SetVerticesDirty();
+    }
+
     public void SetHideOnAwake(bool value)
     {
         hideOnAwake = value;

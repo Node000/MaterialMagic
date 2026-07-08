@@ -20,8 +20,13 @@ public abstract class CastParticleEffectBase : MonoBehaviour
     [SerializeField] private float magicProjectileSize = 56f;
     [SerializeField] private float trailWidth = 10f;
     [SerializeField] private Color projectileColor = new Color(1f, 0.55f, 0.12f, 1f);
-    [SerializeField] private Color trailColor = new Color(1f, 0.36f, 0.08f, 1f);
-    [SerializeField] private Color impactColor = new Color(1f, 0.86f, 0.18f, 1f);
+    [Header("投射物颜色覆盖")]
+    [SerializeField] private bool useProjectileColorOverride;
+    [SerializeField] private Color projectileColorOverride = Color.white;
+    [SerializeField] private bool useTrailColorOverride;
+    [SerializeField] private Color trailColorOverride = new Color(1f, 0.55f, 0.12f, 1f);
+    [SerializeField] private bool useImpactColorOverride;
+    [SerializeField] private Color impactColorOverride = new Color(1f, 0.73f, 0.3f, 1f);
     [SerializeField] private bool playOnStart = true;
     [SerializeField] private bool loop;
     [SerializeField] private float loopDelay = 0.53f;
@@ -60,7 +65,8 @@ public abstract class CastParticleEffectBase : MonoBehaviour
     public void PlayMaterialFill(RectTransform from, RectTransform magicView, MaterialEnum material)
     {
         Sprite icon = MaterialCardView.GetMaterialIcon(material);
-        PlayBurst(from, magicView, 1, Color.white, icon, projectileSize * materialFillProjectileScale);
+        Color color = MaterialCardView.GetMaterialColor(material);
+        PlayBurst(from, magicView, 1, color, icon, projectileSize * materialFillProjectileScale);
     }
 
     protected void PlayCast(RectTransform from, RectTransform target, int count, Sprite projectileSprite, Color color, float visualSize, Action onImpact = null)
@@ -84,8 +90,6 @@ public abstract class CastParticleEffectBase : MonoBehaviour
             return;
 
         projectileCount = Mathf.Max(1, count);
-        trailColor = new Color(color.r, color.g, color.b, 1f);
-        impactColor = new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.18f), Mathf.Min(1f, color.b + 0.18f), 1f);
         StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize), color, onImpact));
     }
 
@@ -157,7 +161,9 @@ public abstract class CastParticleEffectBase : MonoBehaviour
 
     private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, Color color, float visualSize, Action onImpact)
     {
-        RectTransform projectile = CreateImage("ArcProjectile", visualSize, projectileSprite != null ? Color.white : color, projectileSprite);
+        Color trailColor = GetTrailColor(color);
+        Color impactColor = GetImpactColor(color);
+        RectTransform projectile = CreateImage("ArcProjectile", visualSize, GetProjectileColor(color, projectileSprite), projectileSprite);
         RectTransform trail = CreateImage("ArcTrail", trailWidth, trailColor);
         trail.pivot = new Vector2(0f, 0.5f);
         trail.sizeDelta = new Vector2(1f, trailWidth);
@@ -192,12 +198,29 @@ public abstract class CastParticleEffectBase : MonoBehaviour
         }, 1f, travelDuration).SetEase(Ease.InOutSine).SetTarget(this).OnComplete(() =>
         {
             onImpact?.Invoke();
-            SpawnImpact(end, projectileSprite, visualSize, color);
+            SpawnImpact(end, projectileSprite, visualSize, impactColor);
             effectObjects.Remove(projectile.gameObject);
             effectObjects.Remove(trail.gameObject);
             Destroy(projectile.gameObject);
             Destroy(trail.gameObject);
         });
+    }
+
+    private Color GetProjectileColor(Color sourceColor, Sprite projectileSprite)
+    {
+        if (useProjectileColorOverride)
+            return projectileColorOverride;
+        return projectileSprite != null ? Color.white : sourceColor;
+    }
+
+    private Color GetTrailColor(Color sourceColor)
+    {
+        return useTrailColorOverride ? trailColorOverride : MaterialVisualPalette.Active.GetTrailColor(sourceColor);
+    }
+
+    private Color GetImpactColor(Color sourceColor)
+    {
+        return useImpactColorOverride ? impactColorOverride : MaterialVisualPalette.Active.GetImpactColor(sourceColor);
     }
 
     private RectTransform CreateImage(string objectName, float size, Color color)
@@ -218,7 +241,6 @@ public abstract class CastParticleEffectBase : MonoBehaviour
         rect.sizeDelta = new Vector2(size, size);
 
         Image image = instance.GetComponent<Image>();
-        color.a = 1f;
         image.sprite = sprite;
         image.preserveAspect = sprite != null;
         image.color = color;
@@ -229,7 +251,7 @@ public abstract class CastParticleEffectBase : MonoBehaviour
 
     private void SpawnImpact(Vector2 position, Sprite projectileSprite, float visualSize, Color color)
     {
-        RectTransform impact = CreateImage("ArcImpact", visualSize * 1.15f, projectileSprite != null ? Color.white : color, projectileSprite);
+        RectTransform impact = CreateImage("ArcImpact", visualSize * 1.15f, color, projectileSprite);
         impact.anchoredPosition = position;
 
         CanvasGroup canvasGroup = impact.gameObject.AddComponent<CanvasGroup>();

@@ -340,7 +340,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             deckNameText.text = LocalizationSystem.GetText(Config.displayNameKey, fallback);
         }
         if (healthText != null)
-            healthText.text = string.Format(LocalizationSystem.GetText("ui.start_config.health", "生命值 {0}"), Config.maxHealth);
+            healthText.text = Config.maxHealth.ToString();
         RefreshSelectButtonState();
     }
 

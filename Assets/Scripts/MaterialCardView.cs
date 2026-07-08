@@ -122,21 +122,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     }
     public static Color GetMaterialColor(MaterialEnum material)
     {
-        switch (material)
-        {
-            case MaterialEnum.Fire:
-                return new Color(0.9f, 0.22f, 0.12f, 1f);
-            case MaterialEnum.Wind:
-                return new Color(0.25f, 0.85f, 0.45f, 1f);
-            case MaterialEnum.Water:
-                return new Color(0.2f, 0.5f, 1f, 1f);
-            case MaterialEnum.Earth:
-                return new Color(0.62f, 0.42f, 0.2f, 1f);
-            case MaterialEnum.Wild:
-                return new Color(0.8f, 0.45f, 1f, 1f);
-            default:
-                return Color.gray;
-        }
+        return MaterialVisualPalette.Active.GetMaterialColor(material);
     }
     private void RefreshVisual()
     {

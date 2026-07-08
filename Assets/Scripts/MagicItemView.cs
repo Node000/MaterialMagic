@@ -13,11 +13,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private TMP_Text magicNameText;
     [SerializeField] private RectTransform recipeRoot;
     [SerializeField] private Image modifierMarkerImage;
-    [Header("背景颜色")]
-    [SerializeField] private Color UpBackgroundColor = new Color(0.9f, 0.22f, 0.12f, 1f);
-    [SerializeField] private Color LeftBackgroundColor = new Color(0.25f, 0.85f, 0.45f, 1f);
-    [SerializeField] private Color DownBackgroundColor = new Color(0.2f, 0.5f, 1f, 1f);
-    [SerializeField] private Color RightBackgroundColor = new Color(0.62f, 0.42f, 0.2f, 1f);
+    [SerializeField] private SpringLineHighlightUI slotFrame;
     [Header("施法序列")]
     [SerializeField] private Vector2 recipeIconSize = new Vector2(36f, 36f);
     [SerializeField] private Vector2 recipeIconSpacing = new Vector2(22f, 22f);
@@ -90,6 +86,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         {
             this.magic = null;
             CacheMissingReferences();
+            SetSlotFillVisible(false);
 
             SetIconVisible(false);
 
@@ -107,6 +104,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         this.magic = magic;
         CacheMissingReferences();
+        SetSlotFillVisible(true);
 
         SetIconVisible(true);
         if (iconImage != null)
@@ -199,6 +197,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             backgroundImage = GetComponent<Image>();
 
         EnsureModifierMarker();
+        CacheSlotFrame();
 
         if (backgroundImage == null && !warnedMissingBackgroundImage)
         {
@@ -219,6 +218,22 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (iconRoot != null)
             iconRoot.gameObject.SetActive(visible);
         iconImage.gameObject.SetActive(visible);
+    }
+
+    private void SetSlotFillVisible(bool visible)
+    {
+        CacheSlotFrame();
+        if (slotFrame == null)
+            return;
+
+        slotFrame.gameObject.SetActive(true);
+        slotFrame.SetFillEnabled(visible);
+    }
+
+    private void CacheSlotFrame()
+    {
+        if (slotFrame == null)
+            slotFrame = GetComponent<SpringLineHighlightUI>();
     }
 
     private void SetHoverHighlightEnabled(bool enabled)
@@ -413,28 +428,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public Color GetMaterialColor(MaterialEnum material)
     {
-        switch (material)
-        {
-            case MaterialEnum.Fire:
-                return UpBackgroundColor;
-            case MaterialEnum.Wind:
-                return LeftBackgroundColor;
-            case MaterialEnum.Water:
-                return DownBackgroundColor;
-            case MaterialEnum.Earth:
-                return RightBackgroundColor;
-            case MaterialEnum.Wild:
-                return new Color(0.8f, 0.45f, 1f, 1f);
-            default:
-                return Color.gray;
-        }
+        return MaterialVisualPalette.Active.GetMaterialColor(material);
     }
+
     private Color GetMagicBackgroundColor(MaterialEnum element)
     {
-        Color color = GetMagicElementColor(element);
-        color = Color.Lerp(new Color(0.08f, 0.08f, 0.12f, 1f), color, 0.42f);
-        color.a = 1;
-        return color;
+        return MaterialVisualPalette.Active.GetMagicBackgroundColor(element);
     }
 
     private static Sprite LoadMagicIcon(string iconName)
