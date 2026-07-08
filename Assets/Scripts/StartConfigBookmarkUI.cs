@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using TMPro;
 
@@ -11,7 +12,8 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private RectTransform rectTransform;
     [SerializeField] private Image backgroundImage;
     [SerializeField] private Image textureImage;
-    [SerializeField] private TMP_Text nameText;
+    [FormerlySerializedAs("nameText")]
+    [SerializeField] private TMP_Text deckNameText;
     [SerializeField] private TMP_Text healthText;
     [SerializeField] private RectTransform magicRoot;
     [SerializeField] private RectTransform materialRoot;
@@ -34,6 +36,11 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private Button windowCloseButton;
     [SerializeField] private string selectTextKey = "ui.start_config.select";
     [SerializeField] private string selectedTextKey = "ui.start_config.selected";
+    [SerializeField] private string lockedTextKey = "ui.start_config.locked";
+    [Header("锁定状态")]
+    [SerializeField] private Color lockedBackgroundTint = new Color(0.25f, 0.25f, 0.25f, 0.65f);
+    [SerializeField] private Color lockedButtonColor = new Color(0.35f, 0.35f, 0.35f, 1f);
+    [SerializeField] private Color lockedTextColor = new Color(0.78f, 0.78f, 0.78f, 1f);
     [Header("选择按钮颜色")]
     [SerializeField] private Color selectButtonUnselectedOutlineColor = new Color(0.18f, 0.68f, 0.28f, 1f);
     [SerializeField] private Color selectButtonUnselectedTextColor = new Color(0.18f, 0.68f, 0.28f, 1f);
@@ -43,6 +50,9 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private float enterDuration = 0.34f;
     [SerializeField] private float selectDuration = 0.34f;
     [SerializeField] private float exitDuration = 0.34f;
+    [SerializeField] private float enterStartScale;
+    [SerializeField] private float exitEndScale;
+    [SerializeField] private float selectedScale = 1.035f;
     [SerializeField] private Ease enterEase = Ease.OutCubic;
     [SerializeField] private Ease selectEase = Ease.OutCubic;
     [SerializeField] private Ease exitEase = Ease.OutCubic;
@@ -58,6 +68,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     private Tween moveTween;
     private Tween scaleTween;
     private bool selected;
+    private bool locked;
     private bool visible;
     private bool dragging;
     private Vector2 floatCenter;
@@ -79,6 +90,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             button.onClick.AddListener(HandleClick);
         if (selectButton != null && selectButton != button)
             selectButton.onClick.AddListener(HandleClick);
+        LocalizationSystem.LanguageChanged += RefreshLocalizedText;
     }
 
     private StartConfigBookmarkLayoutConfig GetLayoutConfig()
@@ -87,6 +99,20 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             layoutConfig = Resources.Load<StartConfigBookmarkLayoutConfig>("Config/StartConfigBookmarkLayoutConfig");
         return layoutConfig;
     }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedText;
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        enterStartScale = Mathf.Max(0f, enterStartScale);
+        exitEndScale = Mathf.Max(0f, exitEndScale);
+        selectedScale = Mathf.Max(0.01f, selectedScale);
+    }
+#endif
 
     private void Update()
     {
@@ -98,24 +124,28 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         RectTransform.anchoredPosition = floatCenter + currentFloatOffset;
     }
 
-    public void Bind(PlayerStartConfigData config, Action<PlayerStartConfigData> clickHandler, Action<StartConfigBookmarkUI> closeHandler = null)
+    public void Bind(PlayerStartConfigData config, Action<PlayerStartConfigData> clickHandler, Action<StartConfigBookmarkUI> closeHandler = null, bool locked = false)
     {
         Config = config;
         onClick = clickHandler;
         onClose = closeHandler;
         selected = false;
+        this.locked = locked;
 
-        if (nameText != null)
-            nameText.text = !string.IsNullOrEmpty(config.displayName) ? config.displayName : config.id;
-        if (healthText != null)
-            healthText.text = string.Format(LocalizationSystem.GetText("ui.start_config.health", "生命值 {0}"), config.maxHealth);
+        RefreshLocalizedText();
 
         Color color = Color.white;
         if (!string.IsNullOrEmpty(config.color))
             ColorUtility.TryParseHtmlString(config.color, out color);
+        if (locked)
+            color = Color.Lerp(color, lockedBackgroundTint, lockedBackgroundTint.a);
         color.a = 1f;
         if (backgroundImage != null)
             backgroundImage.color = color;
+        if (button != null)
+            button.interactable = !locked;
+        if (selectButton != null)
+            selectButton.interactable = !locked;
 
         if (textureImage != null)
         {
@@ -137,7 +167,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         SetCenter(new Vector2(readyX, RectTransform.anchoredPosition.y));
         moveTween?.Kill(false);
         scaleTween?.Kill(false);
-        RectTransform.localScale = Vector3.zero;
+        RectTransform.localScale = Vector3.one * enterStartScale;
         moveTween = RectTransform.DOScale(Vector3.one, enterDuration)
             .SetDelay(delay)
             .SetEase(enterEase)
@@ -152,7 +182,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         SetCenter(RectTransform.anchoredPosition);
         moveTween?.Kill(false);
         scaleTween?.Kill(false);
-        moveTween = RectTransform.DOScale(Vector3.zero, exitDuration)
+        moveTween = RectTransform.DOScale(Vector3.one * exitEndScale, exitDuration)
             .SetDelay(delay)
             .SetEase(exitEase)
             .SetUpdate(true)
@@ -165,7 +195,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         this.selected = selected;
         RefreshSelectButtonState();
         scaleTween?.Kill(false);
-        scaleTween = RectTransform.DOScale(selected ? Vector3.one * 1.035f : Vector3.one, selectDuration).SetEase(selectEase).SetUpdate(true).SetTarget(this);
+        scaleTween = RectTransform.DOScale(selected ? Vector3.one * selectedScale : Vector3.one, selectDuration).SetEase(selectEase).SetUpdate(true).SetTarget(this);
     }
 
     public void SetSelectedImmediate(bool selected)
@@ -173,7 +203,13 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         this.selected = selected;
         RefreshSelectButtonState();
         scaleTween?.Kill(false);
-        RectTransform.localScale = selected ? Vector3.one * 1.035f : Vector3.one;
+        RectTransform.localScale = selected ? Vector3.one * selectedScale : Vector3.one;
+    }
+
+    public void SetSelectButtonVisible(bool visible)
+    {
+        if (selectButton != null)
+            selectButton.gameObject.SetActive(visible);
     }
 
     public void HideImmediate()
@@ -182,7 +218,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         dragging = false;
         currentFloatOffset = Vector2.zero;
         KillTweens();
-        RectTransform.localScale = Vector3.zero;
+        RectTransform.localScale = Vector3.one * exitEndScale;
         gameObject.SetActive(false);
     }
 
@@ -247,6 +283,13 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         }
         if (selectButtonText == null && selectButton != null)
             selectButtonText = selectButton.GetComponentInChildren<TMP_Text>(true);
+        if (deckNameText == null)
+        {
+            Transform deckName = transform.Find("DeckName");
+            if (deckName == null)
+                deckName = transform.Find("Name");
+            deckNameText = deckName != null ? deckName.GetComponent<TMP_Text>() : null;
+        }
         if (windowCloseButton == null)
             windowCloseButton = transform.Find("PopupDragonWindowBackground/Frame/TitleBar/Close")?.GetComponent<Button>();
     }
@@ -286,8 +329,38 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         RectTransform.anchoredPosition = floatCenter + currentFloatOffset;
     }
 
+    private void RefreshLocalizedText()
+    {
+        if (Config == null)
+            return;
+
+        if (deckNameText != null)
+        {
+            string fallback = !string.IsNullOrEmpty(Config.displayName) ? Config.displayName : Config.id;
+            deckNameText.text = LocalizationSystem.GetText(Config.displayNameKey, fallback);
+        }
+        if (healthText != null)
+            healthText.text = string.Format(LocalizationSystem.GetText("ui.start_config.health", "生命值 {0}"), Config.maxHealth);
+        RefreshSelectButtonState();
+    }
+
     private void RefreshSelectButtonState()
     {
+        if (locked)
+        {
+            if (selectButtonImage != null)
+            {
+                selectButtonImage.color = lockedButtonColor;
+                selectButtonImage.fillCenter = true;
+            }
+            if (selectButtonText != null)
+            {
+                selectButtonText.text = LocalizationSystem.GetText(lockedTextKey, "未解锁");
+                selectButtonText.color = lockedTextColor;
+            }
+            return;
+        }
+
         if (selectButtonImage != null)
         {
             selectButtonImage.color = selected ? selectButtonSelectedFillColor : selectButtonUnselectedOutlineColor;
@@ -303,6 +376,9 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
 
     private void HandleClick()
     {
+        if (locked)
+            return;
+
         onClick?.Invoke(Config);
     }
 
@@ -364,7 +440,9 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
                 RectTransform cardRect = card.transform as RectTransform;
                 cardRect.localScale = Vector3.one * GetLayoutConfig().MaterialCardScale;
                 cardRect.anchoredPosition = GetLayoutConfig().MaterialCardAnchoredPosition;
-                card.Bind(new MaterialModel(data.material + "_preview", data.material));
+                MaterialModel preview = new MaterialModel(data.material + "_preview", data.material);
+                PlayerState.AddMaterialModifiers(preview, data.modifierIds);
+                card.Bind(preview);
                 ConfigureMaterialPreviewCard(cardRect);
 
                 TMP_Text countText = CreateCountText(itemRect);

@@ -11,6 +11,13 @@ public class WeakBuffModel : BuffModel
             attackValue = 0;
     }
 
+    public override void AfterAttack(CombatantModel self, CombatantModel target, ref int attackResult)
+    {
+        int consumed = stack - stack / 2;
+        if (consumed > 0)
+            self.ConsumeBuff(BuffEnum.Weak, consumed);
+    }
+
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
     {
         HalveStack();

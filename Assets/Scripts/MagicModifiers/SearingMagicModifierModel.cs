@@ -22,7 +22,7 @@ public class SearingMagicModifierModel : MagicModifierModel
         if (target == null || target.IsDead)
             return;
 
-        target.AddBuff(BuffEnum.Burning, Data != null && Data.value > 0 ? Data.value : 1);
+        target.AddBuff(BuffEnum.Burning, Data != null && Data.value > 0 ? Data.value : 1, Context != null && Context.PlayerState != null ? new CombatantModel(Context.PlayerState) : null);
         if (result != null)
             result.enemyBuffApplied = true;
     }

@@ -7,7 +7,7 @@ public class BurningNextTurnBuffModel : BuffModel
     public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (opponent != null)
-            opponent.AddBuff(BuffEnum.Burning, stack);
+            opponent.AddBuff(BuffEnum.Burning, stack, self);
         stack = 0;
     }
 }

@@ -16,7 +16,13 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
     {
         ResolveReferences();
         BindButtons();
+        LocalizationSystem.LanguageChanged += HandleLanguageChanged;
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= HandleLanguageChanged;
     }
 
     public void Show(Action<int> slotSelected)
@@ -126,16 +132,25 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
 
             RunSaveData data = RunSaveSystem.LoadSummary(i + 1);
             bool isActive = RunSaveSystem.CurrentSlotIndex == i + 1;
-            string slotTitle = isActive ? $"▶ 当前存档 {i + 1}" : $"存档 {i + 1}";
+            string titleTemplate = LocalizationSystem.GetText(isActive ? "ui.save_slot.current_title" : "ui.save_slot.title", isActive ? "▶ 当前存档 {0}" : "存档 {0}");
+            string slotTitle = string.Format(titleTemplate, i + 1);
+            string summaryTemplate = LocalizationSystem.GetText("ui.save_slot.summary", "{0}\n通关次数：{1}\n游戏时间：{2}分钟\n最后游玩：{3}");
+            string noneText = LocalizationSystem.GetText("ui.common.none", "无");
             if (data == null)
             {
-                text.text = $"{slotTitle}\n通关次数：0\n游戏时间：0分钟\n最后游玩：无";
+                text.text = string.Format(summaryTemplate, slotTitle, 0, 0, noneText);
                 continue;
             }
 
             int minutes = Mathf.FloorToInt(data.totalPlaySeconds / 60f);
-            string lastPlayed = string.IsNullOrEmpty(data.lastPlayedAtUtc) ? "无" : data.lastPlayedAtUtc;
-            text.text = $"{slotTitle}\n通关次数：{data.victoryCount}\n游戏时间：{minutes}分钟\n最后游玩：{lastPlayed}";
+            string lastPlayed = string.IsNullOrEmpty(data.lastPlayedAtUtc) ? noneText : data.lastPlayedAtUtc;
+            text.text = string.Format(summaryTemplate, slotTitle, data.victoryCount, minutes, lastPlayed);
         }
+    }
+
+    private void HandleLanguageChanged()
+    {
+        if (gameObject.activeSelf)
+            Refresh();
     }
 }

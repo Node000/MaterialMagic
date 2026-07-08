@@ -139,6 +139,18 @@
     {
       "buffType": 45,
       "iconName": "保留手牌"
+    },
+    {
+      "buffType": 46,
+      "iconName": "保留手牌"
+    },
+    {
+      "buffType": 47,
+      "iconName": "burn"
+    },
+    {
+      "buffType": 48,
+      "iconName": "负面强化"
     }
   ]
 }

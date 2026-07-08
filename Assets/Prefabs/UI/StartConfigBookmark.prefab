@@ -406,7 +406,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6622530838906541265
 RectTransform:
   m_ObjectHideFlags: 0
@@ -833,6 +833,7 @@ GameObject:
   - component: {fileID: 2928317560240521376}
   - component: {fileID: 4698539486303062362}
   - component: {fileID: 8306601914918731851}
+  - component: {fileID: 7962212489999569660}
   m_Layer: 0
   m_Name: MaterialLabel
   m_TagString: Untagged
@@ -956,6 +957,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &7962212489999569660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6910841577211508133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: ui.start_config.material_label
+  fallback: "\u521D\u59CB\u7D20\u6750"
 --- !u!1 &7501106040586764561
 GameObject:
   m_ObjectHideFlags: 0
@@ -967,6 +982,7 @@ GameObject:
   - component: {fileID: 4244317950543718284}
   - component: {fileID: 7602751341236542648}
   - component: {fileID: 6784722388905911774}
+  - component: {fileID: 2029538032226991847}
   m_Layer: 0
   m_Name: Name (1)
   m_TagString: Untagged
@@ -1021,7 +1037,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: C:\DECK\
+  m_text: C:/DECK/
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}
@@ -1090,6 +1106,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &2029538032226991847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7501106040586764561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: ui.start_config.deck_title
+  fallback: C:/DECK/
 --- !u!1 &7696429440406766783
 GameObject:
   m_ObjectHideFlags: 0
@@ -1176,6 +1206,7 @@ GameObject:
   - component: {fileID: 6407871267249608297}
   - component: {fileID: 8306421498488742301}
   - component: {fileID: 3912473521636886336}
+  - component: {fileID: 6900198596783331063}
   m_Layer: 0
   m_Name: MagicLabel
   m_TagString: Untagged
@@ -1299,6 +1330,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6900198596783331063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8544432957646249564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: ui.start_config.magic_label
+  fallback: "\u521D\u59CB\u6CD5\u672F"
 --- !u!1 &8559460751879422012
 GameObject:
   m_ObjectHideFlags: 0

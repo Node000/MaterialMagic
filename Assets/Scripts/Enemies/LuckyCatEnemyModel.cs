@@ -11,12 +11,12 @@ public class LuckyCatEnemyModel : EnemyModel
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
-        return intent != null && intent.value == 1 ? "意图：金币" : base.GetSpecialIntentTooltipTitle(intent);
+        return intent != null && intent.value == 1 ? GetLocalizedText("enemy.intent.lucky_cat.title") : base.GetSpecialIntentTooltipTitle(intent);
     }
 
     protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
     {
-        return intent != null && intent.value == 1 ? "玩家将获得5金币" : base.GetSpecialIntentTooltipDescription(intent, playerState);
+        return intent != null && intent.value == 1 ? FormatLocalizedText("enemy.intent.lucky_cat.desc", 5) : base.GetSpecialIntentTooltipDescription(intent, playerState);
     }
 
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)

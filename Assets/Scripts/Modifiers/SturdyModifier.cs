@@ -7,8 +7,4 @@ public class SturdyModifier : MaterialModifierModel
             context.PlayerState.GainShield(1);
     }
 
-    public override void OnDiscard()
-    {
-        model?.RemoveModifiers<SturdyModifier>();
-    }
 }

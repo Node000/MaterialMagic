@@ -56,9 +56,9 @@ public class PlayerModel : UnitModel
         Status.ClearShield();
     }
 
-    public override void AddBuff(BuffEnum buffType, int stack)
+    public override void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
     {
-        Status.AddBuff(buffType, stack);
+        Status.AddBuff(buffType, stack, source);
     }
 
     public override int GetBuffStack(BuffEnum buffType)

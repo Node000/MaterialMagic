@@ -14,13 +14,22 @@ public class RunHistoryRecordItemUI : MonoBehaviour
     private RunHistoryRecordData record;
     private Action<RunHistoryRecordData> clicked;
 
+    private void OnEnable()
+    {
+        LocalizationSystem.LanguageChanged += RefreshLabel;
+    }
+
+    private void OnDisable()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLabel;
+    }
+
     public void Bind(RunHistoryRecordData record, bool selected, Action<RunHistoryRecordData> clicked)
     {
         this.record = record;
         this.clicked = clicked;
         CacheReferences();
-        if (text != null)
-            text.text = BuildLabel(record);
+        RefreshLabel();
         SetSelected(selected);
         if (button != null)
         {
@@ -59,13 +68,20 @@ public class RunHistoryRecordItemUI : MonoBehaviour
         return $"{FormatDate(record.endedAtUtc)}  {GetResultText(record.resultType)}\n{FormatPlayTime(record.playSeconds)}  {record.progressText}";
     }
 
+    private void RefreshLabel()
+    {
+        CacheReferences();
+        if (text != null)
+            text.text = BuildLabel(record);
+    }
+
     private static string GetResultText(string resultType)
     {
         switch (resultType)
         {
-            case "Victory": return "通关";
-            case "Defeat": return "失败";
-            case "Abandon": return "放弃";
+            case "Victory": return LocalizationSystem.GetText("ui.run_history.result.victory", "通关");
+            case "Defeat": return LocalizationSystem.GetText("ui.run_history.result.defeat", "失败");
+            case "Abandon": return LocalizationSystem.GetText("ui.run_history.result.abandon", "放弃");
             default: return resultType;
         }
     }
@@ -74,7 +90,7 @@ public class RunHistoryRecordItemUI : MonoBehaviour
     {
         if (DateTime.TryParse(utc, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dateTime))
             return dateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-        return "未知时间";
+        return LocalizationSystem.GetText("ui.run_history.unknown_time", "未知时间");
     }
 
     private static string FormatPlayTime(float seconds)
@@ -84,9 +100,9 @@ public class RunHistoryRecordItemUI : MonoBehaviour
         int minutes = totalSeconds % 3600 / 60;
         int second = totalSeconds % 60;
         if (hours > 0)
-            return $"{hours}小时{minutes}分{second}秒";
+            return string.Format(LocalizationSystem.GetText("ui.run_history.time.hours_minutes_seconds", "{0}小时{1}分{2}秒"), hours, minutes, second);
         if (minutes > 0)
-            return $"{minutes}分{second}秒";
-        return $"{second}秒";
+            return string.Format(LocalizationSystem.GetText("ui.run_history.time.minutes_seconds", "{0}分{1}秒"), minutes, second);
+        return string.Format(LocalizationSystem.GetText("ui.run_history.time.seconds", "{0}秒"), second);
     }
 }

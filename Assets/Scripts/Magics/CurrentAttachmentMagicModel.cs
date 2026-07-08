@@ -5,7 +5,6 @@ public class CurrentAttachmentMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        playerState.AddBuff(BuffEnum.SpellPower, 1);
-        playerState.AddBuff(BuffEnum.ChargeNextDraw, 1);
+        playerState.AddBuff(BuffEnum.ChargeNextDraw, 2);
     }
 }

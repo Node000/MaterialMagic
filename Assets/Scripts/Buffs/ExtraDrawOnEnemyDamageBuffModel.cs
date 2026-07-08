@@ -12,11 +12,11 @@ public class ExtraDrawOnEnemyDamageBuffModel : BuffModel
             return;
 
         damageTriggerCount += stack;
-        int extraDraw = damageTriggerCount / 2;
+        int extraDraw = damageTriggerCount / 3;
         if (extraDraw > 0)
         {
             self.Player.AddBuff(BuffEnum.ExtraDraw, extraDraw);
-            damageTriggerCount %= 2;
+            damageTriggerCount %= 3;
         }
     }
 

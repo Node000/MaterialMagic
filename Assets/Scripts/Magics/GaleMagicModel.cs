@@ -5,6 +5,7 @@ public class GaleMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        playerState.AddBuff(BuffEnum.ExtraDraw, 3);
+        playerState.AddBuff(BuffEnum.ExtraDraw, 1);
+        playerState.AddBuff(BuffEnum.RetainedNextDraw, 3);
     }
 }

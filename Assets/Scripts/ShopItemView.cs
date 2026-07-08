@@ -125,11 +125,20 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (visualRoot == null)
             return;
 
-        for (int i = visualRoot.childCount - 1; i >= 0; i--)
-            Destroy(visualRoot.GetChild(i).gameObject);
-        magicView = null;
-        materialView = null;
-        removeText = null;
+        for (int i = 0; i < visualRoot.childCount; i++)
+        {
+            Transform child = visualRoot.GetChild(i);
+            MagicItemView childMagicView = child.GetComponent<MagicItemView>();
+            if (childMagicView != null)
+                magicView = childMagicView;
+            MaterialCardView childMaterialView = child.GetComponent<MaterialCardView>();
+            if (childMaterialView != null)
+                materialView = childMaterialView;
+            TMP_Text childText = child.GetComponent<TMP_Text>();
+            if (childText != null && child.name == "RemoveText")
+                removeText = childText;
+            child.gameObject.SetActive(false);
+        }
     }
 
     private void CreateVisual(ShopPanelUI panel, ShopOffer offer)
@@ -142,7 +151,13 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             case ShopItemKind.Magic:
                 if (panel.MagicViewPrefab != null && offer.magicData != null)
                 {
-                    RectTransform rect = Instantiate(panel.MagicViewPrefab, visualRoot);
+                    RectTransform rect = magicView != null ? magicView.transform as RectTransform : null;
+                    if (rect == null)
+                    {
+                        rect = Instantiate(panel.MagicViewPrefab, visualRoot);
+                        magicView = rect.GetComponent<MagicItemView>();
+                    }
+                    rect.SetParent(visualRoot, false);
                     rect.gameObject.SetActive(true);
                     rect.anchorMin = new Vector2(0.5f, 0.5f);
                     rect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -150,21 +165,25 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     rect.anchoredPosition = Vector2.zero;
                     rect.sizeDelta = new Vector2(196f, 92f);
                     rect.localScale = Vector3.one * 0.8f;
-                    magicView = rect.GetComponent<MagicItemView>();
                     magicView?.Bind(MagicFactory.Create(offer.magicData));
                 }
                 break;
             case ShopItemKind.Material:
                 if (panel.MaterialCardPrefab != null)
                 {
-                    RectTransform rect = Instantiate(panel.MaterialCardPrefab, visualRoot);
+                    RectTransform rect = materialView != null ? materialView.transform as RectTransform : null;
+                    if (rect == null)
+                    {
+                        rect = Instantiate(panel.MaterialCardPrefab, visualRoot);
+                        materialView = rect.GetComponent<MaterialCardView>();
+                    }
+                    rect.SetParent(visualRoot, false);
                     rect.gameObject.SetActive(true);
                     rect.anchorMin = new Vector2(0.5f, 0.5f);
                     rect.anchorMax = new Vector2(0.5f, 0.5f);
                     rect.pivot = new Vector2(0.5f, 0.5f);
                     rect.anchoredPosition = new Vector2(0f, -30f);
                     rect.sizeDelta = new Vector2(82f, 118f);
-                    materialView = rect.GetComponent<MaterialCardView>();
                     MaterialModel preview = new MaterialModel("shop_preview_" + offer.material, offer.material);
                     MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
                     if (modifier != null)
@@ -177,15 +196,19 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                 }
                 break;
             case ShopItemKind.RemoveMaterial:
-                removeText = new GameObject("RemoveText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+                if (removeText == null)
+                {
+                    removeText = new GameObject("RemoveText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+                    removeText.font = UIManager.GetDefaultTMPFont();
+                    removeText.fontSize = 26;
+                    removeText.fontStyle = FontStyles.Bold;
+                    removeText.alignment = TextAlignmentOptions.Center;
+                    removeText.color = new Color(1f, 0.62f, 0.46f, 1f);
+                    removeText.raycastTarget = false;
+                }
                 removeText.transform.SetParent(visualRoot, false);
-                removeText.font = UIManager.GetDefaultTMPFont();
-                removeText.fontSize = 26;
-                removeText.fontStyle = FontStyles.Bold;
-                removeText.alignment = TextAlignmentOptions.Center;
-                removeText.color = new Color(1f, 0.62f, 0.46f, 1f);
-                removeText.raycastTarget = false;
-                removeText.text = "删牌";
+                removeText.gameObject.SetActive(true);
+                removeText.text = LocalizationSystem.GetText("ui.shop.item.remove_material", string.Empty);
                 RectTransform textRect = removeText.rectTransform;
                 textRect.anchorMin = Vector2.zero;
                 textRect.anchorMax = Vector2.one;
@@ -215,11 +238,11 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         switch (offer.kind)
         {
             case ShopItemKind.Magic:
-                return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : "道具";
+                return offer.magicData != null ? LocalizationSystem.GetText(offer.magicData.nameKey, offer.magicData.id) : LocalizationSystem.GetText("ui.shop.item.fallback_magic", string.Empty);
             case ShopItemKind.Material:
                 return GetMaterialArrowTitle(offer.material);
             case ShopItemKind.RemoveMaterial:
-                return "删牌";
+                return LocalizationSystem.GetText("ui.shop.item.remove_material", string.Empty);
             default:
                 return string.Empty;
         }
@@ -227,35 +250,26 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private static string GetMaterialArrowTitle(MaterialEnum material)
     {
-        switch (material)
-        {
-            case MaterialEnum.Fire:
-                return "上箭头";
-            case MaterialEnum.Water:
-                return "下箭头";
-            case MaterialEnum.Wind:
-                return "左箭头";
-            case MaterialEnum.Earth:
-                return "右箭头";
-            default:
-                return LocalizationKeys.GetMaterialName(material);
-        }
+        string materialName = LocalizationKeys.GetMaterialName(material);
+        if (material == MaterialEnum.Fire || material == MaterialEnum.Water || material == MaterialEnum.Wind || material == MaterialEnum.Earth)
+            return string.Format(LocalizationSystem.GetText("ui.shop.item.arrow_title", "{0}"), materialName);
+        return materialName;
     }
 
 
     private static string GetStateText(ShopOffer offer, bool canAfford, bool canUse, bool selected)
     {
         if (offer != null && offer.purchased)
-            return "已购买";
+            return LocalizationSystem.GetText("ui.shop.state.purchased", string.Empty);
         if (selected)
         {
             if (offer != null && offer.kind == ShopItemKind.Magic)
-                return "已选中";
+                return LocalizationSystem.GetText("ui.shop.state.selected", string.Empty);
             if (offer != null && offer.kind == ShopItemKind.RemoveMaterial)
-                return "选择要删的牌";
+                return LocalizationSystem.GetText("ui.shop.state.select_remove_material", string.Empty);
         }
         if (!canUse)
-            return "不可用";
-        return canAfford ? "点击购买" : "金币不足";
+            return LocalizationSystem.GetText("ui.shop.state.unavailable", string.Empty);
+        return canAfford ? LocalizationSystem.GetText("ui.shop.state.buy", string.Empty) : LocalizationSystem.GetText("ui.shop.state.not_enough_gold", string.Empty);
     }
 }

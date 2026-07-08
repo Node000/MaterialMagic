@@ -38,6 +38,7 @@ public class StartMenuUI : MonoBehaviour
         buttonGroupUI.SettingsClicked += OpenSettings;
         buttonGroupUI.ExitClicked += ExitGame;
         startConfigSelectionUI.ConfigSelected += SelectConfig;
+        startConfigSelectionUI.Closed += HideStartConfigSelection;
         if (tutorialButton != null)
             tutorialButton.onClick.AddListener(OpenTutorial);
         if (skipTutorialButton != null)
@@ -61,7 +62,10 @@ public class StartMenuUI : MonoBehaviour
             buttonGroupUI.ExitClicked -= ExitGame;
         }
         if (startConfigSelectionUI != null)
+        {
             startConfigSelectionUI.ConfigSelected -= SelectConfig;
+            startConfigSelectionUI.Closed -= HideStartConfigSelection;
+        }
         if (tutorialButton != null)
             tutorialButton.onClick.RemoveListener(OpenTutorial);
         if (skipTutorialButton != null)
@@ -166,14 +170,16 @@ public class StartMenuUI : MonoBehaviour
             return;
         }
 
-        bool hasAllConfigWindows = startConfigSelectionUI.HasExpectedConfigWindows;
-        if (!hasAllConfigWindows)
+        if (startConfigSelectionUI.IsSwitchingConfig)
+            return;
+
+        if (selectedConfig == null)
+            selectedConfig = startConfigSelectionUI.SelectedConfig;
+        if (selectedConfig == null)
         {
             startConfigSelectionUI.EnsureConfigWindows();
-            buttonGroupUI.SetStartConfigSelected(selectedConfig != null);
-            return;
+            selectedConfig = startConfigSelectionUI.SelectedConfig;
         }
-
         if (selectedConfig == null)
         {
             buttonGroupUI.SetStartConfigSelected(false);
@@ -370,7 +376,7 @@ public class StartMenuUI : MonoBehaviour
         settingsPanelUI.Hide();
         confirmingAbandonRun = true;
         buttonGroupUI.SetStartAbandonConfirmMode(true);
-        exitConfirmPanelUI.Show("是否放弃本局游戏？");
+        exitConfirmPanelUI.ShowLocalized("ui.start_menu.abandon_run_prompt", "是否放弃本局游戏？");
     }
 
     private void AbandonSavedRun()

@@ -121,6 +121,9 @@ public static class LocalizationKeys
             case BuffEnum.MagicAttackAll: return "magic_attack_all";
             case BuffEnum.NextMagicRepeat: return "next_magic_repeat";
             case BuffEnum.KeepHand: return "keep_hand";
+            case BuffEnum.RetainedNextDraw: return "retained_next_draw";
+            case BuffEnum.DoubleEnemyBurningOnTurnEnd: return "double_enemy_burning_on_turn_end";
+            case BuffEnum.ExtraEnemyDebuff: return "extra_enemy_debuff";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
             case BuffEnum.ChargeNextDraw: return "charge_next_draw";
             case BuffEnum.TutorialDeath: return "tutorial_death";
@@ -194,16 +197,71 @@ public class LocalizationTable
 public static class LocalizationSystem
 {
     private const string LocalizationRoot = "Data/Localization/";
+    private const string DefaultLanguage = "zh-CN";
+    private const string LanguagePrefsKey = "localization.language";
     private static readonly string[] SupplementalLanguageTables = { "_UI", "_Tutorial", "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag" };
+    private static readonly string[] LanguageCodes = { "zh-CN", "en-US" };
+    private static readonly string[] LanguageDisplayNames = { "简体中文", "English" };
     private static readonly Dictionary<string, string> TextByKey = new Dictionary<string, string>();
+    private static bool initialized;
+    private static bool languageLoaded;
 
-    public static string CurrentLanguage { get; private set; } = "zh-CN";
+    public static string CurrentLanguage { get; private set; } = DefaultLanguage;
+    public static int LanguageCount => LanguageCodes.Length;
+    public static event Action LanguageChanged;
+
+    public static void Initialize()
+    {
+        EnsureInitialized();
+    }
+
+    public static string GetLanguageCode(int index)
+    {
+        return index >= 0 && index < LanguageCodes.Length ? LanguageCodes[index] : DefaultLanguage;
+    }
+
+    public static string GetLanguageDisplayName(int index)
+    {
+        return index >= 0 && index < LanguageDisplayNames.Length ? LanguageDisplayNames[index] : GetLanguageCode(index);
+    }
+
+    public static int GetCurrentLanguageIndex()
+    {
+        EnsureInitialized();
+        for (int i = 0; i < LanguageCodes.Length; i++)
+        {
+            if (LanguageCodes[i] == CurrentLanguage)
+                return i;
+        }
+        return 0;
+    }
+
+    public static void SetLanguage(string languageCode)
+    {
+        EnsureInitialized();
+        string normalizedLanguageCode = NormalizeLanguageCode(languageCode);
+        if (languageLoaded && CurrentLanguage == normalizedLanguageCode)
+            return;
+
+        LoadLanguage(normalizedLanguageCode);
+        PlayerPrefs.SetString(LanguagePrefsKey, normalizedLanguageCode);
+        PlayerPrefs.Save();
+        LanguageChanged?.Invoke();
+    }
 
     public static void LoadLanguage(string languageCode)
     {
         TextByKey.Clear();
-        CurrentLanguage = languageCode;
+        CurrentLanguage = NormalizeLanguageCode(languageCode);
+        languageLoaded = true;
 
+        if (CurrentLanguage != DefaultLanguage)
+            LoadLanguageTables(DefaultLanguage);
+        LoadLanguageTables(CurrentLanguage);
+    }
+
+    private static void LoadLanguageTables(string languageCode)
+    {
         LoadLanguageAsset(LocalizationRoot + languageCode);
         for (int i = 0; i < SupplementalLanguageTables.Length; i++)
             LoadLanguageAsset(LocalizationRoot + languageCode + SupplementalLanguageTables[i]);
@@ -234,9 +292,7 @@ public static class LocalizationSystem
         if (string.IsNullOrEmpty(key))
             return string.Empty;
 
-        if (TextByKey.Count == 0)
-            LoadLanguage(CurrentLanguage);
-
+        EnsureLanguageLoaded();
         return TextByKey.TryGetValue(key, out string text) ? text : key;
     }
 
@@ -245,10 +301,38 @@ public static class LocalizationSystem
         if (string.IsNullOrEmpty(key))
             return fallback;
 
-        if (TextByKey.Count == 0)
-            LoadLanguage(CurrentLanguage);
+        EnsureLanguageLoaded();
+        return TextByKey.TryGetValue(key, out string text) && !string.IsNullOrEmpty(text) ? text : fallback;
+    }
 
-        return TextByKey.TryGetValue(key, out string text) ? text : fallback;
+    private static void EnsureInitialized()
+    {
+        if (initialized)
+            return;
+
+        initialized = true;
+        string savedLanguage = PlayerPrefs.GetString(LanguagePrefsKey, DefaultLanguage);
+        LoadLanguage(savedLanguage);
+    }
+
+    private static void EnsureLanguageLoaded()
+    {
+        EnsureInitialized();
+        if (!languageLoaded)
+            LoadLanguage(CurrentLanguage);
+    }
+
+    private static string NormalizeLanguageCode(string languageCode)
+    {
+        if (string.IsNullOrEmpty(languageCode))
+            return DefaultLanguage;
+
+        for (int i = 0; i < LanguageCodes.Length; i++)
+        {
+            if (LanguageCodes[i] == languageCode)
+                return languageCode;
+        }
+        return DefaultLanguage;
     }
 }
 

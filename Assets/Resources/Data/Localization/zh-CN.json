@@ -14,7 +14,7 @@
     },
     {
       "key": "magic.fireball_art.desc",
-      "text": "对敌方造成3点伤害，使其获得2层【燃烧】"
+      "text": "对敌方造成2点伤害，使其获得2层【燃烧】"
     },
     {
       "key": "magic.flame_barrier.name",
@@ -22,7 +22,7 @@
     },
     {
       "key": "magic.flame_barrier.desc",
-      "text": "下回合抽到的前3张素材牌获得【燃薪】"
+      "text": "下回合抽到的3张素材牌获得【燃薪】"
     },
     {
       "key": "magic.magma.name",
@@ -38,7 +38,7 @@
     },
     {
       "key": "magic.molten.desc",
-      "text": "对敌方造成5点伤害，敌方每有一层【燃烧】，使本伤害+1"
+      "text": "对敌方造成3点伤害，敌方每有一层【燃烧】，使本伤害+1"
     },
     {
       "key": "magic.explosion.name",
@@ -54,7 +54,7 @@
     },
     {
       "key": "magic.burning_hand.desc",
-      "text": "本回合【伤害提升】+2，对敌方全体施加8层【燃烧】"
+      "text": "对敌方全体施加4层【燃烧】和1层【燃烧翻倍】"
     },
     {
       "key": "magic.flame_demon.name",
@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "对敌方造成2点伤害，本回合内每触发一次道具，使本伤害+1"
+      "text": "本回合获得1层【伤害提升】，对敌方造成2点伤害"
     },
     {
       "key": "magic.burning_wind.name",
@@ -86,7 +86,7 @@
     },
     {
       "key": "magic.burning_wind.desc",
-      "text": "本回合所有道具【道具重复】1次"
+      "text": "本回合获得【道具重复】 （【道具重复】：道具额外触发一次）"
     },
     {
       "key": "magic.lightning.name",
@@ -94,7 +94,7 @@
     },
     {
       "key": "magic.lightning.desc",
-      "text": "使敌方获得2层【电弧】"
+      "text": "对敌方造成2点伤害，使敌方获得2层【电弧】"
     },
     {
       "key": "magic.storm_hand.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "magic.storm_hand.desc",
-      "text": "使全体敌方获得4层【电弧】"
+      "text": "使全体敌方获得4层【电弧】，获得1层【伤害提升】"
     },
     {
       "key": "magic.current_attachment.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "magic.current_attachment.desc",
-      "text": "本回合后续造成伤害+1，下回合抽到的第1张素材获得【电荷】"
+      "text": "下回合抽到的2张素材获得【电荷】"
     },
     {
       "key": "magic.sandstorm.name",
@@ -126,7 +126,7 @@
     },
     {
       "key": "magic.gale.desc",
-      "text": "下回合额外抽取3张牌"
+      "text": "获得1层【额外抽牌】，下回合抽到的3张素材牌获得【保留】"
     },
     {
       "key": "magic.ice_pick.name",
@@ -142,7 +142,7 @@
     },
     {
       "key": "magic.swamp.desc",
-      "text": "下回合额外获得1次【额外换牌】"
+      "text": "本回合获得1层【负面强化】"
     },
     {
       "key": "magic.poison_fog.name",
@@ -150,7 +150,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "本回合每累计对敌方造成两次生命伤害，获得1层【额外抽牌】"
+      "text": "本回合每累计对敌方造成三次生命伤害，获得1层【额外抽牌】"
     },
     {
       "key": "magic.boiling_rain.name",
@@ -174,7 +174,7 @@
     },
     {
       "key": "magic.turbid_current.desc",
-      "text": "获得4点护盾，下回合抽到的前3张素材牌获得【漩涡】"
+      "text": "下回合抽到的3张素材牌获得【漩涡】"
     },
     {
       "key": "magic.tide_hand.name",
@@ -182,7 +182,7 @@
     },
     {
       "key": "magic.tide_hand.desc",
-      "text": "对敌方全体造成7次1点伤害，所有负面状态层数+2，本回合【负面强化】+1"
+      "text": "对敌方全体造成10次1点伤害，所有负面状态层数+2"
     },
     {
       "key": "magic.water_corrosion.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "对敌方施加1层【虚弱】"
+      "text": "对敌方施加1层【易损】和1层【虚弱】"
     },
     {
       "key": "magic.stone_wall.name",
@@ -206,7 +206,7 @@
     },
     {
       "key": "magic.rockfall.desc",
-      "text": "获得2点护盾，下回合开始时，使所有手牌获得【坚固】"
+      "text": "获得2点护盾，下回合抽到的3张素材牌获得【坚固】"
     },
     {
       "key": "magic.earth_fire.name",
@@ -222,7 +222,7 @@
     },
     {
       "key": "magic.petrify.desc",
-      "text": "对敌方施加2层【迟缓】和2层【虚弱】"
+      "text": "对敌方施加3层【迟缓】和3层【虚弱】"
     },
     {
       "key": "magic.floating.name",
@@ -230,7 +230,7 @@
     },
     {
       "key": "magic.floating.desc",
-      "text": "获得3点护盾，【保留手牌】"
+      "text": "获得3点护盾，获得【保留手牌】"
     },
     {
       "key": "magic.thorn_bush.name",
@@ -238,7 +238,7 @@
     },
     {
       "key": "magic.thorn_bush.desc",
-      "text": "获得5点护盾，并获得【护盾反射】"
+      "text": "获得3点护盾，并获得【护盾反射】"
     },
     {
       "key": "magic.refine.name",
@@ -246,7 +246,7 @@
     },
     {
       "key": "magic.refine.desc",
-      "text": "【消耗】手牌区的素材牌"
+      "text": "移除手牌区的素材牌"
     },
     {
       "key": "magic.earth_hand.name",
@@ -354,7 +354,7 @@
     },
     {
       "key": "magic.tumbler.desc",
-      "text": "本回合道具的【反击强化】+1"
+      "text": "本回合敌方每获得一层debuff，额外获得一层debuff"
     },
     {
       "key": "magic.tangram.name",
@@ -378,7 +378,7 @@
     },
     {
       "key": "magic.spring.desc",
-      "text": "获得2层【下个道具重复】"
+      "text": "获得2层【重复触发】"
     },
     {
       "key": "chapter.tutorial.name",

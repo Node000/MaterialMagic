@@ -73,6 +73,7 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
         if (targetImage == null)
             return;
 
+        targetImage.enabled = true;
         targetImage.sprite = sprite;
         targetImage.preserveAspect = true;
         if (sprite == null)
@@ -98,6 +99,9 @@ public static class EnemyVisualLoader
     private const string EnemyAnimatorRoot = "Animations/Enemies/";
     private const string SampleIconName = "Sample";
 
+    private static readonly System.Collections.Generic.Dictionary<string, RuntimeAnimatorController> animatorCache = new System.Collections.Generic.Dictionary<string, RuntimeAnimatorController>();
+    private static readonly System.Collections.Generic.Dictionary<string, Sprite> spriteCache = new System.Collections.Generic.Dictionary<string, Sprite>();
+
     public static RuntimeAnimatorController LoadAnimatorController(EnemyData data)
     {
         if (data == null)
@@ -110,7 +114,15 @@ public static class EnemyVisualLoader
     public static RuntimeAnimatorController LoadAnimatorController(string pathOrName)
     {
         string path = NormalizeEnemyAnimatorPath(pathOrName);
-        return string.IsNullOrEmpty(path) ? null : Resources.Load<RuntimeAnimatorController>(path);
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        if (animatorCache.TryGetValue(path, out RuntimeAnimatorController controller))
+            return controller;
+
+        controller = Resources.Load<RuntimeAnimatorController>(path);
+        animatorCache[path] = controller;
+        return controller;
     }
 
     public static Sprite LoadStaticSpriteOrSample(EnemyData data)
@@ -122,7 +134,15 @@ public static class EnemyVisualLoader
     public static Sprite LoadStaticSprite(string iconName)
     {
         string path = NormalizeEnemyImagePath(iconName);
-        return string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        if (spriteCache.TryGetValue(path, out Sprite sprite))
+            return sprite;
+
+        sprite = Resources.Load<Sprite>(path);
+        spriteCache[path] = sprite;
+        return sprite;
     }
 
     private static string NormalizeEnemyImagePath(string pathOrName)

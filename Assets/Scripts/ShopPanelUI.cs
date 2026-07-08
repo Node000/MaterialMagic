@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -80,6 +81,7 @@ public class ShopPanelUI : MonoBehaviour
     private Vector2 panelOpenPosition;
     private Vector2 panelSize;
     private bool hasPanelLayout;
+    private Coroutine showRoutine;
 
     public RectTransform MagicViewPrefab => magicViewPrefab;
     public RectTransform MaterialCardPrefab => materialCardPrefab;
@@ -119,12 +121,12 @@ public class ShopPanelUI : MonoBehaviour
         if (savedState != null)
             RestoreState(savedState);
         BindLeaveButton();
-        Refresh();
-        PlayOpenAnimation();
+        StartShowRoutine();
     }
 
     public void Hide()
     {
+        StopShowRoutine();
         owner?.ClearPendingShopMagic();
         ClearUndoPurchase();
         selectedOffer = null;
@@ -301,7 +303,7 @@ public class ShopPanelUI : MonoBehaviour
         {
             foreach (MagicData data in GameDataDatabase.MagicData.Values)
             {
-                if (data != null)
+                if (data != null && UnlockSystem.IsMagicUnlocked(data))
                     magicPool.Add(data);
             }
         }
@@ -309,7 +311,7 @@ public class ShopPanelUI : MonoBehaviour
 
     private void AddMagicPoolData(int magicId)
     {
-        if (GameDataDatabase.TryGetMagicData(magicId, out MagicData data) && data != null && !magicPool.Contains(data))
+        if (GameDataDatabase.TryGetMagicData(magicId, out MagicData data) && data != null && UnlockSystem.IsMagicUnlocked(data) && !magicPool.Contains(data))
             magicPool.Add(data);
     }
 
@@ -377,7 +379,7 @@ public class ShopPanelUI : MonoBehaviour
             return false;
 
         MaterialModifierData data = GetMaterialModifierDataById(modifierId);
-        return data != null && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
+        return data != null && UnlockSystem.IsMaterialModifierUnlocked(data) && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
     }
 
     private static bool IsWeakShopModifierId(string modifierId)
@@ -527,6 +529,40 @@ public class ShopPanelUI : MonoBehaviour
         }
     }
 
+    private void StartShowRoutine()
+    {
+        StopShowRoutine();
+        showRoutine = StartCoroutine(ShowRoutine());
+    }
+
+    private void StopShowRoutine()
+    {
+        if (showRoutine != null)
+        {
+            StopCoroutine(showRoutine);
+            showRoutine = null;
+        }
+    }
+
+    private IEnumerator ShowRoutine()
+    {
+        HideItemViewsForOpeningFrame();
+        PlayOpenAnimation();
+        yield return null;
+        Refresh();
+        PlayItemPopAnimations();
+        showRoutine = null;
+    }
+
+    private void HideItemViewsForOpeningFrame()
+    {
+        for (int i = 0; i < itemViews.Count; i++)
+        {
+            if (itemViews[i] != null)
+                itemViews[i].gameObject.SetActive(false);
+        }
+    }
+
     private void PlayOpenAnimation()
     {
         DOTween.Kill(this);
@@ -553,8 +589,6 @@ public class ShopPanelUI : MonoBehaviour
             panelRect.anchoredPosition = panelOpenPosition;
             ApplyOpenReveal(1f);
         }
-
-        PlayItemPopAnimations();
     }
 
     private void PlayCloseAnimation()

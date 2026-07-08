@@ -11,12 +11,12 @@ public class HealingCatEnemyModel : EnemyModel
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
-        return intent != null && intent.value == 1 ? "意图：治疗" : base.GetSpecialIntentTooltipTitle(intent);
+        return intent != null && intent.value == 1 ? GetLocalizedText("enemy.intent.healing_cat.title") : base.GetSpecialIntentTooltipTitle(intent);
     }
 
     protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
     {
-        return intent != null && intent.value == 1 ? "玩家将回复6点生命" : base.GetSpecialIntentTooltipDescription(intent, playerState);
+        return intent != null && intent.value == 1 ? FormatLocalizedText("enemy.intent.healing_cat.desc", 6) : base.GetSpecialIntentTooltipDescription(intent, playerState);
     }
 
     protected override void ProcessSpecialIntent(int value, PlayerState playerState)

@@ -119,6 +119,16 @@
       "id": "debuff_power",
       "nameKey": "tag.debuff_power.name",
       "descriptionKey": "tag.debuff_power.desc"
+    },
+    {
+      "id": "retained_arrow",
+      "nameKey": "modifier.retained_arrow.name",
+      "descriptionKey": "modifier.retained_arrow.desc"
+    },
+    {
+      "id": "extra_enemy_debuff",
+      "nameKey": "tag.extra_enemy_debuff.name",
+      "descriptionKey": "tag.extra_enemy_debuff.desc"
     }
   ]
 }

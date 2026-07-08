@@ -1,0 +1,80 @@
+{
+  "items": [
+    {
+      "key": "ui.magic_modifier.panel.title",
+      "text": "Choose Item Enhancement"
+    },
+    {
+      "key": "ui.magic_modifier.panel.hint",
+      "text": "Choose an enhancement, then click an existing item to enchant it; an existing enhancement will be replaced."
+    },
+    {
+      "key": "ui.magic_modifier.panel.back",
+      "text": "Back"
+    },
+    {
+      "key": "ui.magic_modifier.panel.empty",
+      "text": "No item enhancements available"
+    },
+    {
+      "key": "ui.magic_modifier.empty_slot",
+      "text": "This item slot is empty!"
+    },
+    {
+      "key": "ui.magic_modifier.already_has_modifier",
+      "text": "This item already has an enhancement; the old one will be replaced."
+    },
+    {
+      "key": "ui.magic_modifier.not_applicable",
+      "text": "This enhancement cannot be applied to that item!"
+    },
+    {
+      "key": "magic_modifier.echo_recast.name",
+      "text": "Echo"
+    },
+    {
+      "key": "magic_modifier.echo_recast.desc",
+      "text": "The first time this item triggers each battle, cast it 1 extra time."
+    },
+    {
+      "key": "magic_modifier.searing_burning.name",
+      "text": "Searing"
+    },
+    {
+      "key": "magic_modifier.searing_burning.desc",
+      "text": "After this item triggers, apply 1 extra 【Burning】."
+    },
+    {
+      "key": "magic_modifier.pioneer_extra_draw.name",
+      "text": "Pioneer"
+    },
+    {
+      "key": "magic_modifier.pioneer_extra_draw.desc",
+      "text": "If this item triggered 2 times this turn, draw 1 extra arrow next turn."
+    },
+    {
+      "key": "rest.option.rest",
+      "text": "Rest"
+    },
+    {
+      "key": "rest.option.study",
+      "text": "Study Item"
+    },
+    {
+      "key": "rest.option.study.effect",
+      "text": "Choose 1 of 2 enhancements and enchant an item with it."
+    },
+    {
+      "key": "rest.option.deep_study",
+      "text": "Deep Study"
+    },
+    {
+      "key": "rest.option.deep_study.effect",
+      "text": "Choose 1 of 3 enhancements and enchant an item with it."
+    },
+    {
+      "key": "rest.default_heal",
+      "text": "You rest calmly and recover health."
+    }
+  ]
+}

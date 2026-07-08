@@ -20,8 +20,9 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     [SerializeField] private string tutorialStartWithConfigTextKey = "ui.start_menu.start_tutorial_with_config";
     [SerializeField] private string abandonRunTextKey = "ui.start_menu.abandon_run";
     [SerializeField] private string confirmAbandonRunTextKey = "ui.start_menu.confirm_abandon_run";
+    [SerializeField] private string exitTextKey = "ui.start_menu.exit";
     [SerializeField] private string confirmStartText = "选择一个游戏配置";
-    [SerializeField] private string selectedStartConfigText = "开始游戏www！";
+    [SerializeField] private string selectedStartConfigText = "开始游戏！";
     [SerializeField] private string abandonRunText = "放弃本局游戏";
     [SerializeField] private string confirmAbandonRunText = "确认放弃";
     [SerializeField] private string confirmExitTextKey = "ui.start_menu.confirm_exit";
@@ -59,6 +60,7 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     private bool startConfigSelected;
     private bool hasCurrentRun;
     private bool startAbandonConfirmMode;
+    private bool exitConfirmMode;
     private int selectedOptionIndex = -1;
     private int activeOptionIndex = -1;
     private Tween buttonGroupTween;
@@ -80,20 +82,13 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         startButtonText = startButton.GetComponentInChildren<TMP_Text>(true);
         exitButtonText = exitButton.GetComponentInChildren<TMP_Text>(true);
         startButtonImage = startButton.GetComponent<Image>();
-        originalStartText = LocalizationSystem.GetText(startTextKey, startButtonText != null && !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
-        confirmStartText = LocalizationSystem.GetText(chooseStartConfigTextKey, confirmStartText);
-        selectedStartConfigText = LocalizationSystem.GetText(selectedStartConfigTextKey, selectedStartConfigText);
-        tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
-        tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程www！");
-        abandonRunText = LocalizationSystem.GetText(abandonRunTextKey, abandonRunText);
-        confirmAbandonRunText = LocalizationSystem.GetText(confirmAbandonRunTextKey, confirmAbandonRunText);
-        originalExitText = exitButtonText != null ? exitButtonText.text : "退出游戏";
-        confirmExitText = LocalizationSystem.GetText(confirmExitTextKey, confirmExitText);
+        RefreshLocalizedTextCache();
+        LocalizationSystem.LanguageChanged += HandleLanguageChanged;
 
         if (startButtonText != null)
             RefreshStartButtonText();
-        if (exitButtonText != null && string.IsNullOrEmpty(exitButtonText.text))
-            exitButtonText.text = originalExitText;
+        if (exitButtonText != null)
+            exitButtonText.text = exitConfirmMode ? confirmExitText : originalExitText;
         if (startButtonImage != null)
             startButtonImage.color = startButtonNormalColor;
 
@@ -111,6 +106,7 @@ public class StartMenuButtonGroupUI : MonoBehaviour
             settingsButton.onClick.RemoveListener(HandleSettingsClicked);
         if (exitButton != null)
             exitButton.onClick.RemoveListener(HandleExitClicked);
+        LocalizationSystem.LanguageChanged -= HandleLanguageChanged;
         buttonGroupTween?.Kill(false);
     }
 
@@ -165,6 +161,7 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     public void SetExitConfirmMode(bool confirming)
     {
         int exitIndex = GetOptionIndex(exitButton);
+        exitConfirmMode = confirming;
         if (exitButtonText != null)
             exitButtonText.text = confirming ? confirmExitText : originalExitText;
         activeOptionIndex = confirming ? exitIndex : activeOptionIndex == exitIndex ? -1 : activeOptionIndex;
@@ -185,22 +182,32 @@ public class StartMenuButtonGroupUI : MonoBehaviour
         activeOptionIndex = -1;
     }
 
+    private void HandleLanguageChanged()
+    {
+        RefreshLocalizedTextCache();
+        RefreshStartButtonText();
+        if (exitButtonText != null)
+            exitButtonText.text = exitConfirmMode ? confirmExitText : originalExitText;
+    }
+
+    private void RefreshLocalizedTextCache()
+    {
+        originalStartText = LocalizationSystem.GetText(startTextKey, startButtonText != null && !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
+        confirmStartText = LocalizationSystem.GetText(chooseStartConfigTextKey, "选择一个游戏配置");
+        selectedStartConfigText = LocalizationSystem.GetText(selectedStartConfigTextKey, "开始游戏！");
+        tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
+        tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程！");
+        abandonRunText = LocalizationSystem.GetText(abandonRunTextKey, "放弃本局游戏");
+        confirmAbandonRunText = LocalizationSystem.GetText(confirmAbandonRunTextKey, "确认放弃");
+        originalExitText = LocalizationSystem.GetText(exitTextKey, exitButtonText != null && !string.IsNullOrEmpty(exitButtonText.text) ? exitButtonText.text : "退出游戏");
+        confirmExitText = LocalizationSystem.GetText(confirmExitTextKey, "确认退出");
+    }
+
     private void RefreshStartButtonText()
     {
         CacheStartButtonReferences();
         if (startButtonText == null)
             return;
-
-        if (string.IsNullOrEmpty(originalStartText))
-            originalStartText = LocalizationSystem.GetText(startTextKey, !string.IsNullOrEmpty(startButtonText.text) ? startButtonText.text : "开始游戏");
-        if (string.IsNullOrEmpty(tutorialStartText))
-            tutorialStartText = LocalizationSystem.GetText(tutorialStartTextKey, "开始教程");
-        if (string.IsNullOrEmpty(tutorialStartWithConfigText))
-            tutorialStartWithConfigText = LocalizationSystem.GetText(tutorialStartWithConfigTextKey, "开始教程www！");
-        if (string.IsNullOrEmpty(abandonRunText))
-            abandonRunText = LocalizationSystem.GetText(abandonRunTextKey, "放弃本局游戏");
-        if (string.IsNullOrEmpty(confirmAbandonRunText))
-            confirmAbandonRunText = LocalizationSystem.GetText(confirmAbandonRunTextKey, "确认放弃");
 
         if (!startConfigMode)
         {

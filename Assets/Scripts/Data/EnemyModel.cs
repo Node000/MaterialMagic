@@ -227,14 +227,24 @@ public class EnemyModel : UnitModel
         return TakeDamageResult(damage, attacker).HealthDamage;
     }
 
+    public int TakeDamageIgnoringVulnerable(int damage)
+    {
+        return TakeDamageResult(damage, null, BuffEnum.Vulnerable).HealthDamage;
+    }
+
     public override CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
+    {
+        return TakeDamageResult(damage, attacker, BuffEnum.None);
+    }
+
+    private CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker, BuffEnum ignoredOnTakeDamageBuff)
     {
         CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
             return result;
 
         int remainingDamage = damage;
-        TriggerOnTakeDamage(attacker, ref remainingDamage);
+        TriggerOnTakeDamage(attacker, ref remainingDamage, ignoredOnTakeDamageBuff);
         if (remainingDamage <= 0)
             return result;
 
@@ -292,11 +302,17 @@ public class EnemyModel : UnitModel
             return 0;
 
         int shieldValue = amount;
-        TriggerOnGainShield(ref shieldValue);
+        int slowReduction = ApplyGainShieldModifiers(ref shieldValue);
         if (shieldValue <= 0)
+        {
+            if (slowReduction > 0)
+                ConsumeBuff(BuffEnum.Slow, slowReduction);
             return 0;
+        }
 
         Shield += shieldValue;
+        if (slowReduction > 0)
+            ConsumeBuff(BuffEnum.Slow, slowReduction);
         GameLog.Data($"Enemy {Id} gain shield={shieldValue} shield={Shield}");
         return shieldValue;
     }
@@ -318,15 +334,29 @@ public class EnemyModel : UnitModel
         GameLog.Data($"Enemy {Id} clear shield");
     }
 
-    public override void AddBuff(BuffEnum buffType, int stack)
+    public override void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
     {
         if (buffType == BuffEnum.None || stack <= 0)
             return;
 
+        CombatantModel self = new CombatantModel(this);
+        ModifyIncomingBuff(source, self, buffType, ref stack);
+        if (stack <= 0)
+            return;
+
+        if (buffType == BuffEnum.DoubleEnemyBurningOnTurnEnd)
+            stack = 1;
+
         if (buffs.TryGetValue(buffType, out BuffModel buff))
+        {
+            if (buffType == BuffEnum.DoubleEnemyBurningOnTurnEnd)
+                return;
             buff.AddStack(stack);
+        }
         else
+        {
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
+        }
         GameLog.Data($"Enemy {Id} add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(this, buffType, stack);
     }
@@ -334,6 +364,25 @@ public class EnemyModel : UnitModel
     public void ApplyBurning(int stack)
     {
         AddBuff(BuffEnum.Burning, stack);
+    }
+
+    private void ModifyIncomingBuff(CombatantModel source, CombatantModel self, BuffEnum buffType, ref int stack)
+    {
+        if (source != null && source.Buffs != null && source.Buffs.Count > 0)
+        {
+            List<BuffModel> sourceBuffs = new List<BuffModel>(source.Buffs.Values);
+            sourceBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+            for (int i = 0; i < sourceBuffs.Count; i++)
+                sourceBuffs[i].OnGiveBuff(source, self, buffType, ref stack);
+        }
+
+        if (buffs.Count > 0)
+        {
+            List<BuffModel> targetBuffs = new List<BuffModel>(buffs.Values);
+            targetBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+            for (int i = 0; i < targetBuffs.Count; i++)
+                targetBuffs[i].OnReceiveBuff(self, source, buffType, ref stack);
+        }
     }
 
     public override int GetBuffStack(BuffEnum buffType)
@@ -577,23 +626,23 @@ public class EnemyModel : UnitModel
         switch (intent.actionType)
         {
             case EnemyActionType.Attack:
-                return GetIntentHitCount(intent) > 1 ? "意图：连击" : "意图：攻击";
+                return GetIntentHitCount(intent) > 1 ? GetLocalizedText("enemy.intent.title.multi_attack") : GetLocalizedText("enemy.intent.title.attack");
             case EnemyActionType.AttackAll:
-                return GetIntentHitCount(intent) > 1 ? "意图：群体连击" : "意图：群体攻击";
+                return GetIntentHitCount(intent) > 1 ? GetLocalizedText("enemy.intent.title.multi_attack_all") : GetLocalizedText("enemy.intent.title.attack_all");
             case EnemyActionType.GainShield:
-                return "意图：防御";
+                return GetLocalizedText("enemy.intent.title.defend");
             case EnemyActionType.ApplyBuff:
-                return "意图：强化";
+                return GetLocalizedText("enemy.intent.title.buff");
             case EnemyActionType.ApplyDebuff:
-                return "意图：负面效果";
+                return GetLocalizedText("enemy.intent.title.debuff");
             case EnemyActionType.Summon:
-                return "意图：召唤";
+                return GetLocalizedText("enemy.intent.title.summon");
             case EnemyActionType.Stunned:
-                return "意图：眩晕";
+                return GetLocalizedText("enemy.intent.title.stunned");
             case EnemyActionType.Special:
                 return GetSpecialIntentTooltipTitle(intent);
             default:
-                return "意图：未知";
+                return GetLocalizedText("enemy.intent.title.unknown");
         }
     }
 
@@ -613,21 +662,21 @@ public class EnemyModel : UnitModel
             case EnemyActionType.AttackAll:
                 return GetAttackIntentTooltipDescription(intent, playerState, true);
             case EnemyActionType.GainShield:
-                return $"这个敌人将获得{GetIntentShieldValue(intent)}点护盾";
+                return FormatLocalizedText("enemy.intent.desc.defend", GetIntentShieldValue(intent));
             case EnemyActionType.ApplyBuff:
             {
                 string buffText = FormatBuffStacks(intent.buffs);
-                return string.IsNullOrEmpty(buffText) ? "这个敌人将获得强化效果" : $"这个敌人将获得{buffText}";
+                return string.IsNullOrEmpty(buffText) ? GetLocalizedText("enemy.intent.desc.buff.empty") : FormatLocalizedText("enemy.intent.desc.buff", buffText);
             }
             case EnemyActionType.ApplyDebuff:
             {
                 string buffText = FormatBuffStacks(intent.buffs);
-                return string.IsNullOrEmpty(buffText) ? "这个敌人将对玩家施加负面效果" : $"这个敌人将对玩家施加{buffText}";
+                return string.IsNullOrEmpty(buffText) ? GetLocalizedText("enemy.intent.desc.debuff.empty") : FormatLocalizedText("enemy.intent.desc.debuff", buffText);
             }
             case EnemyActionType.Summon:
                 return GetSummonIntentTooltipDescription(intent);
             case EnemyActionType.Stunned:
-                return "这个敌人本回合不会行动";
+                return GetLocalizedText("enemy.intent.desc.stunned");
             case EnemyActionType.Special:
                 return GetSpecialIntentTooltipDescription(intent, playerState);
             default:
@@ -638,20 +687,20 @@ public class EnemyModel : UnitModel
     protected virtual string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
         if (intent != null && intent.displayType == "spDefend")
-            return "意图：特殊防御";
+            return GetLocalizedText("enemy.intent.title.special_defend");
         if (intent != null && intent.displayType == "summon")
-            return "意图：召唤";
-        return "意图：特殊攻击";
+            return GetLocalizedText("enemy.intent.title.summon");
+        return GetLocalizedText("enemy.intent.title.special_attack");
     }
 
     protected virtual string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
     {
         string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
         if (intent != null && intent.displayType == "spDefend")
-            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并施加特殊效果" : "这个敌人将进行特殊防御，并施加特殊效果";
+            return !string.IsNullOrEmpty(displayValue) ? FormatLocalizedText("enemy.intent.desc.special_defend", displayValue) : GetLocalizedText("enemy.intent.desc.special_defend.empty");
         if (intent != null && intent.displayType == "summon")
-            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将召唤{displayValue}个援军，并施加特殊效果" : "这个敌人将召唤援军，并施加特殊效果";
-        return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将造成{displayValue}点伤害，并施加特殊效果" : "这个敌人将施加特殊效果";
+            return !string.IsNullOrEmpty(displayValue) ? FormatLocalizedText("enemy.intent.desc.special_summon", displayValue) : GetLocalizedText("enemy.intent.desc.special_summon.empty");
+        return !string.IsNullOrEmpty(displayValue) ? FormatLocalizedText("enemy.intent.desc.special_attack", displayValue) : GetLocalizedText("enemy.intent.desc.special_attack.empty");
     }
 
     public virtual IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)
@@ -664,15 +713,15 @@ public class EnemyModel : UnitModel
         int attackValue = GetIntentAttackValue(intent, playerState);
         int hitCount = GetIntentHitCount(intent);
         if (attackAll)
-            return hitCount > 1 ? $"这个敌人将对所有目标造成{hitCount}次{attackValue}点伤害" : $"这个敌人将对所有目标造成{attackValue}点伤害";
-        return hitCount > 1 ? $"这个敌人将造成{hitCount}次{attackValue}点伤害" : $"这个敌人将造成{attackValue}点伤害";
+            return hitCount > 1 ? FormatLocalizedText("enemy.intent.desc.multi_attack_all", hitCount, attackValue) : FormatLocalizedText("enemy.intent.desc.attack_all", attackValue);
+        return hitCount > 1 ? FormatLocalizedText("enemy.intent.desc.multi_attack", hitCount, attackValue) : FormatLocalizedText("enemy.intent.desc.attack", attackValue);
     }
 
     private string GetSummonIntentTooltipDescription(EnemyIntentData intent)
     {
         int count = intent.summonCount > 0 ? intent.summonCount : 1;
         string summonName = GetSummonEnemyName(intent);
-        return count > 1 ? $"这个敌人将召唤{count}个{summonName}" : $"这个敌人将召唤{summonName}";
+        return count > 1 ? FormatLocalizedText("enemy.intent.desc.summon.multi", summonName, count) : FormatLocalizedText("enemy.intent.desc.summon.single", summonName);
     }
 
     private string GetDataIntentDescription(EnemyIntentData intent, PlayerState playerState)
@@ -714,7 +763,25 @@ public class EnemyModel : UnitModel
         int enemyId = intent.summonEnemyId > 0 ? intent.summonEnemyId : intent.value;
         if (enemyId > 0 && GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
             return LocalizationSystem.GetText(data.nameKey, data.Id);
-        return "敌人";
+        return GetLocalizedText("enemy.intent.fallback_enemy");
+    }
+
+    protected static string GetLocalizedText(string key)
+    {
+        return LocalizationSystem.GetText(key, key);
+    }
+
+    protected static string FormatLocalizedText(string key, params object[] args)
+    {
+        string template = GetLocalizedText(key);
+        try
+        {
+            return string.Format(template, args);
+        }
+        catch (System.FormatException)
+        {
+            return template;
+        }
     }
 
     protected static string FormatBuffStacks(BuffStackData[] buffs)
@@ -734,7 +801,7 @@ public class EnemyModel : UnitModel
                 continue;
 
             if (!string.IsNullOrEmpty(text))
-                text += "、";
+                text += GetLocalizedText("enemy.intent.list_separator");
             text += buffText;
         }
         return text;
@@ -748,8 +815,7 @@ public class EnemyModel : UnitModel
 
         BuffModel buff = BuffModel.Create(buffType, stack);
         string stackText = buff.GetTooltipStackText();
-        string keywordName = "【" + name + "】";
-        return !string.IsNullOrEmpty(stackText) ? keywordName + " " + stackText : keywordName;
+        return !string.IsNullOrEmpty(stackText) ? FormatLocalizedText("enemy.intent.buff_stack_with_stack", name, stackText) : FormatLocalizedText("enemy.intent.buff_stack", name);
     }
 
     protected int GetSpecialDamagePreviewValue(int rawDamage, PlayerState playerState)
@@ -796,11 +862,11 @@ public class EnemyModel : UnitModel
                 break;
             case EnemyActionType.ApplyBuff:
                 if (hitIndex == 0)
-                    ApplyBuffs(new CombatantModel(this), intent.buffs);
+                    ApplyBuffs(new CombatantModel(this), intent.buffs, new CombatantModel(this));
                 break;
             case EnemyActionType.ApplyDebuff:
                 if (hitIndex == 0 && playerState != null)
-                    ApplyBuffs(new CombatantModel(playerState), intent.buffs);
+                    ApplyBuffs(new CombatantModel(playerState), intent.buffs, new CombatantModel(this));
                 break;
             case EnemyActionType.Summon:
                 if (hitIndex == 0)
@@ -911,26 +977,14 @@ public class EnemyModel : UnitModel
             return;
 
         BattleManager manager = BattleManager.Instance;
-        if (manager == null || !GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
+        if (manager == null)
             return;
 
         for (int i = 0; i < count; i++)
-        {
-            EnemyModel summoned = EnemyFactory.Create(data);
-            if (summoned == null)
-                continue;
-
-            if (HasSpawnPosition)
-            {
-                Vector2 position = BattleManager.GetSummonPosition(SpawnPositionX, SpawnPositionY, i, count);
-                summoned.SetSpawnPosition(position.x, position.y);
-            }
-            summoned.SetMinion(true);
-            manager.SpawnEnemy(summoned);
-        }
+            manager.SpawnMinion(enemyId, this, i, count);
     }
 
-    private static void ApplyBuffs(CombatantModel target, BuffStackData[] buffs)
+    private static void ApplyBuffs(CombatantModel target, BuffStackData[] buffs, CombatantModel source)
     {
         if (target == null || buffs == null)
             return;
@@ -939,7 +993,7 @@ public class EnemyModel : UnitModel
         {
             BuffStackData buff = buffs[i];
             if (buff != null)
-                target.AddBuff(buff.buffType, buff.stack);
+                target.AddBuff(buff.buffType, buff.stack, source);
         }
     }
 
@@ -992,13 +1046,22 @@ public class EnemyModel : UnitModel
 
     public void TriggerOnTakeDamage(CombatantModel attacker, ref int damage)
     {
+        TriggerOnTakeDamage(attacker, ref damage, BuffEnum.None);
+    }
+
+    private void TriggerOnTakeDamage(CombatantModel attacker, ref int damage, BuffEnum ignoredBuff)
+    {
         if (buffs.Count == 0)
             return;
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
+        {
+            if (snapshot[i].buffType == ignoredBuff)
+                continue;
             snapshot[i].OnTakeDamage(self, attacker, ref damage);
+        }
     }
 
     public void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result)
@@ -1014,18 +1077,47 @@ public class EnemyModel : UnitModel
 
     public void TriggerOnGainShield(ref int shieldValue)
     {
+        ApplyGainShieldModifiers(ref shieldValue);
+    }
+
+    private int ApplyGainShieldModifiers(ref int shieldValue)
+    {
         if (buffs.Count == 0)
-            return;
+            return 0;
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        BuffModel slowBuff = null;
         for (int i = 0; i < snapshot.Count; i++)
-            snapshot[i].OnGainShield(self, ref shieldValue);
+        {
+            BuffModel buff = snapshot[i];
+            if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
+                continue;
+            if (buff.buffType == BuffEnum.Slow)
+            {
+                slowBuff = buff;
+                continue;
+            }
+
+            buff.OnGainShield(self, ref shieldValue);
+        }
+
+        int beforeSlow = shieldValue;
+        if (slowBuff != null && buffs.TryGetValue(slowBuff.buffType, out BuffModel currentSlow) && ReferenceEquals(currentSlow, slowBuff))
+            slowBuff.OnGainShield(self, ref shieldValue);
+        if (shieldValue < 0)
+            shieldValue = 0;
+        return beforeSlow > shieldValue ? beforeSlow - shieldValue : 0;
     }
 
     public void TriggerOnTurnEnd(CombatantModel opponent)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.OnTurnEnd(self, target));
+    }
+
+    public void TriggerOnPlayerTurnEnd(CombatantModel opponent)
+    {
+        TriggerBuffs(opponent, (buff, self, target) => buff.OnPlayerTurnEnd(self, target));
     }
 
     public void TriggerAfterTurnEnd(CombatantModel opponent)

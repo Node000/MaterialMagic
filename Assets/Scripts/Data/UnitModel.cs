@@ -28,7 +28,11 @@ public abstract class UnitModel
     public abstract int GainShield(int amount);
     public abstract int ConsumeShield(int amount);
     public abstract void ClearShield();
-    public abstract void AddBuff(BuffEnum buffType, int stack);
+    public virtual void AddBuff(BuffEnum buffType, int stack)
+    {
+        AddBuff(buffType, stack, null);
+    }
+    public abstract void AddBuff(BuffEnum buffType, int stack, CombatantModel source);
     public abstract int GetBuffStack(BuffEnum buffType);
     public abstract void ConsumeBuff(BuffEnum buffType, int amount);
 }

@@ -55,6 +55,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Material modifierMarkerFallbackMaterial;
     private Color modifierMarkerFallbackColor;
 
+    private static readonly Dictionary<string, Sprite> magicIconCache = new Dictionary<string, Sprite>();
+    private static Material sharedModifierMarkerFallbackMaterial;
+
     public MagicModel Magic => magic;
 
     private void Awake()
@@ -284,12 +287,15 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         if (modifierMarkerFallbackMaterial == null)
         {
-            Shader shader = Shader.Find("UI/MagicModifierBreath");
-            if (shader != null)
+            if (sharedModifierMarkerFallbackMaterial == null)
             {
-                modifierMarkerFallbackMaterial = new Material(shader);
-                modifierMarkerImage.material = modifierMarkerFallbackMaterial;
+                Shader shader = Shader.Find("UI/MagicModifierBreath");
+                if (shader != null)
+                    sharedModifierMarkerFallbackMaterial = new Material(shader);
             }
+            modifierMarkerFallbackMaterial = sharedModifierMarkerFallbackMaterial;
+            if (modifierMarkerFallbackMaterial != null)
+                modifierMarkerImage.material = modifierMarkerFallbackMaterial;
         }
     }
 
@@ -332,16 +338,22 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             return;
 
         recipeBlocks.Clear();
-        for (int i = recipeRoot.childCount - 1; i >= 0; i--)
-            Destroy(recipeRoot.GetChild(i).gameObject);
+        int recipeCount = magic != null && magic.Data.recipe != null ? magic.Data.recipe.Length : 0;
+        for (int i = 0; i < recipeRoot.childCount; i++)
+            recipeRoot.GetChild(i).gameObject.SetActive(i < recipeCount);
 
-        if (magic == null || magic.Data.recipe == null)
-            return;
-
-        for (int i = 0; i < magic.Data.recipe.Length; i++)
+        for (int i = recipeRoot.childCount; i < recipeCount; i++)
         {
             Image block = new GameObject("MaterialBlock", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             block.transform.SetParent(recipeRoot, false);
+        }
+
+        for (int i = 0; i < recipeCount; i++)
+        {
+            Image block = recipeRoot.GetChild(i).GetComponent<Image>();
+            if (block == null)
+                block = recipeRoot.GetChild(i).gameObject.AddComponent<Image>();
+            block.gameObject.SetActive(true);
             Sprite materialSprite = GetRecipeIcon(magic.Data.recipe[i]);
             block.sprite = materialSprite;
             block.preserveAspect = true;
@@ -430,7 +442,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (string.IsNullOrEmpty(iconName))
             return null;
 
-        return Resources.Load<Sprite>("Images/Magics/" + iconName);
+        if (magicIconCache.TryGetValue(iconName, out Sprite sprite))
+            return sprite;
+
+        sprite = Resources.Load<Sprite>("Images/Magics/" + iconName);
+        magicIconCache[iconName] = sprite;
+        return sprite;
     }
 
     private static void SetBlockOpaque(Image block)

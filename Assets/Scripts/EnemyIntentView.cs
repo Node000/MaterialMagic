@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private const string RippleMaterialResourcePath = "Materials/IntentRipple";
     private const string RippleShaderName = "UI/IntentRipple";
     private static Material rippleMaterialTemplate;
+    private static readonly Dictionary<string, Sprite> intentSpriteCache = new Dictionary<string, Sprite>();
 
     private RectTransform rectTransform;
     private Vector2 baseAnchoredPosition;
@@ -250,10 +252,15 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         }
     }
 
+    public static void PrewarmIntentSprite(EnemyIntentData intent)
+    {
+        LoadIntentSprite(intent);
+    }
+
     private static Sprite LoadIntentSprite(EnemyIntentData intent)
     {
         string displayType = ResolveIntentDisplayType(intent);
-        Sprite sprite = !string.IsNullOrEmpty(displayType) ? Resources.Load<Sprite>("Images/Intent/" + displayType) : null;
+        Sprite sprite = LoadIntentSpriteByName(displayType);
         if (sprite != null)
             return sprite;
 
@@ -261,21 +268,34 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             case EnemyActionType.Attack:
             case EnemyActionType.AttackAll:
-                return Resources.Load<Sprite>("Images/Intent/attack");
+                return LoadIntentSpriteByName("attack");
             case EnemyActionType.GainShield:
-                return Resources.Load<Sprite>("Images/Intent/defend");
+                return LoadIntentSpriteByName("defend");
             case EnemyActionType.ApplyDebuff:
-                return Resources.Load<Sprite>("Images/Intent/debuff");
+                return LoadIntentSpriteByName("debuff");
             case EnemyActionType.Summon:
-                return Resources.Load<Sprite>("Images/Intent/summon");
+                return LoadIntentSpriteByName("summon");
             case EnemyActionType.Stunned:
-                return Resources.Load<Sprite>("Images/Intent/stun");
+                return LoadIntentSpriteByName("stun");
             case EnemyActionType.ApplyBuff:
-                return Resources.Load<Sprite>("Images/Intent/buff");
+                return LoadIntentSpriteByName("buff");
             case EnemyActionType.Special:
             default:
-                return Resources.Load<Sprite>("Images/Intent/spAttack");
+                return LoadIntentSpriteByName("spAttack");
         }
+    }
+
+    private static Sprite LoadIntentSpriteByName(string displayType)
+    {
+        if (string.IsNullOrEmpty(displayType))
+            return null;
+
+        if (intentSpriteCache.TryGetValue(displayType, out Sprite sprite))
+            return sprite;
+
+        sprite = Resources.Load<Sprite>("Images/Intent/" + displayType);
+        intentSpriteCache[displayType] = sprite;
+        return sprite;
     }
 
     private static string ResolveIntentDisplayType(EnemyIntentData intent)

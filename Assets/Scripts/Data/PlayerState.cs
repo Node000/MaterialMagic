@@ -78,7 +78,7 @@ public class PlayerState
         {
             PlayerStartMaterialData material = config.initialMaterials[i];
             if (material != null)
-                AddInitialMaterials(state, material.material, material.count);
+                AddInitialMaterials(state, material);
         }
 
         for (int i = 0; i < config.initialMagics.Length; i++)
@@ -981,11 +981,17 @@ public class PlayerState
             return 0;
 
         int shieldValue = amount;
-        TriggerOnGainShield(ref shieldValue);
+        int slowReduction = ApplyGainShieldModifiers(ref shieldValue);
         if (shieldValue <= 0)
+        {
+            if (slowReduction > 0)
+                ConsumeBuff(BuffEnum.Slow, slowReduction);
             return 0;
+        }
 
         Shield += shieldValue;
+        if (slowReduction > 0)
+            ConsumeBuff(BuffEnum.Slow, slowReduction);
         GameLog.Data($"Player gain shield={shieldValue} shield={Shield}");
         return shieldValue;
     }
@@ -1047,28 +1053,10 @@ public class PlayerState
     {
         ClearShield();
         ClearBuffs();
-        RemoveSturdyModifiers();
         RemoveBattleOnlyArrowState();
         TemporaryMaterialsNextTurn.Clear();
         ConsumedPile.Clear();
         extraRefreshChancesThisTurn = 0;
-    }
-
-    public void RemoveSturdyModifiers()
-    {
-        RemoveSturdyModifiers(Hand);
-        RemoveSturdyModifiers(PlayZone);
-        RemoveSturdyModifiers(DrawPile);
-        RemoveSturdyModifiers(DiscardPile);
-        RemoveSturdyModifiers(ConsumedPile);
-        RemoveSturdyModifiers(Deck);
-        RemoveSturdyModifiers(TemporaryMaterialsNextTurn);
-    }
-
-    private static void RemoveSturdyModifiers(List<MaterialModel> cards)
-    {
-        for (int i = 0; i < cards.Count; i++)
-            cards[i]?.RemoveModifiers<SturdyModifier>();
     }
 
     public void RemoveBattleOnlyArrowState()
@@ -1116,7 +1104,11 @@ public class PlayerState
                 }
             }
             if (!hasSturdy)
-                card.AddModifier(new SturdyModifier());
+            {
+                SturdyModifier modifier = new SturdyModifier();
+                modifier.MarkRemoveAfterBattle();
+                card.AddModifier(modifier);
+            }
         }
     }
 
@@ -1163,7 +1155,17 @@ public class PlayerState
 
     public void AddBuff(BuffEnum buffType, int stack)
     {
+        AddBuff(buffType, stack, null);
+    }
+
+    public void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
+    {
         if (buffType == BuffEnum.None || stack <= 0)
+            return;
+
+        CombatantModel self = new CombatantModel(this);
+        ModifyIncomingBuff(source, self, buffType, ref stack);
+        if (stack <= 0)
             return;
 
         if (buffType == BuffEnum.AttributeDisabled)
@@ -1184,6 +1186,25 @@ public class PlayerState
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
         GameLog.Data($"Player add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(buffType, stack);
+    }
+
+    private void ModifyIncomingBuff(CombatantModel source, CombatantModel self, BuffEnum buffType, ref int stack)
+    {
+        if (source != null && source.Buffs != null && source.Buffs.Count > 0)
+        {
+            List<BuffModel> sourceBuffs = new List<BuffModel>(source.Buffs.Values);
+            sourceBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+            for (int i = 0; i < sourceBuffs.Count; i++)
+                sourceBuffs[i].OnGiveBuff(source, self, buffType, ref stack);
+        }
+
+        if (buffs.Count > 0)
+        {
+            List<BuffModel> targetBuffs = new List<BuffModel>(buffs.Values);
+            targetBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+            for (int i = 0; i < targetBuffs.Count; i++)
+                targetBuffs[i].OnReceiveBuff(self, source, buffType, ref stack);
+        }
     }
 
     public int GetBuffStack(BuffEnum buffType)
@@ -1295,13 +1316,37 @@ public class PlayerState
 
     public void TriggerOnGainShield(ref int shieldValue)
     {
+        ApplyGainShieldModifiers(ref shieldValue);
+    }
+
+    private int ApplyGainShieldModifiers(ref int shieldValue)
+    {
         if (buffs.Count == 0)
-            return;
+            return 0;
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
+        BuffModel slowBuff = null;
         for (int i = 0; i < snapshot.Count; i++)
-            snapshot[i].OnGainShield(self, ref shieldValue);
+        {
+            BuffModel buff = snapshot[i];
+            if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
+                continue;
+            if (buff.buffType == BuffEnum.Slow)
+            {
+                slowBuff = buff;
+                continue;
+            }
+
+            buff.OnGainShield(self, ref shieldValue);
+        }
+
+        int beforeSlow = shieldValue;
+        if (slowBuff != null && buffs.TryGetValue(slowBuff.buffType, out BuffModel currentSlow) && ReferenceEquals(currentSlow, slowBuff))
+            slowBuff.OnGainShield(self, ref shieldValue);
+        if (shieldValue < 0)
+            shieldValue = 0;
+        return beforeSlow > shieldValue ? beforeSlow - shieldValue : 0;
     }
 
     public void TriggerOnTurnEnd(CombatantModel opponent)
@@ -1567,10 +1612,51 @@ public class PlayerState
         return MagicFactory.Create(data, slotIndex);
     }
 
-    private static void AddInitialMaterials(PlayerState state, MaterialEnum material, int count)
+    private static void AddInitialMaterials(PlayerState state, PlayerStartMaterialData data)
     {
-        for (int i = 0; i < count; i++)
-            state.Deck.Add(new MaterialModel(material + "_" + i, material));
+        if (state == null || data == null || data.material == MaterialEnum.None)
+            return;
+
+        for (int i = 0; i < data.count; i++)
+        {
+            MaterialModel card = new MaterialModel(data.material + "_" + i, data.material);
+            AddMaterialModifiers(card, data.modifierIds);
+            state.Deck.Add(card);
+        }
+    }
+
+    public static void AddMaterialModifiers(MaterialModel card, string[] modifierIds)
+    {
+        if (card == null || modifierIds == null)
+            return;
+
+        for (int i = 0; i < modifierIds.Length; i++)
+        {
+            MaterialModifierModel modifier = CreateMaterialModifierFromData(modifierIds[i]);
+            if (modifier != null)
+                card.AddModifier(modifier);
+        }
+    }
+
+    public static MaterialModifierModel CreateMaterialModifierFromData(string modifierId)
+    {
+        MaterialModifierData data = GetMaterialModifierDataById(modifierId);
+        return data != null ? MaterialModifierFactory.Create(data) : null;
+    }
+
+    public static MaterialModifierData GetMaterialModifierDataById(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return null;
+
+        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
+        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
+        {
+            MaterialModifierData data = table.items[i];
+            if (data != null && data.id == modifierId)
+                return data;
+        }
+        return null;
     }
 
     private static string DescribeMaterial(MaterialModel card)

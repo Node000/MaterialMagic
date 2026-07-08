@@ -3,6 +3,7 @@
     {
       "id": "balanced",
       "displayName": "均衡",
+      "displayNameKey": "ui.start_config.balanced.name",
       "texturePath": "",
       "color": "#6F5FA8",
       "maxHealth": 50,
@@ -24,6 +25,7 @@
     {
       "id": "ice_fire",
       "displayName": "冰与火",
+      "displayNameKey": "ui.start_config.ice_fire.name",
       "texturePath": "",
       "color": "#B44D4D",
       "maxHealth": 50,
@@ -45,6 +47,7 @@
     {
       "id": "wind_dust",
       "displayName": "风与尘",
+      "displayNameKey": "ui.start_config.wind_dust.name",
       "texturePath": "",
       "color": "#5F9B77",
       "maxHealth": 50,
@@ -65,20 +68,26 @@
     },
     {
       "id": "blank",
-      "displayName": "空白",
+      "displayName": "更好的一切",
+      "displayNameKey": "ui.start_config.blank.name",
       "texturePath": "",
       "color": "#8A8A8A",
-      "maxHealth": 50,
+      "maxHealth": 45,
       "gold": 0,
       "drawCount": 4,
       "maxPlayCount": 3,
       "initialMaterials": [
-        { "material": 1, "count": 3 },
-        { "material": 2, "count": 3 },
-        { "material": 3, "count": 3 },
-        { "material": 4, "count": 3 }
+        { "material": 1, "count": 4 },
+        { "material": 3, "count": 4 },
+        { "material": 2, "count": 4 },
+        { "material": 4, "count": 4 }
       ],
-      "initialMagics": []
+      "initialMagics": [
+        { "slotIndex": 0, "magicId": 1 },
+        { "slotIndex": 1, "magicId": 24 },
+        { "slotIndex": 2, "magicId": 9 },
+        { "slotIndex": 3, "magicId": 25 }
+      ]
     }
   ]
 }

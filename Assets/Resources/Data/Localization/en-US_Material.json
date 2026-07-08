@@ -1,0 +1,88 @@
+{
+  "items": [
+    {
+      "key": "material.none.name",
+      "text": "None"
+    },
+    {
+      "key": "material.fire.name",
+      "text": "Up"
+    },
+    {
+      "key": "material.wind.name",
+      "text": "Left"
+    },
+    {
+      "key": "material.water.name",
+      "text": "Down"
+    },
+    {
+      "key": "material.earth.name",
+      "text": "Right"
+    },
+    {
+      "key": "material.wild.name",
+      "text": "Wild"
+    },
+    {
+      "key": "material.fire.single_play",
+      "text": "Up: Deal <attack>3 damage"
+    },
+    {
+      "key": "material.water.single_play",
+      "text": "Down: Randomly apply 1 <buff_weak> or <buff_slow>"
+    },
+    {
+      "key": "material.wind.single_play",
+      "text": "Left: Draw 1 extra card next turn"
+    },
+    {
+      "key": "material.earth.single_play",
+      "text": "Right: Gain <shield>3"
+    },
+    {
+      "key": "material.wild.single_play",
+      "text": "This is a special arrow"
+    },
+    {
+      "key": "material.none.single_play",
+      "text": "No base effect"
+    },
+    {
+      "key": "material.read_rule.additional_read",
+      "text": "Read {0} extra time(s)"
+    },
+    {
+      "key": "material.read_rule.pack_following",
+      "text": "Packs following arrows when read"
+    },
+    {
+      "key": "material.read_rule.linked_container",
+      "text": "This is a linked/container arrow"
+    },
+    {
+      "key": "material.read_rule.remove_self",
+      "text": "Removes itself after being read"
+    },
+    {
+      "key": "material.read_rule.return_next_turn",
+      "text": "Returns next turn after being read"
+    },
+    {
+      "key": "material.read_rule.consume",
+      "text": "Consumed after being read"
+    },
+    {
+      "key": "material.read_rule.split_half_discard",
+      "text": "Splits into half arrows and goes to the discard pile after being read"
+    },
+    {
+      "key": "material.read_rule.linked_count",
+      "text": "Contains {0} linked arrow(s)"
+    },
+    {
+      "key": "material.read_rule.can_act_as",
+      "text": "Can act as {0}"
+    }
+  ]
+}

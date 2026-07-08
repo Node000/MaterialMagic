@@ -13,9 +13,13 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button drawCardButton;
     [SerializeField] private TMP_Dropdown levelDropdown;
     [SerializeField] private Button startBattleButton;
+    [SerializeField] private Button completeRunButton;
+    [SerializeField] private TMP_Dropdown unlockDropdown;
+    [SerializeField] private Button unlockButton;
     [SerializeField] private Button closeButton;
 
     private readonly List<int> levelIds = new List<int>();
+    private readonly List<UnlockData> unlockItems = new List<UnlockData>();
     private const int Amount = 10;
 
     private void Awake()
@@ -26,6 +30,8 @@ public class DebugBattlePanelUI : MonoBehaviour
         shieldButton?.onClick.AddListener(GainShield);
         drawCardButton?.onClick.AddListener(DrawCard);
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
+        completeRunButton?.onClick.AddListener(CompleteRun);
+        unlockButton?.onClick.AddListener(UnlockSelectedItem);
         closeButton?.onClick.AddListener(Hide);
     }
 
@@ -33,6 +39,7 @@ public class DebugBattlePanelUI : MonoBehaviour
     {
         CacheReferences();
         PopulateLevelDropdown();
+        PopulateUnlockDropdown();
         RefreshBattleOnlyControls();
     }
 
@@ -48,6 +55,8 @@ public class DebugBattlePanelUI : MonoBehaviour
         shieldButton?.onClick.RemoveListener(GainShield);
         drawCardButton?.onClick.RemoveListener(DrawCard);
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
+        completeRunButton?.onClick.RemoveListener(CompleteRun);
+        unlockButton?.onClick.RemoveListener(UnlockSelectedItem);
         closeButton?.onClick.RemoveListener(Hide);
     }
 
@@ -74,6 +83,12 @@ public class DebugBattlePanelUI : MonoBehaviour
             levelDropdown = transform.Find("LevelDropdown")?.GetComponent<TMP_Dropdown>();
         if (startBattleButton == null)
             startBattleButton = transform.Find("StartBattleButton")?.GetComponent<Button>();
+        if (completeRunButton == null)
+            completeRunButton = transform.Find("CompleteRunButton")?.GetComponent<Button>();
+        if (unlockDropdown == null)
+            unlockDropdown = transform.Find("UnlockDropdown")?.GetComponent<TMP_Dropdown>();
+        if (unlockButton == null)
+            unlockButton = transform.Find("UnlockButton")?.GetComponent<Button>();
         if (drawCardButton == null)
             drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
 
@@ -117,11 +132,47 @@ public class DebugBattlePanelUI : MonoBehaviour
         levelDropdown.RefreshShownValue();
     }
 
+    private void PopulateUnlockDropdown()
+    {
+        if (unlockDropdown == null)
+            return;
+
+        unlockItems.Clear();
+        unlockDropdown.ClearOptions();
+        IReadOnlyList<UnlockData> unlocks = UnlockSystem.Unlocks;
+        List<string> options = new List<string>(unlocks.Count);
+        for (int i = 0; i < unlocks.Count; i++)
+        {
+            UnlockData unlock = unlocks[i];
+            if (unlock == null || string.IsNullOrEmpty(unlock.targetType) || string.IsNullOrEmpty(unlock.targetId))
+                continue;
+
+            unlockItems.Add(unlock);
+            options.Add(BuildUnlockOptionText(unlock));
+        }
+
+        if (options.Count == 0)
+            options.Add("没有可用解锁成就");
+        unlockDropdown.AddOptions(options);
+        unlockDropdown.SetValueWithoutNotify(0);
+        unlockDropdown.RefreshShownValue();
+        if (unlockButton != null)
+            unlockButton.interactable = unlockItems.Count > 0;
+    }
+
+    private static string BuildUnlockOptionText(UnlockData unlock)
+    {
+        string state = UnlockSystem.IsUnlocked(unlock.targetType, unlock.targetId) ? "已解锁" : "未解锁";
+        return $"{state} {UnlockSystem.GetTargetTypeName(unlock.targetType)} - {UnlockSystem.GetTargetName(unlock.targetType, unlock.targetId)}";
+    }
+
     private void RefreshBattleOnlyControls(bool battleOnlyInteractable = true)
     {
         bool inBattle = battleOnlyInteractable && BattleManager.Instance != null && BattleManager.Instance.CurrentPhase != BattlePhase.None && BattleManager.Instance.CurrentPhase != BattlePhase.Finished;
         if (drawCardButton != null)
             drawCardButton.interactable = inBattle;
+        if (completeRunButton != null)
+            completeRunButton.interactable = battleOnlyInteractable && handSystem != null && handSystem.PlayerState != null;
     }
 
     private static bool IsDebugBattleLevel(LevelData level)
@@ -191,6 +242,25 @@ public class DebugBattlePanelUI : MonoBehaviour
 
         if (GameDataDatabase.TryGetLevelData(levelIds[levelDropdown.value], out LevelData level))
             handSystem.DebugStartBattleLevel(level);
+    }
+
+    private void CompleteRun()
+    {
+        handSystem?.DebugCompleteRun();
+        RefreshBattleOnlyControls(false);
+    }
+
+    private void UnlockSelectedItem()
+    {
+        if (unlockDropdown == null || unlockDropdown.value < 0 || unlockDropdown.value >= unlockItems.Count)
+            return;
+
+        UnlockData unlock = unlockItems[unlockDropdown.value];
+        if (unlock == null)
+            return;
+
+        UnlockSystem.GrantUnlock(unlock.targetType, unlock.targetId, true);
+        PopulateUnlockDropdown();
     }
 
     private void DealDamage()

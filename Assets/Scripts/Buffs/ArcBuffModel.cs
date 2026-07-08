@@ -6,7 +6,10 @@ public class ArcBuffModel : BuffModel
 
     public override void OnInvoke(CombatantModel self, CombatantModel target)
     {
-        self.TakeDamage(stack);
+        if (self != null && self.IsEnemy)
+            self.Enemy.TakeDamageIgnoringVulnerable(stack);
+        else
+            self?.TakeDamage(stack);
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "id": "unlock_start_config_blank",
+      "targetType": "StartConfig",
+      "targetId": "blank",
+      "conditions": [
+        { "type": "StartConfigVictoryCount", "targetId": "balanced", "value": 1 },
+        { "type": "StartConfigVictoryCount", "targetId": "ice_fire", "value": 1 },
+        { "type": "StartConfigVictoryCount", "targetId": "wind_dust", "value": 1 }
+      ],
+      "messageKey": "unlock.start_config.blank"
+    }
+  ]
+}

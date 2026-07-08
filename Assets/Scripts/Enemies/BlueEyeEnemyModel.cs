@@ -13,7 +13,7 @@ public class BlueEyeEnemyModel : EnemyModel
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
-        return intent != null && intent.value == 1 ? "意图：召唤" : base.GetSpecialIntentTooltipTitle(intent);
+        return intent != null && intent.value == 1 ? GetLocalizedText("enemy.intent.title.summon") : base.GetSpecialIntentTooltipTitle(intent);
     }
 
     protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
@@ -21,8 +21,8 @@ public class BlueEyeEnemyModel : EnemyModel
         if (intent == null || intent.value != 1)
             return base.GetSpecialIntentTooltipDescription(intent, playerState);
 
-        string summonText = summonCount > 1 ? summonCount + "个爪牙" : "爪牙";
-        return $"这个敌人将召唤{summonText}，并获得{FormatBuffStack(BuffEnum.DefensePower, 2)}";
+        string summonText = summonCount > 1 ? FormatLocalizedText("enemy.intent.blue_eye.minion_multi", summonCount) : GetLocalizedText("enemy.intent.blue_eye.minion_single");
+        return FormatLocalizedText("enemy.intent.blue_eye.summon_desc", summonText, FormatBuffStack(BuffEnum.DefensePower, 2));
     }
 
     public override System.Collections.Generic.IReadOnlyList<BuffStackData> GetIntentTooltipBuffs(EnemyIntentData intent, PlayerState playerState)

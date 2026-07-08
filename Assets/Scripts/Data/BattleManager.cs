@@ -58,7 +58,10 @@ public class BattleActionResult
 
 public class BattleManager
 {
+    private const string EnemySummonLayoutConfigPath = "Config/EnemySummonLayoutConfig";
+
     private readonly List<EnemyModel> enemies = new List<EnemyModel>();
+    private static EnemySummonLayoutConfig summonLayoutConfig;
 
     public static BattleManager Instance { get; private set; }
 
@@ -126,31 +129,87 @@ public class BattleManager
             enemy.SetMinion(true);
             if (summoner != null && summoner.HasSpawnPosition)
             {
-                Vector2 position = GetSummonPosition(summoner.SpawnPositionX, summoner.SpawnPositionY, summonIndex, summonCount);
+                Vector2 position = GetAvailableSummonPosition(summoner.SpawnPositionX, summoner.SpawnPositionY, summonIndex, summonCount);
                 enemy.SetSpawnPosition(position.x, position.y);
             }
         }
         return SpawnEnemy(enemy);
     }
 
-    public static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount)
+    public Vector2 GetAvailableSummonPosition(float centerX, float centerY, int summonIndex, int summonCount)
     {
-        const float horizontalSpacing = 180f;
-        const float verticalSpacing = 110f;
+        EnemySummonLayoutConfig config = LoadSummonLayoutConfig();
         int count = summonCount > 0 ? summonCount : 1;
         int index = summonIndex < 0 ? 0 : summonIndex;
+        Vector2 fallback = GetSummonPosition(centerX, centerY, index, count, config);
+        for (int attempt = 0; attempt < config.MaxSearchAttempts; attempt++)
+        {
+            int candidateIndex = index + attempt * count;
+            Vector2 candidate = GetSummonPosition(centerX, centerY, candidateIndex, count, config);
+            fallback = candidate;
+            if (!IsSummonPositionOccupied(candidate, config.OccupiedRadius))
+                return candidate;
+        }
 
-        if (count == 1)
-            return new Vector2(centerX + horizontalSpacing, centerY);
-        if (count == 2)
-            return new Vector2(centerX + (index == 0 ? -horizontalSpacing : horizontalSpacing), centerY);
+        return fallback;
+    }
 
-        int pairIndex = index / 2 + 1;
-        float x = centerX + (index % 2 == 0 ? -horizontalSpacing * pairIndex : horizontalSpacing * pairIndex);
-        float y = centerY;
-        if (index >= 4)
-            y += index % 4 < 2 ? verticalSpacing : -verticalSpacing;
+    public static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount)
+    {
+        return GetSummonPosition(centerX, centerY, summonIndex, summonCount, LoadSummonLayoutConfig());
+    }
+
+    private static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount, EnemySummonLayoutConfig config)
+    {
+        int count = summonCount > 0 ? summonCount : 1;
+        int index = summonIndex < 0 ? 0 : summonIndex;
+        int slotsPerRow = config.SameRowSlotCount;
+        int row = index / slotsPerRow;
+        int inRowIndex = index % slotsPerRow;
+        int pairIndex = inRowIndex / 2 + 1;
+        bool placeRight = count == 1 ? inRowIndex % 2 == 0 : inRowIndex % 2 == 1;
+        float x = centerX + (placeRight ? config.HorizontalSpacing * pairIndex : -config.HorizontalSpacing * pairIndex);
+        float y = centerY + GetSummonRowOffset(row, config.VerticalSpacing);
         return new Vector2(x, y);
+    }
+
+    private static float GetSummonRowOffset(int row, float verticalSpacing)
+    {
+        if (row <= 0 || verticalSpacing <= 0f)
+            return 0f;
+
+        int distance = (row + 1) / 2;
+        return row % 2 == 1 ? verticalSpacing * distance : -verticalSpacing * distance;
+    }
+
+    private bool IsSummonPositionOccupied(Vector2 position, float occupiedRadius)
+    {
+        if (occupiedRadius <= 0f)
+            return false;
+
+        float occupiedRadiusSqr = occupiedRadius * occupiedRadius;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy == null || enemy.IsDead || !enemy.HasSpawnPosition)
+                continue;
+
+            float deltaX = enemy.SpawnPositionX - position.x;
+            float deltaY = enemy.SpawnPositionY - position.y;
+            if (deltaX * deltaX + deltaY * deltaY < occupiedRadiusSqr)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static EnemySummonLayoutConfig LoadSummonLayoutConfig()
+    {
+        if (summonLayoutConfig == null)
+            summonLayoutConfig = Resources.Load<EnemySummonLayoutConfig>(EnemySummonLayoutConfigPath);
+        if (summonLayoutConfig == null)
+            summonLayoutConfig = ScriptableObject.CreateInstance<EnemySummonLayoutConfig>();
+        return summonLayoutConfig;
     }
 
     public EnemyModel SpawnEnemy(LevelEnemyData placement)
@@ -258,7 +317,7 @@ public class BattleManager
 
         EnemyModel target = SelectRandomEnemy();
         if (target != null)
-            target.AddBuff(BuffEnum.Burning, stack);
+            target.AddBuff(BuffEnum.Burning, stack, PlayerState != null ? new CombatantModel(PlayerState) : null);
     }
 
     public bool AddArcToRandomEnemy(int stack)
@@ -270,7 +329,7 @@ public class BattleManager
         if (target == null)
             return false;
 
-        target.AddBuff(BuffEnum.Arc, stack);
+        target.AddBuff(BuffEnum.Arc, stack, PlayerState != null ? new CombatantModel(PlayerState) : null);
         return true;
     }
 
@@ -284,7 +343,7 @@ public class BattleManager
             return false;
 
         int index = NextRandomInt(0, 3);
-        target.AddBuff(index == 0 ? BuffEnum.Weak : index == 1 ? BuffEnum.Slow : BuffEnum.Vulnerable, stack);
+        target.AddBuff(index == 0 ? BuffEnum.Weak : index == 1 ? BuffEnum.Slow : BuffEnum.Vulnerable, stack, PlayerState != null ? new CombatantModel(PlayerState) : null);
         return true;
     }
 
@@ -475,8 +534,7 @@ public class BattleManager
                 PlayerState.ConsumeBuff(BuffEnum.LazyNextDraw, lazyDrawReduction);
             PlayerState.ConsumeTemporaryMaterialsNextTurn();
         }
-        if (PlayerState.GetBuffStack(BuffEnum.Sturdy) > 0)
-            PlayerState.ApplySturdyToHand();
+
     }
 
     public BattleActionResult EndPlayerTurnRules(List<MaterialModel> removedTemporaryCards)
@@ -487,6 +545,7 @@ public class BattleManager
 
         result.CapturePlayerBefore(PlayerState);
         PlayerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
+        TriggerEnemyPlayerTurnEndBuffs();
         TriggerMagicTurnEnd();
         PlayerState.RemoveTurnOnlyModifiers();
         PlayerState.EndTurn(removedTemporaryCards);
@@ -496,6 +555,17 @@ public class BattleManager
         result.CapturePlayerAfter(PlayerState);
         result.AllEnemiesDead = AllEnemiesDead();
         return result;
+    }
+
+    private void TriggerEnemyPlayerTurnEndBuffs()
+    {
+        CombatantModel opponent = new CombatantModel(PlayerState);
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                enemy.TriggerOnPlayerTurnEnd(opponent);
+        }
     }
 
     public BattleActionResult BeginEnemyAction(EnemyModel enemy)

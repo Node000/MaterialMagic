@@ -410,6 +410,7 @@ public static class RunSaveSystem
         if (data != null)
         {
             AppendHistoryRecord(data, resultType, playSeconds);
+            UnlockSystem.ProcessRunEnded(data, resultType);
             if (resultType == RunHistoryResultType.Victory)
                 data.victoryCount++;
             if (playSeconds >= 0f)
@@ -475,6 +476,7 @@ public static class RunSaveSystem
             File.Delete(summaryPath);
 
         ClearHistory(clampedSlotIndex);
+        UnlockProgressSaveSystem.Clear(clampedSlotIndex);
     }
 
     public static void ClearCurrentRun()
@@ -493,21 +495,22 @@ public static class RunSaveSystem
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
 
-        RunSaveData previousData = LoadSummary(CurrentSlotIndex);
+        RunSaveData currentData = LoadCurrentRun();
+        RunSaveData previousData = currentData ?? LoadSummary(CurrentSlotIndex);
         string now = DateTime.UtcNow.ToString("o");
         RunSaveData data = new RunSaveData
         {
             version = CurrentVersion,
             slotIndex = CurrentSlotIndex,
-            runId = previousData != null && !string.IsNullOrEmpty(previousData.runId) ? previousData.runId : Guid.NewGuid().ToString("N"),
-            createdAtUtc = previousData != null && !string.IsNullOrEmpty(previousData.createdAtUtc) ? previousData.createdAtUtc : now,
+            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId) ? currentData.runId : Guid.NewGuid().ToString("N"),
+            createdAtUtc = currentData != null && !string.IsNullOrEmpty(currentData.createdAtUtc) ? currentData.createdAtUtc : now,
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,
             victoryCount = previousData != null ? previousData.victoryCount : 0,
             tutorialCompleted = previousData != null && previousData.tutorialCompleted,
             tutorialEventShown = previousData != null && previousData.tutorialEventShown,
             totalPlaySeconds = playSeconds >= 0f ? playSeconds : (previousData != null ? previousData.totalPlaySeconds : 0f),
-            startConfigId = PlayerState.SelectedStartConfigId,
+            startConfigId = currentData != null && !string.IsNullOrEmpty(currentData.startConfigId) ? currentData.startConfigId : PlayerState.SelectedStartConfigId,
             runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
             chapterNumericId = chapter != null ? chapter.numericId : 0,
             currentMapNodeIndex = currentMapNodeIndex,
@@ -780,8 +783,9 @@ public static class RunSaveSystem
 
     private static RunSaveData CreateRunEndSnapshot(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds)
     {
-        RunSaveData previousData = LoadSummary(CurrentSlotIndex);
-        if (player == null && previousData == null)
+        RunSaveData currentData = LoadCurrentRun();
+        RunSaveData previousData = currentData ?? LoadSummary(CurrentSlotIndex);
+        if (player == null && currentData == null)
             return null;
 
         string now = DateTime.UtcNow.ToString("o");
@@ -789,15 +793,15 @@ public static class RunSaveSystem
         {
             version = CurrentVersion,
             slotIndex = CurrentSlotIndex,
-            runId = previousData != null && !string.IsNullOrEmpty(previousData.runId) ? previousData.runId : Guid.NewGuid().ToString("N"),
-            createdAtUtc = previousData != null && !string.IsNullOrEmpty(previousData.createdAtUtc) ? previousData.createdAtUtc : now,
+            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId) ? currentData.runId : Guid.NewGuid().ToString("N"),
+            createdAtUtc = currentData != null && !string.IsNullOrEmpty(currentData.createdAtUtc) ? currentData.createdAtUtc : now,
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,
             victoryCount = previousData != null ? previousData.victoryCount : 0,
             tutorialCompleted = previousData != null && previousData.tutorialCompleted,
             tutorialEventShown = previousData != null && previousData.tutorialEventShown,
             totalPlaySeconds = playSeconds >= 0f ? playSeconds : (previousData != null ? previousData.totalPlaySeconds : 0f),
-            startConfigId = previousData != null && !string.IsNullOrEmpty(previousData.startConfigId) ? previousData.startConfigId : PlayerState.SelectedStartConfigId,
+            startConfigId = currentData != null && !string.IsNullOrEmpty(currentData.startConfigId) ? currentData.startConfigId : PlayerState.SelectedStartConfigId,
             runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
             chapterNumericId = chapter != null ? chapter.numericId : (previousData != null ? previousData.chapterNumericId : 0),
             currentMapNodeIndex = mapNodes != null && mapNodes.Count > 0 ? currentMapNodeIndex : (previousData != null ? previousData.currentMapNodeIndex : 0),

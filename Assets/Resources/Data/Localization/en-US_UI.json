@@ -1,0 +1,432 @@
+{
+  "items": [
+    {
+      "key": "ui.common.none",
+      "text": "None"
+    },
+    {
+      "key": "ui.common.close",
+      "text": "Close"
+    },
+    {
+      "key": "ui.common.delete",
+      "text": "Delete"
+    },
+    {
+      "key": "ui.common.list_separator",
+      "text": ", "
+    },
+    {
+      "key": "ui.language.label",
+      "text": "Language"
+    },
+    {
+      "key": "ui.start_settings.title",
+      "text": "C:/Settings"
+    },
+    {
+      "key": "ui.start_settings.music",
+      "text": "Music"
+    },
+    {
+      "key": "ui.start_settings.sfx",
+      "text": "SFX"
+    },
+    {
+      "key": "ui.start_menu.start",
+      "text": "Start Game"
+    },
+    {
+      "key": "ui.start_menu.continue",
+      "text": "Continue"
+    },
+    {
+      "key": "ui.start_menu.settings",
+      "text": "Settings"
+    },
+    {
+      "key": "ui.start_menu.exit",
+      "text": "Exit Game"
+    },
+    {
+      "key": "ui.start_menu.choose_start_config",
+      "text": "Choose a start config"
+    },
+    {
+      "key": "ui.start_menu.start_with_config",
+      "text": "Start Game!"
+    },
+    {
+      "key": "ui.start_menu.confirm_exit",
+      "text": "Confirm Exit"
+    },
+    {
+      "key": "ui.start_menu.abandon_run",
+      "text": "Abandon Run"
+    },
+    {
+      "key": "ui.start_menu.confirm_abandon_run",
+      "text": "Confirm Abandon"
+    },
+    {
+      "key": "ui.start_menu.start_tutorial",
+      "text": "Start Tutorial"
+    },
+    {
+      "key": "ui.start_menu.start_tutorial_with_config",
+      "text": "Start Tutorial!"
+    },
+    {
+      "key": "ui.start_menu.skip_tutorial",
+      "text": "Skip Tutorial"
+    },
+    {
+      "key": "ui.start_menu.exit_prompt",
+      "text": "Exit the game?"
+    },
+    {
+      "key": "ui.start_menu.abandon_run_prompt",
+      "text": "Abandon the current run?"
+    },
+    {
+      "key": "ui.start_menu.tutorial_button",
+      "text": "Tutorial"
+    },
+    {
+      "key": "ui.start_menu.forum_button",
+      "text": "Community"
+    },
+    {
+      "key": "ui.start_menu.history_button",
+      "text": "History"
+    },
+    {
+      "key": "ui.start_menu.change_save",
+      "text": "Change Save"
+    },
+    {
+      "key": "ui.start_config.select",
+      "text": "Select"
+    },
+    {
+      "key": "ui.start_config.selected",
+      "text": "Selected"
+    },
+    {
+      "key": "ui.start_config.health",
+      "text": "Health {0}"
+    },
+    {
+      "key": "ui.start_config.deck_title",
+      "text": "C:/DECK/"
+    },
+    {
+      "key": "ui.start_config.magic_label",
+      "text": "Starting Spells"
+    },
+    {
+      "key": "ui.start_config.material_label",
+      "text": "Starting Arrows"
+    },
+    {
+      "key": "ui.start_config.balanced.name",
+      "text": "Balanced"
+    },
+    {
+      "key": "ui.start_config.ice_fire.name",
+      "text": "Ice & Fire"
+    },
+    {
+      "key": "ui.start_config.wind_dust.name",
+      "text": "Wind & Dust"
+    },
+    {
+      "key": "ui.start_config.blank.name",
+      "text": "Better Everything"
+    },
+    {
+      "key": "ui.save_slot.title",
+      "text": "Save {0}"
+    },
+    {
+      "key": "ui.save_slot.current_title",
+      "text": "▶ Current Save {0}"
+    },
+    {
+      "key": "ui.save_slot.summary",
+      "text": "{0}\nVictories: {1}\nPlay Time: {2} min\nLast Played: {3}"
+    },
+    {
+      "key": "ui.save_slot.delete",
+      "text": "Delete"
+    },
+    {
+      "key": "ui.run_history.title",
+      "text": "C:/Run History"
+    },
+    {
+      "key": "ui.run_history.empty",
+      "text": "No run history"
+    },
+    {
+      "key": "ui.run_history.detail_header",
+      "text": "Run Details"
+    },
+    {
+      "key": "ui.run_history.magic_header",
+      "text": "Item Details"
+    },
+    {
+      "key": "ui.run_history.arrow_header",
+      "text": "Arrow Details"
+    },
+    {
+      "key": "ui.run_history.arrow_detail_hint",
+      "text": "Hover an arrow to view details"
+    },
+    {
+      "key": "ui.run_history.no_arrow_record",
+      "text": "No arrow records"
+    },
+    {
+      "key": "ui.run_history.result.victory",
+      "text": "Victory"
+    },
+    {
+      "key": "ui.run_history.result.defeat",
+      "text": "Defeat"
+    },
+    {
+      "key": "ui.run_history.result.abandon",
+      "text": "Abandoned"
+    },
+    {
+      "key": "ui.run_history.unknown_time",
+      "text": "Unknown Time"
+    },
+    {
+      "key": "ui.run_history.time.hours_minutes_seconds",
+      "text": "{0}h {1}m {2}s"
+    },
+    {
+      "key": "ui.run_history.time.minutes_seconds",
+      "text": "{0}m {1}s"
+    },
+    {
+      "key": "ui.run_history.time.seconds",
+      "text": "{0}s"
+    },
+    {
+      "key": "ui.run_history.detail.date",
+      "text": "Date: {0}"
+    },
+    {
+      "key": "ui.run_history.detail.result",
+      "text": "Result: {0}"
+    },
+    {
+      "key": "ui.run_history.detail.time",
+      "text": "Time: {0}"
+    },
+    {
+      "key": "ui.run_history.detail.progress",
+      "text": "Progress: {0}"
+    },
+    {
+      "key": "ui.run_history.detail.health",
+      "text": "Health: {0}/{1}"
+    },
+    {
+      "key": "ui.run_history.detail.gold",
+      "text": "Gold: {0}"
+    },
+    {
+      "key": "ui.run_history.detail.version",
+      "text": "Version: {0} / Record v{1}"
+    },
+    {
+      "key": "ui.run_history.build.magic_prefix",
+      "text": "Items: "
+    },
+    {
+      "key": "ui.run_history.build.arrow_prefix",
+      "text": "Arrows: "
+    },
+    {
+      "key": "ui.run_history.build.arrow_count_suffix",
+      "text": ""
+    },
+    {
+      "key": "ui.start_tutorial.title",
+      "text": "Tutorial"
+    },
+    {
+      "key": "ui.start_tutorial.prompt",
+      "text": "The most important thing:\n\nClick arrows to select them, then arrange and play them.\n\nPlay different arrows to form combos and smash your items into enemies!\n\nEvents are also resolved by playing Up, Down, Left, and Right.\n\nYep... that's it!\n\nClick the top-right corner of this popup to close the tutorial,\n\nthen start the game!"
+    },
+    {
+      "key": "ui.forum.title",
+      "text": "C:/Community"
+    },
+    {
+      "key": "ui.magic.empty_slot.label",
+      "text": "Empty"
+    },
+    {
+      "key": "ui.magic.empty_slot.title",
+      "text": "Empty Item Slot"
+    },
+    {
+      "key": "ui.magic.empty_slot.body",
+      "text": "A new item can be placed here."
+    },
+    {
+      "key": "ui.unified_detail.section.modifier",
+      "text": "Enhancement"
+    },
+    {
+      "key": "ui.unified_detail.section.arrow_effect",
+      "text": "Arrow Effect"
+    },
+    {
+      "key": "ui.unified_detail.section.tag",
+      "text": "Keyword"
+    },
+    {
+      "key": "ui.unified_detail.material.display_direction",
+      "text": "Display Direction"
+    },
+    {
+      "key": "ui.unified_detail.event.effect_prefix",
+      "text": "Effect:"
+    },
+    {
+      "key": "ui.unified_detail.material.fallback_title",
+      "text": " Arrow"
+    },
+    {
+      "key": "ui.unified_detail.reward.none",
+      "text": "None"
+    },
+    {
+      "key": "ui.unified_detail.reward.gold",
+      "text": "Gain Gold ×{0}"
+    },
+    {
+      "key": "ui.unified_detail.reward.heal",
+      "text": "Heal ×{0}"
+    },
+    {
+      "key": "ui.unified_detail.map_move.title",
+      "text": "Map Move"
+    },
+    {
+      "key": "ui.unified_detail.map_move.fire.body",
+      "text": "Move up one tile."
+    },
+    {
+      "key": "ui.unified_detail.map_move.wind.body",
+      "text": "Move left one tile."
+    },
+    {
+      "key": "ui.unified_detail.map_move.water.body",
+      "text": "Move down one tile."
+    },
+    {
+      "key": "ui.unified_detail.map_move.earth.body",
+      "text": "Move right one tile."
+    },
+    {
+      "key": "ui.unified_detail.material.direction_prefix",
+      "text": ""
+    },
+    {
+      "key": "ui.unified_detail.material.single_play_prefix",
+      "text": "Play alone"
+    },
+    {
+      "key": "ui.magic_modifier.panel.material_title",
+      "text": "Choose Arrow Enchantment"
+    },
+    {
+      "key": "ui.magic_modifier.panel.material_hint",
+      "text": "Choose an enchantment, then choose an arrow to apply it. Later enchantments replace older ones."
+    },
+    {
+      "key": "ui.magic_modifier.panel.material_empty",
+      "text": "No arrow enchantments available"
+    },
+    {
+      "key": "ui.battle.card_disabled",
+      "text": "This card cannot be played this turn!"
+    },
+    {
+      "key": "ui.battle.end_turn.prepare",
+      "text": "Prepare"
+    },
+    {
+      "key": "ui.battle.end_turn.resolve",
+      "text": "Act"
+    },
+    {
+      "key": "ui.shop.item.fallback_magic",
+      "text": "Item"
+    },
+    {
+      "key": "ui.shop.item.remove_material",
+      "text": "Remove Card"
+    },
+    {
+      "key": "ui.shop.item.arrow_title",
+      "text": "{0} Arrow"
+    },
+    {
+      "key": "ui.shop.state.purchased",
+      "text": "Purchased"
+    },
+    {
+      "key": "ui.shop.state.selected",
+      "text": "Selected"
+    },
+    {
+      "key": "ui.shop.state.select_remove_material",
+      "text": "Choose a card to remove"
+    },
+    {
+      "key": "ui.shop.state.unavailable",
+      "text": "Unavailable"
+    },
+    {
+      "key": "ui.shop.state.buy",
+      "text": "Click to buy"
+    },
+    {
+      "key": "ui.shop.state.not_enough_gold",
+      "text": "Not enough Gold"
+    },
+    {
+      "key": "ui.start_config.locked",
+      "text": "Locked"
+    },
+    {
+      "key": "ui.unlock_popup.title",
+      "text": "New Content Unlocked!"
+    },
+    {
+      "key": "ui.unlock_popup.type.start_config",
+      "text": "Start Config"
+    },
+    {
+      "key": "ui.unlock_popup.type.magic",
+      "text": "Item"
+    },
+    {
+      "key": "ui.unlock_popup.type.material_modifier",
+      "text": "Arrow Enchantment"
+    },
+    {
+      "key": "ui.unlock_popup.type.magic_modifier",
+      "text": "Item Upgrade"
+    }
+  ]
+}

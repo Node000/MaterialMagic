@@ -42,7 +42,6 @@
       "iconName": "7",
       "element": 1,
       "tagIds": [
-        "burning",
         "kindling"
       ],
       "recipe": [
@@ -61,7 +60,8 @@
       "iconName": "8",
       "element": 1,
       "tagIds": [
-        "burning"
+        "burning",
+        "temporary"
       ],
       "recipe": [
         4,
@@ -113,8 +113,7 @@
       "iconName": "11",
       "element": 1,
       "tagIds": [
-        "burning",
-        "spell_power"
+        "burning"
       ],
       "recipe": [
         1,
@@ -163,7 +162,9 @@
       "descriptionKey": "magic.wind_blade.desc",
       "iconName": "14",
       "element": 2,
-      "tagIds": [],
+      "tagIds": [
+        "spell_power"
+      ],
       "recipe": [
         2,
         2
@@ -214,7 +215,8 @@
       "iconName": "17",
       "element": 2,
       "tagIds": [
-        "arc"
+        "arc",
+        "spell_power"
       ],
       "recipe": [
         2,
@@ -233,7 +235,6 @@
       "iconName": "18",
       "element": 2,
       "tagIds": [
-        "spell_power",
         "charge"
       ],
       "recipe": [
@@ -268,7 +269,8 @@
       "iconName": "20",
       "element": 2,
       "tagIds": [
-        "extra_draw"
+        "extra_draw",
+        "retained_arrow"
       ],
       "recipe": [
         2,
@@ -303,7 +305,7 @@
       "iconName": "22",
       "element": 3,
       "tagIds": [
-        "extra_refresh"
+        "debuff_power"
       ],
       "recipe": [
         3,
@@ -389,9 +391,7 @@
       "descriptionKey": "magic.tide_hand.desc",
       "iconName": "27",
       "element": 3,
-      "tagIds": [
-        "debuff_power"
-      ],
+      "tagIds": [],
       "recipe": [
         3,
         3,
@@ -409,6 +409,7 @@
       "iconName": "28",
       "element": 3,
       "tagIds": [
+        "vulnerable",
         "weak"
       ],
       "recipe": [
@@ -474,8 +475,8 @@
       "iconName": "32",
       "element": 4,
       "tagIds": [
-        "weak",
-        "slow"
+        "slow",
+        "weak"
       ],
       "recipe": [
         4,
@@ -562,7 +563,7 @@
       "iconName": "不倒翁",
       "element": 4,
       "tagIds": [
-        "shield_reflect_boost"
+        "extra_enemy_debuff"
       ],
       "recipe": [
         2,

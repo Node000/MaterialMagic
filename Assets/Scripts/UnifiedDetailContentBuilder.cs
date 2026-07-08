@@ -558,7 +558,7 @@ public static class UnifiedDetailContentBuilder
     private static string GetMaterialTitle(MaterialModel material, MaterialEnum displayMaterial)
     {
         string materialName = LocalizationKeys.GetMaterialName(displayMaterial);
-        string fallbackTitle = TextConfig != null ? TextConfig.FallbackMaterialTitle : "箭头";
+        string fallbackTitle = TextConfig != null ? TextConfig.FallbackMaterialTitle : LocalizationSystem.GetText("ui.unified_detail.material.fallback_title", string.Empty);
         return string.IsNullOrEmpty(materialName) ? fallbackTitle : materialName + fallbackTitle;
     }
 
@@ -579,9 +579,27 @@ public static class UnifiedDetailContentBuilder
             return text;
 
         string prefix = text.Substring(0, separatorIndex);
-        if (prefix.StartsWith("向", StringComparison.Ordinal) || prefix.StartsWith("单独打出", StringComparison.Ordinal))
+        if (IsMaterialEffectPrefix(prefix))
             return text.Substring(separatorIndex + 1).TrimStart();
         return text;
+    }
+
+    private static bool IsMaterialEffectPrefix(string prefix)
+    {
+        if (string.IsNullOrEmpty(prefix))
+            return false;
+
+        string directionPrefix = LocalizationSystem.GetText("ui.unified_detail.material.direction_prefix", string.Empty);
+        string singlePlayPrefix = LocalizationSystem.GetText("ui.unified_detail.material.single_play_prefix", string.Empty);
+        if (!string.IsNullOrEmpty(directionPrefix) && prefix.StartsWith(directionPrefix, StringComparison.Ordinal))
+            return true;
+        if (!string.IsNullOrEmpty(singlePlayPrefix) && prefix.StartsWith(singlePlayPrefix, StringComparison.Ordinal))
+            return true;
+
+        return prefix == LocalizationKeys.GetMaterialName(MaterialEnum.Fire)
+            || prefix == LocalizationKeys.GetMaterialName(MaterialEnum.Water)
+            || prefix == LocalizationKeys.GetMaterialName(MaterialEnum.Wind)
+            || prefix == LocalizationKeys.GetMaterialName(MaterialEnum.Earth);
     }
 
     private static string GetMaterialSinglePlayFallback(MaterialEnum material)
@@ -589,17 +607,17 @@ public static class UnifiedDetailContentBuilder
         switch (material)
         {
             case MaterialEnum.Fire:
-                return "向上：造成<attack>3点伤害";
+                return LocalizationSystem.GetText("material.fire.single_play", string.Empty);
             case MaterialEnum.Water:
-                return "向下：随机施加1层<buff_weak>或<buff_slow>";
+                return LocalizationSystem.GetText("material.water.single_play", string.Empty);
             case MaterialEnum.Wind:
-                return "向左：下回合额外抽1张牌";
+                return LocalizationSystem.GetText("material.wind.single_play", string.Empty);
             case MaterialEnum.Earth:
-                return "向右：获得<shield>3";
+                return LocalizationSystem.GetText("material.earth.single_play", string.Empty);
             case MaterialEnum.Wild:
-                return "这是一张特殊箭头";
+                return LocalizationSystem.GetText("material.wild.single_play", string.Empty);
             default:
-                return "无基础效果";
+                return LocalizationSystem.GetText("material.none.single_play", string.Empty);
         }
     }
 
@@ -607,12 +625,12 @@ public static class UnifiedDetailContentBuilder
     {
         switch (material)
         {
-            case MaterialEnum.Fire: return "<fire>上";
-            case MaterialEnum.Water: return "<water>下";
-            case MaterialEnum.Wind: return "<wind>左";
-            case MaterialEnum.Earth: return "<earth>右";
-            case MaterialEnum.Wild: return "万能";
-            default: return "无";
+            case MaterialEnum.Fire: return "<fire>" + LocalizationKeys.GetMaterialName(MaterialEnum.Fire);
+            case MaterialEnum.Water: return "<water>" + LocalizationKeys.GetMaterialName(MaterialEnum.Water);
+            case MaterialEnum.Wind: return "<wind>" + LocalizationKeys.GetMaterialName(MaterialEnum.Wind);
+            case MaterialEnum.Earth: return "<earth>" + LocalizationKeys.GetMaterialName(MaterialEnum.Earth);
+            case MaterialEnum.Wild: return LocalizationKeys.GetMaterialName(MaterialEnum.Wild);
+            default: return LocalizationKeys.GetMaterialName(MaterialEnum.None);
         }
     }
 

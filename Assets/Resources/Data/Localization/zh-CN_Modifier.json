@@ -54,7 +54,7 @@
     },
     {
       "key": "modifier.sturdy.desc",
-      "text": "以此素材触发道具时，获得1点护盾；离开手牌或出牌区时消失。"
+      "text": "以此素材触发道具时，获得1点护盾。"
     },
     {
       "key": "modifier.doom.name",

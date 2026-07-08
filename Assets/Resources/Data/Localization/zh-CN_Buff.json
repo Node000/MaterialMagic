@@ -22,7 +22,7 @@
     },
     {
       "key": "buff.weak.desc",
-      "text": "每层使攻击下降1，回合结束时层数减半。"
+      "text": "每层使攻击下降1。每一击攻击后和回合结束时，层数减半。"
     },
     {
       "key": "buff.vulnerable.name",
@@ -30,7 +30,7 @@
     },
     {
       "key": "buff.vulnerable.desc",
-      "text": "每层使受到伤害+1，回合开始时层数减半。"
+      "text": "每层使受到伤害+1，受到伤害后减少1层。"
     },
     {
       "key": "buff.slow.name",
@@ -38,7 +38,7 @@
     },
     {
       "key": "buff.slow.desc",
-      "text": "每层使防御下降1，回合结束时层数减半。"
+      "text": "每层使获得护盾下降1。获得护盾时，按本次被削减的护盾值减少等量层数，回合结束时层数减半。"
     },
     {
       "key": "buff.arc.name",
@@ -46,7 +46,7 @@
     },
     {
       "key": "buff.arc.desc",
-      "text": "每次触发道具时，该目标受到层数点额外伤害，回合结束时清除。"
+      "text": "每次触发道具时，该目标受到层数点额外伤害，该伤害不受易损影响，回合结束时清除。"
     },
     {
       "key": "buff.spell_power.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "buff.sturdy.desc",
-      "text": "下回合开始抽牌结束后，所有手牌获得【坚固】，生效后清除。"
+      "text": "下回合抽到的前{0}张素材牌获得【坚固】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
     },
     {
       "key": "modifier.sturdy.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "modifier.sturdy.desc",
-      "text": "以此素材牌触发道具时，获得1点护盾；离开手牌或出牌区时消失。"
+      "text": "以此素材牌触发道具时，获得1点护盾。"
     },
     {
       "key": "buff.stable.name",
@@ -278,7 +278,7 @@
     },
     {
       "key": "buff.extra_draw_on_enemy_damage.desc",
-      "text": "本回合每对敌方造成两次生命伤害，下回合额外抽{0}张牌。"
+      "text": "本回合每对敌方造成三次生命伤害，下回合额外抽{0}张牌。"
     },
     {
       "key": "buff.shield_reflect_boost.name",
@@ -298,7 +298,7 @@
     },
     {
       "key": "buff.next_magic_repeat.name",
-      "text": "下个道具重复"
+      "text": "重复触发"
     },
     {
       "key": "buff.next_magic_repeat.desc",
@@ -343,6 +343,42 @@
     {
       "key": "buff.tutorial_death.desc",
       "text": "{0}回合后死亡。"
+    },
+    {
+      "key": "buff.retained_next_draw.name",
+      "text": "下回合保留"
+    },
+    {
+      "key": "buff.retained_next_draw.desc",
+      "text": "下回合抽到的前{0}张素材牌获得【保留】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
+    },
+    {
+      "key": "buff.double_enemy_burning_on_turn_end.name",
+      "text": "燃烧翻倍"
+    },
+    {
+      "key": "buff.double_enemy_burning_on_turn_end.desc",
+      "text": "玩家回合结束时，翻倍该目标燃烧层数，生效后清除。"
+    },
+    {
+      "key": "buff.preparedshield.name",
+      "text": "预备护盾"
+    },
+    {
+      "key": "buff.preparedshield.desc",
+      "text": "下回合开始时获得等同层数的护盾，生效后清除。"
+    },
+    {
+      "key": "buff.attributedisabled.desc_with_material",
+      "text": "本回合无法选中{0}属性素材。"
+    },
+    {
+      "key": "buff.extra_enemy_debuff.name",
+      "text": "负面增幅"
+    },
+    {
+      "key": "buff.extra_enemy_debuff.desc",
+      "text": "本回合敌方每获得{0}层负面状态，额外获得等量负面状态。"
     }
   ]
 }

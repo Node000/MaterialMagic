@@ -32,6 +32,12 @@ public class RunHistoryPanelUI : MonoBehaviour
     {
         CacheReferences();
         BindButtons();
+        LocalizationSystem.LanguageChanged += HandleLanguageChanged;
+    }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= HandleLanguageChanged;
     }
 
     public void Show()
@@ -123,7 +129,7 @@ public class RunHistoryPanelUI : MonoBehaviour
     private void RefreshSelectedRecord()
     {
         if (detailText != null)
-            detailText.text = selectedRecord != null ? BuildDetailText(selectedRecord) : "暂无历史记录";
+            detailText.text = selectedRecord != null ? BuildDetailText(selectedRecord) : LocalizationSystem.GetText("ui.run_history.empty", "暂无历史记录");
         if (buildListText != null)
         {
             buildListText.text = string.Empty;
@@ -203,7 +209,9 @@ public class RunHistoryPanelUI : MonoBehaviour
     private void ClearArrowDetail()
     {
         if (arrowDetailText != null)
-            arrowDetailText.text = selectedRecord != null && selectedRecord.deck != null && selectedRecord.deck.Length > 0 ? "悬停箭头查看详情" : "没有箭头记录";
+            arrowDetailText.text = selectedRecord != null && selectedRecord.deck != null && selectedRecord.deck.Length > 0
+                ? LocalizationSystem.GetText("ui.run_history.arrow_detail_hint", "悬停箭头查看详情")
+                : LocalizationSystem.GetText("ui.run_history.no_arrow_record", "没有箭头记录");
     }
 
     private static MagicModel CreateMagicForSlot(MagicSlotSaveData[] magicBook, int slotIndex)
@@ -291,13 +299,13 @@ public class RunHistoryPanelUI : MonoBehaviour
     private static string BuildDetailText(RunHistoryRecordData record)
     {
         StringBuilder builder = new StringBuilder();
-        builder.AppendLine($"日期：{FormatDate(record.endedAtUtc)}");
-        builder.AppendLine($"结果：{GetResultText(record.resultType)}");
-        builder.AppendLine($"用时：{FormatPlayTime(record.playSeconds)}");
-        builder.AppendLine($"进度：{record.progressText}");
-        builder.AppendLine($"生命：{record.currentHealth}/{record.maxHealth}");
-        builder.AppendLine($"金币：{record.gold}");
-        builder.AppendLine($"版本：{record.gameVersion} / 记录v{record.historyVersion}");
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.date", "日期：{0}"), FormatDate(record.endedAtUtc)));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.result", "结果：{0}"), GetResultText(record.resultType)));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.time", "用时：{0}"), FormatPlayTime(record.playSeconds)));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.progress", "进度：{0}"), record.progressText));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.health", "生命：{0}/{1}"), record.currentHealth, record.maxHealth));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.gold", "金币：{0}"), record.gold));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.version", "版本：{0} / 记录v{1}"), record.gameVersion, record.historyVersion));
         return builder.ToString();
     }
 
@@ -305,7 +313,7 @@ public class RunHistoryPanelUI : MonoBehaviour
     {
         StringBuilder builder = new StringBuilder();
         builder.AppendLine(record.buildSummary);
-        builder.Append("道具：");
+        builder.Append(LocalizationSystem.GetText("ui.run_history.build.magic_prefix", "道具："));
         int magicCount = 0;
         for (int i = 0; record.magicBook != null && i < record.magicBook.Length; i++)
         {
@@ -313,16 +321,16 @@ public class RunHistoryPanelUI : MonoBehaviour
             if (magic == null)
                 continue;
             if (magicCount > 0)
-                builder.Append("、");
+                builder.Append(LocalizationSystem.GetText("ui.common.list_separator", "、"));
             builder.Append(magic.Name);
             magicCount++;
         }
         if (magicCount == 0)
-            builder.Append("无");
+            builder.Append(LocalizationSystem.GetText("ui.common.none", "无"));
         builder.AppendLine();
-        builder.Append("箭头：");
+        builder.Append(LocalizationSystem.GetText("ui.run_history.build.arrow_prefix", "箭头："));
         builder.Append(record.deck != null ? record.deck.Length : 0);
-        builder.Append("张");
+        builder.Append(LocalizationSystem.GetText("ui.run_history.build.arrow_count_suffix", "张"));
         return builder.ToString();
     }
 
@@ -330,9 +338,9 @@ public class RunHistoryPanelUI : MonoBehaviour
     {
         switch (resultType)
         {
-            case "Victory": return "通关";
-            case "Defeat": return "失败";
-            case "Abandon": return "放弃";
+            case "Victory": return LocalizationSystem.GetText("ui.run_history.result.victory", "通关");
+            case "Defeat": return LocalizationSystem.GetText("ui.run_history.result.defeat", "失败");
+            case "Abandon": return LocalizationSystem.GetText("ui.run_history.result.abandon", "放弃");
             default: return resultType;
         }
     }
@@ -341,7 +349,7 @@ public class RunHistoryPanelUI : MonoBehaviour
     {
         if (DateTime.TryParse(utc, null, DateTimeStyles.RoundtripKind, out DateTime dateTime))
             return dateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-        return "未知时间";
+        return LocalizationSystem.GetText("ui.run_history.unknown_time", "未知时间");
     }
 
     private static string FormatPlayTime(float seconds)
@@ -351,10 +359,16 @@ public class RunHistoryPanelUI : MonoBehaviour
         int minutes = totalSeconds % 3600 / 60;
         int second = totalSeconds % 60;
         if (hours > 0)
-            return $"{hours}小时{minutes}分{second}秒";
+            return string.Format(LocalizationSystem.GetText("ui.run_history.time.hours_minutes_seconds", "{0}小时{1}分{2}秒"), hours, minutes, second);
         if (minutes > 0)
-            return $"{minutes}分{second}秒";
-        return $"{second}秒";
+            return string.Format(LocalizationSystem.GetText("ui.run_history.time.minutes_seconds", "{0}分{1}秒"), minutes, second);
+        return string.Format(LocalizationSystem.GetText("ui.run_history.time.seconds", "{0}秒"), second);
+    }
+
+    private void HandleLanguageChanged()
+    {
+        if (gameObject.activeSelf)
+            Refresh();
     }
 
     private static RectTransform FindChildRectRecursive(Transform root, string name)

@@ -7,6 +7,7 @@ public class StartExitConfirmPanelUI : MonoBehaviour
 {
     [SerializeField] private RectTransform panelRect;
     [SerializeField] private TMP_Text promptText;
+    [SerializeField] private string promptKey = "ui.start_menu.exit_prompt";
     [SerializeField] private string prompt = "是否退出游戏？";
     [SerializeField] private Vector2 shownPosition = new Vector2(280f, -220f);
     [SerializeField] private Vector2 hiddenPosition = new Vector2(-620f, -220f);
@@ -15,26 +16,36 @@ public class StartExitConfirmPanelUI : MonoBehaviour
     [SerializeField] private Ease hideEase = Ease.OutCubic;
 
     private Tween moveTween;
+    private string currentPromptKey;
+    private string currentPromptFallback;
 
     public bool IsShowing => gameObject.activeSelf;
 
     private void Awake()
     {
         ResolveReferences();
-        if (promptText != null)
-            promptText.text = prompt;
+        LocalizationSystem.LanguageChanged += RefreshPromptText;
+        SetCurrentPrompt(promptKey, prompt);
+        RefreshPromptText();
         if (panelRect != null)
             panelRect.anchoredPosition = hiddenPosition;
     }
 
     private void OnDestroy()
     {
+        LocalizationSystem.LanguageChanged -= RefreshPromptText;
         moveTween?.Kill(false);
     }
 
     public void Show()
     {
-        Show(prompt);
+        ShowLocalized(promptKey, prompt);
+    }
+
+    public void ShowLocalized(string key, string fallback)
+    {
+        SetCurrentPrompt(key, fallback);
+        Show(LocalizationSystem.GetText(currentPromptKey, currentPromptFallback));
     }
 
     public void Show(string message)
@@ -69,6 +80,18 @@ public class StartExitConfirmPanelUI : MonoBehaviour
     public bool Contains(Transform hit)
     {
         return hit != null && hit.IsChildOf(transform);
+    }
+
+    private void RefreshPromptText()
+    {
+        if (promptText != null && gameObject.activeSelf)
+            promptText.text = LocalizationSystem.GetText(currentPromptKey, currentPromptFallback);
+    }
+
+    private void SetCurrentPrompt(string key, string fallback)
+    {
+        currentPromptKey = key;
+        currentPromptFallback = fallback;
     }
 
     private void ResolveReferences()

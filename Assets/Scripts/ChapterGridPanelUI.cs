@@ -151,6 +151,11 @@ public class ChapterGridPanelUI : MonoBehaviour
 
     public void Hide()
     {
+        HideAnimated();
+    }
+
+    public Tween HideAnimated()
+    {
         inputLocked = true;
         ResetScrollMotion();
         scrollTween?.Kill(false);
@@ -159,7 +164,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         ClearDirectionButtons();
         owner?.GetUIManager()?.UnifiedDetailPopup?.HideImmediate();
         if (!gameObject.activeSelf)
-            return;
+            return null;
 
         panelTween?.Kill(false);
         CanvasGroup canvasGroup = GetOrAddCanvasGroup();
@@ -173,6 +178,7 @@ public class ChapterGridPanelUI : MonoBehaviour
                 canvasGroup.alpha = 1f;
                 rectTransform.anchoredPosition = shownAnchoredPosition;
             });
+        return panelTween;
     }
 
     public void SetInputLocked(bool locked)

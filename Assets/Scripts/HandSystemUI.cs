@@ -341,6 +341,9 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float levelSelectAfterMapHideFallbackDelay = 0.28f;
 
+	[SerializeField, Range(0f, 1f)]
+	private float battleStartMapHideProgress = 0.5f;
+
 		[SerializeField]
 		private UIManager uiManager;
 
@@ -404,6 +407,12 @@ public class HandSystemUI : MonoBehaviour
 
 	private readonly List<EnemyViewState> enemyViewStates = new List<EnemyViewState>();
 
+	private readonly List<RectTransform> enemyViewPool = new List<RectTransform>();
+
+    private Coroutine battleStartRoutine;
+
+    private bool deferEnemyViewCreation;
+
     private readonly List<RaycastResult> playInputRaycastResults = new List<RaycastResult>(8);
 
     private PointerEventData playInputPointerEventData;
@@ -433,6 +442,8 @@ public class HandSystemUI : MonoBehaviour
 	    private RunManager runManager;
 
 	private readonly List<RunMapNodeModel> mapNodes = new List<RunMapNodeModel>();
+
+	private readonly List<Vector2Int> designedChapterBlockedCells = new List<Vector2Int>();
 
 	private readonly List<CombatantModel> magicEnemyTargets = new List<CombatantModel>();
 
@@ -661,15 +672,25 @@ public class HandSystemUI : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayBattleMusic();
         battleManager.BeginBattleRules();
-				BeginPlayerTurn(playerState.DrawCount);
-                SaveRunProgress();
-				ResetMagicHighlights();
+					BeginPlayerTurn(playerState.DrawCount);
+	                SaveRunProgress();
+					ResetMagicHighlights();
 
         busy = false;
         SetButtonsInteractable(true);
     }
 
+    public void DebugCompleteRun()
+    {
+        if (runEnded || playerState == null)
+            return;
+
+        debugBattleActive = false;
+        ShowVictoryPanel();
+    }
+
     public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
+
     {
         if (!debugBattleActive)
             return;
@@ -1065,8 +1086,10 @@ public class HandSystemUI : MonoBehaviour
         SaveRunProgress();
         busy = true;
         SetButtonsInteractable(interactable: false);
-        HideMapPanel();
-        HideLevelSelectPanelAnimated(() => StartLevelAfterSelectClosed(level));
+        Tween mapHideTween = HideMapPanel();
+        bool levelSelectHidden = false;
+        HideLevelSelectPanelAnimated(() => levelSelectHidden = true);
+        StartCoroutine(StartLevelAfterTransitionRoutine(level, null, mapHideTween, () => levelSelectHidden));
 	}
 
 	private void RevealSelectedMapLevel(RunMapNodeModel node, LevelData selectedLevel)
@@ -1119,137 +1142,246 @@ public class HandSystemUI : MonoBehaviour
             }
             busy = true;
             SetButtonsInteractable(false);
-            HideMapPanel();
-            HideLevelSelectPanelAnimated(() => StartLevelAfterSelectClosed(level, saveData));
+            Tween mapHideTween = HideMapPanel();
+            bool levelSelectHidden = false;
+            HideLevelSelectPanelAnimated(() => levelSelectHidden = true);
+            StartCoroutine(StartLevelAfterTransitionRoutine(level, saveData, mapHideTween, () => levelSelectHidden));
         }
 
-		private void StartLevelAfterSelectClosed(LevelData level)
+				private IEnumerator StartLevelAfterTransitionRoutine(LevelData level, RunSaveData saveData, Tween mapHideTween, Func<bool> isLevelSelectHidden)
         {
-            StartLevelAfterSelectClosed(level, null);
-        }
-
-		private void StartLevelAfterSelectClosed(LevelData level, RunSaveData saveData)
-	    {
-			if (IsEventLikeLevel(level.levelType))
-			{
-				StartEventLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
-			}
-			else if (level.levelType == LevelType.Shop)
-			{
-				StartShopLevel(level, RunSaveSystem.GetSavedShop(saveData, level));
-			}
-			else if (level.levelType == LevelType.Rest)
-			{
-				StartRestLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
-			}
-			else if (level.levelType == LevelType.Reward)
-			{
-				StartRewardLevel(level);
-			}
-			else
-			{
-				StartBattleLevel(level, RunSaveSystem.GetSavedBattle(saveData));
-			}
-		}
-
-
-		private void StartBattleLevel(LevelData level, BattleNodeSaveData savedBattle = null)
-		{
-
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Expected O, but got Unknown
-        int configuredEnemyCount = level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0
-            ? level.randomEnemyGroups[0].enemies.Length
-            : level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
-		GameLog.Data("Start battle level=" + level.id + " enemies=" + configuredEnemyCount);
-        if (AudioManager.Instance != null)
-        {
-            if (currentChapterMapBossLevel)
-                AudioManager.Instance.PlayBossBattleMusic();
+            bool battleLevel = IsBattleLevel(level);
+            if (battleLevel)
+                yield return WaitForTweenProgress(mapHideTween, battleStartMapHideProgress);
             else
-                AudioManager.Instance.PlayBattleMusic();
-        }
-		currentLevel = level;
-		runManager?.BeginLevel(level);
-        runManager?.SetBattle(battleManager);
-			currentEvent = null;
-			refreshUsedThisTurn = false;
-			ResetBattleDeckState();
-			HideMapPanel();
-			enemyModels.Clear();
-			battleManager.ClearEnemies();
-        ClearEnemyViews();
-        if (savedBattle != null)
-        {
-            RunSaveSystem.RestoreBattle(savedBattle, battleManager, playerState);
-            RefreshStaticUI();
-            RefreshMaterialListPanel();
-            RebuildCards(true);
-            RefreshEnemyUI((RectTransform)null, true);
-            ResetMagicHighlights();
-            busy = false;
-            SetButtonsInteractable(true);
-            SaveRunProgress();
-            return;
-        }
-        runManager?.AdvanceRunRandomStep();
-        SaveRunProgress();
-
-		bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(level);
-		if (tutorialBattle)
-		{
-			TutorialManager.BeginTutorialBattle();
-		}
-        if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
-        {
-            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
-            if (group != null && group.enemies != null)
             {
-                for (int i = 0; i < group.enemies.Length; i++)
-                {
-                    battleManager.SpawnEnemy(group.enemies[i]);
-                }
+                yield return WaitForTweenCompletion(mapHideTween);
+                yield return WaitForCondition(isLevelSelectHidden);
             }
+            yield return null;
+            StartLevelAfterSelectClosed(level, saveData, battleLevel ? mapHideTween : null, battleLevel ? isLevelSelectHidden : null);
         }
-		else if (level.enemies != null && level.enemies.Length > 0)
-		{
-			for (int i = 0; i < level.enemies.Length; i++)
-			{
-				battleManager.SpawnEnemy(level.enemies[i]);
-			}
-		}
-		else if (level.enemyIds != null)
-		{
-			for (int i = 0; i < level.enemyIds.Length; i++)
-			{
-				battleManager.SpawnEnemy(level.enemyIds[i]);
-			}
-		}
-		if (battleManager.Enemies.Count != 0)
-		{
-            battleManager.BeginBattleRules();
-				BeginPlayerTurn(playerState.DrawCount);
-                SaveRunProgress();
-				ResetMagicHighlights();
-				busy = false;
 
-			SetButtonsInteractable(interactable: true);
+				private IEnumerator WaitForTweenProgress(Tween tween, float progress)
+		{
+			if (tween == null)
+				yield break;
+
+			progress = Mathf.Clamp01(progress);
+			while (tween.IsActive() && !tween.IsComplete() && tween.ElapsedPercentage(false) < progress)
+				yield return null;
 		}
-	}
+
+		private IEnumerator WaitForTweenCompletion(Tween tween)
+		{
+			if (tween != null && tween.IsActive() && !tween.IsComplete())
+				yield return tween.WaitForCompletion();
+		}
+
+		private IEnumerator WaitForCondition(Func<bool> condition)
+		{
+			if (condition == null)
+				yield break;
+
+			while (!condition())
+				yield return null;
+		}
+
+				private void StartLevelAfterSelectClosed(LevelData level)
+        {
+            StartLevelAfterSelectClosed(level, null, null, null);
+        }
+
+				private void StartLevelAfterSelectClosed(LevelData level, RunSaveData saveData, Tween mapHideTween, Func<bool> isLevelSelectHidden)
+	    {
+
+				if (IsEventLikeLevel(level.levelType))
+				{
+					StartEventLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
+				}
+				else if (level.levelType == LevelType.Shop)
+				{
+					StartShopLevel(level, RunSaveSystem.GetSavedShop(saveData, level));
+				}
+				else if (level.levelType == LevelType.Rest)
+				{
+					StartRestLevel(level, RunSaveSystem.GetSavedEvent(saveData, level));
+				}
+				else if (level.levelType == LevelType.Reward)
+				{
+					StartRewardLevel(level);
+				}
+				else
+				{
+					StartBattleLevel(level, RunSaveSystem.GetSavedBattle(saveData), mapHideTween, isLevelSelectHidden);
+				}
+			}
+
+
+						private void StartBattleLevel(LevelData level, BattleNodeSaveData savedBattle = null, Tween mapHideTween = null, Func<bool> isLevelSelectHidden = null)
+						{
+							if (battleStartRoutine != null)
+								StopCoroutine(battleStartRoutine);
+							deferEnemyViewCreation = false;
+							battleStartRoutine = StartCoroutine(StartBattleLevelRoutine(level, savedBattle, mapHideTween, isLevelSelectHidden));
+						}
+
+					private IEnumerator StartBattleLevelRoutine(LevelData level, BattleNodeSaveData savedBattle, Tween mapHideTween, Func<bool> isLevelSelectHidden)
+					{
+			//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0056: Expected O, but got Unknown
+	        int configuredEnemyCount = level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0
+	            ? level.randomEnemyGroups[0].enemies.Length
+	            : level.enemies != null && level.enemies.Length > 0 ? level.enemies.Length : (level.enemyIds != null ? level.enemyIds.Length : 0);
+			GameLog.Data("Start battle level=" + level.id + " enemies=" + configuredEnemyCount);
+	        if (AudioManager.Instance != null)
+	        {
+	            if (currentChapterMapBossLevel)
+	                AudioManager.Instance.PlayBossBattleMusic();
+	            else
+	                AudioManager.Instance.PlayBattleMusic();
+	        }
+			currentLevel = level;
+			runManager?.BeginLevel(level);
+	        runManager?.SetBattle(battleManager);
+					currentEvent = null;
+					refreshUsedThisTurn = false;
+					ResetBattleDeckState();
+					if (mapHideTween == null)
+						mapHideTween = HideMapPanel();
+					enemyModels.Clear();
+				battleManager.ClearEnemies();
+	        ClearEnemyViews();
+	        deferEnemyViewCreation = true;
+	        if (savedBattle != null)
+	        {
+	            RunSaveSystem.RestoreBattle(savedBattle, battleManager, playerState);
+	            deferEnemyViewCreation = false;
+	            yield return PrewarmBattleEnemyAssetsRoutine();
+	            yield return CreateDeferredEnemyViewsRoutine();
+	            yield return WaitForTweenCompletion(mapHideTween);
+	            yield return WaitForCondition(isLevelSelectHidden);
+	            yield return null;
+	            RefreshStaticUI();
+	            RefreshMaterialListPanel();
+	            RebuildCards(true);
+	            RefreshEnemyUI((RectTransform)null, true);
+	            ResetMagicHighlights();
+	            busy = false;
+	            SetButtonsInteractable(true);
+	            SaveRunProgress();
+	            battleStartRoutine = null;
+	            yield break;
+	        }
+        runManager?.AdvanceRunRandomStep();
+
+				bool tutorialBattle = TutorialManager != null && TutorialManager.ShouldUseTutorialBattle(level);
+			if (tutorialBattle)
+			{
+				TutorialManager.BeginTutorialBattle();
+			}
+        yield return SpawnBattleLevelEnemiesRoutine(level);
+        deferEnemyViewCreation = false;
+	        yield return PrewarmBattleEnemyAssetsRoutine();
+		        yield return CreateDeferredEnemyViewsRoutine();
+						yield return WaitForTweenCompletion(mapHideTween);
+						yield return WaitForCondition(isLevelSelectHidden);
+						yield return null;
+			if (battleManager.Enemies.Count != 0)
+			{
+	            battleManager.BeginBattleRules();
+					yield return null;
+					BeginPlayerTurn(playerState.DrawCount);
+			        SaveRunProgress();
+					ResetMagicHighlights();
+					busy = false;
+
+				SetButtonsInteractable(interactable: true);
+			}
+	        battleStartRoutine = null;
+		}
+
+		private IEnumerator SpawnBattleLevelEnemiesRoutine(LevelData level)
+		{
+	        if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
+	        {
+	            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+	            if (group != null && group.enemies != null)
+	            {
+	                for (int i = 0; i < group.enemies.Length; i++)
+	                {
+	                    battleManager.SpawnEnemy(group.enemies[i]);
+	                    yield return null;
+	                }
+	            }
+	        }
+			else if (level.enemies != null && level.enemies.Length > 0)
+			{
+				for (int i = 0; i < level.enemies.Length; i++)
+				{
+					battleManager.SpawnEnemy(level.enemies[i]);
+					yield return null;
+				}
+			}
+			else if (level.enemyIds != null)
+			{
+				for (int i = 0; i < level.enemyIds.Length; i++)
+				{
+					battleManager.SpawnEnemy(level.enemyIds[i]);
+					yield return null;
+				}
+			}
+		}
+
+		private IEnumerator PrewarmBattleEnemyAssetsRoutine()
+		{
+			for (int i = 0; i < enemyModels.Count; i++)
+			{
+				EnemyModel model = enemyModels[i];
+				if (model == null || model.Data == null)
+					continue;
+				EnemyVisualLoader.LoadStaticSpriteOrSample(model.Data);
+				EnemyVisualLoader.LoadAnimatorController(model.Data);
+				IReadOnlyList<EnemyIntentData> intents = model.CurrentIntents;
+				for (int intentIndex = 0; intents != null && intentIndex < intents.Count; intentIndex++)
+					EnemyIntentView.PrewarmIntentSprite(intents[intentIndex]);
+				yield return null;
+			}
+		}
+
+		private IEnumerator CreateDeferredEnemyViewsRoutine()
+		{
+			if ((Object)enemyArea == (Object)null || (Object)enemyViewPrefab == (Object)null)
+				yield break;
+
+			int count = enemyModels.Count;
+				for (int i = 0; i < count; i++)
+				{
+					CreateEnemyView(enemyModels[i], i, count);
+					LayoutEnemyViews();
+					yield return null;
+				}
+				enemyModel = GetFirstAliveEnemy();
+				LayoutEnemyViews();
+				RefreshEnemyUI((RectTransform)null, true);
+				yield return null;
+			}
+
 
 		private void BeginPlayerTurn(int drawCount)
-		{
-			battleManager?.BeginPlayerTurnStartRules(drawCount, TryApplyFixedTutorialHand);
-			refreshUsedThisTurn = false;
-			GetUIManager().TurnBanner?.Show("你的回合");
-			ResetContinuousCastCounterUI();
-			suppressEnemyIntentRefresh = false;
-			RefreshEnemyUI();
-			GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
-			RefreshStaticUI();
-			RefreshMaterialListPanel();
-			RebuildCards(animateFromCurrent: true);
-		}
+			{
+				battleManager?.BeginPlayerTurnStartRules(drawCount, TryApplyFixedTutorialHand);
+				refreshUsedThisTurn = false;
+				ResetContinuousCastCounterUI();
+				suppressEnemyIntentRefresh = false;
+				RefreshEnemyUI();
+				GetUIManager().PlayerFeedback?.UpdateVignetteRange(playerState);
+				RefreshStaticUI();
+				RefreshMaterialListPanel();
+				RebuildCards(animateFromCurrent: true);
+				GetUIManager().TurnBanner?.Show("你的回合");
+			}
+
 
 
 		private bool TryApplyFixedTutorialHand()
@@ -1279,14 +1411,10 @@ public class HandSystemUI : MonoBehaviour
         GetUIManager().RewardGridPanel?.Hide();
         GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-		enemyViewStates.Clear();
-		if ((Object)enemyArea != (Object)null)
-		{
-			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
-		}
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+			ClearEnemyViews();
+
 		if ((Object)eventPanel != (Object)null)
 		{
 			eventPanel.Close();
@@ -1332,14 +1460,10 @@ public class HandSystemUI : MonoBehaviour
 		currentLevel = level;
 		runManager?.BeginLevel(level);
 		HideMapPanel();
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-		enemyViewStates.Clear();
-		if ((Object)enemyArea != (Object)null)
-		{
-			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
-		}
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+			ClearEnemyViews();
+
 
 		if ((Object)eventPanel != (Object)null)
 			eventPanel.Close();
@@ -1367,14 +1491,10 @@ public class HandSystemUI : MonoBehaviour
 		runManager?.BeginLevel(level);
 		currentEvent = null;
 		HideMapPanel();
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-		enemyViewStates.Clear();
-		if ((Object)enemyArea != (Object)null)
-		{
-			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
-		}
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+			ClearEnemyViews();
+
 		if ((Object)eventPanel != (Object)null)
 		{
 			eventPanel.Close();
@@ -1453,16 +1573,10 @@ public class HandSystemUI : MonoBehaviour
             SaveRunProgress();
 			refreshUsedThisTurn = false;
 
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-		enemyViewStates.Clear();
-		if ((Object)enemyArea != (Object)null)
-		{
-			for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-			{
-				Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
-			}
-		}
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+			ClearEnemyViews();
+
 		busy = false;
 		SetButtonsInteractable(interactable: true);
 	}
@@ -2139,6 +2253,7 @@ public class HandSystemUI : MonoBehaviour
                 positions.Add(new Vector2Int(x, y));
             }
         }
+        SelectDesignedChapterBlockedCells(positions);
 
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Shop, 1);
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Battle, 3);
@@ -2153,6 +2268,35 @@ public class HandSystemUI : MonoBehaviour
             List<LevelData> candidateLevels = GetMapGridCandidateLevels(chapter, position.y * width + position.x + 1, bossLevel);
             SetMapGridLevel(levels, width, position.x, position.y, ChooseRandomMapLevel(chapter, candidateLevels));
         }
+    }
+
+    private void SelectDesignedChapterBlockedCells(List<Vector2Int> positions)
+    {
+        designedChapterBlockedCells.Clear();
+        List<Vector2Int> candidates = new List<Vector2Int>(9);
+        for (int y = 3; y <= 5; y++)
+        {
+            for (int x = 1; x <= 3; x++)
+                candidates.Add(new Vector2Int(x, y));
+        }
+
+        for (int i = 0; i < 3 && candidates.Count > 0; i++)
+        {
+            Vector2Int position = TakeRandomMapPosition(candidates);
+            designedChapterBlockedCells.Add(position);
+            positions.Remove(position);
+        }
+    }
+
+    private bool IsDesignedChapterBlockedCell(int x, int y)
+    {
+        for (int i = 0; i < designedChapterBlockedCells.Count; i++)
+        {
+            Vector2Int cell = designedChapterBlockedCells[i];
+            if (cell.x == x && cell.y == y)
+                return true;
+        }
+        return false;
     }
 
     private void AssignDesignedMapLevels(ChapterData chapter, List<LevelData> levels, int width, List<Vector2Int> positions, LevelType levelType, int count)
@@ -2200,8 +2344,11 @@ public class HandSystemUI : MonoBehaviour
             if (cell == null)
                 continue;
 
-            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y);
-            cell.isBoss = cell.x == 2 && cell.y == 7;
+            bool blocked = IsDesignedChapterBlockedCell(cell.x, cell.y);
+            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y) && !blocked;
+            cell.isBoss = !blocked && cell.x == 2 && cell.y == 7;
+            if (blocked)
+                cell.level = null;
             cell.isRevealed = cell.isBoss;
         }
         runManager?.RevealCurrentMapNeighbors();
@@ -2562,13 +2709,17 @@ public class HandSystemUI : MonoBehaviour
 		GetUIManager().ShowMapPanel(focusCurrentNode, onComplete, animateMarker);
 	}
 
-	private void HideMapPanel()
-	{
-		GetUIManager().HideMapPanel();
-        GetUIManager().HideChapterGridPanel();
-        ClearMapDirectionCardsFromHandArea();
-        ClearOrphanedCardViews();
-	}
+		private Tween HideMapPanel()
+		{
+			Tween mapTween = GetUIManager().HideMapPanelAnimated();
+	        Tween chapterGridTween = GetUIManager().HideChapterGridPanelAnimated();
+	        ClearMapDirectionCardsFromHandArea();
+	        ClearOrphanedCardViews();
+	        if (mapTween != null && chapterGridTween != null)
+	            return DOTween.Sequence().Join(mapTween).Join(chapterGridTween).SetTarget(this);
+	        return mapTween ?? chapterGridTween;
+		}
+
 
     private void ClearMapDirectionCardsFromHandArea()
     {
@@ -3158,8 +3309,11 @@ public class HandSystemUI : MonoBehaviour
                 EncapsulateScreenBounds(view.RectTransform, eventCamera, ref min, ref max, ref hasBounds);
         }
 
-        if (!hasBounds && fallbackArea != null)
+        if (fallbackArea != null)
+        {
+            // Keep the full queue row hittable while the dragged edge card is excluded from card bounds.
             EncapsulateScreenBounds(fallbackArea, eventCamera, ref min, ref max, ref hasBounds);
+        }
 
         bounds = hasBounds ? Rect.MinMaxRect(min.x, min.y, max.x, max.y) : default;
         return hasBounds;
@@ -3730,7 +3884,7 @@ public bool IsCardDragActive => cardDragActive;
             if (arcStack <= 0)
                 continue;
 
-            enemy.TakeDamage(arcStack);
+            enemy.TakeDamageIgnoringVulnerable(arcStack);
             changed = true;
         }
 
@@ -4815,7 +4969,8 @@ public bool IsCardDragActive => cardDragActive;
 		if (target == null)
 			return;
 
-		target.AddBuff(buffType, stack);
+        target.AddBuff(buffType, stack, playerState != null ? new CombatantModel(playerState) : null);
+
 		result.enemyBuffApplied = true;
 		GameLog.Data($"Material Water add buff target={target.Id} buff={buffType} stack={stack}");
 		battleManager.EndCastTarget();
@@ -5881,7 +6036,7 @@ public bool IsCardDragActive => cardDragActive;
             return;
 
         enemyModels.Add(enemy);
-        if ((Object)enemyArea == (Object)null || (Object)enemyViewPrefab == (Object)null)
+        if (deferEnemyViewCreation || (Object)enemyArea == (Object)null || (Object)enemyViewPrefab == (Object)null)
             return;
 
         CreateEnemyView(enemy, enemyViewStates.Count, enemyModels.Count);
@@ -5893,9 +6048,11 @@ public bool IsCardDragActive => cardDragActive;
     {
         for (int i = 0; i < enemyViewStates.Count; i++)
         {
-            Tween healthNumberTween = enemyViewStates[i].healthNumberTween;
+            EnemyViewState state = enemyViewStates[i];
+            Tween healthNumberTween = state.healthNumberTween;
             if (healthNumberTween != null)
                 TweenExtensions.Kill(healthNumberTween, false);
+            ReleaseEnemyView(state);
         }
         enemyViewStates.Clear();
         enemyModel = null;
@@ -5903,11 +6060,32 @@ public bool IsCardDragActive => cardDragActive;
         enemyHealthFill = null;
         enemyIntentIcon = null;
         enemyBodyImage = null;
-        if ((Object)enemyArea != (Object)null)
+    }
+
+    private void ReleaseEnemyView(EnemyViewState state)
+    {
+        if (state == null || (Object)state.viewRect == (Object)null)
+            return;
+
+        state.viewRect.DOKill(false);
+        state.viewRect.gameObject.SetActive(false);
+        if (!enemyViewPool.Contains(state.viewRect))
+            enemyViewPool.Add(state.viewRect);
+    }
+
+    private RectTransform GetEnemyViewFromPool()
+    {
+        for (int i = enemyViewPool.Count - 1; i >= 0; i--)
         {
-            for (int num = ((Transform)enemyArea).childCount - 1; num >= 0; num--)
-                Object.Destroy((Object)((Component)((Transform)enemyArea).GetChild(num)).gameObject);
+            RectTransform pooled = enemyViewPool[i];
+            enemyViewPool.RemoveAt(i);
+            if ((Object)pooled != (Object)null)
+            {
+                pooled.SetParent(enemyArea, false);
+                return pooled;
+            }
         }
+        return Object.Instantiate<RectTransform>(enemyViewPrefab, (Transform)enemyArea);
     }
 
     private void LayoutEnemyViews()
@@ -5999,8 +6177,9 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0158: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		RectTransform val = Object.Instantiate<RectTransform>(enemyViewPrefab, (Transform)enemyArea);
-		((Component)val).gameObject.SetActive(true);
+			RectTransform val = GetEnemyViewFromPool();
+			((Component)val).gameObject.SetActive(true);
+
         AddJuicyMotion((Transform)val);
         JuicyMotion enemyMotion = ((Component)val).GetComponent<JuicyMotion>();
         if ((Object)enemyMotion != (Object)null)
@@ -6097,9 +6276,11 @@ public bool IsCardDragActive => cardDragActive;
 			enemyViewState.buffRoot = EnsureBuffRoot(val, new Vector2(0f, -82f));
         if ((Object)enemyViewState.viewUI != (Object)null)
             enemyViewState.viewUI.ApplyDataLayout(model.Data);
-			RebuildEnemyIntentViews(enemyViewState);
-			BindEnemyBuffPopup(enemyViewState);
-			enemyViewStates.Add(enemyViewState);
+				CacheEnemyIntentViews(enemyViewState);
+				RebuildEnemyIntentViews(enemyViewState);
+				BindEnemyBuffPopup(enemyViewState);
+				enemyViewStates.Add(enemyViewState);
+
 
 	}
 
@@ -6652,8 +6833,9 @@ public bool IsCardDragActive => cardDragActive;
         List<MagicModifierData> pool = new List<MagicModifierData>();
         foreach (MagicModifierData data in GameDataDatabase.MagicModifierData.Values)
         {
-            if (data != null && data.weight != 0 && CanAnyMagicAcceptModifier(data))
-                pool.Add(data);
+			if (data != null && data.weight != 0 && UnlockSystem.IsMagicModifierUnlocked(data) && CanAnyMagicAcceptModifier(data))
+				pool.Add(data);
+
         }
 
         List<MagicModifierData> result = new List<MagicModifierData>();
@@ -6751,15 +6933,21 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			for (int i = 0; i < rewardPool.magicIds.Length; i++)
 			{
-				if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data))
-				{
-					list.Add(data);
-				}
+					if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data) && UnlockSystem.IsMagicUnlocked(data))
+					{
+						list.Add(data);
+					}
+
 			}
 		}
 		if (list.Count == 0)
 		{
-			list.AddRange(GameDataDatabase.MagicData.Values);
+				foreach (MagicData data in GameDataDatabase.MagicData.Values)
+				{
+					if (data != null && UnlockSystem.IsMagicUnlocked(data))
+						list.Add(data);
+				}
+
 		}
 		List<MagicData> list2 = new List<MagicData>();
 		int num = 0;
@@ -7472,9 +7660,10 @@ public bool IsCardDragActive => cardDragActive;
         GetUIManager().MagicModifierSelectionPanel?.Hide();
 		GetUIManager().MaterialSelectionPanel?.EndSelectionMode();
 
-		enemyModels.Clear();
-		battleManager.ClearEnemies();
-		enemyViewStates.Clear();
+			enemyModels.Clear();
+			battleManager.ClearEnemies();
+			ClearEnemyViews();
+
 		currentEvent = null;
 		currentLevel = null;
         currentChapterMapBossLevel = false;
@@ -7621,7 +7810,7 @@ public bool IsCardDragActive => cardDragActive;
     {
         foreach (MagicModifierData data in GameDataDatabase.MagicModifierData.Values)
         {
-            if (data != null && data.weight != 0 && CanAnyMagicAcceptModifier(data))
+            if (data != null && data.weight != 0 && UnlockSystem.IsMagicModifierUnlocked(data) && CanAnyMagicAcceptModifier(data))
                 return true;
         }
         return false;
@@ -7666,7 +7855,7 @@ public bool IsCardDragActive => cardDragActive;
 
     private bool IsEliteArrowModifierRewardData(MaterialModifierData data)
     {
-        return data != null && data.inArrowModifierRewardPool && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
+        return data != null && data.inArrowModifierRewardPool && UnlockSystem.IsMaterialModifierUnlocked(data) && !string.IsNullOrEmpty(data.script) && MaterialModifierFactory.Create(data) != null;
     }
 
     private int CountSelectableArrowModifierTargets()
@@ -8528,8 +8717,23 @@ public bool IsCardDragActive => cardDragActive;
 
 	}
 
-	private void RebuildEnemyIntentViews(EnemyViewState state)
-	{
+		private void CacheEnemyIntentViews(EnemyViewState state)
+		{
+			state.intentViews.Clear();
+			if ((Object)state.intentRoot == (Object)null)
+				return;
+
+			EnemyIntentView[] views = state.intentRoot.GetComponentsInChildren<EnemyIntentView>(true);
+			for (int i = 0; i < views.Length; i++)
+			{
+				if ((Object)views[i] != (Object)null)
+					state.intentViews.Add(views[i]);
+			}
+		}
+
+		private void RebuildEnemyIntentViews(EnemyViewState state)
+		{
+
 		if (state == null || state.viewRect == null || state.model == null)
 			return;
 

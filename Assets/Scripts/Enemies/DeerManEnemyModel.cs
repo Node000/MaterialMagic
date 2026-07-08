@@ -33,9 +33,9 @@ public class DeerManEnemyModel : EnemyModel
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
         if (intent != null && intent.value == 1)
-            return "意图：特殊防御";
+            return GetLocalizedText("enemy.intent.title.special_defend");
         if (intent != null && intent.value == 2)
-            return "意图：特殊攻击";
+            return GetLocalizedText("enemy.intent.title.special_attack");
         return base.GetSpecialIntentTooltipTitle(intent);
     }
 
@@ -48,13 +48,13 @@ public class DeerManEnemyModel : EnemyModel
         {
             string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
             string disabledBuff = FormatBuffStack(BuffEnum.AttributeDisabled, (int)GetPendingDisabledMaterial(playerState));
-            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将获得{displayValue}点护盾，并施加{disabledBuff}" : $"这个敌人将获得护盾，并施加{disabledBuff}";
+            return !string.IsNullOrEmpty(displayValue) ? FormatLocalizedText("enemy.intent.deer.defend_desc", displayValue, disabledBuff) : FormatLocalizedText("enemy.intent.deer.defend_desc.empty", disabledBuff);
         }
 
         if (intent.value == 2)
         {
             string displayValue = GetSpecialIntentDisplayValue(intent, playerState);
-            return !string.IsNullOrEmpty(displayValue) ? $"这个敌人将造成{displayValue}点伤害，伤害基于玩家最多的基础素材数量" : "这个敌人将造成特殊伤害，伤害基于玩家最多的基础素材数量";
+            return !string.IsNullOrEmpty(displayValue) ? FormatLocalizedText("enemy.intent.deer.attack_desc", displayValue) : GetLocalizedText("enemy.intent.deer.attack_desc.empty");
         }
 
         return base.GetSpecialIntentTooltipDescription(intent, playerState);

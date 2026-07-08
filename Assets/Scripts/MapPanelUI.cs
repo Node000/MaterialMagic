@@ -112,12 +112,17 @@ public class MapPanelUI : MonoBehaviour
 
     public void Hide()
     {
+        HideAnimated();
+    }
+
+    public Tween HideAnimated()
+    {
         if (!gameObject.activeSelf)
-            return;
+            return null;
 
         rectTransform.DOKill(false);
         DOTween.Kill(this, false);
-        rectTransform.DOAnchorPos(shownPosition - new Vector2(0f, mapShowMove), mapHideDuration)
+        return rectTransform.DOAnchorPos(shownPosition - new Vector2(0f, mapShowMove), mapHideDuration)
             .SetEase(Ease.InQuad)
             .SetTarget(this)
             .OnComplete(() => gameObject.SetActive(false));

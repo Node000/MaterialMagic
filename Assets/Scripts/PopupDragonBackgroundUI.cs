@@ -37,6 +37,36 @@ public class PopupDragonBackgroundUI : MonoBehaviour
     private readonly List<RectTransform> windows = new List<RectTransform>();
     private int builtWindowCount = -1;
     private RectTransform builtWindowPrefab;
+    private bool frontWindowReplaced;
+
+    public bool TryGetFrontWindowPose(out Vector2 anchoredPosition, out float rotation, out float scale)
+    {
+        return TryGetWindowPose(0, out anchoredPosition, out rotation, out scale);
+    }
+
+    public bool TryGetWindowPose(int index, out Vector2 anchoredPosition, out float rotation, out float scale)
+    {
+        if (index < 0 || index >= Mathf.Max(1, windowCount))
+        {
+            anchoredPosition = Vector2.zero;
+            rotation = 0f;
+            scale = 1f;
+            return false;
+        }
+
+        EvaluateWindowPose(index, GetAnimationTime(), out anchoredPosition, out rotation, out scale);
+        return true;
+    }
+
+    public void SetFrontWindowReplaced(bool replaced)
+    {
+        if (frontWindowReplaced == replaced)
+            return;
+
+        frontWindowReplaced = replaced;
+        EnsureWindows();
+        ApplyActiveAndOrder();
+    }
 
     private void Awake()
     {
@@ -174,8 +204,12 @@ public class PopupDragonBackgroundUI : MonoBehaviour
         for (int i = 0; i < windows.Count; i++)
         {
             RectTransform window = windows[i];
-            if (window != null && !window.gameObject.activeSelf)
-                window.gameObject.SetActive(true);
+            if (window == null)
+                continue;
+
+            bool shouldBeActive = !(frontWindowReplaced && i == 0);
+            if (window.gameObject.activeSelf != shouldBeActive)
+                window.gameObject.SetActive(shouldBeActive);
         }
 
         for (int i = 0; i < windows.Count; i++)
@@ -194,26 +228,31 @@ public class PopupDragonBackgroundUI : MonoBehaviour
             if (window == null)
                 continue;
 
-            bool fixedFront = i == 0 && frontWindowStaysStill;
-            Vector2 position = frontWindowAnchoredPosition + segmentOffset * i;
-            float rotation = 0f;
-
-            if (!fixedFront)
-            {
-                float depthScale = 1f + i * tailAmplitudeGain;
-                float phase = animationTime * waveSpeed - i * phaseStep;
-                position.x += Mathf.Sin(phase) * waveAmplitude.x * depthScale;
-                position.y += Mathf.Cos(phase * verticalWaveRatio) * waveAmplitude.y * depthScale;
-
-                float rotationPhase = animationTime * rotationSpeed - i * rotationPhaseStep;
-                rotation = Mathf.Sin(rotationPhase) * rotationAmplitude * (1f + i * tailRotationGain);
-            }
-
-            float scale = Mathf.Max(minTailScale, 1f - tailScaleStep * i);
+            EvaluateWindowPose(i, animationTime, out Vector2 position, out float rotation, out float scale);
             window.anchoredPosition = position;
             window.localEulerAngles = new Vector3(0f, 0f, rotation);
             window.localScale = new Vector3(scale, scale, 1f);
         }
+    }
+
+    private void EvaluateWindowPose(int index, float animationTime, out Vector2 position, out float rotation, out float scale)
+    {
+        bool fixedFront = index == 0 && frontWindowStaysStill;
+        position = frontWindowAnchoredPosition + segmentOffset * index;
+        rotation = 0f;
+
+        if (!fixedFront)
+        {
+            float depthScale = 1f + index * tailAmplitudeGain;
+            float phase = animationTime * waveSpeed - index * phaseStep;
+            position.x += Mathf.Sin(phase) * waveAmplitude.x * depthScale;
+            position.y += Mathf.Cos(phase * verticalWaveRatio) * waveAmplitude.y * depthScale;
+
+            float rotationPhase = animationTime * rotationSpeed - index * rotationPhaseStep;
+            rotation = Mathf.Sin(rotationPhase) * rotationAmplitude * (1f + index * tailRotationGain);
+        }
+
+        scale = Mathf.Max(minTailScale, 1f - tailScaleStep * index);
     }
 
     private float GetAnimationTime()

@@ -1,0 +1,332 @@
+{
+  "items": [
+    {
+      "key": "enemy.001.name",
+      "text": "Pod"
+    },
+    {
+      "key": "enemy.002.name",
+      "text": "Owl"
+    },
+    {
+      "key": "enemy.003.name",
+      "text": "Sumo Man"
+    },
+    {
+      "key": "enemy.004.name",
+      "text": "Sumo Man"
+    },
+    {
+      "key": "enemy.005.name",
+      "text": "Bat 1"
+    },
+    {
+      "key": "enemy.006.name",
+      "text": "Bat 2"
+    },
+    {
+      "key": "enemy.007.name",
+      "text": "Furball"
+    },
+    {
+      "key": "enemy.008.name",
+      "text": "Good Ship"
+    },
+    {
+      "key": "enemy.009.name",
+      "text": "Dancer"
+    },
+    {
+      "key": "enemy.010.name",
+      "text": "Fly King"
+    },
+    {
+      "key": "enemy.011.name",
+      "text": "Egg"
+    },
+    {
+      "key": "enemy.012.name",
+      "text": "Merchant"
+    },
+    {
+      "key": "enemy.013.name",
+      "text": "Dummy"
+    },
+    {
+      "key": "enemy.014.name",
+      "text": "Kitty"
+    },
+    {
+      "key": "enemy.015.name",
+      "text": "Lucky Cat"
+    },
+    {
+      "key": "enemy.016.name",
+      "text": "Deer Man"
+    },
+    {
+      "key": "enemy.017.name",
+      "text": "Demon"
+    },
+    {
+      "key": "enemy.018.name",
+      "text": "Black-White Block"
+    },
+    {
+      "key": "enemy.019.name",
+      "text": "Blue Eye (Fake)"
+    },
+    {
+      "key": "enemy.020.name",
+      "text": "Eyeball (Fake)"
+    },
+    {
+      "key": "enemy.021.name",
+      "text": "Blue Eye"
+    },
+    {
+      "key": "enemy.022.name",
+      "text": "Eyeball"
+    },
+    {
+      "key": "enemy.023.name",
+      "text": "Rainbow"
+    },
+    {
+      "key": "enemy.024.name",
+      "text": "Antarctica"
+    },
+    {
+      "key": "enemy.tutorial_dummy_l.name",
+      "text": "Tutorial Dummy L"
+    },
+    {
+      "key": "enemy.tutorial_dummy_xxl.name",
+      "text": "Tutorial Dummy XXL"
+    },
+    {
+      "key": "enemy.intent.title.attack",
+      "text": "Intent: Attack"
+    },
+    {
+      "key": "enemy.intent.title.multi_attack",
+      "text": "Intent: Multiattack"
+    },
+    {
+      "key": "enemy.intent.title.attack_all",
+      "text": "Intent: Attack All"
+    },
+    {
+      "key": "enemy.intent.title.multi_attack_all",
+      "text": "Intent: Multiattack All"
+    },
+    {
+      "key": "enemy.intent.title.defend",
+      "text": "Intent: Defend"
+    },
+    {
+      "key": "enemy.intent.title.buff",
+      "text": "Intent: Buff"
+    },
+    {
+      "key": "enemy.intent.title.debuff",
+      "text": "Intent: Debuff"
+    },
+    {
+      "key": "enemy.intent.title.summon",
+      "text": "Intent: Summon"
+    },
+    {
+      "key": "enemy.intent.title.stunned",
+      "text": "Intent: Stunned"
+    },
+    {
+      "key": "enemy.intent.title.unknown",
+      "text": "Intent: Unknown"
+    },
+    {
+      "key": "enemy.intent.title.special_defend",
+      "text": "Intent: Special Defend"
+    },
+    {
+      "key": "enemy.intent.title.special_attack",
+      "text": "Intent: Special Attack"
+    },
+    {
+      "key": "enemy.intent.desc.attack",
+      "text": "This enemy will deal {0} damage."
+    },
+    {
+      "key": "enemy.intent.desc.multi_attack",
+      "text": "This enemy will deal {1} damage {0} times."
+    },
+    {
+      "key": "enemy.intent.desc.attack_all",
+      "text": "This enemy will deal {0} damage to all targets."
+    },
+    {
+      "key": "enemy.intent.desc.multi_attack_all",
+      "text": "This enemy will deal {1} damage to all targets {0} times."
+    },
+    {
+      "key": "enemy.intent.desc.defend",
+      "text": "This enemy will gain {0} Shield."
+    },
+    {
+      "key": "enemy.intent.desc.buff.empty",
+      "text": "This enemy will gain buffs."
+    },
+    {
+      "key": "enemy.intent.desc.buff",
+      "text": "This enemy will gain {0}."
+    },
+    {
+      "key": "enemy.intent.desc.debuff.empty",
+      "text": "This enemy will apply debuffs to the player."
+    },
+    {
+      "key": "enemy.intent.desc.debuff",
+      "text": "This enemy will apply {0} to the player."
+    },
+    {
+      "key": "enemy.intent.desc.stunned",
+      "text": "This enemy will not act this turn."
+    },
+    {
+      "key": "enemy.intent.desc.special_defend",
+      "text": "This enemy will gain {0} Shield and apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.special_defend.empty",
+      "text": "This enemy will perform a special defense and apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.special_summon",
+      "text": "This enemy will summon {0} reinforcement(s) and apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.special_summon.empty",
+      "text": "This enemy will summon reinforcements and apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.special_attack",
+      "text": "This enemy will deal {0} damage and apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.special_attack.empty",
+      "text": "This enemy will apply a special effect."
+    },
+    {
+      "key": "enemy.intent.desc.summon.single",
+      "text": "This enemy will summon {0}."
+    },
+    {
+      "key": "enemy.intent.desc.summon.multi",
+      "text": "This enemy will summon {0} ×{1}."
+    },
+    {
+      "key": "enemy.intent.fallback_enemy",
+      "text": "Enemy"
+    },
+    {
+      "key": "enemy.intent.buff_stack",
+      "text": "【{0}】"
+    },
+    {
+      "key": "enemy.intent.buff_stack_with_stack",
+      "text": "【{0}】 {1}"
+    },
+    {
+      "key": "enemy.intent.list_separator",
+      "text": ", "
+    },
+    {
+      "key": "enemy.intent.blue_eye.summon_desc",
+      "text": "This enemy will summon {0} and gain {1}."
+    },
+    {
+      "key": "enemy.intent.blue_eye.minion_single",
+      "text": "a minion"
+    },
+    {
+      "key": "enemy.intent.blue_eye.minion_multi",
+      "text": "{0} minions"
+    },
+    {
+      "key": "enemy.intent.deer.defend_desc",
+      "text": "This enemy will gain {0} Shield and apply {1}."
+    },
+    {
+      "key": "enemy.intent.deer.defend_desc.empty",
+      "text": "This enemy will gain Shield and apply {0}."
+    },
+    {
+      "key": "enemy.intent.deer.attack_desc",
+      "text": "This enemy will deal {0} damage based on the player's most common basic arrow count."
+    },
+    {
+      "key": "enemy.intent.deer.attack_desc.empty",
+      "text": "This enemy will deal special damage based on the player's most common basic arrow count."
+    },
+    {
+      "key": "enemy.intent.demon.title",
+      "text": "Intent: Curse"
+    },
+    {
+      "key": "enemy.intent.demon.desc",
+      "text": "This enemy will apply {0} to the player."
+    },
+    {
+      "key": "enemy.intent.healing_cat.title",
+      "text": "Intent: Heal"
+    },
+    {
+      "key": "enemy.intent.healing_cat.desc",
+      "text": "The player will restore {0} HP."
+    },
+    {
+      "key": "enemy.intent.lucky_cat.title",
+      "text": "Intent: Gold"
+    },
+    {
+      "key": "enemy.intent.lucky_cat.desc",
+      "text": "The player will gain {0} Gold."
+    },
+    {
+      "key": "enemy.intent.merchant.title",
+      "text": "Intent: Cleanse"
+    },
+    {
+      "key": "enemy.intent.merchant.desc",
+      "text": "This enemy will remove all debuffs from itself."
+    },
+    {
+      "key": "enemy.intent.rainbow.direction_title",
+      "text": "Intent: Direction Buff"
+    },
+    {
+      "key": "enemy.intent.rainbow.player_gain",
+      "text": "The player will gain {0}."
+    },
+    {
+      "key": "enemy.intent.rainbow.random_title",
+      "text": "Intent: Random Special Effect"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_attack_desc",
+      "text": "This enemy will deal 14 damage."
+    },
+    {
+      "key": "enemy.intent.rainbow.random_defend_desc",
+      "text": "This enemy will gain 10 Shield."
+    },
+    {
+      "key": "enemy.intent.rainbow.random_debuff_desc",
+      "text": "This enemy will apply {0} to the player."
+    },
+    {
+      "key": "enemy.intent.rainbow.random_unknown_desc",
+      "text": "This enemy will randomly deal 14 damage, gain 10 Shield, apply 5 Weak, or apply 6 Vulnerable."
+    }
+  ]
+}

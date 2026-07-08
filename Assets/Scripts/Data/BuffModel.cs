@@ -58,6 +58,14 @@ public class BuffModel
     {
     }
 
+    public virtual void OnGiveBuff(CombatantModel self, CombatantModel target, BuffEnum buffType, ref int stack)
+    {
+    }
+
+    public virtual void OnReceiveBuff(CombatantModel self, CombatantModel source, BuffEnum buffType, ref int stack)
+    {
+    }
+
     public virtual void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
     }
@@ -71,6 +79,10 @@ public class BuffModel
     }
 
     public virtual void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    {
+    }
+
+    public virtual void OnPlayerTurnEnd(CombatantModel self, CombatantModel opponent)
     {
     }
 
@@ -189,6 +201,12 @@ public class BuffModel
                 return new NextMagicRepeatBuffModel(stack);
             case BuffEnum.KeepHand:
                 return new KeepHandBuffModel(stack);
+            case BuffEnum.RetainedNextDraw:
+                return new RetainedNextDrawBuffModel(stack);
+            case BuffEnum.DoubleEnemyBurningOnTurnEnd:
+                return new DoubleEnemyBurningOnTurnEndBuffModel(stack);
+            case BuffEnum.ExtraEnemyDebuff:
+                return new ExtraEnemyDebuffBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -233,6 +251,7 @@ public class BuffModel
             case BuffEnum.LazyNextDraw:
             case BuffEnum.TutorialDeath:
             case BuffEnum.ShuffleHandOnInvokeChance:
+            case BuffEnum.DoubleEnemyBurningOnTurnEnd:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
@@ -253,6 +272,8 @@ public class BuffModel
             case BuffEnum.MagicAttackAll:
             case BuffEnum.NextMagicRepeat:
             case BuffEnum.KeepHand:
+            case BuffEnum.RetainedNextDraw:
+            case BuffEnum.ExtraEnemyDebuff:
             case BuffEnum.Claw:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:
@@ -335,9 +356,22 @@ public class CombatantModel
 
     public void AddBuff(BuffEnum buffType, int stack)
     {
+        AddBuff(buffType, stack, null);
+    }
+
+    public void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
+    {
         if (IsPlayer)
-            player.AddBuff(buffType, stack);
+            player.AddBuff(buffType, stack, source);
         else
-            enemy.AddBuff(buffType, stack);
+            enemy.AddBuff(buffType, stack, source);
+    }
+
+    public void ConsumeBuff(BuffEnum buffType, int amount)
+    {
+        if (IsPlayer)
+            player.ConsumeBuff(buffType, amount);
+        else
+            enemy.ConsumeBuff(buffType, amount);
     }
 }

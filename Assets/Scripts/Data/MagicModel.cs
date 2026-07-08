@@ -313,10 +313,10 @@ public class MagicModel
         if (target == null || buffType == BuffEnum.None || stack <= 0)
             return;
 
-        int finalStack = stack + GetDebuffStackBonus(buffType);
-        target.AddBuff(buffType, finalStack);
-        GameLog.Data($"Magic {Id} add buff target={target.DisplayName} buff={buffType} stack={finalStack}");
-        result.enemyBuffApplied = target is EnemyModel && finalStack > 0;
+        CombatantModel source = MagicModifierModel.CurrentContext?.PlayerState != null ? new CombatantModel(MagicModifierModel.CurrentContext.PlayerState) : null;
+        target.AddBuff(buffType, stack, source);
+        GameLog.Data($"Magic {Id} add buff target={target.DisplayName} buff={buffType} stack={stack}");
+        result.enemyBuffApplied = target is EnemyModel && stack > 0;
     }
 
     protected void AddBuff(EnemyModel target, BuffEnum buffType, int stack, MagicCastResult result)
@@ -336,13 +336,6 @@ public class MagicModel
             if (enemy != null && !enemy.IsDead)
                 AddBuff(enemy, buffType, stack, result);
         }
-    }
-
-    private int GetDebuffStackBonus(BuffEnum buffType)
-    {
-        return BuffModel.GetKind(buffType) == BuffKindEnum.DeBuff && MagicModifierModel.CurrentContext?.PlayerState != null
-            ? MagicModifierModel.CurrentContext.PlayerState.GetBuffStack(BuffEnum.DebuffPower) + MagicModifierModel.CurrentContext.PlayerState.GetBuffStack(BuffEnum.DirectionWeakBonus)
-            : 0;
     }
 
     protected bool UseExtraRefreshChance(PlayerState playerState)
@@ -417,7 +410,10 @@ public class MagicModel
     private void AddDebuffStackIfPresent(EnemyModel enemy, BuffEnum buffType, int amount)
     {
         if (enemy.GetBuffStack(buffType) > 0)
-            enemy.AddBuff(buffType, amount);
+        {
+            CombatantModel source = MagicModifierModel.CurrentContext?.PlayerState != null ? new CombatantModel(MagicModifierModel.CurrentContext.PlayerState) : null;
+            enemy.AddBuff(buffType, amount, source);
+        }
     }
 
     protected void GainShield(PlayerState playerState, BattleManager battleManager, int amount, MagicCastResult result)

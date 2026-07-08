@@ -197,6 +197,11 @@ public class UIManager : MonoBehaviour
         mapPanelUI?.Hide();
     }
 
+    public Tween HideMapPanelAnimated()
+    {
+        return mapPanelUI != null ? mapPanelUI.HideAnimated() : null;
+    }
+
     public void ShowLevelSelect(IReadOnlyList<RunMapNodeModel> nodes, int currentNodeIndex)
     {
         levelSelectPanelUI?.Show(nodes, currentNodeIndex);
@@ -210,6 +215,11 @@ public class UIManager : MonoBehaviour
     public void HideChapterGridPanel()
     {
         chapterGridPanelUI?.Hide();
+    }
+
+    public Tween HideChapterGridPanelAnimated()
+    {
+        return chapterGridPanelUI != null ? chapterGridPanelUI.HideAnimated() : null;
     }
 
     public void HideLevelSelect()

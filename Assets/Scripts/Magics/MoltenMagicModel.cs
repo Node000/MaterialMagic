@@ -14,11 +14,11 @@ public class MoltenMagicModel : MagicModel
             {
                 EnemyModel enemy = enemies[i];
                 if (enemy != null && !enemy.IsDead)
-                    Damage(playerState, enemy, 5 + GetBuffStack(enemy, BuffEnum.Burning), result);
+                    Damage(playerState, enemy, 3 + GetBuffStack(enemy, BuffEnum.Burning), result);
             }
             return;
         }
 
-        Damage(playerState, target, 5 + GetBuffStack(target, BuffEnum.Burning), result);
+        Damage(playerState, target, 3 + GetBuffStack(target, BuffEnum.Burning), result);
     }
 }

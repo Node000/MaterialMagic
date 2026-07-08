@@ -1,0 +1,212 @@
+{
+  "items": [
+    {
+      "key": "tag.burning.name",
+      "text": "Burning"
+    },
+    {
+      "key": "tag.burning.desc",
+      "text": "At turn start, take damage equal to the stack count, then halve the stacks. This damage ignores Shield and is not affected by Vulnerable."
+    },
+    {
+      "key": "tag.arc.name",
+      "text": "Arc"
+    },
+    {
+      "key": "tag.arc.desc",
+      "text": "Whenever an item triggers, this target takes extra damage equal to the stack count. This damage is not affected by Vulnerable. Cleared at turn end."
+    },
+    {
+      "key": "tag.charge.name",
+      "text": "Charge"
+    },
+    {
+      "key": "tag.charge.desc",
+      "text": "When this arrow triggers an item, apply 1 Arc to a random enemy."
+    },
+    {
+      "key": "tag.temporary.name",
+      "text": "Temporary"
+    },
+    {
+      "key": "tag.temporary.desc",
+      "text": "Disappears at turn end or when leaving your hand, and does not return to the draw pile."
+    },
+    {
+      "key": "tag.vortex.name",
+      "text": "Vortex"
+    },
+    {
+      "key": "tag.vortex.desc",
+      "text": "When this arrow triggers an item, apply 1 random Weak, Slow, or Vulnerable to a random enemy and draw 1 extra arrow into the play area."
+    },
+    {
+      "key": "tag.vulnerable.name",
+      "text": "Vulnerable"
+    },
+    {
+      "key": "tag.vulnerable.desc",
+      "text": "Each stack increases damage taken by 1. Lose 1 stack after taking damage."
+    },
+    {
+      "key": "tag.slow.name",
+      "text": "Slow"
+    },
+    {
+      "key": "tag.slow.desc",
+      "text": "Each stack reduces defense by 1. Stacks are halved at turn end."
+    },
+    {
+      "key": "tag.weak.name",
+      "text": "Weak"
+    },
+    {
+      "key": "tag.weak.desc",
+      "text": "Each stack reduces attack by 1. Stacks are halved at turn end."
+    },
+    {
+      "key": "tag.sturdy.name",
+      "text": "Sturdy"
+    },
+    {
+      "key": "tag.sturdy.desc",
+      "text": "When this arrow triggers an item, gain 1 Shield."
+    },
+    {
+      "key": "tag.shield_reflect.name",
+      "text": "Shield Reflect"
+    },
+    {
+      "key": "tag.shield_reflect.desc",
+      "text": "Reflect damage blocked by Shield. Cleared at turn end."
+    },
+    {
+      "key": "tag.extra_draw.name",
+      "text": "Extra Draw"
+    },
+    {
+      "key": "tag.extra_draw.desc",
+      "text": "Draw extra cards equal to the stack count, then clear this after drawing."
+    },
+    {
+      "key": "tag.extra_refresh.name",
+      "text": "Extra Refresh"
+    },
+    {
+      "key": "tag.extra_refresh.desc",
+      "text": "After next turn starts, gain extra redraw chances equal to the stack count."
+    },
+    {
+      "key": "tag.spell_power.name",
+      "text": "Spell Power"
+    },
+    {
+      "key": "tag.spell_power.desc",
+      "text": "Spell Power X: damage dealt +X. Cleared at turn end."
+    },
+    {
+      "key": "tag.defense_power.name",
+      "text": "Defense Power"
+    },
+    {
+      "key": "tag.defense_power.desc",
+      "text": "Each stack increases Shield gained by 1. Cleared at turn end."
+    },
+    {
+      "key": "tag.kindling.name",
+      "text": "Kindling"
+    },
+    {
+      "key": "tag.kindling.desc",
+      "text": "When this arrow triggers an item, apply 1 Burning to a random enemy."
+    },
+    {
+      "key": "tag.repeat_spell.name",
+      "text": "Repeat Item"
+    },
+    {
+      "key": "tag.repeat_spell.desc",
+      "text": "This turn, each item triggers extra times equal to the stack count."
+    },
+    {
+      "key": "tag.draw_on_enemy_attack.name",
+      "text": "Counter Draw"
+    },
+    {
+      "key": "tag.draw_on_enemy_attack.desc",
+      "text": "This turn, each time you are attacked by an enemy, draw extra cards next turn."
+    },
+    {
+      "key": "tag.burning_on_enemy_attack.name",
+      "text": "Counter Burning"
+    },
+    {
+      "key": "tag.burning_on_enemy_attack.desc",
+      "text": "This turn, whenever an enemy attacks, the attacker gains Burning."
+    },
+    {
+      "key": "tag.shield_reflect_boost.name",
+      "text": "Reflect Boost"
+    },
+    {
+      "key": "tag.shield_reflect_boost.desc",
+      "text": "This turn, item reflect effects trigger extra times."
+    },
+    {
+      "key": "tag.magic_attack_all.name",
+      "text": "Attack All"
+    },
+    {
+      "key": "tag.magic_attack_all.desc",
+      "text": "This turn, friendly item attacks target all enemies."
+    },
+    {
+      "key": "tag.next_magic_repeat.name",
+      "text": "Repeat Trigger"
+    },
+    {
+      "key": "tag.next_magic_repeat.desc",
+      "text": "The next item triggers extra times."
+    },
+    {
+      "key": "tag.keep_hand.name",
+      "text": "Keep Hand"
+    },
+    {
+      "key": "tag.keep_hand.desc",
+      "text": "Keep your hand at the end of this turn."
+    },
+    {
+      "key": "tag.remove_hand.name",
+      "text": "Consume"
+    },
+    {
+      "key": "tag.remove_hand.desc",
+      "text": "Removed from this battle."
+    },
+    {
+      "key": "tag.debuff_power.name",
+      "text": "Debuff Power"
+    },
+    {
+      "key": "tag.debuff_power.desc",
+      "text": "This turn, debuff stacks you apply increase."
+    },
+    {
+      "key": "modifier.retained_arrow.name",
+      "text": "Retained"
+    },
+    {
+      "key": "modifier.retained_arrow.desc",
+      "text": "At turn end, if this arrow is still in your hand, keep it in your hand."
+    },
+    {
+      "key": "tag.extra_enemy_debuff.name",
+      "text": "Debuff Amplify"
+    },
+    {
+      "key": "tag.extra_enemy_debuff.desc",
+      "text": "This turn, enemies gain additional stacks when they receive debuffs."
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "items": [
+    {
+      "key": "modifier.temporary.name",
+      "text": "Temporary"
+    },
+    {
+      "key": "modifier.temporary.desc",
+      "text": "Disappears at turn end or when leaving your hand, and does not return to the draw pile."
+    },
+    {
+      "key": "modifier.charge.name",
+      "text": "Charge"
+    },
+    {
+      "key": "modifier.charge.desc",
+      "text": "When this arrow triggers an item, apply 1 Arc to a random enemy."
+    },
+    {
+      "key": "modifier.vortex.name",
+      "text": "Vortex"
+    },
+    {
+      "key": "modifier.vortex.desc",
+      "text": "When this arrow triggers an item, apply 1 random debuff to a random enemy and draw 1 extra arrow into the play area."
+    },
+    {
+      "key": "modifier.kindling.name",
+      "text": "Kindling"
+    },
+    {
+      "key": "modifier.kindling.desc",
+      "text": "When this arrow triggers an item, apply 1 Burning to a random enemy."
+    },
+    {
+      "key": "modifier.flow.name",
+      "text": "Flow"
+    },
+    {
+      "key": "modifier.flow.desc",
+      "text": "If this arrow is used for redraw, draw 1 extra card."
+    },
+    {
+      "key": "modifier.liquefy.name",
+      "text": "Liquefy"
+    },
+    {
+      "key": "modifier.liquefy.desc",
+      "text": "This arrow is also treated as a Down arrow."
+    },
+    {
+      "key": "modifier.sturdy.name",
+      "text": "Sturdy"
+    },
+    {
+      "key": "modifier.sturdy.desc",
+      "text": "When this arrow triggers an item, gain 1 Shield."
+    },
+    {
+      "key": "modifier.doom.name",
+      "text": "Doom"
+    },
+    {
+      "key": "modifier.doom.desc",
+      "text": "When resolving this arrow's base effect, the player takes 5 damage. Removed after battle."
+    },
+    {
+      "key": "modifier.lazy.name",
+      "text": "Lazy"
+    },
+    {
+      "key": "modifier.lazy.desc",
+      "text": "When resolving this arrow's base effect, draw 1 fewer card next turn. Removed after battle."
+    },
+    {
+      "key": "modifier.omni_arrow.name",
+      "text": "Omni Arrow"
+    },
+    {
+      "key": "modifier.omni_arrow.desc",
+      "text": "When read, triggers Up, Down, Left, and Right base effects in order, and can count as any base direction for recipes."
+    },
+    {
+      "key": "modifier.repeat_arrow.name",
+      "text": "Repeat"
+    },
+    {
+      "key": "modifier.repeat_arrow.desc",
+      "text": "When this arrow is read, read it one extra time."
+    },
+    {
+      "key": "modifier.big_arrow_2.name",
+      "text": "Double Arrow"
+    },
+    {
+      "key": "modifier.big_arrow_2.desc",
+      "text": "This arrow triggers its base effect only once, but supplies 2 consecutive recipe slots."
+    },
+    {
+      "key": "modifier.big_arrow_3.name",
+      "text": "Triple Arrow"
+    },
+    {
+      "key": "modifier.big_arrow_3.desc",
+      "text": "This arrow triggers its base effect only once, but supplies 3 consecutive recipe slots."
+    },
+    {
+      "key": "modifier.big_arrow_4.name",
+      "text": "Quad Arrow"
+    },
+    {
+      "key": "modifier.big_arrow_4.desc",
+      "text": "This arrow triggers its base effect only once, but supplies 4 consecutive recipe slots."
+    },
+    {
+      "key": "modifier.return_arrow.name",
+      "text": "Return Symbol"
+    },
+    {
+      "key": "modifier.return_arrow.desc",
+      "text": "When read, removes this symbol and reverses the reading direction. This symbol does not supply recipe slots."
+    },
+    {
+      "key": "modifier.period_arrow.name",
+      "text": "Period Symbol"
+    },
+    {
+      "key": "modifier.period_arrow.desc",
+      "text": "Cannot be read. Arrow reading and recipe searching stop when they reach this symbol."
+    },
+    {
+      "key": "modifier.pack_arrow.name",
+      "text": "Pack Symbol"
+    },
+    {
+      "key": "modifier.pack_arrow.desc",
+      "text": "When read, packs all arrows and syntax symbols behind the current reading direction and resolves them in linked order. Restored after battle."
+    },
+    {
+      "key": "modifier.linked_arrow.name",
+      "text": "Linked Arrow"
+    },
+    {
+      "key": "modifier.linked_arrow.desc",
+      "text": "Contains ordered child arrows. When read, resolves them in linked order. Linked arrows can be linked again."
+    },
+    {
+      "key": "modifier.random_arrow.name",
+      "text": "Random Arrow"
+    },
+    {
+      "key": "modifier.random_arrow.desc",
+      "text": "Before being read, randomly changes into a base direction arrow and triggers/matches as that direction."
+    },
+    {
+      "key": "modifier.proliferating_arrow.name",
+      "text": "Proliferating"
+    },
+    {
+      "key": "modifier.proliferating_arrow.desc",
+      "text": "After being played and entering the discard pile, adds a temporary copy of this arrow to the discard pile. The copy is removed after battle."
+    },
+    {
+      "key": "modifier.eternal_arrow.name",
+      "text": "Eternal"
+    },
+    {
+      "key": "modifier.eternal_arrow.desc",
+      "text": "After being read, this arrow does not enter the discard pile and returns to your hand next turn."
+    },
+    {
+      "key": "modifier.fragile_arrow.name",
+      "text": "Fragile"
+    },
+    {
+      "key": "modifier.fragile_arrow.desc",
+      "text": "After resolving its base effect, this arrow leaves the play area and splits into two half arrows of the same direction in the discard pile. Half arrows are removed after battle."
+    },
+    {
+      "key": "modifier.retained_arrow.name",
+      "text": "Retained"
+    },
+    {
+      "key": "modifier.retained_arrow.desc",
+      "text": "At turn end, if this arrow is still in your hand, keep it in your hand."
+    },
+    {
+      "key": "modifier.half_arrow.name",
+      "text": "Half Arrow"
+    },
+    {
+      "key": "modifier.half_arrow.desc",
+      "text": "Can count as the matching direction for recipes, but does not trigger that direction's base effect when read."
+    }
+  ]
+}

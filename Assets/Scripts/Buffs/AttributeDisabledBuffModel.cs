@@ -17,7 +17,11 @@ public class AttributeDisabledBuffModel : BuffModel
     public override string GetDesc()
     {
         string directionName = GetDirectionName(stack);
-        return string.IsNullOrEmpty(directionName) ? "本回合无法选中指定属性素材。" : $"本回合无法选中{directionName}属性素材。";
+        if (string.IsNullOrEmpty(directionName))
+            return LocalizationKeys.GetBuffDescription(buffType);
+
+        string template = LocalizationSystem.GetText("buff.attributedisabled.desc_with_material", string.Empty);
+        return string.IsNullOrEmpty(template) ? LocalizationKeys.GetBuffDescription(buffType) : string.Format(template, directionName);
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
@@ -28,18 +32,7 @@ public class AttributeDisabledBuffModel : BuffModel
 
     private static string GetDirectionName(int materialValue)
     {
-        switch ((MaterialEnum)materialValue)
-        {
-            case MaterialEnum.Fire:
-                return "上";
-            case MaterialEnum.Water:
-                return "下";
-            case MaterialEnum.Wind:
-                return "左";
-            case MaterialEnum.Earth:
-                return "右";
-            default:
-                return string.Empty;
-        }
+        MaterialEnum material = (MaterialEnum)materialValue;
+        return material == MaterialEnum.None || material == MaterialEnum.Wild ? string.Empty : LocalizationKeys.GetMaterialName(material);
     }
 }

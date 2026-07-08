@@ -5,7 +5,7 @@ public class PetrifyMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
-        AddBuff(target, BuffEnum.Slow, 2, result);
-        AddBuff(target, BuffEnum.Weak, 2, result);
+        AddBuff(target, BuffEnum.Slow, 3, result);
+        AddBuff(target, BuffEnum.Weak, 3, result);
     }
 }

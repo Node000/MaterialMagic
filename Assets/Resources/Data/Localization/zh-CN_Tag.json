@@ -14,7 +14,7 @@
     },
     {
       "key": "tag.arc.desc",
-      "text": "每次触发道具时，该目标受到层数点额外伤害，回合结束时清除。"
+      "text": "每次触发道具时，该目标受到层数点额外伤害，该伤害不受易损影响，回合结束时清除。"
     },
     {
       "key": "tag.charge.name",
@@ -46,7 +46,7 @@
     },
     {
       "key": "tag.vulnerable.desc",
-      "text": "每层使受到伤害+1，回合开始时层数减半。"
+      "text": "每层使受到伤害+1，受到伤害后减少1层。"
     },
     {
       "key": "tag.slow.name",
@@ -70,7 +70,7 @@
     },
     {
       "key": "tag.sturdy.desc",
-      "text": "以此素材牌触发道具时，获得1点护盾；离开手牌或出牌区时消失。"
+      "text": "以此素材牌触发道具时，获得1点护盾。"
     },
     {
       "key": "tag.shield_reflect.name",
@@ -162,7 +162,7 @@
     },
     {
       "key": "tag.next_magic_repeat.name",
-      "text": "下个道具重复"
+      "text": "重复触发"
     },
     {
       "key": "tag.next_magic_repeat.desc",
@@ -191,6 +191,14 @@
     {
       "key": "tag.debuff_power.desc",
       "text": "本回合施加的负面状态层数提高。"
+    },
+    {
+      "key": "tag.extra_enemy_debuff.name",
+      "text": "负面增幅"
+    },
+    {
+      "key": "tag.extra_enemy_debuff.desc",
+      "text": "本回合敌方获得负面状态时额外获得同等层数。"
     }
   ]
 }

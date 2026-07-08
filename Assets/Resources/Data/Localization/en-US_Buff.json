@@ -1,0 +1,376 @@
+{
+  "items": [
+    {
+      "key": "buff.shield.name",
+      "text": "Shield"
+    },
+    {
+      "key": "buff.shield.desc",
+      "text": "Blocks incoming damage first."
+    },
+    {
+      "key": "buff.burning.name",
+      "text": "Burning"
+    },
+    {
+      "key": "buff.burning.desc",
+      "text": "At turn start, take damage equal to the stack count, then halve the stacks. This damage ignores Shield and is not affected by Vulnerable."
+    },
+    {
+      "key": "buff.weak.name",
+      "text": "Weak"
+    },
+    {
+      "key": "buff.weak.desc",
+      "text": "Each stack reduces attack by 1. After each hit and at turn end, stacks are halved."
+    },
+    {
+      "key": "buff.vulnerable.name",
+      "text": "Vulnerable"
+    },
+    {
+      "key": "buff.vulnerable.desc",
+      "text": "Each stack increases damage taken by 1. Lose 1 stack after taking damage."
+    },
+    {
+      "key": "buff.slow.name",
+      "text": "Slow"
+    },
+    {
+      "key": "buff.slow.desc",
+      "text": "Each stack reduces Shield gained by 1. When Shield is gained, lose stacks equal to the Shield reduced this way. Stacks are halved at turn end."
+    },
+    {
+      "key": "buff.arc.name",
+      "text": "Arc"
+    },
+    {
+      "key": "buff.arc.desc",
+      "text": "Whenever an item triggers, this target takes extra damage equal to the stack count. This damage is not affected by Vulnerable. Cleared at turn end."
+    },
+    {
+      "key": "buff.spell_power.name",
+      "text": "Spell Power"
+    },
+    {
+      "key": "buff.spell_power.desc",
+      "text": "Damage dealt +{0}. Cleared at turn end."
+    },
+    {
+      "key": "buff.charge_next_draw.name",
+      "text": "Next Draw Charge"
+    },
+    {
+      "key": "buff.charge_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain 【Charge】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.burning_next_turn.name",
+      "text": "Burning Next Turn"
+    },
+    {
+      "key": "buff.burning_next_turn.desc",
+      "text": "At the start of next turn, gain Burning equal to the stack count, then clear this."
+    },
+    {
+      "key": "buff.shield_reflect.name",
+      "text": "Shield Reflect"
+    },
+    {
+      "key": "buff.shield_reflect.desc",
+      "text": "Reflect damage blocked by Shield. Cleared at turn end."
+    },
+    {
+      "key": "buff.extra_draw.name",
+      "text": "Extra Draw"
+    },
+    {
+      "key": "buff.extra_draw.desc",
+      "text": "Draw extra cards equal to the stack count, then clear this after drawing."
+    },
+    {
+      "key": "buff.extra_refresh.name",
+      "text": "Extra Refresh"
+    },
+    {
+      "key": "buff.extra_refresh.desc",
+      "text": "After next turn starts, gain extra redraw chances equal to the stack count, then clear this."
+    },
+    {
+      "key": "buff.sturdy.name",
+      "text": "Sturdy"
+    },
+    {
+      "key": "buff.sturdy.desc",
+      "text": "The first {0} arrows drawn next turn gain 【Sturdy】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.stable.name",
+      "text": "Stable"
+    },
+    {
+      "key": "buff.stable.desc",
+      "text": "Lose 1 stack at turn end. When stacks reach 0, convert into 1 【Disorder】."
+    },
+    {
+      "key": "buff.disorder.name",
+      "text": "Disorder"
+    },
+    {
+      "key": "buff.disorder.desc",
+      "text": "Attack damage increases by the stack count. At turn end, take direct damage equal to the stack count."
+    },
+    {
+      "key": "buff.defense_power.name",
+      "text": "Defense Power"
+    },
+    {
+      "key": "buff.defense_power.desc",
+      "text": "Each stack increases Shield gained by 1. Cleared at the end of the player turn; enemies keep it while active."
+    },
+    {
+      "key": "buff.burn_on_attack.name",
+      "text": "Burn on Attack"
+    },
+    {
+      "key": "buff.burn_on_attack.desc",
+      "text": "This turn, whenever this unit attacks, it gains Burning equal to the stack count."
+    },
+    {
+      "key": "buff.repeat_spell.name",
+      "text": "Repeat Item"
+    },
+    {
+      "key": "buff.repeat_spell.desc",
+      "text": "This turn, each item triggers extra times equal to the stack count."
+    },
+    {
+      "key": "buff.debuff_power.name",
+      "text": "Debuff Power"
+    },
+    {
+      "key": "buff.debuff_power.desc",
+      "text": "This turn, debuff stacks you apply increase by the stack count."
+    },
+    {
+      "key": "buff.vortex_next_draw.name",
+      "text": "Next Draw Vortex"
+    },
+    {
+      "key": "buff.vortex_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain 【Vortex】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.eggdeathexplosion.name",
+      "text": "Death Explosion"
+    },
+    {
+      "key": "buff.eggdeathexplosion.desc",
+      "text": "On death, deal {0} damage to all units."
+    },
+    {
+      "key": "buff.shieldonhealthloss.name",
+      "text": "Wounded Shield"
+    },
+    {
+      "key": "buff.shieldonhealthloss.desc",
+      "text": "Persistent: when HP decreases, gain Shield equal to lost HP × {0}."
+    },
+    {
+      "key": "buff.shufflehandoninvokechance.name",
+      "text": "Random Shuffle"
+    },
+    {
+      "key": "buff.shufflehandoninvokechance.desc",
+      "text": "Persistent: when the player confirms a play, has a 1/3 chance to shuffle the play area."
+    },
+    {
+      "key": "buff.attributedisabled.name",
+      "text": "Attribute Disabled"
+    },
+    {
+      "key": "buff.attributedisabled.desc",
+      "text": "The specified attribute arrows cannot be selected this turn."
+    },
+    {
+      "key": "buff.attributedisabled.desc_with_material",
+      "text": "{0} arrows cannot be selected this turn."
+    },
+    {
+      "key": "buff.curse.name",
+      "text": "Curse"
+    },
+    {
+      "key": "buff.curse.desc",
+      "text": "Persistent: at turn start, each stack makes the first 2 drawn cards gain Doom."
+    },
+    {
+      "key": "buff.directiondamagebonus.name",
+      "text": "Up: Bonus Damage"
+    },
+    {
+      "key": "buff.directiondamagebonus.desc",
+      "text": "Attacks deal {0} extra damage this turn."
+    },
+    {
+      "key": "buff.directionweakbonus.name",
+      "text": "Down: Bonus Debuff"
+    },
+    {
+      "key": "buff.directionweakbonus.desc",
+      "text": "When applying debuffs this turn, apply {0} extra stacks."
+    },
+    {
+      "key": "buff.directionextradraw.name",
+      "text": "Left: Extra Draw"
+    },
+    {
+      "key": "buff.directionextradraw.desc",
+      "text": "Draw {0} extra card(s) at turn start."
+    },
+    {
+      "key": "buff.directionshieldbonus.name",
+      "text": "Right: Bonus Shield"
+    },
+    {
+      "key": "buff.directionshieldbonus.desc",
+      "text": "Gain {0} extra Shield whenever you gain Shield this turn."
+    },
+    {
+      "key": "buff.materialoverplaydebuff.name",
+      "text": "Arrow Overload"
+    },
+    {
+      "key": "buff.materialoverplaydebuff.desc",
+      "text": "Persistent: after the player plays more than 4 arrows, each extra arrow gives 1 random debuff stack."
+    },
+    {
+      "key": "buff.preparedshield.name",
+      "text": "Prepared Shield"
+    },
+    {
+      "key": "buff.preparedshield.desc",
+      "text": "At the start of next turn, gain Shield equal to the stack count, then clear this."
+    },
+    {
+      "key": "buff.kindling_next_draw.name",
+      "text": "Next Draw Kindling"
+    },
+    {
+      "key": "buff.kindling_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain 【Kindling】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.draw_on_enemy_attack.name",
+      "text": "Counter Draw"
+    },
+    {
+      "key": "buff.draw_on_enemy_attack.desc",
+      "text": "This turn, each time you are attacked by an enemy, draw {0} extra card(s) next turn."
+    },
+    {
+      "key": "buff.burning_on_enemy_attack.name",
+      "text": "Counter Burning"
+    },
+    {
+      "key": "buff.burning_on_enemy_attack.desc",
+      "text": "This turn, whenever an enemy attacks, the attacker gains {0} Burning."
+    },
+    {
+      "key": "buff.extra_draw_on_enemy_damage.name",
+      "text": "Damage Draw"
+    },
+    {
+      "key": "buff.extra_draw_on_enemy_damage.desc",
+      "text": "This turn, each 3 instances of HP damage dealt to enemies makes you draw {0} extra card(s) next turn."
+    },
+    {
+      "key": "buff.shield_reflect_boost.name",
+      "text": "Reflect Boost"
+    },
+    {
+      "key": "buff.shield_reflect_boost.desc",
+      "text": "This turn, item reflect effects trigger {0} extra time(s)."
+    },
+    {
+      "key": "buff.magic_attack_all.name",
+      "text": "Attack All"
+    },
+    {
+      "key": "buff.magic_attack_all.desc",
+      "text": "This turn, friendly item attacks target all enemies."
+    },
+    {
+      "key": "buff.next_magic_repeat.name",
+      "text": "Repeat Trigger"
+    },
+    {
+      "key": "buff.next_magic_repeat.desc",
+      "text": "The next item triggers {0} extra time(s), then clear this."
+    },
+    {
+      "key": "buff.keep_hand.name",
+      "text": "Keep Hand"
+    },
+    {
+      "key": "buff.keep_hand.desc",
+      "text": "Keep your hand at the end of this turn, then clear this."
+    },
+    {
+      "key": "buff.lazy_next_draw.name",
+      "text": "Lazy"
+    },
+    {
+      "key": "buff.lazy_next_draw.desc",
+      "text": "Draw {0} fewer card(s) next turn, then clear this after drawing."
+    },
+    {
+      "key": "buff.claw.name",
+      "text": "Minion"
+    },
+    {
+      "key": "buff.claw.desc",
+      "text": "This enemy does not count toward victory. After all non-minion enemies are defeated, it dies immediately."
+    },
+    {
+      "key": "buff.tutorial_death.name",
+      "text": "Tutorial"
+    },
+    {
+      "key": "buff.tutorial_death.desc",
+      "text": "Dies after {0} turn(s)."
+    },
+    {
+      "key": "buff.tutorialdeath.name",
+      "text": "Tutorial"
+    },
+    {
+      "key": "buff.tutorialdeath.desc",
+      "text": "Dies after {0} turn(s)."
+    },
+    {
+      "key": "buff.retained_next_draw.name",
+      "text": "Next Draw Retained"
+    },
+    {
+      "key": "buff.retained_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain 【Retained】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.double_enemy_burning_on_turn_end.name",
+      "text": "Double Burning"
+    },
+    {
+      "key": "buff.double_enemy_burning_on_turn_end.desc",
+      "text": "At player turn end, double this target's Burning stacks, then clear this."
+    },
+    {
+      "key": "buff.extra_enemy_debuff.name",
+      "text": "Debuff Amplify"
+    },
+    {
+      "key": "buff.extra_enemy_debuff.desc",
+      "text": "This turn, whenever an enemy gains {0} debuff stack(s), it gains the same amount again."
+    }
+  ]
+}

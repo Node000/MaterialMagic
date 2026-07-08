@@ -103,6 +103,230 @@
     {
       "key": "enemy.tutorial_dummy_xxl.name",
       "text": "教学人偶XXL"
+    },
+    {
+      "key": "enemy.intent.title.attack",
+      "text": "意图：攻击"
+    },
+    {
+      "key": "enemy.intent.title.multi_attack",
+      "text": "意图：连击"
+    },
+    {
+      "key": "enemy.intent.title.attack_all",
+      "text": "意图：群体攻击"
+    },
+    {
+      "key": "enemy.intent.title.multi_attack_all",
+      "text": "意图：群体连击"
+    },
+    {
+      "key": "enemy.intent.title.defend",
+      "text": "意图：防御"
+    },
+    {
+      "key": "enemy.intent.title.buff",
+      "text": "意图：强化"
+    },
+    {
+      "key": "enemy.intent.title.debuff",
+      "text": "意图：负面效果"
+    },
+    {
+      "key": "enemy.intent.title.summon",
+      "text": "意图：召唤"
+    },
+    {
+      "key": "enemy.intent.title.stunned",
+      "text": "意图：眩晕"
+    },
+    {
+      "key": "enemy.intent.title.unknown",
+      "text": "意图：未知"
+    },
+    {
+      "key": "enemy.intent.title.special_defend",
+      "text": "意图：特殊防御"
+    },
+    {
+      "key": "enemy.intent.title.special_attack",
+      "text": "意图：特殊攻击"
+    },
+    {
+      "key": "enemy.intent.desc.attack",
+      "text": "这个敌人将造成{0}点伤害"
+    },
+    {
+      "key": "enemy.intent.desc.multi_attack",
+      "text": "这个敌人将造成{0}次{1}点伤害"
+    },
+    {
+      "key": "enemy.intent.desc.attack_all",
+      "text": "这个敌人将对所有目标造成{0}点伤害"
+    },
+    {
+      "key": "enemy.intent.desc.multi_attack_all",
+      "text": "这个敌人将对所有目标造成{0}次{1}点伤害"
+    },
+    {
+      "key": "enemy.intent.desc.defend",
+      "text": "这个敌人将获得{0}点护盾"
+    },
+    {
+      "key": "enemy.intent.desc.buff.empty",
+      "text": "这个敌人将获得强化效果"
+    },
+    {
+      "key": "enemy.intent.desc.buff",
+      "text": "这个敌人将获得{0}"
+    },
+    {
+      "key": "enemy.intent.desc.debuff.empty",
+      "text": "这个敌人将对玩家施加负面效果"
+    },
+    {
+      "key": "enemy.intent.desc.debuff",
+      "text": "这个敌人将对玩家施加{0}"
+    },
+    {
+      "key": "enemy.intent.desc.stunned",
+      "text": "这个敌人本回合不会行动"
+    },
+    {
+      "key": "enemy.intent.desc.special_defend",
+      "text": "这个敌人将获得{0}点护盾，并施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.special_defend.empty",
+      "text": "这个敌人将进行特殊防御，并施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.special_summon",
+      "text": "这个敌人将召唤{0}个援军，并施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.special_summon.empty",
+      "text": "这个敌人将召唤援军，并施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.special_attack",
+      "text": "这个敌人将造成{0}点伤害，并施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.special_attack.empty",
+      "text": "这个敌人将施加特殊效果"
+    },
+    {
+      "key": "enemy.intent.desc.summon.single",
+      "text": "这个敌人将召唤{0}"
+    },
+    {
+      "key": "enemy.intent.desc.summon.multi",
+      "text": "这个敌人将召唤{1}个{0}"
+    },
+    {
+      "key": "enemy.intent.fallback_enemy",
+      "text": "敌人"
+    },
+    {
+      "key": "enemy.intent.buff_stack",
+      "text": "【{0}】"
+    },
+    {
+      "key": "enemy.intent.buff_stack_with_stack",
+      "text": "【{0}】 {1}"
+    },
+    {
+      "key": "enemy.intent.list_separator",
+      "text": "、"
+    },
+    {
+      "key": "enemy.intent.blue_eye.summon_desc",
+      "text": "这个敌人将召唤{0}，并获得{1}"
+    },
+    {
+      "key": "enemy.intent.blue_eye.minion_single",
+      "text": "爪牙"
+    },
+    {
+      "key": "enemy.intent.blue_eye.minion_multi",
+      "text": "{0}个爪牙"
+    },
+    {
+      "key": "enemy.intent.deer.defend_desc",
+      "text": "这个敌人将获得{0}点护盾，并施加{1}"
+    },
+    {
+      "key": "enemy.intent.deer.defend_desc.empty",
+      "text": "这个敌人将获得护盾，并施加{0}"
+    },
+    {
+      "key": "enemy.intent.deer.attack_desc",
+      "text": "这个敌人将造成{0}点伤害，伤害基于玩家最多的基础素材数量"
+    },
+    {
+      "key": "enemy.intent.deer.attack_desc.empty",
+      "text": "这个敌人将造成特殊伤害，伤害基于玩家最多的基础素材数量"
+    },
+    {
+      "key": "enemy.intent.demon.title",
+      "text": "意图：诅咒"
+    },
+    {
+      "key": "enemy.intent.demon.desc",
+      "text": "这个敌人将对玩家施加{0}"
+    },
+    {
+      "key": "enemy.intent.healing_cat.title",
+      "text": "意图：治疗"
+    },
+    {
+      "key": "enemy.intent.healing_cat.desc",
+      "text": "玩家将回复{0}点生命"
+    },
+    {
+      "key": "enemy.intent.lucky_cat.title",
+      "text": "意图：金币"
+    },
+    {
+      "key": "enemy.intent.lucky_cat.desc",
+      "text": "玩家将获得{0}金币"
+    },
+    {
+      "key": "enemy.intent.merchant.title",
+      "text": "意图：净化"
+    },
+    {
+      "key": "enemy.intent.merchant.desc",
+      "text": "这个敌人将清除自身所有负面状态"
+    },
+    {
+      "key": "enemy.intent.rainbow.direction_title",
+      "text": "意图：方向强化"
+    },
+    {
+      "key": "enemy.intent.rainbow.player_gain",
+      "text": "玩家将获得{0}"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_title",
+      "text": "意图：随机特殊效果"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_attack_desc",
+      "text": "这个敌人将造成14点伤害"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_defend_desc",
+      "text": "这个敌人将获得10点护盾"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_debuff_desc",
+      "text": "这个敌人将对玩家施加{0}"
+    },
+    {
+      "key": "enemy.intent.rainbow.random_unknown_desc",
+      "text": "这个敌人将随机造成14点伤害、获得10点护盾、施加5层虚弱或施加6层易伤"
     }
   ]
 }

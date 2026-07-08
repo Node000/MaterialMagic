@@ -62,7 +62,7 @@
     },
     {
       "key": "ui.start_menu.start_with_config",
-      "text": "开始游戏www！"
+      "text": "开始游戏！"
     },
     {
       "key": "ui.start_menu.confirm_exit",
@@ -106,7 +106,7 @@
     },
     {
       "key": "ui.start_menu.start_tutorial_with_config",
-      "text": "开始教程www！"
+      "text": "开始教程！"
     },
     {
       "key": "ui.start_menu.skip_tutorial",
@@ -118,7 +118,7 @@
     },
     {
       "key": "ui.magic_modifier.panel.material_hint",
-      "text": ""
+      "text": "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。"
     },
     {
       "key": "ui.magic_modifier.panel.material_empty",
@@ -211,6 +211,294 @@
     {
       "key": "ui.unified_detail.map_move.earth.body",
       "text": "向右移动一格。"
+    },
+    {
+      "key": "ui.common.none",
+      "text": "无"
+    },
+    {
+      "key": "ui.common.close",
+      "text": "关闭"
+    },
+    {
+      "key": "ui.common.delete",
+      "text": "删除"
+    },
+    {
+      "key": "ui.common.list_separator",
+      "text": "、"
+    },
+    {
+      "key": "ui.language.label",
+      "text": "语言"
+    },
+    {
+      "key": "ui.start_settings.title",
+      "text": "C:/设置"
+    },
+    {
+      "key": "ui.start_settings.music",
+      "text": "音乐"
+    },
+    {
+      "key": "ui.start_settings.sfx",
+      "text": "音效"
+    },
+    {
+      "key": "ui.start_menu.continue",
+      "text": "继续游戏"
+    },
+    {
+      "key": "ui.start_menu.settings",
+      "text": "设置"
+    },
+    {
+      "key": "ui.start_menu.exit",
+      "text": "退出游戏"
+    },
+    {
+      "key": "ui.start_menu.exit_prompt",
+      "text": "是否退出游戏？"
+    },
+    {
+      "key": "ui.start_menu.abandon_run_prompt",
+      "text": "是否放弃本局游戏？"
+    },
+    {
+      "key": "ui.start_menu.tutorial_button",
+      "text": "游戏教程"
+    },
+    {
+      "key": "ui.start_menu.forum_button",
+      "text": "玩家交流群"
+    },
+    {
+      "key": "ui.start_menu.history_button",
+      "text": "历史记录"
+    },
+    {
+      "key": "ui.start_menu.change_save",
+      "text": "更换存档"
+    },
+    {
+      "key": "ui.start_config.deck_title",
+      "text": "C:/DECK/"
+    },
+    {
+      "key": "ui.start_config.magic_label",
+      "text": "初始法术"
+    },
+    {
+      "key": "ui.start_config.material_label",
+      "text": "初始素材"
+    },
+    {
+      "key": "ui.start_config.balanced.name",
+      "text": "均衡"
+    },
+    {
+      "key": "ui.start_config.ice_fire.name",
+      "text": "冰与火"
+    },
+    {
+      "key": "ui.start_config.wind_dust.name",
+      "text": "风与尘"
+    },
+    {
+      "key": "ui.start_config.blank.name",
+      "text": "更好的一切"
+    },
+    {
+      "key": "ui.save_slot.title",
+      "text": "存档 {0}"
+    },
+    {
+      "key": "ui.save_slot.current_title",
+      "text": "▶ 当前存档 {0}"
+    },
+    {
+      "key": "ui.save_slot.summary",
+      "text": "{0}\n通关次数：{1}\n游戏时间：{2}分钟\n最后游玩：{3}"
+    },
+    {
+      "key": "ui.save_slot.delete",
+      "text": "删除"
+    },
+    {
+      "key": "ui.run_history.title",
+      "text": "C:/历史记录"
+    },
+    {
+      "key": "ui.run_history.empty",
+      "text": "暂无历史记录"
+    },
+    {
+      "key": "ui.run_history.detail_header",
+      "text": "记录详情"
+    },
+    {
+      "key": "ui.run_history.magic_header",
+      "text": "道具详情"
+    },
+    {
+      "key": "ui.run_history.arrow_header",
+      "text": "箭头详情"
+    },
+    {
+      "key": "ui.run_history.arrow_detail_hint",
+      "text": "悬停箭头查看详情"
+    },
+    {
+      "key": "ui.run_history.no_arrow_record",
+      "text": "没有箭头记录"
+    },
+    {
+      "key": "ui.run_history.result.victory",
+      "text": "通关"
+    },
+    {
+      "key": "ui.run_history.result.defeat",
+      "text": "失败"
+    },
+    {
+      "key": "ui.run_history.result.abandon",
+      "text": "放弃"
+    },
+    {
+      "key": "ui.run_history.unknown_time",
+      "text": "未知时间"
+    },
+    {
+      "key": "ui.run_history.time.hours_minutes_seconds",
+      "text": "{0}小时{1}分{2}秒"
+    },
+    {
+      "key": "ui.run_history.time.minutes_seconds",
+      "text": "{0}分{1}秒"
+    },
+    {
+      "key": "ui.run_history.time.seconds",
+      "text": "{0}秒"
+    },
+    {
+      "key": "ui.run_history.detail.date",
+      "text": "日期：{0}"
+    },
+    {
+      "key": "ui.run_history.detail.result",
+      "text": "结果：{0}"
+    },
+    {
+      "key": "ui.run_history.detail.time",
+      "text": "用时：{0}"
+    },
+    {
+      "key": "ui.run_history.detail.progress",
+      "text": "进度：{0}"
+    },
+    {
+      "key": "ui.run_history.detail.health",
+      "text": "生命：{0}/{1}"
+    },
+    {
+      "key": "ui.run_history.detail.gold",
+      "text": "金币：{0}"
+    },
+    {
+      "key": "ui.run_history.detail.version",
+      "text": "版本：{0} / 记录v{1}"
+    },
+    {
+      "key": "ui.run_history.build.magic_prefix",
+      "text": "道具："
+    },
+    {
+      "key": "ui.run_history.build.arrow_prefix",
+      "text": "箭头："
+    },
+    {
+      "key": "ui.run_history.build.arrow_count_suffix",
+      "text": "张"
+    },
+    {
+      "key": "ui.start_tutorial.title",
+      "text": "新手教程"
+    },
+    {
+      "key": "ui.start_tutorial.prompt",
+      "text": "最重要的东西：\n\n点击箭头，选中，然后调整顺序并打出。\n\n通过打出不同箭头形成组合，将身边的道具狠狠地挥到敌人脸上！\n\n遇到事件也靠打出上下左右解决！\n\n嗯……对！就是这样！\n\n点击弹窗的右上角关闭教程，\n\n然后开始游戏吧！"
+    },
+    {
+      "key": "ui.forum.title",
+      "text": "C:/玩家交流群"
+    },
+    {
+      "key": "ui.unified_detail.material.direction_prefix",
+      "text": "向"
+    },
+    {
+      "key": "ui.unified_detail.material.single_play_prefix",
+      "text": "单独打出"
+    },
+    {
+      "key": "ui.shop.item.fallback_magic",
+      "text": "道具"
+    },
+    {
+      "key": "ui.shop.item.remove_material",
+      "text": "删牌"
+    },
+    {
+      "key": "ui.shop.item.arrow_title",
+      "text": "{0}箭头"
+    },
+    {
+      "key": "ui.shop.state.purchased",
+      "text": "已购买"
+    },
+    {
+      "key": "ui.shop.state.selected",
+      "text": "已选中"
+    },
+    {
+      "key": "ui.shop.state.select_remove_material",
+      "text": "选择要删的牌"
+    },
+    {
+      "key": "ui.shop.state.unavailable",
+      "text": "不可用"
+    },
+    {
+      "key": "ui.shop.state.buy",
+      "text": "点击购买"
+    },
+    {
+      "key": "ui.shop.state.not_enough_gold",
+      "text": "金币不足"
+    },
+    {
+      "key": "ui.start_config.locked",
+      "text": "未解锁"
+    },
+    {
+      "key": "ui.unlock_popup.title",
+      "text": "新内容解锁！"
+    },
+    {
+      "key": "ui.unlock_popup.type.start_config",
+      "text": "初始卡组"
+    },
+    {
+      "key": "ui.unlock_popup.type.magic",
+      "text": "道具"
+    },
+    {
+      "key": "ui.unlock_popup.type.material_modifier",
+      "text": "箭头附魔"
+    },
+    {
+      "key": "ui.unlock_popup.type.magic_modifier",
+      "text": "道具强化"
     }
   ]
 }

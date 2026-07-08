@@ -86,6 +86,8 @@ public class RewardPanelUI : MonoBehaviour
     private Action magicOnlyCompleted;
     private RewardOptionsModel currentRewardOptions;
     private RewardOptionKind eliteExtraRewardKind;
+    private Coroutine magicChoicePrewarmRoutine;
+    private bool magicChoicesPrebound;
 
     private const float SelectedMagicScale = 1.24f;
     private const float HoverMagicScaleBonus = 0.08f;
@@ -125,6 +127,7 @@ public class RewardPanelUI : MonoBehaviour
         CacheReferences();
         HideMagicChoices();
         RefreshOptions();
+        ScheduleMagicChoicePrewarm();
         owner.GetUIManager().TutorialManager?.OnRewardPanelShown();
     }
 
@@ -156,10 +159,12 @@ public class RewardPanelUI : MonoBehaviour
         CacheReferences();
         HideMagicChoices();
         RefreshOptions();
+        ScheduleMagicChoicePrewarm();
     }
 
     public void Hide()
     {
+        StopMagicChoicePrewarm();
         owner?.SelectPendingRewardMagic(null);
         HideMagicChoices();
         currentRewardOptions = null;
@@ -357,6 +362,7 @@ public class RewardPanelUI : MonoBehaviour
         if (magicClaimed)
             return;
 
+        StopMagicChoicePrewarm();
         owner.GetUIManager().TutorialManager?.OnMagicRewardChoicesShown();
         EnsureMagicChoicePanel();
         magicChoicePanel.gameObject.SetActive(true);
@@ -392,7 +398,8 @@ public class RewardPanelUI : MonoBehaviour
             UIManager.RemoveJuicyMotion(view.transform);
 
             MagicData data = choices[i];
-            view.Bind(MagicFactory.Create(data));
+            if (!magicChoicesPrebound)
+                view.Bind(MagicFactory.Create(data));
             Button button = view.GetComponent<Button>();
             if (button != null)
             {
@@ -403,6 +410,48 @@ public class RewardPanelUI : MonoBehaviour
             view.gameObject.SetActive(true);
             SetRewardMagicHighlightVisible(view, view == selectedMagicView || view == hoveredMagicView);
         }
+    }
+
+    private void ScheduleMagicChoicePrewarm()
+    {
+        StopMagicChoicePrewarm();
+        magicChoicesPrebound = false;
+        magicChoicePrewarmRoutine = StartCoroutine(PrewarmMagicChoicesRoutine());
+    }
+
+    private void StopMagicChoicePrewarm()
+    {
+        if (magicChoicePrewarmRoutine != null)
+        {
+            StopCoroutine(magicChoicePrewarmRoutine);
+            magicChoicePrewarmRoutine = null;
+        }
+    }
+
+    private IEnumerator PrewarmMagicChoicesRoutine()
+    {
+        yield return null;
+        if (!gameObject.activeInHierarchy || magicClaimed)
+        {
+            magicChoicePrewarmRoutine = null;
+            yield break;
+        }
+
+        EnsureMagicChoicePanel();
+        if (currentRewardOptions == null)
+            currentRewardOptions = new RewardOptionsModel(currentGoldReward, owner.GetRewardMagicChoices(3));
+
+        List<MagicData> choices = currentRewardOptions.MagicChoices;
+        int choiceCount = Mathf.Min(choices.Count, rewardMagicViews.Count);
+        for (int i = 0; i < choiceCount; i++)
+        {
+            MagicItemView view = rewardMagicViews[i];
+            if (view != null)
+                view.Bind(MagicFactory.Create(choices[i]));
+        }
+        magicChoicesPrebound = true;
+        HideMagicChoices();
+        magicChoicePrewarmRoutine = null;
     }
 
     private void SelectMagicReward(MagicData data, MagicItemView view)

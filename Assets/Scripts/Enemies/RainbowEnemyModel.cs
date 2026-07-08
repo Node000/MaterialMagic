@@ -50,7 +50,7 @@ public class RainbowEnemyModel : EnemyModel
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)
     {
-        return intent != null && intent.value == RandomFollowupIntentValue ? GetRandomFollowupTooltipTitle() : "意图：方向强化";
+        return intent != null && intent.value == RandomFollowupIntentValue ? GetRandomFollowupTooltipTitle() : GetLocalizedText("enemy.intent.rainbow.direction_title");
     }
 
     protected override string GetSpecialIntentTooltipDescription(EnemyIntentData intent, PlayerState playerState)
@@ -61,13 +61,13 @@ public class RainbowEnemyModel : EnemyModel
         switch (intent.value)
         {
             case DirectionDamageIntentValue:
-                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionDamageBonus, 3);
+                return FormatLocalizedText("enemy.intent.rainbow.player_gain", FormatBuffStack(BuffEnum.DirectionDamageBonus, 3));
             case DirectionWeakIntentValue:
-                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionWeakBonus, 2);
+                return FormatLocalizedText("enemy.intent.rainbow.player_gain", FormatBuffStack(BuffEnum.DirectionWeakBonus, 2));
             case DirectionDrawIntentValue:
-                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionExtraDraw, 1);
+                return FormatLocalizedText("enemy.intent.rainbow.player_gain", FormatBuffStack(BuffEnum.DirectionExtraDraw, 1));
             case DirectionShieldIntentValue:
-                return "玩家将获得" + FormatBuffStack(BuffEnum.DirectionShieldBonus, 3);
+                return FormatLocalizedText("enemy.intent.rainbow.player_gain", FormatBuffStack(BuffEnum.DirectionShieldBonus, 3));
             case RandomFollowupIntentValue:
                 return GetRandomFollowupTooltipDescription();
             default:
@@ -186,14 +186,14 @@ public class RainbowEnemyModel : EnemyModel
         switch (randomFollowupDisplayType)
         {
             case 1:
-                return "意图：攻击";
+                return GetLocalizedText("enemy.intent.title.attack");
             case 2:
-                return "意图：防御";
+                return GetLocalizedText("enemy.intent.title.defend");
             case 3:
             case 4:
-                return "意图：负面效果";
+                return GetLocalizedText("enemy.intent.title.debuff");
             default:
-                return "意图：随机特殊效果";
+                return GetLocalizedText("enemy.intent.rainbow.random_title");
         }
     }
 
@@ -202,15 +202,15 @@ public class RainbowEnemyModel : EnemyModel
         switch (randomFollowupDisplayType)
         {
             case 1:
-                return "这个敌人将造成14点伤害";
+                return GetLocalizedText("enemy.intent.rainbow.random_attack_desc");
             case 2:
-                return "这个敌人将获得10点护盾";
+                return GetLocalizedText("enemy.intent.rainbow.random_defend_desc");
             case 3:
-                return "这个敌人将对玩家施加" + FormatBuffStack(BuffEnum.Weak, 5);
+                return FormatLocalizedText("enemy.intent.rainbow.random_debuff_desc", FormatBuffStack(BuffEnum.Weak, 5));
             case 4:
-                return "这个敌人将对玩家施加" + FormatBuffStack(BuffEnum.Vulnerable, 6);
+                return FormatLocalizedText("enemy.intent.rainbow.random_debuff_desc", FormatBuffStack(BuffEnum.Vulnerable, 6));
             default:
-                return "这个敌人将随机造成14点伤害、获得10点护盾、施加5层虚弱或施加6层易伤";
+                return GetLocalizedText("enemy.intent.rainbow.random_unknown_desc");
         }
     }
 }

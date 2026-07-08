@@ -6,6 +6,6 @@ public class TumblerMagicModel : MagicModel
 
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        playerState.AddBuff(BuffEnum.ShieldReflectBoost, 1);
+        playerState.AddBuff(BuffEnum.ExtraEnemyDebuff, 1);
     }
 }

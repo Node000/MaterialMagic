@@ -9,8 +9,9 @@ public class VulnerableBuffModel : BuffModel
         damage += stack;
     }
 
-    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
+    public override void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
-        HalveStack();
+        if (result != null && result.FinalDamage > 0)
+            ConsumeStack(1);
     }
 }

@@ -109,7 +109,10 @@ public enum BuffEnum
     LazyNextDraw = 42,
     ChargeNextDraw = 43,
     TutorialDeath = 44,
-    KeepHand = 45
+    KeepHand = 45,
+    RetainedNextDraw = 46,
+    DoubleEnemyBurningOnTurnEnd = 47,
+    ExtraEnemyDebuff = 48
 }
 
 public enum BuffKindEnum
@@ -212,6 +215,7 @@ public class PlayerStartMaterialData
 {
     public MaterialEnum material;
     public int count;
+    public string[] modifierIds = Array.Empty<string>();
 }
 
 [Serializable]
@@ -226,6 +230,7 @@ public class PlayerStartConfigData : IDataRecord
 {
     public string id;
     public string displayName;
+    public string displayNameKey;
     public string texturePath;
     public string color;
     public int maxHealth = 50;

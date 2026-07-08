@@ -1,0 +1,292 @@
+{
+  "items": [
+    {
+      "key": "magic.fireball_art.name",
+      "text": "Fire Wine"
+    },
+    {
+      "key": "magic.flame_demon.name",
+      "text": "Melting Heart"
+    },
+    {
+      "key": "magic.wind_blade.name",
+      "text": "Windmill"
+    },
+    {
+      "key": "magic.current_attachment.name",
+      "text": "Desktop PC"
+    },
+    {
+      "key": "magic.sandstorm.name",
+      "text": "Glittering"
+    },
+    {
+      "key": "magic.ice_pick.name",
+      "text": "Popsicle"
+    },
+    {
+      "key": "magic.rockfall.name",
+      "text": "Trash Can"
+    },
+    {
+      "key": "magic.ignite.name",
+      "text": "Better Up"
+    },
+    {
+      "key": "magic.ignite.desc",
+      "text": "Apply 2 【Burning】 to the enemy."
+    },
+    {
+      "key": "magic.fireball_art.desc",
+      "text": "Deal 2 damage to the enemy and apply 2 【Burning】."
+    },
+    {
+      "key": "magic.flame_barrier.name",
+      "text": "Flame"
+    },
+    {
+      "key": "magic.flame_barrier.desc",
+      "text": "The next 3 arrows drawn next turn gain 【Kindling】."
+    },
+    {
+      "key": "magic.magma.name",
+      "text": "Spicy Noodles"
+    },
+    {
+      "key": "magic.magma.desc",
+      "text": "Apply 2 【Burning】 to the enemy. Next turn, add a 【Temporary】 Right arrow to your hand."
+    },
+    {
+      "key": "magic.molten.name",
+      "text": "Devil Pepper"
+    },
+    {
+      "key": "magic.molten.desc",
+      "text": "Deal 3 damage to the enemy. This damage gains +1 for each stack of 【Burning】 on the enemy."
+    },
+    {
+      "key": "magic.explosion.name",
+      "text": "Oil Barrel"
+    },
+    {
+      "key": "magic.explosion.desc",
+      "text": "Immediately trigger the enemy's 【Burning】."
+    },
+    {
+      "key": "magic.burning_hand.name",
+      "text": "Passionate Heart"
+    },
+    {
+      "key": "magic.burning_hand.desc",
+      "text": "Apply 4 【Burning】 and 1 【Double Burning】 to all enemies."
+    },
+    {
+      "key": "magic.flame_demon.desc",
+      "text": "Next turn, add 1 【Temporary】 Up arrow to your hand."
+    },
+    {
+      "key": "magic.airflow.name",
+      "text": "Better Left"
+    },
+    {
+      "key": "magic.airflow.desc",
+      "text": "Deal 2 damage to the enemy."
+    },
+    {
+      "key": "magic.wind_blade.desc",
+      "text": "Gain 1 【Spell Power】 this turn. Deal 2 damage to the enemy."
+    },
+    {
+      "key": "magic.burning_wind.name",
+      "text": "Ice Cream"
+    },
+    {
+      "key": "magic.burning_wind.desc",
+      "text": "Gain 【Repeat Item】 this turn. (【Repeat Item】: items trigger one extra time.)"
+    },
+    {
+      "key": "magic.lightning.name",
+      "text": "Lightning"
+    },
+    {
+      "key": "magic.lightning.desc",
+      "text": "Deal 2 damage to the enemy and apply 2 【Arc】."
+    },
+    {
+      "key": "magic.storm_hand.name",
+      "text": "Thor"
+    },
+    {
+      "key": "magic.storm_hand.desc",
+      "text": "Apply 4 【Arc】 to all enemies and gain 1 【Spell Power】."
+    },
+    {
+      "key": "magic.current_attachment.desc",
+      "text": "The next 2 arrows drawn next turn gain 【Charge】."
+    },
+    {
+      "key": "magic.sandstorm.desc",
+      "text": "Each time you are attacked by an enemy this turn, gain 1 【Extra Draw】."
+    },
+    {
+      "key": "magic.gale.name",
+      "text": "Leaf"
+    },
+    {
+      "key": "magic.gale.desc",
+      "text": "Gain 1 【Extra Draw】. The next 3 arrows drawn next turn gain 【Retained】."
+    },
+    {
+      "key": "magic.ice_pick.desc",
+      "text": "Apply 1 【Vulnerable】 to the enemy, then deal 1 damage twice."
+    },
+    {
+      "key": "magic.swamp.name",
+      "text": "Fly"
+    },
+    {
+      "key": "magic.swamp.desc",
+      "text": "Gain 1 【Debuff Power】 this turn."
+    },
+    {
+      "key": "magic.poison_fog.name",
+      "text": "Snowball"
+    },
+    {
+      "key": "magic.poison_fog.desc",
+      "text": "Each time you deal HP damage to enemies 3 times this turn, gain 1 【Extra Draw】."
+    },
+    {
+      "key": "magic.boiling_rain.name",
+      "text": "Kettle"
+    },
+    {
+      "key": "magic.boiling_rain.desc",
+      "text": "Deal 1 damage to all enemies 3 times."
+    },
+    {
+      "key": "magic.blizzard.name",
+      "text": "November Rain"
+    },
+    {
+      "key": "magic.blizzard.desc",
+      "text": "Apply 1 【Weak】, 【Slow】, and 【Vulnerable】 to all enemies, then deal damage equal to each enemy's total debuff stacks."
+    },
+    {
+      "key": "magic.turbid_current.name",
+      "text": "Vortex"
+    },
+    {
+      "key": "magic.turbid_current.desc",
+      "text": "The next 3 arrows drawn next turn gain 【Vortex】."
+    },
+    {
+      "key": "magic.tide_hand.name",
+      "text": "Sprinkler"
+    },
+    {
+      "key": "magic.tide_hand.desc",
+      "text": "Deal 1 damage to all enemies 10 times. Increase all debuff stacks by 2."
+    },
+    {
+      "key": "magic.water_corrosion.name",
+      "text": "Better Down"
+    },
+    {
+      "key": "magic.water_corrosion.desc",
+      "text": "Apply 1 【Vulnerable】 and 1 【Weak】 to the enemy."
+    },
+    {
+      "key": "magic.stone_wall.name",
+      "text": "Better Right"
+    },
+    {
+      "key": "magic.stone_wall.desc",
+      "text": "Gain 2 Shield."
+    },
+    {
+      "key": "magic.rockfall.desc",
+      "text": "Gain 2 Shield. The next 3 arrows drawn next turn gain 【Sturdy】."
+    },
+    {
+      "key": "magic.earth_fire.name",
+      "text": "Gasoline"
+    },
+    {
+      "key": "magic.earth_fire.desc",
+      "text": "Each time you are attacked by an enemy this turn, apply 3 【Burning】 to the attacker."
+    },
+    {
+      "key": "magic.petrify.name",
+      "text": "Hot Dog Trap"
+    },
+    {
+      "key": "magic.petrify.desc",
+      "text": "Apply 3 【Slow】 and 3 【Weak】 to the enemy."
+    },
+    {
+      "key": "magic.floating.name",
+      "text": "Wings"
+    },
+    {
+      "key": "magic.floating.desc",
+      "text": "Gain 3 Shield and gain 【Keep Hand】."
+    },
+    {
+      "key": "magic.thorn_bush.name",
+      "text": "Spikes"
+    },
+    {
+      "key": "magic.thorn_bush.desc",
+      "text": "Gain 3 Shield and gain 【Shield Reflect】."
+    },
+    {
+      "key": "magic.refine.name",
+      "text": "Fake Diamond"
+    },
+    {
+      "key": "magic.refine.desc",
+      "text": "Remove the arrows in the play area."
+    },
+    {
+      "key": "magic.earth_hand.name",
+      "text": "Hand"
+    },
+    {
+      "key": "magic.earth_hand.desc",
+      "text": "Gain 10 Shield. Deal damage to all enemies equal to your current Shield."
+    },
+    {
+      "key": "magic.tumbler.name",
+      "text": "Tumbler"
+    },
+    {
+      "key": "magic.tumbler.desc",
+      "text": "This turn, whenever an enemy gains debuff stacks, it gains that many additional debuff stacks."
+    },
+    {
+      "key": "magic.tangram.name",
+      "text": "Tangram"
+    },
+    {
+      "key": "magic.tangram.desc",
+      "text": "Next turn, add 1 【Temporary】 Left arrow and 1 【Temporary】 Down arrow to your hand."
+    },
+    {
+      "key": "magic.glue.name",
+      "text": "Glue"
+    },
+    {
+      "key": "magic.glue.desc",
+      "text": "Friendly items gain 【Attack All】 this turn."
+    },
+    {
+      "key": "magic.spring.name",
+      "text": "Spring"
+    },
+    {
+      "key": "magic.spring.desc",
+      "text": "Gain 2 【Repeat Trigger】."
+    }
+  ]
+}

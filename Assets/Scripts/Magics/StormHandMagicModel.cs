@@ -5,5 +5,6 @@ public class StormHandMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         AddBuffAll(battleManager, BuffEnum.Arc, 4, result);
+        AddBuffSelf(playerState, BuffEnum.SpellPower, 1);
     }
 }

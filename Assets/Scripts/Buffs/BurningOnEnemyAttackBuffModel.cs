@@ -7,7 +7,7 @@ public class BurningOnEnemyAttackBuffModel : BuffModel
     public override void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
         if (self.IsPlayer && attacker != null && attacker.IsEnemy && result != null && result.RawDamage > 0)
-            attacker.Enemy.AddBuff(BuffEnum.Burning, stack);
+            attacker.Enemy.AddBuff(BuffEnum.Burning, stack, self);
     }
 
     public override void OnTurnStart(CombatantModel self, CombatantModel opponent)

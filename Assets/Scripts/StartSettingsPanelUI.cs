@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -11,6 +13,7 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
     [SerializeField] private Button windowCloseButton;
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider sfxSlider;
+    [SerializeField] private TMP_Dropdown languageDropdown;
     [SerializeField] private Vector2 shownPosition = new Vector2(320f, 0f);
     [SerializeField] private Vector2 hiddenPosition = new Vector2(-980f, 0f);
     [SerializeField] private float moveDuration = 0.46f;
@@ -31,7 +34,7 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
             closeButton.onClick.AddListener(Hide);
         if (windowCloseButton != null)
             windowCloseButton.onClick.AddListener(Hide);
-        InitializeSliders();
+        InitializeControls();
         if (panelRect != null)
             panelRect.anchoredPosition = hiddenPosition;
     }
@@ -46,6 +49,8 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
             musicSlider.onValueChanged.RemoveListener(SetMusicVolume);
         if (sfxSlider != null)
             sfxSlider.onValueChanged.RemoveListener(SetSfxVolume);
+        if (languageDropdown != null)
+            languageDropdown.onValueChanged.RemoveListener(SetLanguage);
         moveTween?.Kill(false);
     }
 
@@ -54,7 +59,8 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
         if (panelRect == null || gameObject.activeSelf)
             return;
 
-        InitializeSliders();
+        ResolveReferences();
+        InitializeControls();
         gameObject.SetActive(true);
         moveTween?.Kill(false);
         panelRect.anchoredPosition = hiddenPosition;
@@ -98,6 +104,8 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
             musicSlider = transform.Find("MusicSlider")?.GetComponent<Slider>();
         if (sfxSlider == null)
             sfxSlider = transform.Find("SfxSlider")?.GetComponent<Slider>();
+        if (languageDropdown == null)
+            languageDropdown = transform.Find("LanguageDropdown")?.GetComponent<TMP_Dropdown>();
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -145,6 +153,8 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
             return false;
         if (hit.GetComponentInParent<Slider>() != null)
             return false;
+        if (hit.GetComponentInParent<TMP_Dropdown>() != null)
+            return false;
         if (hit.GetComponentInParent<Button>() != null)
             return false;
         return true;
@@ -156,6 +166,12 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
         if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
             return null;
         return eventData.pressEventCamera != null ? eventData.pressEventCamera : canvas != null ? canvas.worldCamera : null;
+    }
+
+    private void InitializeControls()
+    {
+        InitializeSliders();
+        InitializeLanguageDropdown();
     }
 
     private void InitializeSliders()
@@ -175,6 +191,22 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
     }
 
+    private void InitializeLanguageDropdown()
+    {
+        if (languageDropdown == null)
+            return;
+
+        languageDropdown.onValueChanged.RemoveListener(SetLanguage);
+        languageDropdown.ClearOptions();
+        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>(LocalizationSystem.LanguageCount);
+        for (int i = 0; i < LocalizationSystem.LanguageCount; i++)
+            options.Add(new TMP_Dropdown.OptionData(LocalizationSystem.GetLanguageDisplayName(i)));
+        languageDropdown.AddOptions(options);
+        languageDropdown.SetValueWithoutNotify(LocalizationSystem.GetCurrentLanguageIndex());
+        languageDropdown.RefreshShownValue();
+        languageDropdown.onValueChanged.AddListener(SetLanguage);
+    }
+
     private void SetMusicVolume(float value)
     {
         if (AudioManager.Instance != null)
@@ -185,5 +217,10 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
     {
         if (AudioManager.Instance != null)
             AudioManager.Instance.SetSfxVolume(value);
+    }
+
+    private void SetLanguage(int optionIndex)
+    {
+        LocalizationSystem.SetLanguage(LocalizationSystem.GetLanguageCode(optionIndex));
     }
 }
