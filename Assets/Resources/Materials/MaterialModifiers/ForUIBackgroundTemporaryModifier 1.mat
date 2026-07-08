@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
-    - _Disturbance: 0.22
+    - _Disturbance: 0.5
     - _DotRes: 96
     - _DotShape: 0
     - _EffectMode: 3
@@ -49,5 +49,5 @@ Material:
     m_Colors:
     - _AuraColor: {r: 0.72156864, g: 0.72156864, b: 0.72156864, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _VoidColor: {r: 0.26415092, g: 0.047347777, b: 0.047347777, a: 1}
+    - _VoidColor: {r: 0.70837605, g: 0.019382361, b: 0.12477186, a: 1}
   m_BuildTextureStacks: []

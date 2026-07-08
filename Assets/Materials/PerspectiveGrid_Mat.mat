@@ -59,10 +59,10 @@ Material:
     - _VerticalCount: 20
     m_Colors:
     - _Background: {r: 0.05882353, g: 0.08627451, b: 0.23137255, a: 1}
-    - _BgColor: {r: 0.06404414, g: 0.0012459746, b: 0.13207549, a: 1}
+    - _BgColor: {r: 0.039215688, g: 0.011764706, b: 0.07058824, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _GridColor: {r: 0.8666667, g: 0.15294118, b: 0.39215687, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _SkyBgColor: {r: 0.0627451, g: 0, b: 0.13333334, a: 1}
+    - _SkyBgColor: {r: 0.037786957, g: 0.008484618, b: 0.06918234, a: 1}
   m_BuildTextureStacks: []
