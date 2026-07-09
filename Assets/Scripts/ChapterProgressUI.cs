@@ -15,7 +15,7 @@ public class ChapterProgressUI : MonoBehaviour
     {
         CacheReferences();
         if (progressText != null)
-            progressText.text = $"关卡 {current:00}/{total:00}";
+            progressText.text = $"{current:00}/{total:00}";
     }
 
     private void CacheReferences()

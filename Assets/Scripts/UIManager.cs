@@ -143,23 +143,48 @@ public class UIManager : MonoBehaviour
 
     private void BindTopBar(Transform root)
     {
-        RectTransform topBar = FindChildRect(root, "TopBar");
+        RectTransform topBar = FindChildRecursive(root, "TopBar") as RectTransform;
         if (topBar == null)
             return;
 
-        Button settingsButton = FindChildComponent<Button>(topBar, "SettingsButton");
+        Button settingsButton = FindTopBarButton(topBar, "SettingsButton", "SettingsIconButton");
         if (settingsButton != null)
         {
             settingsButton.onClick.RemoveAllListeners();
             settingsButton.onClick.AddListener(ToggleSettingsPanel);
+            ConfigureTopBarTooltip(settingsButton, "ui.top_bar.settings.title", "ui.top_bar.settings.body", "设置", "打开设置菜单，调整音量或返回开始界面。");
         }
 
-        Button mapButton = FindChildComponent<Button>(topBar, "MapButton");
+        Button mapButton = FindTopBarButton(topBar, "MapButton", "MapIconButton");
         if (mapButton != null)
         {
             mapButton.onClick.RemoveAllListeners();
             mapButton.onClick.AddListener(ToggleMapPanel);
+            ConfigureTopBarTooltip(mapButton, "ui.top_bar.map.title", "ui.top_bar.map.body", "地图", "查看当前章节地图和当前位置。");
         }
+
+        Button chapterProgressButton = FindTopBarButton(topBar, "ChapterProgressButton", "Step");
+        if (chapterProgressButton != null)
+            ConfigureTopBarTooltip(chapterProgressButton, "ui.top_bar.chapter_progress.title", "ui.top_bar.chapter_progress.body", "关卡进度", "显示当前关卡数与章节总关卡数。");
+    }
+
+    private Button FindTopBarButton(Transform topBar, params string[] names)
+    {
+        for (int i = 0; i < names.Length; i++)
+        {
+            Button button = FindChildComponent<Button>(topBar, names[i]);
+            if (button != null)
+                return button;
+        }
+        return null;
+    }
+
+    private void ConfigureTopBarTooltip(Button button, string titleKey, string bodyKey, string titleFallback, string bodyFallback)
+    {
+        TopBarIconTooltipUI tooltip = button.GetComponent<TopBarIconTooltipUI>();
+        if (tooltip == null)
+            tooltip = button.gameObject.AddComponent<TopBarIconTooltipUI>();
+        tooltip.Configure(this, titleKey, bodyKey, titleFallback, bodyFallback);
     }
 
     public void ToggleMapPanel()

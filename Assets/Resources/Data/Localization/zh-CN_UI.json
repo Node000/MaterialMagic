@@ -499,6 +499,46 @@
     {
       "key": "ui.unlock_popup.type.magic_modifier",
       "text": "道具强化"
+    },
+    {
+      "key": "ui.unlock_popup.type.feature",
+      "text": "功能"
+    },
+    {
+      "key": "feature.ascension.name",
+      "text": "进阶"
+    },
+    {
+      "key": "ui.top_bar.settings.title",
+      "text": "设置"
+    },
+    {
+      "key": "ui.top_bar.settings.body",
+      "text": "打开设置菜单，调整音量或返回开始界面。"
+    },
+    {
+      "key": "ui.top_bar.map.title",
+      "text": "地图"
+    },
+    {
+      "key": "ui.top_bar.map.body",
+      "text": "查看当前章节地图和当前位置。"
+    },
+    {
+      "key": "ui.top_bar.chapter_progress.title",
+      "text": "关卡进度"
+    },
+    {
+      "key": "ui.top_bar.chapter_progress.body",
+      "text": "显示当前关卡数与章节总关卡数。"
+    },
+    {
+      "key": "ui.battle.turn_banner.player",
+      "text": "你的回合"
+    },
+    {
+      "key": "ui.battle.turn_banner.enemy",
+      "text": "敌方回合"
     }
   ]
 }

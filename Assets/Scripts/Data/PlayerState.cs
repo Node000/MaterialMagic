@@ -975,6 +975,17 @@ public class PlayerState
         GameLog.Data($"Player max health only change={amount} hp={CurrentHealth}/{MaxHealth}");
     }
 
+    public void AdjustMaxHealthOnly(int amount)
+    {
+        if (amount == 0)
+            return;
+
+        MaxHealth = Mathf.Max(1, MaxHealth + amount);
+        if (CurrentHealth > MaxHealth)
+            CurrentHealth = MaxHealth;
+        GameLog.Data($"Player max health adjust={amount} hp={CurrentHealth}/{MaxHealth}");
+    }
+
     public int GainShield(int amount)
     {
         if (amount <= 0)
@@ -1143,8 +1154,13 @@ public class PlayerState
             cards[i]?.RemoveTurnOnlyModifiers();
     }
 
-    public void AddGold(int amount)
+    public void AddGold(int amount, bool applyDifficulty = true)
     {
+        if (amount > 0 && applyDifficulty)
+            amount = DifficultyUpgradeSystem.ModifyGoldGain(amount);
+        if (amount == 0)
+            return;
+
         Gold += amount;
         if (Gold < 0)
             Gold = 0;

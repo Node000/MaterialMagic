@@ -2,9 +2,31 @@ public static class EnemyFactory
 {
     public static EnemyModel Create(EnemyData data)
     {
+        return Create(data, null);
+    }
+
+    public static EnemyModel Create(EnemyData data, DifficultyUpgradeContext context)
+    {
         if (data == null)
             return null;
 
+        EnemyModel enemy;
+        EnemyModel.SuppressConstructorRuntimeInitialization = true;
+        try
+        {
+            enemy = CreateBaseModel(data);
+        }
+        finally
+        {
+            EnemyModel.SuppressConstructorRuntimeInitialization = false;
+        }
+
+        enemy?.ApplyRuntimeDefinition(EnemyRuntimeDefinitionFactory.Create(data, context));
+        return enemy;
+    }
+
+    private static EnemyModel CreateBaseModel(EnemyData data)
+    {
         switch (data.numericId)
         {
             case 1: return new PodEnemyModel(data);

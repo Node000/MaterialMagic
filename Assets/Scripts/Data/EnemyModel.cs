@@ -6,17 +6,22 @@ public class EnemyModel : UnitModel
 {
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
     private readonly HashSet<int> consumedOnlyOnceIntentIds = new HashSet<int>();
+    private readonly EnemyIntentPlanState intentPlanState = new EnemyIntentPlanState();
+    private EnemyRuntimeDefinition runtimeDefinition;
+
+    internal static bool SuppressConstructorRuntimeInitialization { get; set; }
     private int lastResolvedIntentGroupId = -1;
 
     public event Action<EnemyModel, BuffEnum, int> BuffAdded;
 
-    public EnemyData Data { get; }
+    public EnemyData Data { get; private set; }
     public override int CurrentHealth { get; protected set; }
     public override int Shield { get; protected set; }
     public int ActionIndex { get; private set; }
     public int Phase { get; private set; }
     public override IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
     public IReadOnlyList<EnemyIntentData> CurrentIntents { get; }
+    public EnemyRuntimeDefinition RuntimeDefinition => runtimeDefinition;
     public bool HasSpawnPosition { get; private set; }
     public float SpawnPositionX { get; private set; }
     public float SpawnPositionY { get; private set; }
@@ -25,20 +30,51 @@ public class EnemyModel : UnitModel
 
     private bool dead;
 
-    public string Id => Data.Id;
-    public override int NumericId => Data.numericId;
-    public string Name => LocalizationSystem.GetText(Data.nameKey, Data.Id);
+    public string Id => Data != null ? Data.Id : string.Empty;
+    public override int NumericId => Data != null ? Data.numericId : 0;
+    public string Name => Data != null ? LocalizationSystem.GetText(Data.nameKey, Data.Id) : string.Empty;
     public override string DisplayName => Name;
-    public override int MaxHealth => Data.maxHealth;
+    public override int MaxHealth => runtimeDefinition != null ? runtimeDefinition.MaxHealth : Data != null ? Data.maxHealth : 1;
     public override bool IsDead => CurrentHealth <= 0;
     public override bool DeathHandled => dead;
 
     public EnemyModel(EnemyData data)
     {
-        Data = data;
-        IsMinion = data.isMinion;
-        CurrentHealth = data.maxHealth;
         CurrentIntents = new List<EnemyIntentData>();
+        if (SuppressConstructorRuntimeInitialization)
+        {
+            Data = data;
+            IsMinion = data != null && data.isMinion;
+            CurrentHealth = data != null ? Mathf.Max(1, data.maxHealth) : 1;
+            return;
+        }
+
+        ApplyRuntimeDefinition(new EnemyRuntimeDefinition(data));
+    }
+
+    public void ApplyRuntimeDefinition(EnemyRuntimeDefinition definition)
+    {
+        if (definition == null || definition.BaseData == null)
+            return;
+
+        runtimeDefinition = definition;
+        Data = definition.BaseData;
+        buffs.Clear();
+        consumedOnlyOnceIntentIds.Clear();
+        intentPlanState.ConsumedOnlyOnceIntentIds.Clear();
+        lastResolvedIntentGroupId = -1;
+        intentPlanState.LastResolvedIntentGroupId = -1;
+        intentPlanState.SelectedIntentPhase = -1;
+        intentPlanState.SelectedIntentActionIndex = -1;
+        intentPlanState.SelectedIntentGroupId = 0;
+        Phase = 0;
+        intentPlanState.Phase = 0;
+        ActionIndex = 0;
+        intentPlanState.ActionIndex = 0;
+        Shield = 0;
+        dead = false;
+        IsMinion = definition.IsMinion;
+        CurrentHealth = definition.MaxHealth;
         ApplyInitialBuffs();
         if (IsMinion)
             AddBuff(BuffEnum.Claw, 1);
@@ -69,6 +105,8 @@ public class EnemyModel : UnitModel
         Shield = Mathf.Max(0, data.shield);
         ActionIndex = Mathf.Max(0, data.actionIndex);
         Phase = Mathf.Max(0, data.phase);
+        SyncIntentPlanStateFromEnemyState();
+        RestoreIntentPlanState(data.consumedOnlyOnceIntentIds, data.lastResolvedIntentGroupId, data.selectedIntentPhase, data.selectedIntentActionIndex, data.selectedIntentGroupId);
         dead = data.deathHandled;
         CanActThisEnemyTurn = data.canActThisEnemyTurn;
         IsMinion = data.isMinion;
@@ -117,12 +155,13 @@ public class EnemyModel : UnitModel
 
     private void ApplyInitialBuffs()
     {
-        if (Data.initialBuffs == null)
+        IReadOnlyList<BuffStackData> initialBuffs = runtimeDefinition != null ? runtimeDefinition.InitialBuffs : null;
+        if (initialBuffs == null)
             return;
 
-        for (int i = 0; i < Data.initialBuffs.Length; i++)
+        for (int i = 0; i < initialBuffs.Count; i++)
         {
-            BuffStackData initialBuff = Data.initialBuffs[i];
+            BuffStackData initialBuff = initialBuffs[i];
             if (initialBuff != null)
                 AddBuff(initialBuff.buffType, initialBuff.stack);
         }
@@ -130,10 +169,7 @@ public class EnemyModel : UnitModel
 
     public EnemyActionData GetCurrentAction()
     {
-        if (Data.actionLoop == null || Data.actionLoop.Length == 0)
-            return null;
-
-        return Data.actionLoop[ActionIndex % Data.actionLoop.Length];
+        return runtimeDefinition != null && runtimeDefinition.IntentPlan != null ? runtimeDefinition.IntentPlan.GetCurrentAction(intentPlanState) : null;
     }
 
     public void ResolveCurrentIntents(PlayerState playerState)
@@ -206,6 +242,7 @@ public class EnemyModel : UnitModel
     public void AdvanceAction()
     {
         ActionIndex++;
+        SyncIntentPlanStateFromEnemyState();
         GameLog.Data($"Enemy {Id} advance action index={ActionIndex}");
         UpdateCurrentIntents();
     }
@@ -214,6 +251,7 @@ public class EnemyModel : UnitModel
     {
         Phase = phase < 0 ? 0 : phase;
         ActionIndex = 0;
+        SyncIntentPlanStateFromEnemyState();
         GameLog.Data($"Enemy {Id} set phase={Phase}");
     }
 
@@ -265,7 +303,7 @@ public class EnemyModel : UnitModel
         result.ShieldDamage = blockedDamage;
         result.HealthDamage = healthDamage;
         result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
-        GameLog.Data($"Enemy {Id} take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{Data.maxHealth}");
+        GameLog.Data($"Enemy {Id} take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
@@ -286,7 +324,7 @@ public class EnemyModel : UnitModel
         if (CurrentHealth < 0)
             CurrentHealth = 0;
         int healthDamage = healthBefore - CurrentHealth;
-        GameLog.Data($"Enemy {Id} take direct damage={damage} hp={CurrentHealth}/{Data.maxHealth}");
+        GameLog.Data($"Enemy {Id} take direct damage={damage} hp={CurrentHealth}/{MaxHealth}");
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
 
@@ -418,128 +456,56 @@ public class EnemyModel : UnitModel
         List<EnemyIntentData> currentIntents = (List<EnemyIntentData>)CurrentIntents;
         currentIntents.Clear();
 
-        EnemyIntentGroupData group = GetCurrentIntentGroup();
-        if (group != null && group.intents != null && group.intents.Length > 0)
-        {
-            for (int i = 0; i < group.intents.Length; i++)
-                currentIntents.Add(NormalizeIntent(group.intents[i]));
-            OnCurrentIntentsUpdated();
-            return;
-        }
-
-        EnemyActionData action = GetCurrentAction();
-        if (action != null)
-            currentIntents.Add(CreateIntentFromAction(action));
+        if (runtimeDefinition != null && runtimeDefinition.IntentPlan != null)
+            currentIntents.AddRange(runtimeDefinition.IntentPlan.SelectCurrentIntents(intentPlanState, NextRandomInt));
+        SyncLegacyIntentStateFromPlanState();
         OnCurrentIntentsUpdated();
+    }
+
+    public int[] ExportConsumedOnlyOnceIntentIds()
+    {
+        int[] values = new int[intentPlanState.ConsumedOnlyOnceIntentIds.Count];
+        intentPlanState.ConsumedOnlyOnceIntentIds.CopyTo(values);
+        return values;
+    }
+
+    public int LastResolvedIntentGroupId => intentPlanState.LastResolvedIntentGroupId;
+    public int SelectedIntentPhase => intentPlanState.SelectedIntentPhase;
+    public int SelectedIntentActionIndex => intentPlanState.SelectedIntentActionIndex;
+    public int SelectedIntentGroupId => intentPlanState.SelectedIntentGroupId;
+
+    private void SyncIntentPlanStateFromEnemyState()
+    {
+        intentPlanState.Phase = Phase;
+        intentPlanState.ActionIndex = ActionIndex;
+    }
+
+    private void SyncLegacyIntentStateFromPlanState()
+    {
+        consumedOnlyOnceIntentIds.Clear();
+        foreach (int value in intentPlanState.ConsumedOnlyOnceIntentIds)
+            consumedOnlyOnceIntentIds.Add(value);
+        lastResolvedIntentGroupId = intentPlanState.LastResolvedIntentGroupId;
+    }
+
+    private void RestoreIntentPlanState(int[] consumedIds, int lastResolvedGroupId, int selectedPhase, int selectedActionIndex, int selectedGroupId)
+    {
+        intentPlanState.ConsumedOnlyOnceIntentIds.Clear();
+        consumedOnlyOnceIntentIds.Clear();
+        for (int i = 0; consumedIds != null && i < consumedIds.Length; i++)
+        {
+            intentPlanState.ConsumedOnlyOnceIntentIds.Add(consumedIds[i]);
+            consumedOnlyOnceIntentIds.Add(consumedIds[i]);
+        }
+        intentPlanState.LastResolvedIntentGroupId = lastResolvedGroupId;
+        lastResolvedIntentGroupId = lastResolvedGroupId;
+        intentPlanState.SelectedIntentPhase = selectedPhase;
+        intentPlanState.SelectedIntentActionIndex = selectedActionIndex;
+        intentPlanState.SelectedIntentGroupId = selectedGroupId;
     }
 
     protected virtual void OnCurrentIntentsUpdated()
     {
-    }
-
-    private EnemyIntentGroupData GetCurrentIntentGroup()
-    {
-        EnemyIntentLoopData[] loop = GetCurrentSeparatedIntentLoop(out EnemyIntentGroupData[] groups);
-        if (loop != null && loop.Length > 0)
-            return GetCurrentSeparatedIntentGroup(loop, groups);
-
-        EnemyIntentGroupData[] pool = GetCurrentIntentPool();
-        if (pool == null || pool.Length == 0)
-            return null;
-
-        int checkedCount = 0;
-        int index = ActionIndex % pool.Length;
-        while (checkedCount < pool.Length)
-        {
-            EnemyIntentGroupData group = pool[index];
-            if (group != null && (!group.onlyOnce || group.id == 0 || !consumedOnlyOnceIntentIds.Contains(group.id)) && CanUseIntentGroup(group.id, pool.Length))
-            {
-                if (group.onlyOnce && group.id != 0)
-                    consumedOnlyOnceIntentIds.Add(group.id);
-                lastResolvedIntentGroupId = group.id;
-                return group;
-            }
-
-            index = (index + 1) % pool.Length;
-            checkedCount++;
-        }
-
-        return null;
-    }
-
-    private EnemyIntentGroupData GetCurrentSeparatedIntentGroup(EnemyIntentLoopData[] loop, EnemyIntentGroupData[] groups)
-    {
-        if (groups == null || groups.Length == 0)
-            return null;
-
-        int checkedCount = 0;
-        int index = ActionIndex % loop.Length;
-        while (checkedCount < loop.Length)
-        {
-            EnemyIntentLoopData entry = loop[index];
-            if (entry != null)
-            {
-                int groupId = ResolveLoopGroupId(entry, groups);
-                int onceKey = -(index + 1);
-                if (groupId != 0 && (!entry.onlyOnce || !consumedOnlyOnceIntentIds.Contains(onceKey)) && CanUseIntentGroup(groupId, groups.Length))
-                {
-                    EnemyIntentGroupData group = FindIntentGroup(groups, groupId);
-                    if (group != null)
-                    {
-                        if (entry.onlyOnce)
-                            consumedOnlyOnceIntentIds.Add(onceKey);
-                        lastResolvedIntentGroupId = groupId;
-                        return group;
-                    }
-                }
-            }
-
-            index = (index + 1) % loop.Length;
-            checkedCount++;
-        }
-
-        return null;
-    }
-
-    private int ResolveLoopGroupId(EnemyIntentLoopData entry, EnemyIntentGroupData[] groups)
-    {
-        if (entry.randomGroupIds != null && entry.randomGroupIds.Length > 0)
-        {
-            if (entry.randomGroupIds.Length == 1)
-                return entry.randomGroupIds[0];
-
-            int[] candidates = entry.randomGroupIds;
-            int fallback = candidates[NextRandomInt(0, candidates.Length)];
-            for (int i = 0; i < candidates.Length; i++)
-            {
-                int candidate = candidates[NextRandomInt(0, candidates.Length)];
-                if (CanUseIntentGroup(candidate, groups != null ? groups.Length : candidates.Length))
-                    return candidate;
-            }
-            return fallback;
-        }
-
-        return entry.groupId;
-    }
-
-    private bool CanUseIntentGroup(int groupId, int totalGroupCount)
-    {
-        if (groupId == 0 || totalGroupCount <= 1 || lastResolvedIntentGroupId == -1)
-            return true;
-
-        return groupId != lastResolvedIntentGroupId;
-    }
-
-    private static EnemyIntentGroupData FindIntentGroup(EnemyIntentGroupData[] groups, int groupId)
-    {
-        for (int i = 0; i < groups.Length; i++)
-        {
-            EnemyIntentGroupData group = groups[i];
-            if (group != null && group.id == groupId)
-                return group;
-        }
-
-        return null;
     }
 
     protected int NextRandomInt(int minInclusive, int maxExclusive)
@@ -549,41 +515,6 @@ public class EnemyModel : UnitModel
             return status.NextRunRandomInt(minInclusive, maxExclusive);
 
         return UnityEngine.Random.Range(minInclusive, maxExclusive);
-    }
-
-    private EnemyIntentLoopData[] GetCurrentSeparatedIntentLoop(out EnemyIntentGroupData[] groups)
-    {
-        groups = null;
-        if (Data.phases != null && Data.phases.Length > 0)
-        {
-            for (int i = 0; i < Data.phases.Length; i++)
-            {
-                EnemyPhaseData phaseData = Data.phases[i];
-                if (phaseData != null && phaseData.phase == Phase)
-                {
-                    groups = phaseData.intentGroups;
-                    return phaseData.intentLoop;
-                }
-            }
-        }
-
-        groups = Data.intentGroups;
-        return Data.intentLoop;
-    }
-
-    private EnemyIntentGroupData[] GetCurrentIntentPool()
-    {
-        if (Data.phases != null && Data.phases.Length > 0)
-        {
-            for (int i = 0; i < Data.phases.Length; i++)
-            {
-                EnemyPhaseData phaseData = Data.phases[i];
-                if (phaseData != null && phaseData.phase == Phase)
-                    return phaseData.intentPool;
-            }
-        }
-
-        return null;
     }
 
     public int GetIntentAttackValue(EnemyIntentData intent, PlayerState playerState = null)

@@ -134,6 +134,8 @@ public static class GameDataDatabase
     private static Dictionary<int, MapGenConfigData> mapGenConfigData;
     private static Dictionary<int, EconomyConfigData> economyConfigData;
     private static Dictionary<int, ShopProductPoolData> shopProductPoolData;
+    private static Dictionary<int, AscensionData> ascensionData;
+    private static Dictionary<string, DifficultyUpgradeData> difficultyUpgradeData;
     private static Dictionary<string, TagData> tagData;
     private static Dictionary<string, MagicModifierData> magicModifierData;
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
@@ -148,6 +150,8 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, MapGenConfigData> MapGenConfigData => mapGenConfigData ??= GameDataReader.LoadNumericDictionary<MapGenConfigData>("MapGenConfig");
     public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
     public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData");
+    public static IReadOnlyDictionary<int, AscensionData> AscensionData => ascensionData ??= GameDataReader.LoadNumericDictionary<AscensionData>("AscensionData");
+    public static IReadOnlyDictionary<string, DifficultyUpgradeData> DifficultyUpgradeData => difficultyUpgradeData ??= GameDataReader.LoadDictionary<DifficultyUpgradeData>("DifficultyUpgradeData");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
     public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
     public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
@@ -202,6 +206,16 @@ public static class GameDataDatabase
         return ShopProductPoolData.TryGetValue(id, out data);
     }
 
+    public static bool TryGetAscensionData(int id, out AscensionData data)
+    {
+        return AscensionData.TryGetValue(id, out data);
+    }
+
+    public static bool TryGetDifficultyUpgradeData(string id, out DifficultyUpgradeData data)
+    {
+        return DifficultyUpgradeData.TryGetValue(id, out data);
+    }
+
     public static EconomyConfigData GetDefaultEconomyConfig()
     {
         if (TryGetEconomyConfigData(1, out EconomyConfigData data))
@@ -242,6 +256,8 @@ public static class GameDataDatabase
         mapGenConfigData = null;
         economyConfigData = null;
         shopProductPoolData = null;
+        ascensionData = null;
+        difficultyUpgradeData = null;
         tagData = null;
         magicModifierData = null;
         playerStartConfigData = null;

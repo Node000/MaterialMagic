@@ -74,6 +74,9 @@ public class BattleManager
     public EnemyModel CurrentCastTarget { get; private set; }
     public int ContinuousCastCount { get; private set; }
     public BattlePhase CurrentPhase { get; private set; }
+    public LevelData CurrentLevel { get; private set; }
+    public int CurrentChapterNumericId { get; private set; }
+    public bool CurrentLevelIsBoss { get; private set; }
 
     public BattleManager(PlayerState playerState)
     {
@@ -92,6 +95,23 @@ public class BattleManager
     {
         if (ReferenceEquals(Instance, manager))
             Instance = null;
+    }
+
+    public void ConfigureLevelContext(LevelData level, int chapterNumericId, bool isBoss)
+    {
+        CurrentLevel = level;
+        CurrentChapterNumericId = chapterNumericId;
+        CurrentLevelIsBoss = isBoss;
+    }
+
+    public DifficultyUpgradeContext CreateDifficultyContext()
+    {
+        return new DifficultyUpgradeContext
+        {
+            Level = CurrentLevel,
+            ChapterNumericId = CurrentChapterNumericId,
+            IsBoss = CurrentLevelIsBoss
+        };
     }
 
     public void SetEnemies(IEnumerable<EnemyModel> enemyModels)
@@ -123,7 +143,7 @@ public class BattleManager
         if (!GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
             return null;
 
-        EnemyModel enemy = EnemyFactory.Create(data);
+        EnemyModel enemy = EnemyFactory.Create(data, CreateDifficultyContext());
         if (enemy != null)
         {
             enemy.SetMinion(true);
@@ -222,7 +242,7 @@ public class BattleManager
 
     public EnemyModel SpawnEnemy(EnemyData data)
     {
-        return data != null ? SpawnEnemy(EnemyFactory.Create(data)) : null;
+        return data != null ? SpawnEnemy(EnemyFactory.Create(data, CreateDifficultyContext())) : null;
     }
 
     public EnemyModel SpawnEnemy(EnemyData data, float x, float y)
@@ -230,7 +250,7 @@ public class BattleManager
         if (data == null)
             return null;
 
-        EnemyModel enemy = EnemyFactory.Create(data);
+        EnemyModel enemy = EnemyFactory.Create(data, CreateDifficultyContext());
         if (enemy != null)
             enemy.SetSpawnPosition(x, y);
         return SpawnEnemy(enemy);

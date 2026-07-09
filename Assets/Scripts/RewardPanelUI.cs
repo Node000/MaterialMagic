@@ -339,7 +339,7 @@ public class RewardPanelUI : MonoBehaviour
         if (endButton != null)
             endButton.interactable = false;
         RectTransform sourceRect = optionViews.Count > 0 ? optionViews[0].transform as RectTransform : transform as RectTransform;
-        yield return owner.GainGoldAnimated(currentGoldReward, sourceRect);
+        yield return owner.GainGoldAnimated(currentGoldReward, sourceRect, false);
         goldClaimed = true;
         goldClaimInProgress = false;
         RefreshOptions();
@@ -354,7 +354,8 @@ public class RewardPanelUI : MonoBehaviour
         bool eliteReward = owner != null && owner.RunManager != null && owner.RunManager.CurrentLevel != null && owner.RunManager.CurrentLevel.levelType == LevelType.Elite;
         int min = eliteReward ? Mathf.Min(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Min(economy.battleGoldMin, economy.battleGoldMax);
         int max = eliteReward ? Mathf.Max(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Max(economy.battleGoldMin, economy.battleGoldMax);
-        return owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(min, max + 1) : UnityEngine.Random.Range(min, max + 1);
+        int reward = owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(min, max + 1) : UnityEngine.Random.Range(min, max + 1);
+        return DifficultyUpgradeSystem.ModifyGoldGain(reward);
     }
 
     private void ShowMagicChoices()

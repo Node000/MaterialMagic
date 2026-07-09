@@ -28,6 +28,7 @@ public class UnlockProgressData
     public string[] unlockedIds = Array.Empty<string>();
     public int normalEndCount;
     public int victoryCount;
+    public int nonTutorialVictoryCount;
     public int defeatCount;
     public UnlockCounterData[] startConfigNormalEndCounts = Array.Empty<UnlockCounterData>();
     public UnlockCounterData[] startConfigVictoryCounts = Array.Empty<UnlockCounterData>();

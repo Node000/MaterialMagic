@@ -262,7 +262,7 @@ public class ShopPanelUI : MonoBehaviour
         AddStrongMaterialOffer();
         for (int i = 0; i < 3; i++)
             AddNormalMaterialOffer();
-        offers.Add(new ShopOffer { kind = ShopItemKind.RemoveMaterial, price = config.shopRemoveMaterialPrice });
+        offers.Add(new ShopOffer { kind = ShopItemKind.RemoveMaterial, price = GetOfferPrice(config.shopRemoveMaterialPrice) });
     }
 
     private ShopProductPoolData GetShopProductPool()
@@ -438,7 +438,7 @@ public class ShopPanelUI : MonoBehaviour
         int index = NextRunRandomInt(0, magicPool.Count);
         MagicData data = magicPool[index];
         magicPool.RemoveAt(index);
-        offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = config.shopSpellPrice, magicData = data });
+        offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice), magicData = data });
     }
 
     private void AddStrongMaterialOffer()
@@ -481,7 +481,8 @@ public class ShopPanelUI : MonoBehaviour
 
     private int GetOfferPrice(int price)
     {
-        return price > 0 ? price : config.shopMaterialPrice;
+        int basePrice = price > 0 ? price : config.shopMaterialPrice;
+        return DifficultyUpgradeSystem.ModifyShopPrice(basePrice);
     }
 
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
@@ -1162,7 +1163,7 @@ public class ShopPanelUI : MonoBehaviour
 
         int goldDelta = undoGold - owner.PlayerState.Gold;
         if (goldDelta != 0)
-            owner.PlayerState.AddGold(goldDelta);
+            owner.PlayerState.AddGold(goldDelta, false);
 
         if (undoMagicSlotIndex >= 0)
         {

@@ -7,9 +7,11 @@ public static class UnlockSystem
     public const string TargetMagic = "Magic";
     public const string TargetMaterialModifier = "MaterialModifier";
     public const string TargetMagicModifier = "MagicModifier";
+    public const string TargetFeature = "Feature";
 
     private const string ConditionNormalEndCount = "NormalEndCount";
     private const string ConditionVictoryCount = "VictoryCount";
+    private const string ConditionNonTutorialVictoryCount = "NonTutorialVictoryCount";
     private const string ConditionDefeatCount = "DefeatCount";
     private const string ConditionStartConfigNormalEndCount = "StartConfigNormalEndCount";
     private const string ConditionStartConfigVictoryCount = "StartConfigVictoryCount";
@@ -101,7 +103,11 @@ public static class UnlockSystem
 
         progress.normalEndCount++;
         if (resultType == RunHistoryResultType.Victory)
+        {
             progress.victoryCount++;
+            if (!IsTutorialRun(data))
+                progress.nonTutorialVictoryCount++;
+        }
         else if (resultType == RunHistoryResultType.Defeat)
             progress.defeatCount++;
 
@@ -166,6 +172,8 @@ public static class UnlockSystem
                 return LocalizationSystem.GetText("ui.unlock_popup.type.material_modifier", "箭头附魔");
             case TargetMagicModifier:
                 return LocalizationSystem.GetText("ui.unlock_popup.type.magic_modifier", "道具强化");
+            case TargetFeature:
+                return LocalizationSystem.GetText("ui.unlock_popup.type.feature", "功能");
             default:
                 return targetType;
         }
@@ -195,6 +203,10 @@ public static class UnlockSystem
             case TargetMagicModifier:
                 if (GameDataDatabase.TryGetMagicModifierData(targetId, out MagicModifierData magicModifier))
                     return LocalizationSystem.GetText(magicModifier.nameKey, magicModifier.id);
+                break;
+            case TargetFeature:
+                if (targetId == "ascension")
+                    return LocalizationSystem.GetText("feature.ascension.name", "进阶");
                 break;
         }
 
@@ -261,6 +273,8 @@ public static class UnlockSystem
                 return progress.normalEndCount >= required;
             case ConditionVictoryCount:
                 return progress.victoryCount >= required;
+            case ConditionNonTutorialVictoryCount:
+                return progress.nonTutorialVictoryCount >= required;
             case ConditionDefeatCount:
                 return progress.defeatCount >= required;
             case ConditionStartConfigNormalEndCount:
@@ -282,6 +296,11 @@ public static class UnlockSystem
             default:
                 return false;
         }
+    }
+
+    private static bool IsTutorialRun(RunSaveData run)
+    {
+        return run != null && run.chapterNumericId == TutorialManagerUI.TutorialChapterNumericId;
     }
 
     private static bool HasMagicAtRunEnd(RunSaveData run, string targetId)

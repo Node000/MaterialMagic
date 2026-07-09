@@ -427,6 +427,46 @@
     {
       "key": "ui.unlock_popup.type.magic_modifier",
       "text": "Item Upgrade"
+    },
+    {
+      "key": "ui.unlock_popup.type.feature",
+      "text": "Feature"
+    },
+    {
+      "key": "feature.ascension.name",
+      "text": "Ascension"
+    },
+    {
+      "key": "ui.top_bar.settings.title",
+      "text": "Settings"
+    },
+    {
+      "key": "ui.top_bar.settings.body",
+      "text": "Open settings to adjust volume or return to the title screen."
+    },
+    {
+      "key": "ui.top_bar.map.title",
+      "text": "Map"
+    },
+    {
+      "key": "ui.top_bar.map.body",
+      "text": "View the current chapter map and your position."
+    },
+    {
+      "key": "ui.top_bar.chapter_progress.title",
+      "text": "Level Progress"
+    },
+    {
+      "key": "ui.top_bar.chapter_progress.body",
+      "text": "Shows the current level and total levels in this chapter."
+    },
+    {
+      "key": "ui.battle.turn_banner.player",
+      "text": "Your Turn"
+    },
+    {
+      "key": "ui.battle.turn_banner.enemy",
+      "text": "Enemy Turn"
     }
   ]
 }

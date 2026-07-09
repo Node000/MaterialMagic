@@ -1,0 +1,172 @@
+{
+  "items": [
+    {
+      "id": "map_more_unknown_nodes",
+      "nameKey": "difficulty.map_more_unknown_nodes.name",
+      "descriptionKey": "difficulty.map_more_unknown_nodes.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "map_more_enemy_nodes",
+      "nameKey": "difficulty.map_more_enemy_nodes.name",
+      "descriptionKey": "difficulty.map_more_enemy_nodes.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "player_max_health_minus_5",
+      "nameKey": "difficulty.player_max_health_minus_5.name",
+      "descriptionKey": "difficulty.player_max_health_minus_5.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 10, "intValue": -5 }
+      ]
+    },
+    {
+      "id": "starting_deck_add_basic_directions",
+      "nameKey": "difficulty.starting_deck_add_basic_directions.name",
+      "descriptionKey": "difficulty.starting_deck_add_basic_directions.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 11, "intValue": 1 }
+      ]
+    },
+    {
+      "id": "gold_gain_80",
+      "nameKey": "difficulty.gold_gain_80.name",
+      "descriptionKey": "difficulty.gold_gain_80.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 12, "value": 0.8 }
+      ]
+    },
+    {
+      "id": "reward_magic_choices_minus_1",
+      "nameKey": "difficulty.reward_magic_choices_minus_1.name",
+      "descriptionKey": "difficulty.reward_magic_choices_minus_1.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 13, "intValue": -1 }
+      ]
+    },
+    {
+      "id": "starting_magic_slots_minus_2_a7",
+      "nameKey": "difficulty.starting_magic_slots_minus_2.name",
+      "descriptionKey": "difficulty.starting_magic_slots_minus_2.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 18, "intValue": -2 }
+      ]
+    },
+    {
+      "id": "map_block_cells_plus_2",
+      "nameKey": "difficulty.map_block_cells_plus_2.name",
+      "descriptionKey": "difficulty.map_block_cells_plus_2.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 17, "intValue": 2 }
+      ]
+    },
+    {
+      "id": "starting_deck_add_placeholder",
+      "nameKey": "difficulty.starting_deck_add_placeholder.name",
+      "descriptionKey": "difficulty.starting_deck_add_placeholder.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "shop_price_120",
+      "nameKey": "difficulty.shop_price_120.name",
+      "descriptionKey": "difficulty.shop_price_120.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 14, "value": 1.2 }
+      ]
+    },
+    {
+      "id": "rare_magic_less_common",
+      "nameKey": "difficulty.rare_magic_less_common.name",
+      "descriptionKey": "difficulty.rare_magic_less_common.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "map_smaller",
+      "nameKey": "difficulty.map_smaller.name",
+      "descriptionKey": "difficulty.map_smaller.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 15, "intValue": -1 },
+        { "type": 16, "intValue": -1 }
+      ]
+    },
+    {
+      "id": "starting_magic_slots_minus_2_a13",
+      "nameKey": "difficulty.starting_magic_slots_minus_2.name",
+      "descriptionKey": "difficulty.starting_magic_slots_minus_2.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 18, "intValue": -2 }
+      ]
+    },
+    {
+      "id": "enemy_health_20",
+      "nameKey": "difficulty.enemy_health_20.name",
+      "descriptionKey": "difficulty.enemy_health_20.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 1, "value": 1.2 }
+      ]
+    },
+    {
+      "id": "level_cap_minus_4",
+      "nameKey": "difficulty.level_cap_minus_4.name",
+      "descriptionKey": "difficulty.level_cap_minus_4.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "map_block_cells_plus_1",
+      "nameKey": "difficulty.map_block_cells_plus_1.name",
+      "descriptionKey": "difficulty.map_block_cells_plus_1.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 17, "intValue": 1 }
+      ]
+    },
+    {
+      "id": "enemy_attack_intents_20",
+      "nameKey": "difficulty.enemy_attack_intents_20.name",
+      "descriptionKey": "difficulty.enemy_attack_intents_20.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 2, "value": 1.2 }
+      ]
+    },
+    {
+      "id": "rest_nodes_less_common",
+      "nameKey": "difficulty.rest_nodes_less_common.name",
+      "descriptionKey": "difficulty.rest_nodes_less_common.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "level_cap_minus_2",
+      "nameKey": "difficulty.level_cap_minus_2.name",
+      "descriptionKey": "difficulty.level_cap_minus_2.desc",
+      "scope": 0,
+      "effects": []
+    },
+    {
+      "id": "boss_harder",
+      "nameKey": "difficulty.boss_harder.name",
+      "descriptionKey": "difficulty.boss_harder.desc",
+      "scope": 2,
+      "effects": [
+        { "type": 1, "value": 1.3 },
+        { "type": 2, "value": 1.2 }
+      ]
+    }
+  ]
+}

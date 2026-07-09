@@ -10,6 +10,15 @@
         { "type": "StartConfigVictoryCount", "targetId": "wind_dust", "value": 1 }
       ],
       "messageKey": "unlock.start_config.blank"
+    },
+    {
+      "id": "unlock_feature_ascension",
+      "targetType": "Feature",
+      "targetId": "ascension",
+      "conditions": [
+        { "type": "NonTutorialVictoryCount", "value": 1 }
+      ],
+      "messageKey": "unlock.feature.ascension"
     }
   ]
 }

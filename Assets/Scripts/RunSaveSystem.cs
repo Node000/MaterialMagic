@@ -60,6 +60,7 @@ public class RunSaveData
     public RunMapNodeSaveData[] mapNodes = Array.Empty<RunMapNodeSaveData>();
     public RunMapGridSaveData mapGrid;
     public RunPoolSaveData runPools;
+    public RunDifficultySaveData difficulty;
     public PlayerSaveData player;
     public CurrentNodeSaveData currentNode;
 }
@@ -129,21 +130,27 @@ public class BattleNodeSaveData
 }
 
 [Serializable]
-public class EnemyBattleSaveData
-{
-    public int enemyId;
-    public int currentHealth;
-    public int shield;
-    public int actionIndex;
-    public int phase;
-    public bool deathHandled;
-    public bool canActThisEnemyTurn = true;
-    public bool isMinion;
-    public bool hasSpawnPosition;
-    public float spawnPositionX;
-    public float spawnPositionY;
-    public BuffStackData[] buffs = Array.Empty<BuffStackData>();
-}
+    public class EnemyBattleSaveData
+    {
+        public int enemyId;
+        public int currentHealth;
+        public int shield;
+        public int actionIndex;
+        public int phase;
+        public bool deathHandled;
+        public bool canActThisEnemyTurn = true;
+        public bool isMinion;
+        public bool hasSpawnPosition;
+        public float spawnPositionX;
+        public float spawnPositionY;
+        public BuffStackData[] buffs = Array.Empty<BuffStackData>();
+        public int[] consumedOnlyOnceIntentIds = Array.Empty<int>();
+        public int lastResolvedIntentGroupId = -1;
+        public int selectedIntentPhase = -1;
+        public int selectedIntentActionIndex = -1;
+        public int selectedIntentGroupId;
+    }
+
 
 [Serializable]
 public class PlayerCombatSaveData
@@ -517,6 +524,7 @@ public static class RunSaveSystem
             mapNodes = ExportMapNodes(mapNodes),
             mapGrid = ExportMapGrid(RunManager.Current != null ? RunManager.Current.MapGrid : null),
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
+            difficulty = DifficultyUpgradeSystem.ExportCurrentState(),
             player = ExportPlayer(player),
             currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player, battleManager, currentEvent, null) : null
         };
@@ -705,7 +713,7 @@ public static class RunSaveSystem
             if (enemyData == null || !GameDataDatabase.TryGetEnemyData(enemyData.enemyId, out EnemyData baseData))
                 continue;
 
-            EnemyModel enemy = EnemyFactory.Create(baseData);
+            EnemyModel enemy = EnemyFactory.Create(baseData, battleManager.CreateDifficultyContext());
             if (enemy == null)
                 continue;
             enemy.RestoreBattleState(enemyData);
@@ -777,7 +785,8 @@ public static class RunSaveSystem
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,
             runState = MapSelectionState,
-            startConfigId = PlayerState.SelectedStartConfigId
+            startConfigId = PlayerState.SelectedStartConfigId,
+            difficulty = DifficultyUpgradeSystem.ExportCurrentState()
         };
     }
 
@@ -808,6 +817,7 @@ public static class RunSaveSystem
             mapNodes = mapNodes != null && mapNodes.Count > 0 ? ExportMapNodes(mapNodes) : (previousData != null ? previousData.mapNodes : Array.Empty<RunMapNodeSaveData>()),
             mapGrid = RunManager.Current != null ? ExportMapGrid(RunManager.Current.MapGrid) : previousData != null ? previousData.mapGrid : null,
             runPools = RunManager.Current != null ? RunManager.Current.ExportPoolState() : previousData != null ? previousData.runPools : null,
+            difficulty = currentData != null && currentData.difficulty != null ? currentData.difficulty : DifficultyUpgradeSystem.ExportCurrentState(),
             player = player != null ? ExportPlayer(player) : previousData != null ? previousData.player : null,
             currentNode = currentLevel != null ? ExportCurrentNode(currentLevel, player, null, null, null) : previousData != null ? previousData.currentNode : null
         };
@@ -955,7 +965,12 @@ public static class RunSaveSystem
             hasSpawnPosition = enemy.HasSpawnPosition,
             spawnPositionX = enemy.SpawnPositionX,
             spawnPositionY = enemy.SpawnPositionY,
-            buffs = ExportBuffs(enemy.Buffs)
+            buffs = ExportBuffs(enemy.Buffs),
+            consumedOnlyOnceIntentIds = enemy.ExportConsumedOnlyOnceIntentIds(),
+            lastResolvedIntentGroupId = enemy.LastResolvedIntentGroupId,
+            selectedIntentPhase = enemy.SelectedIntentPhase,
+            selectedIntentActionIndex = enemy.SelectedIntentActionIndex,
+            selectedIntentGroupId = enemy.SelectedIntentGroupId
         };
     }
 

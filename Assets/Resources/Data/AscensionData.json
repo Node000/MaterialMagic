@@ -1,0 +1,144 @@
+{
+  "items": [
+    {
+      "numericId": 1,
+      "id": "ascension_1",
+      "nameKey": "ascension.1.name",
+      "descriptionKey": "ascension.1.desc",
+      "upgradeIds": ["map_more_unknown_nodes"]
+    },
+    {
+      "numericId": 2,
+      "id": "ascension_2",
+      "nameKey": "ascension.2.name",
+      "descriptionKey": "ascension.2.desc",
+      "upgradeIds": ["map_more_enemy_nodes"]
+    },
+    {
+      "numericId": 3,
+      "id": "ascension_3",
+      "nameKey": "ascension.3.name",
+      "descriptionKey": "ascension.3.desc",
+      "upgradeIds": ["player_max_health_minus_5"]
+    },
+    {
+      "numericId": 4,
+      "id": "ascension_4",
+      "nameKey": "ascension.4.name",
+      "descriptionKey": "ascension.4.desc",
+      "upgradeIds": ["starting_deck_add_basic_directions"]
+    },
+    {
+      "numericId": 5,
+      "id": "ascension_5",
+      "nameKey": "ascension.5.name",
+      "descriptionKey": "ascension.5.desc",
+      "upgradeIds": ["gold_gain_80"]
+    },
+    {
+      "numericId": 6,
+      "id": "ascension_6",
+      "nameKey": "ascension.6.name",
+      "descriptionKey": "ascension.6.desc",
+      "upgradeIds": ["reward_magic_choices_minus_1"]
+    },
+    {
+      "numericId": 7,
+      "id": "ascension_7",
+      "nameKey": "ascension.7.name",
+      "descriptionKey": "ascension.7.desc",
+      "upgradeIds": ["starting_magic_slots_minus_2_a7"]
+    },
+    {
+      "numericId": 8,
+      "id": "ascension_8",
+      "nameKey": "ascension.8.name",
+      "descriptionKey": "ascension.8.desc",
+      "upgradeIds": ["map_block_cells_plus_2"]
+    },
+    {
+      "numericId": 9,
+      "id": "ascension_9",
+      "nameKey": "ascension.9.name",
+      "descriptionKey": "ascension.9.desc",
+      "upgradeIds": ["starting_deck_add_placeholder"]
+    },
+    {
+      "numericId": 10,
+      "id": "ascension_10",
+      "nameKey": "ascension.10.name",
+      "descriptionKey": "ascension.10.desc",
+      "upgradeIds": ["shop_price_120"]
+    },
+    {
+      "numericId": 11,
+      "id": "ascension_11",
+      "nameKey": "ascension.11.name",
+      "descriptionKey": "ascension.11.desc",
+      "upgradeIds": ["rare_magic_less_common"]
+    },
+    {
+      "numericId": 12,
+      "id": "ascension_12",
+      "nameKey": "ascension.12.name",
+      "descriptionKey": "ascension.12.desc",
+      "upgradeIds": ["map_smaller"]
+    },
+    {
+      "numericId": 13,
+      "id": "ascension_13",
+      "nameKey": "ascension.13.name",
+      "descriptionKey": "ascension.13.desc",
+      "upgradeIds": ["starting_magic_slots_minus_2_a13"]
+    },
+    {
+      "numericId": 14,
+      "id": "ascension_14",
+      "nameKey": "ascension.14.name",
+      "descriptionKey": "ascension.14.desc",
+      "upgradeIds": ["enemy_health_20"]
+    },
+    {
+      "numericId": 15,
+      "id": "ascension_15",
+      "nameKey": "ascension.15.name",
+      "descriptionKey": "ascension.15.desc",
+      "upgradeIds": ["level_cap_minus_4"]
+    },
+    {
+      "numericId": 16,
+      "id": "ascension_16",
+      "nameKey": "ascension.16.name",
+      "descriptionKey": "ascension.16.desc",
+      "upgradeIds": ["map_block_cells_plus_1"]
+    },
+    {
+      "numericId": 17,
+      "id": "ascension_17",
+      "nameKey": "ascension.17.name",
+      "descriptionKey": "ascension.17.desc",
+      "upgradeIds": ["enemy_attack_intents_20"]
+    },
+    {
+      "numericId": 18,
+      "id": "ascension_18",
+      "nameKey": "ascension.18.name",
+      "descriptionKey": "ascension.18.desc",
+      "upgradeIds": ["rest_nodes_less_common"]
+    },
+    {
+      "numericId": 19,
+      "id": "ascension_19",
+      "nameKey": "ascension.19.name",
+      "descriptionKey": "ascension.19.desc",
+      "upgradeIds": ["level_cap_minus_2"]
+    },
+    {
+      "numericId": 20,
+      "id": "ascension_20",
+      "nameKey": "ascension.20.name",
+      "descriptionKey": "ascension.20.desc",
+      "upgradeIds": ["boss_harder"]
+    }
+  ]
+}

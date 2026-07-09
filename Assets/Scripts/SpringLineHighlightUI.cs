@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(CanvasRenderer))]
 [AddComponentMenu("UI/Spring Line Highlight")]
 public class SpringLineHighlightUI : MaskableGraphic
 {

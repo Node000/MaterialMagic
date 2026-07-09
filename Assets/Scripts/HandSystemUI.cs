@@ -664,6 +664,7 @@ public class HandSystemUI : MonoBehaviour
         HideMapPanel();
         enemyModels.Clear();
         battleManager.ClearEnemies();
+        battleManager.ConfigureLevelContext(level, activeChapter != null ? activeChapter.numericId : 0, false);
         ClearEnemyViews();
         SpawnDebugLevelEnemies(level);
         if (battleManager.Enemies.Count == 0)
@@ -1241,9 +1242,11 @@ public class HandSystemUI : MonoBehaviour
 	            else
 	                AudioManager.Instance.PlayBattleMusic();
 	        }
-			currentLevel = level;
-			runManager?.BeginLevel(level);
-	        runManager?.SetBattle(battleManager);
+				currentLevel = level;
+				runManager?.BeginLevel(level);
+        battleManager.ConfigureLevelContext(level, activeChapter != null ? activeChapter.numericId : 0, currentChapterMapBossLevel);
+        runManager?.SetBattle(battleManager);
+
 					currentEvent = null;
 					refreshUsedThisTurn = false;
 					ResetBattleDeckState();
@@ -1379,7 +1382,7 @@ public class HandSystemUI : MonoBehaviour
 				RefreshStaticUI();
 				RefreshMaterialListPanel();
 				RebuildCards(animateFromCurrent: true);
-				GetUIManager().TurnBanner?.Show("你的回合");
+				GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.player", "你的回合"));
 			}
 
 
@@ -2168,6 +2171,11 @@ public class HandSystemUI : MonoBehaviour
 
         int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
         int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
+        if (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId)
+        {
+            width = DifficultyUpgradeSystem.ModifyMapWidth(width);
+            height = DifficultyUpgradeSystem.ModifyMapHeight(height);
+        }
         int cellCount = width * height;
         List<LevelData> levels = new List<LevelData>(cellCount);
         for (int i = 0; i < cellCount; i++)
@@ -2190,6 +2198,8 @@ public class HandSystemUI : MonoBehaviour
         runManager.BuildMapGrid(chapter, levels);
         if (width == 5 && height == 8)
             ApplyDesignedChapterMapCellFlags();
+        DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt);
+        runManager?.RevealCurrentMapNeighbors();
     }
 
     private void BuildTutorialChapterMapGrid(List<LevelData> levels, int width, int height)
@@ -2809,11 +2819,17 @@ public class HandSystemUI : MonoBehaviour
         bool startingTutorialRun = !continueSavedRun && RunSaveSystem.ConsumeStartingTutorialRun();
         if (startingTutorialRun && GameDataDatabase.TryGetChapterData(TutorialManagerUI.TutorialChapterNumericId, out ChapterData tutorialChapter))
             activeChapter = tutorialChapter;
+        if (saveData != null)
+            DifficultyUpgradeSystem.InitializeFromSave(saveData);
+        else
+            DifficultyUpgradeSystem.InitializeNewRun(startingTutorialRun);
 
         PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
         if (startingTutorialRun && playerStatus.Gold < 10)
             playerStatus.AddGold(10 - playerStatus.Gold);
-		playerState = playerStatus;
+        if (saveData == null)
+            DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
+			playerState = playerStatus;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
         runManager.AttachMapGrid(new RunMapGridModel());
@@ -2973,13 +2989,17 @@ public class HandSystemUI : MonoBehaviour
 			{
 				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
 			}
+            RectTransform drawPileArea = FindPileChildArea("DrawPileIcon");
+            Button drawButton = drawPileArea != null ? drawPileArea.GetComponent<Button>() : null;
+            if ((Object)drawButton != (Object)null)
+                ((UnityEvent)drawButton.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
 		}
 		if ((Object)(object)discardPileArea != (Object)null)
 		{
 			Button component = ((Component)discardPileArea).GetComponent<Button>();
 			if ((Object)(object)component != (Object)null)
 			{
-				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleDiscardPilePanel));
+				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
 			}
 		}
 		if ((Object)(object)consumedPileArea != (Object)null)
@@ -2987,7 +3007,7 @@ public class HandSystemUI : MonoBehaviour
 			Button component = ((Component)consumedPileArea).GetComponent<Button>();
 			if ((Object)(object)component != (Object)null)
 			{
-				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleConsumedPilePanel));
+				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
 			}
 		}
         disabledCardPopupTween?.Kill(false);
@@ -4076,7 +4096,7 @@ public bool IsCardDragActive => cardDragActive;
 			if (!enemyTurnBannerShown)
 			{
 				enemyTurnBannerShown = true;
-				GetUIManager().TurnBanner?.Show("敌方回合");
+				GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.enemy", "敌方回合"));
 			}
 
 			yield return ResolveEnemyIntentsRoutine(enemy);
@@ -5418,23 +5438,55 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_004e: Expected O, but got Unknown
 		GetUIManager().PlayerStatus?.Refresh(playerState, false);
         GetUIManager().GoldDisplay?.SetGold(playerState.Gold, true);
-		RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
-		if ((Object)(object)deckCountText != (Object)null)
-		{
-			deckCountText.text = playerState != null ? $"抽牌堆：{playerState.DrawPile.Count}\n弃牌堆：{playerState.DiscardPile.Count}\n已消耗：{playerState.ConsumedPile.Count}" : "抽牌堆\n弃牌堆\n已消耗";
-		}
-		if ((Object)(object)discardCountText != (Object)null)
-		{
-			discardCountText.text = string.Empty;
-		}
-		if ((Object)(object)consumedCountText != (Object)null)
-		{
-			consumedCountText.text = string.Empty;
-		}
+			RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
+            RefreshPileCountTexts();
+
 	        RefreshEndTurnButtonText();
 	        RefreshRefreshChanceUI();
 	        RefreshPlayerAnimationState();
 		}
+
+        private void RefreshPileCountTexts()
+        {
+            if ((Object)deckCountText == (Object)null || (Object)discardCountText == (Object)null || (Object)consumedCountText == (Object)null)
+                CachePileCountTexts();
+
+            if ((Object)deckCountText != (Object)null)
+                deckCountText.text = playerState != null ? playerState.DrawPile.Count.ToString() : "0";
+            if ((Object)discardCountText != (Object)null)
+                discardCountText.text = playerState != null ? playerState.DiscardPile.Count.ToString() : "0";
+            if ((Object)consumedCountText != (Object)null)
+                consumedCountText.text = playerState != null ? playerState.ConsumedPile.Count.ToString() : "0";
+        }
+
+        private void CachePileCountTexts()
+        {
+            Transform root = deckPileArea != null ? deckPileArea : null;
+            if (root == null)
+                return;
+
+            if ((Object)deckCountText == (Object)null)
+                deckCountText = FindPileText(root, "DrawPileIcon/DrawPileCountText", "DrawPileCountText");
+            if ((Object)discardCountText == (Object)null)
+                discardCountText = FindPileText(root, "DiscardPileIcon/DiscardPileCountText", "DiscardPileCountText");
+            if ((Object)consumedCountText == (Object)null)
+                consumedCountText = FindPileText(root, "ExhaustPileIcon/ExhaustPileCountText", "ConsumedPileIcon/ConsumedPileCountText", "ExhaustPileCountText", "ConsumedPileCountText");
+        }
+
+        private TMP_Text FindPileText(Transform root, params string[] paths)
+        {
+            for (int i = 0; i < paths.Length; i++)
+            {
+                Transform found = root.Find(paths[i]);
+                if (found == null)
+                    continue;
+
+                TMP_Text text = found.GetComponent<TMP_Text>();
+                if (text != null)
+                    return text;
+            }
+            return null;
+        }
 
 	    private int GetRemainingRefreshChanceCount()
 	    {
@@ -5570,12 +5622,22 @@ public bool IsCardDragActive => cardDragActive;
             AddJuicyMotion(((Component)endTurnButton).transform);
     }
 
-	private void EnsurePileButtons()
-	{
-		BindPileButton(deckPileArea, ToggleMaterialListPanel);
-		UnbindPileButton(discardPileArea, ToggleDiscardPilePanel);
-		UnbindPileButton(consumedPileArea, ToggleConsumedPilePanel);
-	}
+		private void EnsurePileButtons()
+		{
+			BindPileButton(deckPileArea, ToggleMaterialListPanel);
+            BindPileButton(FindPileChildArea("DrawPileIcon"), ToggleMaterialListPanel);
+			BindPileButton(discardPileArea, ToggleMaterialListPanel);
+			BindPileButton(consumedPileArea, ToggleMaterialListPanel);
+		}
+
+        private RectTransform FindPileChildArea(string childName)
+        {
+            if (deckPileArea == null)
+                return null;
+
+            Transform child = deckPileArea.Find(childName);
+            return child as RectTransform;
+        }
 
 	private void BindPileButton(RectTransform pileArea, UnityAction action)
 	{
@@ -6013,20 +6075,27 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0011: Expected O, but got Unknown
 		if (!((Object)magicBookArea == (Object)null))
 		{
-			magicViews.Clear();
-				MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
-				for (int i = 0; i < componentsInChildren.Length; i++)
-				{
-				((Component)componentsInChildren[i]).gameObject.SetActive(true);
-				AddJuicyMotion(((Component)componentsInChildren[i]).transform);
-				MagicSlotClickHandler clickHandler = ((Component)componentsInChildren[i]).GetComponent<MagicSlotClickHandler>();
-				if (clickHandler == null)
-					clickHandler = ((Component)componentsInChildren[i]).gameObject.AddComponent<MagicSlotClickHandler>();
-                clickHandler.Bind(this, i);
-                componentsInChildren[i].Bind(playerState.GetMagicAtSlot(i));
+				magicViews.Clear();
+					MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+                    int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(componentsInChildren.Length);
+					for (int i = 0; i < componentsInChildren.Length; i++)
+					{
+                    bool visibleSlot = i < slotLimit;
+					((Component)componentsInChildren[i]).gameObject.SetActive(visibleSlot);
+                    if (!visibleSlot)
+                    {
+                        playerState?.ClearMagicSlot(i);
+                        continue;
+                    }
+					AddJuicyMotion(((Component)componentsInChildren[i]).transform);
+					MagicSlotClickHandler clickHandler = ((Component)componentsInChildren[i]).GetComponent<MagicSlotClickHandler>();
+					if (clickHandler == null)
+						clickHandler = ((Component)componentsInChildren[i]).gameObject.AddComponent<MagicSlotClickHandler>();
+	                clickHandler.Bind(this, i);
+	                componentsInChildren[i].Bind(playerState.GetMagicAtSlot(i));
 
-				magicViews.Add(componentsInChildren[i]);
-			}
+					magicViews.Add(componentsInChildren[i]);
+				}
 		}
 	}
 
@@ -6919,12 +6988,13 @@ public bool IsCardDragActive => cardDragActive;
         return GetRewardMagicChoices(3);
     }
 
-	public List<MagicData> GetRewardMagicChoices(int choiceCount)
-	{
-		if (TutorialManager != null && TutorialManager.MainTutorialRunning)
-			return GetTutorialRewardMagicChoices(choiceCount);
+		public List<MagicData> GetRewardMagicChoices(int choiceCount)
+		{
+			if (TutorialManager != null && TutorialManager.MainTutorialRunning)
+				return GetTutorialRewardMagicChoices(choiceCount);
 
-		List<MagicData> list = new List<MagicData>();
+            choiceCount = DifficultyUpgradeSystem.ModifyRewardMagicChoiceCount(choiceCount);
+			List<MagicData> list = new List<MagicData>();
 		RewardPoolData rewardPool = null;
 		if (currentLevel != null && currentLevel.rewardPoolId > 0)
 			GameDataDatabase.TryGetRewardPoolData(currentLevel.rewardPoolId, out rewardPool);
@@ -7467,14 +7537,21 @@ public bool IsCardDragActive => cardDragActive;
 
     public IEnumerator GainGoldAnimated(int amount, RectTransform sourceRect)
     {
+        yield return GainGoldAnimated(amount, sourceRect, true);
+    }
+
+    public IEnumerator GainGoldAnimated(int amount, RectTransform sourceRect, bool applyDifficulty)
+    {
+        if (applyDifficulty)
+            amount = DifficultyUpgradeSystem.ModifyGoldGain(amount);
         if (amount <= 0 || playerState == null)
             yield break;
 
         GoldDisplayUI goldDisplay = GetUIManager().GoldDisplay;
         if (goldDisplay != null)
-            yield return goldDisplay.PlayGain(amount, sourceRect, () => playerState.AddGold(1), () => playerState.Gold);
+            yield return goldDisplay.PlayGain(amount, sourceRect, () => playerState.AddGold(1, false), () => playerState.Gold);
         else
-            playerState.AddGold(amount);
+            playerState.AddGold(amount, false);
 
         RefreshStaticUI();
         SaveRunProgress();
