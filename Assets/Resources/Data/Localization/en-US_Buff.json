@@ -10,7 +10,7 @@
     },
     {
       "key": "buff.burning.name",
-      "text": "Burning"
+      "text": "Burn"
     },
     {
       "key": "buff.burning.desc",
@@ -22,7 +22,7 @@
     },
     {
       "key": "buff.weak.desc",
-      "text": "Each stack reduces attack by 1. After each hit and at turn end, stacks are halved."
+      "text": "Each stack reduces attack by 1. After each attack and at turn end, stacks are halved."
     },
     {
       "key": "buff.vulnerable.name",
@@ -50,7 +50,7 @@
     },
     {
       "key": "buff.spell_power.name",
-      "text": "Spell Power"
+      "text": "Damage Up"
     },
     {
       "key": "buff.spell_power.desc",
@@ -62,19 +62,19 @@
     },
     {
       "key": "buff.charge_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain 【Charge】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain CHARGE. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.burning_next_turn.name",
-      "text": "Burning Next Turn"
+      "text": "Burn Next Turn"
     },
     {
       "key": "buff.burning_next_turn.desc",
-      "text": "At the start of next turn, gain Burning equal to the stack count, then clear this."
+      "text": "At the start of next turn, gain BURN equal to the stack count, then clear this."
     },
     {
       "key": "buff.shield_reflect.name",
-      "text": "Shield Reflect"
+      "text": "Shield Thorns"
     },
     {
       "key": "buff.shield_reflect.desc",
@@ -102,7 +102,7 @@
     },
     {
       "key": "buff.sturdy.desc",
-      "text": "The first {0} arrows drawn next turn gain 【Sturdy】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain STURDY. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.stable.name",
@@ -138,7 +138,7 @@
     },
     {
       "key": "buff.repeat_spell.name",
-      "text": "Repeat Item"
+      "text": "Item Echo"
     },
     {
       "key": "buff.repeat_spell.desc",
@@ -146,7 +146,7 @@
     },
     {
       "key": "buff.debuff_power.name",
-      "text": "Debuff Power"
+      "text": "Debuff Up"
     },
     {
       "key": "buff.debuff_power.desc",
@@ -158,7 +158,7 @@
     },
     {
       "key": "buff.vortex_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain 【Vortex】. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain VORTEX. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.eggdeathexplosion.name",

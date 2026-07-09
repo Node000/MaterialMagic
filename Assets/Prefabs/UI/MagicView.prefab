@@ -415,11 +415,8 @@ MonoBehaviour:
   magicNameText: {fileID: 1340398558595696215}
   recipeRoot: {fileID: 2714448743960716031}
   modifierMarkerImage: {fileID: 3061875667698673557}
-  UpBackgroundColor: {r: 0.106918216, g: 0.106918216, b: 0.106918216, a: 1}
-  LeftBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
-  DownBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
-  RightBackgroundColor: {r: 0.105882354, g: 0.105882354, b: 0.105882354, a: 1}
-  recipeIconSize: {x: 96, y: 96}
+  slotFrame: {fileID: 0}
+  recipeIconSize: {x: 80, y: 80}
   recipeIconSpacing: {x: 22, y: 22}
   recipeIconPadding: {x: 0, y: 0}
   tagTooltipRoot: {fileID: 0}
@@ -568,16 +565,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2666451991955614391}
-  m_LocalRotation: {x: 0, y: 0, z: -0.38268343, w: 0.92387956}
+  m_LocalRotation: {x: -0, y: -0, z: -0.16536862, w: 0.98623186}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 2.31, y: 2.31, z: 2.31}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 9157996333688980366}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -45}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -19.037}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 7.4000015, y: -8.299999}
+  m_AnchoredPosition: {x: 206.9, y: 2.6}
   m_SizeDelta: {x: 25.9252, y: 26.8058}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1179847108552673311
@@ -652,8 +649,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 85.1, y: -6}
-  m_SizeDelta: {x: -97.100044, y: 30}
+  m_AnchoredPosition: {x: 88.4, y: 0.020000458}
+  m_SizeDelta: {x: -90.807304, y: 30.3553}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &5727689174406608873
 CanvasRenderer:
@@ -710,19 +707,19 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 27
+  m_fontSizeBase: 27
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 10
   m_fontSizeMax: 40
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 4096
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
-  m_characterSpacing: 0
+  m_characterSpacing: -5.22
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -44.33
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -746,7 +743,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: -1.065979, w: -38.015503}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1203,7 +1200,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 82.805756, y: 13}
+  m_AnchoredPosition: {x: 82.805756, y: 2.55}
   m_SizeDelta: {x: -94.8058, y: 38}
   m_Pivot: {x: 0, y: 0}
 --- !u!1 &5918868775102772169
