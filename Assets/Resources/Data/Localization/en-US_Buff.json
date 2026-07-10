@@ -22,7 +22,7 @@
     },
     {
       "key": "buff.weak.desc",
-      "text": "Each stack reduces attack by 1. After each attack and at turn end, stacks are halved."
+      "text": "Damage dealt -{0}. After each attack and at turn end, stacks are halved."
     },
     {
       "key": "buff.vulnerable.name",
@@ -38,7 +38,7 @@
     },
     {
       "key": "buff.slow.desc",
-      "text": "Each stack reduces Shield gained by 1. When Shield is gained, lose stacks equal to the Shield reduced this way. Stacks are halved at turn end."
+      "text": "Shield gained -{0}. When gaining Shield, lose stacks equal to the Shield reduced this way. Stacks are halved at turn end."
     },
     {
       "key": "buff.arc.name",

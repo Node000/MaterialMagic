@@ -9540,6 +9540,7 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
 			ShortcutExtensions.DOKill((Component)view.RectTransform, false);
+			view.ClearPlayFeedback(true);
 			Canvas.ForceUpdateCanvases();
 			Vector3 position = GetAreaCenterWorldPosition(view.RectTransform);
 			Quaternion rotation = ((Transform)view.RectTransform).rotation;

@@ -190,12 +190,18 @@ public class EnemyIntentPlan
         if (pool == null || pool.Length == 0)
             return null;
 
+        EnemyIntentGroupData pooledGroup = SelectCurrentIntentPoolGroup(pool, state, actionIndex, false);
+        return pooledGroup != null ? pooledGroup : SelectCurrentIntentPoolGroup(pool, state, actionIndex, true);
+    }
+
+    private EnemyIntentGroupData SelectCurrentIntentPoolGroup(EnemyIntentGroupData[] pool, EnemyIntentPlanState state, int actionIndex, bool allowRepeat)
+    {
         int checkedCount = 0;
         int index = Mathf.Max(0, actionIndex) % pool.Length;
         while (checkedCount < pool.Length)
         {
             EnemyIntentGroupData group = pool[index];
-            if (group != null && (!group.onlyOnce || group.id == 0 || state == null || !state.ConsumedOnlyOnceIntentIds.Contains(group.id)) && CanUseIntentGroup(group.id, pool.Length, state))
+            if (group != null && (!group.onlyOnce || group.id == 0 || state == null || !state.ConsumedOnlyOnceIntentIds.Contains(group.id)) && (allowRepeat || CanUseIntentGroup(group.id, pool.Length, state)))
             {
                 if (state != null)
                 {
@@ -220,6 +226,12 @@ public class EnemyIntentPlan
             return null;
 
         int actionIndex = state != null ? state.ActionIndex : 0;
+        EnemyIntentGroupData group = SelectSeparatedIntentGroup(loop, groups, state, nextRandomInt, actionIndex, false);
+        return group != null ? group : SelectSeparatedIntentGroup(loop, groups, state, nextRandomInt, actionIndex, true);
+    }
+
+    private EnemyIntentGroupData SelectSeparatedIntentGroup(EnemyIntentLoopData[] loop, EnemyIntentGroupData[] groups, EnemyIntentPlanState state, Func<int, int, int> nextRandomInt, int actionIndex, bool allowRepeat)
+    {
         int checkedCount = 0;
         int index = Mathf.Max(0, actionIndex) % loop.Length;
         while (checkedCount < loop.Length)
@@ -227,22 +239,25 @@ public class EnemyIntentPlan
             EnemyIntentLoopData entry = loop[index];
             if (entry != null)
             {
-                int groupId = ResolveLoopGroupId(entry, groups, nextRandomInt);
                 int onceKey = -(index + 1);
                 bool onceAllowed = !entry.onlyOnce || state == null || !state.ConsumedOnlyOnceIntentIds.Contains(onceKey);
-                if (groupId != 0 && onceAllowed && CanUseIntentGroup(groupId, groups.Length, state))
+                if (onceAllowed)
                 {
-                    EnemyIntentGroupData group = FindIntentGroup(groups, groupId);
-                    if (group != null)
+                    int groupId = ResolveLoopGroupId(entry, groups, state, nextRandomInt, allowRepeat);
+                    if (groupId != 0)
                     {
-                        if (state != null)
+                        EnemyIntentGroupData group = FindIntentGroup(groups, groupId);
+                        if (group != null)
                         {
-                            if (entry.onlyOnce)
-                                state.ConsumedOnlyOnceIntentIds.Add(onceKey);
-                            state.LastResolvedIntentGroupId = groupId;
-                            RememberSelectedIntentGroup(state, groupId);
+                            if (state != null)
+                            {
+                                if (entry.onlyOnce)
+                                    state.ConsumedOnlyOnceIntentIds.Add(onceKey);
+                                state.LastResolvedIntentGroupId = groupId;
+                                RememberSelectedIntentGroup(state, groupId);
+                            }
+                            return group;
                         }
-                        return group;
                     }
                 }
             }
@@ -254,25 +269,37 @@ public class EnemyIntentPlan
         return null;
     }
 
-    private int ResolveLoopGroupId(EnemyIntentLoopData entry, EnemyIntentGroupData[] groups, Func<int, int, int> nextRandomInt)
+    private int ResolveLoopGroupId(EnemyIntentLoopData entry, EnemyIntentGroupData[] groups, EnemyIntentPlanState state, Func<int, int, int> nextRandomInt, bool allowRepeat)
     {
         if (entry.randomGroupIds != null && entry.randomGroupIds.Length > 0)
         {
-            if (entry.randomGroupIds.Length == 1)
-                return entry.randomGroupIds[0];
-
             int[] candidates = entry.randomGroupIds;
-            int fallback = candidates[NextRandomInt(nextRandomInt, 0, candidates.Length)];
+            int selected = 0;
+            int selectableCount = 0;
+            int totalGroupCount = groups != null ? groups.Length : candidates.Length;
             for (int i = 0; i < candidates.Length; i++)
             {
-                int candidate = candidates[NextRandomInt(nextRandomInt, 0, candidates.Length)];
-                if (CanUseIntentGroup(candidate, groups != null ? groups.Length : candidates.Length, null))
-                    return candidate;
+                int candidate = candidates[i];
+                if (candidate == 0)
+                    continue;
+                if (!allowRepeat && !CanUseIntentGroup(candidate, totalGroupCount, state))
+                    continue;
+                if (groups != null && FindIntentGroup(groups, candidate) == null)
+                    continue;
+
+                selectableCount++;
+                if (NextRandomInt(nextRandomInt, 0, selectableCount) == 0)
+                    selected = candidate;
             }
-            return fallback;
+            return selected;
         }
 
-        return entry.groupId;
+        int groupId = entry.groupId;
+        if (groupId == 0)
+            return 0;
+        if (!allowRepeat && !CanUseIntentGroup(groupId, groups != null ? groups.Length : 0, state))
+            return 0;
+        return groupId;
     }
 
     private bool TryGetSelectedIntentGroup(EnemyIntentPlanState state, int phase, int actionIndex, out EnemyIntentGroupData group)
