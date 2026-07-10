@@ -4,7 +4,7 @@
   "nameKey": "enemy.003.name",
   "maxHealth": 29,
   "baseAttack": 9,
-  "imageScale": 0.6,
+  "imageScale": 0.537,
   "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [],
@@ -54,6 +54,6 @@
     }
   ],
   "iconName": "相扑男",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "相扑男",
   "animationFrameRate": 8.0
 }

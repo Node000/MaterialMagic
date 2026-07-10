@@ -42,7 +42,7 @@ public class SlotSelectPanelUI : MonoBehaviour
         transform.SetAsLastSibling();
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = "选择要填入的道具槽";
+            title.text = LocalizationSystem.GetText("ui.slot_select.title", "选择要填入的道具槽");
 
         EnsureSlotButtons(owner.MagicSlotViewCount);
         LayoutSlotButtons(owner.MagicSlotViewCount);
@@ -62,7 +62,10 @@ public class SlotSelectPanelUI : MonoBehaviour
             MagicModel magic = owner.PlayerState.GetMagicAtSlot(i);
             TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
             if (text != null)
-                text.text = magic != null ? i + 1 + ": " + magic.Name : i + 1 + ": 空槽";
+            {
+                string slotName = magic != null ? magic.Name : LocalizationSystem.GetText("ui.slot_select.empty_slot", "空槽");
+                text.text = string.Format(LocalizationSystem.GetText("ui.slot_select.slot_format", "{0}: {1}"), i + 1, slotName);
+            }
 
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => ChooseSlot(slotIndex));

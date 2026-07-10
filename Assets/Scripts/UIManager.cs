@@ -461,14 +461,14 @@ public class UIManager : MonoBehaviour
     {
         return type switch
         {
-            LevelType.Shop => "商店",
-            LevelType.Event => "事件",
-            LevelType.RemoveMaterial => "删除",
-            LevelType.AddMaterial => "新增",
-            LevelType.Rest => "休息",
-            LevelType.Reward => "奖励",
-            LevelType.Elite => "精英",
-            _ => "战斗",
+            LevelType.Shop => LocalizationSystem.GetText("ui.level_type.shop", "商店"),
+            LevelType.Event => LocalizationSystem.GetText("ui.level_type.event", "事件"),
+            LevelType.RemoveMaterial => LocalizationSystem.GetText("ui.level_type.remove_material", "删除"),
+            LevelType.AddMaterial => LocalizationSystem.GetText("ui.level_type.add_material", "新增"),
+            LevelType.Rest => LocalizationSystem.GetText("ui.level_type.rest", "休息"),
+            LevelType.Reward => LocalizationSystem.GetText("ui.level_type.reward", "奖励"),
+            LevelType.Elite => LocalizationSystem.GetText("ui.level_type.elite", "精英"),
+            _ => LocalizationSystem.GetText("ui.level_type.battle", "战斗"),
         };
     }
 

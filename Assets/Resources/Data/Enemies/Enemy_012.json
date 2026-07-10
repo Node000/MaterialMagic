@@ -4,7 +4,7 @@
   "nameKey": "enemy.012.name",
   "maxHealth": 41,
   "baseAttack": 11,
-  "imageScale": 0.6,
+  "imageScale": 0.482,
   "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [],
@@ -85,6 +85,6 @@
     }
   ],
   "iconName": "生意人",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "生意人",
   "animationFrameRate": 8.0
 }

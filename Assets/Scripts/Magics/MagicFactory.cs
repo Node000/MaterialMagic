@@ -43,6 +43,22 @@ public static class MagicFactory
             case nameof(TangramMagicModel): return new TangramMagicModel(data, slotIndex);
             case nameof(GlueMagicModel): return new GlueMagicModel(data, slotIndex);
             case nameof(SpringMagicModel): return new SpringMagicModel(data, slotIndex);
+            case nameof(RainBannerMagicModel): return new RainBannerMagicModel(data, slotIndex);
+            case nameof(LighterMagicModel): return new LighterMagicModel(data, slotIndex);
+            case nameof(WaterBallMagicModel): return new WaterBallMagicModel(data, slotIndex);
+            case nameof(CanMagicModel): return new CanMagicModel(data, slotIndex);
+            case nameof(PlasticBagMagicModel): return new PlasticBagMagicModel(data, slotIndex);
+            case nameof(BoxingGloveMagicModel): return new BoxingGloveMagicModel(data, slotIndex);
+            case nameof(SailboatMagicModel): return new SailboatMagicModel(data, slotIndex);
+            case nameof(HarmfulWaveMagicModel): return new HarmfulWaveMagicModel(data, slotIndex);
+            case nameof(ChloroplastMagicModel): return new ChloroplastMagicModel(data, slotIndex);
+            case nameof(BubbleGumMagicModel): return new BubbleGumMagicModel(data, slotIndex);
+            case nameof(CamouflageMagicModel): return new CamouflageMagicModel(data, slotIndex);
+            case nameof(CaramelBearMagicModel): return new CaramelBearMagicModel(data, slotIndex);
+            case nameof(ColoredLampMagicModel): return new ColoredLampMagicModel(data, slotIndex);
+            case nameof(FoamBoardMagicModel): return new FoamBoardMagicModel(data, slotIndex);
+            case nameof(YoYoMagicModel): return new YoYoMagicModel(data, slotIndex);
+            case nameof(StickerMagicModel): return new StickerMagicModel(data, slotIndex);
             default: return new MagicModel(data, slotIndex);
         }
     }

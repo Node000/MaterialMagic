@@ -393,6 +393,11 @@ public class BattleManager
         return SelectTargetEnemy();
     }
 
+    public EnemyModel GetRandomAliveEnemy()
+    {
+        return SelectRandomEnemy();
+    }
+
     private EnemyModel SelectTargetEnemy()
     {
         if (FocusTarget != null && !FocusTarget.IsDead)
@@ -527,7 +532,11 @@ public class BattleManager
         PlayerState.ResetExtraRefreshChancesThisTurn();
         result.CapturePlayerBefore(PlayerState);
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
-        PlayerState.ClearShield();
+        int keepShield = PlayerState.GetBuffStack(BuffEnum.KeepShieldNextTurn);
+        if (keepShield > 0)
+            PlayerState.ConsumeBuff(BuffEnum.KeepShieldNextTurn, keepShield);
+        else
+            PlayerState.ClearShield();
         PlayerState.TriggerOnTurnStart(opponent);
         bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
         DrawPlayerTurnCards(drawCount, skipNormalDraw);

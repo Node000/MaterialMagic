@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public static class UnlockSystem
 {
@@ -140,6 +141,7 @@ public static class UnlockSystem
             progress.pendingUnlockMessages = AddPendingMessage(progress.pendingUnlockMessages, unlock);
         }
 
+        UpdateAscensionProgress(progress, data, resultType);
         UnlockProgressSaveSystem.SaveCurrent(progress);
     }
 
@@ -301,6 +303,31 @@ public static class UnlockSystem
     private static bool IsTutorialRun(RunSaveData run)
     {
         return run != null && run.chapterNumericId == TutorialManagerUI.TutorialChapterNumericId;
+    }
+
+    private static void UpdateAscensionProgress(UnlockProgressData progress, RunSaveData run, RunHistoryResultType resultType)
+    {
+        if (progress == null || run == null || resultType != RunHistoryResultType.Victory || IsTutorialRun(run))
+            return;
+
+        string ascensionUnlockKey = GetUnlockKey(TargetFeature, "ascension");
+        if (!Contains(progress.unlockedIds, ascensionUnlockKey))
+            return;
+
+        int maxLevel = AscensionSystem.MaxAscensionLevel;
+        if (maxLevel <= 0)
+            return;
+
+        if (progress.highestAscensionUnlocked <= 0)
+            progress.highestAscensionUnlocked = 1;
+
+        int clearedLevel = run.difficulty != null ? Mathf.Clamp(run.difficulty.ascensionLevel, 0, maxLevel) : 0;
+        if (clearedLevel > progress.highestAscensionCleared)
+            progress.highestAscensionCleared = clearedLevel;
+        if (clearedLevel >= progress.highestAscensionUnlocked && progress.highestAscensionUnlocked < maxLevel)
+            progress.highestAscensionUnlocked = Mathf.Min(maxLevel, clearedLevel + 1);
+        if (progress.selectedAscensionLevel > progress.highestAscensionUnlocked)
+            progress.selectedAscensionLevel = progress.highestAscensionUnlocked;
     }
 
     private static bool HasMagicAtRunEnd(RunSaveData run, string targetId)

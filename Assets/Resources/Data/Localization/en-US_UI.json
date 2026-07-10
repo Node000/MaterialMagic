@@ -437,6 +437,74 @@
       "text": "Ascension"
     },
     {
+      "key": "ui.start_menu.codex_button",
+      "text": "Library"
+    },
+    {
+      "key": "ui.magic_codex.title",
+      "text": "C:/Library"
+    },
+    {
+      "key": "ui.magic_codex.detail_hint_title",
+      "text": "Library"
+    },
+    {
+      "key": "ui.magic_codex.detail_hint",
+      "text": "Hover an item below to view details"
+    },
+    {
+      "key": "ui.magic_codex.count",
+      "text": "Obtained {0}/{1}"
+    },
+    {
+      "key": "ui.magic_codex.new_label",
+      "text": "New!!!"
+    },
+    {
+      "key": "ui.magic_codex.rarity_label",
+      "text": "Rarity"
+    },
+    {
+      "key": "ui.magic_codex.recipe_label",
+      "text": "Sequence"
+    },
+    {
+      "key": "ui.magic_codex.effect_label",
+      "text": "Effect"
+    },
+    {
+      "key": "ui.magic_codex.label_separator",
+      "text": ": "
+    },
+    {
+      "key": "ui.magic_codex.recipe_separator",
+      "text": " → "
+    },
+    {
+      "key": "ui.magic_codex.locked_suffix",
+      "text": " (Not obtained)"
+    },
+    {
+      "key": "ui.magic_codex.locked_state_suffix",
+      "text": " / Not obtained"
+    },
+    {
+      "key": "ui.magic_codex.rarity.common",
+      "text": "Common"
+    },
+    {
+      "key": "ui.magic_codex.rarity.rare",
+      "text": "Rare"
+    },
+    {
+      "key": "ui.magic_codex.rarity.epic",
+      "text": "Epic"
+    },
+    {
+      "key": "ui.magic_codex.rarity.legendary",
+      "text": "Legendary"
+    },
+    {
       "key": "ui.top_bar.settings.title",
       "text": "Settings"
     },
@@ -467,6 +535,738 @@
     {
       "key": "ui.battle.turn_banner.enemy",
       "text": "Enemy Turn"
+    },
+    {
+      "key": "ui.run_result.victory.title",
+      "text": "Victory"
+    },
+    {
+      "key": "ui.run_result.victory.body",
+      "text": "You spent {0} and cleared every level.\nYou carried: {1}\nWhat a delightful victory.\nNow it is time to rest."
+    },
+    {
+      "key": "ui.run_result.victory.tutorial.body",
+      "text": "Congratulations, you completed the tutorial!"
+    },
+    {
+      "key": "ui.run_result.victory.return_button",
+      "text": "Finish"
+    },
+    {
+      "key": "ui.run_result.victory.magic_separator",
+      "text": ", "
+    },
+    {
+      "key": "ui.run_result.victory.empty_magic_list",
+      "text": "None"
+    },
+    {
+      "key": "ui.run_result.defeat.title",
+      "text": "Game Over"
+    },
+    {
+      "key": "ui.run_result.defeat.body",
+      "text": "You reached this point, but were finally defeated by {0}.\nClearly, your spirit is exhausted.\nIt is time to sleep."
+    },
+    {
+      "key": "ui.run_result.defeat.return_button",
+      "text": "Finish"
+    },
+    {
+      "key": "ui.run_result.unknown_enemy",
+      "text": "Unknown Enemy"
+    },
+    {
+      "key": "ui.run_result.time.hours_minutes_seconds",
+      "text": "{0}h {1}m {2}s"
+    },
+    {
+      "key": "ui.run_result.time.minutes_seconds",
+      "text": "{0}m {1}s"
+    },
+    {
+      "key": "ui.run_result.time.seconds",
+      "text": "{0}s"
+    },
+    {
+      "key": "ui.material_list.draw_pile",
+      "text": "Draw Pile"
+    },
+    {
+      "key": "ui.material_list.discard_pile",
+      "text": "Discard Pile"
+    },
+    {
+      "key": "ui.material_list.consumed_pile",
+      "text": "Consumed"
+    },
+    {
+      "key": "ui.material_list.select_material",
+      "text": "Select Arrow"
+    },
+    {
+      "key": "ui.material_list.arrow_piles",
+      "text": "Arrow Piles"
+    },
+    {
+      "key": "ui.common.confirm",
+      "text": "Confirm"
+    },
+    {
+      "key": "ui.common.cancel",
+      "text": "Cancel"
+    },
+    {
+      "key": "ui.common.back",
+      "text": "Back"
+    },
+    {
+      "key": "ui.common.leave",
+      "text": "Leave"
+    },
+    {
+      "key": "ui.common.skip",
+      "text": "Skip"
+    },
+    {
+      "key": "ui.reward_panel.title",
+      "text": "Battle Rewards"
+    },
+    {
+      "key": "ui.reward_panel.hint",
+      "text": "Choose a reward. After selecting an item reward, click an item slot in the scene to replace it."
+    },
+    {
+      "key": "ui.reward_panel.magic_only.title",
+      "text": "Item Reward"
+    },
+    {
+      "key": "ui.reward_panel.magic_only.hint",
+      "text": "Choose an item, then click an item slot in the scene to replace it."
+    },
+    {
+      "key": "ui.reward_panel.option.magic",
+      "text": "Gain Item"
+    },
+    {
+      "key": "ui.reward_panel.option.gold",
+      "text": "Gold x{0}"
+    },
+    {
+      "key": "ui.reward_panel.option.magic_modifier",
+      "text": "Item Upgrade"
+    },
+    {
+      "key": "ui.reward_panel.option.arrow_modifier",
+      "text": "Arrow Enchantment"
+    },
+    {
+      "key": "ui.reward_panel.magic_choice.title",
+      "text": "Choose an Item"
+    },
+    {
+      "key": "ui.reward_panel.magic_choice.hint",
+      "text": "After choosing, click a slot below or in the scene to replace it. You can reselect."
+    },
+    {
+      "key": "ui.slot_select.title",
+      "text": "Choose an Item Slot"
+    },
+    {
+      "key": "ui.slot_select.empty_slot",
+      "text": "Empty Slot"
+    },
+    {
+      "key": "ui.slot_select.slot_format",
+      "text": "{0}: {1}"
+    },
+    {
+      "key": "ui.shop.title",
+      "text": "Shop"
+    },
+    {
+      "key": "ui.shop.hint",
+      "text": "Each item can be bought once. After buying an item, click an existing item slot to replace it."
+    },
+    {
+      "key": "ui.shop.remove_material.title",
+      "text": "Choose a Card to Remove"
+    },
+    {
+      "key": "ui.level_select.title",
+      "text": "Choose the Next Level"
+    },
+    {
+      "key": "ui.level_select.unknown",
+      "text": "Unknown"
+    },
+    {
+      "key": "ui.level_type.shop",
+      "text": "Shop"
+    },
+    {
+      "key": "ui.level_type.event",
+      "text": "Event"
+    },
+    {
+      "key": "ui.level_type.remove_material",
+      "text": "Remove"
+    },
+    {
+      "key": "ui.level_type.add_material",
+      "text": "Add"
+    },
+    {
+      "key": "ui.level_type.rest",
+      "text": "Rest"
+    },
+    {
+      "key": "ui.level_type.reward",
+      "text": "Reward"
+    },
+    {
+      "key": "ui.level_type.elite",
+      "text": "Elite"
+    },
+    {
+      "key": "ui.level_type.battle",
+      "text": "Battle"
+    },
+    {
+      "key": "ui.chapter_grid.title",
+      "text": "Map"
+    },
+    {
+      "key": "ui.chapter_grid.boss",
+      "text": "Boss"
+    },
+    {
+      "key": "ui.reward_grid.title",
+      "text": "Bonus Stage"
+    },
+    {
+      "key": "ui.reward_grid.hint",
+      "text": "Play arrows to move Up / Left / Down / Right."
+    },
+    {
+      "key": "ui.reward_grid.start",
+      "text": "Start from the center."
+    },
+    {
+      "key": "ui.reward_grid.result.edge_stop",
+      "text": "Stopped at edge"
+    },
+    {
+      "key": "ui.reward_grid.result.reward_summary",
+      "text": "{0}x{1}"
+    },
+    {
+      "key": "ui.reward_grid.reward.gold.description",
+      "text": "Gain Gold"
+    },
+    {
+      "key": "ui.reward_grid.reward.heal.description",
+      "text": "Restore HP"
+    },
+    {
+      "key": "ui.reward_grid.reward.default.description",
+      "text": "Gain Reward"
+    },
+    {
+      "key": "ui.reward_grid.reward.gold.name",
+      "text": "Gold"
+    },
+    {
+      "key": "ui.reward_grid.reward.heal.name",
+      "text": "HP"
+    },
+    {
+      "key": "ui.event_panel.hint",
+      "text": "Left click: skip/continue; play arrows and end the turn to choose an option"
+    },
+    {
+      "key": "ui.event.effect.separator",
+      "text": "; "
+    },
+    {
+      "key": "ui.event.effect.none",
+      "text": "No direct effect"
+    },
+    {
+      "key": "ui.event.effect.heal_amount",
+      "text": "Heal {0} HP"
+    },
+    {
+      "key": "ui.event.effect.increase_draw_count_per_turn",
+      "text": "Draw +1 card each turn"
+    },
+    {
+      "key": "ui.event.effect.remove_material_choice",
+      "text": "Remove {0} arrow(s)"
+    },
+    {
+      "key": "ui.event.effect.gain_material_count",
+      "text": "Gain {0} arrow(s)"
+    },
+    {
+      "key": "ui.event.effect.apply_material_modifier",
+      "text": "Choose {0} hand arrow(s) and add {1}"
+    },
+    {
+      "key": "ui.event.effect.heal_percent_max",
+      "text": "Heal {0}% of max HP"
+    },
+    {
+      "key": "ui.event.effect.lose_health_amount",
+      "text": "Lose {0} HP"
+    },
+    {
+      "key": "ui.event.effect.escalate_per_use_suffix",
+      "text": ", +{0} each time"
+    },
+    {
+      "key": "ui.event.effect.gain_gold",
+      "text": "Gain {0} Gold"
+    },
+    {
+      "key": "ui.event.effect.gain_magic",
+      "text": "Gain an item reward"
+    },
+    {
+      "key": "ui.event.effect.gain_magic_modifier",
+      "text": "Gain an item upgrade"
+    },
+    {
+      "key": "ui.event.effect.increase_max_health",
+      "text": "Max HP +{0}"
+    },
+    {
+      "key": "ui.event.effect.gain_random_material",
+      "text": "Gain {0} random arrow(s)"
+    },
+    {
+      "key": "ui.event.effect.gain_same_random_materials",
+      "text": "Gain {0} matching random arrows"
+    },
+    {
+      "key": "ui.event.effect.increase_draw_count",
+      "text": "Draw count +{0} each turn"
+    },
+    {
+      "key": "ui.event.effect.gain_next_battle_start_shield",
+      "text": "Gain {0} Shield at the start of the next battle"
+    },
+    {
+      "key": "ui.event.effect.gain_material_modifier_to_choice",
+      "text": "Choose {0} arrow(s) to gain {1}"
+    },
+    {
+      "key": "ui.event.effect.spend_all_gold",
+      "text": "Spend all Gold"
+    },
+    {
+      "key": "ui.event.effect.randomize_deck_basic_materials",
+      "text": "Randomly reset basic arrow directions in your deck"
+    },
+    {
+      "key": "ui.event.effect.gain_random_syntax_material",
+      "text": "Gain {0} random syntax arrow(s)"
+    },
+    {
+      "key": "ui.event.effect.arrow_modifier",
+      "text": "Arrow Enchantment"
+    },
+    {
+      "key": "ui.debug_magic_dropdown.select_replacement",
+      "text": "Choose Replacement Item"
+    },
+    {
+      "key": "ui.battle.floating.max_health_up",
+      "text": "Max HP +{0}"
+    },
+    {
+      "key": "ui.reward_magic_confirm.title",
+      "text": "Replace Item?"
+    },
+    {
+      "key": "ui.reward_magic_confirm.hint",
+      "text": "The item is replaced only after confirming. Cancel to choose another slot."
+    },
+    {
+      "key": "ui.reward_magic_confirm.existing_label",
+      "text": "Current Item"
+    },
+    {
+      "key": "ui.reward_magic_confirm.new_label",
+      "text": "New Item"
+    },
+    {
+      "key": "ui.arrow_modifier.select_target_title",
+      "text": "Choose an Arrow to Enchant"
+    },
+    {
+      "key": "ui.magic_modifier.empty_slot",
+      "text": "This item slot is empty!"
+    },
+    {
+      "key": "ui.magic_modifier.not_applicable",
+      "text": "This upgrade cannot be applied to that item!"
+    },
+    {
+      "key": "ui.ascension.locked_hint",
+      "text": "Ascension unlocks after your first non-tutorial victory."
+    },
+    {
+      "key": "ui.ascension.selector_status",
+      "text": "Unlocked to {0} / Best clear {1}"
+    },
+    {
+      "key": "ui.ascension.selector_level",
+      "text": "Ascension {0}"
+    },
+    {
+      "key": "ui.ascension.detail_title",
+      "text": "Ascension Details"
+    },
+    {
+      "key": "ui.ascension.no_effects",
+      "text": "No extra ascension modifiers are active."
+    },
+    {
+      "key": "ui.ascension.active_effects",
+      "text": "Ascension modifiers:"
+    },
+    {
+      "key": "ui.ascension.label_separator",
+      "text": ": "
+    },
+    {
+      "key": "ui.ascension.detail_button",
+      "text": "Details"
+    },
+    {
+      "key": "ui.run_history.detail.ascension",
+      "text": "Ascension: {0}"
+    },
+    {
+      "key": "ascension.0.name",
+      "text": "A0 Standard"
+    },
+    {
+      "key": "ascension.0.desc",
+      "text": "Start with standard difficulty and no ascension modifiers."
+    },
+    {
+      "key": "ascension.1.name",
+      "text": "A1 Spreading Fog"
+    },
+    {
+      "key": "ascension.1.desc",
+      "text": "More unknown locations appear on the map."
+    },
+    {
+      "key": "ascension.2.name",
+      "text": "A2 More Battles"
+    },
+    {
+      "key": "ascension.2.desc",
+      "text": "More normal battles appear on the map."
+    },
+    {
+      "key": "ascension.3.name",
+      "text": "A3 Lower Vitality"
+    },
+    {
+      "key": "ascension.3.desc",
+      "text": "The player starts with lower maximum HP."
+    },
+    {
+      "key": "ascension.4.name",
+      "text": "A4 Heavy Arrows"
+    },
+    {
+      "key": "ascension.4.desc",
+      "text": "The starting deck gains extra basic arrows."
+    },
+    {
+      "key": "ascension.5.name",
+      "text": "A5 Tight Gold"
+    },
+    {
+      "key": "ascension.5.desc",
+      "text": "Gold gains are reduced."
+    },
+    {
+      "key": "ascension.6.name",
+      "text": "A6 Fewer Choices"
+    },
+    {
+      "key": "ascension.6.desc",
+      "text": "Item rewards offer fewer choices."
+    },
+    {
+      "key": "ascension.7.name",
+      "text": "A7 Fewer Item Slots I"
+    },
+    {
+      "key": "ascension.7.desc",
+      "text": "Initial available item slots are reduced."
+    },
+    {
+      "key": "ascension.8.name",
+      "text": "A8 Blocked Map I"
+    },
+    {
+      "key": "ascension.8.desc",
+      "text": "More blocked cells appear on the map."
+    },
+    {
+      "key": "ascension.9.name",
+      "text": "A9 Placeholder Burden"
+    },
+    {
+      "key": "ascension.9.desc",
+      "text": "The starting deck gains an extra placeholder burden."
+    },
+    {
+      "key": "ascension.10.name",
+      "text": "A10 Price Hike"
+    },
+    {
+      "key": "ascension.10.desc",
+      "text": "Shop prices increase."
+    },
+    {
+      "key": "ascension.11.name",
+      "text": "A11 Rarer Rares"
+    },
+    {
+      "key": "ascension.11.desc",
+      "text": "Rare and better items appear less often."
+    },
+    {
+      "key": "ascension.12.name",
+      "text": "A12 Smaller Map"
+    },
+    {
+      "key": "ascension.12.desc",
+      "text": "Chapter map size is reduced."
+    },
+    {
+      "key": "ascension.13.name",
+      "text": "A13 Fewer Item Slots II"
+    },
+    {
+      "key": "ascension.13.desc",
+      "text": "Initial available item slots are reduced again."
+    },
+    {
+      "key": "ascension.14.name",
+      "text": "A14 Tougher Enemies"
+    },
+    {
+      "key": "ascension.14.desc",
+      "text": "Enemies have more HP."
+    },
+    {
+      "key": "ascension.15.name",
+      "text": "A15 Shorter Progress I"
+    },
+    {
+      "key": "ascension.15.desc",
+      "text": "The chapter has fewer progress steps."
+    },
+    {
+      "key": "ascension.16.name",
+      "text": "A16 Blocked Map II"
+    },
+    {
+      "key": "ascension.16.desc",
+      "text": "Even more blocked cells appear on the map."
+    },
+    {
+      "key": "ascension.17.name",
+      "text": "A17 Stronger Attacks"
+    },
+    {
+      "key": "ascension.17.desc",
+      "text": "Enemy attack intent values are increased."
+    },
+    {
+      "key": "ascension.18.name",
+      "text": "A18 Fewer Rests"
+    },
+    {
+      "key": "ascension.18.desc",
+      "text": "Rest nodes appear less often."
+    },
+    {
+      "key": "ascension.19.name",
+      "text": "A19 Shorter Progress II"
+    },
+    {
+      "key": "ascension.19.desc",
+      "text": "The chapter has even fewer progress steps."
+    },
+    {
+      "key": "ascension.20.name",
+      "text": "A20 Stronger Bosses"
+    },
+    {
+      "key": "ascension.20.desc",
+      "text": "Boss fights become more dangerous."
+    },
+    {
+      "key": "difficulty.map_more_unknown_nodes.name",
+      "text": "More Unknown Nodes"
+    },
+    {
+      "key": "difficulty.map_more_unknown_nodes.desc",
+      "text": "More non-elite nodes appear unknown on the map."
+    },
+    {
+      "key": "difficulty.map_more_enemy_nodes.name",
+      "text": "More Battle Nodes"
+    },
+    {
+      "key": "difficulty.map_more_enemy_nodes.desc",
+      "text": "More normal battle nodes appear on the map."
+    },
+    {
+      "key": "difficulty.player_max_health_minus_5.name",
+      "text": "Max HP -5"
+    },
+    {
+      "key": "difficulty.player_max_health_minus_5.desc",
+      "text": "Player maximum HP is reduced by 5."
+    },
+    {
+      "key": "difficulty.starting_deck_add_basic_directions.name",
+      "text": "Extra Basic Starting Arrows"
+    },
+    {
+      "key": "difficulty.starting_deck_add_basic_directions.desc",
+      "text": "The starting deck gains extra basic arrows."
+    },
+    {
+      "key": "difficulty.gold_gain_80.name",
+      "text": "Gold Gain -20%"
+    },
+    {
+      "key": "difficulty.gold_gain_80.desc",
+      "text": "All gold gains are reduced to 80%."
+    },
+    {
+      "key": "difficulty.reward_magic_choices_minus_1.name",
+      "text": "Item Reward Choices -1"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_minus_1.desc",
+      "text": "Item rewards offer one fewer choice."
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_2.name",
+      "text": "Item Slots -2"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_2.desc",
+      "text": "Initial available item slots are reduced by 2."
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_2.name",
+      "text": "Blocked Map Cells +2"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_2.desc",
+      "text": "Two extra map cells are blocked."
+    },
+    {
+      "key": "difficulty.starting_deck_add_placeholder.name",
+      "text": "Extra Placeholder Starting Arrow"
+    },
+    {
+      "key": "difficulty.starting_deck_add_placeholder.desc",
+      "text": "The starting deck gains an extra placeholder burden."
+    },
+    {
+      "key": "difficulty.shop_price_120.name",
+      "text": "Shop Prices +20%"
+    },
+    {
+      "key": "difficulty.shop_price_120.desc",
+      "text": "Shop prices are increased to 120%."
+    },
+    {
+      "key": "difficulty.rare_magic_less_common.name",
+      "text": "Rare Items Less Common"
+    },
+    {
+      "key": "difficulty.rare_magic_less_common.desc",
+      "text": "Rare and better item weights are reduced."
+    },
+    {
+      "key": "difficulty.map_smaller.name",
+      "text": "Map Width/Height -1"
+    },
+    {
+      "key": "difficulty.map_smaller.desc",
+      "text": "Chapter map width and height are each reduced by 1."
+    },
+    {
+      "key": "difficulty.enemy_health_20.name",
+      "text": "Enemy HP +20%"
+    },
+    {
+      "key": "difficulty.enemy_health_20.desc",
+      "text": "Enemy maximum HP is increased by 20%."
+    },
+    {
+      "key": "difficulty.level_cap_minus_4.name",
+      "text": "Progress Limit -4"
+    },
+    {
+      "key": "difficulty.level_cap_minus_4.desc",
+      "text": "The chapter has 4 fewer progress steps."
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_1.name",
+      "text": "Blocked Map Cells +1"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_1.desc",
+      "text": "One extra map cell is blocked."
+    },
+    {
+      "key": "difficulty.enemy_attack_intents_20.name",
+      "text": "Enemy Attack Intents +20%"
+    },
+    {
+      "key": "difficulty.enemy_attack_intents_20.desc",
+      "text": "Enemy attack intent values are increased by 20%."
+    },
+    {
+      "key": "difficulty.rest_nodes_less_common.name",
+      "text": "Fewer Rest Nodes"
+    },
+    {
+      "key": "difficulty.rest_nodes_less_common.desc",
+      "text": "Rest nodes appear less often."
+    },
+    {
+      "key": "difficulty.level_cap_minus_2.name",
+      "text": "Progress Limit -2"
+    },
+    {
+      "key": "difficulty.level_cap_minus_2.desc",
+      "text": "The chapter has 2 fewer progress steps."
+    },
+    {
+      "key": "difficulty.boss_harder.name",
+      "text": "Stronger Bosses"
+    },
+    {
+      "key": "difficulty.boss_harder.desc",
+      "text": "Boss HP is increased by 30%, and attack intent values by 20%."
     }
   ]
 }

@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "rarity": 0,
+      "id": "common",
+      "weight": 70,
+      "borderColor": "#BFC7C9FF"
+    },
+    {
+      "rarity": 1,
+      "id": "rare",
+      "weight": 22,
+      "borderColor": "#4DA3FFFF"
+    },
+    {
+      "rarity": 2,
+      "id": "epic",
+      "weight": 7,
+      "borderColor": "#B45CFFFF"
+    },
+    {
+      "rarity": 3,
+      "id": "legendary",
+      "weight": 1,
+      "borderColor": "#FFB23FFF"
+    }
+  ]
+}

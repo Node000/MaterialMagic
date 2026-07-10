@@ -1,0 +1,180 @@
+{
+  "items": [
+    {
+      "key": "tutorial.reward.undo_hint",
+      "text": "If you replaced the wrong item, press R to undo claiming the reward."
+    },
+    {
+      "key": "tutorial.shop.undo_hint",
+      "text": "If you bought the wrong thing, press R to undo this purchase. You cannot undo after leaving the shop."
+    },
+    {
+      "key": "tutorial.battle.info.title",
+      "text": "Player Info"
+    },
+    {
+      "key": "tutorial.battle.info.body",
+      "text": "The left side shows your HP, buffs, and Gold.\n\nYour hand and play area are shown at the bottom.\n\nThe right side contains your redraw and play buttons, plus the card piles."
+    },
+    {
+      "key": "tutorial.battle.magic_book.title",
+      "text": "Player Item Slots"
+    },
+    {
+      "key": "tutorial.battle.magic_book.body",
+      "text": "These are your item slots. When the arrows in the play area match an item recipe, that item triggers in order. Longer recipes are checked first."
+    },
+    {
+      "key": "tutorial.battle.enemy_info.title",
+      "text": "Enemy Info"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.body",
+      "text": "This is the enemy. The icon and number above it show its intent for the next turn.\n\nIf there are multiple enemies, click one to focus it. Items target the leftmost enemy by default."
+    },
+    {
+      "key": "tutorial.battle.arrow_base.title",
+      "text": "Basic Arrows"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.body",
+      "text": "Basic arrow directions are Up, Down, Left, and Right. First, place arrows into the play area in order."
+    },
+    {
+      "key": "tutorial.battle.magic_combo.title",
+      "text": "Trigger Items"
+    },
+    {
+      "key": "tutorial.battle.magic_combo.body",
+      "text": "Arrows in the play area are combined from left to right. When a combination matches a recipe on the right, the matching item triggers automatically."
+    },
+    {
+      "key": "tutorial.battle.play.title",
+      "text": "Play Arrows"
+    },
+    {
+      "key": "tutorial.battle.play.body",
+      "text": "Click an arrow in your hand to select it, then click the upper area to play it. You can also drag arrows to play and reorder them.\n\nClick an arrow in the play area to return it to your hand.\n\nTry playing all arrows, then press the Act button at the lower right to confirm."
+    },
+    {
+      "key": "tutorial.battle.play_confirm.title",
+      "text": "Play Arrows"
+    },
+    {
+      "key": "tutorial.battle.play_confirm.body",
+      "text": "Good. Now click the upper play area, or press right mouse button, to play all selected arrows."
+    },
+    {
+      "key": "tutorial.battle.cancel.title",
+      "text": "Cancel Play"
+    },
+    {
+      "key": "tutorial.battle.cancel.body",
+      "text": "If an arrow is placed incorrectly, click it in the play area to return it to your hand. Cancel one played arrow first, then play the two Up arrows again."
+    },
+    {
+      "key": "tutorial.battle.end_turn.title",
+      "text": "End Turn"
+    },
+    {
+      "key": "tutorial.battle.end_turn.body",
+      "text": "After confirming arrow order, click Act to end the turn."
+    },
+    {
+      "key": "tutorial.battle.refresh.title",
+      "text": "Redraw"
+    },
+    {
+      "key": "tutorial.battle.refresh.body",
+      "text": "When you draw arrows you do not want, select them and press the redraw button on the right to draw again.\n\nYour redraw count resets to 1 at the start of your turn. Some effects can increase it temporarily or permanently.\n\nNow, try redrawing your whole hand."
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.title",
+      "text": "Redraw"
+    },
+    {
+      "key": "tutorial.battle.refresh_confirm.body",
+      "text": "All three Right arrows are selected. Click the redraw button now; afterward you will get Up, Up, and Down."
+    },
+    {
+      "key": "tutorial.reward.claim.title",
+      "text": "Claim Rewards"
+    },
+    {
+      "key": "tutorial.reward.claim.body",
+      "text": "After winning a battle, the reward panel appears. Click to claim a reward."
+    },
+    {
+      "key": "tutorial.reward.equip_magic.title",
+      "text": "Replace Item"
+    },
+    {
+      "key": "tutorial.reward.equip_magic.body",
+      "text": "After choosing an item reward, click a slot on the right item bar to replace it."
+    },
+    {
+      "key": "tutorial.reward.undo_hint.title",
+      "text": "Undo Reward"
+    },
+    {
+      "key": "tutorial.reward.undo_hint.body",
+      "text": "If you make a mistaken choice, press R to undo this reward claim."
+    },
+    {
+      "key": "tutorial.shop.buy_hint.title",
+      "text": "Shop Purchases"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.body",
+      "text": "In shops, you can buy items and arrows, or remove extra arrows.\n\nAfter buying an item, click the item slot on the right to confirm the purchase."
+    },
+    {
+      "key": "tutorial.shop.undo_hint.title",
+      "text": "Undo Purchase"
+    },
+    {
+      "key": "tutorial.shop.undo_hint.body",
+      "text": "If you bought the wrong item, press R to undo this purchase.\n\nNote: arrow purchases cannot be undone."
+    },
+    {
+      "key": "tutorial.event.options.title",
+      "text": "Event Options"
+    },
+    {
+      "key": "tutorial.event.options.body",
+      "text": "Each event has multiple options. Play the matching arrow combination to choose an option.\n\nMost option requirements are random, so removing cards will not necessarily make an option impossible."
+    },
+    {
+      "key": "tutorial.event.refresh.title",
+      "text": "Event Redraw"
+    },
+    {
+      "key": "tutorial.event.refresh.body",
+      "text": "Each event has its own draw count.\n\nYou can still redraw any number of selected arrows once during an event."
+    },
+    {
+      "key": "tutorial.map.panel.title",
+      "text": "Map Panel"
+    },
+    {
+      "key": "tutorial.map.panel.body",
+      "text": "The final goal is to defeat the Boss. Use the map to plan your route.\n\nAt first, only the Boss tile is revealed. You can only reveal information for adjacent tiles."
+    },
+    {
+      "key": "tutorial.map.movement.title",
+      "text": "Map Movement"
+    },
+    {
+      "key": "tutorial.map.movement.body",
+      "text": "Play Up, Down, Left, and Right arrows to move to adjacent map tiles.\n\nIf the tile you reach is not empty, it triggers that content."
+    },
+    {
+      "key": "tutorial.map.step_limit.title",
+      "text": "Step Limit"
+    },
+    {
+      "key": "tutorial.map.step_limit.body",
+      "text": "When your cleared level count reaches the limit, all tiles become Boss tiles and force a Boss battle. Prepare before that happens."
+    }
+  ]
+}

@@ -22,9 +22,17 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
         CacheReferences();
 
         boundData = data;
+        RuntimeAnimatorController controller = EnemyVisualLoader.LoadAnimatorController(data);
+        if (controller == null && animator != null)
+        {
+            animator.runtimeAnimatorController = null;
+            animator.enabled = false;
+        }
+
         Sprite sprite = EnemyVisualLoader.LoadStaticSpriteOrSample(data);
         ApplySprite(sprite);
-        ApplyAnimator(data);
+        if (controller != null)
+            ApplyAnimator(controller);
     }
 
     public void RefreshLayoutFromAnimatedSprite()
@@ -45,18 +53,10 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
             animator = GetComponent<Animator>();
     }
 
-    private void ApplyAnimator(EnemyData data)
+    private void ApplyAnimator(RuntimeAnimatorController controller)
     {
-        RuntimeAnimatorController controller = EnemyVisualLoader.LoadAnimatorController(data);
         if (controller == null)
-        {
-            if (animator != null)
-            {
-                animator.runtimeAnimatorController = null;
-                animator.enabled = false;
-            }
             return;
-        }
 
         if (animator == null)
             animator = gameObject.AddComponent<Animator>();

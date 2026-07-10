@@ -125,6 +125,7 @@ public static class GameDataReader
 public static class GameDataDatabase
 {
     private static Dictionary<int, MagicData> magicData;
+    private static Dictionary<MagicRarity, MagicRarityData> magicRarityData;
     private static Dictionary<int, EnemyData> enemyData;
     private static Dictionary<int, EventData> eventData;
     private static Dictionary<int, LevelData> levelData;
@@ -141,6 +142,7 @@ public static class GameDataDatabase
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
 
     public static IReadOnlyDictionary<int, MagicData> MagicData => magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData");
+    public static IReadOnlyDictionary<MagicRarity, MagicRarityData> MagicRarityData => magicRarityData ??= LoadMagicRarityData();
     public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= GameDataReader.LoadNumericDictionary<EnemyData>("EnemyData", "Enemies");
     public static IReadOnlyDictionary<int, EventData> EventData => eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData");
     public static IReadOnlyDictionary<int, LevelData> LevelData => levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData");
@@ -156,9 +158,27 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
     public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
 
+    private static Dictionary<MagicRarity, MagicRarityData> LoadMagicRarityData()
+    {
+        DataTable<MagicRarityData> table = GameDataReader.LoadTable<MagicRarityData>("MagicRarityData");
+        Dictionary<MagicRarity, MagicRarityData> dictionary = new Dictionary<MagicRarity, MagicRarityData>(table.items.Count);
+        for (int i = 0; i < table.items.Count; i++)
+        {
+            MagicRarityData item = table.items[i];
+            if (item != null)
+                dictionary[item.rarity] = item;
+        }
+        return dictionary;
+    }
+
     public static bool TryGetMagicData(int id, out MagicData data)
     {
         return MagicData.TryGetValue(id, out data);
+    }
+
+    public static bool TryGetMagicRarityData(MagicRarity rarity, out MagicRarityData data)
+    {
+        return MagicRarityData.TryGetValue(rarity, out data);
     }
 
     public static bool TryGetEnemyData(int id, out EnemyData data)
@@ -247,6 +267,7 @@ public static class GameDataDatabase
     public static void ClearCache()
     {
         magicData = null;
+        magicRarityData = null;
         enemyData = null;
         eventData = null;
         levelData = null;

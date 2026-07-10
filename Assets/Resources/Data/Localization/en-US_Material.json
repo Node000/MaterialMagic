@@ -30,7 +30,7 @@
     },
     {
       "key": "material.water.single_play",
-      "text": "Down: Randomly apply 1 <buff_weak> or <buff_slow>"
+      "text": "Down: Apply 1 <buff_weak> and 1 <buff_vulnerable>"
     },
     {
       "key": "material.wind.single_play",

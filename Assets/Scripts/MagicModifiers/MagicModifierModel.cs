@@ -74,8 +74,6 @@ public class MagicModifierModel
 
         switch (Data.targetRule)
         {
-            case MagicModifierTargetRule.Element:
-                return magic.Data.element == Data.targetElement;
             case MagicModifierTargetRule.EffectType:
                 return magic.EffectType == Data.targetEffectType;
             case MagicModifierTargetRule.Tag:

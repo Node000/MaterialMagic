@@ -48,7 +48,7 @@
       ]
     }
   ],
-  "iconName": "蝙蝠2",
-  "spriteAnimationPath": "",
+  "iconName": "蝙蝠",
+  "spriteAnimationPath": "蝙蝠",
   "animationFrameRate": 8.0
 }

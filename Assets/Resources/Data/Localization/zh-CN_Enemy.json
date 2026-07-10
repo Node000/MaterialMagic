@@ -98,11 +98,11 @@
     },
     {
       "key": "enemy.tutorial_dummy_l.name",
-      "text": "教学人偶L"
+      "text": "教学假人"
     },
     {
       "key": "enemy.tutorial_dummy_xxl.name",
-      "text": "教学人偶XXL"
+      "text": "高级假人"
     },
     {
       "key": "enemy.intent.title.attack",

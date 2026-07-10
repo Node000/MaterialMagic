@@ -3,7 +3,7 @@
     {
       "numericId": 1,
       "id": "default",
-      "shopSpellPrice": 4,
+      "shopSpellPrice": 5,
       "shopMaterialPrice": 6,
       "shopRemoveMaterialPrice": 7,
       "shopProductPoolId": 1,

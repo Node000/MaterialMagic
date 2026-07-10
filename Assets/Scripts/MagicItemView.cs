@@ -110,11 +110,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (iconImage != null)
         {
             iconImage.sprite = LoadMagicIcon(magic.Data.iconName);
-            iconImage.color = iconImage.sprite != null ? Color.white : GetMagicElementColor(magic.Data.element);
+            iconImage.color = Color.white;
         }
-
-        if (backgroundImage != null)
-            backgroundImage.color = GetMagicBackgroundColor(magic.Data.element);
 
         if (magicNameText != null)
             magicNameText.text = magic.Name;
@@ -421,20 +418,6 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         return Color.white;
     }
 
-    private Color GetMagicElementColor(MaterialEnum element)
-    {
-        return element != MaterialEnum.None ? GetMaterialColor(element) : Color.gray;
-    }
-
-    public Color GetMaterialColor(MaterialEnum material)
-    {
-        return MaterialVisualPalette.Active.GetMaterialColor(material);
-    }
-
-    private Color GetMagicBackgroundColor(MaterialEnum element)
-    {
-        return MaterialVisualPalette.Active.GetMagicBackgroundColor(element);
-    }
 
     private static Sprite LoadMagicIcon(string iconName)
     {

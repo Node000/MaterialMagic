@@ -98,11 +98,11 @@
     },
     {
       "key": "enemy.tutorial_dummy_l.name",
-      "text": "Tutorial Dummy L"
+      "text": "Training Dummy"
     },
     {
       "key": "enemy.tutorial_dummy_xxl.name",
-      "text": "Tutorial Dummy XXL"
+      "text": "Advanced Training Dummy"
     },
     {
       "key": "enemy.intent.title.attack",

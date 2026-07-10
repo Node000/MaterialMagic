@@ -443,8 +443,6 @@ public class HandSystemUI : MonoBehaviour
 
 	private readonly List<RunMapNodeModel> mapNodes = new List<RunMapNodeModel>();
 
-	private readonly List<Vector2Int> designedChapterBlockedCells = new List<Vector2Int>();
-
 	private readonly List<CombatantModel> magicEnemyTargets = new List<CombatantModel>();
 
 	private EnemyModel enemyModel;
@@ -705,7 +703,7 @@ public class HandSystemUI : MonoBehaviour
         debugMagicDropdown.ClearOptions();
         List<MagicData> magics = new List<MagicData>(GameDataDatabase.MagicData.Values);
         magics.Sort((left, right) => left.numericId.CompareTo(right.numericId));
-        List<string> options = new List<string>(magics.Count + 1) { "选择替换道具" };
+        List<string> options = new List<string>(magics.Count + 1) { LocalizationSystem.GetText("ui.debug_magic_dropdown.select_replacement", "选择替换道具") };
         debugMagicDropdownIds.Add(0);
         for (int i = 0; i < magics.Count; i++)
         {
@@ -2263,14 +2261,12 @@ public class HandSystemUI : MonoBehaviour
                 positions.Add(new Vector2Int(x, y));
             }
         }
-        SelectDesignedChapterBlockedCells(positions);
-
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Shop, 1);
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Battle, 3);
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Elite, 2);
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.RemoveMaterial, 1);
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.AddMaterial, 1);
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Rest, 2);
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Shop, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Shop, 1));
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Battle, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Battle, 3));
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Elite, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Elite, 2));
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.RemoveMaterial, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.RemoveMaterial, 1));
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.AddMaterial, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.AddMaterial, 1));
+        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Rest, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Rest, 2));
 
         while (positions.Count > 0)
         {
@@ -2278,35 +2274,6 @@ public class HandSystemUI : MonoBehaviour
             List<LevelData> candidateLevels = GetMapGridCandidateLevels(chapter, position.y * width + position.x + 1, bossLevel);
             SetMapGridLevel(levels, width, position.x, position.y, ChooseRandomMapLevel(chapter, candidateLevels));
         }
-    }
-
-    private void SelectDesignedChapterBlockedCells(List<Vector2Int> positions)
-    {
-        designedChapterBlockedCells.Clear();
-        List<Vector2Int> candidates = new List<Vector2Int>(9);
-        for (int y = 3; y <= 5; y++)
-        {
-            for (int x = 1; x <= 3; x++)
-                candidates.Add(new Vector2Int(x, y));
-        }
-
-        for (int i = 0; i < 3 && candidates.Count > 0; i++)
-        {
-            Vector2Int position = TakeRandomMapPosition(candidates);
-            designedChapterBlockedCells.Add(position);
-            positions.Remove(position);
-        }
-    }
-
-    private bool IsDesignedChapterBlockedCell(int x, int y)
-    {
-        for (int i = 0; i < designedChapterBlockedCells.Count; i++)
-        {
-            Vector2Int cell = designedChapterBlockedCells[i];
-            if (cell.x == x && cell.y == y)
-                return true;
-        }
-        return false;
     }
 
     private void AssignDesignedMapLevels(ChapterData chapter, List<LevelData> levels, int width, List<Vector2Int> positions, LevelType levelType, int count)
@@ -2354,11 +2321,8 @@ public class HandSystemUI : MonoBehaviour
             if (cell == null)
                 continue;
 
-            bool blocked = IsDesignedChapterBlockedCell(cell.x, cell.y);
-            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y) && !blocked;
-            cell.isBoss = !blocked && cell.x == 2 && cell.y == 7;
-            if (blocked)
-                cell.level = null;
+            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y);
+            cell.isBoss = cell.x == 2 && cell.y == 7;
             cell.isRevealed = cell.isBoss;
         }
         runManager?.RevealCurrentMapNeighbors();
@@ -2468,18 +2432,25 @@ public class HandSystemUI : MonoBehaviour
 		if (node == null)
 			return;
 
-		float hiddenWeight = Mathf.Clamp01(chapter != null ? chapter.hiddenLevelWeight : 0f);
-		if (hiddenWeight <= 0f)
-			return;
+			float hiddenWeight = Mathf.Clamp01(chapter != null ? chapter.hiddenLevelWeight : 0f);
+			if (hiddenWeight <= 0f)
+				return;
 
-		node.leftHidden = RollHiddenLevel(hiddenWeight);
-		node.rightHidden = node.fixedSingleChoice || node.rightLevel == node.leftLevel ? node.leftHidden : RollHiddenLevel(hiddenWeight);
-	}
+			node.leftHidden = CanHideMapNodeLevel(node.leftLevel) && RollHiddenLevel(hiddenWeight);
+			node.rightHidden = node.fixedSingleChoice || node.rightLevel == node.leftLevel ? node.leftHidden : CanHideMapNodeLevel(node.rightLevel) && RollHiddenLevel(hiddenWeight);
+		}
 
-	private bool RollHiddenLevel(float hiddenWeight)
-	{
-		return NextRunRandomInt(0, 10000) < Mathf.RoundToInt(hiddenWeight * 10000f);
-	}
+		private bool RollHiddenLevel(float hiddenWeight)
+		{
+			return NextRunRandomInt(0, 10000) < Mathf.RoundToInt(hiddenWeight * 10000f);
+		}
+
+        private static bool CanHideMapNodeLevel(LevelData level)
+        {
+            return level != null && level.levelType != LevelType.Elite;
+        }
+
+
 
 	private LevelData ChooseRandomMapLevel(ChapterData chapter, List<LevelData> levels)
 	{
@@ -2591,10 +2562,11 @@ public class HandSystemUI : MonoBehaviour
                 weight = chapter != null ? chapter.rewardMapLevelWeight : 2;
                 break;
         }
-		return Mathf.Max(0, weight);
-	}
+			return DifficultyUpgradeSystem.ModifyMapLevelWeight(level.levelType, Mathf.Max(0, weight));
+		}
 
-	private LevelData GetFixedLevelForProgress(ChapterData chapter, int progress)
+		private LevelData GetFixedLevelForProgress(ChapterData chapter, int progress)
+
 	{
 		if (chapter == null || chapter.fixed_level == null)
 			return null;
@@ -2636,11 +2608,13 @@ public class HandSystemUI : MonoBehaviour
 		return null;
 	}
 
-	private int GetActiveChapterLength()
-	{
-		ChapterData chapter = GetActiveChapter();
-		return chapter != null && chapter.levelLength > 0 ? chapter.levelLength : RunNodeCount;
-	}
+    private int GetActiveChapterLength()
+    {
+        ChapterData chapter = GetActiveChapter();
+        int length = chapter != null && chapter.levelLength > 0 ? chapter.levelLength : RunNodeCount;
+        return DifficultyUpgradeSystem.ModifyChapterLength(length);
+    }
+
 
 	private List<LevelData> GetLevelsForProgress(ChapterData chapter, int progress)
 	{
@@ -4447,7 +4421,7 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			playerState.IncreaseMaxHealthOnly(amount);
 			PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
-			ShowPlayerFloatingText("+" + amount + "上限", FloatingTextType.Heal);
+            ShowPlayerFloatingText(string.Format(LocalizationSystem.GetText("ui.battle.floating.max_health_up", "+{0}上限"), amount), FloatingTextType.Heal);
 			RefreshStaticUI();
 			SaveRunProgress();
 		}
@@ -4931,9 +4905,14 @@ public bool IsCardDragActive => cardDragActive;
 
 			step.SourceCard.TriggerOnArrowBaseEffectResolve(new ArrowReadContext(playerState, battleManager));
 
-		for (int i = 0; i < step.BaseEffectDirections.Count; i++)
-			ResolveMaterialBaseEffect(step.BaseEffectDirections[i], result);
-		return result;
+			int repeatCount = 1 + playerState.GetBuffStack(BuffEnum.MaterialBaseEffectRepeat);
+			for (int repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++)
+			{
+				for (int i = 0; i < step.BaseEffectDirections.Count; i++)
+					ResolveMaterialBaseEffect(step.BaseEffectDirections[i], result);
+			}
+			return result;
+
 	}
 
 	private void ResolveMaterialBaseEffect(MaterialEnum material, MagicCastResult result)
@@ -4944,7 +4923,7 @@ public bool IsCardDragActive => cardDragActive;
 				ResolveMaterialDamage(3, result);
 				break;
 			case MaterialEnum.Water:
-				ResolveMaterialEnemyBuff(NextRunRandomInt(0, 2) == 0 ? BuffEnum.Weak : BuffEnum.Slow, 1, result);
+				ResolveMaterialWaterDebuffs(result);
 				break;
 			case MaterialEnum.Wind:
 				playerState.AddBuff(BuffEnum.ExtraDraw, 1);
@@ -4980,21 +4959,24 @@ public bool IsCardDragActive => cardDragActive;
 		battleManager.EndCastTarget();
 	}
 
-	private void ResolveMaterialEnemyBuff(BuffEnum buffType, int stack, MagicCastResult result)
+	private void ResolveMaterialWaterDebuffs(MagicCastResult result)
 	{
-		if (battleManager == null || buffType == BuffEnum.None || stack <= 0)
+		if (battleManager == null)
 			return;
 
 		EnemyModel target = battleManager.BeginCastTarget();
 		if (target == null)
 			return;
 
-        target.AddBuff(buffType, stack, playerState != null ? new CombatantModel(playerState) : null);
-
+		CombatantModel source = playerState != null ? new CombatantModel(playerState) : null;
+		target.AddBuff(BuffEnum.Weak, 1, source);
+		target.AddBuff(BuffEnum.Vulnerable, 1, source);
 		result.enemyBuffApplied = true;
-		GameLog.Data($"Material Water add buff target={target.Id} buff={buffType} stack={stack}");
+		GameLog.Data($"Material Water add buff target={target.Id} weak=1 vulnerable=1");
 		battleManager.EndCastTarget();
 	}
+
+
 
 	private void CollectCastableMagicsByRecipeLength(IReadOnlyList<ArrowReadToken> tokens, int startIndex)
 	{
@@ -5593,8 +5575,9 @@ public bool IsCardDragActive => cardDragActive;
 
 	        {
 	            MaterialModel card = selectedCards[i];
-	            if (card != null && playerState.Hand.Contains(card) && !playerState.IsMaterialDisabled(card) && card.IsArrowReadable())
-	                return true;
+                if (card != null && playerState.Hand.Contains(card) && !playerState.IsMaterialDisabled(card))
+                    return true;
+
 	        }
 	        return false;
 	    }
@@ -7019,18 +7002,17 @@ public bool IsCardDragActive => cardDragActive;
 				}
 
 		}
-		List<MagicData> list2 = new List<MagicData>();
-		int num = 0;
-		while (list2.Count < choiceCount && list.Count > 0 && num < 30)
-		{
-			num++;
-			MagicData item = list[NextRunRandomInt(0, list.Count)];
-			if (!list2.Contains(item))
+			List<MagicData> list2 = new List<MagicData>();
+			while (list2.Count < choiceCount && list.Count > 0)
 			{
+				MagicData item = MagicRaritySystem.SelectWeightedMagic(list, NextRunRandomInt);
+				if (item == null)
+					break;
+
+				list.Remove(item);
 				list2.Add(item);
 			}
-		}
-		return list2;
+			return list2;
 	}
 
 	private List<MagicData> GetTutorialRewardMagicChoices(int choiceCount)
@@ -7280,15 +7262,15 @@ public bool IsCardDragActive => cardDragActive;
 
         RectTransform window = CreateRewardMagicConfirmWindow(rewardMagicConfirmPanel);
         RectTransform content = GetPopupContent(window);
-        CreateRewardMagicConfirmText(content, "Title", "确认替换道具？", 28, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(420f, 42f));
-        CreateRewardMagicConfirmText(content, "Hint", "确认后才会覆盖；取消后可以重新选择道具槽。", 16, FontStyles.Normal, new Vector2(0f, 76f), new Vector2(560f, 28f));
-        CreateRewardMagicConfirmText(content, "ExistingLabel", "已有道具", 18, FontStyles.Bold, new Vector2(-160f, 36f), new Vector2(160f, 28f));
-        CreateRewardMagicConfirmText(content, "NewLabel", "新道具", 18, FontStyles.Bold, new Vector2(160f, 36f), new Vector2(160f, 28f));
+        CreateRewardMagicConfirmText(content, "Title", LocalizationSystem.GetText("ui.reward_magic_confirm.title", "确认替换道具？"), 28, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(420f, 42f));
+        CreateRewardMagicConfirmText(content, "Hint", LocalizationSystem.GetText("ui.reward_magic_confirm.hint", "确认后才会覆盖；取消后可以重新选择道具槽。"), 16, FontStyles.Normal, new Vector2(0f, 76f), new Vector2(560f, 28f));
+        CreateRewardMagicConfirmText(content, "ExistingLabel", LocalizationSystem.GetText("ui.reward_magic_confirm.existing_label", "已有道具"), 18, FontStyles.Bold, new Vector2(-160f, 36f), new Vector2(160f, 28f));
+        CreateRewardMagicConfirmText(content, "NewLabel", LocalizationSystem.GetText("ui.reward_magic_confirm.new_label", "新道具"), 18, FontStyles.Bold, new Vector2(160f, 36f), new Vector2(160f, 28f));
         Vector2 cellSize = GetRewardMagicConfirmCellSize();
         rewardMagicConfirmExistingRoot = CreateRewardMagicConfirmRoot(content, "ExistingMagic", new Vector2(-160f, -34f), cellSize);
         rewardMagicConfirmNewRoot = CreateRewardMagicConfirmRoot(content, "NewMagic", new Vector2(160f, -34f), cellSize);
-        rewardMagicConfirmCancelButton = CreateRewardMagicConfirmButton(content, "CancelButton", "取消", new Vector2(-90f, -130f), new Vector2(130f, 44f), new Color(0.09f, 0.09f, 0.14f, 1f));
-        rewardMagicConfirmButton = CreateRewardMagicConfirmButton(content, "ConfirmButton", "确认", new Vector2(90f, -130f), new Vector2(130f, 44f), new Color(0.1f, 0.95f, 0.25f, 1f));
+        rewardMagicConfirmCancelButton = CreateRewardMagicConfirmButton(content, "CancelButton", LocalizationSystem.GetText("ui.common.cancel", "取消"), new Vector2(-90f, -130f), new Vector2(130f, 44f), new Color(0.09f, 0.09f, 0.14f, 1f));
+        rewardMagicConfirmButton = CreateRewardMagicConfirmButton(content, "ConfirmButton", LocalizationSystem.GetText("ui.common.confirm", "确认"), new Vector2(90f, -130f), new Vector2(130f, 44f), new Color(0.1f, 0.95f, 0.25f, 1f));
         rewardMagicConfirmPanel.gameObject.SetActive(false);
     }
 
@@ -7993,7 +7975,7 @@ public bool IsCardDragActive => cardDragActive;
             MaterialModel target = selectedMaterials != null && selectedMaterials.Count > 0 ? selectedMaterials[0] : null;
             if (TryApplyPendingMaterialModifier(target))
                 GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
-        }, () => ReturnToArrowModifierChoices(choices, completed), "选择要附魔的箭头");
+        }, () => ReturnToArrowModifierChoices(choices, completed), LocalizationSystem.GetText("ui.arrow_modifier.select_target_title", "选择要附魔的箭头"));
     }
 
     private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed)

@@ -34,6 +34,14 @@ public class BuffModel
     {
     }
 
+    public virtual void AfterMaterialConsumed(CombatantModel self, MaterialModel card)
+    {
+    }
+
+    public virtual void AfterEnemyBurningDamage(CombatantModel self, EnemyModel enemy, int damage)
+    {
+    }
+
     public virtual void OnInvoke(CombatantModel self, CombatantModel target)
     {
     }
@@ -207,6 +215,20 @@ public class BuffModel
                 return new DoubleEnemyBurningOnTurnEndBuffModel(stack);
             case BuffEnum.ExtraEnemyDebuff:
                 return new ExtraEnemyDebuffBuffModel(stack);
+            case BuffEnum.MaterialBaseEffectRepeat:
+                return new MaterialBaseEffectRepeatBuffModel(stack);
+            case BuffEnum.KeepShieldNextTurn:
+                return new KeepShieldNextTurnBuffModel(stack);
+            case BuffEnum.BurningDamageShieldNextTurn:
+                return new BurningDamageShieldNextTurnBuffModel(stack);
+            case BuffEnum.SpellPowerOnExtraDraw:
+                return new SpellPowerOnExtraDrawBuffModel(stack);
+            case BuffEnum.WeakOnEnemyAttack:
+                return new WeakOnEnemyAttackBuffModel(stack);
+            case BuffEnum.TemporaryWindOnMaterialConsumed:
+                return new TemporaryWindOnMaterialConsumedBuffModel(stack);
+            case BuffEnum.WeakNextTurn:
+                return new WeakNextTurnBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -252,6 +274,7 @@ public class BuffModel
             case BuffEnum.TutorialDeath:
             case BuffEnum.ShuffleHandOnInvokeChance:
             case BuffEnum.DoubleEnemyBurningOnTurnEnd:
+            case BuffEnum.WeakNextTurn:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
@@ -274,6 +297,12 @@ public class BuffModel
             case BuffEnum.KeepHand:
             case BuffEnum.RetainedNextDraw:
             case BuffEnum.ExtraEnemyDebuff:
+            case BuffEnum.MaterialBaseEffectRepeat:
+            case BuffEnum.KeepShieldNextTurn:
+            case BuffEnum.BurningDamageShieldNextTurn:
+            case BuffEnum.SpellPowerOnExtraDraw:
+            case BuffEnum.WeakOnEnemyAttack:
+            case BuffEnum.TemporaryWindOnMaterialConsumed:
             case BuffEnum.Claw:
             case BuffEnum.ShieldReflect:
             case BuffEnum.ExtraDraw:

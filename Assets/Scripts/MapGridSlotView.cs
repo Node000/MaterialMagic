@@ -42,7 +42,8 @@ public class MapGridSlotView : MonoBehaviour
 
         bool unavailable = model == null || !model.isAvailable;
         bool hiddenByFog = !unavailable && !model.isRevealed;
-        bool hasContent = !unavailable && !hiddenByFog && (model.isBoss || model.level != null);
+        bool hiddenContent = !unavailable && !hiddenByFog && model.isHidden && model.level != null && !model.isBoss && model.level.levelType != LevelType.Elite;
+        bool hasContent = !unavailable && !hiddenByFog && (hiddenContent || model.isBoss || model.level != null);
         if (background != null)
             background.color = unavailable ? unavailableColor : hiddenByFog ? fogColor : model.level == null && !model.isBoss ? emptyColor : normalColor;
 
@@ -51,6 +52,18 @@ public class MapGridSlotView : MonoBehaviour
             icon.gameObject.SetActive(false);
             if (label != null)
                 label.text = string.Empty;
+            return;
+        }
+
+        if (hiddenContent)
+        {
+            icon.gameObject.SetActive(false);
+            if (label != null)
+            {
+                label.text = "?";
+                label.color = labelColor;
+                label.raycastTarget = false;
+            }
             return;
         }
 

@@ -3,11 +3,11 @@
     {
       "numericId": 1,
       "id": "magic_ignite",
+      "rarity": 2,
       "script": "IgniteMagicModel",
       "nameKey": "magic.ignite.name",
       "descriptionKey": "magic.ignite.desc",
       "iconName": "5",
-      "element": 1,
       "tagIds": [
         "burning"
       ],
@@ -19,11 +19,11 @@
     {
       "numericId": 2,
       "id": "magic_fireball_art",
+      "rarity": 0,
       "script": "FireballArtMagicModel",
       "nameKey": "magic.fireball_art.name",
       "descriptionKey": "magic.fireball_art.desc",
       "iconName": "6",
-      "element": 1,
       "tagIds": [
         "burning"
       ],
@@ -36,11 +36,11 @@
     {
       "numericId": 3,
       "id": "magic_flame_barrier",
+      "rarity": 1,
       "script": "FlameBarrierMagicModel",
       "nameKey": "magic.flame_barrier.name",
       "descriptionKey": "magic.flame_barrier.desc",
       "iconName": "7",
-      "element": 1,
       "tagIds": [
         "kindling"
       ],
@@ -54,11 +54,11 @@
     {
       "numericId": 4,
       "id": "magic_magma",
+      "rarity": 0,
       "script": "MagmaMagicModel",
       "nameKey": "magic.magma.name",
       "descriptionKey": "magic.magma.desc",
       "iconName": "8",
-      "element": 1,
       "tagIds": [
         "burning",
         "temporary"
@@ -72,11 +72,11 @@
     {
       "numericId": 5,
       "id": "magic_molten",
+      "rarity": 1,
       "script": "MoltenMagicModel",
       "nameKey": "magic.molten.name",
       "descriptionKey": "magic.molten.desc",
       "iconName": "9",
-      "element": 1,
       "tagIds": [
         "burning"
       ],
@@ -90,11 +90,11 @@
     {
       "numericId": 6,
       "id": "magic_explosion",
+      "rarity": 0,
       "script": "ExplosionMagicModel",
       "nameKey": "magic.explosion.name",
       "descriptionKey": "magic.explosion.desc",
       "iconName": "10",
-      "element": 1,
       "tagIds": [
         "burning"
       ],
@@ -107,11 +107,11 @@
     {
       "numericId": 7,
       "id": "magic_burning_hand",
+      "rarity": 3,
       "script": "BurningHandMagicModel",
       "nameKey": "magic.burning_hand.name",
       "descriptionKey": "magic.burning_hand.desc",
       "iconName": "11",
-      "element": 1,
       "tagIds": [
         "burning"
       ],
@@ -126,11 +126,11 @@
     {
       "numericId": 8,
       "id": "magic_flame_demon",
+      "rarity": 0,
       "script": "FlameDemonMagicModel",
       "nameKey": "magic.flame_demon.name",
       "descriptionKey": "magic.flame_demon.desc",
       "iconName": "12",
-      "element": 1,
       "tagIds": [
         "temporary"
       ],
@@ -143,11 +143,11 @@
     {
       "numericId": 9,
       "id": "magic_airflow",
+      "rarity": 2,
       "script": "AirflowMagicModel",
       "nameKey": "magic.airflow.name",
       "descriptionKey": "magic.airflow.desc",
       "iconName": "13",
-      "element": 2,
       "tagIds": [],
       "recipe": [
         2
@@ -157,11 +157,11 @@
     {
       "numericId": 10,
       "id": "magic_wind_blade",
+      "rarity": 0,
       "script": "WindBladeMagicModel",
       "nameKey": "magic.wind_blade.name",
       "descriptionKey": "magic.wind_blade.desc",
       "iconName": "14",
-      "element": 2,
       "tagIds": [
         "spell_power"
       ],
@@ -174,11 +174,11 @@
     {
       "numericId": 11,
       "id": "magic_burning_wind",
+      "rarity": 2,
       "script": "BurningWindMagicModel",
       "nameKey": "magic.burning_wind.name",
       "descriptionKey": "magic.burning_wind.desc",
       "iconName": "15",
-      "element": 2,
       "tagIds": [
         "repeat_spell"
       ],
@@ -192,11 +192,11 @@
     {
       "numericId": 12,
       "id": "magic_lightning",
+      "rarity": 0,
       "script": "LightningMagicModel",
       "nameKey": "magic.lightning.name",
       "descriptionKey": "magic.lightning.desc",
       "iconName": "16",
-      "element": 2,
       "tagIds": [
         "arc"
       ],
@@ -209,11 +209,11 @@
     {
       "numericId": 13,
       "id": "magic_storm_hand",
+      "rarity": 3,
       "script": "StormHandMagicModel",
       "nameKey": "magic.storm_hand.name",
       "descriptionKey": "magic.storm_hand.desc",
       "iconName": "17",
-      "element": 2,
       "tagIds": [
         "arc",
         "spell_power"
@@ -229,28 +229,28 @@
     {
       "numericId": 14,
       "id": "magic_current_attachment",
+      "rarity": 0,
       "script": "CurrentAttachmentMagicModel",
       "nameKey": "magic.current_attachment.name",
       "descriptionKey": "magic.current_attachment.desc",
       "iconName": "18",
-      "element": 2,
       "tagIds": [
         "charge"
       ],
       "recipe": [
-        2,
-        3
+        3,
+        2
       ],
       "playPlayerCastAnimation": false
     },
     {
       "numericId": 15,
       "id": "magic_sandstorm",
+      "rarity": 0,
       "script": "SandstormMagicModel",
       "nameKey": "magic.sandstorm.name",
       "descriptionKey": "magic.sandstorm.desc",
       "iconName": "19",
-      "element": 2,
       "tagIds": [
         "draw_on_enemy_attack"
       ],
@@ -263,11 +263,11 @@
     {
       "numericId": 16,
       "id": "magic_gale",
+      "rarity": 1,
       "script": "GaleMagicModel",
       "nameKey": "magic.gale.name",
       "descriptionKey": "magic.gale.desc",
       "iconName": "20",
-      "element": 2,
       "tagIds": [
         "extra_draw",
         "retained_arrow"
@@ -282,11 +282,11 @@
     {
       "numericId": 17,
       "id": "magic_ice_pick",
+      "rarity": 0,
       "script": "IcePickMagicModel",
       "nameKey": "magic.ice_pick.name",
       "descriptionKey": "magic.ice_pick.desc",
       "iconName": "21",
-      "element": 3,
       "tagIds": [
         "vulnerable"
       ],
@@ -299,11 +299,11 @@
     {
       "numericId": 18,
       "id": "magic_swamp",
+      "rarity": 0,
       "script": "SwampMagicModel",
       "nameKey": "magic.swamp.name",
       "descriptionKey": "magic.swamp.desc",
       "iconName": "22",
-      "element": 3,
       "tagIds": [
         "debuff_power"
       ],
@@ -316,28 +316,28 @@
     {
       "numericId": 19,
       "id": "magic_poison_fog",
+      "rarity": 0,
       "script": "PoisonFogMagicModel",
       "nameKey": "magic.poison_fog.name",
       "descriptionKey": "magic.poison_fog.desc",
       "iconName": "23",
-      "element": 3,
       "tagIds": [
         "extra_draw"
       ],
       "recipe": [
-        3,
-        2
+        2,
+        3
       ],
       "playPlayerCastAnimation": true
     },
     {
       "numericId": 20,
       "id": "magic_boiling_rain",
+      "rarity": 0,
       "script": "BoilingRainMagicModel",
       "nameKey": "magic.boiling_rain.name",
       "descriptionKey": "magic.boiling_rain.desc",
       "iconName": "24",
-      "element": 3,
       "tagIds": [],
       "recipe": [
         3,
@@ -348,11 +348,11 @@
     {
       "numericId": 21,
       "id": "magic_blizzard",
+      "rarity": 1,
       "script": "BlizzardMagicModel",
       "nameKey": "magic.blizzard.name",
       "descriptionKey": "magic.blizzard.desc",
       "iconName": "25",
-      "element": 3,
       "tagIds": [
         "vulnerable",
         "slow",
@@ -368,11 +368,11 @@
     {
       "numericId": 22,
       "id": "magic_turbid_current",
+      "rarity": 1,
       "script": "TurbidCurrentMagicModel",
       "nameKey": "magic.turbid_current.name",
       "descriptionKey": "magic.turbid_current.desc",
       "iconName": "26",
-      "element": 3,
       "tagIds": [
         "vortex"
       ],
@@ -386,11 +386,11 @@
     {
       "numericId": 23,
       "id": "magic_tide_hand",
+      "rarity": 3,
       "script": "TideHandMagicModel",
       "nameKey": "magic.tide_hand.name",
       "descriptionKey": "magic.tide_hand.desc",
       "iconName": "27",
-      "element": 3,
       "tagIds": [],
       "recipe": [
         3,
@@ -403,14 +403,13 @@
     {
       "numericId": 24,
       "id": "magic_water_corrosion",
+      "rarity": 2,
       "script": "WaterCorrosionMagicModel",
       "nameKey": "magic.water_corrosion.name",
       "descriptionKey": "magic.water_corrosion.desc",
       "iconName": "28",
-      "element": 3,
       "tagIds": [
-        "vulnerable",
-        "weak"
+        "vulnerable"
       ],
       "recipe": [
         3
@@ -420,11 +419,11 @@
     {
       "numericId": 25,
       "id": "magic_stone_wall",
+      "rarity": 2,
       "script": "StoneWallMagicModel",
       "nameKey": "magic.stone_wall.name",
       "descriptionKey": "magic.stone_wall.desc",
       "iconName": "29",
-      "element": 4,
       "tagIds": [],
       "recipe": [
         4
@@ -434,11 +433,11 @@
     {
       "numericId": 26,
       "id": "magic_rockfall",
+      "rarity": 0,
       "script": "RockfallMagicModel",
       "nameKey": "magic.rockfall.name",
       "descriptionKey": "magic.rockfall.desc",
       "iconName": "30",
-      "element": 4,
       "tagIds": [
         "sturdy"
       ],
@@ -451,11 +450,11 @@
     {
       "numericId": 27,
       "id": "magic_earth_fire",
+      "rarity": 0,
       "script": "EarthFireMagicModel",
       "nameKey": "magic.earth_fire.name",
       "descriptionKey": "magic.earth_fire.desc",
       "iconName": "31",
-      "element": 4,
       "tagIds": [
         "burning_on_enemy_attack",
         "burning"
@@ -469,11 +468,11 @@
     {
       "numericId": 28,
       "id": "magic_petrify",
+      "rarity": 0,
       "script": "PetrifyMagicModel",
       "nameKey": "magic.petrify.name",
       "descriptionKey": "magic.petrify.desc",
       "iconName": "32",
-      "element": 4,
       "tagIds": [
         "slow",
         "weak"
@@ -487,11 +486,11 @@
     {
       "numericId": 29,
       "id": "magic_floating",
+      "rarity": 0,
       "script": "FloatingMagicModel",
       "nameKey": "magic.floating.name",
       "descriptionKey": "magic.floating.desc",
       "iconName": "33",
-      "element": 4,
       "tagIds": [
         "keep_hand"
       ],
@@ -504,11 +503,11 @@
     {
       "numericId": 30,
       "id": "magic_thorn_bush",
+      "rarity": 1,
       "script": "ThornBushMagicModel",
       "nameKey": "magic.thorn_bush.name",
       "descriptionKey": "magic.thorn_bush.desc",
       "iconName": "34",
-      "element": 4,
       "tagIds": [
         "shield_reflect"
       ],
@@ -522,11 +521,11 @@
     {
       "numericId": 31,
       "id": "magic_refine",
+      "rarity": 2,
       "script": "RefineMagicModel",
       "nameKey": "magic.refine.name",
       "descriptionKey": "magic.refine.desc",
       "iconName": "35",
-      "element": 4,
       "tagIds": [
         "remove_hand"
       ],
@@ -540,11 +539,11 @@
     {
       "numericId": 32,
       "id": "magic_earth_hand",
+      "rarity": 3,
       "script": "EarthHandMagicModel",
       "nameKey": "magic.earth_hand.name",
       "descriptionKey": "magic.earth_hand.desc",
       "iconName": "36",
-      "element": 4,
       "tagIds": [],
       "recipe": [
         4,
@@ -557,11 +556,11 @@
     {
       "numericId": 33,
       "id": "magic_tumbler",
+      "rarity": 2,
       "script": "TumblerMagicModel",
       "nameKey": "magic.tumbler.name",
       "descriptionKey": "magic.tumbler.desc",
       "iconName": "不倒翁",
-      "element": 4,
       "tagIds": [
         "extra_enemy_debuff"
       ],
@@ -575,11 +574,11 @@
     {
       "numericId": 34,
       "id": "magic_tangram",
+      "rarity": 2,
       "script": "TangramMagicModel",
       "nameKey": "magic.tangram.name",
       "descriptionKey": "magic.tangram.desc",
       "iconName": "七巧板",
-      "element": 3,
       "tagIds": [
         "temporary"
       ],
@@ -593,11 +592,11 @@
     {
       "numericId": 35,
       "id": "magic_glue",
+      "rarity": 2,
       "script": "GlueMagicModel",
       "nameKey": "magic.glue.name",
       "descriptionKey": "magic.glue.desc",
       "iconName": "胶水",
-      "element": 2,
       "tagIds": [
         "magic_attack_all"
       ],
@@ -611,17 +610,296 @@
     {
       "numericId": 36,
       "id": "magic_spring",
+      "rarity": 2,
       "script": "SpringMagicModel",
       "nameKey": "magic.spring.name",
       "descriptionKey": "magic.spring.desc",
       "iconName": "弹簧",
-      "element": 4,
       "tagIds": [
         "next_magic_repeat"
       ],
       "recipe": [
         4,
         2,
+        1
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 37,
+      "id": "magic_rain_banner",
+      "rarity": 2,
+      "script": "RainBannerMagicModel",
+      "nameKey": "magic.rain_banner.name",
+      "descriptionKey": "magic.rain_banner.desc",
+      "iconName": "雨幡",
+      "tagIds": [
+        "temporary"
+      ],
+      "recipe": [
+        1,
+        3,
+        4
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 38,
+      "id": "magic_lighter",
+      "rarity": 2,
+      "script": "LighterMagicModel",
+      "nameKey": "magic.lighter.name",
+      "descriptionKey": "magic.lighter.desc",
+      "iconName": "打火机",
+      "tagIds": [
+        "burning"
+      ],
+      "recipe": [
+        4,
+        1,
+        2
+      ],
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 39,
+      "id": "magic_water_ball",
+      "rarity": 2,
+      "script": "WaterBallMagicModel",
+      "nameKey": "magic.water_ball.name",
+      "descriptionKey": "magic.water_ball.desc",
+      "iconName": "水球",
+      "tagIds": [
+        "extra_draw"
+      ],
+      "recipe": [
+        1,
+        2,
+        3
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 40,
+      "id": "magic_can",
+      "rarity": 1,
+      "script": "CanMagicModel",
+      "nameKey": "magic.can.name",
+      "descriptionKey": "magic.can.desc",
+      "iconName": "易拉罐",
+      "tagIds": [
+        "burning"
+      ],
+      "recipe": [
+        1,
+        2,
+        4
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 41,
+      "id": "magic_plastic_bag",
+      "rarity": 1,
+      "script": "PlasticBagMagicModel",
+      "nameKey": "magic.plastic_bag.name",
+      "descriptionKey": "magic.plastic_bag.desc",
+      "iconName": "塑料袋",
+      "tagIds": [
+        "burning"
+      ],
+      "recipe": [
+        3,
+        1,
+        2
+      ],
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 42,
+      "id": "magic_boxing_glove",
+      "rarity": 1,
+      "script": "BoxingGloveMagicModel",
+      "nameKey": "magic.boxing_glove.name",
+      "descriptionKey": "magic.boxing_glove.desc",
+      "iconName": "拳套",
+      "tagIds": [],
+      "recipe": [
+        2,
+        1,
+        4
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 43,
+      "id": "magic_sailboat",
+      "rarity": 2,
+      "script": "SailboatMagicModel",
+      "nameKey": "magic.sailboat.name",
+      "descriptionKey": "magic.sailboat.desc",
+      "iconName": "帆船",
+      "tagIds": [
+        "extra_draw",
+        "spell_power"
+      ],
+      "recipe": [
+        2,
+        3,
+        1
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 44,
+      "id": "magic_harmful_wave",
+      "rarity": 1,
+      "script": "HarmfulWaveMagicModel",
+      "nameKey": "magic.harmful_wave.name",
+      "descriptionKey": "magic.harmful_wave.desc",
+      "iconName": "有害电波",
+      "tagIds": [],
+      "recipe": [
+        2,
+        3,
+        4
+      ],
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 45,
+      "id": "magic_chloroplast",
+      "rarity": 2,
+      "script": "ChloroplastMagicModel",
+      "nameKey": "magic.chloroplast.name",
+      "descriptionKey": "magic.chloroplast.desc",
+      "iconName": "叶绿体",
+      "tagIds": [],
+      "recipe": [
+        2,
+        4,
+        3
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 46,
+      "id": "magic_bubble_gum",
+      "rarity": 1,
+      "script": "BubbleGumMagicModel",
+      "nameKey": "magic.bubble_gum.name",
+      "descriptionKey": "magic.bubble_gum.desc",
+      "iconName": "泡泡糖",
+      "tagIds": [],
+      "recipe": [
+        3,
+        2,
+        4
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 47,
+      "id": "magic_camouflage",
+      "rarity": 1,
+      "script": "CamouflageMagicModel",
+      "nameKey": "magic.camouflage.name",
+      "descriptionKey": "magic.camouflage.desc",
+      "iconName": "保护色",
+      "tagIds": [],
+      "recipe": [
+        3,
+        4,
+        2
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 48,
+      "id": "magic_caramel_bear",
+      "rarity": 2,
+      "script": "CaramelBearMagicModel",
+      "nameKey": "magic.caramel_bear.name",
+      "descriptionKey": "magic.caramel_bear.desc",
+      "iconName": "焦糖熊",
+      "tagIds": [
+        "weak"
+      ],
+      "recipe": [
+        4,
+        3,
+        2
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 49,
+      "id": "magic_colored_lamp",
+      "rarity": 1,
+      "script": "ColoredLampMagicModel",
+      "nameKey": "magic.colored_lamp.name",
+      "descriptionKey": "magic.colored_lamp.desc",
+      "iconName": "彩灯",
+      "tagIds": [
+        "vulnerable",
+        "burning",
+        "weak"
+      ],
+      "recipe": [
+        3,
+        1,
+        4
+      ],
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 50,
+      "id": "magic_foam_board",
+      "rarity": 1,
+      "script": "FoamBoardMagicModel",
+      "nameKey": "magic.foam_board.name",
+      "descriptionKey": "magic.foam_board.desc",
+      "iconName": "泡沫板",
+      "tagIds": [],
+      "recipe": [
+        1,
+        4,
+        3
+      ],
+      "playPlayerCastAnimation": false
+    },
+    {
+      "numericId": 51,
+      "id": "magic_yoyo",
+      "rarity": 1,
+      "script": "YoYoMagicModel",
+      "nameKey": "magic.yoyo.name",
+      "descriptionKey": "magic.yoyo.desc",
+      "iconName": "悠悠球",
+      "tagIds": [
+        "slow"
+      ],
+      "recipe": [
+        4,
+        3,
+        1
+      ],
+      "playPlayerCastAnimation": true
+    },
+    {
+      "numericId": 52,
+      "id": "magic_sticker",
+      "rarity": 1,
+      "script": "StickerMagicModel",
+      "nameKey": "magic.sticker.name",
+      "descriptionKey": "magic.sticker.desc",
+      "iconName": "贴纸",
+      "tagIds": [
+        "temporary"
+      ],
+      "recipe": [
+        3,
+        4,
         1
       ],
       "playPlayerCastAnimation": false

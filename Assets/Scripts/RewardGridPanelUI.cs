@@ -79,11 +79,11 @@ public class RewardGridPanelUI : MonoBehaviour
         playerX = centerIndex;
         playerY = centerIndex;
         if (titleText != null)
-            titleText.text = "奖励关卡";
+            titleText.text = LocalizationSystem.GetText("ui.reward_grid.title", "奖励关卡");
         if (hintText != null)
-            hintText.text = "打出箭头，按上 / 左 / 下 / 右移动。";
+            hintText.text = LocalizationSystem.GetText("ui.reward_grid.hint", "打出箭头，按上 / 左 / 下 / 右移动。");
         if (resultText != null)
-            resultText.text = "从中心出发。";
+            resultText.text = LocalizationSystem.GetText("ui.reward_grid.start", "从中心出发。");
         gameObject.SetActive(true);
         RefreshAllCells();
         MoveMarkerToCurrentCell(false);
@@ -161,7 +161,7 @@ public class RewardGridPanelUI : MonoBehaviour
             int nextY = Mathf.Clamp(playerY + direction.y, 0, gridSize - 1);
             if (nextX == playerX && nextY == playerY)
             {
-                AppendResult("边缘停步");
+                AppendResult(LocalizationSystem.GetText("ui.reward_grid.result.edge_stop", "边缘停步"));
                 yield return new WaitForSeconds(StepDelay);
                 continue;
             }
@@ -724,22 +724,27 @@ public class RewardGridPanelUI : MonoBehaviour
 
     private static string GetRewardSummary(BonusRewardData rewardData)
     {
-        return GetRewardName(rewardData) + "x" + rewardData.amount;
+        return string.Format(LocalizationSystem.GetText("ui.reward_grid.result.reward_summary", "{0}x{1}"), GetRewardName(rewardData), rewardData.amount);
     }
 
     private static string GetRewardDescription(BonusRewardData rewardData)
     {
         switch (rewardData.rewardType)
         {
-            case BonusRewardType.Gold: return "获得金币";
-            case BonusRewardType.Heal: return "恢复生命";
-            default: return "获得奖励";
+            case BonusRewardType.Gold: return LocalizationSystem.GetText("ui.reward_grid.reward.gold.description", "获得金币");
+            case BonusRewardType.Heal: return LocalizationSystem.GetText("ui.reward_grid.reward.heal.description", "恢复生命");
+            default: return LocalizationSystem.GetText("ui.reward_grid.reward.default.description", "获得奖励");
         }
     }
 
     private static string GetRewardName(BonusRewardData rewardData)
     {
-        return !string.IsNullOrEmpty(rewardData.rewardName) ? rewardData.rewardName : rewardData.rewardType.ToString();
+        switch (rewardData.rewardType)
+        {
+            case BonusRewardType.Gold: return LocalizationSystem.GetText("ui.reward_grid.reward.gold.name", "金币");
+            case BonusRewardType.Heal: return LocalizationSystem.GetText("ui.reward_grid.reward.heal.name", "生命值");
+            default: return !string.IsNullOrEmpty(rewardData.rewardName) ? LocalizationSystem.GetText(rewardData.rewardName, rewardData.rewardName) : rewardData.rewardType.ToString();
+        }
     }
 
     private static Vector2Int GetDirection(MaterialEnum material)
@@ -769,10 +774,10 @@ public class RewardGridPanelUI : MonoBehaviour
             drawCount = 5,
             rewards = new[]
             {
-                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 1, texturePath = "Images/Bonus/coin1" },
-                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = "金币", amount = 2, texturePath = "Images/Bonus/coin2" },
-                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 2, texturePath = "Images/Bonus/pill1" },
-                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = "生命值", amount = 3, texturePath = "Images/Bonus/pill2" }
+                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = string.Empty, amount = 1, texturePath = "Images/Bonus/coin1" },
+                new BonusRewardData { rewardType = BonusRewardType.Gold, rewardName = string.Empty, amount = 2, texturePath = "Images/Bonus/coin2" },
+                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = string.Empty, amount = 2, texturePath = "Images/Bonus/pill1" },
+                new BonusRewardData { rewardType = BonusRewardType.Heal, rewardName = string.Empty, amount = 3, texturePath = "Images/Bonus/pill2" }
             }
         };
     }

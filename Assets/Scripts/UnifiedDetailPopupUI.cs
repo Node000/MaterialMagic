@@ -244,7 +244,16 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             iconImage.sprite = content.Icon;
             iconImage.gameObject.SetActive(content.Icon != null);
         }
+        ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
+    }
+
+    private void ApplyAccentColor(Color color)
+    {
+        if (borderImage != null)
+            borderImage.color = color;
+        if (borderGraphic != null && borderGraphic != borderImage)
+            borderGraphic.color = color;
     }
 
     private void ApplyAddedDetails(IReadOnlyList<UnifiedDetailAddedDetail> details)

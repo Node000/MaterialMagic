@@ -113,9 +113,9 @@ public class ShopPanelUI : MonoBehaviour
         gameObject.SetActive(true);
 
         if (titleText != null)
-            titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, "商店");
+            titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, LocalizationSystem.GetText("ui.shop.title", "商店"));
         if (hintText != null)
-            hintText.text = "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。";
+            hintText.text = LocalizationSystem.GetText("ui.shop.hint", "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。");
 
         BuildOffers();
         if (savedState != null)
@@ -247,7 +247,7 @@ public class ShopPanelUI : MonoBehaviour
         leaveButton.onClick.AddListener(LeaveShop);
         TMP_Text text = UIManager.FindChildComponent<TMP_Text>(leaveButton.transform, "Text");
         if (text != null)
-            text.text = "离开";
+            text.text = LocalizationSystem.GetText("ui.common.leave", "离开");
     }
 
     private void BuildOffers()
@@ -435,10 +435,27 @@ public class ShopPanelUI : MonoBehaviour
         if (magicPool.Count == 0)
             return;
 
-        int index = NextRunRandomInt(0, magicPool.Count);
-        MagicData data = magicPool[index];
-        magicPool.RemoveAt(index);
-        offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice), magicData = data });
+        MagicData data = MagicRaritySystem.SelectWeightedMagic(magicPool, NextRunRandomInt);
+        if (data == null)
+            return;
+
+        magicPool.Remove(data);
+        offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice + GetMagicRarityPriceOffset(data.rarity)), magicData = data });
+    }
+
+    private static int GetMagicRarityPriceOffset(MagicRarity rarity)
+    {
+        switch (rarity)
+        {
+            case MagicRarity.Common:
+                return -2;
+            case MagicRarity.Rare:
+                return -1;
+            case MagicRarity.Legendary:
+                return 1;
+            default:
+                return 0;
+        }
     }
 
     private void AddStrongMaterialOffer()
@@ -877,7 +894,7 @@ public class ShopPanelUI : MonoBehaviour
         waitingForSelection = true;
         Refresh();
         MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialSelectionPanel;
-        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelSelectionPurchase, "选择要删的牌");
+        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveMaterialPurchase(offer, selected), CancelSelectionPurchase, LocalizationSystem.GetText("ui.shop.remove_material.title", "选择要删的牌"));
         RectTransform materialRect = materialListPanel != null ? materialListPanel.transform as RectTransform : null;
         if (materialRect != null)
             PopupLayerUtility.ApplyTo(materialRect);

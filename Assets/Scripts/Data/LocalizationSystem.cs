@@ -124,6 +124,13 @@ public static class LocalizationKeys
             case BuffEnum.RetainedNextDraw: return "retained_next_draw";
             case BuffEnum.DoubleEnemyBurningOnTurnEnd: return "double_enemy_burning_on_turn_end";
             case BuffEnum.ExtraEnemyDebuff: return "extra_enemy_debuff";
+            case BuffEnum.MaterialBaseEffectRepeat: return "material_base_effect_repeat";
+            case BuffEnum.KeepShieldNextTurn: return "keep_shield_next_turn";
+            case BuffEnum.BurningDamageShieldNextTurn: return "burning_damage_shield_next_turn";
+            case BuffEnum.SpellPowerOnExtraDraw: return "spell_power_on_extra_draw";
+            case BuffEnum.WeakOnEnemyAttack: return "weak_on_enemy_attack";
+            case BuffEnum.TemporaryWindOnMaterialConsumed: return "temporary_wind_on_material_consumed";
+            case BuffEnum.WeakNextTurn: return "weak_next_turn";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
             case BuffEnum.ChargeNextDraw: return "charge_next_draw";
             case BuffEnum.TutorialDeath: return "tutorial_death";

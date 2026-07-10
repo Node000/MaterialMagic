@@ -5,14 +5,20 @@
       "nameKey": "difficulty.map_more_unknown_nodes.name",
       "descriptionKey": "difficulty.map_more_unknown_nodes.desc",
       "scope": 0,
-      "effects": []
+      "effects": [
+        { "type": 20, "value": 0.35 }
+      ]
     },
     {
       "id": "map_more_enemy_nodes",
       "nameKey": "difficulty.map_more_enemy_nodes.name",
       "descriptionKey": "difficulty.map_more_enemy_nodes.desc",
       "scope": 0,
-      "effects": []
+      "targetLevelTypes": [0],
+      "effects": [
+        { "type": 21, "value": 1.5 },
+        { "type": 22, "intValue": 1 }
+      ]
     },
     {
       "id": "player_max_health_minus_5",
@@ -73,7 +79,9 @@
       "nameKey": "difficulty.starting_deck_add_placeholder.name",
       "descriptionKey": "difficulty.starting_deck_add_placeholder.desc",
       "scope": 0,
-      "effects": []
+      "effects": [
+        { "type": 24, "intValue": 1 }
+      ]
     },
     {
       "id": "shop_price_120",
@@ -89,7 +97,10 @@
       "nameKey": "difficulty.rare_magic_less_common.name",
       "descriptionKey": "difficulty.rare_magic_less_common.desc",
       "scope": 0,
-      "effects": []
+      "effects": [
+        { "type": 19, "rarity": 2, "value": 0.5 },
+        { "type": 19, "rarity": 3, "value": 0.5 }
+      ]
     },
     {
       "id": "map_smaller",
@@ -124,7 +135,9 @@
       "nameKey": "difficulty.level_cap_minus_4.name",
       "descriptionKey": "difficulty.level_cap_minus_4.desc",
       "scope": 0,
-      "effects": []
+      "effects": [
+        { "type": 23, "intValue": -4 }
+      ]
     },
     {
       "id": "map_block_cells_plus_1",
@@ -149,14 +162,20 @@
       "nameKey": "difficulty.rest_nodes_less_common.name",
       "descriptionKey": "difficulty.rest_nodes_less_common.desc",
       "scope": 0,
-      "effects": []
+      "targetLevelTypes": [3],
+      "effects": [
+        { "type": 21, "value": 0.5 },
+        { "type": 22, "intValue": -1 }
+      ]
     },
     {
       "id": "level_cap_minus_2",
       "nameKey": "difficulty.level_cap_minus_2.name",
       "descriptionKey": "difficulty.level_cap_minus_2.desc",
       "scope": 0,
-      "effects": []
+      "effects": [
+        { "type": 23, "intValue": -2 }
+      ]
     },
     {
       "id": "boss_harder",

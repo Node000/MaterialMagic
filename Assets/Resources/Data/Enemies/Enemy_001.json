@@ -4,7 +4,7 @@
   "nameKey": "enemy.001.name",
   "maxHealth": 23,
   "baseAttack": 5,
-  "imageScale": 0.7,
+  "imageScale": 0.489,
   "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [],
@@ -68,6 +68,6 @@
     }
   ],
   "iconName": "豆荚",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "豆荚",
   "animationFrameRate": 8.0
 }

@@ -509,6 +509,74 @@
       "text": "进阶"
     },
     {
+      "key": "ui.start_menu.codex_button",
+      "text": "图鉴"
+    },
+    {
+      "key": "ui.magic_codex.title",
+      "text": "C:/道具图鉴"
+    },
+    {
+      "key": "ui.magic_codex.detail_hint_title",
+      "text": "图鉴"
+    },
+    {
+      "key": "ui.magic_codex.detail_hint",
+      "text": "悬停下方道具查看详情"
+    },
+    {
+      "key": "ui.magic_codex.count",
+      "text": "已获取 {0}/{1}"
+    },
+    {
+      "key": "ui.magic_codex.new_label",
+      "text": "New!!!"
+    },
+    {
+      "key": "ui.magic_codex.rarity_label",
+      "text": "稀有度"
+    },
+    {
+      "key": "ui.magic_codex.recipe_label",
+      "text": "素材序列"
+    },
+    {
+      "key": "ui.magic_codex.effect_label",
+      "text": "具体效果"
+    },
+    {
+      "key": "ui.magic_codex.label_separator",
+      "text": "："
+    },
+    {
+      "key": "ui.magic_codex.recipe_separator",
+      "text": " → "
+    },
+    {
+      "key": "ui.magic_codex.locked_suffix",
+      "text": "（未获取）"
+    },
+    {
+      "key": "ui.magic_codex.locked_state_suffix",
+      "text": " / 未获取"
+    },
+    {
+      "key": "ui.magic_codex.rarity.common",
+      "text": "普通"
+    },
+    {
+      "key": "ui.magic_codex.rarity.rare",
+      "text": "稀有"
+    },
+    {
+      "key": "ui.magic_codex.rarity.epic",
+      "text": "史诗"
+    },
+    {
+      "key": "ui.magic_codex.rarity.legendary",
+      "text": "传说"
+    },
+    {
       "key": "ui.top_bar.settings.title",
       "text": "设置"
     },
@@ -539,6 +607,666 @@
     {
       "key": "ui.battle.turn_banner.enemy",
       "text": "敌方回合"
+    },
+    {
+      "key": "ui.common.confirm",
+      "text": "确认"
+    },
+    {
+      "key": "ui.common.cancel",
+      "text": "取消"
+    },
+    {
+      "key": "ui.common.back",
+      "text": "返回"
+    },
+    {
+      "key": "ui.common.leave",
+      "text": "离开"
+    },
+    {
+      "key": "ui.common.skip",
+      "text": "跳过"
+    },
+    {
+      "key": "ui.reward_panel.title",
+      "text": "战斗奖励"
+    },
+    {
+      "key": "ui.reward_panel.hint",
+      "text": "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。"
+    },
+    {
+      "key": "ui.reward_panel.magic_only.title",
+      "text": "道具奖励"
+    },
+    {
+      "key": "ui.reward_panel.magic_only.hint",
+      "text": "选择一个道具后，点击场景中的道具槽覆盖。"
+    },
+    {
+      "key": "ui.reward_panel.option.magic",
+      "text": "获得道具"
+    },
+    {
+      "key": "ui.reward_panel.option.gold",
+      "text": "金币x{0}"
+    },
+    {
+      "key": "ui.reward_panel.option.magic_modifier",
+      "text": "道具强化"
+    },
+    {
+      "key": "ui.reward_panel.option.arrow_modifier",
+      "text": "箭头附魔"
+    },
+    {
+      "key": "ui.reward_panel.magic_choice.title",
+      "text": "选择一个道具"
+    },
+    {
+      "key": "ui.reward_panel.magic_choice.hint",
+      "text": "选择后点击下方/场景中的道具槽覆盖；可重新选择。"
+    },
+    {
+      "key": "ui.slot_select.title",
+      "text": "选择要填入的道具槽"
+    },
+    {
+      "key": "ui.slot_select.empty_slot",
+      "text": "空槽"
+    },
+    {
+      "key": "ui.slot_select.slot_format",
+      "text": "{0}: {1}"
+    },
+    {
+      "key": "ui.shop.title",
+      "text": "商店"
+    },
+    {
+      "key": "ui.shop.hint",
+      "text": "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。"
+    },
+    {
+      "key": "ui.shop.remove_material.title",
+      "text": "选择要删的牌"
+    },
+    {
+      "key": "ui.level_select.title",
+      "text": "选择下一关"
+    },
+    {
+      "key": "ui.level_select.unknown",
+      "text": "未知"
+    },
+    {
+      "key": "ui.level_type.shop",
+      "text": "商店"
+    },
+    {
+      "key": "ui.level_type.event",
+      "text": "事件"
+    },
+    {
+      "key": "ui.level_type.remove_material",
+      "text": "删除"
+    },
+    {
+      "key": "ui.level_type.add_material",
+      "text": "新增"
+    },
+    {
+      "key": "ui.level_type.rest",
+      "text": "休息"
+    },
+    {
+      "key": "ui.level_type.reward",
+      "text": "奖励"
+    },
+    {
+      "key": "ui.level_type.elite",
+      "text": "精英"
+    },
+    {
+      "key": "ui.level_type.battle",
+      "text": "战斗"
+    },
+    {
+      "key": "ui.chapter_grid.title",
+      "text": "地图"
+    },
+    {
+      "key": "ui.chapter_grid.boss",
+      "text": "Boss"
+    },
+    {
+      "key": "ui.reward_grid.title",
+      "text": "奖励关卡"
+    },
+    {
+      "key": "ui.reward_grid.hint",
+      "text": "打出箭头，按上 / 左 / 下 / 右移动。"
+    },
+    {
+      "key": "ui.reward_grid.start",
+      "text": "从中心出发。"
+    },
+    {
+      "key": "ui.reward_grid.result.edge_stop",
+      "text": "边缘停步"
+    },
+    {
+      "key": "ui.reward_grid.result.reward_summary",
+      "text": "{0}x{1}"
+    },
+    {
+      "key": "ui.reward_grid.reward.gold.description",
+      "text": "获得金币"
+    },
+    {
+      "key": "ui.reward_grid.reward.heal.description",
+      "text": "恢复生命"
+    },
+    {
+      "key": "ui.reward_grid.reward.default.description",
+      "text": "获得奖励"
+    },
+    {
+      "key": "ui.reward_grid.reward.gold.name",
+      "text": "金币"
+    },
+    {
+      "key": "ui.reward_grid.reward.heal.name",
+      "text": "生命值"
+    },
+    {
+      "key": "ui.event_panel.hint",
+      "text": "左键：跳过/继续；打出素材并结束回合来选择选项"
+    },
+    {
+      "key": "ui.event.effect.separator",
+      "text": "；"
+    },
+    {
+      "key": "ui.event.effect.none",
+      "text": "无直接效果"
+    },
+    {
+      "key": "ui.event.effect.heal_amount",
+      "text": "恢复{0}点生命"
+    },
+    {
+      "key": "ui.event.effect.increase_draw_count_per_turn",
+      "text": "之后每回合抽牌数+1"
+    },
+    {
+      "key": "ui.event.effect.remove_material_choice",
+      "text": "删除{0}张箭头"
+    },
+    {
+      "key": "ui.event.effect.gain_material_count",
+      "text": "获得{0}张箭头"
+    },
+    {
+      "key": "ui.event.effect.apply_material_modifier",
+      "text": "选择{0}张手牌箭头，添加{1}"
+    },
+    {
+      "key": "ui.event.effect.heal_percent_max",
+      "text": "恢复{0}%最大生命"
+    },
+    {
+      "key": "ui.event.effect.lose_health_amount",
+      "text": "失去{0}点生命"
+    },
+    {
+      "key": "ui.event.effect.escalate_per_use_suffix",
+      "text": "，每次+{0}"
+    },
+    {
+      "key": "ui.event.effect.gain_gold",
+      "text": "获得{0}金币"
+    },
+    {
+      "key": "ui.event.effect.gain_magic",
+      "text": "获得一次道具奖励"
+    },
+    {
+      "key": "ui.event.effect.gain_magic_modifier",
+      "text": "获得一次道具强化"
+    },
+    {
+      "key": "ui.event.effect.increase_max_health",
+      "text": "生命上限+{0}"
+    },
+    {
+      "key": "ui.event.effect.gain_random_material",
+      "text": "获得{0}张随机箭头"
+    },
+    {
+      "key": "ui.event.effect.gain_same_random_materials",
+      "text": "获得{0}张相同的随机箭头"
+    },
+    {
+      "key": "ui.event.effect.increase_draw_count",
+      "text": "每回合抽牌数+{0}"
+    },
+    {
+      "key": "ui.event.effect.gain_next_battle_start_shield",
+      "text": "下一场战斗开始时获得{0}点护盾"
+    },
+    {
+      "key": "ui.event.effect.gain_material_modifier_to_choice",
+      "text": "选择{0}张箭头获得{1}"
+    },
+    {
+      "key": "ui.event.effect.spend_all_gold",
+      "text": "花光所有金币"
+    },
+    {
+      "key": "ui.event.effect.randomize_deck_basic_materials",
+      "text": "将牌库中的基础箭头随机重置"
+    },
+    {
+      "key": "ui.event.effect.gain_random_syntax_material",
+      "text": "获得{0}张随机语法箭头"
+    },
+    {
+      "key": "ui.event.effect.arrow_modifier",
+      "text": "箭头附魔"
+    },
+    {
+      "key": "ui.debug_magic_dropdown.select_replacement",
+      "text": "选择替换道具"
+    },
+    {
+      "key": "ui.battle.floating.max_health_up",
+      "text": "+{0}上限"
+    },
+    {
+      "key": "ui.reward_magic_confirm.title",
+      "text": "确认替换道具？"
+    },
+    {
+      "key": "ui.reward_magic_confirm.hint",
+      "text": "确认后才会覆盖；取消后可以重新选择道具槽。"
+    },
+    {
+      "key": "ui.reward_magic_confirm.existing_label",
+      "text": "已有道具"
+    },
+    {
+      "key": "ui.reward_magic_confirm.new_label",
+      "text": "新道具"
+    },
+    {
+      "key": "ui.arrow_modifier.select_target_title",
+      "text": "选择要附魔的箭头"
+    },
+    {
+      "key": "ui.magic_modifier.empty_slot",
+      "text": "这个道具槽是空的！"
+    },
+    {
+      "key": "ui.magic_modifier.not_applicable",
+      "text": "这个强化不能用于该道具！"
+    },
+    {
+      "key": "ui.ascension.locked_hint",
+      "text": "首次非教程通关后解锁进阶。"
+    },
+    {
+      "key": "ui.ascension.selector_status",
+      "text": "已解锁至 {0} / 最高通关 {1}"
+    },
+    {
+      "key": "ui.ascension.selector_level",
+      "text": "进阶 {0}"
+    },
+    {
+      "key": "ui.ascension.detail_title",
+      "text": "进阶详情"
+    },
+    {
+      "key": "ui.ascension.no_effects",
+      "text": "当前没有额外进阶词条。"
+    },
+    {
+      "key": "ui.ascension.active_effects",
+      "text": "进阶词条："
+    },
+    {
+      "key": "ui.ascension.label_separator",
+      "text": "："
+    },
+    {
+      "key": "ui.ascension.detail_button",
+      "text": "详情"
+    },
+    {
+      "key": "ui.run_history.detail.ascension",
+      "text": "进阶：{0}"
+    },
+    {
+      "key": "ascension.0.name",
+      "text": "A0 标准"
+    },
+    {
+      "key": "ascension.0.desc",
+      "text": "没有进阶词条，使用标准难度开始游戏。"
+    },
+    {
+      "key": "ascension.1.name",
+      "text": "A1 迷雾扩散"
+    },
+    {
+      "key": "ascension.1.desc",
+      "text": "地图里会出现更多未知地点。"
+    },
+    {
+      "key": "ascension.2.name",
+      "text": "A2 战斗增多"
+    },
+    {
+      "key": "ascension.2.desc",
+      "text": "地图里会出现更多普通战斗。"
+    },
+    {
+      "key": "ascension.3.name",
+      "text": "A3 体质削弱"
+    },
+    {
+      "key": "ascension.3.desc",
+      "text": "玩家最大生命值降低。"
+    },
+    {
+      "key": "ascension.4.name",
+      "text": "A4 笨重箭头"
+    },
+    {
+      "key": "ascension.4.desc",
+      "text": "起始牌组会加入额外基础箭头。"
+    },
+    {
+      "key": "ascension.5.name",
+      "text": "A5 金币紧缩"
+    },
+    {
+      "key": "ascension.5.desc",
+      "text": "获得金币减少。"
+    },
+    {
+      "key": "ascension.6.name",
+      "text": "A6 选择变少"
+    },
+    {
+      "key": "ascension.6.desc",
+      "text": "道具奖励选项减少。"
+    },
+    {
+      "key": "ascension.7.name",
+      "text": "A7 道具栏压缩 I"
+    },
+    {
+      "key": "ascension.7.desc",
+      "text": "初始可用道具槽减少。"
+    },
+    {
+      "key": "ascension.8.name",
+      "text": "A8 地图封锁 I"
+    },
+    {
+      "key": "ascension.8.desc",
+      "text": "地图中会有更多不可通行格。"
+    },
+    {
+      "key": "ascension.9.name",
+      "text": "A9 占位负担"
+    },
+    {
+      "key": "ascension.9.desc",
+      "text": "起始牌组会加入额外占位负担。"
+    },
+    {
+      "key": "ascension.10.name",
+      "text": "A10 商店涨价"
+    },
+    {
+      "key": "ascension.10.desc",
+      "text": "商店商品价格提高。"
+    },
+    {
+      "key": "ascension.11.name",
+      "text": "A11 稀有枯竭"
+    },
+    {
+      "key": "ascension.11.desc",
+      "text": "稀有及以上道具更少出现。"
+    },
+    {
+      "key": "ascension.12.name",
+      "text": "A12 地图收缩"
+    },
+    {
+      "key": "ascension.12.desc",
+      "text": "章节地图尺寸缩小。"
+    },
+    {
+      "key": "ascension.13.name",
+      "text": "A13 道具栏压缩 II"
+    },
+    {
+      "key": "ascension.13.desc",
+      "text": "初始可用道具槽再次减少。"
+    },
+    {
+      "key": "ascension.14.name",
+      "text": "A14 敌人体质强化"
+    },
+    {
+      "key": "ascension.14.desc",
+      "text": "敌人生命提高。"
+    },
+    {
+      "key": "ascension.15.name",
+      "text": "A15 进度压缩 I"
+    },
+    {
+      "key": "ascension.15.desc",
+      "text": "章节可推进关卡数减少。"
+    },
+    {
+      "key": "ascension.16.name",
+      "text": "A16 地图封锁 II"
+    },
+    {
+      "key": "ascension.16.desc",
+      "text": "地图中继续增加不可通行格。"
+    },
+    {
+      "key": "ascension.17.name",
+      "text": "A17 攻势强化"
+    },
+    {
+      "key": "ascension.17.desc",
+      "text": "敌人的攻击意图数值提高。"
+    },
+    {
+      "key": "ascension.18.name",
+      "text": "A18 休息稀少"
+    },
+    {
+      "key": "ascension.18.desc",
+      "text": "休息节点更少出现。"
+    },
+    {
+      "key": "ascension.19.name",
+      "text": "A19 进度压缩 II"
+    },
+    {
+      "key": "ascension.19.desc",
+      "text": "章节可推进关卡数再次减少。"
+    },
+    {
+      "key": "ascension.20.name",
+      "text": "A20 首领强化"
+    },
+    {
+      "key": "ascension.20.desc",
+      "text": "首领战更危险。"
+    },
+    {
+      "key": "difficulty.map_more_unknown_nodes.name",
+      "text": "更多未知格"
+    },
+    {
+      "key": "difficulty.map_more_unknown_nodes.desc",
+      "text": "地图中更多非精英节点变为未知。"
+    },
+    {
+      "key": "difficulty.map_more_enemy_nodes.name",
+      "text": "更多战斗格"
+    },
+    {
+      "key": "difficulty.map_more_enemy_nodes.desc",
+      "text": "地图中普通战斗节点更多。"
+    },
+    {
+      "key": "difficulty.player_max_health_minus_5.name",
+      "text": "生命上限-5"
+    },
+    {
+      "key": "difficulty.player_max_health_minus_5.desc",
+      "text": "玩家最大生命值减少5点。"
+    },
+    {
+      "key": "difficulty.starting_deck_add_basic_directions.name",
+      "text": "起始牌组加入基础箭头"
+    },
+    {
+      "key": "difficulty.starting_deck_add_basic_directions.desc",
+      "text": "起始牌组加入额外基础箭头。"
+    },
+    {
+      "key": "difficulty.gold_gain_80.name",
+      "text": "金币获取-20%"
+    },
+    {
+      "key": "difficulty.gold_gain_80.desc",
+      "text": "所有金币获得量变为80%。"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_minus_1.name",
+      "text": "道具奖励选项-1"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_minus_1.desc",
+      "text": "道具奖励少一个可选项。"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_2.name",
+      "text": "道具槽-2"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_2.desc",
+      "text": "初始可用道具槽减少2个。"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_2.name",
+      "text": "封锁地图格+2"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_2.desc",
+      "text": "地图中额外封锁2个格子。"
+    },
+    {
+      "key": "difficulty.starting_deck_add_placeholder.name",
+      "text": "起始牌组加入占位箭头"
+    },
+    {
+      "key": "difficulty.starting_deck_add_placeholder.desc",
+      "text": "起始牌组加入额外占位负担。"
+    },
+    {
+      "key": "difficulty.shop_price_120.name",
+      "text": "商店价格+20%"
+    },
+    {
+      "key": "difficulty.shop_price_120.desc",
+      "text": "商店价格变为120%。"
+    },
+    {
+      "key": "difficulty.rare_magic_less_common.name",
+      "text": "稀有道具出现率降低"
+    },
+    {
+      "key": "difficulty.rare_magic_less_common.desc",
+      "text": "稀有及以上道具权重降低。"
+    },
+    {
+      "key": "difficulty.map_smaller.name",
+      "text": "地图宽高-1"
+    },
+    {
+      "key": "difficulty.map_smaller.desc",
+      "text": "章节地图宽度和高度各减少1。"
+    },
+    {
+      "key": "difficulty.enemy_health_20.name",
+      "text": "敌人生命+20%"
+    },
+    {
+      "key": "difficulty.enemy_health_20.desc",
+      "text": "敌人最大生命值提高20%。"
+    },
+    {
+      "key": "difficulty.level_cap_minus_4.name",
+      "text": "关卡上限-4"
+    },
+    {
+      "key": "difficulty.level_cap_minus_4.desc",
+      "text": "章节可推进关卡数减少4。"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_1.name",
+      "text": "封锁地图格+1"
+    },
+    {
+      "key": "difficulty.map_block_cells_plus_1.desc",
+      "text": "地图中额外封锁1个格子。"
+    },
+    {
+      "key": "difficulty.enemy_attack_intents_20.name",
+      "text": "敌人攻击意图+20%"
+    },
+    {
+      "key": "difficulty.enemy_attack_intents_20.desc",
+      "text": "敌人的攻击意图数值提高20%。"
+    },
+    {
+      "key": "difficulty.rest_nodes_less_common.name",
+      "text": "休息点减少"
+    },
+    {
+      "key": "difficulty.rest_nodes_less_common.desc",
+      "text": "休息节点更少出现。"
+    },
+    {
+      "key": "difficulty.level_cap_minus_2.name",
+      "text": "关卡上限-2"
+    },
+    {
+      "key": "difficulty.level_cap_minus_2.desc",
+      "text": "章节可推进关卡数减少2。"
+    },
+    {
+      "key": "difficulty.boss_harder.name",
+      "text": "首领强化"
+    },
+    {
+      "key": "difficulty.boss_harder.desc",
+      "text": "首领生命提高30%，攻击意图数值提高20%。"
     }
   ]
 }

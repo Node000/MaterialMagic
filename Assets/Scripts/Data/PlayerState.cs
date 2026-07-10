@@ -401,6 +401,7 @@ public class PlayerState
 
         card.isPlayed = false;
         ConsumedPile.Add(card);
+        TriggerAfterMaterialConsumed(card);
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
@@ -1266,6 +1267,17 @@ public class PlayerState
         TriggerBuffs(null, (buff, self, target) => buff.AfterDiscard(self, card));
     }
 
+    public void TriggerAfterMaterialConsumed(MaterialModel card)
+    {
+        TriggerBuffs(null, (buff, self, target) => buff.AfterMaterialConsumed(self, card));
+    }
+
+    public void TriggerAfterEnemyBurningDamage(EnemyModel enemy, int damage)
+    {
+        if (damage > 0)
+            TriggerBuffs(enemy != null ? new CombatantModel(enemy) : null, (buff, self, target) => buff.AfterEnemyBurningDamage(self, enemy, damage));
+    }
+
     public void TriggerOnInvoke(CombatantModel target)
     {
         TriggerBuffs(target, (buff, self, opponent) => buff.OnInvoke(self, opponent));
@@ -1538,6 +1550,16 @@ public class PlayerState
         return card;
     }
 
+    public MaterialModel AddDeckPlaceholderMaterial()
+    {
+        MaterialModel card = new MaterialModel("deck_placeholder_" + temporaryMaterialIndex++, MaterialEnum.None);
+        card.AddModifier(new TemporaryModifier());
+        Deck.Add(card);
+        DrawPile.Add(card);
+        GameLog.Data($"Add deck placeholder {DescribeMaterial(card)}");
+        return card;
+    }
+
     public bool RemoveCardEverywhere(MaterialModel card)
     {
         if (card == null)
@@ -1618,6 +1640,7 @@ public class PlayerState
             insertIndex++;
 
         MagicBook.Insert(insertIndex, magic);
+        MagicCodexProgressSystem.MarkMagicDiscovered(magic.Data);
     }
 
     public static MagicModel CreateMagicFromData(int magicId, int slotIndex)

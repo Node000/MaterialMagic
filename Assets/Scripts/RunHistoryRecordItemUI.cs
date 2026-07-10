@@ -65,7 +65,7 @@ public class RunHistoryRecordItemUI : MonoBehaviour
         if (record == null)
             return string.Empty;
 
-        return $"{FormatDate(record.endedAtUtc)}  {GetResultText(record.resultType)}\n{FormatPlayTime(record.playSeconds)}  {record.progressText}";
+        return $"{FormatDate(record.endedAtUtc)}  {GetResultText(record.resultType)}  {AscensionUIUtility.FormatLevel(record.ascensionLevel)}\n{FormatPlayTime(record.playSeconds)}  {record.progressText}";
     }
 
     private void RefreshLabel()

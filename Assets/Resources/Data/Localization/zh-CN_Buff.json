@@ -278,7 +278,7 @@
     },
     {
       "key": "buff.extra_draw_on_enemy_damage.desc",
-      "text": "本回合每对敌方造成三次生命伤害，下回合额外抽{0}张牌。"
+      "text": "本回合每对敌方造成2次生命伤害，下回合额外抽{0}张牌。"
     },
     {
       "key": "buff.shield_reflect_boost.name",
@@ -379,6 +379,62 @@
     {
       "key": "buff.extra_enemy_debuff.desc",
       "text": "本回合敌方每获得{0}层负面状态，额外获得等量负面状态。"
+    },
+    {
+      "key": "buff.material_base_effect_repeat.name",
+      "text": "基础重复"
+    },
+    {
+      "key": "buff.material_base_effect_repeat.desc",
+      "text": "本回合素材牌基础效果额外触发{0}次。"
+    },
+    {
+      "key": "buff.keep_shield_next_turn.name",
+      "text": "保留护盾"
+    },
+    {
+      "key": "buff.keep_shield_next_turn.desc",
+      "text": "下回合开始时不清除护盾，生效后清除。"
+    },
+    {
+      "key": "buff.burning_damage_shield_next_turn.name",
+      "text": "燃烧护盾"
+    },
+    {
+      "key": "buff.burning_damage_shield_next_turn.desc",
+      "text": "本回合敌人受到燃烧伤害时，下回合获得伤害×{0}的预备护盾。"
+    },
+    {
+      "key": "buff.spell_power_on_extra_draw.name",
+      "text": "抽牌加攻"
+    },
+    {
+      "key": "buff.spell_power_on_extra_draw.desc",
+      "text": "本回合每获得1层【额外抽牌】，获得{0}层【伤害提升】。"
+    },
+    {
+      "key": "buff.weak_on_enemy_attack.name",
+      "text": "攻击虚弱"
+    },
+    {
+      "key": "buff.weak_on_enemy_attack.desc",
+      "text": "本回合敌方每进行1次攻击，攻击者下回合获得{0}层【虚弱】。"
+    },
+    {
+      "key": "buff.temporary_wind_on_material_consumed.name",
+      "text": "消耗返左"
+    },
+    {
+      "key": "buff.temporary_wind_on_material_consumed.desc",
+      "text": "本回合每有1张素材被消耗，下回合将{0}张【临时】左加入手牌。"
+    },
+    {
+      "key": "buff.weak_next_turn.name",
+      "text": "下回合虚弱"
+    },
+    {
+      "key": "buff.weak_next_turn.desc",
+      "text": "下回合开始时获得等同层数的【虚弱】，生效后清除。"
     }
   ]
 }

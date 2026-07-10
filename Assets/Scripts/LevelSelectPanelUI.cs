@@ -47,7 +47,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         PreparePanelShow();
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(GetOptionRoot(), "Title");
         if (title != null)
-            title.text = "选择下一关";
+            title.text = LocalizationSystem.GetText("ui.level_select.title", "选择下一关");
 
         float optionBaseDelay = panelShowDuration;
         if (nodeModel.fixedSingleChoice)
@@ -147,7 +147,7 @@ public class LevelSelectPanelUI : MonoBehaviour
         button.gameObject.SetActive(true);
         TMP_Text text = UIManager.FindChildComponent<TMP_Text>(button.transform, "Text");
         if (text != null)
-            text.text = hidden ? "未知" : UIManager.GetLevelTypeName(level.levelType);
+            text.text = hidden ? LocalizationSystem.GetText("ui.level_select.unknown", "未知") : UIManager.GetLevelTypeName(level.levelType);
 
         Image icon = UIManager.FindChildComponent<Image>(button.transform, "TypeIcon");
         if (icon != null)

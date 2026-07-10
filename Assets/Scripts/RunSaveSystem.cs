@@ -32,6 +32,7 @@ public class RunHistoryRecordData
     public int totalMapNodeCount;
     public int currentLevelNumericId;
     public string progressText;
+    public int ascensionLevel;
     public int maxHealth;
     public int currentHealth;
     public int gold;
@@ -96,6 +97,7 @@ public class RunMapCellSaveData
     public bool isBoss;
     public bool isAvailable = true;
     public bool isRevealed;
+    public bool isHidden;
 }
 
 [Serializable]
@@ -484,6 +486,7 @@ public static class RunSaveSystem
 
         ClearHistory(clampedSlotIndex);
         UnlockProgressSaveSystem.Clear(clampedSlotIndex);
+        MagicCodexProgressSystem.Clear(clampedSlotIndex);
     }
 
     public static void ClearCurrentRun()
@@ -668,7 +671,8 @@ public static class RunSaveSystem
                 level = GetLevel(cellData.levelId),
                 isBoss = cellData.isBoss,
                 isAvailable = legacyGridAvailability || cellData.isAvailable || cellData.isBoss || cellData.levelId > 0 || (cellData.x == data.playerX && cellData.y == data.playerY),
-                isRevealed = legacyGridReveal ? cellData.isBoss || (cellData.x == data.playerX && cellData.y == data.playerY) : cellData.isRevealed
+                isRevealed = legacyGridReveal ? cellData.isBoss || (cellData.x == data.playerX && cellData.y == data.playerY) : cellData.isRevealed,
+                isHidden = cellData.isHidden
             });
         }
         grid.ClampPosition(ref grid.playerX, ref grid.playerY);
@@ -863,6 +867,7 @@ public static class RunSaveSystem
             totalMapNodeCount = totalNodeCount,
             currentLevelNumericId = data.currentNode != null ? data.currentNode.levelId : 0,
             progressText = BuildProgressText(data.chapterNumericId, progressNode, totalNodeCount, data.currentNode != null ? data.currentNode.levelId : 0),
+            ascensionLevel = data.difficulty != null ? data.difficulty.ascensionLevel : 0,
             maxHealth = player != null ? player.maxHealth : 0,
             currentHealth = player != null ? player.currentHealth : 0,
             gold = player != null ? player.gold : 0,
@@ -1041,7 +1046,8 @@ public static class RunSaveSystem
                 levelId = cell != null && cell.level != null ? cell.level.numericId : 0,
                 isBoss = cell != null && cell.isBoss,
                 isAvailable = cell != null && cell.isAvailable,
-                isRevealed = cell != null && cell.isRevealed
+                isRevealed = cell != null && cell.isRevealed,
+                isHidden = cell != null && cell.isHidden
             };
         }
 

@@ -41,6 +41,7 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private Button selectionConfirmButtonComponent;
     [SerializeField] private TMP_Text selectionConfirmButtonText;
     [SerializeField] private float selectionConfirmDisabledAlpha = 0.35f;
+    [SerializeField] private string selectionConfirmTextKey = "ui.common.confirm";
     [SerializeField] private string selectionConfirmText = "确认";
 
     private const string LayoutConfigResourcePath = "Config/MaterialListPanelLayoutConfig";
@@ -320,7 +321,7 @@ public class MaterialListPanelUI : MonoBehaviour
             selectionConfirmCanvasGroup.interactable = enabled;
         }
         if (selectionConfirmButtonText != null)
-            selectionConfirmButtonText.text = selectionConfirmText;
+            selectionConfirmButtonText.text = LocalizationSystem.GetText(selectionConfirmTextKey, selectionConfirmText);
     }
 
     private void HideSelectionConfirmButton()

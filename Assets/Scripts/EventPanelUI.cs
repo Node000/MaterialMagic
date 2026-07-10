@@ -102,7 +102,7 @@ public class EventPanelUI : MonoBehaviour
         Transform optionAreaTransform = GetPanelContentRoot().Find("OptionArea");
         optionArea = optionAreaTransform as RectTransform;
         if (hintText != null)
-            hintText.text = "左键：跳过/继续；打出素材并结束回合来选择选项";
+            hintText.text = LocalizationSystem.GetText("ui.event_panel.hint", "左键：跳过/继续；打出素材并结束回合来选择选项");
         if (optionArea != null)
         {
             if (optionPrefab == null)
@@ -671,120 +671,7 @@ public class EventPanelUI : MonoBehaviour
 
     private static string GetOptionEffectText(EventOptionData option)
     {
-        if (option != null && option.effects != null && option.effects.Length > 0)
-        {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < option.effects.Length; i++)
-            {
-                string effectText = GetEffectDataText(option.effects[i], option);
-                if (string.IsNullOrEmpty(effectText))
-                    continue;
-                if (builder.Length > 0)
-                    builder.Append("；");
-                builder.Append(effectText);
-            }
-            return "效果：" + (builder.Length > 0 ? builder.ToString() : "无直接效果");
-        }
-
-        string effect = "无直接效果";
-        if (option.resultId == 1)
-            effect = "恢复10点生命";
-        else if (option.resultId == 2)
-            effect = "之后每回合抽牌数+1";
-        else if (option.resultId == 100)
-            effect = "选择并删除" + GetChoiceCountText(option) + "张素材牌";
-        else if (option.resultId >= 101 && option.resultId <= 104)
-            effect = "获得1张素材牌";
-        else if (option.resultId == 201)
-            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加助燃";
-        else if (option.resultId == 202)
-            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加流转";
-        else if (option.resultId == 203)
-            effect = "选择" + GetChoiceCountText(option) + "张手牌素材，添加液化";
-        else if (option.resultId == 300)
-            effect = "恢复30%最大生命";
-        else if (option.resultId == 301)
-            effect = LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个道具上");
-        else if (option.resultId == 302)
-            effect = LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个道具上");
-
-        return "效果：" + effect;
-    }
-
-    private static string GetEffectDataText(EventEffectData effect, EventOptionData option)
-    {
-        if (effect == null)
-            return string.Empty;
-
-        switch (effect.rewardType)
-        {
-            case EventRewardType.Heal:
-                return "恢复" + GetEffectAmountText(effect, 10) + "点生命";
-            case EventRewardType.LoseHealth:
-                return "失去" + GetEffectAmountText(effect, 1) + "点生命" + (effect.escalatePerUse > 0 ? "，每次+" + effect.escalatePerUse : string.Empty);
-            case EventRewardType.GainGold:
-                return "获得" + GetEffectAmountText(effect, 1) + "金币";
-            case EventRewardType.GainMagic:
-                return "获得一次道具奖励";
-            case EventRewardType.GainMagicModifier:
-                return "获得一次道具强化";
-            case EventRewardType.IncreaseMaxHealth:
-                return "生命上限+" + GetEffectAmountText(effect, 5);
-            case EventRewardType.GainMaterial:
-                return "获得" + GetEffectCountText(effect, 1) + "张箭头";
-            case EventRewardType.GainRandomMaterial:
-                return "获得" + GetEffectCountText(effect, 1) + "张随机箭头";
-            case EventRewardType.GainSameRandomMaterials:
-                return "获得随机同种箭头x" + GetEffectCountText(effect, 1);
-            case EventRewardType.IncreaseDrawCount:
-                return "抽牌数+" + GetEffectAmountText(effect, 1);
-            case EventRewardType.RemoveMaterial:
-                return "选择并删除" + GetEffectChoiceCountText(effect, option, 1) + "张箭头";
-            case EventRewardType.GainNextBattleStartShield:
-                return "下场战斗开始时，获得" + GetEffectAmountText(effect, 1) + "点护盾";
-            case EventRewardType.GainMaterialModifier:
-                return "选择1张箭头获得" + GetMaterialModifierNameText(effect.modifierId) + "";
-            case EventRewardType.SpendAllGold:
-                return "失去所有金币";
-            case EventRewardType.RandomizeDeckBasicMaterials:
-                return "随机变化所有箭头方向";
-            case EventRewardType.GainRandomSyntaxMaterial:
-                return "获得1张随机句法符号";
-            default:
-                return string.Empty;
-        }
-    }
-
-    private static string GetMaterialModifierNameText(string modifierId)
-    {
-        if (string.IsNullOrEmpty(modifierId))
-            return "箭头附魔";
-
-        return LocalizationSystem.GetText("modifier." + modifierId + ".name", modifierId);
-    }
-
-    private static string GetEffectAmountText(EventEffectData effect, int defaultAmount)
-    {
-        return (effect != null && effect.amount != 0 ? effect.amount : defaultAmount).ToString();
-    }
-
-    private static string GetEffectCountText(EventEffectData effect, int defaultCount)
-    {
-        return (effect != null && effect.count > 0 ? effect.count : defaultCount).ToString();
-    }
-
-    private static string GetEffectChoiceCountText(EventEffectData effect, EventOptionData option, int defaultCount)
-    {
-        if (effect != null && effect.choiceCount > 0)
-            return effect.choiceCount.ToString();
-        if (option != null && option.choiceCount > 0)
-            return option.choiceCount.ToString();
-        return defaultCount.ToString();
-    }
-
-    private static string GetChoiceCountText(EventOptionData option)
-    {
-        return option != null && option.choiceCount > 0 ? option.choiceCount.ToString() : "1";
+        return EventDetailTextUtility.GetOptionEffectText(option);
     }
 
     private static string BuildOptionTagTooltipText(EventOptionData option)

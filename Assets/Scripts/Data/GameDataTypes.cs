@@ -112,7 +112,14 @@ public enum BuffEnum
     KeepHand = 45,
     RetainedNextDraw = 46,
     DoubleEnemyBurningOnTurnEnd = 47,
-    ExtraEnemyDebuff = 48
+    ExtraEnemyDebuff = 48,
+    MaterialBaseEffectRepeat = 49,
+    KeepShieldNextTurn = 50,
+    BurningDamageShieldNextTurn = 51,
+    SpellPowerOnExtraDraw = 52,
+    WeakOnEnemyAttack = 53,
+    TemporaryWindOnMaterialConsumed = 54,
+    WeakNextTurn = 55
 }
 
 public enum BuffKindEnum
@@ -143,6 +150,14 @@ public enum MagicEffectType
     Heal = 3,
     ApplyBuff = 4,
     DrawNextTurn = 5
+}
+
+public enum MagicRarity
+{
+    Common = 0,
+    Rare = 1,
+    Epic = 2,
+    Legendary = 3
 }
 
 public enum EnemyIntentType
@@ -205,7 +220,6 @@ public enum MagicModifierTargetRule
 {
     None = 0,
     Any = 1,
-    Element = 2,
     EffectType = 3,
     Tag = 4
 }
@@ -248,11 +262,11 @@ public class MagicData : IDataRecord, INumericDataRecord
 {
     public int numericId;
     public string id;
+    public MagicRarity rarity = MagicRarity.Common;
     public string nameKey;
     public string descriptionKey;
     public string script;
     public string iconName;
-    public MaterialEnum element;
     public string[] tagIds = Array.Empty<string>();
     public MaterialEnum[] recipe = Array.Empty<MaterialEnum>();
     public MagicMatchRule matchRule;
@@ -260,6 +274,15 @@ public class MagicData : IDataRecord, INumericDataRecord
 
     public string Id => id;
     public int NumericId => numericId;
+}
+
+[Serializable]
+public class MagicRarityData
+{
+    public MagicRarity rarity;
+    public string id;
+    public int weight = 1;
+    public string borderColor = "#FFFFFFFF";
 }
 
 [Serializable]
@@ -280,7 +303,6 @@ public class MagicModifierData : IDataRecord
     public string descriptionKey;
     public string iconName;
     public MagicModifierTargetRule targetRule = MagicModifierTargetRule.Any;
-    public MaterialEnum targetElement;
     public MagicEffectType targetEffectType;
     public string targetTagId;
     public int value;

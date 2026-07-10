@@ -151,7 +151,10 @@ public class RunManager
     {
         RunMapCellModel cell = mapGrid != null ? mapGrid.GetCurrentCell() : null;
         if (cell != null && !cell.isBoss)
+        {
             cell.level = null;
+            cell.isHidden = false;
+        }
     }
 
     public void RevealCurrentMapNeighbors()
@@ -186,6 +189,7 @@ public class RunManager
             {
                 cell.isBoss = true;
                 cell.isRevealed = true;
+                cell.isHidden = false;
             }
         }
     }

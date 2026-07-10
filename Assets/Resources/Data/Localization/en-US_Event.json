@@ -1,0 +1,768 @@
+{
+  "items": [
+    {
+      "key": "event.test_crossroad.title",
+      "text": "Crossroads"
+    },
+    {
+      "key": "event.material_trade.title",
+      "text": "Arrow Market"
+    },
+    {
+      "key": "event.modifier_shrine.title",
+      "text": "Enchantment Altar"
+    },
+    {
+      "key": "event.draw_training.title",
+      "text": "More Arrows!"
+    },
+    {
+      "key": "level.rest_001.title",
+      "text": "Rest Camp"
+    },
+    {
+      "key": "event.test_crossroad.start.1",
+      "text": "You arrive at a crossroads lit by ancient runes."
+    },
+    {
+      "key": "event.test_crossroad.start.2",
+      "text": "A clear spring bubbles between the rocks, and a broken stele still hums with magic."
+    },
+    {
+      "key": "event.test_crossroad.option.inspect",
+      "text": "Inspect the Runes"
+    },
+    {
+      "key": "event.test_crossroad.option.heal",
+      "text": "Drink from the Spring"
+    },
+    {
+      "key": "event.test_crossroad.option.remove_material",
+      "text": "Offer an Arrow"
+    },
+    {
+      "key": "event.material_trade.start.1",
+      "text": "A traveling merchant opens a case of arrows, their elements clashing inside."
+    },
+    {
+      "key": "event.material_trade.start.2",
+      "text": "He can deal with your extra arrows, or hand you a new one."
+    },
+    {
+      "key": "event.material_trade.option.remove_material",
+      "text": "Remove an Arrow"
+    },
+    {
+      "key": "event.material_trade.option.go_gain",
+      "text": "Pick a New Arrow"
+    },
+    {
+      "key": "event.material_trade.gain_select.1",
+      "text": "The merchant slides over several elemental cores and waits for your choice."
+    },
+    {
+      "key": "event.test_crossroad.rune.1",
+      "text": "The runes answer your arrow, and the patterns on the stele flare back to life."
+    },
+    {
+      "key": "event.test_crossroad.rune.2",
+      "text": "You can keep guiding this power and change the arrows you draw later."
+    },
+    {
+      "key": "event.test_crossroad.option.upgrade",
+      "text": "Guide the Magic"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_fire",
+      "text": "Take the Up Arrow"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_wind",
+      "text": "Take the Left Arrow"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_water",
+      "text": "Take the Down Arrow"
+    },
+    {
+      "key": "event.test_crossroad.option.gain_earth",
+      "text": "Take the Right Arrow"
+    },
+    {
+      "key": "event.test_crossroad.option.kindling",
+      "text": "Brand with Kindling"
+    },
+    {
+      "key": "event.test_crossroad.option.flow_two",
+      "text": "Brand with Flow"
+    },
+    {
+      "key": "event.test_crossroad.option.liquefy",
+      "text": "Brand with Liquefy"
+    },
+    {
+      "key": "event.modifier_shrine.start.1",
+      "text": "You find an enchantment altar humming under its breath."
+    },
+    {
+      "key": "event.modifier_shrine.start.2",
+      "text": "It can carve different spell marks into your arrows."
+    },
+    {
+      "key": "event.modifier_shrine.option.more",
+      "text": "View Other Marks"
+    },
+    {
+      "key": "event.modifier_shrine.more.1",
+      "text": "Symbols on the altar back slowly flip over, revealing two more marks."
+    },
+    {
+      "key": "event.draw_training.start.1",
+      "text": "You review the spellwork from the last fight in the trial logs. Next round, you can draw arrows faster."
+    },
+    {
+      "key": "event.draw_training.option.increase_draw",
+      "text": "Draw Count +1"
+    },
+    {
+      "key": "rest.001.1",
+      "text": "You light a small campfire under a sheltered cliff."
+    },
+    {
+      "key": "rest.001.2",
+      "text": "Warmth drives away fatigue, restoring some of your HP."
+    },
+    {
+      "key": "event.test_crossroad.option.leave",
+      "text": "Leave"
+    },
+    {
+      "key": "event.test_crossroad.spring.1",
+      "text": "The spring washes away your travel fatigue. You heal 10 HP."
+    },
+    {
+      "key": "event.test_crossroad.remove_material.1",
+      "text": "You toss an arrow into the rock crack. The runes flash briefly, then go still."
+    },
+    {
+      "key": "event.test_crossroad.upgrade.1",
+      "text": "Magic flows into your deck. From now on, you draw 1 extra arrow each turn."
+    },
+    {
+      "key": "event.test_crossroad.gain_fire.1",
+      "text": "An Up arrow drops into your arrow sequence."
+    },
+    {
+      "key": "event.test_crossroad.gain_wind.1",
+      "text": "A Left arrow drops into your arrow sequence."
+    },
+    {
+      "key": "event.test_crossroad.gain_water.1",
+      "text": "A Down arrow drops into your arrow sequence."
+    },
+    {
+      "key": "event.test_crossroad.gain_earth.1",
+      "text": "A Right arrow drops into your arrow sequence."
+    },
+    {
+      "key": "event.test_crossroad.kindling.1",
+      "text": "A Kindling mark appears on the arrow surface."
+    },
+    {
+      "key": "event.test_crossroad.flow.1",
+      "text": "A Flow mark appears on the arrow surface."
+    },
+    {
+      "key": "event.test_crossroad.liquefy.1",
+      "text": "The arrow edge glows, and it can now also count as a Down arrow."
+    },
+    {
+      "key": "event.common.option.leave",
+      "text": "Leave"
+    },
+    {
+      "key": "event.midnight_convenience.title",
+      "text": "Midnight Convenience Store"
+    },
+    {
+      "key": "event.midnight_convenience.start.1",
+      "text": "At 2 a.m., pink neon overexposes the store entrance like a dream."
+    },
+    {
+      "key": "event.midnight_convenience.start.2",
+      "text": "Only three items remain on the shelves, and the barcode scanner is still muttering to itself."
+    },
+    {
+      "key": "event.midnight_convenience.option.biscuit",
+      "text": "Compressed Biscuits"
+    },
+    {
+      "key": "event.midnight_convenience.option.energy_drink",
+      "text": "Energy Drink"
+    },
+    {
+      "key": "event.midnight_convenience.option.mint",
+      "text": "Mint Candy"
+    },
+    {
+      "key": "event.midnight_convenience.biscuit.1",
+      "text": "The biscuit tastes like dust inside a server case, but the calories are real. You heal."
+    },
+    {
+      "key": "event.midnight_convenience.energy_drink.1",
+      "text": "The drink flushes out a stray memory. Choose an arrow and remove it from your deck."
+    },
+    {
+      "key": "event.midnight_convenience.mint.1",
+      "text": "Mint bursts on your tongue, and a new item ad pops up."
+    },
+    {
+      "key": "event.midnight_convenience.leave.1",
+      "text": "You leave without checking out. The door sensor whispers, \"See you next time.\""
+    },
+    {
+      "key": "event.capsule_machine.title",
+      "text": "Capsule Machine"
+    },
+    {
+      "key": "event.capsule_machine.start.1",
+      "text": "An old capsule machine is wedged at the end of the alley, colored static floating inside its clear shell."
+    },
+    {
+      "key": "event.capsule_machine.start.2",
+      "text": "Its coin slot blinks. A sticker nearby says, \"Win rate depends on mood.\""
+    },
+    {
+      "key": "event.capsule_machine.option.insert_coin",
+      "text": "Insert Coin"
+    },
+    {
+      "key": "event.capsule_machine.option.smash_open",
+      "text": "Kick It"
+    },
+    {
+      "key": "event.capsule_machine.insert_coin.1",
+      "text": "Three capsules roll out, each containing a copy of the same arrow."
+    },
+    {
+      "key": "event.capsule_machine.smash_open.1",
+      "text": "Plastic shells scatter everywhere. You get hurt, but you pry an arrow from the machine belly."
+    },
+    {
+      "key": "event.capsule_machine.leave.1",
+      "text": "You stare at it for a while and decide not to make eye contact with RNG."
+    },
+    {
+      "key": "event.anonymous_forum.title",
+      "text": "Anonymous Forum"
+    },
+    {
+      "key": "event.anonymous_forum.start.1",
+      "text": "You scroll through an anonymous forum. Every avatar is a default icon, but the posts refresh like living things."
+    },
+    {
+      "key": "event.anonymous_forum.start.2",
+      "text": "A hot thread flickers: \"You are here already. Say something.\""
+    },
+    {
+      "key": "event.anonymous_forum.option.argue",
+      "text": "Argue"
+    },
+    {
+      "key": "event.anonymous_forum.option.post",
+      "text": "Post"
+    },
+    {
+      "key": "event.anonymous_forum.argue.1",
+      "text": "You win an argument with no audience, delete an annoying arrow, and recover some HP."
+    },
+    {
+      "key": "event.anonymous_forum.post.1",
+      "text": "After posting, the comments bite back at your sanity, but you also earn an item upgrade."
+    },
+    {
+      "key": "event.anonymous_forum.leave.1",
+      "text": "You close the page. The background still pops up with \"Someone replied to you.\""
+    },
+    {
+      "key": "event.coffee_or_cola.title",
+      "text": "Coffee or Cola?"
+    },
+    {
+      "key": "event.coffee_or_cola.start.1",
+      "text": "The vending machine screen is split in two: coffee on one side, cola on the other."
+    },
+    {
+      "key": "event.coffee_or_cola.start.2",
+      "text": "It asks, \"Awake, or even more awake?\""
+    },
+    {
+      "key": "event.coffee_or_cola.option.all",
+      "text": "I Will Take Both"
+    },
+    {
+      "key": "event.coffee_or_cola.option.coffee",
+      "text": "Coffee"
+    },
+    {
+      "key": "event.coffee_or_cola.option.cola",
+      "text": "Cola"
+    },
+    {
+      "key": "event.coffee_or_cola.all.1",
+      "text": "You mix both cans and drink them. It tastes dangerous, but your HP and max HP both rise."
+    },
+    {
+      "key": "event.coffee_or_cola.coffee.1",
+      "text": "The bitterness pulls you back to reality. You heal."
+    },
+    {
+      "key": "event.coffee_or_cola.cola.1",
+      "text": "Bubbles race through your veins. Your max HP increases."
+    },
+    {
+      "key": "event.coffee_or_cola.leave.1",
+      "text": "You press refund. The machine spits out a cheap sigh."
+    },
+    {
+      "key": "event.limited_sale.title",
+      "text": "Limited-Time Offer!"
+    },
+    {
+      "key": "event.limited_sale.start.1",
+      "text": "A mall billboard recognizes your face as a \"potential impulse buyer.\""
+    },
+    {
+      "key": "event.limited_sale.start.2",
+      "text": "Popups pile up: only now, miss it and wait forever."
+    },
+    {
+      "key": "event.limited_sale.option.clothes",
+      "text": "Nice Clothes"
+    },
+    {
+      "key": "event.limited_sale.option.weapon",
+      "text": "Nice Weapon"
+    },
+    {
+      "key": "event.limited_sale.option.no_buy",
+      "text": "Save 100% by Not Buying"
+    },
+    {
+      "key": "event.limited_sale.clothes.1",
+      "text": "New clothes fit like armor. Your max HP increases."
+    },
+    {
+      "key": "event.limited_sale.weapon.1",
+      "text": "The weapon is only a sticker, but it really changes your item."
+    },
+    {
+      "key": "event.limited_sale.no_buy.1",
+      "text": "You successfully resist consumerism. The system gives you 2 Gold as a retention reward."
+    },
+    {
+      "key": "event.promo_link.title",
+      "text": "Referral Link"
+    },
+    {
+      "key": "event.promo_link.start.1",
+      "text": "A popup chases you: \"Share with friends and get a reward now!\""
+    },
+    {
+      "key": "event.promo_link.start.2",
+      "text": "Fine print: this event may cause mild social death or HP loss."
+    },
+    {
+      "key": "event.promo_link.option.share",
+      "text": "Share Link"
+    },
+    {
+      "key": "event.promo_link.option.share_again",
+      "text": "Share Link Again"
+    },
+    {
+      "key": "event.promo_link.repeat.1",
+      "text": "The link is out and the Gold is in. The popup gets more excited: share again?"
+    },
+    {
+      "key": "event.promo_link.leave.1",
+      "text": "You close the popup. It still tries to persuade you during the closing animation."
+    },
+    {
+      "key": "event.traffic_growth.title",
+      "text": "Traffic Growth"
+    },
+    {
+      "key": "event.traffic_growth.start.1",
+      "text": "A data curve suddenly spikes, like a neon snake biting into your turn."
+    },
+    {
+      "key": "event.traffic_growth.option.accept",
+      "text": "Draw Count +1"
+    },
+    {
+      "key": "event.traffic_growth.growth.1",
+      "text": "You learn to grab arrows faster. From now on, draw count +1 each turn."
+    },
+    {
+      "key": "event.midnight_convenience.option.sleep",
+      "text": "Go Home and Sleep"
+    },
+    {
+      "key": "event.midnight_convenience.sleep.1",
+      "text": "You cannot keep staying up tonight, so you decide to rest properly."
+    },
+    {
+      "key": "event.capsule_machine.option.kick",
+      "text": "Kick It"
+    },
+    {
+      "key": "event.capsule_machine.option.punch",
+      "text": "Punch It"
+    },
+    {
+      "key": "event.capsule_machine.punch.1",
+      "text": "You punch the capsule machine. The coin slot coughs up two coins, and your hand starts aching."
+    },
+    {
+      "key": "event.anonymous_forum.option.reply",
+      "text": "Reply"
+    },
+    {
+      "key": "event.anonymous_forum.reply.1",
+      "text": "You make a sincere reply. A stranger approval becomes brief security. At the start of your next battle, gain 4 Shield."
+    },
+    {
+      "key": "event.coffee_or_cola.coffee_remove.1",
+      "text": "The coffee is as bitter as a to-do list. You wake up and decide to delete an arrow that should not stay."
+    },
+    {
+      "key": "event.coffee_or_cola.option.water",
+      "text": "Plain Water Is Healthier"
+    },
+    {
+      "key": "event.coffee_or_cola.water.1",
+      "text": "You pour a cup of plain water. Your body does not complain and quietly recovers a little."
+    },
+    {
+      "key": "event.limited_sale.no_buy_save.1",
+      "text": "You close every popup and realize the best deal is buying nothing. The system reluctantly spits out 2 Gold as a \"rational spending reward.\""
+    },
+    {
+      "key": "event.promo_link.option.stop",
+      "text": "Know When to Stop"
+    },
+    {
+      "key": "event.traffic_growth.start.video.1",
+      "text": "You post a clear video online. Within minutes, views surge like a neon tide. Comments and likes crowd the screen, and suddenly the next journey feels faster."
+    },
+    {
+      "key": "event.traffic_growth.option.cheer",
+      "text": "Heck Yeah!!!"
+    },
+    {
+      "key": "event.traffic_growth.growth.video.1",
+      "text": "The platform traffic pushes you forward. From now on, draw count +1 each turn."
+    },
+    {
+      "key": "level.arrow_remove.title",
+      "text": "Remove"
+    },
+    {
+      "key": "level.arrow_add.title",
+      "text": "Add"
+    },
+    {
+      "key": "event.arrow_recycle_station.title",
+      "text": "Arrow Recycling Station"
+    },
+    {
+      "key": "event.arrow_recycle_station.start.1",
+      "text": "An old terminal is set into the wall, its screen flashing \"Recycle extra arrows.\""
+    },
+    {
+      "key": "event.arrow_recycle_station.start.2",
+      "text": "It reads your played arrow sequence and starts a recycling process at matching strength."
+    },
+    {
+      "key": "event.arrow_recycle_station.option.single",
+      "text": "Light Recycling"
+    },
+    {
+      "key": "event.arrow_recycle_station.option.double",
+      "text": "Deep Recycling"
+    },
+    {
+      "key": "event.arrow_recycle_station.single.1",
+      "text": "The terminal compresses an arrow into a hot data shard. Your deck feels a little lighter."
+    },
+    {
+      "key": "event.arrow_recycle_station.double.1",
+      "text": "The terminal slams down twice, turning two arrows into tiny motes of light. Your deck feels much lighter."
+    },
+    {
+      "key": "event.arrow_recycle_station.leave.1",
+      "text": "You close the recycling program, and the terminal screen slowly goes dark."
+    },
+    {
+      "key": "event.arrow_claw_machine.title",
+      "text": "Arrow Claw Machine"
+    },
+    {
+      "key": "event.arrow_claw_machine.start.1",
+      "text": "A claw machine glows with neon lights, its glass cabinet packed with Up, Down, Left, and Right arrows."
+    },
+    {
+      "key": "event.arrow_claw_machine.start.2",
+      "text": "The claw hangs in midair and only responds to arrows of matching direction."
+    },
+    {
+      "key": "event.arrow_claw_machine.option.up",
+      "text": "Grab Up Arrow"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.down",
+      "text": "Grab Down Arrow"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.left",
+      "text": "Grab Left Arrow"
+    },
+    {
+      "key": "event.arrow_claw_machine.option.right",
+      "text": "Grab Right Arrow"
+    },
+    {
+      "key": "event.arrow_claw_machine.up.1",
+      "text": "The claw wobbles down and picks up a glowing Up arrow. The new arrow drops into your deck."
+    },
+    {
+      "key": "event.arrow_claw_machine.down.1",
+      "text": "The claw wobbles down and picks up a glowing Down arrow. The new arrow drops into your deck."
+    },
+    {
+      "key": "event.arrow_claw_machine.left.1",
+      "text": "The claw wobbles down and picks up a glowing Left arrow. The new arrow drops into your deck."
+    },
+    {
+      "key": "event.arrow_claw_machine.right.1",
+      "text": "The claw wobbles down and picks up a glowing Right arrow. The new arrow drops into your deck."
+    },
+    {
+      "key": "event.arrow_claw_machine.leave.1",
+      "text": "You release the joystick, and the arrows inside keep flashing neon."
+    },
+    {
+      "key": "event.screen_protector_stall.title",
+      "text": "Screen Protector Stall"
+    },
+    {
+      "key": "event.screen_protector_stall.start.1",
+      "text": "A roadside stall displays rows of glowing screen protectors. The vendor says each one can stick to an arrow."
+    },
+    {
+      "key": "event.screen_protector_stall.start.2",
+      "text": "He flicks a scraper with practiced ease. Bubbles under the neon look like tiny item accidents."
+    },
+    {
+      "key": "event.screen_protector_stall.option.free",
+      "text": "Free Protector"
+    },
+    {
+      "key": "event.screen_protector_stall.option.cheap",
+      "text": "Cheap Film"
+    },
+    {
+      "key": "event.screen_protector_stall.option.tempered",
+      "text": "Tempered Glass"
+    },
+    {
+      "key": "event.screen_protector_stall.free.1",
+      "text": "The free film fits surprisingly well. Choose an arrow and let it stay in your hand a little longer."
+    },
+    {
+      "key": "event.screen_protector_stall.cheap.1",
+      "text": "The film cracks into pretty patterns as soon as it sticks. Choose an arrow and make it fragile."
+    },
+    {
+      "key": "event.screen_protector_stall.tempered.1",
+      "text": "The tempered glass clicks sharply. Choose an arrow and make it return next turn."
+    },
+    {
+      "key": "event.printer_accident.title",
+      "text": "Printer Accident"
+    },
+    {
+      "key": "event.printer_accident.start.1",
+      "text": "A self-service printer is spitting out direction arrows, steam rising from the paper edges."
+    },
+    {
+      "key": "event.printer_accident.start.2",
+      "text": "The screen says \"Print Successful,\" but you are sure nothing is aligned."
+    },
+    {
+      "key": "event.printer_accident.option.unclear",
+      "text": "Cannot Tell"
+    },
+    {
+      "key": "event.printer_accident.option.wrong_size",
+      "text": "Wrong Size"
+    },
+    {
+      "key": "event.printer_accident.option.misaligned",
+      "text": "Misaligned"
+    },
+    {
+      "key": "event.printer_accident.unclear.1",
+      "text": "You decide to pretend you do not understand. The printer refunds two coins as compensation for emotional damage."
+    },
+    {
+      "key": "event.printer_accident.wrong_size.1",
+      "text": "The print ratio stretches. Choose an arrow and turn it into a larger multi-slot arrow."
+    },
+    {
+      "key": "event.printer_accident.misaligned.1",
+      "text": "The same arrow was printed twice. Choose an arrow and make it heavier when read."
+    },
+    {
+      "key": "event.website_emergency.title",
+      "text": "Website Emergency"
+    },
+    {
+      "key": "event.website_emergency.start.1",
+      "text": "You open a website that should display a map, but the page starts shaking wildly."
+    },
+    {
+      "key": "event.website_emergency.start.2",
+      "text": "Error messages stack up like monsters rushing to sign up."
+    },
+    {
+      "key": "event.website_emergency.option.refresh",
+      "text": "Just Refresh"
+    },
+    {
+      "key": "event.website_emergency.option.reversed_direction",
+      "text": "Page Not Responding"
+    },
+    {
+      "key": "event.website_emergency.option.popups",
+      "text": "So Many Popups"
+    },
+    {
+      "key": "event.website_emergency.refresh.1",
+      "text": "You press refresh. The page briefly returns to normal, and your spirit recovers a little too."
+    },
+    {
+      "key": "event.website_emergency.reversed_direction.1",
+      "text": "The page freezes on a loading spinner. Choose an arrow and make it stay in hand at turn end."
+    },
+    {
+      "key": "event.website_emergency.popups.1",
+      "text": "The more popups you close, the more appear. Choose an arrow and teach it to copy itself after play."
+    },
+    {
+      "key": "event.neon_wayfinding.title",
+      "text": "Omni Night Sign"
+    },
+    {
+      "key": "event.neon_wayfinding.start.1",
+      "text": "At 3 a.m., the wayfinding sign in an abandoned mall is still lit. Pink-purple arrows flicker through empty corridors—exit, restroom, arcade, underground parking... until all arrows point at you."
+    },
+    {
+      "key": "event.neon_wayfinding.option.follow_all_arrows",
+      "text": "Follow All the Arrows"
+    },
+    {
+      "key": "event.neon_wayfinding.option.take_photo",
+      "text": "Take One Photo"
+    },
+    {
+      "key": "event.neon_wayfinding.follow_all_arrows.1",
+      "text": "The sign goes dark all at once, then lights up again in your hand. You gain an omni symbol."
+    },
+    {
+      "key": "event.neon_wayfinding.take_photo.1",
+      "text": "The photo blurs into purple light, but someone is willing to pay for weird photos."
+    },
+    {
+      "key": "event.suspected_trojan.title",
+      "text": "Suspected Trojan?"
+    },
+    {
+      "key": "event.suspected_trojan.start.1",
+      "text": "A constantly changing arrow flashes on your phone. Maybe you downloaded a Trojan? The phone is old enough that it finds no way to attack, so it just keeps blinking uselessly."
+    },
+    {
+      "key": "event.suspected_trojan.option.keep_it",
+      "text": "Fine As It Is"
+    },
+    {
+      "key": "event.suspected_trojan.option.reinstall_system",
+      "text": "Reinstall System"
+    },
+    {
+      "key": "event.suspected_trojan.keep_it.1",
+      "text": "You decide to leave it alone. The flashing arrow jumps into your deck, still changing direction."
+    },
+    {
+      "key": "event.suspected_trojan.reinstall_system.1",
+      "text": "The progress bar reaches 100%, and your wallet is cleared too. Every arrow looks freshly reset."
+    },
+    {
+      "key": "event.missing_fonts.title",
+      "text": "Missing Fonts"
+    },
+    {
+      "key": "event.missing_fonts.start.1",
+      "text": "A night-shift print shop computer pops up a stream of garbled text. Every font is gone except a few stubborn symbols. After some clicks, a \"Disable compatibility mode?\" popup appears."
+    },
+    {
+      "key": "event.missing_fonts.option.disable_compatibility",
+      "text": "Disable Compatibility Mode"
+    },
+    {
+      "key": "event.missing_fonts.option.keep_compatibility",
+      "text": "Keep Compatibility Mode"
+    },
+    {
+      "key": "event.missing_fonts.disable_compatibility.1",
+      "text": "The screen goes black for a moment, then spits out a symbol before it can become text. You gain a random syntax symbol."
+    },
+    {
+      "key": "event.missing_fonts.keep_compatibility.1",
+      "text": "You leave things as they are. The print shop owner appreciates your restraint and slips you a few coins."
+    },
+    {
+      "key": "event.tutorial_signpost.title",
+      "text": "Signpost"
+    },
+    {
+      "key": "event.tutorial_signpost.start.1",
+      "text": "You arrive at a three-way crossing. A sign in front of you reads, \"Geniuses left, lunatics right.\""
+    },
+    {
+      "key": "event.tutorial_signpost.option.left",
+      "text": "Go Left"
+    },
+    {
+      "key": "event.tutorial_signpost.option.right",
+      "text": "Go Right"
+    },
+    {
+      "key": "event.tutorial_signpost.option.straight",
+      "text": "Why Turn?"
+    },
+    {
+      "key": "event.tutorial_signpost.left.1",
+      "text": "You choose left. Your max HP increases."
+    },
+    {
+      "key": "event.tutorial_signpost.right.1",
+      "text": "You choose right. The pain and tradeoff both feel real."
+    },
+    {
+      "key": "event.tutorial_signpost.straight.1",
+      "text": "You refuse to turn, so you receive an item reward."
+    }
+  ]
+}

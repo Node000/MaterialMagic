@@ -19,6 +19,7 @@ public class RunMapCellModel
     public bool isBoss;
     public bool isAvailable = true;
     public bool isRevealed;
+    public bool isHidden;
     public bool reachableSearchVisited;
 
     public LevelType DisplayType => isBoss ? LevelType.Elite : level != null ? level.levelType : LevelType.Battle;

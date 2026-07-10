@@ -24,7 +24,13 @@ public enum DifficultyUpgradeEffectType
     MapWidthDelta = 15,
     MapHeightDelta = 16,
     MapBlockAvailableCells = 17,
-    StartingMagicSlotDelta = 18
+    StartingMagicSlotDelta = 18,
+    MagicRarityWeightMultiplier = 19,
+    MapHiddenLevelChanceDelta = 20,
+    MapLevelWeightMultiplier = 21,
+    DesignedMapLevelCountDelta = 22,
+    ChapterLengthDelta = 23,
+    StartingDeckAddPlaceholder = 24
 }
 
 [Serializable]
@@ -35,6 +41,7 @@ public class DifficultyUpgradeEffectData
     public int intValue;
     public BuffEnum buffType;
     public int stack;
+    public MagicRarity rarity;
 }
 
 [Serializable]
@@ -121,6 +128,21 @@ public abstract class DifficultyUpgrade
         return height;
     }
 
+    public virtual int ModifyMapLevelWeight(LevelType levelType, int weight)
+    {
+        return weight;
+    }
+
+    public virtual int ModifyDesignedMapLevelCount(LevelType levelType, int count)
+    {
+        return count;
+    }
+
+    public virtual int ModifyChapterLength(int length)
+    {
+        return length;
+    }
+
     public virtual void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
     {
     }
@@ -128,6 +150,11 @@ public abstract class DifficultyUpgrade
     public virtual int ModifyMagicSlotCount(int slotCount)
     {
         return slotCount;
+    }
+
+    public virtual float ModifyMagicRarityWeight(MagicRarity rarity, float weight)
+    {
+        return weight;
     }
 }
 
@@ -210,17 +237,70 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         return ModifyMapSize(height, DifficultyUpgradeEffectType.MapHeightDelta);
     }
 
+    public override int ModifyMapLevelWeight(LevelType levelType, int weight)
+    {
+        if (weight <= 0 || Data == null)
+            return weight;
+
+        int result = weight;
+        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
+        {
+            DifficultyUpgradeEffectData effect = Data.effects[i];
+            if (effect != null && effect.type == DifficultyUpgradeEffectType.MapLevelWeightMultiplier && MatchesTargetLevelType(levelType))
+                result = Mathf.RoundToInt(result * Mathf.Max(0f, effect.value));
+        }
+        return Mathf.Max(0, result);
+    }
+
+    public override int ModifyDesignedMapLevelCount(LevelType levelType, int count)
+    {
+        if (Data == null)
+            return count;
+
+        int result = count;
+        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
+        {
+            DifficultyUpgradeEffectData effect = Data.effects[i];
+            if (effect != null && effect.type == DifficultyUpgradeEffectType.DesignedMapLevelCountDelta && MatchesTargetLevelType(levelType))
+                result += GetEffectInt(effect);
+        }
+        return Mathf.Max(0, result);
+    }
+
+    public override int ModifyChapterLength(int length)
+    {
+        if (Data == null)
+            return length;
+
+        int result = length;
+        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
+        {
+            DifficultyUpgradeEffectData effect = Data.effects[i];
+            if (effect != null && effect.type == DifficultyUpgradeEffectType.ChapterLengthDelta)
+                result += GetEffectInt(effect);
+        }
+        return Mathf.Max(1, result);
+    }
+
     public override void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
     {
         if (grid == null || Data == null)
             return;
 
+        float hiddenWeight = 0f;
         for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
         {
             DifficultyUpgradeEffectData effect = Data.effects[i];
-            if (effect != null && effect.type == DifficultyUpgradeEffectType.MapBlockAvailableCells)
+            if (effect == null)
+                continue;
+
+            if (effect.type == DifficultyUpgradeEffectType.MapBlockAvailableCells)
                 BlockAvailableMapCells(grid, Mathf.Max(0, GetEffectInt(effect)), nextRandomInt);
+            else if (effect.type == DifficultyUpgradeEffectType.MapHiddenLevelChanceDelta)
+                hiddenWeight += effect.value;
         }
+
+        ApplyHiddenMapCells(grid, hiddenWeight, nextRandomInt);
     }
 
     public override int ModifyMagicSlotCount(int slotCount)
@@ -238,6 +318,21 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         return Mathf.Max(1, result);
     }
 
+    public override float ModifyMagicRarityWeight(MagicRarity rarity, float weight)
+    {
+        if (weight <= 0f || Data == null)
+            return weight;
+
+        float result = weight;
+        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
+        {
+            DifficultyUpgradeEffectData effect = Data.effects[i];
+            if (effect != null && effect.type == DifficultyUpgradeEffectType.MagicRarityWeightMultiplier && effect.rarity == rarity)
+                result *= Mathf.Max(0f, effect.value);
+        }
+        return Mathf.Max(0f, result);
+    }
+
     private int ModifyMapSize(int size, DifficultyUpgradeEffectType effectType)
     {
         if (Data == null)
@@ -251,6 +346,11 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
                 result += GetEffectInt(effect);
         }
         return Mathf.Max(1, result);
+    }
+
+    private bool MatchesTargetLevelType(LevelType levelType)
+    {
+        return Data == null || Data.targetLevelTypes == null || Data.targetLevelTypes.Length == 0 || Contains(Data.targetLevelTypes, levelType);
     }
 
     private bool Matches(EnemyRuntimeDefinition definition, DifficultyUpgradeContext context)
@@ -313,6 +413,9 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
             case DifficultyUpgradeEffectType.StartingDeckAddBasicDirections:
                 AddBasicDirectionSet(player);
                 break;
+            case DifficultyUpgradeEffectType.StartingDeckAddPlaceholder:
+                AddPlaceholderDeckCards(player, Mathf.Max(0, GetEffectInt(effect)));
+                break;
         }
     }
 
@@ -324,9 +427,39 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         player.AddDeckMaterial(MaterialEnum.Earth);
     }
 
+    private static void AddPlaceholderDeckCards(PlayerStatus player, int count)
+    {
+        for (int i = 0; i < count; i++)
+            player.AddDeckPlaceholderMaterial();
+    }
+
     private static int GetEffectInt(DifficultyUpgradeEffectData effect)
     {
         return effect.intValue != 0 ? effect.intValue : Mathf.RoundToInt(effect.value);
+    }
+
+    private static void ApplyHiddenMapCells(RunMapGridModel grid, float hiddenWeight, Func<int, int, int> nextRandomInt)
+    {
+        hiddenWeight = Mathf.Clamp01(hiddenWeight);
+        if (grid == null || hiddenWeight <= 0f || grid.cells == null || grid.cells.Count == 0)
+            return;
+
+        int threshold = Mathf.RoundToInt(hiddenWeight * 10000f);
+        for (int i = 0; i < grid.cells.Count; i++)
+        {
+            RunMapCellModel cell = grid.cells[i];
+            if (CanHideMapCell(grid, cell))
+                cell.isHidden = NextRandomInt(nextRandomInt, 0, 10000) < threshold;
+            else if (cell != null && (cell.isBoss || cell.level != null && cell.level.levelType == LevelType.Elite))
+                cell.isHidden = false;
+        }
+    }
+
+    private static bool CanHideMapCell(RunMapGridModel grid, RunMapCellModel cell)
+    {
+        if (grid == null || cell == null || !cell.isAvailable || cell.isBoss || cell.level == null || cell.level.levelType == LevelType.Elite)
+            return false;
+        return cell.x != grid.playerX || cell.y != grid.playerY;
     }
 
     private static void BlockAvailableMapCells(RunMapGridModel grid, int count, Func<int, int, int> nextRandomInt)
@@ -484,6 +617,30 @@ public static class DifficultyUpgradeSystem
         return Mathf.Max(1, result);
     }
 
+    public static int ModifyMapLevelWeight(LevelType levelType, int weight)
+    {
+        int result = weight;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMapLevelWeight(levelType, result) : result;
+        return Mathf.Max(0, result);
+    }
+
+    public static int ModifyDesignedMapLevelCount(LevelType levelType, int count)
+    {
+        int result = count;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyDesignedMapLevelCount(levelType, result) : result;
+        return Mathf.Max(0, result);
+    }
+
+    public static int ModifyChapterLength(int length)
+    {
+        int result = length;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyChapterLength(result) : result;
+        return Mathf.Max(1, result);
+    }
+
     public static void ApplyMapUpgrades(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
     {
         for (int i = 0; i < activeUpgrades.Count; i++)
@@ -496,6 +653,14 @@ public static class DifficultyUpgradeSystem
         for (int i = 0; i < activeUpgrades.Count; i++)
             result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMagicSlotCount(result) : result;
         return Mathf.Clamp(result, 1, Mathf.Max(1, slotCount));
+    }
+
+    public static float ModifyMagicRarityWeight(MagicRarity rarity, float weight)
+    {
+        float result = weight;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMagicRarityWeight(rarity, result) : result;
+        return Mathf.Max(0f, result);
     }
 
     private static void Initialize(RunDifficultySaveData state)
@@ -513,9 +678,14 @@ public static class DifficultyUpgradeSystem
         }
     }
 
+    public static RunDifficultySaveData BuildPreviewStateForAscension(int ascensionLevel)
+    {
+        return BuildRunStateForAscension(ascensionLevel);
+    }
+
     private static RunDifficultySaveData BuildRunStateForAscension(int ascensionLevel)
     {
-        ascensionLevel = Mathf.Max(0, ascensionLevel);
+        ascensionLevel = Mathf.Clamp(ascensionLevel, 0, AscensionSystem.MaxAscensionLevel);
         List<string> upgradeIds = new List<string>();
         for (int level = 1; level <= ascensionLevel; level++)
         {
@@ -566,21 +736,63 @@ public static class DifficultyUpgradeSystem
 
 public static class AscensionSystem
 {
-    private const string SelectedAscensionLevelKey = "AscensionSystem.SelectedLevel";
+    public static int MaxAscensionLevel
+    {
+        get
+        {
+            int maxLevel = 0;
+            foreach (int level in GameDataDatabase.AscensionData.Keys)
+            {
+                if (level > maxLevel)
+                    maxLevel = level;
+            }
+            return maxLevel;
+        }
+    }
 
     public static int SelectedAscensionLevel
     {
-        get => IsUnlocked() ? Mathf.Clamp(PlayerPrefs.GetInt(SelectedAscensionLevelKey, 0), 0, 20) : 0;
+        get
+        {
+            if (!IsUnlocked())
+                return 0;
+
+            UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
+            int highestUnlocked = GetHighestUnlockedLevel(progress);
+            return Mathf.Clamp(progress.selectedAscensionLevel, 0, highestUnlocked);
+        }
         set
         {
-            PlayerPrefs.SetInt(SelectedAscensionLevelKey, Mathf.Clamp(value, 0, 20));
-            PlayerPrefs.Save();
+            UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
+            int highestUnlocked = GetHighestUnlockedLevel(progress);
+            progress.selectedAscensionLevel = Mathf.Clamp(value, 0, highestUnlocked);
+            UnlockProgressSaveSystem.SaveCurrent(progress);
         }
     }
+
+    public static int HighestUnlockedLevel => IsUnlocked() ? GetHighestUnlockedLevel(UnlockProgressSaveSystem.LoadCurrent()) : 0;
+    public static int HighestClearedLevel => IsUnlocked() ? Mathf.Clamp(UnlockProgressSaveSystem.LoadCurrent().highestAscensionCleared, 0, MaxAscensionLevel) : 0;
 
     public static bool IsUnlocked()
     {
         return UnlockSystem.IsUnlocked(UnlockSystem.TargetFeature, "ascension");
+    }
+
+    public static bool IsLevelUnlocked(int level)
+    {
+        return level == 0 || (IsUnlocked() && level <= HighestUnlockedLevel);
+    }
+
+    private static int GetHighestUnlockedLevel(UnlockProgressData progress)
+    {
+        if (progress == null)
+            return 0;
+
+        int maxLevel = MaxAscensionLevel;
+        int highestUnlocked = Mathf.Clamp(progress.highestAscensionUnlocked, 0, maxLevel);
+        if (highestUnlocked <= 0 && IsUnlocked() && maxLevel > 0)
+            highestUnlocked = 1;
+        return highestUnlocked;
     }
 }
 

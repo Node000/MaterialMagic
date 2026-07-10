@@ -151,6 +151,34 @@
     {
       "buffType": 48,
       "iconName": "负面强化"
+    },
+    {
+      "buffType": 49,
+      "iconName": "道具重复"
+    },
+    {
+      "buffType": 50,
+      "iconName": "DefendUP"
+    },
+    {
+      "buffType": 51,
+      "iconName": "burn"
+    },
+    {
+      "buffType": 52,
+      "iconName": "AttackUP"
+    },
+    {
+      "buffType": 53,
+      "iconName": "weak"
+    },
+    {
+      "buffType": 54,
+      "iconName": "额外抽牌"
+    },
+    {
+      "buffType": 55,
+      "iconName": "weak"
     }
   ]
 }

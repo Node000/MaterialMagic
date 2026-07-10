@@ -41,6 +41,7 @@ public static class UnlockProgressSaveSystem
             data.creditedRunIds = System.Array.Empty<string>();
         if (data.pendingUnlockMessages == null)
             data.pendingUnlockMessages = System.Array.Empty<UnlockPendingMessageData>();
+        NormalizeAscensionProgress(data);
         return data;
     }
 
@@ -75,10 +76,54 @@ public static class UnlockProgressSaveSystem
 
     private static UnlockProgressData CreateEmpty(int slotIndex)
     {
-        return new UnlockProgressData
+        UnlockProgressData data = new UnlockProgressData
         {
             version = CurrentVersion,
             slotIndex = Mathf.Clamp(slotIndex, 1, 3)
         };
+        NormalizeAscensionProgress(data);
+        return data;
+    }
+
+    private static void NormalizeAscensionProgress(UnlockProgressData data)
+    {
+        if (data == null)
+            return;
+
+        int maxLevel = GetMaxAscensionLevel();
+        data.highestAscensionUnlocked = Mathf.Clamp(data.highestAscensionUnlocked, 0, maxLevel);
+        data.highestAscensionCleared = Mathf.Clamp(data.highestAscensionCleared, 0, maxLevel);
+        if (data.highestAscensionCleared > data.highestAscensionUnlocked)
+            data.highestAscensionCleared = data.highestAscensionUnlocked;
+
+        string ascensionUnlockKey = UnlockSystem.GetUnlockKey(UnlockSystem.TargetFeature, "ascension");
+        if (data.highestAscensionUnlocked <= 0 && Contains(data.unlockedIds, ascensionUnlockKey) && maxLevel > 0)
+            data.highestAscensionUnlocked = 1;
+
+        data.selectedAscensionLevel = Mathf.Clamp(data.selectedAscensionLevel, 0, data.highestAscensionUnlocked);
+    }
+
+    private static int GetMaxAscensionLevel()
+    {
+        int maxLevel = 0;
+        foreach (int level in GameDataDatabase.AscensionData.Keys)
+        {
+            if (level > maxLevel)
+                maxLevel = level;
+        }
+        return maxLevel;
+    }
+
+    private static bool Contains(string[] values, string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        for (int i = 0; values != null && i < values.Length; i++)
+        {
+            if (values[i] == value)
+                return true;
+        }
+        return false;
     }
 }

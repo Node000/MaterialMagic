@@ -275,6 +275,7 @@ public class RunHistoryPanelUI : MonoBehaviour
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.result", "结果：{0}"), GetResultText(record.resultType)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.time", "用时：{0}"), FormatPlayTime(record.playSeconds)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.progress", "进度：{0}"), record.progressText));
+        builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.ascension", "进阶：{0}"), AscensionUIUtility.FormatLevel(record.ascensionLevel)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.health", "生命：{0}/{1}"), record.currentHealth, record.maxHealth));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.gold", "金币：{0}"), record.gold));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.version", "版本：{0} / 记录v{1}"), record.gameVersion, record.historyVersion));

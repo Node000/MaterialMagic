@@ -4,7 +4,7 @@
   "nameKey": "enemy.022.name",
   "maxHealth": 19,
   "baseAttack": 1,
-  "imageScale": 0.6,
+  "imageScale": 0.523,
   "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [],
@@ -66,6 +66,6 @@
     }
   ],
   "iconName": "眼球",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "眼球",
   "animationFrameRate": 8.0
 }

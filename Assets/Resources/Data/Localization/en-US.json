@@ -138,7 +138,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "Apply 1 VULNERABLE to the enemy, then deal 1 damage twice."
+      "text": "Apply 2 VULNERABLE to the enemy, then deal 1 damage twice."
     },
     {
       "key": "magic.swamp.name",
@@ -154,7 +154,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "Each time you deal damage to enemies 3 times this turn, gain 1 EXTRA_DRAW."
+      "text": "Each time you deal HP damage to enemies 2 times this turn, gain 1 EXTRA_DRAW."
     },
     {
       "key": "magic.boiling_rain.name",
@@ -194,7 +194,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "Apply 1 VULNERABLE and 1 WEAK to the enemy."
+      "text": "Apply 2 VULNERABLE to the enemy."
     },
     {
       "key": "magic.stone_wall.name",
@@ -287,6 +287,134 @@
     {
       "key": "magic.spring.desc",
       "text": "Gain 2 EXTRA_TRIGGER."
+    },
+    {
+      "key": "magic.rain_banner.name",
+      "text": "Rain Banner"
+    },
+    {
+      "key": "magic.rain_banner.desc",
+      "text": "Add 5 EPHEMERAL Down arrows to your hand."
+    },
+    {
+      "key": "magic.lighter.name",
+      "text": "Lighter"
+    },
+    {
+      "key": "magic.lighter.desc",
+      "text": "Lose all Shield. For each Shield lost, a random enemy gains 2 BURN."
+    },
+    {
+      "key": "magic.water_ball.name",
+      "text": "Water Ball"
+    },
+    {
+      "key": "magic.water_ball.desc",
+      "text": "For every 3 debuff stacks on enemies, gain 1 EXTRA_DRAW."
+    },
+    {
+      "key": "magic.can.name",
+      "text": "Can"
+    },
+    {
+      "key": "magic.can.desc",
+      "text": "This turn, when an enemy takes Burning damage, gain Shield next turn equal to the damage."
+    },
+    {
+      "key": "magic.plastic_bag.name",
+      "text": "Plastic Bag"
+    },
+    {
+      "key": "magic.plastic_bag.desc",
+      "text": "For each card in the consumed pile, apply 2 BURN to the enemy."
+    },
+    {
+      "key": "magic.boxing_glove.name",
+      "text": "Boxing Glove"
+    },
+    {
+      "key": "magic.boxing_glove.desc",
+      "text": "This turn, arrow base effects trigger one extra time."
+    },
+    {
+      "key": "magic.sailboat.name",
+      "text": "Sailboat"
+    },
+    {
+      "key": "magic.sailboat.desc",
+      "text": "This turn, whenever you gain 1 EXTRA_DRAW, gain 1 DAMAGE_UP."
+    },
+    {
+      "key": "magic.harmful_wave.name",
+      "text": "Harmful Wave"
+    },
+    {
+      "key": "magic.harmful_wave.desc",
+      "text": "For each card in hand, deal 3 damage to a random enemy once."
+    },
+    {
+      "key": "magic.chloroplast.name",
+      "text": "Chloroplast"
+    },
+    {
+      "key": "magic.chloroplast.desc",
+      "text": "This turn, Shield can be kept until next turn."
+    },
+    {
+      "key": "magic.bubble_gum.name",
+      "text": "Bubble Gum"
+    },
+    {
+      "key": "magic.bubble_gum.desc",
+      "text": "Gain 3 Shield. Extra cards drawn next turn can exceed the hand limit."
+    },
+    {
+      "key": "magic.camouflage.name",
+      "text": "Camouflage"
+    },
+    {
+      "key": "magic.camouflage.desc",
+      "text": "Gain 3 Shield for each card in hand."
+    },
+    {
+      "key": "magic.caramel_bear.name",
+      "text": "Caramel Bear"
+    },
+    {
+      "key": "magic.caramel_bear.desc",
+      "text": "Each time an enemy attacks, it gains 2 WEAK next turn."
+    },
+    {
+      "key": "magic.colored_lamp.name",
+      "text": "Colored Lamp"
+    },
+    {
+      "key": "magic.colored_lamp.desc",
+      "text": "Apply 4 VULNERABLE, 4 BURN, and 4 WEAK to the enemy."
+    },
+    {
+      "key": "magic.foam_board.name",
+      "text": "Foam Board"
+    },
+    {
+      "key": "magic.foam_board.desc",
+      "text": "This turn, gain 1 Shield for each debuff stack on enemies."
+    },
+    {
+      "key": "magic.yoyo.name",
+      "text": "Yo-Yo"
+    },
+    {
+      "key": "magic.yoyo.desc",
+      "text": "Apply SLOW to the enemy equal to your current Shield."
+    },
+    {
+      "key": "magic.sticker.name",
+      "text": "Sticker"
+    },
+    {
+      "key": "magic.sticker.desc",
+      "text": "This turn, whenever an arrow is consumed, add 1 EPHEMERAL Left arrow to your hand next turn."
     }
   ]
 }

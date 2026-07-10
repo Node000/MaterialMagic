@@ -4,7 +4,7 @@
   "nameKey": "enemy.009.name",
   "maxHealth": 41,
   "baseAttack": 10,
-  "imageScale": 0.6,
+  "imageScale": 0.5,
   "hoverEffect": true,
   "isMinion": false,
   "initialBuffs": [],
@@ -74,6 +74,6 @@
     }
   ],
   "iconName": "舞女",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "舞女",
   "animationFrameRate": 8.0
 }

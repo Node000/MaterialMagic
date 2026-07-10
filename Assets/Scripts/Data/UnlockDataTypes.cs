@@ -30,6 +30,9 @@ public class UnlockProgressData
     public int victoryCount;
     public int nonTutorialVictoryCount;
     public int defeatCount;
+    public int selectedAscensionLevel;
+    public int highestAscensionUnlocked;
+    public int highestAscensionCleared;
     public UnlockCounterData[] startConfigNormalEndCounts = Array.Empty<UnlockCounterData>();
     public UnlockCounterData[] startConfigVictoryCounts = Array.Empty<UnlockCounterData>();
     public UnlockCounterData[] startConfigDefeatCounts = Array.Empty<UnlockCounterData>();

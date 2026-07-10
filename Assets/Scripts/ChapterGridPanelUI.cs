@@ -248,7 +248,7 @@ public class ChapterGridPanelUI : MonoBehaviour
                     icon.sprite = Resources.Load<Sprite>("Images/UI/Boss");
                     icon.color = bossIconColor;
                     if (label != null)
-                        label.text = "Boss";
+                        label.text = LocalizationSystem.GetText("ui.chapter_grid.boss", "Boss");
                 }));
                 bossSequence.Insert(delay + bossIconShrinkDuration, icon.rectTransform.DOScale(Vector3.one, bossIconGrowDuration).SetEase(bossIconGrowEase));
             }
@@ -265,7 +265,7 @@ public class ChapterGridPanelUI : MonoBehaviour
     public void RefreshTexts()
     {
         if (titleText != null)
-            titleText.text = "地图";
+            titleText.text = LocalizationSystem.GetText("ui.chapter_grid.title", "地图");
         if (actionPowerText != null)
             actionPowerText.gameObject.SetActive(false);
     }
@@ -712,12 +712,24 @@ public class ChapterGridPanelUI : MonoBehaviour
 
         bool unavailable = cell.Model == null || !cell.Model.isAvailable;
         bool hiddenByFog = !unavailable && !cell.Model.isRevealed;
-        bool hasContent = !unavailable && !hiddenByFog && (cell.Model.isBoss || cell.Model.level != null);
+        bool hiddenContent = !unavailable && !hiddenByFog && cell.Model.isHidden && cell.Model.level != null && !cell.Model.isBoss && cell.Model.level.levelType != LevelType.Elite;
+        bool hasContent = !unavailable && !hiddenByFog && (hiddenContent || cell.Model.isBoss || cell.Model.level != null);
         if (!hasContent)
         {
             cell.Icon.gameObject.SetActive(false);
             if (cell.Label != null)
                 cell.Label.text = string.Empty;
+            return;
+        }
+
+        if (hiddenContent)
+        {
+            cell.Icon.gameObject.SetActive(false);
+            if (cell.Label != null)
+            {
+                cell.Label.color = labelColor;
+                cell.Label.text = "?";
+            }
             return;
         }
 

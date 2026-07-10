@@ -118,11 +118,11 @@ public class RewardPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = "战斗奖励";
+            title.text = LocalizationSystem.GetText("ui.reward_panel.title", "战斗奖励");
 
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         if (hint != null)
-            hint.text = "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。";
+            hint.text = LocalizationSystem.GetText("ui.reward_panel.hint", "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。");
 
         CacheReferences();
         HideMagicChoices();
@@ -150,11 +150,11 @@ public class RewardPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
         if (title != null)
-            title.text = "道具奖励";
+            title.text = LocalizationSystem.GetText("ui.reward_panel.magic_only.title", "道具奖励");
 
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         if (hint != null)
-            hint.text = "选择一个道具后，点击场景中的道具槽覆盖。";
+            hint.text = LocalizationSystem.GetText("ui.reward_panel.magic_only.hint", "选择一个道具后，点击场景中的道具槽覆盖。");
 
         CacheReferences();
         HideMagicChoices();
@@ -221,7 +221,7 @@ public class RewardPanelUI : MonoBehaviour
             if (optionViews.Count > 0)
             {
                 if (!magicClaimed)
-                    optionViews[0].Bind("获得道具", ShowMagicChoices);
+                    optionViews[0].Bind(LocalizationSystem.GetText("ui.reward_panel.option.magic", "获得道具"), ShowMagicChoices);
                 else
                     optionViews[0].Hide();
             }
@@ -233,23 +233,23 @@ public class RewardPanelUI : MonoBehaviour
             if (optionViews.Count > 0)
             {
                 if (!goldClaimed && !goldClaimInProgress)
-                    optionViews[0].Bind("金币x" + currentGoldReward, ClaimGoldReward);
+                    optionViews[0].Bind(string.Format(LocalizationSystem.GetText("ui.reward_panel.option.gold", "金币x{0}"), currentGoldReward), ClaimGoldReward);
                 else
                     optionViews[0].Hide();
             }
             if (optionViews.Count > 1)
             {
                 if (!magicClaimed && !goldClaimInProgress)
-                    optionViews[1].Bind("获得道具", ShowMagicChoices);
+                    optionViews[1].Bind(LocalizationSystem.GetText("ui.reward_panel.option.magic", "获得道具"), ShowMagicChoices);
                 else
                     optionViews[1].Hide();
             }
             if (optionViews.Count > 2)
             {
                 if (eliteExtraRewardKind == RewardOptionKind.MagicModifier && !goldClaimInProgress)
-                    optionViews[2].Bind("道具强化", ClaimEliteMagicModifierReward);
+                    optionViews[2].Bind(LocalizationSystem.GetText("ui.reward_panel.option.magic_modifier", "道具强化"), ClaimEliteMagicModifierReward);
                 else if (eliteExtraRewardKind == RewardOptionKind.ArrowModifier && !goldClaimInProgress)
-                    optionViews[2].Bind("箭头附魔", ClaimEliteArrowModifierReward);
+                    optionViews[2].Bind(LocalizationSystem.GetText("ui.reward_panel.option.arrow_modifier", "箭头附魔"), ClaimEliteArrowModifierReward);
                 else
                     optionViews[2].Hide();
             }
@@ -267,7 +267,7 @@ public class RewardPanelUI : MonoBehaviour
             endButton.interactable = !goldClaimInProgress;
             TMP_Text text = UIManager.FindChildComponent<TMP_Text>(endButton.transform, "Text");
             if (text != null)
-                text.text = magicOnlyMode ? "跳过" : "离开";
+                text.text = magicOnlyMode ? LocalizationSystem.GetText("ui.common.skip", "跳过") : LocalizationSystem.GetText("ui.common.leave", "离开");
         }
     }
 
@@ -633,12 +633,12 @@ public class RewardPanelUI : MonoBehaviour
         panelImage.color = new Color(0.02f, 0.02f, 0.04f, 1f);
         panelImage.raycastTarget = true;
 
-        TMP_Text title = CreatePanelText(magicChoicePanel, "Title", "选择一个道具", 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
+        TMP_Text title = CreatePanelText(magicChoicePanel, "Title", LocalizationSystem.GetText("ui.reward_panel.magic_choice.title", "选择一个道具"), 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
         title.color = new Color(1f, 0.9f, 0.55f, 1f);
-        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。", 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
+        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。"), 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
         hint.color = new Color(0.82f, 0.84f, 0.9f, 1f);
 
-        magicChoiceBackButton = CreatePanelButton(magicChoicePanel, "BackButton", "返回", new Vector2(-360f, 112f), new Vector2(110f, 42f));
+        magicChoiceBackButton = CreatePanelButton(magicChoicePanel, "BackButton", LocalizationSystem.GetText("ui.common.back", "返回"), new Vector2(-360f, 112f), new Vector2(110f, 42f));
         BindMagicChoiceBackButton();
 
         magicChoiceContent = new GameObject("MagicChoices", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -664,10 +664,10 @@ public class RewardPanelUI : MonoBehaviour
 
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(magicChoicePanel, "Title");
         if (title != null)
-            title.text = "选择一个道具";
+            title.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.title", "选择一个道具");
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(magicChoicePanel, "Hint");
         if (hint != null)
-            hint.text = "选择后点击下方/场景中的道具槽覆盖；可重新选择。";
+            hint.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。");
 
         magicChoiceBackButton = FindMagicChoiceBackButton();
         BindMagicChoiceBackButton();
@@ -706,6 +706,9 @@ public class RewardPanelUI : MonoBehaviour
 
         magicChoiceBackButton.onClick.RemoveAllListeners();
         magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
+        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(magicChoiceBackButton.transform, "Text");
+        if (text != null)
+            text.text = LocalizationSystem.GetText("ui.common.back", "返回");
     }
 
     private TMP_Text CreatePanelText(RectTransform parent, string name, string text, int fontSize, FontStyles fontStyle, Vector2 anchoredPosition, Vector2 size)

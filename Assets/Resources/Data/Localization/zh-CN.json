@@ -134,7 +134,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "使敌方获得1层【易损】，对敌方造成两次1点伤害"
+      "text": "使敌方获得2层【易损】，对敌方造成两次1点伤害"
     },
     {
       "key": "magic.swamp.name",
@@ -150,7 +150,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "本回合每累计对敌方造成三次生命伤害，获得1层【额外抽牌】"
+      "text": "本回合每累计对敌方造成2次生命伤害，获得1层【额外抽牌】"
     },
     {
       "key": "magic.boiling_rain.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "对敌方施加1层【易损】和1层【虚弱】"
+      "text": "对敌方施加2层【易损】"
     },
     {
       "key": "magic.stone_wall.name",
@@ -379,6 +379,134 @@
     {
       "key": "magic.spring.desc",
       "text": "获得2层【重复触发】"
+    },
+    {
+      "key": "magic.rain_banner.name",
+      "text": "雨幡"
+    },
+    {
+      "key": "magic.rain_banner.desc",
+      "text": "将5张【临时】下加入手牌"
+    },
+    {
+      "key": "magic.lighter.name",
+      "text": "打火机"
+    },
+    {
+      "key": "magic.lighter.desc",
+      "text": "失去所有护盾，每失去1点护盾，随机敌方获得2层【燃烧】"
+    },
+    {
+      "key": "magic.water_ball.name",
+      "text": "水球"
+    },
+    {
+      "key": "magic.water_ball.desc",
+      "text": "敌方每有3层负面状态，获得1层【额外抽牌】"
+    },
+    {
+      "key": "magic.can.name",
+      "text": "易拉罐"
+    },
+    {
+      "key": "magic.can.desc",
+      "text": "本回合当敌人受到燃烧伤害时，下回合获得等同伤害数值的护盾"
+    },
+    {
+      "key": "magic.plastic_bag.name",
+      "text": "塑料袋"
+    },
+    {
+      "key": "magic.plastic_bag.desc",
+      "text": "消耗牌堆中每有1张牌，使敌方获得2层【燃烧】"
+    },
+    {
+      "key": "magic.boxing_glove.name",
+      "text": "拳套"
+    },
+    {
+      "key": "magic.boxing_glove.desc",
+      "text": "本回合，素材牌的基础效果额外触发1次"
+    },
+    {
+      "key": "magic.sailboat.name",
+      "text": "帆船"
+    },
+    {
+      "key": "magic.sailboat.desc",
+      "text": "本回合每获得1层【额外抽牌】，就获得1层【伤害提升】"
+    },
+    {
+      "key": "magic.harmful_wave.name",
+      "text": "有害电波"
+    },
+    {
+      "key": "magic.harmful_wave.desc",
+      "text": "每有1张手牌，对随机敌方造成3点伤害1次"
+    },
+    {
+      "key": "magic.chloroplast.name",
+      "text": "叶绿体"
+    },
+    {
+      "key": "magic.chloroplast.desc",
+      "text": "本回合护盾可以保留到下一回合"
+    },
+    {
+      "key": "magic.bubble_gum.name",
+      "text": "泡泡糖"
+    },
+    {
+      "key": "magic.bubble_gum.desc",
+      "text": "获得3点护盾，下回合额外抽的牌可以超过手牌上限"
+    },
+    {
+      "key": "magic.camouflage.name",
+      "text": "保护色"
+    },
+    {
+      "key": "magic.camouflage.desc",
+      "text": "每有1张手牌，获得3点护盾"
+    },
+    {
+      "key": "magic.caramel_bear.name",
+      "text": "焦糖熊"
+    },
+    {
+      "key": "magic.caramel_bear.desc",
+      "text": "敌方每进行1次攻击，下回合获得2层【虚弱】"
+    },
+    {
+      "key": "magic.colored_lamp.name",
+      "text": "彩灯"
+    },
+    {
+      "key": "magic.colored_lamp.desc",
+      "text": "敌方获得4层【易损】、4层【燃烧】、4层【虚弱】"
+    },
+    {
+      "key": "magic.foam_board.name",
+      "text": "泡沫板"
+    },
+    {
+      "key": "magic.foam_board.desc",
+      "text": "本回合敌人每有1层负面状态，你获得1点护盾"
+    },
+    {
+      "key": "magic.yoyo.name",
+      "text": "悠悠球"
+    },
+    {
+      "key": "magic.yoyo.desc",
+      "text": "使敌方获得和你当前护盾相同层数的【迟缓】"
+    },
+    {
+      "key": "magic.sticker.name",
+      "text": "贴纸"
+    },
+    {
+      "key": "magic.sticker.desc",
+      "text": "本回合每有1张素材被消耗，下回合将1张【临时】左加入手牌"
     },
     {
       "key": "chapter.tutorial.name",

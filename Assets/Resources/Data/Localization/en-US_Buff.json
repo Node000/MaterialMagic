@@ -282,7 +282,7 @@
     },
     {
       "key": "buff.extra_draw_on_enemy_damage.desc",
-      "text": "This turn, each 3 instances of HP damage dealt to enemies makes you draw {0} extra card(s) next turn."
+      "text": "This turn, each 2 instances of HP damage dealt to enemies makes you draw {0} extra card(s) next turn."
     },
     {
       "key": "buff.shield_reflect_boost.name",
@@ -371,6 +371,70 @@
     {
       "key": "buff.extra_enemy_debuff.desc",
       "text": "This turn, whenever an enemy gains {0} debuff stack(s), it gains the same amount again."
+    },
+    {
+      "key": "buff.material_base_effect_repeat.name",
+      "text": "Base Echo"
+    },
+    {
+      "key": "buff.material_base_effect_repeat.desc",
+      "text": "This turn, arrow base effects trigger {0} extra time(s)."
+    },
+    {
+      "key": "buff.keep_shield_next_turn.name",
+      "text": "Keep Shield"
+    },
+    {
+      "key": "buff.keep_shield_next_turn.desc",
+      "text": "At next turn start, do not clear Shield, then clear this."
+    },
+    {
+      "key": "buff.burning_damage_shield_next_turn.name",
+      "text": "Burn Shield"
+    },
+    {
+      "key": "buff.burning_damage_shield_next_turn.desc",
+      "text": "This turn, when an enemy takes Burning damage, gain prepared Shield next turn equal to damage × {0}."
+    },
+    {
+      "key": "buff.spell_power_on_extra_draw.name",
+      "text": "Draw Power"
+    },
+    {
+      "key": "buff.spell_power_on_extra_draw.desc",
+      "text": "This turn, whenever you gain 1 EXTRA_DRAW, gain {0} DAMAGE_UP."
+    },
+    {
+      "key": "buff.weak_on_enemy_attack.name",
+      "text": "Attack Weak"
+    },
+    {
+      "key": "buff.weak_on_enemy_attack.desc",
+      "text": "This turn, whenever an enemy attacks, the attacker gains {0} WEAK next turn."
+    },
+    {
+      "key": "buff.temporary_wind_on_material_consumed.name",
+      "text": "Consume Left"
+    },
+    {
+      "key": "buff.temporary_wind_on_material_consumed.desc",
+      "text": "This turn, whenever an arrow is consumed, add {0} EPHEMERAL Left arrow(s) to your hand next turn."
+    },
+    {
+      "key": "buff.weak_next_turn.name",
+      "text": "Weak Next Turn"
+    },
+    {
+      "key": "buff.weak_next_turn.desc",
+      "text": "At turn start, gain WEAK equal to the stack count, then clear this."
+    },
+    {
+      "key": "modifier.sturdy.name",
+      "text": "Sturdy"
+    },
+    {
+      "key": "modifier.sturdy.desc",
+      "text": "When this arrow triggers an item, gain 1 Shield."
     }
   ]
 }

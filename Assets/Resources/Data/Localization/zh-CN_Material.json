@@ -30,7 +30,7 @@
     },
     {
       "key": "material.water.single_play",
-      "text": "向下：随机施加1层<buff_weak>或<buff_slow>"
+      "text": "向下：施加1层<buff_weak>和1层<buff_vulnerable>"
     },
     {
       "key": "material.wind.single_play",
