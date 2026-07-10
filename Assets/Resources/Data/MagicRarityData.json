@@ -15,13 +15,13 @@
     {
       "rarity": 2,
       "id": "epic",
-      "weight": 7,
+      "weight": 6,
       "borderColor": "#B45CFFFF"
     },
     {
       "rarity": 3,
       "id": "legendary",
-      "weight": 1,
+      "weight": 2,
       "borderColor": "#FFB23FFF"
     }
   ]
