@@ -26,6 +26,10 @@ public class BuffModel
     {
     }
 
+    public virtual void AfterTurnStartDraw(CombatantModel self, CombatantModel opponent, int drawCount)
+    {
+    }
+
     public virtual void AfterDraw(CombatantModel self, MaterialModel card)
     {
     }

@@ -442,7 +442,7 @@
     },
     {
       "key": "buff.shield_on_next_draw.desc",
-      "text": "Next turn, gain {0} Shield whenever you draw a card."
+      "text": "At the start of next turn, gain {0} Shield for each card drawn, then clear this."
     },
     {
       "key": "modifier.sturdy.name",

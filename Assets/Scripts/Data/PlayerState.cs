@@ -1270,6 +1270,11 @@ public class PlayerState
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnStart(self, target));
     }
 
+    public void TriggerAfterTurnStartDraw(CombatantModel opponent, int drawCount)
+    {
+        TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnStartDraw(self, target, drawCount));
+    }
+
     public void TriggerAfterDraw(MaterialModel card)
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDraw(self, card));

@@ -458,7 +458,7 @@
     },
     {
       "key": "magic.bubble_gum.desc",
-      "text": "下回合每抽1张牌，获得2点护盾"
+      "text": "下回合开始时，每抽1张牌获得2点护盾"
     },
     {
       "key": "magic.camouflage.name",

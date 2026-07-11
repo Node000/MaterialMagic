@@ -1,28 +1,14 @@
 public class ShieldOnNextDrawBuffModel : BuffModel
 {
-    private bool pendingNextTurn = true;
-
     public ShieldOnNextDrawBuffModel(int stack) : base(BuffEnum.ShieldOnNextDraw, stack)
     {
     }
 
-    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
+    public override void AfterTurnStartDraw(CombatantModel self, CombatantModel opponent, int drawCount)
     {
-        if (pendingNextTurn)
-            pendingNextTurn = false;
-    }
+        if (self?.Player != null && drawCount > 0)
+            self.Player.GainShield(drawCount * stack);
 
-    public override void AfterDraw(CombatantModel self, MaterialModel card)
-    {
-        if (pendingNextTurn || self?.Player == null || card == null)
-            return;
-
-        self.Player.GainShield(stack);
-    }
-
-    public override void AfterTurnStart(CombatantModel self, CombatantModel opponent)
-    {
-        if (!pendingNextTurn)
-            stack = 0;
+        stack = 0;
     }
 }

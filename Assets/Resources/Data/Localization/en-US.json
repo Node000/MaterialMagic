@@ -366,7 +366,7 @@
     },
     {
       "key": "magic.bubble_gum.desc",
-      "text": "Next turn, gain 2 Shield whenever you draw a card."
+      "text": "At the start of next turn, gain 2 Shield for each card drawn."
     },
     {
       "key": "magic.camouflage.name",

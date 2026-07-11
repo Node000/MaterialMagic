@@ -538,8 +538,10 @@ public class BattleManager
         else
             PlayerState.ClearShield();
         PlayerState.TriggerOnTurnStart(opponent);
+        int handCountBeforeTurnDraw = PlayerState.Hand.Count;
         bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
         DrawPlayerTurnCards(drawCount, skipNormalDraw);
+        PlayerState.TriggerAfterTurnStartDraw(opponent, PlayerState.Hand.Count - handCountBeforeTurnDraw);
         PlayerState.TriggerAfterTurnStart(opponent);
         TriggerMagicTurnStart();
         result.CapturePlayerAfter(PlayerState);
