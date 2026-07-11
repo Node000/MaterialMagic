@@ -17,7 +17,6 @@ public class SaveSlotSelectionPanelUI : MonoBehaviour
         ResolveReferences();
         BindButtons();
         LocalizationSystem.LanguageChanged += HandleLanguageChanged;
-        gameObject.SetActive(false);
     }
 
     private void OnDestroy()

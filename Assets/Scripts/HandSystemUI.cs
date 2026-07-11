@@ -349,10 +349,6 @@ public class HandSystemUI : MonoBehaviour
 
     private const string BattleInputConfigResourcePath = "Config/BattleInputConfig";
 
-        private Camera cachedMainCamera;
-        private static readonly Rect DefaultWideViewportRect = new Rect(0f, 0.1f, 1f, 0.8f);
-        private static readonly Color LetterboxColor = Color.black;
-
 		[Header("出牌输入")]
 
     [SerializeField]
@@ -2819,7 +2815,6 @@ public class HandSystemUI : MonoBehaviour
         EnsureActionButtonMotion();
 				GetUIManager();
             CacheDebugMagicDropdown();
-	            ApplyLetterboxCameraSettings();
 			EnsurePileButtons();
 
 			CreateTopBar();
@@ -6850,31 +6845,11 @@ public bool IsCardDragActive => cardDragActive;
     {
         if (paused)
             SaveRunProgress();
-        else
-            ApplyLetterboxCameraSettings();
-    }
-
-    private void OnApplicationFocus(bool focused)
-    {
-        if (focused)
-            ApplyLetterboxCameraSettings();
     }
 
     private void OnApplicationQuit()
     {
         SaveRunProgress();
-    }
-
-    private void ApplyLetterboxCameraSettings()
-    {
-        Camera targetCamera = cachedMainCamera != null ? cachedMainCamera : Camera.main;
-        if (targetCamera == null)
-            return;
-
-        cachedMainCamera = targetCamera;
-        targetCamera.rect = DefaultWideViewportRect;
-        targetCamera.clearFlags = CameraClearFlags.SolidColor;
-        targetCamera.backgroundColor = LetterboxColor;
     }
 
     private void ShowMagicModifierSelection(int choiceCount, Action completed = null)
