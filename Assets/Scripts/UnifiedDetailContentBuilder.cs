@@ -395,7 +395,7 @@ public static class UnifiedDetailContentBuilder
         else if (action == ArrowReadAfterReadAction.Consume)
             lines.Add(LocalizationSystem.GetText("material.read_rule.consume", "读取后消耗"));
         else if (action == ArrowReadAfterReadAction.SplitIntoHalfArrowsToDiscard)
-            lines.Add(LocalizationSystem.GetText("material.read_rule.split_half_discard", "读取后拆分为半箭头并进入弃牌堆"));
+            lines.Add(LocalizationSystem.GetText("material.read_rule.split_half_discard", "读取后消耗自身，并添加半箭头进入弃牌堆"));
 
         IReadOnlyList<MaterialModel> linkedCards = material.GetArrowLinkedCards();
         if (linkedCards != null && linkedCards.Count > 0)

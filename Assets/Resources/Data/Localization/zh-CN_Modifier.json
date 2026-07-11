@@ -174,7 +174,7 @@
     },
     {
       "key": "modifier.fragile_arrow.desc",
-      "text": "结算基础效果后，此箭头离开出牌区并分裂成两个同方向半箭头进入弃牌堆；半箭头战斗结束后移除。"
+      "text": "结算基础效果后，此箭头被消耗，并添加两个同方向半箭头进入弃牌堆；半箭头战斗结束后移除。"
     },
     {
       "key": "modifier.retained_arrow.name",

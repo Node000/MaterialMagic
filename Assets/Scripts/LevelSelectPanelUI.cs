@@ -152,8 +152,9 @@ public class LevelSelectPanelUI : MonoBehaviour
         Image icon = UIManager.FindChildComponent<Image>(button.transform, "TypeIcon");
         if (icon != null)
         {
-            icon.sprite = hidden ? null : UIManager.LoadLevelTypeSprite(level.levelType);
-            icon.color = hidden || icon.sprite == null ? new Color(0.7f, 0.7f, 0.75f, 1f) : Color.white;
+            icon.sprite = hidden ? UIManager.LoadHiddenLevelSprite() : UIManager.LoadLevelTypeSprite(level.levelType);
+            icon.color = icon.sprite == null ? new Color(0.7f, 0.7f, 0.75f, 1f) : Color.white;
+            icon.preserveAspect = true;
         }
 
         button.onClick.RemoveAllListeners();

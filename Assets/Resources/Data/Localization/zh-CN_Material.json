@@ -74,7 +74,7 @@
     },
     {
       "key": "material.read_rule.split_half_discard",
-      "text": "读取后拆分为半箭头并进入弃牌堆"
+      "text": "读取后消耗自身，并添加半箭头进入弃牌堆"
     },
     {
       "key": "material.read_rule.linked_count",

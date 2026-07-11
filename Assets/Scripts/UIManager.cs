@@ -457,6 +457,11 @@ public class UIManager : MonoBehaviour
         };
     }
 
+    internal static Sprite LoadHiddenLevelSprite()
+    {
+        return Resources.Load<Sprite>("Images/UI/question mark");
+    }
+
     internal static string GetLevelTypeName(LevelType type)
     {
         return type switch

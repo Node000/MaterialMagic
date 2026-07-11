@@ -131,6 +131,7 @@ public static class LocalizationKeys
             case BuffEnum.WeakOnEnemyAttack: return "weak_on_enemy_attack";
             case BuffEnum.TemporaryWindOnMaterialConsumed: return "temporary_wind_on_material_consumed";
             case BuffEnum.WeakNextTurn: return "weak_next_turn";
+            case BuffEnum.FoamShield: return "foam_shield";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
             case BuffEnum.ChargeNextDraw: return "charge_next_draw";
             case BuffEnum.TutorialDeath: return "tutorial_death";

@@ -487,19 +487,21 @@ public class MapPanelUI : MonoBehaviour
         if (icon == null)
             return;
 
+        Sprite hiddenSprite = UIManager.LoadHiddenLevelSprite();
         icon.gameObject.SetActive(true);
-        icon.sprite = null;
-        icon.color = new Color(0.24f * color.r, 0.24f * color.g, 0.3f * color.b, 1f);
+        icon.sprite = hiddenSprite;
+        icon.color = hiddenSprite != null ? color : new Color(0.24f * color.r, 0.24f * color.g, 0.3f * color.b, 1f);
+        icon.preserveAspect = true;
         icon.raycastTarget = false;
 
-        TMP_Text text = GetOrCreateUnknownText(node, unknownTextName, icon.rectTransform);
+        TMP_Text text = hiddenSprite == null ? GetOrCreateUnknownText(node, unknownTextName, icon.rectTransform) : UIManager.FindChildComponent<TMP_Text>(node, unknownTextName);
         if (text != null)
         {
-            text.text = "?";
+            text.text = hiddenSprite != null ? string.Empty : "?";
             text.color = color;
             text.fontSize = icon.rectTransform.sizeDelta.y * 0.9f;
             text.raycastTarget = false;
-            text.gameObject.SetActive(true);
+            text.gameObject.SetActive(hiddenSprite == null);
             text.transform.SetAsLastSibling();
         }
     }

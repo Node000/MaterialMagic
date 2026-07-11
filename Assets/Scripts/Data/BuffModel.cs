@@ -38,6 +38,10 @@ public class BuffModel
     {
     }
 
+    public virtual void AfterArrowConsumed(CombatantModel self, MaterialModel card)
+    {
+    }
+
     public virtual void AfterEnemyBurningDamage(CombatantModel self, EnemyModel enemy, int damage)
     {
     }
@@ -71,6 +75,10 @@ public class BuffModel
     }
 
     public virtual void OnReceiveBuff(CombatantModel self, CombatantModel source, BuffEnum buffType, ref int stack)
+    {
+    }
+
+    public virtual void AfterGiveBuff(CombatantModel self, CombatantModel target, BuffEnum buffType, int stack)
     {
     }
 
@@ -229,6 +237,8 @@ public class BuffModel
                 return new TemporaryWindOnMaterialConsumedBuffModel(stack);
             case BuffEnum.WeakNextTurn:
                 return new WeakNextTurnBuffModel(stack);
+            case BuffEnum.FoamShield:
+                return new FoamShieldBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -275,11 +285,11 @@ public class BuffModel
             case BuffEnum.ShuffleHandOnInvokeChance:
             case BuffEnum.DoubleEnemyBurningOnTurnEnd:
             case BuffEnum.WeakNextTurn:
+            case BuffEnum.DebuffPower:
                 return BuffKindEnum.DeBuff;
             case BuffEnum.SpellPower:
             case BuffEnum.DefensePower:
             case BuffEnum.RepeatSpell:
-            case BuffEnum.DebuffPower:
             case BuffEnum.VortexNextDraw:
             case BuffEnum.ShieldOnHealthLoss:
             case BuffEnum.DirectionDamageBonus:
@@ -313,6 +323,7 @@ public class BuffModel
             case BuffEnum.Disorder:
             case BuffEnum.Shield:
             case BuffEnum.EggDeathExplosion:
+            case BuffEnum.FoamShield:
                 return BuffKindEnum.Buff;
             default:
                 return BuffKindEnum.Neutral;

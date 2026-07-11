@@ -65,6 +65,10 @@
       "text": "开始游戏！"
     },
     {
+      "key": "ui.popup_dragon.credits",
+      "text": "\n\n《制作人员》\n\n程序/玩法：空堇\n\n美术/世界观：Scarlemonty\n\n本游戏使用的音乐均来自于MusMus"
+    },
+    {
       "key": "ui.start_menu.confirm_exit",
       "text": "确认退出"
     },
@@ -533,6 +537,10 @@
       "text": "New!!!"
     },
     {
+      "key": "ui.magic_codex.locked_unknown",
+      "text": "？？？"
+    },
+    {
       "key": "ui.magic_codex.rarity_label",
       "text": "稀有度"
     },
@@ -542,7 +550,7 @@
     },
     {
       "key": "ui.magic_codex.effect_label",
-      "text": "具体效果"
+      "text": "效果"
     },
     {
       "key": "ui.magic_codex.label_separator",

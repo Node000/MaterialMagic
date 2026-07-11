@@ -146,7 +146,7 @@
     },
     {
       "key": "magic.swamp.desc",
-      "text": "Gain 1 DEBUFF_UP this turn."
+      "text": "Apply 1 DEBUFF_UP to all enemies."
     },
     {
       "key": "magic.poison_fog.name",
@@ -398,7 +398,7 @@
     },
     {
       "key": "magic.foam_board.desc",
-      "text": "This turn, gain 1 Shield for each debuff stack on enemies."
+      "text": "This turn, whenever an enemy gains 1 debuff stack, gain 1 Shield."
     },
     {
       "key": "magic.yoyo.name",

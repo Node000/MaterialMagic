@@ -179,6 +179,10 @@
     {
       "buffType": 55,
       "iconName": "weak"
+    },
+    {
+      "buffType": 56,
+      "iconName": "DefendUP"
     }
   ]
 }

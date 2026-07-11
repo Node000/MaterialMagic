@@ -121,6 +121,24 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         RebuildRecipe();
     }
 
+    public void SetCodexLockedVisual(string placeholderText, Sprite placeholderIcon)
+    {
+        CacheMissingReferences();
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = placeholderIcon;
+            iconImage.color = Color.white;
+            iconImage.preserveAspect = true;
+            SetIconVisible(placeholderIcon != null);
+        }
+
+        if (magicNameText != null)
+            magicNameText.text = placeholderText;
+
+        SetModifierMarker(null);
+    }
+
     public void ResetRecipeHighlights()
     {
         for (int i = 0; i < recipeBlocks.Count; i++)

@@ -142,7 +142,7 @@
     },
     {
       "key": "magic.swamp.desc",
-      "text": "本回合获得1层【负面强化】"
+      "text": "使全体敌方获得1层【负面强化】"
     },
     {
       "key": "magic.poison_fog.name",
@@ -490,7 +490,7 @@
     },
     {
       "key": "magic.foam_board.desc",
-      "text": "本回合敌人每有1层负面状态，你获得1点护盾"
+      "text": "本回合敌方每获得1层负面状态，你获得1点护盾"
     },
     {
       "key": "magic.yoyo.name",

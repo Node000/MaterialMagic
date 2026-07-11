@@ -57,10 +57,15 @@ public class MapGridSlotView : MonoBehaviour
 
         if (hiddenContent)
         {
-            icon.gameObject.SetActive(false);
+            Sprite hiddenSprite = UIManager.LoadHiddenLevelSprite();
+            icon.gameObject.SetActive(hiddenSprite != null);
+            icon.sprite = hiddenSprite;
+            icon.color = levelIconColor;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
             if (label != null)
             {
-                label.text = "?";
+                label.text = hiddenSprite != null ? string.Empty : "?";
                 label.color = labelColor;
                 label.raycastTarget = false;
             }

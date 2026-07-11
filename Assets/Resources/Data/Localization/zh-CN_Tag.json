@@ -190,7 +190,7 @@
     },
     {
       "key": "tag.debuff_power.desc",
-      "text": "本回合施加的负面状态层数提高。"
+      "text": "本回合该目标获得负面状态时层数提高。"
     },
     {
       "key": "tag.extra_enemy_debuff.name",

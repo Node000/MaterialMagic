@@ -174,7 +174,7 @@
     },
     {
       "key": "modifier.fragile_arrow.desc",
-      "text": "After resolving its base effect, this arrow leaves the play area and splits into two half arrows of the same direction in the discard pile. Half arrows are removed after battle."
+      "text": "After resolving its base effect, this arrow is consumed, then adds two half arrows of the same direction to the discard pile. Half arrows are removed after battle."
     },
     {
       "key": "modifier.retained_arrow.name",

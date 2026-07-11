@@ -316,20 +316,16 @@ public class StartMagicCodexPanelUI : MonoBehaviour
 
         if (detailIconImage != null)
         {
-            detailIconImage.sprite = LoadMagicIcon(currentMagicData.iconName);
+            detailIconImage.sprite = currentMagicUnlocked ? LoadMagicIcon(currentMagicData.iconName) : LoadLockedPlaceholderIcon();
             detailIconImage.enabled = detailIconImage.sprite != null;
             detailIconImage.color = Color.white;
         }
 
-        string name = LocalizationSystem.GetText(currentMagicData.nameKey, currentMagicData.id);
-        if (!currentMagicUnlocked)
-            name += LocalizationSystem.GetText("ui.magic_codex.locked_suffix", "（未获取）");
+        string name = currentMagicUnlocked ? LocalizationSystem.GetText(currentMagicData.nameKey, currentMagicData.id) : GetLockedPlaceholderText();
         if (detailNameText != null)
             detailNameText.text = name;
 
         string rarity = GetRarityName(currentMagicData.rarity);
-        if (!currentMagicUnlocked)
-            rarity += LocalizationSystem.GetText("ui.magic_codex.locked_state_suffix", " / 未获取");
         if (detailRarityText != null)
         {
             detailRarityText.richText = true;
@@ -347,7 +343,7 @@ public class StartMagicCodexPanelUI : MonoBehaviour
         if (detailEffectText != null)
         {
             detailEffectText.richText = true;
-            string effect = LocalizationSystem.GetText(currentMagicData.descriptionKey, string.Empty);
+            string effect = currentMagicUnlocked ? LocalizationSystem.GetText(currentMagicData.descriptionKey, string.Empty) : GetLockedPlaceholderText();
             detailEffectText.text = FormatLabel(LocalizationSystem.GetText("ui.magic_codex.effect_label", "具体效果"), InlineIconTextFormatter.Format(effect));
         }
         RefreshBodyScroll();
@@ -490,6 +486,16 @@ public class StartMagicCodexPanelUI : MonoBehaviour
         if (string.IsNullOrEmpty(label))
             return value ?? string.Empty;
         return "<b>" + label + LocalizationSystem.GetText("ui.magic_codex.label_separator", "：") + "</b>" + (value ?? string.Empty);
+    }
+
+    public static string GetLockedPlaceholderText()
+    {
+        return LocalizationSystem.GetText("ui.magic_codex.locked_unknown", "？？？");
+    }
+
+    public static Sprite LoadLockedPlaceholderIcon()
+    {
+        return Resources.Load<Sprite>("Images/Magics/unknown");
     }
 
     private static Sprite LoadMagicIcon(string iconName)

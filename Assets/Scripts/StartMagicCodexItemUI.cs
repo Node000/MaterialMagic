@@ -49,11 +49,12 @@ public class StartMagicCodexItemUI : MonoBehaviour, IPointerEnterHandler, IPoint
 
         if (canvasGroup != null)
         {
-            canvasGroup.alpha = unlocked ? unlockedAlpha : lockedAlpha;
+            canvasGroup.alpha = 1f;
             canvasGroup.interactable = true;
             canvasGroup.blocksRaycasts = true;
         }
 
+        RefreshLockedVisual();
         RefreshNewLabel();
     }
 
@@ -118,6 +119,14 @@ public class StartMagicCodexItemUI : MonoBehaviour, IPointerEnterHandler, IPoint
         rect.pivot = new Vector2(1f, 1f);
         rect.anchoredPosition = newLabelAnchoredPosition;
         rect.sizeDelta = newLabelSize;
+    }
+
+    private void RefreshLockedVisual()
+    {
+        if (unlocked || magicItemView == null)
+            return;
+
+        magicItemView.SetCodexLockedVisual(StartMagicCodexPanelUI.GetLockedPlaceholderText(), StartMagicCodexPanelUI.LoadLockedPlaceholderIcon());
     }
 
     private void RefreshNewLabel()

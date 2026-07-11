@@ -74,7 +74,7 @@
     },
     {
       "key": "material.read_rule.split_half_discard",
-      "text": "Splits into half arrows and goes to the discard pile after being read"
+      "text": "Consumed after being read, then adds half arrows to the discard pile"
     },
     {
       "key": "material.read_rule.linked_count",

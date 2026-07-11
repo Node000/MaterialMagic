@@ -57,6 +57,10 @@
       "text": "Start Game!"
     },
     {
+      "key": "ui.popup_dragon.credits",
+      "text": "\n\nCredits\n\nProgramming / Gameplay: Violaid\n\nArt / Worldbuilding: Scarlemonty\n\nAll music used in this game is from MusMus"
+    },
+    {
       "key": "ui.start_menu.confirm_exit",
       "text": "Confirm Exit"
     },
@@ -459,6 +463,10 @@
     {
       "key": "ui.magic_codex.new_label",
       "text": "New!!!"
+    },
+    {
+      "key": "ui.magic_codex.locked_unknown",
+      "text": "???"
     },
     {
       "key": "ui.magic_codex.rarity_label",

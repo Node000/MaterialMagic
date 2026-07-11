@@ -150,7 +150,7 @@
     },
     {
       "key": "buff.debuff_power.desc",
-      "text": "This turn, debuff stacks you apply increase by the stack count."
+      "text": "This turn, debuff stacks this target gains increase by the stack count."
     },
     {
       "key": "buff.vortex_next_draw.name",
@@ -427,6 +427,14 @@
     {
       "key": "buff.weak_next_turn.desc",
       "text": "At turn start, gain WEAK equal to the stack count, then clear this."
+    },
+    {
+      "key": "buff.foam_shield.name",
+      "text": "Foam Shield"
+    },
+    {
+      "key": "buff.foam_shield.desc",
+      "text": "This turn, whenever an enemy gains {0} debuff stack(s), gain the same amount of Shield."
     },
     {
       "key": "modifier.sturdy.name",

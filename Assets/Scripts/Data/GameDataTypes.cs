@@ -119,7 +119,8 @@ public enum BuffEnum
     SpellPowerOnExtraDraw = 52,
     WeakOnEnemyAttack = 53,
     TemporaryWindOnMaterialConsumed = 54,
-    WeakNextTurn = 55
+    WeakNextTurn = 55,
+    FoamShield = 56
 }
 
 public enum BuffKindEnum

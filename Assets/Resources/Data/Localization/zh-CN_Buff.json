@@ -158,7 +158,7 @@
     },
     {
       "key": "buff.debuff_power.desc",
-      "text": "本回合施加的负面状态层数提高等同层数。"
+      "text": "本回合该目标获得负面状态时，层数提高等同层数。"
     },
     {
       "key": "buff.vortex_next_draw.name",
@@ -435,6 +435,14 @@
     {
       "key": "buff.weak_next_turn.desc",
       "text": "下回合开始时获得等同层数的【虚弱】，生效后清除。"
+    },
+    {
+      "key": "buff.foam_shield.name",
+      "text": "泡沫护盾"
+    },
+    {
+      "key": "buff.foam_shield.desc",
+      "text": "本回合敌方每获得{0}层负面状态，获得等量护盾。"
     }
   ]
 }

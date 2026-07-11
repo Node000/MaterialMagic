@@ -235,13 +235,12 @@ public class PlayerState
 
     private bool SplitArrowReadSourceToDiscard(MaterialModel card)
     {
-        if (!RemoveCardFromCombatPiles(card))
+        if (!ConsumeCardForBattle(card))
             return false;
 
-        card.isPlayed = false;
         AddHalfArrowToDiscard(card, 0);
         AddHalfArrowToDiscard(card, 1);
-        GameLog.Data($"Split fragile arrow {DescribeMaterial(card)} to half arrows. discardPile={DiscardPile.Count}");
+        GameLog.Data($"Consume and split fragile arrow {DescribeMaterial(card)} to half arrows. discardPile={DiscardPile.Count}");
         return true;
     }
 
@@ -402,6 +401,7 @@ public class PlayerState
         card.isPlayed = false;
         ConsumedPile.Add(card);
         TriggerAfterMaterialConsumed(card);
+        TriggerAfterArrowConsumed(card);
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
@@ -1194,6 +1194,7 @@ public class PlayerState
 
             GameLog.Data($"Player add buff {buffType} material={stack} now={GetBuffStack(buffType)}");
             BuffAdded?.Invoke(buffType, stack);
+            TriggerAfterGiveBuff(source, self, buffType, stack);
             return;
         }
 
@@ -1203,6 +1204,18 @@ public class PlayerState
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
         GameLog.Data($"Player add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(buffType, stack);
+        TriggerAfterGiveBuff(source, self, buffType, stack);
+    }
+
+    private void TriggerAfterGiveBuff(CombatantModel source, CombatantModel target, BuffEnum buffType, int stack)
+    {
+        if (source == null || source.Buffs == null || source.Buffs.Count == 0)
+            return;
+
+        List<BuffModel> sourceBuffs = new List<BuffModel>(source.Buffs.Values);
+        sourceBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+        for (int i = 0; i < sourceBuffs.Count; i++)
+            sourceBuffs[i].AfterGiveBuff(source, target, buffType, stack);
     }
 
     private void ModifyIncomingBuff(CombatantModel source, CombatantModel self, BuffEnum buffType, ref int stack)
@@ -1270,6 +1283,11 @@ public class PlayerState
     public void TriggerAfterMaterialConsumed(MaterialModel card)
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterMaterialConsumed(self, card));
+    }
+
+    public void TriggerAfterArrowConsumed(MaterialModel card)
+    {
+        TriggerBuffs(null, (buff, self, target) => buff.AfterArrowConsumed(self, card));
     }
 
     public void TriggerAfterEnemyBurningDamage(EnemyModel enemy, int damage)

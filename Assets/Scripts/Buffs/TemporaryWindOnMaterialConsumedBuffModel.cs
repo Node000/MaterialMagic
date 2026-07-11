@@ -4,7 +4,7 @@ public class TemporaryWindOnMaterialConsumedBuffModel : BuffModel
     {
     }
 
-    public override void AfterMaterialConsumed(CombatantModel self, MaterialModel card)
+    public override void AfterArrowConsumed(CombatantModel self, MaterialModel card)
     {
         if (self?.Player == null || card == null)
             return;
@@ -13,7 +13,7 @@ public class TemporaryWindOnMaterialConsumedBuffModel : BuffModel
             self.Player.AddTemporaryMaterialNextTurn(MaterialEnum.Wind, true);
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (self.IsPlayer)
             stack = 0;

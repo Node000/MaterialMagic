@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -12,6 +13,9 @@ public class PopupDragonBackgroundUI : MonoBehaviour
     [Header("弹窗生成")]
     [SerializeField] private RectTransform windowPrefab;
     [SerializeField, FormerlySerializedAs("visibleWindowCount"), Min(1)] private int windowCount = 10;
+
+    [Header("本地化")]
+    [SerializeField] private LocalizedText creditsText = new LocalizedText("ui.popup_dragon.credits", "\n\n《制作人员》\n\n程序/玩法：空堇\n\n美术/世界观：Scarlemonty\n\n本游戏使用的音乐均来自于MusMus");
 
     [Header("基础布局")]
     [SerializeField] private Vector2 frontWindowAnchoredPosition = new Vector2(-350f, -40f);
@@ -73,13 +77,21 @@ public class PopupDragonBackgroundUI : MonoBehaviour
         EnsureWindows();
         ApplyActiveAndOrder();
         ApplyLayout(GetAnimationTime());
+        RefreshLocalizedTexts();
     }
 
     private void OnEnable()
     {
+        LocalizationSystem.LanguageChanged += RefreshLocalizedTexts;
         EnsureWindows();
         ApplyActiveAndOrder();
         ApplyLayout(GetAnimationTime());
+        RefreshLocalizedTexts();
+    }
+
+    private void OnDisable()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedTexts;
     }
 
     private void Update()
@@ -152,6 +164,7 @@ public class PopupDragonBackgroundUI : MonoBehaviour
         builtWindowCount = count;
         builtWindowPrefab = windowPrefab;
         ApplyActiveAndOrder();
+        RefreshLocalizedTexts();
     }
 
     private void ClearGeneratedWindows()
@@ -232,6 +245,19 @@ public class PopupDragonBackgroundUI : MonoBehaviour
             window.anchoredPosition = position;
             window.localEulerAngles = new Vector3(0f, 0f, rotation);
             window.localScale = new Vector3(scale, scale, 1f);
+        }
+    }
+
+    private void RefreshLocalizedTexts()
+    {
+        string text = creditsText.Value;
+        for (int i = 0; i < windows.Count; i++)
+        {
+            RectTransform window = windows[i];
+            Transform promptTransform = window != null ? window.Find("Frame/Content/Prompt") : null;
+            TMP_Text prompt = promptTransform != null ? promptTransform.GetComponent<TMP_Text>() : null;
+            if (prompt != null)
+                prompt.text = text;
         }
     }
 

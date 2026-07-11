@@ -724,11 +724,15 @@ public class ChapterGridPanelUI : MonoBehaviour
 
         if (hiddenContent)
         {
-            cell.Icon.gameObject.SetActive(false);
+            Sprite hiddenSprite = UIManager.LoadHiddenLevelSprite();
+            cell.Icon.gameObject.SetActive(hiddenSprite != null);
+            cell.Icon.sprite = hiddenSprite;
+            cell.Icon.color = levelIconColor;
+            cell.Icon.preserveAspect = true;
             if (cell.Label != null)
             {
                 cell.Label.color = labelColor;
-                cell.Label.text = "?";
+                cell.Label.text = hiddenSprite != null ? string.Empty : "?";
             }
             return;
         }

@@ -4833,9 +4833,7 @@ public bool IsCardDragActive => cardDragActive;
             if (!playerState.ApplyArrowReadAfterAction(card, step.AfterReadAction) || (Object)view == (Object)null)
                 continue;
 
-            if (step.AfterReadAction == ArrowReadAfterReadAction.SplitIntoHalfArrowsToDiscard)
-                discardViews.Add(view);
-            else if (step.AfterReadAction == ArrowReadAfterReadAction.ReturnNextTurn)
+            if (step.AfterReadAction == ArrowReadAfterReadAction.ReturnNextTurn)
                 returnViews.Add(view);
             else
                 consumedViews.Add(view);

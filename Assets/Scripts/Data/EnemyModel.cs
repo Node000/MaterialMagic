@@ -397,6 +397,18 @@ public class EnemyModel : UnitModel
         }
         GameLog.Data($"Enemy {Id} add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(this, buffType, stack);
+        TriggerAfterGiveBuff(source, self, buffType, stack);
+    }
+
+    private void TriggerAfterGiveBuff(CombatantModel source, CombatantModel target, BuffEnum buffType, int stack)
+    {
+        if (source == null || source.Buffs == null || source.Buffs.Count == 0)
+            return;
+
+        List<BuffModel> sourceBuffs = new List<BuffModel>(source.Buffs.Values);
+        sourceBuffs.Sort((a, b) => a.buffType.CompareTo(b.buffType));
+        for (int i = 0; i < sourceBuffs.Count; i++)
+            sourceBuffs[i].AfterGiveBuff(source, target, buffType, stack);
     }
 
     public void ApplyBurning(int stack)

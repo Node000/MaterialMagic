@@ -4,9 +4,9 @@ public class DebuffPowerBuffModel : BuffModel
     {
     }
 
-    public override void OnGiveBuff(CombatantModel self, CombatantModel target, BuffEnum buffType, ref int stack)
+    public override void OnReceiveBuff(CombatantModel self, CombatantModel source, BuffEnum buffType, ref int stack)
     {
-        if (self.IsPlayer && target != null && target.IsEnemy && BuffModel.GetKind(buffType) == BuffKindEnum.DeBuff)
+        if (self.IsEnemy && buffType != BuffEnum.DebuffPower && BuffModel.GetKind(buffType) == BuffKindEnum.DeBuff)
             stack += this.stack;
     }
 

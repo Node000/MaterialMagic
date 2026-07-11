@@ -190,7 +190,7 @@
     },
     {
       "key": "tag.debuff_power.desc",
-      "text": "This turn, debuff stacks you apply increase."
+      "text": "This turn, debuff stacks this target gains increase."
     },
     {
       "key": "modifier.retained_arrow.name",
