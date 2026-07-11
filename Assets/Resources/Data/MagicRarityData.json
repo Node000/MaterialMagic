@@ -3,25 +3,25 @@
     {
       "rarity": 0,
       "id": "common",
-      "weight": 70,
+      "weight": 60,
       "borderColor": "#BFC7C9FF"
     },
     {
       "rarity": 1,
       "id": "rare",
-      "weight": 22,
+      "weight": 25,
       "borderColor": "#4DA3FFFF"
     },
     {
       "rarity": 2,
       "id": "epic",
-      "weight": 6,
+      "weight": 12,
       "borderColor": "#B45CFFFF"
     },
     {
       "rarity": 3,
       "id": "legendary",
-      "weight": 2,
+      "weight": 3,
       "borderColor": "#FFB23FFF"
     }
   ]
