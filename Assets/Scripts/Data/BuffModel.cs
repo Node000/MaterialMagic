@@ -239,6 +239,8 @@ public class BuffModel
                 return new WeakNextTurnBuffModel(stack);
             case BuffEnum.FoamShield:
                 return new FoamShieldBuffModel(stack);
+            case BuffEnum.ShieldOnNextDraw:
+                return new ShieldOnNextDrawBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -324,6 +326,7 @@ public class BuffModel
             case BuffEnum.Shield:
             case BuffEnum.EggDeathExplosion:
             case BuffEnum.FoamShield:
+            case BuffEnum.ShieldOnNextDraw:
                 return BuffKindEnum.Buff;
             default:
                 return BuffKindEnum.Neutral;

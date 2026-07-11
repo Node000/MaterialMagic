@@ -77,7 +77,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         hoverSelectionOutlineEnabled = enabled;
     }
 
-    public void Refresh(string title, IReadOnlyList<MaterialModel> materials, Predicate<MaterialModel> selectablePredicate, IReadOnlyList<MaterialModel> selectedMaterials, bool hideUnselectable)
+    public void Refresh(string title, IReadOnlyList<MaterialModel> materials, Predicate<MaterialModel> selectablePredicate, IReadOnlyList<MaterialModel> selectedMaterials, bool hideUnselectable, string emptyTextKey, string emptyTextFallback)
     {
         CacheReferences();
         ClearItems();
@@ -86,6 +86,8 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         this.selectedMaterials = selectedMaterials;
         if (titleText != null)
             titleText.text = title;
+        if (emptyText != null)
+            emptyText.text = LocalizationSystem.GetText(emptyTextKey, emptyTextFallback);
 
         if (contentRoot == null || materialCardPrefab == null)
         {

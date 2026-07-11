@@ -45,6 +45,10 @@ public class MaterialListPanelUI : MonoBehaviour
     [SerializeField] private string selectionConfirmText = "确认";
 
     private const string LayoutConfigResourcePath = "Config/MaterialListPanelLayoutConfig";
+    private const string EmptyPileTextKey = "ui.material_list.empty_pile";
+    private const string EmptyPileTextFallback = "没有箭头";
+    private const string EmptySelectionTextKey = "ui.material_list.empty_selection";
+    private const string EmptySelectionTextFallback = "没有可选箭头";
 
     private HandSystemUI owner;
     private MaterialListPanelLayoutConfig cachedLayoutConfig;
@@ -65,6 +69,13 @@ public class MaterialListPanelUI : MonoBehaviour
         this.owner = owner;
         CacheReferences();
         BindCloseButton();
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
+        LocalizationSystem.LanguageChanged += RefreshLocalizedContent;
+    }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
     }
 
     public void Toggle()
@@ -191,9 +202,9 @@ public class MaterialListPanelUI : MonoBehaviour
     private void RefreshCombatPileRows()
     {
         PlayerState state = owner.PlayerState;
-        RefreshRow(drawPileRow, LocalizationSystem.GetText("ui.material_list.draw_pile", "抽牌堆"), state.DrawPile, null, false);
-        RefreshRow(discardPileRow, LocalizationSystem.GetText("ui.material_list.discard_pile", "弃牌堆"), state.DiscardPile, null, false);
-        RefreshRow(consumedPileRow, LocalizationSystem.GetText("ui.material_list.consumed_pile", "已消耗"), state.ConsumedPile, null, false);
+        RefreshRow(drawPileRow, LocalizationSystem.GetText("ui.material_list.draw_pile", "抽牌堆"), state.DrawPile, null, false, EmptyPileTextKey, EmptyPileTextFallback);
+        RefreshRow(discardPileRow, LocalizationSystem.GetText("ui.material_list.discard_pile", "弃牌堆"), state.DiscardPile, null, false, EmptyPileTextKey, EmptyPileTextFallback);
+        RefreshRow(consumedPileRow, LocalizationSystem.GetText("ui.material_list.consumed_pile", "已消耗"), state.ConsumedPile, null, false, EmptyPileTextKey, EmptyPileTextFallback);
     }
 
     private void RefreshSelectionRow()
@@ -202,10 +213,10 @@ public class MaterialListPanelUI : MonoBehaviour
         string title = !string.IsNullOrEmpty(selectionTitleOverride)
             ? selectionTitleOverride
             : LocalizationSystem.GetText("ui.material_list.select_material", "选择素材");
-        RefreshRow(selectionRow, title, selectionCandidates, selectionPredicate, true);
+        RefreshRow(selectionRow, title, selectionCandidates, selectionPredicate, true, EmptySelectionTextKey, EmptySelectionTextFallback);
     }
 
-    private void RefreshRow(BattleMaterialRowUI row, string title, IReadOnlyList<MaterialModel> materials, Predicate<MaterialModel> predicate, bool hideUnselectable)
+    private void RefreshRow(BattleMaterialRowUI row, string title, IReadOnlyList<MaterialModel> materials, Predicate<MaterialModel> predicate, bool hideUnselectable, string emptyTextKey, string emptyTextFallback)
     {
         if (row == null)
             return;
@@ -227,7 +238,7 @@ public class MaterialListPanelUI : MonoBehaviour
         float hoverCurvePower = arrowSelectionWaveHoverConfig != null ? arrowSelectionWaveHoverConfig.FalloffPower : 1.35f;
         row.ConfigureArrowRowLayout(rowTotalLength, defaultScale, hoverScale, hoverYOffset, hoverCurvePower);
         row.SetHoverSelectionOutlineEnabled(selectionCompleted != null);
-        row.Refresh(title, materials, predicate, selectedMaterials, hideUnselectable);
+        row.Refresh(title, materials, predicate, selectedMaterials, hideUnselectable, emptyTextKey, emptyTextFallback);
     }
 
     private MaterialListPanelLayoutConfig GetLayoutConfig()
@@ -364,6 +375,15 @@ public class MaterialListPanelUI : MonoBehaviour
         ClearSelectionMode();
         gameObject.SetActive(false);
         completed(result);
+    }
+
+    private void RefreshLocalizedContent()
+    {
+        if (this == null)
+            return;
+
+        if (gameObject.activeInHierarchy)
+            Refresh();
     }
 
     private void OnDisable()

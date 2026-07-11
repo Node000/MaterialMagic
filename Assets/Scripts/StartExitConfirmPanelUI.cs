@@ -25,7 +25,8 @@ public class StartExitConfirmPanelUI : MonoBehaviour
     {
         ResolveReferences();
         LocalizationSystem.LanguageChanged += RefreshPromptText;
-        SetCurrentPrompt(promptKey, prompt);
+        if (string.IsNullOrEmpty(currentPromptKey))
+            SetCurrentPrompt(promptKey, prompt);
         RefreshPromptText();
         if (panelRect != null)
             panelRect.anchoredPosition = hiddenPosition;

@@ -145,7 +145,7 @@ public class PlayAreaUI : MonoBehaviour
     private string BuildContinuousCastCounterText(int count)
     {
         string suffix = count > 10 ? "!!" : count > 5 ? "!" : string.Empty;
-        return "COMBO " + count + suffix;
+        return string.Format(LocalizationSystem.GetText("ui.battle.combo_format", "COMBO {0}{1}"), count, suffix);
     }
 
     private void CacheContinuousCastCounterTextStyle(HandSystemUI owner)

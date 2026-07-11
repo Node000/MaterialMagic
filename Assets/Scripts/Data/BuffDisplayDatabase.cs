@@ -55,13 +55,23 @@ public static class BuffDisplayDatabase
                 if (entry == null || entry.buffType == BuffEnum.None)
                     continue;
 
-                Sprite icon = null;
-                if (!string.IsNullOrEmpty(entry.iconName))
-                    icon = Resources.Load<Sprite>("Images/Buffs/" + entry.iconName);
+                Sprite icon = LoadIcon(entry.iconName);
 
                 DataByType[entry.buffType] = CreateDefault(entry.buffType, icon);
             }
         }
+    }
+
+    private static Sprite LoadIcon(string iconName)
+    {
+        if (string.IsNullOrEmpty(iconName))
+            return null;
+
+        const string magicIconPrefix = "magic/";
+        if (iconName.StartsWith(magicIconPrefix, StringComparison.Ordinal))
+            return Resources.Load<Sprite>("Images/Magics/" + iconName.Substring(magicIconPrefix.Length));
+
+        return Resources.Load<Sprite>("Images/Buffs/" + iconName);
     }
 
     private static BuffDisplayData CreateDefault(BuffEnum buffType, Sprite icon)

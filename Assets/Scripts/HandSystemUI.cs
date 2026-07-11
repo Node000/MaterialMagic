@@ -5606,10 +5606,26 @@ public bool IsCardDragActive => cardDragActive;
 		private void EnsurePileButtons()
 		{
 			BindPileButton(deckPileArea, ToggleMaterialListPanel);
-            BindPileButton(FindPileChildArea("DrawPileIcon"), ToggleMaterialListPanel);
+            RectTransform drawPileArea = FindPileChildArea("DrawPileIcon");
+            BindPileButton(drawPileArea, ToggleMaterialListPanel);
 			BindPileButton(discardPileArea, ToggleMaterialListPanel);
 			BindPileButton(consumedPileArea, ToggleMaterialListPanel);
+
+            ConfigurePileTooltip(drawPileArea, "ui.battle.pile.draw.title", "ui.battle.pile.draw.body", "抽牌堆", "从这里抽取箭头。抽牌堆耗尽时，弃牌堆会洗回这里。");
+            ConfigurePileTooltip(discardPileArea, "ui.battle.pile.discard.title", "ui.battle.pile.discard.body", "弃牌堆", "本回合已使用的箭头会进入这里。抽牌堆耗尽时，它们会洗回抽牌堆。");
+            ConfigurePileTooltip(consumedPileArea, "ui.battle.pile.consumed.title", "ui.battle.pile.consumed.body", "已消耗", "已消耗的箭头会留在这里，本场战斗不会再回到抽牌堆。");
 		}
+
+        private void ConfigurePileTooltip(RectTransform pileArea, string titleKey, string bodyKey, string titleFallback, string bodyFallback)
+        {
+            if (pileArea == null)
+                return;
+
+            TopBarIconTooltipUI tooltip = pileArea.GetComponent<TopBarIconTooltipUI>();
+            if (tooltip == null)
+                tooltip = pileArea.gameObject.AddComponent<TopBarIconTooltipUI>();
+            tooltip.Configure(GetUIManager(), titleKey, bodyKey, titleFallback, bodyFallback);
+        }
 
         private RectTransform FindPileChildArea(string childName)
         {
@@ -6980,26 +6996,24 @@ public bool IsCardDragActive => cardDragActive;
 		if (currentLevel != null && currentLevel.rewardPoolId > 0)
 			GameDataDatabase.TryGetRewardPoolData(currentLevel.rewardPoolId, out rewardPool);
 
-		if (rewardPool != null && rewardPool.magicIds != null)
-		{
-			for (int i = 0; i < rewardPool.magicIds.Length; i++)
+			if (rewardPool != null && rewardPool.magicIds != null)
 			{
-					if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data) && UnlockSystem.IsMagicUnlocked(data))
-					{
+				for (int i = 0; i < rewardPool.magicIds.Length; i++)
+				{
+					if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data) && IsRewardMagicAllowed(data, rewardPool))
 						list.Add(data);
-					}
-
+				}
 			}
-		}
-		if (list.Count == 0)
-		{
+			if (list.Count == 0 && (rewardPool == null || rewardPool.allowedRarities == null || rewardPool.allowedRarities.Length == 0))
+			{
 				foreach (MagicData data in GameDataDatabase.MagicData.Values)
 				{
 					if (data != null && UnlockSystem.IsMagicUnlocked(data))
 						list.Add(data);
 				}
-
-		}
+			}
+			if (list.Count < choiceCount && rewardPool != null && rewardPool.allowedRarities != null && rewardPool.allowedRarities.Length > 0)
+				Debug.LogError($"Reward pool '{rewardPool.id}' has only {list.Count} eligible magic rewards for {choiceCount} choices.");
 			List<MagicData> list2 = new List<MagicData>();
 			while (list2.Count < choiceCount && list.Count > 0)
 			{
@@ -7011,9 +7025,26 @@ public bool IsCardDragActive => cardDragActive;
 				list2.Add(item);
 			}
 			return list2;
-	}
+		}
 
-	private List<MagicData> GetTutorialRewardMagicChoices(int choiceCount)
+		private static bool IsRewardMagicAllowed(MagicData data, RewardPoolData rewardPool)
+		{
+			if (data == null || !UnlockSystem.IsMagicUnlocked(data))
+				return false;
+
+			if (rewardPool.allowedRarities == null || rewardPool.allowedRarities.Length == 0)
+				return true;
+
+			for (int i = 0; i < rewardPool.allowedRarities.Length; i++)
+			{
+				if (data.rarity == rewardPool.allowedRarities[i])
+					return true;
+			}
+
+			return false;
+		}
+
+		private List<MagicData> GetTutorialRewardMagicChoices(int choiceCount)
 	{
 		List<MagicData> choices = new List<MagicData>();
 		foreach (MagicData data in GameDataDatabase.MagicData.Values)

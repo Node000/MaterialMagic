@@ -278,6 +278,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             item.gameObject.SetActive(true);
             UnifiedDetailAddedDetail detail = details[i];
             item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type));
+            item.SetScrollInteractionEnabled(pinned);
         }
     }
 

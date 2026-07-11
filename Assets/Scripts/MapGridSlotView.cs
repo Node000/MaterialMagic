@@ -65,7 +65,7 @@ public class MapGridSlotView : MonoBehaviour
             icon.raycastTarget = false;
             if (label != null)
             {
-                label.text = hiddenSprite != null ? string.Empty : "?";
+                label.text = LocalizationSystem.GetText("ui.level_select.unknown", "未知");
                 label.color = labelColor;
                 label.raycastTarget = false;
             }

@@ -2,187 +2,258 @@
   "items": [
     {
       "buffType": 1,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "护盾"
     },
     {
       "buffType": 2,
-      "iconName": "burn"
+      "iconName": "burn",
+      "displayName": "燃烧"
     },
     {
       "buffType": 3,
-      "iconName": "weak"
+      "iconName": "weak",
+      "displayName": "虚弱"
     },
     {
       "buffType": 6,
-      "iconName": "vulnerable"
+      "iconName": "vulnerable",
+      "displayName": "易损"
     },
     {
       "buffType": 7,
-      "iconName": "slow"
+      "iconName": "slow",
+      "displayName": "迟缓"
     },
     {
       "buffType": 9,
-      "iconName": "lightning"
+      "iconName": "lightning",
+      "displayName": "电弧"
     },
     {
       "buffType": 10,
-      "iconName": "AttackUP"
+      "iconName": "AttackUP",
+      "displayName": "伤害提升"
     },
     {
       "buffType": 11,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "下回合燃烧"
     },
     {
       "buffType": 12,
-      "iconName": "yellowStar"
+      "iconName": "magic/34",
+      "displayName": "护盾反射"
     },
     {
       "buffType": 13,
-      "iconName": "额外抽牌"
+      "iconName": "额外抽牌",
+      "displayName": "额外抽牌"
     },
     {
       "buffType": 14,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "额外换牌"
     },
     {
       "buffType": 15,
-      "iconName": "yellowStar"
+      "iconName": "magic/30",
+      "displayName": "坚固"
     },
     {
       "buffType": 16,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "稳定"
     },
     {
       "buffType": 17,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "紊乱"
     },
     {
       "buffType": 18,
-      "iconName": "DefendUP"
+      "iconName": "DefendUP",
+      "displayName": "防御提升"
     },
     {
       "buffType": 19,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "攻击燃烧"
     },
     {
       "buffType": 20,
-      "iconName": "道具重复"
+      "iconName": "道具重复",
+      "displayName": "道具重复"
     },
     {
       "buffType": 21,
-      "iconName": "负面强化"
+      "iconName": "负面强化",
+      "displayName": "负面强化"
     },
     {
       "buffType": 22,
-      "iconName": "yellowStar"
+      "iconName": "magic/26",
+      "displayName": "下回合漩涡"
     },
     {
       "buffType": 23,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "亡语爆炸"
     },
     {
       "buffType": 24,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "受伤护盾"
     },
     {
       "buffType": 25,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "随机打乱"
     },
     {
       "buffType": 26,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "属性禁用"
     },
     {
       "buffType": 27,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "诅咒"
     },
     {
       "buffType": 28,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "上：额外伤害"
     },
     {
       "buffType": 29,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "下：额外虚弱"
     },
     {
       "buffType": 30,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "左：额外抽牌"
     },
     {
       "buffType": 31,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "右：额外护盾"
     },
     {
       "buffType": 32,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "素材过载"
     },
     {
       "buffType": 38,
-      "iconName": "yellowStar"
+      "iconName": "yellowStar",
+      "displayName": "反击强化"
     },
     {
       "buffType": 39,
-      "iconName": "yellowStar"
+      "iconName": "magic/胶水",
+      "displayName": "全体攻击"
     },
     {
       "buffType": 40,
-      "iconName": "重复触发"
+      "iconName": "重复触发",
+      "displayName": "重复触发"
     },
     {
       "buffType": 41,
-      "iconName": "Claw"
+      "iconName": "Claw",
+      "displayName": "爪牙"
     },
     {
       "buffType": 44,
-      "iconName": "redStar"
+      "iconName": "redStar",
+      "displayName": "教学中"
     },
     {
       "buffType": 45,
-      "iconName": "保留手牌"
+      "iconName": "保留手牌",
+      "displayName": "保留手牌"
     },
     {
       "buffType": 46,
-      "iconName": "保留手牌"
+      "iconName": "保留手牌",
+      "displayName": "下回合保留"
     },
     {
       "buffType": 47,
-      "iconName": "burn"
+      "iconName": "burn",
+      "displayName": "燃烧翻倍"
     },
     {
       "buffType": 48,
-      "iconName": "负面强化"
+      "iconName": "负面强化",
+      "displayName": "负面增幅"
     },
     {
       "buffType": 49,
-      "iconName": "道具重复"
+      "iconName": "道具重复",
+      "displayName": "基础重复"
     },
     {
       "buffType": 50,
-      "iconName": "DefendUP"
+      "iconName": "DefendUP",
+      "displayName": "保留护盾"
     },
     {
       "buffType": 51,
-      "iconName": "burn"
+      "iconName": "burn",
+      "displayName": "燃烧护盾"
     },
     {
       "buffType": 52,
-      "iconName": "AttackUP"
+      "iconName": "AttackUP",
+      "displayName": "抽牌加攻"
     },
     {
       "buffType": 53,
-      "iconName": "weak"
+      "iconName": "weak",
+      "displayName": "攻击虚弱"
     },
     {
       "buffType": 54,
-      "iconName": "额外抽牌"
+      "iconName": "额外抽牌",
+      "displayName": "消耗返左"
     },
     {
       "buffType": 55,
-      "iconName": "weak"
+      "iconName": "weak",
+      "displayName": "下回合虚弱"
     },
     {
       "buffType": 56,
-      "iconName": "DefendUP"
+      "iconName": "DefendUP",
+      "displayName": "泡沫护盾"
+    },
+    {
+      "buffType": 34,
+      "iconName": "magic/7",
+      "displayName": "下回合燃薪"
+    },
+    {
+      "buffType": 35,
+      "iconName": "magic/19",
+      "displayName": "反击抽牌"
+    },
+    {
+      "buffType": 36,
+      "iconName": "magic/31",
+      "displayName": "反击燃烧"
+    },
+    {
+      "buffType": 43,
+      "iconName": "magic/18",
+      "displayName": "下次电荷"
+    },
+    {
+      "buffType": 57,
+      "iconName": "magic/泡泡糖",
+      "displayName": "抽牌护盾"
     }
   ]
 }

@@ -617,6 +617,34 @@
       "text": "Arrow Piles"
     },
     {
+      "key": "ui.material_list.empty_pile",
+      "text": "No arrows"
+    },
+    {
+      "key": "ui.material_list.empty_selection",
+      "text": "No selectable arrows"
+    },
+    {
+      "key": "ui.battle.combo_format",
+      "text": "COMBO {0}{1}"
+    },
+    {
+      "key": "ui.battle_settings.title",
+      "text": "Settings"
+    },
+    {
+      "key": "ui.battle_settings.music",
+      "text": "Music"
+    },
+    {
+      "key": "ui.battle_settings.sfx",
+      "text": "SFX"
+    },
+    {
+      "key": "ui.battle_settings.return_start",
+      "text": "Save and Exit"
+    },
+    {
       "key": "ui.common.confirm",
       "text": "Confirm"
     },
@@ -1275,6 +1303,30 @@
     {
       "key": "difficulty.boss_harder.desc",
       "text": "Boss HP is increased by 30%, and attack intent values by 20%."
+    },
+    {
+      "key": "ui.battle.pile.draw.title",
+      "text": "Draw Pile"
+    },
+    {
+      "key": "ui.battle.pile.draw.body",
+      "text": "Draw arrows from this pile. When it runs out, the discard pile is shuffled back into it."
+    },
+    {
+      "key": "ui.battle.pile.discard.title",
+      "text": "Discard Pile"
+    },
+    {
+      "key": "ui.battle.pile.discard.body",
+      "text": "Arrows used this turn go here. When the draw pile runs out, they are shuffled back into it."
+    },
+    {
+      "key": "ui.battle.pile.consumed.title",
+      "text": "Consumed"
+    },
+    {
+      "key": "ui.battle.pile.consumed.body",
+      "text": "Consumed arrows remain here and do not return to the draw pile during this battle."
     }
   ]
 }

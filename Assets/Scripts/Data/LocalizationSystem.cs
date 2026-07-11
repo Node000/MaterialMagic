@@ -132,6 +132,7 @@ public static class LocalizationKeys
             case BuffEnum.TemporaryWindOnMaterialConsumed: return "temporary_wind_on_material_consumed";
             case BuffEnum.WeakNextTurn: return "weak_next_turn";
             case BuffEnum.FoamShield: return "foam_shield";
+            case BuffEnum.ShieldOnNextDraw: return "shield_on_next_draw";
             case BuffEnum.LazyNextDraw: return "lazy_next_draw";
             case BuffEnum.ChargeNextDraw: return "charge_next_draw";
             case BuffEnum.TutorialDeath: return "tutorial_death";
@@ -254,7 +255,27 @@ public static class LocalizationSystem
         LoadLanguage(normalizedLanguageCode);
         PlayerPrefs.SetString(LanguagePrefsKey, normalizedLanguageCode);
         PlayerPrefs.Save();
-        LanguageChanged?.Invoke();
+        NotifyLanguageChanged();
+    }
+
+    private static void NotifyLanguageChanged()
+    {
+        Action handlers = LanguageChanged;
+        if (handlers == null)
+            return;
+
+        Delegate[] listeners = handlers.GetInvocationList();
+        for (int i = 0; i < listeners.Length; i++)
+        {
+            Action listener = (Action)listeners[i];
+            if (listener.Target is UnityEngine.Object target && target == null)
+            {
+                LanguageChanged -= listener;
+                continue;
+            }
+
+            listener.Invoke();
+        }
     }
 
     public static void LoadLanguage(string languageCode)

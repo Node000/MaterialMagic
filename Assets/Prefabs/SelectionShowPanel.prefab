@@ -365,6 +365,7 @@ GameObject:
   - component: {fileID: 5872784423191211850}
   - component: {fileID: 6839134936824364718}
   - component: {fileID: 3720248350138788648}
+  - component: {fileID: 3091708103061926014}
   m_Layer: 0
   m_Name: Text
   m_TagString: Untagged
@@ -488,6 +489,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &3091708103061926014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2274728798669600625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: ui.common.close
+  fallback: "\u5173\u95ED"
 --- !u!1 &2475015647124402287
 GameObject:
   m_ObjectHideFlags: 0
@@ -964,6 +979,7 @@ MonoBehaviour:
   selectionConfirmButtonComponent: {fileID: 437473605112481910}
   selectionConfirmButtonText: {fileID: 2758056961818287897}
   selectionConfirmDisabledAlpha: 0.35
+  selectionConfirmTextKey: ui.common.confirm
   selectionConfirmText: "\u786E\u8BA4"
 --- !u!225 &6775829547300719347
 CanvasGroup:
@@ -1856,6 +1872,7 @@ GameObject:
   - component: {fileID: 2130080960167636137}
   - component: {fileID: 1797088059500918526}
   - component: {fileID: 8773489141622993494}
+  - component: {fileID: 4581191530073466818}
   m_Layer: 0
   m_Name: EmptyText
   m_TagString: Untagged
@@ -1910,7 +1927,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u6CA1\u6709\u7BAD\u5934"
+  m_text: "\u6CA1\u6709\u53EF\u9009\u7BAD\u5934"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}
@@ -1979,6 +1996,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4581191530073466818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8683962055000552027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: ui.material_list.empty_selection
+  fallback: "\u6CA1\u6709\u53EF\u9009\u7BAD\u5934"
 --- !u!1 &9176906716647205122
 GameObject:
   m_ObjectHideFlags: 0

@@ -120,7 +120,8 @@ public enum BuffEnum
     WeakOnEnemyAttack = 53,
     TemporaryWindOnMaterialConsumed = 54,
     WeakNextTurn = 55,
-    FoamShield = 56
+    FoamShield = 56,
+    ShieldOnNextDraw = 57
 }
 
 public enum BuffKindEnum
@@ -485,6 +486,7 @@ public class RewardPoolData : INumericDataRecord
     public int numericId;
     public string id;
     public int[] magicIds = Array.Empty<int>();
+    public MagicRarity[] allowedRarities = Array.Empty<MagicRarity>();
 
     public int NumericId => numericId;
 }

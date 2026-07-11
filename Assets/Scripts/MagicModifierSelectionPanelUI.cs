@@ -51,7 +51,15 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         this.owner = owner;
         panel = (RectTransform)transform;
         CacheReferences();
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
+        LocalizationSystem.LanguageChanged += RefreshLocalizedContent;
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
+        popupTween?.Kill(false);
     }
 
     public bool ShouldUseMobileInteraction()
@@ -112,6 +120,23 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         if (hintText != null)
             hintText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_hint", "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。");
         HideSelectedHint();
+        RefreshOptions();
+    }
+
+    private void RefreshLocalizedContent()
+    {
+        if (this == null || !gameObject.activeInHierarchy)
+            return;
+
+        CacheReferences();
+        if (titleText != null)
+            titleText.text = materialModifierMode
+                ? LocalizationSystem.GetText("ui.magic_modifier.panel.material_title", "选择箭头附魔")
+                : LocalizationSystem.GetText("ui.magic_modifier.panel.title", "选择道具强化");
+        if (hintText != null)
+            hintText.text = materialModifierMode
+                ? LocalizationSystem.GetText("ui.magic_modifier.panel.material_hint", "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。")
+                : LocalizationSystem.GetText("ui.magic_modifier.panel.hint", "选择一个强化后，点击一个已有道具完成附魔。每个道具只能附魔一次。");
         RefreshOptions();
     }
 

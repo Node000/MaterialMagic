@@ -416,7 +416,7 @@
       "titleKey": "level.battle_019.title",
       "levelType": 5,
       "numericId": 19,
-      "rewardPoolId": 1,
+      "rewardPoolId": 2,
       "enemyIds": [
         16
       ],
@@ -433,7 +433,7 @@
       "titleKey": "level.battle_020.title",
       "levelType": 5,
       "numericId": 20,
-      "rewardPoolId": 1,
+      "rewardPoolId": 2,
       "enemyIds": [
         17
       ],
@@ -450,7 +450,7 @@
       "titleKey": "level.battle_021.title",
       "levelType": 5,
       "numericId": 21,
-      "rewardPoolId": 1,
+      "rewardPoolId": 2,
       "enemyIds": [
         18
       ],
@@ -467,7 +467,7 @@
       "titleKey": "level.battle_022.title",
       "levelType": 5,
       "numericId": 22,
-      "rewardPoolId": 1,
+      "rewardPoolId": 2,
       "enemyIds": [
         19,
         20

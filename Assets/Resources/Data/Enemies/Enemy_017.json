@@ -60,6 +60,6 @@
     }
   ],
   "iconName": "恶魔",
-  "spriteAnimationPath": "",
+  "spriteAnimationPath": "恶魔",
   "animationFrameRate": 8.0
 }

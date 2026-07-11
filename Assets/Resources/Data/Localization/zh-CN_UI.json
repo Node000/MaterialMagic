@@ -149,6 +149,34 @@
       "text": "箭头牌堆"
     },
     {
+      "key": "ui.material_list.empty_pile",
+      "text": "没有箭头"
+    },
+    {
+      "key": "ui.material_list.empty_selection",
+      "text": "没有可选箭头"
+    },
+    {
+      "key": "ui.battle.combo_format",
+      "text": "COMBO {0}{1}"
+    },
+    {
+      "key": "ui.battle_settings.title",
+      "text": "设置"
+    },
+    {
+      "key": "ui.battle_settings.music",
+      "text": "音乐"
+    },
+    {
+      "key": "ui.battle_settings.sfx",
+      "text": "音效"
+    },
+    {
+      "key": "ui.battle_settings.return_start",
+      "text": "保存并退出"
+    },
+    {
       "key": "ui.unified_detail.section.modifier",
       "text": "强化效果"
     },
@@ -1275,6 +1303,30 @@
     {
       "key": "difficulty.boss_harder.desc",
       "text": "首领生命提高30%，攻击意图数值提高20%。"
+    },
+    {
+      "key": "ui.battle.pile.draw.title",
+      "text": "抽牌堆"
+    },
+    {
+      "key": "ui.battle.pile.draw.body",
+      "text": "从这里抽取箭头。抽牌堆耗尽时，弃牌堆会洗回这里。"
+    },
+    {
+      "key": "ui.battle.pile.discard.title",
+      "text": "弃牌堆"
+    },
+    {
+      "key": "ui.battle.pile.discard.body",
+      "text": "本回合已使用的箭头会进入这里。抽牌堆耗尽时，它们会洗回抽牌堆。"
+    },
+    {
+      "key": "ui.battle.pile.consumed.title",
+      "text": "已消耗"
+    },
+    {
+      "key": "ui.battle.pile.consumed.body",
+      "text": "已消耗的箭头会留在这里，本场战斗不会再回到抽牌堆。"
     }
   ]
 }

@@ -437,6 +437,14 @@
       "text": "This turn, whenever an enemy gains {0} debuff stack(s), gain the same amount of Shield."
     },
     {
+      "key": "buff.shield_on_next_draw.name",
+      "text": "Draw Shield"
+    },
+    {
+      "key": "buff.shield_on_next_draw.desc",
+      "text": "Next turn, gain {0} Shield whenever you draw a card."
+    },
+    {
       "key": "modifier.sturdy.name",
       "text": "Sturdy"
     },

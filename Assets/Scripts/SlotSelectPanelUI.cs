@@ -23,7 +23,14 @@ public class SlotSelectPanelUI : MonoBehaviour
         RectTransform rect = transform as RectTransform;
         if (rect != null)
             initialPanelSize = rect.sizeDelta;
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
+        LocalizationSystem.LanguageChanged += RefreshLocalizedContent;
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        LocalizationSystem.LanguageChanged -= RefreshLocalizedContent;
     }
 
     public void Show(MagicData rewardMagic)
@@ -121,6 +128,15 @@ public class SlotSelectPanelUI : MonoBehaviour
             float y = SlotButtonBaseY - (row - (rows - 1) * 0.5f) * SlotButtonSpacingY;
             rect.anchoredPosition = new Vector2(x, y);
         }
+    }
+
+    private void RefreshLocalizedContent()
+    {
+        if (this == null)
+            return;
+
+        if (gameObject.activeInHierarchy && pendingRewardMagic != null)
+            Show(pendingRewardMagic, slotChosen);
     }
 
     public void Hide()

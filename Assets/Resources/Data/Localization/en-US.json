@@ -366,7 +366,7 @@
     },
     {
       "key": "magic.bubble_gum.desc",
-      "text": "Gain 3 Shield. Extra cards drawn next turn can exceed the hand limit."
+      "text": "Next turn, gain 2 Shield whenever you draw a card."
     },
     {
       "key": "magic.camouflage.name",

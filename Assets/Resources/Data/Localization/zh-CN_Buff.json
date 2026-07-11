@@ -443,6 +443,14 @@
     {
       "key": "buff.foam_shield.desc",
       "text": "本回合敌方每获得{0}层负面状态，获得等量护盾。"
+    },
+    {
+      "key": "buff.shield_on_next_draw.name",
+      "text": "抽牌护盾"
+    },
+    {
+      "key": "buff.shield_on_next_draw.desc",
+      "text": "下回合每抽1张牌，获得{0}点护盾。"
     }
   ]
 }
