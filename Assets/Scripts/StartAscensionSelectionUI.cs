@@ -14,6 +14,8 @@ public class StartAscensionSelectionUI : MonoBehaviour
     [SerializeField] private TMP_Text drawerLevelText;
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text bodyText;
+    [SerializeField] private ScrollRect bodyScrollRect;
+    [SerializeField] private float bodyBottomPadding = 16f;
     [SerializeField] private Sprite iconSprite;
     [SerializeField] private Color lockedTextColor = new Color(0.68f, 0.68f, 0.72f, 1f);
     [SerializeField] private Color unlockedTextColor = Color.white;
@@ -94,11 +96,27 @@ public class StartAscensionSelectionUI : MonoBehaviour
         {
             bodyText.richText = true;
             bodyText.text = InlineIconTextFormatter.Format(AscensionUIUtility.BuildDetailBody(level));
+            RefreshBodyScroll();
         }
         if (decreaseButton != null)
             decreaseButton.interactable = unlocked && level > 0;
         if (increaseButton != null)
             increaseButton.interactable = unlocked && level < AscensionSystem.HighestUnlockedLevel;
+    }
+
+    private void RefreshBodyScroll()
+    {
+        if (bodyScrollRect == null || bodyScrollRect.content == null || bodyScrollRect.viewport == null || bodyText == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        float textWidth = bodyText.rectTransform.rect.width;
+        float textHeight = bodyText.GetPreferredValues(bodyText.text, textWidth, 0f).y;
+        float contentHeight = Mathf.Max(bodyScrollRect.viewport.rect.height, Mathf.Ceil(textHeight) + bodyBottomPadding);
+        Vector2 size = bodyScrollRect.content.sizeDelta;
+        size.y = contentHeight;
+        bodyScrollRect.content.sizeDelta = size;
+        bodyScrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void DecreaseLevel()
@@ -133,10 +151,10 @@ public class StartAscensionSelectionUI : MonoBehaviour
         if (drawerPanel == null)
             return;
 
-        Refresh();
         drawerOpen = open;
         drawerTween?.Kill(false);
         drawerPanel.gameObject.SetActive(true);
+        Refresh();
         if (drawerCanvasGroup != null)
         {
             drawerCanvasGroup.interactable = open;
@@ -158,6 +176,8 @@ public class StartAscensionSelectionUI : MonoBehaviour
         {
             if (!open && drawerPanel != null)
                 drawerPanel.gameObject.SetActive(false);
+            else
+                RefreshBodyScroll();
         });
         drawerTween = sequence;
     }
@@ -171,6 +191,8 @@ public class StartAscensionSelectionUI : MonoBehaviour
 
         drawerPanel.anchoredPosition = open ? drawerShownAnchoredPosition : drawerHiddenAnchoredPosition;
         drawerPanel.gameObject.SetActive(open);
+        if (open)
+            Refresh();
         if (drawerCanvasGroup != null)
         {
             drawerCanvasGroup.alpha = open ? 1f : 0f;

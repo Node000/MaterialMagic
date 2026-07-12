@@ -74,10 +74,10 @@ public class RunManager
         mapGrid = grid ?? new RunMapGridModel();
     }
 
-    public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels)
+    public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels, int width, int height)
     {
-        int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
-        int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
+        width = Mathf.Max(1, width);
+        height = Mathf.Max(1, height);
         mapGrid = new RunMapGridModel
         {
             width = width,

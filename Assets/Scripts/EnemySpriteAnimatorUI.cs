@@ -11,17 +11,19 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
     [SerializeField] private Animator animator;
 
     private EnemyData boundData;
+    private int boundRuntimeMaxHealth;
 
     private void Awake()
     {
         CacheReferences();
     }
 
-    public void Bind(EnemyData data)
+    public void Bind(EnemyData data, int runtimeMaxHealth = 0)
     {
         CacheReferences();
 
         boundData = data;
+        boundRuntimeMaxHealth = runtimeMaxHealth;
         RuntimeAnimatorController controller = EnemyVisualLoader.LoadAnimatorController(data);
         if (controller == null && animator != null)
         {
@@ -84,7 +86,7 @@ public class EnemySpriteAnimatorUI : MonoBehaviour
         if (owner == null)
             owner = GetComponentInParent<EnemyViewUI>();
         if (owner != null)
-            owner.ApplyDataLayout(boundData);
+            owner.ApplyDataLayout(boundData, boundRuntimeMaxHealth);
     }
 
     private float GetImageScale()

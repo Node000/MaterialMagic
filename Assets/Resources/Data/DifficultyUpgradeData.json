@@ -66,12 +66,12 @@
       ]
     },
     {
-      "id": "map_block_cells_plus_2",
-      "nameKey": "difficulty.map_block_cells_plus_2.name",
-      "descriptionKey": "difficulty.map_block_cells_plus_2.desc",
+      "id": "map_block_cells_plus_1_a8",
+      "nameKey": "difficulty.map_block_cells_plus_1_a8.name",
+      "descriptionKey": "difficulty.map_block_cells_plus_1_a8.desc",
       "scope": 0,
       "effects": [
-        { "type": 17, "intValue": 2 }
+        { "type": 17, "intValue": 1 }
       ]
     },
     {
@@ -108,17 +108,16 @@
       "descriptionKey": "difficulty.map_smaller.desc",
       "scope": 0,
       "effects": [
-        { "type": 15, "intValue": -1 },
-        { "type": 16, "intValue": -1 }
+        { "type": 25, "intValue": -1 }
       ]
     },
     {
-      "id": "starting_magic_slots_minus_2_a13",
-      "nameKey": "difficulty.starting_magic_slots_minus_2.name",
-      "descriptionKey": "difficulty.starting_magic_slots_minus_2.desc",
+      "id": "starting_magic_slots_minus_1_a13",
+      "nameKey": "difficulty.starting_magic_slots_minus_1.name",
+      "descriptionKey": "difficulty.starting_magic_slots_minus_1.desc",
       "scope": 0,
       "effects": [
-        { "type": 18, "intValue": -2 }
+        { "type": 18, "intValue": -1 }
       ]
     },
     {

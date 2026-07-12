@@ -54,7 +54,7 @@
       "id": "ascension_8",
       "nameKey": "ascension.8.name",
       "descriptionKey": "ascension.8.desc",
-      "upgradeIds": ["map_block_cells_plus_2"]
+      "upgradeIds": ["map_block_cells_plus_1_a8"]
     },
     {
       "numericId": 9,
@@ -89,7 +89,7 @@
       "id": "ascension_13",
       "nameKey": "ascension.13.name",
       "descriptionKey": "ascension.13.desc",
-      "upgradeIds": ["starting_magic_slots_minus_2_a13"]
+      "upgradeIds": ["starting_magic_slots_minus_1_a13"]
     },
     {
       "numericId": 14,

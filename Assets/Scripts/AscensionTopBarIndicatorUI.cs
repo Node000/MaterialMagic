@@ -17,6 +17,7 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
 
     private void Awake()
     {
+        ResolveDependencies();
         BindButton();
         LocalizationSystem.LanguageChanged += HandleLanguageChanged;
     }
@@ -46,8 +47,18 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (uiManager != null)
-            uiManager.ShowUnifiedDetailPopup(this, AscensionUIUtility.BuildUnifiedDetailContent(DifficultyUpgradeSystem.CurrentAscensionLevel, iconSprite));
+        ResolveDependencies();
+        if (uiManager == null)
+            return;
+
+        int level = DifficultyUpgradeSystem.CurrentAscensionLevel;
+        uiManager.ShowUnifiedDetailPopup(this, new UnifiedDetailContent
+        {
+            Title = string.Format(LocalizationSystem.GetText("ui.ascension.button_detail.title", "进阶{0}"), level),
+            Body = LocalizationSystem.GetText("ui.ascension.button_detail.body", "点击查看难度变化"),
+            AccentColor = Color.white,
+            Icon = iconSprite
+        });
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -73,6 +84,7 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
 
     private void ToggleDetail()
     {
+        ResolveDependencies();
         if (detailPanel == null)
             return;
 
@@ -80,6 +92,14 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
             detailPanel.Hide();
         else
             detailPanel.Show(DifficultyUpgradeSystem.CurrentAscensionLevel);
+    }
+
+    private void ResolveDependencies()
+    {
+        if (uiManager == null)
+            uiManager = GetComponentInParent<UIManager>();
+        if (detailPanel == null)
+            detailPanel = GetComponentInParent<UIManager>()?.GetComponentInChildren<AscensionDetailPanelUI>(true);
     }
 
     private void BindButton()

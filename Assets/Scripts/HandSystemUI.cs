@@ -2165,7 +2165,10 @@ public class HandSystemUI : MonoBehaviour
 
         int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
         int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
-        if (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId)
+        bool isDesignedMap = chapter != null && chapter.numericId != TutorialManagerUI.TutorialChapterNumericId && width == 5 && height == 8;
+        if (isDesignedMap)
+            height = DifficultyUpgradeSystem.ModifyDesignedMapMainAreaHeight(5) + 3;
+        else if (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId)
         {
             width = DifficultyUpgradeSystem.ModifyMapWidth(width);
             height = DifficultyUpgradeSystem.ModifyMapHeight(height);
@@ -2178,21 +2181,23 @@ public class HandSystemUI : MonoBehaviour
         if (chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId)
         {
             BuildTutorialChapterMapGrid(levels, width, height);
-            runManager.BuildMapGrid(chapter, levels);
+            runManager.BuildMapGrid(chapter, levels, width, height);
             ApplyTutorialChapterMapCellFlags();
             return;
         }
 
         LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
-        if (width == 5 && height == 8)
-            BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel);
+        bool isReducedDesignedMap = isDesignedMap && height == 7;
+        HashSet<Vector2Int> designedBlockedCells = isReducedDesignedMap ? SelectDesignedChapterBlockedCells(DifficultyUpgradeSystem.GetMapBlockedCellCount()) : null;
+        if (isDesignedMap)
+            BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel, designedBlockedCells);
         else
             BuildWeightedChapterMapGrid(chapter, levels, width, height, bossLevel);
 
-        runManager.BuildMapGrid(chapter, levels);
-        if (width == 5 && height == 8)
-            ApplyDesignedChapterMapCellFlags();
-        DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt);
+        runManager.BuildMapGrid(chapter, levels, width, height);
+        if (isDesignedMap)
+            ApplyDesignedChapterMapCellFlags(designedBlockedCells);
+        DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt, !isReducedDesignedMap);
         runManager?.RevealCurrentMapNeighbors();
     }
 
@@ -2241,20 +2246,22 @@ public class HandSystemUI : MonoBehaviour
         }
     }
 
-    private void BuildDesignedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel)
+    private void BuildDesignedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel, HashSet<Vector2Int> blockedCells)
     {
-        SetMapGridLevel(levels, width, 2, 7, bossLevel);
+        int bossY = height - 1;
+        SetMapGridLevel(levels, width, 2, bossY, bossLevel);
         SetMapGridLevel(levels, width, 2, 2, ChooseRandomMapLevel(chapter, GetBattleLevels()));
         SetMapGridLevel(levels, width, 2, 1, ChooseRandomMapLevel(chapter, GetBattleLevels()));
 
         List<Vector2Int> positions = new List<Vector2Int>();
-        for (int y = 6; y >= 2; y--)
+        for (int y = bossY - 1; y >= 2; y--)
         {
             for (int x = 0; x < width; x++)
             {
-                if (x == 2 && y == 2)
+                Vector2Int position = new Vector2Int(x, y);
+                if (x == 2 && y == 2 || blockedCells != null && blockedCells.Contains(position))
                     continue;
-                positions.Add(new Vector2Int(x, y));
+                positions.Add(position);
             }
         }
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Shop, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Shop, 1));
@@ -2305,28 +2312,48 @@ public class HandSystemUI : MonoBehaviour
             levels[index] = level;
     }
 
-    private void ApplyDesignedChapterMapCellFlags()
+    private HashSet<Vector2Int> SelectDesignedChapterBlockedCells(int count)
+    {
+        HashSet<Vector2Int> blockedCells = new HashSet<Vector2Int>();
+        List<Vector2Int> candidates = new List<Vector2Int>();
+        for (int y = 3; y <= 4; y++)
+        {
+            for (int x = 1; x <= 3; x++)
+                candidates.Add(new Vector2Int(x, y));
+        }
+
+        for (int i = 0; i < count && candidates.Count > 0; i++)
+        {
+            int index = NextRunRandomInt(0, candidates.Count);
+            blockedCells.Add(candidates[index]);
+            candidates.RemoveAt(index);
+        }
+        return blockedCells;
+    }
+
+    private void ApplyDesignedChapterMapCellFlags(HashSet<Vector2Int> blockedCells)
     {
         RunMapGridModel grid = ChapterMapGrid;
         if (grid == null)
             return;
 
+        int bossY = grid.height - 1;
         for (int i = 0; i < grid.cells.Count; i++)
         {
             RunMapCellModel cell = grid.cells[i];
             if (cell == null)
                 continue;
 
-            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y);
-            cell.isBoss = cell.x == 2 && cell.y == 7;
+            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y, bossY) && (blockedCells == null || !blockedCells.Contains(new Vector2Int(cell.x, cell.y)));
+            cell.isBoss = cell.x == 2 && cell.y == bossY;
             cell.isRevealed = cell.isBoss;
         }
         runManager?.RevealCurrentMapNeighbors();
     }
 
-    private static bool IsDesignedChapterMapCellAvailable(int x, int y)
+    private static bool IsDesignedChapterMapCellAvailable(int x, int y, int bossY)
     {
-        return (x == 2 && y == 7) || (y >= 2 && y <= 6) || (x == 2 && (y == 0 || y == 1));
+        return (x == 2 && y == bossY) || (y >= 2 && y < bossY) || (x == 2 && (y == 0 || y == 1));
     }
 
     private List<LevelData> GetMapGridCandidateLevels(ChapterData chapter, int progress, LevelData bossLevel)
@@ -5894,14 +5921,14 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void UpdateEnemyHealthUI(bool instant = false)
 	{
-		UpdateHealthBar(enemyHealthFill, enemyHealthBufferFill, enemyShieldFill, enemyModel.CurrentHealth, enemyModel.Data.maxHealth, enemyModel.Shield, instant);
+		UpdateHealthBar(enemyHealthFill, enemyHealthBufferFill, enemyShieldFill, enemyModel.CurrentHealth, enemyModel.MaxHealth, enemyModel.Shield, instant);
 		Tween val = enemyHealthNumberTween;
 		if (val != null)
 		{
 			TweenExtensions.Kill(val, false);
 		}
 			HealthBarUI.SetHealthTextColor(enemyHealthText, false);
-				enemyHealthNumberTween = UpdateHealthText(enemyHealthText, enemyShieldText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.Data.maxHealth, enemyModel.Shield, instant, delegate(int healthValue)
+				enemyHealthNumberTween = UpdateHealthText(enemyHealthText, enemyShieldText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.MaxHealth, enemyModel.Shield, instant, delegate(int healthValue)
 
 			{
 				displayedEnemyHealth = healthValue;
@@ -6297,7 +6324,7 @@ public bool IsCardDragActive => cardDragActive;
 			if ((Object)bodyAnimator == (Object)null)
 				bodyAnimator = ((Component)enemyViewState.bodyImage).gameObject.AddComponent<EnemySpriteAnimatorUI>();
 
-			bodyAnimator.Bind(model.Data);
+			bodyAnimator.Bind(model.Data, model.MaxHealth);
 			enemyViewState.bodyBaseColor = enemyViewState.bodyImage.color;
 		}
 		enemyModel = model;
@@ -6336,7 +6363,7 @@ public bool IsCardDragActive => cardDragActive;
 		if ((Object)enemyViewState.buffRoot == (Object)null)
 			enemyViewState.buffRoot = EnsureBuffRoot(val, new Vector2(0f, -82f));
         if ((Object)enemyViewState.viewUI != (Object)null)
-            enemyViewState.viewUI.ApplyDataLayout(model.Data);
+            enemyViewState.viewUI.ApplyDataLayout(model.Data, model.MaxHealth);
 				CacheEnemyIntentViews(enemyViewState);
 				RebuildEnemyIntentViews(enemyViewState);
 				BindEnemyBuffPopup(enemyViewState);
@@ -8756,7 +8783,7 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			state.intentIcon.color = Color.white;
 		}
-		UpdateHealthBar(state.healthFill, state.healthBufferFill, state.shieldFill, state.model.CurrentHealth, state.model.Data.maxHealth, state.model.Shield, instant);
+		UpdateHealthBar(state.healthFill, state.healthBufferFill, state.shieldFill, state.model.CurrentHealth, state.model.MaxHealth, state.model.Shield, instant);
 		RefreshBuffRoot(state.buffRoot, state.model.Buffs, null);
 		if ((Object)state.focusMarker != (Object)null)
 		{
@@ -8765,14 +8792,14 @@ public bool IsCardDragActive => cardDragActive;
 		if (!suppressEnemyIntentRefresh)
 			RebuildEnemyIntentViews(state);
         if ((Object)state.viewUI != (Object)null)
-            state.viewUI.ApplyDataLayout(state.model.Data);
+            state.viewUI.ApplyDataLayout(state.model.Data, state.model.MaxHealth);
 		Tween healthNumberTween = state.healthNumberTween;
 		if (healthNumberTween != null)
 		{
 			TweenExtensions.Kill(healthNumberTween, false);
 		}
 			HealthBarUI.SetHealthTextColor(state.healthText, false);
-				state.healthNumberTween = UpdateHealthText(state.healthText, state.shieldText, state.displayedHealth, state.model.CurrentHealth, state.model.Data.maxHealth, state.model.Shield, instant, delegate(int healthValue)
+				state.healthNumberTween = UpdateHealthText(state.healthText, state.shieldText, state.displayedHealth, state.model.CurrentHealth, state.model.MaxHealth, state.model.Shield, instant, delegate(int healthValue)
 
 			{
 				state.displayedHealth = healthValue;

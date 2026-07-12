@@ -985,6 +985,14 @@
       "text": "Ascension: {0}"
     },
     {
+      "key": "ui.ascension.button_detail.title",
+      "text": "Ascension {0}"
+    },
+    {
+      "key": "ui.ascension.button_detail.body",
+      "text": "Click to view difficulty changes"
+    },
+    {
       "key": "ascension.0.name",
       "text": "A0 Standard"
     },
@@ -1078,7 +1086,7 @@
     },
     {
       "key": "ascension.11.desc",
-      "text": "Rare and better items appear less often."
+      "text": "Epic and Legendary items appear less often."
     },
     {
       "key": "ascension.12.name",
@@ -1209,12 +1217,12 @@
       "text": "Initial available item slots are reduced by 2."
     },
     {
-      "key": "difficulty.map_block_cells_plus_2.name",
-      "text": "Blocked Map Cells +2"
+      "key": "difficulty.map_block_cells_plus_1_a8.name",
+      "text": "Blocked Map Cells +1"
     },
     {
-      "key": "difficulty.map_block_cells_plus_2.desc",
-      "text": "Two extra map cells are blocked."
+      "key": "difficulty.map_block_cells_plus_1_a8.desc",
+      "text": "One extra map cell is blocked."
     },
     {
       "key": "difficulty.starting_deck_add_placeholder.name",
@@ -1234,19 +1242,19 @@
     },
     {
       "key": "difficulty.rare_magic_less_common.name",
-      "text": "Rare Items Less Common"
+      "text": "Epic and Legendary Items Less Common"
     },
     {
       "key": "difficulty.rare_magic_less_common.desc",
-      "text": "Rare and better item weights are reduced."
+      "text": "Epic and Legendary item weights are reduced."
     },
     {
       "key": "difficulty.map_smaller.name",
-      "text": "Map Width/Height -1"
+      "text": "Smaller Map"
     },
     {
       "key": "difficulty.map_smaller.desc",
-      "text": "Chapter map width and height are each reduced by 1."
+      "text": "The chapter map is smaller."
     },
     {
       "key": "difficulty.enemy_health_20.name",
@@ -1263,6 +1271,14 @@
     {
       "key": "difficulty.level_cap_minus_4.desc",
       "text": "The chapter has 4 fewer progress steps."
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_1.name",
+      "text": "Item Slots -1"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_minus_1.desc",
+      "text": "Initial available item slots are reduced by 1."
     },
     {
       "key": "difficulty.map_block_cells_plus_1.name",

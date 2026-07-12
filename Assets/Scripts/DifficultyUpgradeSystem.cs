@@ -24,6 +24,7 @@ public enum DifficultyUpgradeEffectType
     MapWidthDelta = 15,
     MapHeightDelta = 16,
     MapBlockAvailableCells = 17,
+    DesignedMapMainAreaHeightDelta = 25,
     StartingMagicSlotDelta = 18,
     MagicRarityWeightMultiplier = 19,
     MapHiddenLevelChanceDelta = 20,
@@ -133,6 +134,11 @@ public abstract class DifficultyUpgrade
         return weight;
     }
 
+    public virtual int ModifyDesignedMapMainAreaHeight(int height)
+    {
+        return height;
+    }
+
     public virtual int ModifyDesignedMapLevelCount(LevelType levelType, int count)
     {
         return count;
@@ -143,7 +149,7 @@ public abstract class DifficultyUpgrade
         return length;
     }
 
-    public virtual void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
+    public virtual void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt, bool applyMapBlocks)
     {
     }
 
@@ -252,6 +258,11 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         return Mathf.Max(0, result);
     }
 
+    public override int ModifyDesignedMapMainAreaHeight(int height)
+    {
+        return ModifyMapSize(height, DifficultyUpgradeEffectType.DesignedMapMainAreaHeightDelta);
+    }
+
     public override int ModifyDesignedMapLevelCount(LevelType levelType, int count)
     {
         if (Data == null)
@@ -282,7 +293,7 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         return Mathf.Max(1, result);
     }
 
-    public override void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
+    public override void ApplyMapUpgrade(RunMapGridModel grid, Func<int, int, int> nextRandomInt, bool applyMapBlocks)
     {
         if (grid == null || Data == null)
             return;
@@ -294,7 +305,7 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
             if (effect == null)
                 continue;
 
-            if (effect.type == DifficultyUpgradeEffectType.MapBlockAvailableCells)
+            if (applyMapBlocks && effect.type == DifficultyUpgradeEffectType.MapBlockAvailableCells)
                 BlockAvailableMapCells(grid, Mathf.Max(0, GetEffectInt(effect)), nextRandomInt);
             else if (effect.type == DifficultyUpgradeEffectType.MapHiddenLevelChanceDelta)
                 hiddenWeight += effect.value;
@@ -625,6 +636,14 @@ public static class DifficultyUpgradeSystem
         return Mathf.Max(0, result);
     }
 
+    public static int ModifyDesignedMapMainAreaHeight(int height)
+    {
+        int result = height;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyDesignedMapMainAreaHeight(result) : result;
+        return Mathf.Max(1, result);
+    }
+
     public static int ModifyDesignedMapLevelCount(LevelType levelType, int count)
     {
         int result = count;
@@ -641,10 +660,26 @@ public static class DifficultyUpgradeSystem
         return Mathf.Max(1, result);
     }
 
-    public static void ApplyMapUpgrades(RunMapGridModel grid, Func<int, int, int> nextRandomInt)
+    public static int GetMapBlockedCellCount()
+    {
+        int count = 0;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+        {
+            DifficultyUpgradeData data = activeUpgrades[i] != null ? activeUpgrades[i].Data : null;
+            for (int effectIndex = 0; data != null && data.effects != null && effectIndex < data.effects.Length; effectIndex++)
+            {
+                DifficultyUpgradeEffectData effect = data.effects[effectIndex];
+                if (effect != null && effect.type == DifficultyUpgradeEffectType.MapBlockAvailableCells)
+                    count += Mathf.Max(0, effect.intValue != 0 ? effect.intValue : Mathf.RoundToInt(effect.value));
+            }
+        }
+        return count;
+    }
+
+    public static void ApplyMapUpgrades(RunMapGridModel grid, Func<int, int, int> nextRandomInt, bool applyMapBlocks = true)
     {
         for (int i = 0; i < activeUpgrades.Count; i++)
-            activeUpgrades[i]?.ApplyMapUpgrade(grid, nextRandomInt);
+            activeUpgrades[i]?.ApplyMapUpgrade(grid, nextRandomInt, applyMapBlocks);
     }
 
     public static int ModifyMagicSlotCount(int slotCount)

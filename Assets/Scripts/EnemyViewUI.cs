@@ -100,7 +100,7 @@ public class EnemyViewUI : MonoBehaviour
             juicyMotion = GetComponent<JuicyMotion>();
     }
 
-    public void ApplyDataLayout(EnemyData data)
+    public void ApplyDataLayout(EnemyData data, int runtimeMaxHealth = 0)
     {
         CacheMissingReferences();
         CacheBaseLayout();
@@ -109,7 +109,7 @@ public class EnemyViewUI : MonoBehaviour
         if (bodyRoot != null)
             bodyRoot.sizeDelta = bodySize;
 
-        ApplyEnemyDataOverrides(data);
+        ApplyEnemyDataOverrides(data, runtimeMaxHealth);
         ApplyHoverEffect(data);
 
         if (bodyImage != null)
@@ -144,18 +144,18 @@ public class EnemyViewUI : MonoBehaviour
         baseLayoutCached = true;
     }
 
-    private void ApplyEnemyDataOverrides(EnemyData data)
+    private void ApplyEnemyDataOverrides(EnemyData data, int runtimeMaxHealth)
     {
         if (infoBackFrame != null)
         {
             infoBackFrame.anchoredPosition = GetInfoBoxAnchoredPosition(data);
-            infoBackFrame.sizeDelta = GetInfoBoxSizeDelta(data);
+            infoBackFrame.sizeDelta = GetInfoBoxSizeDelta(data, runtimeMaxHealth);
         }
 
         if (healthBarRoot != null)
         {
             healthBarRoot.anchoredPosition = GetHealthBarAnchoredPosition(data);
-            healthBarRoot.sizeDelta = GetHealthBarSizeDelta(data);
+            healthBarRoot.sizeDelta = GetHealthBarSizeDelta(data, runtimeMaxHealth);
             ConfigureBuffRootLayout(healthBarRoot);
         }
 
@@ -178,7 +178,7 @@ public class EnemyViewUI : MonoBehaviour
         return data != null && (data.infoBoxOffset.x != 0f || data.infoBoxOffset.y != 0f);
     }
 
-    private Vector2 GetInfoBoxSizeDelta(EnemyData data)
+    private Vector2 GetInfoBoxSizeDelta(EnemyData data, int runtimeMaxHealth)
     {
         EnemyStatusConfig config = LoadConfig();
         if (config == null)
@@ -191,7 +191,7 @@ public class EnemyViewUI : MonoBehaviour
                 HasInfoBoxHeightOverride(data) ? data.infoBoxSize.y : baseInfoBackFrameSizeDelta.y);
         }
 
-        return new Vector2(GetInfoBoxWidth(data, config), GetInfoBoxHeight(config));
+        return new Vector2(GetInfoBoxWidth(data, runtimeMaxHealth, config), GetInfoBoxHeight(config));
     }
 
     private Vector2 GetInfoBoxAnchoredPosition(EnemyData data)
@@ -211,13 +211,13 @@ public class EnemyViewUI : MonoBehaviour
         return baseHealthBarAnchoredPosition + GetInfoBoxOffset(data);
     }
 
-    private Vector2 GetHealthBarSizeDelta(EnemyData data)
+    private Vector2 GetHealthBarSizeDelta(EnemyData data, int runtimeMaxHealth)
     {
         EnemyStatusConfig config = LoadConfig();
         if (config == null)
             return baseHealthBarSizeDelta;
 
-        float width = GetHealthBarWidth(data, config);
+        float width = GetHealthBarWidth(data, runtimeMaxHealth, config);
         return new Vector2(width, baseHealthBarSizeDelta.y);
     }
 
@@ -226,9 +226,9 @@ public class EnemyViewUI : MonoBehaviour
         return data != null ? data.infoBoxOffset : Vector2.zero;
     }
 
-    private float GetInfoBoxWidth(EnemyData data, EnemyStatusConfig config)
+    private float GetInfoBoxWidth(EnemyData data, int runtimeMaxHealth, EnemyStatusConfig config)
     {
-        float healthBarWidth = GetHealthBarWidth(data, config);
+        float healthBarWidth = GetHealthBarWidth(data, runtimeMaxHealth, config);
         return Mathf.Max(config.InfoBoxMinWidth, healthBarWidth + config.InfoBoxHorizontalPadding * 2f + config.InfoBoxTextColumnWidth);
     }
 
@@ -237,11 +237,13 @@ public class EnemyViewUI : MonoBehaviour
         return baseInfoBackFrameSizeDelta.y + config.InfoBoxVerticalPadding * 2f;
     }
 
-    private float GetHealthBarWidth(EnemyData data, EnemyStatusConfig config)
+    private float GetHealthBarWidth(EnemyData data, int runtimeMaxHealth, EnemyStatusConfig config)
     {
-        return data != null && data.healthBarWidth > 0f
-            ? data.healthBarWidth
-            : GetHealthBarWidthFromHealth(data != null ? data.maxHealth : 0, config);
+        if (data != null && data.healthBarWidth > 0f)
+            return data.healthBarWidth;
+
+        int maxHealth = runtimeMaxHealth > 0 ? runtimeMaxHealth : data != null ? data.maxHealth : 0;
+        return GetHealthBarWidthFromHealth(maxHealth, config);
     }
 
     private static Vector2 GetIntentOffset(EnemyData data)

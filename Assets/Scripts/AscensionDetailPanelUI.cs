@@ -6,12 +6,14 @@ public class AscensionDetailPanelUI : MonoBehaviour
 {
     [SerializeField] private RectTransform root;
     [SerializeField] private Button closeButton;
+    [SerializeField] private TMP_Text closeButtonText;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private ScrollRect bodyScrollRect;
+    [SerializeField] private float bodyBottomPadding = 16f;
     [SerializeField] private Sprite iconSprite;
 
     private int currentLevel;
@@ -36,8 +38,8 @@ public class AscensionDetailPanelUI : MonoBehaviour
     {
         currentLevel = ascensionLevel;
         BindCloseButton();
-        Refresh();
         gameObject.SetActive(true);
+        Refresh();
         transform.SetAsLastSibling();
     }
 
@@ -58,6 +60,8 @@ public class AscensionDetailPanelUI : MonoBehaviour
             iconImage.sprite = iconSprite;
             iconImage.enabled = iconImage.sprite != null;
         }
+        if (closeButtonText != null)
+            closeButtonText.text = LocalizationSystem.GetText("ui.common.close", "关闭");
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText("ui.ascension.detail_title", "进阶详情");
         if (levelText != null)
@@ -69,8 +73,22 @@ public class AscensionDetailPanelUI : MonoBehaviour
             bodyText.richText = true;
             bodyText.text = InlineIconTextFormatter.Format(AscensionUIUtility.BuildDetailBody(currentLevel));
         }
-        if (bodyScrollRect != null)
-            bodyScrollRect.verticalNormalizedPosition = 1f;
+        RefreshBodyScroll();
+    }
+
+    private void RefreshBodyScroll()
+    {
+        if (bodyScrollRect == null || bodyScrollRect.content == null || bodyScrollRect.viewport == null || bodyText == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        float textWidth = bodyText.rectTransform.rect.width;
+        float textHeight = bodyText.GetPreferredValues(bodyText.text, textWidth, 0f).y;
+        float contentHeight = Mathf.Max(bodyScrollRect.viewport.rect.height, Mathf.Ceil(textHeight) + bodyBottomPadding);
+        Vector2 size = bodyScrollRect.content.sizeDelta;
+        size.y = contentHeight;
+        bodyScrollRect.content.sizeDelta = size;
+        bodyScrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void BindCloseButton()
