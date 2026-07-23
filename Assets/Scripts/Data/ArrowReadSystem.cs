@@ -86,15 +86,35 @@ public class ArrowReadStep
         if (token != null)
             tokens.Add(token);
     }
+
+    public ArrowReadStep CreateReplayStep()
+    {
+        ArrowReadStep replayStep = new ArrowReadStep(SourceCard, SourceCardIndex);
+        for (int i = 0; i < baseEffectDirections.Count; i++)
+            replayStep.AddBaseEffectDirection(baseEffectDirections[i]);
+        for (int i = 0; i < tokens.Count; i++)
+        {
+            ArrowReadToken token = tokens[i];
+            replayStep.AddToken(new ArrowReadToken(SourceCard, SourceCardIndex, token.SourceStepIndex));
+        }
+        return replayStep;
+    }
 }
 
 public class ArrowReadSequence
 {
     private readonly List<ArrowReadStep> steps = new List<ArrowReadStep>();
     private readonly List<ArrowReadToken> tokens = new List<ArrowReadToken>();
+    private readonly List<ArrowReadSequence> resolveSequences = new List<ArrowReadSequence>();
 
     public IReadOnlyList<ArrowReadStep> Steps => steps;
     public IReadOnlyList<ArrowReadToken> Tokens => tokens;
+    public IReadOnlyList<ArrowReadSequence> ResolveSequences => resolveSequences;
+
+    public ArrowReadSequence()
+    {
+        resolveSequences.Add(this);
+    }
 
     public void AddStep(ArrowReadStep step)
     {
@@ -105,6 +125,17 @@ public class ArrowReadSequence
         steps.Add(step);
         for (int i = 0; i < step.Tokens.Count; i++)
             tokens.Add(step.Tokens[i]);
+    }
+
+    public void AddReplayFromStep(int stepIndex)
+    {
+        if (stepIndex < 0 || stepIndex >= steps.Count)
+            return;
+
+        ArrowReadSequence replaySequence = new ArrowReadSequence();
+        for (int i = stepIndex; i < steps.Count; i++)
+            replaySequence.AddStep(steps[i].CreateReplayStep());
+        resolveSequences.Add(replaySequence);
     }
 }
 
@@ -156,7 +187,22 @@ public static class ArrowReadSystem
             items.Add(new ArrowReadItem(cards[i], i));
 
         BuildSequenceFromItems(items, sequence, context, 0);
+        AddSequenceReplays(sequence);
         return sequence;
+    }
+
+    private static void AddSequenceReplays(ArrowReadSequence sequence)
+    {
+        if (sequence == null)
+            return;
+
+        for (int stepIndex = 0; stepIndex < sequence.Steps.Count; stepIndex++)
+        {
+            ArrowReadStep step = sequence.Steps[stepIndex];
+            int replayCount = step?.SourceCard != null ? step.SourceCard.GetArrowSequenceReplayCount() : 0;
+            for (int replayIndex = 0; replayIndex < replayCount; replayIndex++)
+                sequence.AddReplayFromStep(stepIndex);
+        }
     }
 
     private static void BuildSequenceFromItems(List<ArrowReadItem> items, ArrowReadSequence sequence, ArrowReadContext context, int depth)

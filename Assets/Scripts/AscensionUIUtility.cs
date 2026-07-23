@@ -6,12 +6,12 @@ public static class AscensionUIUtility
 {
     public static string FormatLevel(int level)
     {
-        return "A" + Mathf.Max(0, level).ToString();
+        return "A" + level.ToString();
     }
 
     public static string GetLevelName(int level)
     {
-        if (level <= 0)
+        if (level == 0)
             return LocalizationSystem.GetText("ascension.0.name", "A0 标准");
 
         if (GameDataDatabase.TryGetAscensionData(level, out AscensionData data) && data != null)
@@ -21,7 +21,7 @@ public static class AscensionUIUtility
 
     public static string GetLevelDescription(int level)
     {
-        if (level <= 0)
+        if (level == 0)
             return LocalizationSystem.GetText("ascension.0.desc", "没有进阶词条，使用标准难度开始游戏。");
 
         if (GameDataDatabase.TryGetAscensionData(level, out AscensionData data) && data != null)

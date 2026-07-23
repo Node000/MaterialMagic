@@ -131,6 +131,11 @@ public class MaterialModifierModel
         return 0;
     }
 
+    public virtual int GetArrowSequenceReplayCount()
+    {
+        return 0;
+    }
+
     public virtual MaterialModifierModel Clone()
     {
         MaterialModifierModel clone = (MaterialModifierModel)MemberwiseClone();

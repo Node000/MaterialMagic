@@ -95,6 +95,8 @@ public class RunMapCellSaveData
     public int y;
     public int levelId;
     public bool isBoss;
+    public bool isEnd;
+    public bool isCompleted;
     public bool isAvailable = true;
     public bool isRevealed;
     public bool isHidden;
@@ -670,6 +672,8 @@ public static class RunSaveSystem
                 y = cellData.y,
                 level = GetLevel(cellData.levelId),
                 isBoss = cellData.isBoss,
+                isEnd = cellData.isEnd,
+                isCompleted = cellData.isCompleted,
                 isAvailable = legacyGridAvailability || cellData.isAvailable || cellData.isBoss || cellData.levelId > 0 || (cellData.x == data.playerX && cellData.y == data.playerY),
                 isRevealed = legacyGridReveal ? cellData.isBoss || (cellData.x == data.playerX && cellData.y == data.playerY) : cellData.isRevealed,
                 isHidden = cellData.isHidden
@@ -1045,6 +1049,8 @@ public static class RunSaveSystem
                 y = cell != null ? cell.y : 0,
                 levelId = cell != null && cell.level != null ? cell.level.numericId : 0,
                 isBoss = cell != null && cell.isBoss,
+                isEnd = cell != null && cell.isEnd,
+                isCompleted = cell != null && cell.isCompleted,
                 isAvailable = cell != null && cell.isAvailable,
                 isRevealed = cell != null && cell.isRevealed,
                 isHidden = cell != null && cell.isHidden

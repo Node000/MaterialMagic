@@ -64,6 +64,21 @@ public static class GameDataReader
         return dictionary;
     }
 
+    public static Dictionary<int, T> LoadSignedNumericDictionary<T>(string tablePath) where T : INumericDataRecord
+    {
+        DataTable<T> table = LoadTable<T>(tablePath);
+        Dictionary<int, T> dictionary = new Dictionary<int, T>(table.items.Count);
+
+        for (int i = 0; i < table.items.Count; i++)
+        {
+            T item = table.items[i];
+            if (item != null && item.NumericId != 0)
+                dictionary[item.NumericId] = item;
+        }
+
+        return dictionary;
+    }
+
     public static Dictionary<int, T> LoadNumericDictionary<T>(string tablePath, string folderPath) where T : INumericDataRecord
     {
         Dictionary<int, T> dictionary = LoadNumericDictionary<T>(tablePath);
@@ -143,7 +158,7 @@ public static class GameDataDatabase
 
     public static IReadOnlyDictionary<int, MagicData> MagicData => magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData");
     public static IReadOnlyDictionary<MagicRarity, MagicRarityData> MagicRarityData => magicRarityData ??= LoadMagicRarityData();
-    public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= GameDataReader.LoadNumericDictionary<EnemyData>("EnemyData", "Enemies");
+    public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= LoadEnemyData();
     public static IReadOnlyDictionary<int, EventData> EventData => eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData");
     public static IReadOnlyDictionary<int, LevelData> LevelData => levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData");
     public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");
@@ -152,11 +167,25 @@ public static class GameDataDatabase
     public static IReadOnlyDictionary<int, MapGenConfigData> MapGenConfigData => mapGenConfigData ??= GameDataReader.LoadNumericDictionary<MapGenConfigData>("MapGenConfig");
     public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
     public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData");
-    public static IReadOnlyDictionary<int, AscensionData> AscensionData => ascensionData ??= GameDataReader.LoadNumericDictionary<AscensionData>("AscensionData");
+    public static IReadOnlyDictionary<int, AscensionData> AscensionData => ascensionData ??= GameDataReader.LoadSignedNumericDictionary<AscensionData>("AscensionData");
     public static IReadOnlyDictionary<string, DifficultyUpgradeData> DifficultyUpgradeData => difficultyUpgradeData ??= GameDataReader.LoadDictionary<DifficultyUpgradeData>("DifficultyUpgradeData");
     public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
     public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
     public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
+
+    private static Dictionary<int, EnemyData> LoadEnemyData()
+    {
+        Dictionary<int, EnemyData> dictionary = GameDataReader.LoadNumericDictionary<EnemyData>("EnemyData", "Enemies");
+        GameContentDatabase database = GameContentDatabase.Load();
+        if (database == null)
+            return dictionary;
+
+        Dictionary<int, EnemyData> contentData = database.CreateEnemyDataDictionary();
+        foreach (KeyValuePair<int, EnemyData> pair in contentData)
+            dictionary[pair.Key] = pair.Value;
+
+        return dictionary;
+    }
 
     private static Dictionary<MagicRarity, MagicRarityData> LoadMagicRarityData()
     {

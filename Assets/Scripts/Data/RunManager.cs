@@ -74,7 +74,7 @@ public class RunManager
         mapGrid = grid ?? new RunMapGridModel();
     }
 
-    public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels, int width, int height)
+    public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels, int width, int height, int additionalTopBossCellCount = 0, LevelData bossLevel = null)
     {
         width = Mathf.Max(1, width);
         height = Mathf.Max(1, height);
@@ -106,9 +106,28 @@ public class RunManager
                 cell.level = null;
                 cell.isAvailable = true;
             }
-            if (cell.isBoss)
-                cell.isRevealed = true;
             mapGrid.cells.Add(cell);
+        }
+
+        if (additionalTopBossCellCount > 0 && bossLevel != null)
+        {
+            int bossCellCount = additionalTopBossCellCount + 1;
+            int bossX = Mathf.Clamp(width / 2, 0, width - 1);
+            int bossStartY = height - bossCellCount;
+            for (int bossIndex = 0; bossIndex < bossCellCount; bossIndex++)
+            {
+                RunMapCellModel bossCell = mapGrid.GetCell(bossX, bossStartY + bossIndex);
+                if (bossCell == null)
+                    continue;
+
+                bossCell.level = bossLevel;
+                bossCell.isBoss = true;
+                bossCell.isEnd = bossIndex == bossCellCount - 1;
+                bossCell.isCompleted = false;
+                bossCell.isAvailable = true;
+                bossCell.isRevealed = true;
+                bossCell.isHidden = false;
+            }
         }
         RevealCurrentMapNeighbors();
     }
@@ -138,7 +157,7 @@ public class RunManager
             return null;
 
         RunMapCellModel targetCell = mapGrid.GetCell(nextX, nextY);
-        if (targetCell == null || !targetCell.isAvailable)
+        if (!mapGrid.CanEnterCell(targetCell))
             return null;
 
         mapGrid.playerX = nextX;
@@ -155,6 +174,17 @@ public class RunManager
             cell.level = null;
             cell.isHidden = false;
         }
+    }
+
+    public bool CompleteCurrentBossCell()
+    {
+        RunMapCellModel cell = mapGrid != null ? mapGrid.GetCurrentCell() : null;
+        if (cell == null || !cell.isBoss || !mapGrid.HasFixedBossPath)
+            return false;
+
+        cell.isCompleted = true;
+        RevealMapCell(cell.x, cell.y + 1);
+        return cell.isEnd;
     }
 
     public void RevealCurrentMapNeighbors()
@@ -178,7 +208,7 @@ public class RunManager
 
     public void ActivateBossMap()
     {
-        if (mapGrid == null)
+        if (mapGrid == null || mapGrid.HasFixedBossPath)
             return;
 
         mapGrid.bossMapActive = true;

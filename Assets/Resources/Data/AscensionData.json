@@ -139,6 +139,146 @@
       "nameKey": "ascension.20.name",
       "descriptionKey": "ascension.20.desc",
       "upgradeIds": ["boss_harder"]
+    },
+    {
+      "numericId": -1,
+      "id": "ascension_minus_1",
+      "nameKey": "ascension.minus_1.name",
+      "descriptionKey": "ascension.minus_1.desc",
+      "upgradeIds": ["player_base_draw_count_plus_1"]
+    },
+    {
+      "numericId": -2,
+      "id": "ascension_minus_2",
+      "nameKey": "ascension.minus_2.name",
+      "descriptionKey": "ascension.minus_2.desc",
+      "upgradeIds": ["designed_battle_count_minus_1"]
+    },
+    {
+      "numericId": -3,
+      "id": "ascension_minus_3",
+      "nameKey": "ascension.minus_3.name",
+      "descriptionKey": "ascension.minus_3.desc",
+      "upgradeIds": ["player_max_health_plus_5"]
+    },
+    {
+      "numericId": -4,
+      "id": "ascension_minus_4",
+      "nameKey": "ascension.minus_4.name",
+      "descriptionKey": "ascension.minus_4.desc",
+      "upgradeIds": ["starting_deck_add_omni_arrow"]
+    },
+    {
+      "numericId": -5,
+      "id": "ascension_minus_5",
+      "nameKey": "ascension.minus_5.name",
+      "descriptionKey": "ascension.minus_5.desc",
+      "upgradeIds": ["gold_gain_125"]
+    },
+    {
+      "numericId": -6,
+      "id": "ascension_minus_6",
+      "nameKey": "ascension.minus_6.name",
+      "descriptionKey": "ascension.minus_6.desc",
+      "upgradeIds": ["reward_magic_choices_plus_1"]
+    },
+    {
+      "numericId": -7,
+      "id": "ascension_minus_7",
+      "nameKey": "ascension.minus_7.name",
+      "descriptionKey": "ascension.minus_7.desc",
+      "upgradeIds": ["starting_magic_slots_plus_1_a7"]
+    },
+    {
+      "numericId": -8,
+      "id": "ascension_minus_8",
+      "nameKey": "ascension.minus_8.name",
+      "descriptionKey": "ascension.minus_8.desc",
+      "upgradeIds": ["designed_event_count_plus_1"]
+    },
+    {
+      "numericId": -9,
+      "id": "ascension_minus_9",
+      "nameKey": "ascension.minus_9.name",
+      "descriptionKey": "ascension.minus_9.desc",
+      "upgradeIds": ["starting_deck_add_three_random_doubled"]
+    },
+    {
+      "numericId": -10,
+      "id": "ascension_minus_10",
+      "nameKey": "ascension.minus_10.name",
+      "descriptionKey": "ascension.minus_10.desc",
+      "upgradeIds": ["shop_price_50"]
+    },
+    {
+      "numericId": -11,
+      "id": "ascension_minus_11",
+      "nameKey": "ascension.minus_11.name",
+      "descriptionKey": "ascension.minus_11.desc",
+      "upgradeIds": ["elite_guaranteed_legendary"]
+    },
+    {
+      "numericId": -12,
+      "id": "ascension_minus_12",
+      "nameKey": "ascension.minus_12.name",
+      "descriptionKey": "ascension.minus_12.desc",
+      "upgradeIds": ["designed_map_main_area_height_plus_1"]
+    },
+    {
+      "numericId": -13,
+      "id": "ascension_minus_13",
+      "nameKey": "ascension.minus_13.name",
+      "descriptionKey": "ascension.minus_13.desc",
+      "upgradeIds": ["starting_magic_slots_plus_1_a13"]
+    },
+    {
+      "numericId": -14,
+      "id": "ascension_minus_14",
+      "nameKey": "ascension.minus_14.name",
+      "descriptionKey": "ascension.minus_14.desc",
+      "upgradeIds": ["enemy_initial_vulnerable_4"]
+    },
+    {
+      "numericId": -15,
+      "id": "ascension_minus_15",
+      "nameKey": "ascension.minus_15.name",
+      "descriptionKey": "ascension.minus_15.desc",
+      "upgradeIds": ["chapter_length_plus_2_a15"]
+    },
+    {
+      "numericId": -16,
+      "id": "ascension_minus_16",
+      "nameKey": "ascension.minus_16.name",
+      "descriptionKey": "ascension.minus_16.desc",
+      "upgradeIds": ["designed_reward_count_plus_1"]
+    },
+    {
+      "numericId": -17,
+      "id": "ascension_minus_17",
+      "nameKey": "ascension.minus_17.name",
+      "descriptionKey": "ascension.minus_17.desc",
+      "upgradeIds": ["enemy_initial_weak_6"]
+    },
+    {
+      "numericId": -18,
+      "id": "ascension_minus_18",
+      "nameKey": "ascension.minus_18.name",
+      "descriptionKey": "ascension.minus_18.desc",
+      "upgradeIds": ["designed_rest_count_plus_1"]
+    },
+    {
+      "numericId": -19,
+      "id": "ascension_minus_19",
+      "nameKey": "ascension.minus_19.name",
+      "descriptionKey": "ascension.minus_19.desc",
+      "upgradeIds": ["chapter_length_plus_2_a19"]
+    },
+    {
+      "numericId": -20,
+      "id": "ascension_minus_20",
+      "nameKey": "ascension.minus_20.name",
+      "descriptionKey": "ascension.minus_20.desc",
+      "upgradeIds": ["extra_top_boss_cells_2"]
     }
   ]
 }

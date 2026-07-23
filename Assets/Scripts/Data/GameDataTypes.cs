@@ -690,6 +690,17 @@ public class MaterialModel
         return readCount < 0 ? 0 : readCount;
     }
 
+    public int GetArrowSequenceReplayCount()
+    {
+        int replayCount = 0;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null)
+                replayCount += modifiers[i].GetArrowSequenceReplayCount();
+        }
+        return replayCount > 0 ? replayCount : 0;
+    }
+
     public void TriggerBeforeArrowRead(ArrowReadContext context)
     {
         for (int i = 0; i < modifiers.Count; i++)

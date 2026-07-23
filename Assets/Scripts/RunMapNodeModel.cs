@@ -17,6 +17,8 @@ public class RunMapCellModel
     public int y;
     public LevelData level;
     public bool isBoss;
+    public bool isEnd;
+    public bool isCompleted;
     public bool isAvailable = true;
     public bool isRevealed;
     public bool isHidden;
@@ -36,6 +38,49 @@ public class RunMapGridModel
     private readonly Queue<RunMapCellModel> reachableQueue = new Queue<RunMapCellModel>();
 
     public int CellCount => cells.Count;
+
+    public bool HasFixedBossPath
+    {
+        get
+        {
+            for (int i = 0; i < cells.Count; i++)
+            {
+                RunMapCellModel cell = cells[i];
+                if (cell != null && cell.isEnd)
+                    return true;
+            }
+            return false;
+        }
+    }
+
+    public bool IsCurrentCellEnd
+    {
+        get
+        {
+            RunMapCellModel cell = GetCurrentCell();
+            return cell != null && cell.isEnd;
+        }
+    }
+
+    public bool CanEnterCell(RunMapCellModel target)
+    {
+        if (target == null || !target.isAvailable)
+            return false;
+
+        if (!HasFixedBossPath || !target.isBoss)
+            return true;
+
+        if (target.isCompleted)
+            return true;
+
+        for (int i = 0; i < cells.Count; i++)
+        {
+            RunMapCellModel cell = cells[i];
+            if (cell != null && cell.isBoss && cell.x == target.x && cell.y < target.y && !cell.isCompleted)
+                return false;
+        }
+        return true;
+    }
 
     public RunMapCellModel GetCell(int x, int y)
     {

@@ -79,7 +79,7 @@ public class StartAscensionSelectionUI : MonoBehaviour
         }
         if (levelText != null)
         {
-            levelText.text = Mathf.Max(0, level).ToString();
+            levelText.text = level.ToString();
             levelText.color = unlocked ? unlockedTextColor : lockedTextColor;
         }
         if (drawerLevelText != null)
@@ -99,7 +99,7 @@ public class StartAscensionSelectionUI : MonoBehaviour
             RefreshBodyScroll();
         }
         if (decreaseButton != null)
-            decreaseButton.interactable = unlocked && level > 0;
+            decreaseButton.interactable = unlocked && level > AscensionSystem.MinAscensionLevel;
         if (increaseButton != null)
             increaseButton.interactable = unlocked && level < AscensionSystem.HighestUnlockedLevel;
     }

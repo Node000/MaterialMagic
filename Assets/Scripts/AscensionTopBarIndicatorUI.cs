@@ -79,7 +79,7 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
         if (iconRenderer != null)
             iconRenderer.sprite = sprite;
         if (levelText != null)
-            levelText.text = Mathf.Max(0, level).ToString();
+            levelText.text = level.ToString();
     }
 
     private void ToggleDetail()

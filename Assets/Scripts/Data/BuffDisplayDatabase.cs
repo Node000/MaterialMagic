@@ -45,6 +45,7 @@ public static class BuffDisplayDatabase
             return;
 
         loaded = true;
+        LocalizationSystem.LanguageChanged += RefreshLocalizedText;
         TextAsset asset = GameDataReader.LoadTextAsset("Data/BuffIconData");
         BuffIconTable table = asset != null ? JsonUtility.FromJson<BuffIconTable>(asset.text) : null;
         if (table != null && table.items != null)
@@ -59,6 +60,16 @@ public static class BuffDisplayDatabase
 
                 DataByType[entry.buffType] = CreateDefault(entry.buffType, icon);
             }
+        }
+    }
+
+    private static void RefreshLocalizedText()
+    {
+        foreach (KeyValuePair<BuffEnum, BuffDisplayData> pair in DataByType)
+        {
+            BuffDisplayData data = pair.Value;
+            data.Name = LocalizationKeys.GetBuffName(pair.Key);
+            data.Description = LocalizationKeys.GetBuffDescription(pair.Key);
         }
     }
 

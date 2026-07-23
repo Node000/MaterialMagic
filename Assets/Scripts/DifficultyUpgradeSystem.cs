@@ -24,14 +24,19 @@ public enum DifficultyUpgradeEffectType
     MapWidthDelta = 15,
     MapHeightDelta = 16,
     MapBlockAvailableCells = 17,
-    DesignedMapMainAreaHeightDelta = 25,
     StartingMagicSlotDelta = 18,
     MagicRarityWeightMultiplier = 19,
     MapHiddenLevelChanceDelta = 20,
     MapLevelWeightMultiplier = 21,
     DesignedMapLevelCountDelta = 22,
     ChapterLengthDelta = 23,
-    StartingDeckAddPlaceholder = 24
+    StartingDeckAddPlaceholder = 24,
+    DesignedMapMainAreaHeightDelta = 25,
+    PlayerBaseDrawCountDelta = 26,
+    StartingDeckAddOmniArrow = 27,
+    StartingDeckAddRandomDoubled = 28,
+    EliteGuaranteedLegendary = 29,
+    AdditionalTopBossCellCount = 30
 }
 
 [Serializable]
@@ -421,11 +426,20 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
             case DifficultyUpgradeEffectType.PlayerMaxHealthDelta:
                 player.AdjustMaxHealthOnly(GetEffectInt(effect));
                 break;
+            case DifficultyUpgradeEffectType.PlayerBaseDrawCountDelta:
+                player.DrawCount = Mathf.Max(1, player.DrawCount + GetEffectInt(effect));
+                break;
             case DifficultyUpgradeEffectType.StartingDeckAddBasicDirections:
                 AddBasicDirectionSet(player);
                 break;
             case DifficultyUpgradeEffectType.StartingDeckAddPlaceholder:
                 AddPlaceholderDeckCards(player, Mathf.Max(0, GetEffectInt(effect)));
+                break;
+            case DifficultyUpgradeEffectType.StartingDeckAddOmniArrow:
+                AddOmniArrowDeckCards(player, Mathf.Max(0, GetEffectInt(effect)));
+                break;
+            case DifficultyUpgradeEffectType.StartingDeckAddRandomDoubled:
+                AddRandomDoubledDeckCards(player, Mathf.Max(0, GetEffectInt(effect)));
                 break;
         }
     }
@@ -442,6 +456,39 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
     {
         for (int i = 0; i < count; i++)
             player.AddDeckPlaceholderMaterial();
+    }
+
+    private static void AddOmniArrowDeckCards(PlayerStatus player, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            MaterialEnum material = (MaterialEnum)NextPlayerRandomInt(player, (int)MaterialEnum.Fire, (int)MaterialEnum.Earth + 1);
+            player.AddDeckMaterial(material, new OmniArrowModifier());
+        }
+    }
+
+    private static void AddRandomDoubledDeckCards(PlayerStatus player, int count)
+    {
+        List<MaterialModel> candidates = new List<MaterialModel>();
+        for (int i = 0; i < player.Deck.Count; i++)
+        {
+            MaterialModel card = player.Deck[i];
+            if (card != null && card.material != MaterialEnum.None)
+                candidates.Add(card);
+        }
+
+        for (int i = 0; i < count && candidates.Count > 0; i++)
+        {
+            int index = NextPlayerRandomInt(player, 0, candidates.Count);
+            MaterialModel card = candidates[index];
+            candidates.RemoveAt(index);
+            card.AddModifier(new BigArrow2Modifier());
+        }
+    }
+
+    private static int NextPlayerRandomInt(PlayerStatus player, int minInclusive, int maxExclusive)
+    {
+        return player != null ? player.NextRunRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
     }
 
     private static int GetEffectInt(DifficultyUpgradeEffectData effect)
@@ -687,7 +734,7 @@ public static class DifficultyUpgradeSystem
         int result = slotCount;
         for (int i = 0; i < activeUpgrades.Count; i++)
             result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMagicSlotCount(result) : result;
-        return Mathf.Clamp(result, 1, Mathf.Max(1, slotCount));
+        return Mathf.Max(1, result);
     }
 
     public static float ModifyMagicRarityWeight(MagicRarity rarity, float weight)
@@ -696,6 +743,16 @@ public static class DifficultyUpgradeSystem
         for (int i = 0; i < activeUpgrades.Count; i++)
             result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMagicRarityWeight(rarity, result) : result;
         return Mathf.Max(0f, result);
+    }
+
+    public static bool HasEliteGuaranteedLegendaryReward()
+    {
+        return GetActiveEffectIntTotal(DifficultyUpgradeEffectType.EliteGuaranteedLegendary) > 0;
+    }
+
+    public static int GetAdditionalTopBossCellCount()
+    {
+        return Mathf.Max(0, GetActiveEffectIntTotal(DifficultyUpgradeEffectType.AdditionalTopBossCellCount));
     }
 
     private static void Initialize(RunDifficultySaveData state)
@@ -720,15 +777,17 @@ public static class DifficultyUpgradeSystem
 
     private static RunDifficultySaveData BuildRunStateForAscension(int ascensionLevel)
     {
-        ascensionLevel = Mathf.Clamp(ascensionLevel, 0, AscensionSystem.MaxAscensionLevel);
+        ascensionLevel = Mathf.Clamp(ascensionLevel, AscensionSystem.MinAscensionLevel, AscensionSystem.MaxAscensionLevel);
         List<string> upgradeIds = new List<string>();
-        for (int level = 1; level <= ascensionLevel; level++)
+        if (ascensionLevel < 0)
         {
-            if (!GameDataDatabase.TryGetAscensionData(level, out AscensionData data) || data == null || data.upgradeIds == null)
-                continue;
-
-            for (int i = 0; i < data.upgradeIds.Length; i++)
-                AddUnique(upgradeIds, data.upgradeIds[i]);
+            for (int level = -1; level >= ascensionLevel; level--)
+                AddAscensionUpgradeIds(upgradeIds, level);
+        }
+        else
+        {
+            for (int level = 1; level <= ascensionLevel; level++)
+                AddAscensionUpgradeIds(upgradeIds, level);
         }
 
         return new RunDifficultySaveData
@@ -745,9 +804,34 @@ public static class DifficultyUpgradeSystem
 
         return new RunDifficultySaveData
         {
-            ascensionLevel = Mathf.Max(0, state.ascensionLevel),
+            ascensionLevel = Mathf.Clamp(state.ascensionLevel, AscensionSystem.MinAscensionLevel, AscensionSystem.MaxAscensionLevel),
             upgradeIds = CloneStringArray(state.upgradeIds)
         };
+    }
+
+    private static void AddAscensionUpgradeIds(List<string> upgradeIds, int level)
+    {
+        if (!GameDataDatabase.TryGetAscensionData(level, out AscensionData data) || data == null || data.upgradeIds == null)
+            return;
+
+        for (int i = 0; i < data.upgradeIds.Length; i++)
+            AddUnique(upgradeIds, data.upgradeIds[i]);
+    }
+
+    private static int GetActiveEffectIntTotal(DifficultyUpgradeEffectType effectType)
+    {
+        int total = 0;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+        {
+            DifficultyUpgradeData data = activeUpgrades[i] != null ? activeUpgrades[i].Data : null;
+            for (int effectIndex = 0; data != null && data.effects != null && effectIndex < data.effects.Length; effectIndex++)
+            {
+                DifficultyUpgradeEffectData effect = data.effects[effectIndex];
+                if (effect != null && effect.type == effectType)
+                    total += effect.intValue != 0 ? effect.intValue : Mathf.RoundToInt(effect.value);
+            }
+        }
+        return total;
     }
 
     private static string[] CloneStringArray(string[] source)
@@ -771,6 +855,8 @@ public static class DifficultyUpgradeSystem
 
 public static class AscensionSystem
 {
+    public const int MinAscensionLevel = -20;
+
     public static int MaxAscensionLevel
     {
         get
@@ -794,13 +880,13 @@ public static class AscensionSystem
 
             UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
             int highestUnlocked = GetHighestUnlockedLevel(progress);
-            return Mathf.Clamp(progress.selectedAscensionLevel, 0, highestUnlocked);
+            return Mathf.Clamp(progress.selectedAscensionLevel, MinAscensionLevel, highestUnlocked);
         }
         set
         {
             UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
             int highestUnlocked = GetHighestUnlockedLevel(progress);
-            progress.selectedAscensionLevel = Mathf.Clamp(value, 0, highestUnlocked);
+            progress.selectedAscensionLevel = Mathf.Clamp(value, MinAscensionLevel, highestUnlocked);
             UnlockProgressSaveSystem.SaveCurrent(progress);
         }
     }
@@ -815,7 +901,11 @@ public static class AscensionSystem
 
     public static bool IsLevelUnlocked(int level)
     {
-        return level == 0 || (IsUnlocked() && level <= HighestUnlockedLevel);
+        if (level == 0)
+            return true;
+        if (!IsUnlocked())
+            return false;
+        return level >= MinAscensionLevel && (level < 0 || level <= HighestUnlockedLevel);
     }
 
     private static int GetHighestUnlockedLevel(UnlockProgressData progress)

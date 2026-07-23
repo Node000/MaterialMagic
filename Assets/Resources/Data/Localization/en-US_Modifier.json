@@ -86,7 +86,7 @@
     },
     {
       "key": "modifier.repeat_arrow.desc",
-      "text": "When this arrow is read, read it one extra time."
+      "text": "After this arrow is read, resolve the remaining sequence from this arrow one additional time. Does not affect event recipes."
     },
     {
       "key": "modifier.big_arrow_2.name",

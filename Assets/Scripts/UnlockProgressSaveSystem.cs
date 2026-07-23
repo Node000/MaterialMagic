@@ -97,10 +97,12 @@ public static class UnlockProgressSaveSystem
             data.highestAscensionCleared = data.highestAscensionUnlocked;
 
         string ascensionUnlockKey = UnlockSystem.GetUnlockKey(UnlockSystem.TargetFeature, "ascension");
-        if (data.highestAscensionUnlocked <= 0 && Contains(data.unlockedIds, ascensionUnlockKey) && maxLevel > 0)
+        bool ascensionUnlocked = Contains(data.unlockedIds, ascensionUnlockKey);
+        if (data.highestAscensionUnlocked <= 0 && ascensionUnlocked && maxLevel > 0)
             data.highestAscensionUnlocked = 1;
 
-        data.selectedAscensionLevel = Mathf.Clamp(data.selectedAscensionLevel, 0, data.highestAscensionUnlocked);
+        int minSelectedLevel = ascensionUnlocked ? AscensionSystem.MinAscensionLevel : 0;
+        data.selectedAscensionLevel = Mathf.Clamp(data.selectedAscensionLevel, minSelectedLevel, data.highestAscensionUnlocked);
     }
 
     private static int GetMaxAscensionLevel()

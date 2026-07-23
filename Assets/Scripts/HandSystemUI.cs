@@ -366,6 +366,10 @@ public class HandSystemUI : MonoBehaviour
 
 		private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
 
+    private int baseMagicSlotCount;
+
+    private bool initializeStartingMagicSlotsFromEnd;
+
     private readonly List<int> debugMagicDropdownIds = new List<int>();
 
 		private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
@@ -938,7 +942,7 @@ public class HandSystemUI : MonoBehaviour
     private bool ShouldActivateBossMapForCurrentSelection(RunMapGridModel grid)
     {
         ChapterData chapter = activeChapter ?? GetActiveChapter();
-        return grid != null && grid.CellCount > 0 && !grid.bossMapActive && (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId) && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1;
+        return grid != null && grid.CellCount > 0 && !grid.HasFixedBossPath && !grid.bossMapActive && (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId) && currentMapNodeIndex >= Mathf.Max(1, GetActiveChapterLength()) - 1;
     }
 
     private void ActivateBossMapForCurrentSelection(ChapterGridPanelUI panel)
@@ -1126,6 +1130,8 @@ public class HandSystemUI : MonoBehaviour
             if (level == null)
                 return;
 
+            RunMapCellModel currentCell = ChapterMapGrid != null ? ChapterMapGrid.GetCurrentCell() : null;
+            currentChapterMapBossLevel = currentCell != null && (currentCell.isBoss || ChapterMapGrid.bossMapActive);
             currentLevel = level;
             runManager?.SelectCurrentNodeLevel(level);
             if (currentMapNodeIndex >= 0 && currentMapNodeIndex < mapNodes.Count)
@@ -2152,33 +2158,37 @@ public class HandSystemUI : MonoBehaviour
 		}
 		currentMapNodeIndex = 0;
         runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
-        BuildChapterMapGrid(chapter);
+        BuildChapterMapGrid(chapter, DifficultyUpgradeSystem.GetAdditionalTopBossCellCount());
 		RefreshChapterProgressUI();
 		GetUIManager().MapPanel?.SetPlayerMarkerNodeIndex(currentMapNodeIndex);
 		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
 	}
 
-	private void BuildChapterMapGrid(ChapterData chapter)
+    public void BuildChapterMapGrid(ChapterData chapter, int additionalTopBossCellCount = 0)
     {
         if (runManager == null)
             return;
 
+        bool isTutorialMap = chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId;
+        additionalTopBossCellCount = isTutorialMap ? 0 : Mathf.Max(0, additionalTopBossCellCount);
         int width = Mathf.Max(1, chapter != null && chapter.mapWidth > 0 ? chapter.mapWidth : 5);
-        int height = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
-        bool isDesignedMap = chapter != null && chapter.numericId != TutorialManagerUI.TutorialChapterNumericId && width == 5 && height == 8;
+        int baseHeight = Mathf.Max(1, chapter != null && chapter.mapHeight > 0 ? chapter.mapHeight : 5);
+        bool isDesignedMap = chapter != null && !isTutorialMap && width == 5 && baseHeight == 8;
         if (isDesignedMap)
-            height = DifficultyUpgradeSystem.ModifyDesignedMapMainAreaHeight(5) + 3;
-        else if (chapter == null || chapter.numericId != TutorialManagerUI.TutorialChapterNumericId)
+            baseHeight = DifficultyUpgradeSystem.ModifyDesignedMapMainAreaHeight(5) + 3;
+        else if (!isTutorialMap)
         {
             width = DifficultyUpgradeSystem.ModifyMapWidth(width);
-            height = DifficultyUpgradeSystem.ModifyMapHeight(height);
+            baseHeight = DifficultyUpgradeSystem.ModifyMapHeight(baseHeight);
         }
+
+        int height = baseHeight + additionalTopBossCellCount;
         int cellCount = width * height;
         List<LevelData> levels = new List<LevelData>(cellCount);
         for (int i = 0; i < cellCount; i++)
             levels.Add(null);
 
-        if (chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId)
+        if (isTutorialMap)
         {
             BuildTutorialChapterMapGrid(levels, width, height);
             runManager.BuildMapGrid(chapter, levels, width, height);
@@ -2187,16 +2197,16 @@ public class HandSystemUI : MonoBehaviour
         }
 
         LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
-        bool isReducedDesignedMap = isDesignedMap && height == 7;
+        bool isReducedDesignedMap = isDesignedMap && baseHeight == 7;
         HashSet<Vector2Int> designedBlockedCells = isReducedDesignedMap ? SelectDesignedChapterBlockedCells(DifficultyUpgradeSystem.GetMapBlockedCellCount()) : null;
         if (isDesignedMap)
-            BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel, designedBlockedCells);
+            BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel, designedBlockedCells, additionalTopBossCellCount);
         else
             BuildWeightedChapterMapGrid(chapter, levels, width, height, bossLevel);
 
-        runManager.BuildMapGrid(chapter, levels, width, height);
+        runManager.BuildMapGrid(chapter, levels, width, height, additionalTopBossCellCount, bossLevel);
         if (isDesignedMap)
-            ApplyDesignedChapterMapCellFlags(designedBlockedCells);
+            ApplyDesignedChapterMapCellFlags(designedBlockedCells, additionalTopBossCellCount);
         DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt, !isReducedDesignedMap);
         runManager?.RevealCurrentMapNeighbors();
     }
@@ -2246,15 +2256,17 @@ public class HandSystemUI : MonoBehaviour
         }
     }
 
-    private void BuildDesignedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel, HashSet<Vector2Int> blockedCells)
+    private void BuildDesignedChapterMapGrid(ChapterData chapter, List<LevelData> levels, int width, int height, LevelData bossLevel, HashSet<Vector2Int> blockedCells, int additionalTopBossCellCount)
     {
-        int bossY = height - 1;
-        SetMapGridLevel(levels, width, 2, bossY, bossLevel);
+        int bossCellCount = additionalTopBossCellCount + 1;
+        int bossStartY = height - bossCellCount;
+        for (int bossIndex = 0; bossIndex < bossCellCount; bossIndex++)
+            SetMapGridLevel(levels, width, 2, bossStartY + bossIndex, bossLevel);
         SetMapGridLevel(levels, width, 2, 2, ChooseRandomMapLevel(chapter, GetBattleLevels()));
         SetMapGridLevel(levels, width, 2, 1, ChooseRandomMapLevel(chapter, GetBattleLevels()));
 
         List<Vector2Int> positions = new List<Vector2Int>();
-        for (int y = bossY - 1; y >= 2; y--)
+        for (int y = bossStartY - 1; y >= 2; y--)
         {
             for (int x = 0; x < width; x++)
             {
@@ -2331,29 +2343,34 @@ public class HandSystemUI : MonoBehaviour
         return blockedCells;
     }
 
-    private void ApplyDesignedChapterMapCellFlags(HashSet<Vector2Int> blockedCells)
+    private void ApplyDesignedChapterMapCellFlags(HashSet<Vector2Int> blockedCells, int additionalTopBossCellCount)
     {
         RunMapGridModel grid = ChapterMapGrid;
         if (grid == null)
             return;
 
-        int bossY = grid.height - 1;
+        int bossCellCount = Mathf.Max(0, additionalTopBossCellCount) + 1;
+        int bossStartY = grid.height - bossCellCount;
+        bool hasFixedBossPath = additionalTopBossCellCount > 0;
         for (int i = 0; i < grid.cells.Count; i++)
         {
             RunMapCellModel cell = grid.cells[i];
             if (cell == null)
                 continue;
 
-            cell.isAvailable = IsDesignedChapterMapCellAvailable(cell.x, cell.y, bossY) && (blockedCells == null || !blockedCells.Contains(new Vector2Int(cell.x, cell.y)));
-            cell.isBoss = cell.x == 2 && cell.y == bossY;
-            cell.isRevealed = cell.isBoss;
+            bool isBossCell = cell.x == 2 && cell.y >= bossStartY;
+            cell.isAvailable = isBossCell || (IsDesignedChapterMapCellAvailable(cell.x, cell.y, bossStartY) && (blockedCells == null || !blockedCells.Contains(new Vector2Int(cell.x, cell.y))));
+            cell.isBoss = isBossCell;
+            cell.isEnd = hasFixedBossPath && cell.x == 2 && cell.y == grid.height - 1;
+            cell.isCompleted = false;
+            cell.isRevealed = isBossCell;
         }
         runManager?.RevealCurrentMapNeighbors();
     }
 
-    private static bool IsDesignedChapterMapCellAvailable(int x, int y, int bossY)
+    private static bool IsDesignedChapterMapCellAvailable(int x, int y, int bossStartY)
     {
-        return (x == 2 && y == bossY) || (y >= 2 && y < bossY) || (x == 2 && (y == 0 || y == 1));
+        return (y >= 2 && y < bossStartY) || (x == 2 && (y == 0 || y == 1));
     }
 
     private List<LevelData> GetMapGridCandidateLevels(ChapterData chapter, int progress, LevelData bossLevel)
@@ -2401,7 +2418,7 @@ public class HandSystemUI : MonoBehaviour
     {
         RunMapGridModel grid = ChapterMapGrid;
         if (grid == null || grid.CellCount == 0)
-            BuildChapterMapGrid(activeChapter ?? GetActiveChapter());
+            BuildChapterMapGrid(activeChapter ?? GetActiveChapter(), DifficultyUpgradeSystem.GetAdditionalTopBossCellCount());
     }
 
     public void OnChapterMapDirectionClicked(MaterialEnum material)
@@ -2434,6 +2451,15 @@ public class HandSystemUI : MonoBehaviour
         float delay = panel != null ? panel.EnterLevelDelayAfterMove : 0.2f;
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
+
+        if (targetCell.isBoss && targetCell.isCompleted)
+        {
+            panel?.SetInputLocked(false);
+            busy = false;
+            chapterMapMoveInProgress = false;
+            SaveRunProgress();
+            yield break;
+        }
 
         pendingChapterMapBossStart = targetCell.isBoss || (ChapterMapGrid != null && ChapterMapGrid.bossMapActive);
         LevelData level = pendingChapterMapBossStart ? runManager.DrawBossLevel(activeChapter ?? GetActiveChapter()) : targetCell.level;
@@ -2827,6 +2853,7 @@ public class HandSystemUI : MonoBehaviour
         if (saveData == null)
             DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
 			playerState = playerStatus;
+        initializeStartingMagicSlotsFromEnd = saveData == null;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
         runManager.AttachMapGrid(new RunMapGridModel());
@@ -2854,7 +2881,7 @@ public class HandSystemUI : MonoBehaviour
             runManager.RestorePoolState(saveData.runPools);
             RunSaveSystem.RestoreMapNodes(saveData, mapNodes);
             if (!runManager.RestoreMapGrid(RunSaveSystem.RestoreMapGrid(saveData)))
-                BuildChapterMapGrid(activeChapter ?? GetActiveChapter());
+                BuildChapterMapGrid(activeChapter ?? GetActiveChapter(), DifficultyUpgradeSystem.GetAdditionalTopBossCellCount());
             currentMapNodeIndex = Mathf.Clamp(saveData.currentMapNodeIndex, 0, Mathf.Max(0, mapNodes.Count - 1));
             runManager.SetCurrentMapNodeIndex(currentMapNodeIndex);
             RefreshChapterProgressUI();
@@ -4729,14 +4756,18 @@ public bool IsCardDragActive => cardDragActive;
 		GetUIManager().PlayArea.ShowResolveIndicator();
 		ArrowReadSequence readSequence = ArrowReadSystem.BuildSequence(cards, playerState, battleManager);
         List<ArrowReadStep> afterReadActionSteps = new List<ArrowReadStep>();
-		for (int stepIndex = 0; stepIndex < readSequence.Steps.Count; stepIndex++)
+		for (int sequenceIndex = 0; sequenceIndex < readSequence.ResolveSequences.Count; sequenceIndex++)
 		{
-			ArrowReadStep step = readSequence.Steps[stepIndex];
+			ArrowReadSequence resolveSequence = readSequence.ResolveSequences[sequenceIndex];
+			bool appliesAfterReadActions = sequenceIndex == 0;
+			for (int stepIndex = 0; stepIndex < resolveSequence.Steps.Count; stepIndex++)
+			{
+				ArrowReadStep step = resolveSequence.Steps[stepIndex];
 			MaterialModel card = step.SourceCard;
 			if (card != null)
 			{
 				ResetMagicHighlights();
-				MoveIndicatorToReadStep(cards, step, stepIndex == 0);
+					MoveIndicatorToReadStep(cards, step, sequenceIndex == 0 && stepIndex == 0);
 				yield return (object)new WaitForSeconds(layoutDuration * 0.35f);
 				HandCardView handCardView = FindView(card);
 				if ((Object)handCardView != (Object)null)
@@ -4747,7 +4778,7 @@ public bool IsCardDragActive => cardDragActive;
                 GameLog.Data($"Resolve arrow from play zone material={card.material} cardIndex={step.SourceCardIndex} step={stepIndex}");
                 playerCastAnimator?.PlayMaterialAction(step.PrimaryDisplayMaterial);
                 MagicCastResult materialResult = ResolveArrowReadStepEffect(step);
-                if (step.RemovesSourceAfterRead && !ContainsAfterReadActionStep(afterReadActionSteps, card))
+                if (appliesAfterReadActions && step.RemovesSourceAfterRead && !ContainsAfterReadActionStep(afterReadActionSteps, card))
                     afterReadActionSteps.Add(step);
 				PlayMagicCastFeedback(materialResult);
 				yield return PlayPendingEnemyDeaths();
@@ -4767,7 +4798,7 @@ public bool IsCardDragActive => cardDragActive;
 				int stepTokenCount = step.Tokens.Count;
 				for (int tokenStart = step.FirstTokenIndex; tokenStart < step.FirstTokenIndex + stepTokenCount; tokenStart++)
 				{
-					CollectCastableMagicsByRecipeLength(readSequence.Tokens, tokenStart);
+						CollectCastableMagicsByRecipeLength(resolveSequence.Tokens, tokenStart);
 					if (castableMagicViews.Count == 0)
 					{
 						continue;
@@ -4777,11 +4808,11 @@ public bool IsCardDragActive => cardDragActive;
 						ResetMagicHighlights();
 						MagicItemView matchedMagicView = castableMagicViews[matchedIndex];
 						int matchLength = GetRecipeLength(matchedMagicView.Magic);
-						MoveIndicatorToTokenRange(cards, readSequence.Tokens, tokenStart, matchLength, false);
+						MoveIndicatorToTokenRange(cards, resolveSequence.Tokens, tokenStart, matchLength, false);
 						yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
 						for (int i = 0; i < matchLength; i++)
 						{
-							ArrowReadToken token = readSequence.Tokens[tokenStart + i];
+							ArrowReadToken token = resolveSequence.Tokens[tokenStart + i];
 							HandCardView handCardView = FindView(token.SourceCard);
 							if ((Object)handCardView != (Object)null)
 							{
@@ -4792,8 +4823,9 @@ public bool IsCardDragActive => cardDragActive;
 						yield return (object)new WaitForSeconds(GetParticleArrivalWait());
 						for (int j = 0; j < matchLength; j++)
 						{
-							MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager, Token = readSequence.Tokens[tokenStart + j], Step = step };
-							readSequence.Tokens[tokenStart + j].SourceCard.TriggerOnTokenInvoke(readSequence.Tokens[tokenStart + j], step);
+							ArrowReadToken token = resolveSequence.Tokens[tokenStart + j];
+							MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager, Token = token, Step = step };
+							token.SourceCard.TriggerOnTokenInvoke(token, step);
 							matchedMagicView.HighlightRecipeSlot(j);
 						}
 						EnemyModel targetEnemy = battleManager.BeginCastTarget();
@@ -4819,6 +4851,7 @@ public bool IsCardDragActive => cardDragActive;
 					}
 				}
 
+			}
 		}
         yield return ApplyArrowReadAfterActions(afterReadActionSteps);
 	}
@@ -6090,31 +6123,62 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void CreateMagicViews()
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Expected O, but got Unknown
-		if (!((Object)magicBookArea == (Object)null))
-		{
-				magicViews.Clear();
-					MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
-                    int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(componentsInChildren.Length);
-					for (int i = 0; i < componentsInChildren.Length; i++)
-					{
-                    bool visibleSlot = i < slotLimit;
-					((Component)componentsInChildren[i]).gameObject.SetActive(visibleSlot);
-                    if (!visibleSlot)
-                    {
-                        playerState?.ClearMagicSlot(i);
-                        continue;
-                    }
-					AddJuicyMotion(((Component)componentsInChildren[i]).transform);
-					MagicSlotClickHandler clickHandler = ((Component)componentsInChildren[i]).GetComponent<MagicSlotClickHandler>();
-					if (clickHandler == null)
-						clickHandler = ((Component)componentsInChildren[i]).gameObject.AddComponent<MagicSlotClickHandler>();
-	                clickHandler.Bind(this, i);
-	                componentsInChildren[i].Bind(playerState.GetMagicAtSlot(i));
+		if ((Object)magicBookArea == (Object)null)
+			return;
 
-					magicViews.Add(componentsInChildren[i]);
-				}
+		MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+		if (componentsInChildren.Length == 0)
+			return;
+
+		if (baseMagicSlotCount <= 0)
+			baseMagicSlotCount = componentsInChildren.Length;
+
+		int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
+		EnsureMagicSlotCapacity(slotLimit, componentsInChildren[0]);
+		componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+		if (initializeStartingMagicSlotsFromEnd)
+		{
+			InitializeStartingMagicSlotsFromEnd(slotLimit);
+			initializeStartingMagicSlotsFromEnd = false;
+		}
+
+		magicViews.Clear();
+		for (int i = 0; i < componentsInChildren.Length; i++)
+		{
+			bool visibleSlot = i < slotLimit;
+			MagicItemView view = componentsInChildren[i];
+			view.gameObject.SetActive(visibleSlot);
+			if (!visibleSlot)
+			{
+				playerState?.ClearMagicSlot(i);
+				continue;
+			}
+
+			AddJuicyMotion(view.transform);
+			MagicSlotClickHandler clickHandler = view.GetComponent<MagicSlotClickHandler>();
+			if (clickHandler == null)
+				clickHandler = view.gameObject.AddComponent<MagicSlotClickHandler>();
+			clickHandler.Bind(this, i);
+			view.Bind(playerState.GetMagicAtSlot(i));
+			magicViews.Add(view);
+		}
+	}
+
+	private void InitializeStartingMagicSlotsFromEnd(int slotLimit)
+	{
+		List<MagicModel> initialMagicBook = new List<MagicModel>(playerState.MagicBook);
+		playerState.MagicBook.Clear();
+		for (int i = 0; i < initialMagicBook.Count; i++)
+			playerState.SetMagicAtSlot(initialMagicBook[i], slotLimit - 1 - initialMagicBook[i].SlotIndex);
+	}
+
+	private void EnsureMagicSlotCapacity(int slotCount, MagicItemView template)
+	{
+		for (int i = magicBookArea.GetComponentsInChildren<MagicItemView>(true).Length; i < slotCount; i++)
+		{
+			GameObject slot = Object.Instantiate(template.gameObject, magicBookArea);
+			slot.name = template.gameObject.name;
+			slot.SetActive(true);
 		}
 	}
 
@@ -6779,8 +6843,9 @@ public bool IsCardDragActive => cardDragActive;
             }
 			busy = true;
 			SetButtonsInteractable(interactable: false);
-	        if (ShouldCompleteRunAfterCurrentBattle())
+		if (ShouldCompleteRunAfterCurrentBattle())
         {
+            runManager?.CompleteCurrentBossCell();
             TutorialManager?.CompleteTutorial(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
             ShowVictoryPanel();
             yield break;
@@ -6790,7 +6855,11 @@ public bool IsCardDragActive => cardDragActive;
 
     private bool ShouldCompleteRunAfterCurrentBattle()
     {
-        return currentChapterMapBossLevel && IsFinalChapter(activeChapter ?? GetActiveChapter());
+        if (!currentChapterMapBossLevel)
+            return false;
+
+        RunMapGridModel grid = ChapterMapGrid;
+        return grid != null && grid.HasFixedBossPath ? grid.IsCurrentCellEnd : IsFinalChapter(activeChapter ?? GetActiveChapter());
     }
 
     private bool IsFinalChapter(ChapterData chapter)
@@ -7023,11 +7092,59 @@ public bool IsCardDragActive => cardDragActive;
 				if (item == null)
 					break;
 
-				list.Remove(item);
-				list2.Add(item);
+					list.Remove(item);
+					list2.Add(item);
+				}
+
+				if (currentLevel != null && currentLevel.levelType == LevelType.Elite && DifficultyUpgradeSystem.HasEliteGuaranteedLegendaryReward())
+				{
+					bool hasLegendary = false;
+					for (int i = 0; i < list2.Count; i++)
+					{
+						if (list2[i] != null && list2[i].rarity == MagicRarity.Legendary)
+						{
+							hasLegendary = true;
+							break;
+						}
+					}
+
+					if (!hasLegendary && list2.Count > 0)
+					{
+						int legendaryCount = 0;
+						for (int i = 0; i < list.Count; i++)
+						{
+							if (list[i] != null && list[i].rarity == MagicRarity.Legendary)
+								legendaryCount++;
+						}
+
+						if (legendaryCount > 0)
+						{
+							int legendaryIndex = NextRunRandomInt(0, legendaryCount);
+							MagicData legendary = null;
+							for (int i = 0; i < list.Count; i++)
+							{
+								if (list[i] == null || list[i].rarity != MagicRarity.Legendary)
+									continue;
+
+								if (legendaryIndex-- == 0)
+								{
+									legendary = list[i];
+									break;
+								}
+							}
+
+							if (legendary != null)
+							{
+								int replacementIndex = NextRunRandomInt(0, list2.Count);
+								list.Remove(legendary);
+								list2[replacementIndex] = legendary;
+							}
+						}
+					}
+				}
+
+				return list2;
 			}
-			return list2;
-		}
 
 		private static bool IsRewardMagicAllowed(MagicData data, RewardPoolData rewardPool)
 		{
@@ -7764,8 +7881,12 @@ public bool IsCardDragActive => cardDragActive;
         {
             if (finishedBossMapLevel)
             {
-                ShowVictoryPanel();
-                return;
+                bool completedEndCell = runManager != null && runManager.CompleteCurrentBossCell();
+                if (!ChapterMapGrid.HasFixedBossPath || completedEndCell)
+                {
+                    ShowVictoryPanel();
+                    return;
+                }
             }
 
             currentMapNodeIndex++;

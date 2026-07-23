@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92cd13073531cc54b8287ed1ee7ff47b, type: 3}
+  m_Name: Enemy_013
+  m_EditorClassIdentifier: 
+  data:
+    numericId: 13
+    id: 
+    string_id: enemy_013
+    nameKey: enemy.013.name
+    maxHealth: 23
+    baseAttack: 2
+    imageScale: 0.6
+    hoverEffect: 1
+    infoBoxSize: {x: 0, y: 0}
+    infoBoxOffset: {x: 0, y: 0}
+    healthBarWidth: 0
+    intentOffsetX: 0
+    intentOffsetY: 0
+    isMinion: 0
+    initialBuffs: []
+    iconName: "\u5047\u4EBA"
+    spriteAnimationPath: "\u5047\u4EBA"
+    animationFrameRate: 8
+    phases:
+    - phase: 0
+      intentGroups:
+      - id: 1
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 1
+          value: 2
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: attack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 6
+            stack: 4
+          displayType: debuff
+          descriptionKey: 
+      intentLoop:
+      - groupId: 1
+        randomGroupIds: 
+        onlyOnce: 0
+      intentPool: []
+    intentGroups: []
+    intentLoop: []
+    actionLoop: []

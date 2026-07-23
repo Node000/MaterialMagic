@@ -1343,6 +1343,326 @@
     {
       "key": "ui.battle.pile.consumed.body",
       "text": "已消耗的箭头会留在这里，本场战斗不会再回到抽牌堆。"
+    },
+    {
+      "key": "ascension.minus_1.name",
+      "text": "A-1 抽牌增益"
+    },
+    {
+      "key": "ascension.minus_1.desc",
+      "text": "基础每回合抽牌数+1。"
+    },
+    {
+      "key": "ascension.minus_2.name",
+      "text": "A-2 减少战斗"
+    },
+    {
+      "key": "ascension.minus_2.desc",
+      "text": "设计地图中的普通战斗节点-1。"
+    },
+    {
+      "key": "ascension.minus_3.name",
+      "text": "A-3 额外生命"
+    },
+    {
+      "key": "ascension.minus_3.desc",
+      "text": "玩家最大生命值+5。"
+    },
+    {
+      "key": "ascension.minus_4.name",
+      "text": "A-4 全能箭头"
+    },
+    {
+      "key": "ascension.minus_4.desc",
+      "text": "起始牌组获得1张全能箭头。"
+    },
+    {
+      "key": "ascension.minus_5.name",
+      "text": "A-5 金币增益"
+    },
+    {
+      "key": "ascension.minus_5.desc",
+      "text": "获得金币变为125%。"
+    },
+    {
+      "key": "ascension.minus_6.name",
+      "text": "A-6 更多奖励选择"
+    },
+    {
+      "key": "ascension.minus_6.desc",
+      "text": "道具奖励选项+1。"
+    },
+    {
+      "key": "ascension.minus_7.name",
+      "text": "A-7 额外道具槽"
+    },
+    {
+      "key": "ascension.minus_7.desc",
+      "text": "初始可用道具槽+1。"
+    },
+    {
+      "key": "ascension.minus_8.name",
+      "text": "A-8 更多事件"
+    },
+    {
+      "key": "ascension.minus_8.desc",
+      "text": "设计地图中的事件节点+1。"
+    },
+    {
+      "key": "ascension.minus_9.name",
+      "text": "A-9 随机双重箭头"
+    },
+    {
+      "key": "ascension.minus_9.desc",
+      "text": "起始牌组获得3张随机双重箭头。"
+    },
+    {
+      "key": "ascension.minus_10.name",
+      "text": "A-10 商店折扣"
+    },
+    {
+      "key": "ascension.minus_10.desc",
+      "text": "商店商品价格变为50%。"
+    },
+    {
+      "key": "ascension.minus_11.name",
+      "text": "A-11 传说保障"
+    },
+    {
+      "key": "ascension.minus_11.desc",
+      "text": "精英奖励必定出现传说道具。"
+    },
+    {
+      "key": "ascension.minus_12.name",
+      "text": "A-12 地图增高"
+    },
+    {
+      "key": "ascension.minus_12.desc",
+      "text": "设计地图主区域高度+1。"
+    },
+    {
+      "key": "ascension.minus_13.name",
+      "text": "A-13 额外道具槽"
+    },
+    {
+      "key": "ascension.minus_13.desc",
+      "text": "初始可用道具槽再+1。"
+    },
+    {
+      "key": "ascension.minus_14.name",
+      "text": "A-14 敌人易伤"
+    },
+    {
+      "key": "ascension.minus_14.desc",
+      "text": "敌人初始获得4层易伤。"
+    },
+    {
+      "key": "ascension.minus_15.name",
+      "text": "A-15 更长章节 I"
+    },
+    {
+      "key": "ascension.minus_15.desc",
+      "text": "章节进度+2。"
+    },
+    {
+      "key": "ascension.minus_16.name",
+      "text": "A-16 更多奖励"
+    },
+    {
+      "key": "ascension.minus_16.desc",
+      "text": "设计地图中的奖励节点+1。"
+    },
+    {
+      "key": "ascension.minus_17.name",
+      "text": "A-17 敌人虚弱"
+    },
+    {
+      "key": "ascension.minus_17.desc",
+      "text": "敌人初始获得6层虚弱。"
+    },
+    {
+      "key": "ascension.minus_18.name",
+      "text": "A-18 更多休息"
+    },
+    {
+      "key": "ascension.minus_18.desc",
+      "text": "设计地图中的休息节点+1。"
+    },
+    {
+      "key": "ascension.minus_19.name",
+      "text": "A-19 更长章节 II"
+    },
+    {
+      "key": "ascension.minus_19.desc",
+      "text": "章节进度再+2。"
+    },
+    {
+      "key": "ascension.minus_20.name",
+      "text": "A-20 顶层首领格"
+    },
+    {
+      "key": "ascension.minus_20.desc",
+      "text": "顶层额外添加2个首领格。"
+    },
+    {
+      "key": "difficulty.player_base_draw_count_plus_1.name",
+      "text": "基础抽牌数+1"
+    },
+    {
+      "key": "difficulty.player_base_draw_count_plus_1.desc",
+      "text": "每回合基础抽牌数增加1。"
+    },
+    {
+      "key": "difficulty.designed_battle_count_minus_1.name",
+      "text": "普通战斗节点-1"
+    },
+    {
+      "key": "difficulty.designed_battle_count_minus_1.desc",
+      "text": "设计地图中的普通战斗节点减少1个。"
+    },
+    {
+      "key": "difficulty.player_max_health_plus_5.name",
+      "text": "生命上限+5"
+    },
+    {
+      "key": "difficulty.player_max_health_plus_5.desc",
+      "text": "玩家最大生命值增加5点。"
+    },
+    {
+      "key": "difficulty.starting_deck_add_omni_arrow.name",
+      "text": "初始全能箭头"
+    },
+    {
+      "key": "difficulty.starting_deck_add_omni_arrow.desc",
+      "text": "起始牌组加入1张全能箭头。"
+    },
+    {
+      "key": "difficulty.gold_gain_125.name",
+      "text": "金币获取+25%"
+    },
+    {
+      "key": "difficulty.gold_gain_125.desc",
+      "text": "所有金币获得量变为125%。"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_plus_1.name",
+      "text": "道具奖励选项+1"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_plus_1.desc",
+      "text": "道具奖励多一个可选项。"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a7.name",
+      "text": "道具槽+1"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a7.desc",
+      "text": "初始可用道具槽增加1个。"
+    },
+    {
+      "key": "difficulty.designed_event_count_plus_1.name",
+      "text": "事件节点+1"
+    },
+    {
+      "key": "difficulty.designed_event_count_plus_1.desc",
+      "text": "设计地图中的事件节点增加1个。"
+    },
+    {
+      "key": "difficulty.starting_deck_add_three_random_doubled.name",
+      "text": "3张随机双重箭头"
+    },
+    {
+      "key": "difficulty.starting_deck_add_three_random_doubled.desc",
+      "text": "起始牌组加入3张随机双重箭头。"
+    },
+    {
+      "key": "difficulty.shop_price_50.name",
+      "text": "商店价格-50%"
+    },
+    {
+      "key": "difficulty.shop_price_50.desc",
+      "text": "商店价格变为50%。"
+    },
+    {
+      "key": "difficulty.elite_guaranteed_legendary.name",
+      "text": "精英传说保障"
+    },
+    {
+      "key": "difficulty.elite_guaranteed_legendary.desc",
+      "text": "精英奖励必定出现传说道具。"
+    },
+    {
+      "key": "difficulty.designed_map_main_area_height_plus_1.name",
+      "text": "设计地图主区域高度+1"
+    },
+    {
+      "key": "difficulty.designed_map_main_area_height_plus_1.desc",
+      "text": "设计地图主区域高度增加1。"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a13.name",
+      "text": "道具槽+1"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a13.desc",
+      "text": "初始可用道具槽增加1个。"
+    },
+    {
+      "key": "difficulty.enemy_initial_vulnerable_4.name",
+      "text": "敌人初始易伤4"
+    },
+    {
+      "key": "difficulty.enemy_initial_vulnerable_4.desc",
+      "text": "敌人初始获得4层易伤。"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a15.name",
+      "text": "章节进度+2"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a15.desc",
+      "text": "章节可推进关卡数增加2。"
+    },
+    {
+      "key": "difficulty.designed_reward_count_plus_1.name",
+      "text": "奖励节点+1"
+    },
+    {
+      "key": "difficulty.designed_reward_count_plus_1.desc",
+      "text": "设计地图中的奖励节点增加1个。"
+    },
+    {
+      "key": "difficulty.enemy_initial_weak_6.name",
+      "text": "敌人初始虚弱6"
+    },
+    {
+      "key": "difficulty.enemy_initial_weak_6.desc",
+      "text": "敌人初始获得6层虚弱。"
+    },
+    {
+      "key": "difficulty.designed_rest_count_plus_1.name",
+      "text": "休息节点+1"
+    },
+    {
+      "key": "difficulty.designed_rest_count_plus_1.desc",
+      "text": "设计地图中的休息节点增加1个。"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a19.name",
+      "text": "章节进度+2"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a19.desc",
+      "text": "章节可推进关卡数增加2。"
+    },
+    {
+      "key": "difficulty.extra_top_boss_cells_2.name",
+      "text": "顶层额外首领格"
+    },
+    {
+      "key": "difficulty.extra_top_boss_cells_2.desc",
+      "text": "顶层额外添加2个首领格。"
     }
   ]
 }

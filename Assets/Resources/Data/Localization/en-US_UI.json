@@ -1343,6 +1343,326 @@
     {
       "key": "ui.battle.pile.consumed.body",
       "text": "Consumed arrows remain here and do not return to the draw pile during this battle."
+    },
+    {
+      "key": "ascension.minus_1.name",
+      "text": "A-1 Extra Draw"
+    },
+    {
+      "key": "ascension.minus_1.desc",
+      "text": "Base cards drawn each turn +1."
+    },
+    {
+      "key": "ascension.minus_2.name",
+      "text": "A-2 Fewer Battles"
+    },
+    {
+      "key": "ascension.minus_2.desc",
+      "text": "Designed maps have 1 fewer normal battle node."
+    },
+    {
+      "key": "ascension.minus_3.name",
+      "text": "A-3 Extra Vitality"
+    },
+    {
+      "key": "ascension.minus_3.desc",
+      "text": "Player maximum HP +5."
+    },
+    {
+      "key": "ascension.minus_4.name",
+      "text": "A-4 Omni Arrow"
+    },
+    {
+      "key": "ascension.minus_4.desc",
+      "text": "The starting deck gains 1 omni arrow."
+    },
+    {
+      "key": "ascension.minus_5.name",
+      "text": "A-5 Gold Gain"
+    },
+    {
+      "key": "ascension.minus_5.desc",
+      "text": "Gold gains are increased to 125%."
+    },
+    {
+      "key": "ascension.minus_6.name",
+      "text": "A-6 More Reward Choices"
+    },
+    {
+      "key": "ascension.minus_6.desc",
+      "text": "Item rewards offer 1 additional choice."
+    },
+    {
+      "key": "ascension.minus_7.name",
+      "text": "A-7 Extra Item Slot"
+    },
+    {
+      "key": "ascension.minus_7.desc",
+      "text": "Initial available item slots +1."
+    },
+    {
+      "key": "ascension.minus_8.name",
+      "text": "A-8 More Events"
+    },
+    {
+      "key": "ascension.minus_8.desc",
+      "text": "Designed maps have 1 additional event node."
+    },
+    {
+      "key": "ascension.minus_9.name",
+      "text": "A-9 Random Doubled Arrows"
+    },
+    {
+      "key": "ascension.minus_9.desc",
+      "text": "The starting deck gains 3 random doubled arrows."
+    },
+    {
+      "key": "ascension.minus_10.name",
+      "text": "A-10 Shop Discount"
+    },
+    {
+      "key": "ascension.minus_10.desc",
+      "text": "Shop prices are reduced to 50%."
+    },
+    {
+      "key": "ascension.minus_11.name",
+      "text": "A-11 Legendary Guarantee"
+    },
+    {
+      "key": "ascension.minus_11.desc",
+      "text": "Elite rewards always include a Legendary item."
+    },
+    {
+      "key": "ascension.minus_12.name",
+      "text": "A-12 Taller Map"
+    },
+    {
+      "key": "ascension.minus_12.desc",
+      "text": "Designed map main-area height +1."
+    },
+    {
+      "key": "ascension.minus_13.name",
+      "text": "A-13 Extra Item Slot"
+    },
+    {
+      "key": "ascension.minus_13.desc",
+      "text": "Initial available item slots +1 again."
+    },
+    {
+      "key": "ascension.minus_14.name",
+      "text": "A-14 Vulnerable Enemies"
+    },
+    {
+      "key": "ascension.minus_14.desc",
+      "text": "Enemies start with 4 stacks of Vulnerable."
+    },
+    {
+      "key": "ascension.minus_15.name",
+      "text": "A-15 Longer Progress I"
+    },
+    {
+      "key": "ascension.minus_15.desc",
+      "text": "Chapter progress +2."
+    },
+    {
+      "key": "ascension.minus_16.name",
+      "text": "A-16 More Rewards"
+    },
+    {
+      "key": "ascension.minus_16.desc",
+      "text": "Designed maps have 1 additional reward node."
+    },
+    {
+      "key": "ascension.minus_17.name",
+      "text": "A-17 Weak Enemies"
+    },
+    {
+      "key": "ascension.minus_17.desc",
+      "text": "Enemies start with 6 stacks of Weak."
+    },
+    {
+      "key": "ascension.minus_18.name",
+      "text": "A-18 More Rests"
+    },
+    {
+      "key": "ascension.minus_18.desc",
+      "text": "Designed maps have 1 additional rest node."
+    },
+    {
+      "key": "ascension.minus_19.name",
+      "text": "A-19 Longer Progress II"
+    },
+    {
+      "key": "ascension.minus_19.desc",
+      "text": "Chapter progress +2 again."
+    },
+    {
+      "key": "ascension.minus_20.name",
+      "text": "A-20 Extra Top Boss Cells"
+    },
+    {
+      "key": "ascension.minus_20.desc",
+      "text": "Adds 2 extra boss cells at the top."
+    },
+    {
+      "key": "difficulty.player_base_draw_count_plus_1.name",
+      "text": "Base Draw Count +1"
+    },
+    {
+      "key": "difficulty.player_base_draw_count_plus_1.desc",
+      "text": "Draw 1 additional card each turn."
+    },
+    {
+      "key": "difficulty.designed_battle_count_minus_1.name",
+      "text": "Normal Battle Nodes -1"
+    },
+    {
+      "key": "difficulty.designed_battle_count_minus_1.desc",
+      "text": "Designed maps have 1 fewer normal battle node."
+    },
+    {
+      "key": "difficulty.player_max_health_plus_5.name",
+      "text": "Max HP +5"
+    },
+    {
+      "key": "difficulty.player_max_health_plus_5.desc",
+      "text": "Player maximum HP is increased by 5."
+    },
+    {
+      "key": "difficulty.starting_deck_add_omni_arrow.name",
+      "text": "Starting Omni Arrow"
+    },
+    {
+      "key": "difficulty.starting_deck_add_omni_arrow.desc",
+      "text": "The starting deck gains 1 omni arrow."
+    },
+    {
+      "key": "difficulty.gold_gain_125.name",
+      "text": "Gold Gain +25%"
+    },
+    {
+      "key": "difficulty.gold_gain_125.desc",
+      "text": "All gold gains are increased to 125%."
+    },
+    {
+      "key": "difficulty.reward_magic_choices_plus_1.name",
+      "text": "Item Reward Choices +1"
+    },
+    {
+      "key": "difficulty.reward_magic_choices_plus_1.desc",
+      "text": "Item rewards offer 1 additional choice."
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a7.name",
+      "text": "Item Slots +1"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a7.desc",
+      "text": "Initial available item slots are increased by 1."
+    },
+    {
+      "key": "difficulty.designed_event_count_plus_1.name",
+      "text": "Event Nodes +1"
+    },
+    {
+      "key": "difficulty.designed_event_count_plus_1.desc",
+      "text": "Designed maps have 1 additional event node."
+    },
+    {
+      "key": "difficulty.starting_deck_add_three_random_doubled.name",
+      "text": "3 Random Doubled Arrows"
+    },
+    {
+      "key": "difficulty.starting_deck_add_three_random_doubled.desc",
+      "text": "The starting deck gains 3 random doubled arrows."
+    },
+    {
+      "key": "difficulty.shop_price_50.name",
+      "text": "Shop Prices -50%"
+    },
+    {
+      "key": "difficulty.shop_price_50.desc",
+      "text": "Shop prices are reduced to 50%."
+    },
+    {
+      "key": "difficulty.elite_guaranteed_legendary.name",
+      "text": "Elite Legendary Guarantee"
+    },
+    {
+      "key": "difficulty.elite_guaranteed_legendary.desc",
+      "text": "Elite rewards always include a Legendary item."
+    },
+    {
+      "key": "difficulty.designed_map_main_area_height_plus_1.name",
+      "text": "Designed Map Main-Area Height +1"
+    },
+    {
+      "key": "difficulty.designed_map_main_area_height_plus_1.desc",
+      "text": "Designed map main-area height is increased by 1."
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a13.name",
+      "text": "Item Slots +1"
+    },
+    {
+      "key": "difficulty.starting_magic_slots_plus_1_a13.desc",
+      "text": "Initial available item slots are increased by 1."
+    },
+    {
+      "key": "difficulty.enemy_initial_vulnerable_4.name",
+      "text": "Enemies Start Vulnerable 4"
+    },
+    {
+      "key": "difficulty.enemy_initial_vulnerable_4.desc",
+      "text": "Enemies start with 4 stacks of Vulnerable."
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a15.name",
+      "text": "Chapter Progress +2"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a15.desc",
+      "text": "The chapter has 2 additional progress steps."
+    },
+    {
+      "key": "difficulty.designed_reward_count_plus_1.name",
+      "text": "Reward Nodes +1"
+    },
+    {
+      "key": "difficulty.designed_reward_count_plus_1.desc",
+      "text": "Designed maps have 1 additional reward node."
+    },
+    {
+      "key": "difficulty.enemy_initial_weak_6.name",
+      "text": "Enemies Start Weak 6"
+    },
+    {
+      "key": "difficulty.enemy_initial_weak_6.desc",
+      "text": "Enemies start with 6 stacks of Weak."
+    },
+    {
+      "key": "difficulty.designed_rest_count_plus_1.name",
+      "text": "Rest Nodes +1"
+    },
+    {
+      "key": "difficulty.designed_rest_count_plus_1.desc",
+      "text": "Designed maps have 1 additional rest node."
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a19.name",
+      "text": "Chapter Progress +2"
+    },
+    {
+      "key": "difficulty.chapter_length_plus_2_a19.desc",
+      "text": "The chapter has 2 additional progress steps."
+    },
+    {
+      "key": "difficulty.extra_top_boss_cells_2.name",
+      "text": "Extra Top Boss Cells"
+    },
+    {
+      "key": "difficulty.extra_top_boss_cells_2.desc",
+      "text": "Adds 2 extra boss cells at the top."
     }
   ]
 }

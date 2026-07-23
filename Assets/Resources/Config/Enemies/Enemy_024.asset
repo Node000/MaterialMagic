@@ -1,0 +1,162 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92cd13073531cc54b8287ed1ee7ff47b, type: 3}
+  m_Name: Enemy_024
+  m_EditorClassIdentifier: 
+  data:
+    numericId: 24
+    id: 
+    string_id: enemy_024
+    nameKey: enemy.024.name
+    maxHealth: 201
+    baseAttack: 14
+    imageScale: 4.01
+    hoverEffect: 0
+    infoBoxSize: {x: 80, y: 120}
+    infoBoxOffset: {x: 0, y: 150}
+    healthBarWidth: 600
+    intentOffsetX: 0
+    intentOffsetY: -1400
+    isMinion: 0
+    initialBuffs:
+    - buffType: 32
+      stack: 1
+    iconName: "\u5357\u6781\u6D32"
+    spriteAnimationPath: "\u5357\u6781\u6D32atlas"
+    animationFrameRate: 8
+    phases:
+    - phase: 0
+      intentGroups:
+      - id: 1
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 1
+          value: 3
+          times: 4
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: multiAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 6
+            stack: 2
+          displayType: debuff
+          descriptionKey: 
+      - id: 2
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 1
+          value: 14
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: bigAttack
+          descriptionKey: 
+      - id: 3
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 1
+          value: 7
+          times: 2
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: bitMultiAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 3
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 10
+            stack: 2
+          displayType: buff
+          descriptionKey: 
+      - id: 4
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 10
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: stun
+          descriptionKey: 
+      - id: 5
+        onlyOnce: 0
+        intents:
+        - intentType: 0
+          actionType: 1
+          value: 4
+          times: 5
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: multiAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 3
+            stack: 1
+          displayType: debuff
+          descriptionKey: 
+      intentLoop:
+      - groupId: 0
+        randomGroupIds: 0100000002000000
+        onlyOnce: 0
+      - groupId: 0
+        randomGroupIds: 0100000002000000
+        onlyOnce: 0
+      - groupId: 4
+        randomGroupIds: 
+        onlyOnce: 0
+      - groupId: 0
+        randomGroupIds: 0300000005000000
+        onlyOnce: 0
+      - groupId: 0
+        randomGroupIds: 0300000005000000
+        onlyOnce: 0
+      - groupId: 4
+        randomGroupIds: 
+        onlyOnce: 0
+      intentPool: []
+    intentGroups: []
+    intentLoop: []
+    actionLoop: []

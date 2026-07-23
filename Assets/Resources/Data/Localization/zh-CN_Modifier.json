@@ -86,7 +86,7 @@
     },
     {
       "key": "modifier.repeat_arrow.desc",
-      "text": "读取此箭头时，额外读取此箭头一次。"
+      "text": "读取此箭头后，额外从此箭头开始完整结算一次后续序列。不会影响事件配方。"
     },
     {
       "key": "modifier.big_arrow_2.name",
