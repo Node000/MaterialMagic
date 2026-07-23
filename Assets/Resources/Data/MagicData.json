@@ -597,9 +597,9 @@
         "extra_enemy_debuff"
       ],
       "recipe": [
-        2,
         1,
-        4
+        4,
+        2
       ],
       "playPlayerCastAnimation": false,
       "displayName": "不倒翁"
