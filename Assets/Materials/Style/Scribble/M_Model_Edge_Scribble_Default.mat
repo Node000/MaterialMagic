@@ -27,12 +27,13 @@ Material:
     m_Floats:
     - _AnimationFramesPerSecond: 12
     - _Opacity: 1
+    - _PreviewAnimationTime: -1
     - _SecondaryWobble: 0.5
     - _Seed: 3417
     - _SteppedAnimation: 1
-    - _WobbleAmplitude: 0.035
-    - _WobbleFrequency: 3.5
-    - _WobbleSpeed: 0.7
+    - _WobbleAmplitude: 0.001
+    - _WobbleFrequency: 0.32
+    - _WobbleSpeed: 0.1
     m_Colors:
-    - _Tint: {r: 1, g: 0.32, b: 0.12, a: 0.95}
+    - _Tint: {r: 0.76729554, g: 0.47051135, b: 0.6666907, a: 0.95}
   m_BuildTextureStacks: []
