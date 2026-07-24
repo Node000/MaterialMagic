@@ -325,8 +325,8 @@
         "debuff_power"
       ],
       "recipe": [
-        3,
-        4
+        4,
+        3
       ],
       "playPlayerCastAnimation": true,
       "displayName": "苍蝇"
@@ -505,8 +505,8 @@
         "weak"
       ],
       "recipe": [
-        4,
-        3
+        3,
+        4
       ],
       "playPlayerCastAnimation": true,
       "displayName": "热狗陷阱"
