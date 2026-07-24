@@ -41,6 +41,12 @@ ExportedObj/
 sysinfo.txt
 crashlytics-build.properties
 
+# ── Local SDK credentials ──
+/Assets/Resources/LocalSettings/
+
 # ── Recordings / Profiling ──
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/
+
+/Packages/com.farlocus.locus/
+/Locus/
