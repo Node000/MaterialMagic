@@ -26,7 +26,7 @@ public class ScribblePlane3DEditor : Editor
         if (scribblePlane.CurrentFillMode == ScribblePlane3D.FillMode.EdgeGuidedStrokes)
         {
             EditorGUILayout.Space();
-            EditorGUILayout.HelpBox("Each direct child GameObject is a guide point. Their Hierarchy order defines the stroke route. Move, duplicate, delete, or reorder these children with normal Unity tools.", MessageType.Info);
+            EditorGUILayout.HelpBox("Each direct child GameObject is an independent bypass center. Its strokes leave and return to the selected edge, passing around that point once. Move, duplicate, or delete children with normal Unity tools; sibling order does not matter.", MessageType.Info);
             if (GUILayout.Button("Add Guide Point"))
             {
                 Transform guidePoint = scribblePlane.CreateGuidePoint();
@@ -40,50 +40,17 @@ public class ScribblePlane3DEditor : Editor
         if (GUILayout.Button("Rebuild Preview"))
             scribblePlane.RebuildMesh();
 
-        if (GUILayout.Button("Initialize Contour From Fill Area"))
-        {
-            Undo.RecordObject(scribblePlane, "Initialize Scribble Contour");
-            scribblePlane.InitializeContourFromFillArea();
-            EditorUtility.SetDirty(scribblePlane);
-        }
     }
 
     private void OnSceneGUI()
     {
-        if (scribblePlane == null || scribblePlane.ControlPointCount == 0)
+        if (scribblePlane == null)
             return;
 
         Transform transform = scribblePlane.transform;
-        Vector3 planeNormal = transform.TransformDirection(scribblePlane.GetLocalPlaneNormal()).normalized;
-        Vector3 firstAxis = transform.right.normalized;
-        Vector3 secondAxis = transform.TransformDirection(scribblePlane.GetLocalPlaneSecondAxis()).normalized;
-
-        DrawContour(transform);
+        DrawFillArea(transform);
         if (scribblePlane.CurrentFillMode == ScribblePlane3D.FillMode.EdgeGuidedStrokes)
             DrawGuidePoints(transform);
-
-        for (int index = 0; index < scribblePlane.ControlPointCount; index++)
-        {
-            Vector3 worldPoint = transform.TransformPoint(scribblePlane.ToLocalPoint(scribblePlane.GetControlPoint(index)));
-            float handleSize = HandleUtility.GetHandleSize(worldPoint) * 0.075f;
-
-            EditorGUI.BeginChangeCheck();
-            Vector3 movedWorldPoint = Handles.Slider2D(
-                worldPoint,
-                planeNormal,
-                firstAxis,
-                secondAxis,
-                handleSize,
-                Handles.DotHandleCap,
-                Vector2.zero);
-            if (!EditorGUI.EndChangeCheck())
-                continue;
-
-            Undo.RecordObject(scribblePlane, "Move Scribble Control Point");
-            Vector3 movedLocalPoint = transform.InverseTransformPoint(movedWorldPoint);
-            scribblePlane.SetControlPoint(index, scribblePlane.ToPlanePoint(movedLocalPoint));
-            EditorUtility.SetDirty(scribblePlane);
-        }
     }
 
     private void DrawGuidePoints(Transform transform)
@@ -102,25 +69,174 @@ public class ScribblePlane3DEditor : Editor
         }
     }
 
-    private void DrawContour(Transform transform)
+    private void DrawFillArea(Transform transform)
     {
-        int pointCount = scribblePlane.ControlPointCount;
-        if (pointCount < 2)
+        Rect area = scribblePlane.FillArea;
+        Vector2[] corners =
+        {
+            new Vector2(area.xMin, area.yMin),
+            new Vector2(area.xMax, area.yMin),
+            new Vector2(area.xMax, area.yMax),
+            new Vector2(area.xMin, area.yMax)
+        };
+        Vector3[] worldCorners = new Vector3[corners.Length];
+        for (int index = 0; index < corners.Length; index++)
+            worldCorners[index] = transform.TransformPoint(scribblePlane.ToLocalPoint(corners[index]));
+
+        Color previousColor = Handles.color;
+        UnityEngine.Rendering.CompareFunction previousZTest = Handles.zTest;
+        Handles.color = new Color(0.28f, 0.94f, 1f, 0.95f);
+        Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
+        for (int index = 0; index < worldCorners.Length; index++)
+            Handles.DrawLine(worldCorners[index], worldCorners[(index + 1) % worldCorners.Length], 2f);
+        Handles.Label(worldCorners[0], "  Fill Area");
+
+        Vector3 planeNormal = transform.TransformDirection(scribblePlane.GetLocalPlaneNormal()).normalized;
+        Vector3 firstAxis = transform.right.normalized;
+        Vector3 secondAxis = transform.TransformDirection(scribblePlane.GetLocalPlaneSecondAxis()).normalized;
+        for (int index = 0; index < worldCorners.Length; index++)
+        {
+            float handleSize = HandleUtility.GetHandleSize(worldCorners[index]) * 0.075f;
+            EditorGUI.BeginChangeCheck();
+            Vector3 movedWorldPoint = Handles.Slider2D(
+                worldCorners[index],
+                planeNormal,
+                firstAxis,
+                secondAxis,
+                handleSize,
+                Handles.RectangleHandleCap,
+                Vector2.zero);
+            if (!EditorGUI.EndChangeCheck())
+                continue;
+
+            Vector2 movedPoint = scribblePlane.ToPlanePoint(transform.InverseTransformPoint(movedWorldPoint));
+            float xMin = area.xMin;
+            float xMax = area.xMax;
+            float yMin = area.yMin;
+            float yMax = area.yMax;
+            switch (index)
+            {
+                case 0:
+                    xMin = movedPoint.x;
+                    yMin = movedPoint.y;
+                    break;
+                case 1:
+                    xMax = movedPoint.x;
+                    yMin = movedPoint.y;
+                    break;
+                case 2:
+                    xMax = movedPoint.x;
+                    yMax = movedPoint.y;
+                    break;
+                default:
+                    xMin = movedPoint.x;
+                    yMax = movedPoint.y;
+                    break;
+            }
+
+            Undo.RecordObject(scribblePlane, "Resize Scribble Fill Area");
+            scribblePlane.SetFillArea(Rect.MinMaxRect(xMin, yMin, xMax, yMax));
+            EditorUtility.SetDirty(scribblePlane);
+        }
+
+        Handles.color = previousColor;
+        Handles.zTest = previousZTest;
+    }
+}
+
+[InitializeOnLoad]
+internal static class ScribbleRibbonScenePreview
+{
+    private const string RibbonShaderName = "Style/Scribble/Ribbon3D";
+    private static readonly int PreviewAnimationTimeId = Shader.PropertyToID("_PreviewAnimationTime");
+    private static readonly MaterialPropertyBlock PreviewProperties = new MaterialPropertyBlock();
+    private static double nextRepaintTime;
+
+    static ScribbleRibbonScenePreview()
+    {
+        EditorApplication.update += RepaintSceneViewWhenNeeded;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    private static void RepaintSceneViewWhenNeeded()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling)
             return;
 
-        Handles.color = new Color(1f, 0.78f, 0.22f, 0.95f);
-        for (int index = 0; index < pointCount - 1; index++)
+        double time = EditorApplication.timeSinceStartup;
+        if (time < nextRepaintTime)
+            return;
+
+        float framesPerSecond = GetPreviewFramesPerSecond(time);
+        if (framesPerSecond <= 0f)
+            return;
+
+        nextRepaintTime = time + 1d / framesPerSecond;
+        SceneView.RepaintAll();
+    }
+
+    private static float GetPreviewFramesPerSecond(double previewTime)
+    {
+        ScribblePlane3D[] planes = Object.FindObjectsOfType<ScribblePlane3D>();
+        float framesPerSecond = 0f;
+        for (int planeIndex = 0; planeIndex < planes.Length; planeIndex++)
         {
-            Vector3 from = transform.TransformPoint(scribblePlane.ToLocalPoint(scribblePlane.GetControlPoint(index)));
-            Vector3 to = transform.TransformPoint(scribblePlane.ToLocalPoint(scribblePlane.GetControlPoint(index + 1)));
-            Handles.DrawLine(from, to, 2f);
+            MeshRenderer renderer = planes[planeIndex].GetComponent<MeshRenderer>();
+            if (renderer == null)
+                continue;
+
+            Material[] materials = renderer.sharedMaterials;
+            for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+            {
+                Material material = materials[materialIndex];
+                if (material == null || material.shader == null || material.shader.name != RibbonShaderName)
+                    continue;
+
+                bool isAnimating = material.GetFloat("_WobbleAmplitude") > 0f && material.GetFloat("_WobbleSpeed") > 0f;
+                SetPreviewTime(renderer, materialIndex, isAnimating ? (float)previewTime : -1f);
+                if (!isAnimating)
+                    continue;
+
+                float materialFramesPerSecond = material.GetFloat("_SteppedAnimation") > 0.5f
+                    ? material.GetFloat("_AnimationFramesPerSecond")
+                    : 30f;
+                framesPerSecond = Mathf.Max(framesPerSecond, materialFramesPerSecond);
+            }
         }
 
-        if (scribblePlane.ClosedContour && pointCount > 2)
+        return framesPerSecond;
+    }
+
+    private static void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.EnteredPlayMode)
+            ClearPreviewTimes();
+    }
+
+    private static void ClearPreviewTimes()
+    {
+        ScribblePlane3D[] planes = Object.FindObjectsOfType<ScribblePlane3D>();
+        for (int planeIndex = 0; planeIndex < planes.Length; planeIndex++)
         {
-            Vector3 from = transform.TransformPoint(scribblePlane.ToLocalPoint(scribblePlane.GetControlPoint(pointCount - 1)));
-            Vector3 to = transform.TransformPoint(scribblePlane.ToLocalPoint(scribblePlane.GetControlPoint(0)));
-            Handles.DrawLine(from, to, 2f);
+            MeshRenderer renderer = planes[planeIndex].GetComponent<MeshRenderer>();
+            if (renderer == null)
+                continue;
+
+            Material[] materials = renderer.sharedMaterials;
+            for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+            {
+                Material material = materials[materialIndex];
+                if (material != null && material.shader != null && material.shader.name == RibbonShaderName)
+                    SetPreviewTime(renderer, materialIndex, -1f);
+            }
         }
+    }
+
+    private static void SetPreviewTime(MeshRenderer renderer, int materialIndex, float previewTime)
+    {
+        renderer.GetPropertyBlock(PreviewProperties, materialIndex);
+        PreviewProperties.SetFloat(PreviewAnimationTimeId, previewTime);
+        renderer.SetPropertyBlock(PreviewProperties, materialIndex);
+        PreviewProperties.Clear();
     }
 }

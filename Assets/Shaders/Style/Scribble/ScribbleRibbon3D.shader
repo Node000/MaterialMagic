@@ -11,6 +11,9 @@ Shader "Style/Scribble/Ribbon3D"
         _WobbleAmplitude ("Wobble Amplitude", Float) = 0
         _WobbleFrequency ("Wobble Frequency", Float) = 3
         _WobbleSpeed ("Wobble Speed", Float) = 0
+        _SteppedAnimation ("Stepped Animation", Range(0,1)) = 1
+        _AnimationFramesPerSecond ("Animation Frames Per Second", Range(1,30)) = 12
+        [HideInInspector] _PreviewAnimationTime ("Preview Animation Time", Float) = -1
         _SecondaryWobble ("Secondary Wobble", Range(0,1)) = 0.35
         _Seed ("Seed", Float) = 0
         _Opacity ("Opacity", Range(0,1)) = 1
@@ -51,6 +54,9 @@ Shader "Style/Scribble/Ribbon3D"
                 float _WobbleAmplitude;
                 float _WobbleFrequency;
                 float _WobbleSpeed;
+                float _SteppedAnimation;
+                float _AnimationFramesPerSecond;
+                float _PreviewAnimationTime;
                 float _SecondaryWobble;
                 float _Seed;
                 float _Opacity;
@@ -88,9 +94,13 @@ Shader "Style/Scribble/Ribbon3D"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
+                float animationTime = _PreviewAnimationTime >= 0.0 ? _PreviewAnimationTime : _Time.y;
+                if (_SteppedAnimation > 0.5)
+                    animationTime = floor(animationTime * _AnimationFramesPerSecond) / _AnimationFramesPerSecond;
+
                 float phase = input.uv.x * _WobbleFrequency + _Seed * 0.173;
-                float primaryWobble = sin((phase + _Time.y * _WobbleSpeed) * ScribbleTwoPi);
-                float secondaryWobble = sin((phase * 1.83 - _Time.y * _WobbleSpeed * 1.37 + _Seed * 0.419) * ScribbleTwoPi);
+                float primaryWobble = sin((phase + animationTime * _WobbleSpeed) * ScribbleTwoPi);
+                float secondaryWobble = sin((phase * 1.83 - animationTime * _WobbleSpeed * 1.37 + _Seed * 0.419) * ScribbleTwoPi);
                 float3 tangentDirection = normalize(input.tangentOS.xyz);
                 input.positionOS.xyz += tangentDirection * (primaryWobble + secondaryWobble * _SecondaryWobble) * _WobbleAmplitude;
                 input.positionOS.xyz += input.normalOS * _DepthOffset;

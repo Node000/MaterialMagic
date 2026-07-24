@@ -33,15 +33,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AnimationFramesPerSecond: 12
     - _BreakupStrength: 0.18
     - _BreakupThreshold: 0.42
     - _DepthOffset: 0.001
     - _Opacity: 1
     - _SecondaryWobble: 0.32
     - _Seed: 17
+    - _SteppedAnimation: 1
     - _WobbleAmplitude: 0.012
     - _WobbleFrequency: 4
-    - _WobbleSpeed: 0
+    - _WobbleSpeed: 0.7
     m_Colors:
     - _BrushTiling: {r: 1.5, g: 1, b: 0, a: 0}
     - _Tint: {r: 0.953, g: 0.933, b: 0.961, a: 1}

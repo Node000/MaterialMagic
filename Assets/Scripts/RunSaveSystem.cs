@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public enum RunHistoryResultType
@@ -327,7 +328,7 @@ public static class RunSaveSystem
         if (string.IsNullOrEmpty(json))
             return null;
 
-        return JsonUtility.FromJson<RunSaveData>(json);
+        return JsonConvert.DeserializeObject<RunSaveData>(json);
     }
 
     public static bool HasRun(int slotIndex)
@@ -436,7 +437,7 @@ public static class RunSaveSystem
     {
         Directory.CreateDirectory(SaveDirectory);
         string path = Path.Combine(SaveDirectory, $"summary_slot_{CurrentSlotIndex}.json");
-        File.WriteAllText(path, JsonUtility.ToJson(data, true));
+        File.WriteAllText(path, JsonConvert.SerializeObject(data, Formatting.Indented));
     }
 
     public static RunSaveData LoadSummary(int slotIndex)
@@ -447,7 +448,7 @@ public static class RunSaveSystem
         string path = Path.Combine(SaveDirectory, $"summary_slot_{Mathf.Clamp(slotIndex, 1, 3)}.json");
         if (!File.Exists(path))
             return null;
-        return JsonUtility.FromJson<RunSaveData>(File.ReadAllText(path));
+        return JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(path));
     }
 
     public static RunHistoryData LoadHistory(int slotIndex)
@@ -457,7 +458,7 @@ public static class RunSaveSystem
         if (!File.Exists(path))
             return new RunHistoryData { version = HistoryVersion, slotIndex = clampedSlotIndex };
 
-        RunHistoryData history = JsonUtility.FromJson<RunHistoryData>(File.ReadAllText(path));
+        RunHistoryData history = JsonConvert.DeserializeObject<RunHistoryData>(File.ReadAllText(path));
         if (history == null)
             return new RunHistoryData { version = HistoryVersion, slotIndex = clampedSlotIndex };
 
@@ -536,7 +537,7 @@ public static class RunSaveSystem
 
         Directory.CreateDirectory(SaveDirectory);
         string tempPath = RunSavePath + ".tmp";
-        File.WriteAllText(tempPath, JsonUtility.ToJson(data, true));
+        File.WriteAllText(tempPath, JsonConvert.SerializeObject(data, Formatting.Indented));
         if (File.Exists(RunSavePath))
             File.Delete(RunSavePath);
         File.Move(tempPath, RunSavePath);
@@ -849,7 +850,7 @@ public static class RunSaveSystem
 
         history.records = records.ToArray();
         Directory.CreateDirectory(SaveDirectory);
-        File.WriteAllText(GetHistorySavePath(CurrentSlotIndex), JsonUtility.ToJson(history, true));
+        File.WriteAllText(GetHistorySavePath(CurrentSlotIndex), JsonConvert.SerializeObject(history, Formatting.Indented));
     }
 
     private static RunHistoryRecordData CreateHistoryRecord(RunSaveData data, RunHistoryResultType resultType, float playSeconds)

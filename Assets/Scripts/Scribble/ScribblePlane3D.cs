@@ -39,18 +39,6 @@ public class ScribblePlane3D : MonoBehaviour
     [Header("Plane")]
     [SerializeField] private PlaneAxes planeAxes = PlaneAxes.XY;
 
-    [Header("Contour")]
-    [SerializeField] private List<Vector2> contourPoints = new List<Vector2>
-    {
-        new Vector2(-1.5f, -0.9f),
-        new Vector2(1.5f, -0.9f),
-        new Vector2(1.5f, 0.9f),
-        new Vector2(-1.5f, 0.9f)
-    };
-    [SerializeField] private bool closedContour = true;
-    [SerializeField, Min(0.001f)] private float contourWidth = 0.06f;
-    [SerializeField] private Color contourVertexColor = Color.white;
-
     [Header("Scribble Fill")]
     [SerializeField] private bool fillEnabled = true;
     [SerializeField] private FillMode fillMode;
@@ -102,11 +90,10 @@ public class ScribblePlane3D : MonoBehaviour
     private int guidePointTransformHash;
 #endif
 
-    public int ControlPointCount => contourPoints == null ? 0 : contourPoints.Count;
-    public bool ClosedContour => closedContour;
     public PlaneAxes Axes => planeAxes;
     public FillMode CurrentFillMode => fillMode;
     public int GuidePointCount => transform.childCount;
+    public Rect FillArea => GetNormalizedFillArea();
 
     public Vector2 GetGuidePoint(int index)
     {
@@ -121,11 +108,6 @@ public class ScribblePlane3D : MonoBehaviour
         guideTransform.localPosition = ToLocalPoint(GetNormalizedFillArea().center);
         RebuildMesh();
         return guideTransform;
-    }
-
-    private void Reset()
-    {
-        InitializeContourFromFillArea();
     }
 
     private void OnEnable()
@@ -160,33 +142,9 @@ public class ScribblePlane3D : MonoBehaviour
     }
 #endif
 
-    public Vector2 GetControlPoint(int index)
+    public void SetFillArea(Rect area)
     {
-        return contourPoints[index];
-    }
-
-    public void SetControlPoint(int index, Vector2 point)
-    {
-        if (index < 0 || index >= ControlPointCount)
-            return;
-
-        contourPoints[index] = point;
-        RebuildMesh();
-    }
-
-    public void InitializeContourFromFillArea()
-    {
-        Rect area = GetNormalizedFillArea();
-        if (contourPoints == null)
-            contourPoints = new List<Vector2>(4);
-        else
-            contourPoints.Clear();
-
-        contourPoints.Add(new Vector2(area.xMin, area.yMin));
-        contourPoints.Add(new Vector2(area.xMax, area.yMin));
-        contourPoints.Add(new Vector2(area.xMax, area.yMax));
-        contourPoints.Add(new Vector2(area.xMin, area.yMax));
-        closedContour = true;
+        fillArea = NormalizeFillArea(area);
         RebuildMesh();
     }
 
@@ -228,7 +186,6 @@ public class ScribblePlane3D : MonoBehaviour
         colors.Clear();
         triangles.Clear();
 
-        AddRibbon(contourPoints, closedContour, contourWidth, contourVertexColor);
         if (fillEnabled)
             AddFillRibbons();
 
@@ -588,16 +545,20 @@ public class ScribblePlane3D : MonoBehaviour
 
     private Rect GetNormalizedFillArea()
     {
-        float xMin = Mathf.Min(fillArea.xMin, fillArea.xMax);
-        float xMax = Mathf.Max(fillArea.xMin, fillArea.xMax);
-        float yMin = Mathf.Min(fillArea.yMin, fillArea.yMax);
-        float yMax = Mathf.Max(fillArea.yMin, fillArea.yMax);
+        return NormalizeFillArea(fillArea);
+    }
+
+    private static Rect NormalizeFillArea(Rect area)
+    {
+        float xMin = Mathf.Min(area.xMin, area.xMax);
+        float xMax = Mathf.Max(area.xMin, area.xMax);
+        float yMin = Mathf.Min(area.yMin, area.yMax);
+        float yMax = Mathf.Max(area.yMin, area.yMax);
         return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
     }
 
     private void NormalizeSettings()
     {
-        contourWidth = Mathf.Max(0.001f, contourWidth);
         fillLineWidth = Mathf.Max(0.001f, fillLineWidth);
         fillInset = Mathf.Max(0f, fillInset);
         fillWobbleAmplitude = Mathf.Max(0f, fillWobbleAmplitude);
@@ -622,8 +583,6 @@ public class ScribblePlane3D : MonoBehaviour
         area.height = Mathf.Max(0.001f, area.height);
         fillArea = area;
 
-        if (contourPoints == null)
-            contourPoints = new List<Vector2>();
     }
 
     private void EnsureMesh()

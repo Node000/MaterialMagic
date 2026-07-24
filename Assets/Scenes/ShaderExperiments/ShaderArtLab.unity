@@ -203,14 +203,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planeAxes: 0
-  contourPoints:
-  - {x: -1.8, y: -1.15}
-  - {x: 1.8, y: -1.15}
-  - {x: 1.8, y: 1.15}
-  - {x: -1.8, y: 1.15}
-  closedContour: 1
-  contourWidth: 0.07
-  contourVertexColor: {r: 0.96, g: 0.93, b: 0.98, a: 1}
   fillEnabled: 1
   fillMode: 0
   fillArea:
@@ -383,14 +375,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planeAxes: 0
-  contourPoints:
-  - {x: -1.05, y: -0.72}
-  - {x: 1.05, y: -0.72}
-  - {x: 1.05, y: 0.72}
-  - {x: -1.05, y: 0.72}
-  closedContour: 1
-  contourWidth: 0.07
-  contourVertexColor: {r: 1, g: 0.84, b: 0.92, a: 1}
   fillEnabled: 1
   fillMode: 0
   fillArea:
@@ -748,14 +732,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planeAxes: 0
-  contourPoints:
-  - {x: -2, y: -1.25}
-  - {x: 2, y: -1.25}
-  - {x: 2, y: 1.25}
-  - {x: -2, y: 1.25}
-  closedContour: 1
-  contourWidth: 0.07
-  contourVertexColor: {r: 0.96, g: 0.93, b: 0.98, a: 1}
   fillEnabled: 1
   fillMode: 0
   fillArea:
@@ -930,14 +906,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planeAxes: 0
-  contourPoints:
-  - {x: -2.6, y: -1.55}
-  - {x: 2.6, y: -1.55}
-  - {x: 2.6, y: 1.55}
-  - {x: -2.6, y: 1.55}
-  closedContour: 1
-  contourWidth: 0.07
-  contourVertexColor: {r: 1, g: 0.86, b: 0.48, a: 1}
   fillEnabled: 1
   fillMode: 1
   fillArea:
@@ -961,7 +929,7 @@ MonoBehaviour:
   guidedStrokesPerPointMin: 3
   guidedStrokesPerPointMax: 3
   guidedBypassOffset: 0.38
-  guidedBypassOffsetRange: 0
+  guidedBypassOffsetRange: 0.14
   guidedBypassAspect: 0.7
   guidedWobbleAmplitudeOverPath:
     serializedVersion: 2
@@ -1287,14 +1255,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planeAxes: 1
-  contourPoints:
-  - {x: -3.6, y: -1.5}
-  - {x: 3.6, y: -1.5}
-  - {x: 3.6, y: 1.5}
-  - {x: -3.6, y: 1.5}
-  closedContour: 1
-  contourWidth: 0.07
-  contourVertexColor: {r: 0.78, g: 0.75, b: 1, a: 1}
   fillEnabled: 1
   fillMode: 0
   fillArea:
