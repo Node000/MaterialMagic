@@ -1192,7 +1192,10 @@ public static class RunSaveSystem
             if (modifier != null)
                 card.AddModifier(modifier);
         }
-        if (data.isTemporary && !card.isTemporary)
+        bool isDeckPlaceholder = !string.IsNullOrEmpty(card.instanceId) && card.instanceId.StartsWith("deck_placeholder_");
+        if (isDeckPlaceholder)
+            card.RemoveModifiers<TemporaryModifier>();
+        else if (data.isTemporary && !card.isTemporary)
             card.AddModifier(new TemporaryModifier());
         return card;
     }

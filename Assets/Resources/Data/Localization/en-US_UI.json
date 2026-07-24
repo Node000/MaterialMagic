@@ -1210,11 +1210,11 @@
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
-      "text": "Item Slots -2"
+      "text": "Item Slots -1"
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.desc",
-      "text": "Initial available item slots are reduced by 2."
+      "text": "Initial available item slots are reduced by 1."
     },
     {
       "key": "difficulty.map_block_cells_plus_1_a8.name",

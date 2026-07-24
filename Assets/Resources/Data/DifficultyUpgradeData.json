@@ -62,7 +62,7 @@
       "descriptionKey": "difficulty.starting_magic_slots_minus_2.desc",
       "scope": 0,
       "effects": [
-        { "type": 18, "intValue": -2 }
+        { "type": 18, "intValue": -1 }
       ]
     },
     {

@@ -826,6 +826,20 @@ public class PlayerState
         EndTurn(null);
     }
 
+    public void EndBattle()
+    {
+        EndBattle(null);
+    }
+
+    public void EndBattle(List<MaterialModel> removedTemporaryCards)
+    {
+        IsEndingTurn = true;
+        ReturnHandCardsToDiscardPile(new List<MaterialModel>(Hand), removedTemporaryCards);
+        IsEndingTurn = false;
+        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+        KeepHandOnEndTurn = false;
+    }
+
     public void EndTurn(List<MaterialModel> removedTemporaryCards)
     {
         IsEndingTurn = true;
@@ -1576,7 +1590,6 @@ public class PlayerState
     public MaterialModel AddDeckPlaceholderMaterial()
     {
         MaterialModel card = new MaterialModel("deck_placeholder_" + temporaryMaterialIndex++, MaterialEnum.None);
-        card.AddModifier(new TemporaryModifier());
         Deck.Add(card);
         DrawPile.Add(card);
         GameLog.Data($"Add deck placeholder {DescribeMaterial(card)}");

@@ -238,7 +238,7 @@
               "isExitOption": true,
               "effects": [
                 {
-                  "rewardType": 15,
+                  "rewardType": 1,
                   "amount": 4
                 }
               ]

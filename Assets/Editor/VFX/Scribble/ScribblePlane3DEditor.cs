@@ -5,6 +5,7 @@ using UnityEngine;
 public class ScribblePlane3DEditor : Editor
 {
     private ScribblePlane3D scribblePlane;
+    private ScribblePlaneStylePreset stylePreset;
 
     private void OnEnable()
     {
@@ -23,6 +24,28 @@ public class ScribblePlane3DEditor : Editor
             EditorUtility.SetDirty(scribblePlane);
         }
 
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Style Preset", EditorStyles.boldLabel);
+        stylePreset = (ScribblePlaneStylePreset)EditorGUILayout.ObjectField("Preset", stylePreset, typeof(ScribblePlaneStylePreset), false);
+        using (new EditorGUI.DisabledScope(stylePreset == null))
+        {
+            if (GUILayout.Button("Apply Preset"))
+            {
+                Undo.RecordObject(scribblePlane, "Apply Scribble Plane Style Preset");
+                stylePreset.ApplyTo(scribblePlane);
+                EditorUtility.SetDirty(scribblePlane);
+            }
+            if (GUILayout.Button("Capture To Preset"))
+            {
+                Undo.RecordObject(stylePreset, "Capture Scribble Plane Style Preset");
+                stylePreset.CaptureFrom(scribblePlane);
+                EditorUtility.SetDirty(stylePreset);
+                AssetDatabase.SaveAssets();
+            }
+        }
+        if (GUILayout.Button("Create Style Preset From Current"))
+            CreateStylePreset();
+
         if (scribblePlane.CurrentFillMode == ScribblePlane3D.FillMode.EdgeGuidedStrokes)
         {
             EditorGUILayout.Space();
@@ -40,6 +63,24 @@ public class ScribblePlane3DEditor : Editor
         if (GUILayout.Button("Rebuild Preview"))
             scribblePlane.RebuildMesh();
 
+    }
+
+    private void CreateStylePreset()
+    {
+        string assetPath = EditorUtility.SaveFilePanelInProject(
+            "Create Scribble Plane Style Preset",
+            "ScribblePlaneStylePreset",
+            "asset",
+            "Choose where to save the reusable plane style preset.");
+        if (string.IsNullOrEmpty(assetPath))
+            return;
+
+        ScribblePlaneStylePreset preset = CreateInstance<ScribblePlaneStylePreset>();
+        preset.CaptureFrom(scribblePlane);
+        AssetDatabase.CreateAsset(preset, assetPath);
+        AssetDatabase.SaveAssets();
+        stylePreset = preset;
+        Selection.activeObject = preset;
     }
 
     private void OnSceneGUI()

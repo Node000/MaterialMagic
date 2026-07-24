@@ -503,7 +503,7 @@ public class BattleManager
         ResetContinuousCastCount();
         FinishBattle();
         BeginPlayerResolveRules(false);
-        PlayerState?.EndTurn(removedTemporaryCards);
+        PlayerState?.EndBattle(removedTemporaryCards);
         EndPlayerResolveRules();
         PlayerState?.ClearCombatState();
     }

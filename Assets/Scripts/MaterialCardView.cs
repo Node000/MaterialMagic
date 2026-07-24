@@ -271,6 +271,8 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
                 return "Images/UI/4";
             case MaterialEnum.Wild:
                 return "Images/UI/Wild";
+            case MaterialEnum.None:
+                return "Images/UI/placeholder";
             default:
                 return null;
         }

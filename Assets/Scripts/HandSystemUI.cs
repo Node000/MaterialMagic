@@ -564,8 +564,10 @@ public class HandSystemUI : MonoBehaviour
 		private bool busy;
 
         private int resolveTransitionLockCount;
+        private int enemyResolveLockCount;
+        private int nextEnemyRuleResolveIndex;
 
-		private bool choosingEventCard;
+			private bool choosingEventCard;
 
 	private EventOptionData pendingChoiceOption;
 
@@ -2195,8 +2197,7 @@ public class HandSystemUI : MonoBehaviour
         }
 
         LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
-        bool isReducedDesignedMap = isDesignedMap && baseHeight == 7;
-        HashSet<Vector2Int> designedBlockedCells = isReducedDesignedMap ? SelectDesignedChapterBlockedCells(DifficultyUpgradeSystem.GetMapBlockedCellCount()) : null;
+        HashSet<Vector2Int> designedBlockedCells = isDesignedMap ? SelectDesignedChapterBlockedCells(baseHeight, DifficultyUpgradeSystem.GetMapBlockedCellCount()) : null;
         if (isDesignedMap)
             BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel, designedBlockedCells, additionalTopBossCellCount);
         else
@@ -2205,7 +2206,7 @@ public class HandSystemUI : MonoBehaviour
         runManager.BuildMapGrid(chapter, levels, width, height, additionalTopBossCellCount, bossLevel);
         if (isDesignedMap)
             ApplyDesignedChapterMapCellFlags(designedBlockedCells, additionalTopBossCellCount);
-        DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt, !isReducedDesignedMap);
+        DifficultyUpgradeSystem.ApplyMapUpgrades(ChapterMapGrid, NextRunRandomInt, !isDesignedMap);
         runManager?.RevealCurrentMapNeighbors();
     }
 
@@ -2322,11 +2323,13 @@ public class HandSystemUI : MonoBehaviour
             levels[index] = level;
     }
 
-    private HashSet<Vector2Int> SelectDesignedChapterBlockedCells(int count)
+    private HashSet<Vector2Int> SelectDesignedChapterBlockedCells(int baseHeight, int count)
     {
         HashSet<Vector2Int> blockedCells = new HashSet<Vector2Int>();
         List<Vector2Int> candidates = new List<Vector2Int>();
-        for (int y = 3; y <= 4; y++)
+        int minY = 3;
+        int maxY = baseHeight == 7 ? 4 : 5;
+        for (int y = minY; y <= maxY; y++)
         {
             for (int x = 1; x <= 3; x++)
                 candidates.Add(new Vector2Int(x, y));
@@ -2948,10 +2951,10 @@ public class HandSystemUI : MonoBehaviour
                 return;
         }
 
-			if (!tutorialClickConsumedThisFrame && IsPlaySelectedCardsInputDown())
-			{
-				PlaySelectedCardsByInput();
-			}
+		if (!tutorialClickConsumedThisFrame && CanUseBattleCardInput() && IsPlaySelectedCardsInputDown())
+		{
+			PlaySelectedCardsByInput();
+		}
 
 			if (!tutorialClickConsumedThisFrame && currentLevel != null && currentLevel.levelType == LevelType.Rest && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
 
@@ -3049,17 +3052,26 @@ public class HandSystemUI : MonoBehaviour
         playerCastEffect = effect;
 	}
 
+    private bool CanUseBattleCardInput()
+    {
+        return !busy
+            && !choosingEventCard
+            && runManager != null
+            && runManager.State == RunFlowState.Battle
+            && battleManager != null
+            && battleManager.CurrentPhase == BattlePhase.PlayerTurn;
+    }
+
 	public void OnCardLeftClicked(HandCardView cardView)
 	{
-		if (busy && !choosingEventCard)
+		if (choosingEventCard)
 		{
+			HandleEventCardChoice(cardView);
 			return;
 		}
-			if (choosingEventCard)
-			{
-				HandleEventCardChoice(cardView);
-				return;
-			}
+
+        if (!CanUseBattleCardInput())
+            return;
 
             if (cardView.InPlayZone)
             {
@@ -3071,30 +3083,23 @@ public class HandSystemUI : MonoBehaviour
             return;
 
 		bool flag = !selectedCards.Contains(cardView.Card);
-			cardView.SetSelected(flag, instant: false);
-
 		if (flag)
 		{
-			if (!selectedCards.Contains(cardView.Card))
-			{
-				selectedCards.Add(cardView.Card);
-			}
+			selectedCards.Add(cardView.Card);
 		}
-				else
-				{
-					selectedCards.Remove(cardView.Card);
-				}
-	        UpdateLayout(false);
-	        RefreshEndTurnButtonText();
-	        RefreshPlayerAnimationState();
+		else
+		{
+			selectedCards.Remove(cardView.Card);
+		}
+        SynchronizeCardSelectionState(false);
 	        TutorialManager?.OnBattleCardsSelected(selectedCards);
 
 		}
 
 			public void OnCardPlayRequested(HandCardView cardView)
 			{
-				if (busy || cardView.InPlayZone)
-		            return;
+			if (!CanUseBattleCardInput() || cardView.InPlayZone)
+	            return;
 
 		        if (playerState.IsMaterialDisabled(cardView.Card))
 		        {
@@ -3714,7 +3719,7 @@ public bool IsCardDragActive => cardDragActive;
 
 	public void PlaySelectedCardsByInput()
 	{
-		if (!busy)
+		if (CanUseBattleCardInput())
 		{
 			PlaySelectedCards();
 		}
@@ -3757,9 +3762,12 @@ public bool IsCardDragActive => cardDragActive;
         return screenPosition.y > Screen.height * Mathf.Clamp01(playInputScreenHeightThreshold);
     }
 
-    public bool TryPlaySelectedCardsFromCardClick(HandCardView cardView, PointerEventData eventData)
-    {
-        if (cardView == null || eventData == null || eventData.button != PointerEventData.InputButton.Left)
+	public bool TryPlaySelectedCardsFromCardClick(HandCardView cardView, PointerEventData eventData)
+	{
+        if (!CanUseBattleCardInput())
+            return false;
+
+		if (cardView == null || eventData == null || eventData.button != PointerEventData.InputButton.Left)
             return false;
 
         if (!IsAbovePlayInputThreshold(eventData.position))
@@ -3807,7 +3815,7 @@ public bool IsCardDragActive => cardDragActive;
 
 			private void PlaySelectedCards()
 			{
-            RestoreSelectedCardsFromViewState();
+            RemoveInvalidSelectedCards();
 				if (selectedCards.Count == 0)
 
 			{
@@ -3939,7 +3947,7 @@ public bool IsCardDragActive => cardDragActive;
 
 		private void RefreshSelectedCards(bool ignoreOncePerTurn)
 		{
-            RestoreSelectedCardsFromViewState();
+            RemoveInvalidSelectedCards();
 			//IL_005e: Unknown result type (might be due to invalid IL or missing references)
 
 		//IL_0069: Expected O, but got Unknown
@@ -3949,7 +3957,7 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				return;
 			}
-			if (busy || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
+			if (!CanUseBattleCardInput() || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
 			{
 				return;
 			}
@@ -4021,10 +4029,10 @@ public bool IsCardDragActive => cardDragActive;
 		if (runEnded)
 			return;
 
-			if (busy)
+			if (!CanUseBattleCardInput())
 	            return;
 
-            RestoreSelectedCardsFromViewState();
+            RemoveInvalidSelectedCards();
 
 	        if (HasSelectedArrowCard())
         {
@@ -4106,7 +4114,10 @@ public bool IsCardDragActive => cardDragActive;
             yield return FinishBattleRoutine();
             yield break;
         }
-        battleManager?.BeginEnemyTurn();
+		battleManager?.BeginEnemyTurn();
+        enemyResolveLockCount = 0;
+        nextEnemyRuleResolveIndex = 0;
+        int enemyRuleResolveIndex = 0;
 		for (int num = 0; num < enemyModels.Count; num++)
 		{
 			EnemyModel enemy = enemyModels[num];
@@ -4119,10 +4130,12 @@ public bool IsCardDragActive => cardDragActive;
 				GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.enemy", "敌方回合"));
 			}
 
-			yield return ResolveEnemyIntentsRoutine(enemy);
-			if (HasActingEnemyAfter(num))
-				yield return new WaitForSeconds(enemyBetweenDelay);
+            enemyResolveLockCount++;
+            StartCoroutine(ResolveEnemyIntentsRoutine(enemy, enemyRuleResolveIndex));
+            enemyRuleResolveIndex++;
 		}
+        while (enemyResolveLockCount > 0)
+            yield return null;
         battleManager?.EndEnemyTurn();
 		RefreshStaticUI();
 		if (CheckPlayerDefeated())
@@ -5173,25 +5186,6 @@ public bool IsCardDragActive => cardDragActive;
 		            RefreshEndTurnButtonText();
 		            RefreshPlayerAnimationState();
 		        }
-
-		        private void RestoreSelectedCardsFromViewState()
-
-        {
-            if (playerState == null || choosingEventCard)
-                return;
-
-            RemoveInvalidSelectedCards();
-            for (int i = 0; i < cardViews.Count; i++)
-            {
-                HandCardView view = cardViews[i];
-                if ((Object)view == (Object)null || !view.Selected)
-                    continue;
-
-                MaterialModel card = view.Card;
-                if (card != null && playerState.Hand.Contains(card) && !selectedCards.Contains(card))
-                    selectedCards.Add(card);
-            }
-        }
 
         private void RemoveInvalidSelectedCards()
         {
@@ -8095,8 +8089,6 @@ public bool IsCardDragActive => cardDragActive;
         RefreshMaterialListPanel();
         RebuildCards(animateFromCurrent: true);
         RefreshPlayerAnimationState();
-        busy = false;
-        SetButtonsInteractable(interactable: true);
 
         MaterialListPanelUI materialListPanel = GetUIManager().MaterialSelectionPanel;
         if ((Object)materialListPanel == (Object)null)
@@ -8181,11 +8173,11 @@ public bool IsCardDragActive => cardDragActive;
 		}, animateMarker);
 	}
 
-	private IEnumerator ResolveEnemyIntentsRoutine(EnemyModel enemy)
+	private IEnumerator ResolveEnemyIntentsRoutine(EnemyModel enemy, int ruleResolveIndex)
 	{
 		EnemyViewState state = FindEnemyViewState(enemy);
 		suppressEnemyIntentRefresh = true;
-        battleManager?.BeginEnemyAction(enemy);
+        bool ruleResolveStarted = false;
 
 		for (int i = 0; i < enemy.CurrentIntents.Count; i++)
 		{
@@ -8207,9 +8199,22 @@ public bool IsCardDragActive => cardDragActive;
 			yield return new WaitForSeconds(enemyIntentPrePerformDelay);
 			int hitCount = enemy.GetIntentHitCount(intent);
 			for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
-			{
-				yield return PlayEnemyIntentPerformance(state, intent);
-				BattleActionResult intentResult = hitCount > 1
+				{
+					yield return PlayEnemyIntentPerformance(state, intent);
+                    if (!ruleResolveStarted)
+                    {
+                        while (nextEnemyRuleResolveIndex != ruleResolveIndex)
+                            yield return null;
+                        if (enemy.IsDead)
+                        {
+                            nextEnemyRuleResolveIndex++;
+                            enemyResolveLockCount--;
+                            yield break;
+                        }
+                        battleManager?.BeginEnemyAction(enemy);
+                        ruleResolveStarted = true;
+                    }
+					BattleActionResult intentResult = hitCount > 1
 					? (battleManager != null ? battleManager.ResolveEnemyIntentHitAt(enemy, i, hitIndex) : null)
 					: (battleManager != null ? battleManager.ResolveEnemyIntentAt(enemy, i) : null);
 				PlayPlayerDamageFeedbackIfNeeded(intentResult != null ? intentResult.PlayerHealthBefore : playerState.CurrentHealth, intentResult != null ? intentResult.PlayerShieldBefore : playerState.Shield);
@@ -8226,9 +8231,18 @@ public bool IsCardDragActive => cardDragActive;
 			yield return new WaitForSeconds(enemyIntentBetweenDelay);
 		}
 
-        battleManager?.EndEnemyAction(enemy);
+        if (!ruleResolveStarted)
+        {
+            while (nextEnemyRuleResolveIndex != ruleResolveIndex)
+                yield return null;
+            battleManager?.BeginEnemyAction(enemy);
+        }
+
+		battleManager?.EndEnemyAction(enemy);
 		RefreshEnemyUI(state, false);
 		yield return PlayPendingEnemyDeaths();
+        nextEnemyRuleResolveIndex++;
+        enemyResolveLockCount--;
 	}
 
 	private void PlayPlayerDamageFeedbackIfNeeded(int healthBefore, int shieldBefore)
@@ -9697,11 +9711,11 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0011: Expected O, but got Unknown
 		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0050: Expected O, but got Unknown
-	        buttonsInteractable = interactable;
+		        buttonsInteractable = interactable && CanUseBattleCardInput();
 			if ((Object)refreshButton != (Object)null)
 			{
 				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.ExtraRefreshChancesThisTurn > 0);
-				refreshButton.interactable = interactable && canRefresh;
+				refreshButton.interactable = buttonsInteractable && canRefresh;
 			}
 	        RefreshRefreshChanceUI();
 	        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());

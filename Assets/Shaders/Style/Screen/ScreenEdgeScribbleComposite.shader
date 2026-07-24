@@ -64,6 +64,7 @@ Shader "Hidden/Style/ScreenEdgeScribbleComposite"
                 Varyings output;
                 output.uv = float2((input.vertexID << 1) & 2, input.vertexID & 2);
                 output.positionCS = float4(output.uv * 2.0 - 1.0, 0.0, 1.0);
+                output.uv.y = 1.0 - output.uv.y;
                 return output;
             }
 

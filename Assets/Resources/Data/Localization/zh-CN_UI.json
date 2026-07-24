@@ -1210,11 +1210,11 @@
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
-      "text": "道具槽-2"
+      "text": "道具槽-1"
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.desc",
-      "text": "初始可用道具槽减少2个。"
+      "text": "初始可用道具槽减少1个。"
     },
     {
       "key": "difficulty.map_block_cells_plus_1_a8.name",

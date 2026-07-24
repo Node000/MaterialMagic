@@ -19305,7 +19305,7 @@ MonoBehaviour:
   healthText: {fileID: 1037492018340562236}
   magicRoot: {fileID: 6614923704064905924}
   materialRoot: {fileID: 4912340120963044901}
-  magicViewPrefab: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+  magicViewPrefab: {fileID: 3584544211444736926, guid: b5dd64291f051a540ab29ac3d9925039, type: 3}
   materialCardPrefab: {fileID: 2150081298421458138, guid: 5a245cf3e163b134eadf8b70b0407a36, type: 3}
   magicPreviewSlotCount: 4
   magicItemFallbackSize: {x: 196, y: 92}

@@ -172,6 +172,78 @@ public class ScribblePlane3D : MonoBehaviour
         return planeAxes == PlaneAxes.XY ? Vector3.up : Vector3.forward;
     }
 
+    public ScribblePlaneStyleSettings GetStyleSettings()
+    {
+        MeshRenderer renderer = GetComponent<MeshRenderer>();
+        return new ScribblePlaneStyleSettings
+        {
+            fillEnabled = fillEnabled,
+            fillMode = fillMode,
+            fillLineCount = fillLineCount,
+            fillSamplesPerLine = fillSamplesPerLine,
+            fillLineWidth = fillLineWidth,
+            fillInset = fillInset,
+            fillAngleDegrees = fillAngleDegrees,
+            fillWobbleAmplitude = fillWobbleAmplitude,
+            fillWobbleFrequency = fillWobbleFrequency,
+            fillVertexColor = fillVertexColor,
+            guidedEdge = guidedEdge,
+            guidedStartOffsetRange = guidedStartOffsetRange,
+            guidedEndOffsetRange = guidedEndOffsetRange,
+            guidedEdgeJitter = guidedEdgeJitter,
+            guidedStrokesPerPointMin = guidedStrokesPerPointMin,
+            guidedStrokesPerPointMax = guidedStrokesPerPointMax,
+            guidedBypassOffset = guidedBypassOffset,
+            guidedBypassOffsetRange = guidedBypassOffsetRange,
+            guidedBypassAspect = guidedBypassAspect,
+            guidedWobbleAmplitudeOverPath = new AnimationCurve(guidedWobbleAmplitudeOverPath.keys),
+            guidedWobbleFrequencyOverPath = new AnimationCurve(guidedWobbleFrequencyOverPath.keys),
+            guidedCurveDirection = guidedCurveDirection,
+            appearanceMaterial = renderer == null ? null : renderer.sharedMaterial,
+            seed = seed
+        };
+    }
+
+    public void ApplyStyleSettings(ScribblePlaneStyleSettings settings)
+    {
+        fillEnabled = settings.fillEnabled;
+        fillMode = settings.fillMode;
+        fillLineCount = settings.fillLineCount;
+        fillSamplesPerLine = settings.fillSamplesPerLine;
+        fillLineWidth = settings.fillLineWidth;
+        fillInset = settings.fillInset;
+        fillAngleDegrees = settings.fillAngleDegrees;
+        fillWobbleAmplitude = settings.fillWobbleAmplitude;
+        fillWobbleFrequency = settings.fillWobbleFrequency;
+        fillVertexColor = settings.fillVertexColor;
+        guidedEdge = settings.guidedEdge;
+        guidedStartOffsetRange = settings.guidedStartOffsetRange;
+        guidedEndOffsetRange = settings.guidedEndOffsetRange;
+        guidedEdgeJitter = settings.guidedEdgeJitter;
+        guidedStrokesPerPointMin = settings.guidedStrokesPerPointMin;
+        guidedStrokesPerPointMax = settings.guidedStrokesPerPointMax;
+        guidedBypassOffset = settings.guidedBypassOffset;
+        guidedBypassOffsetRange = settings.guidedBypassOffsetRange;
+        guidedBypassAspect = settings.guidedBypassAspect;
+        guidedWobbleAmplitudeOverPath = settings.guidedWobbleAmplitudeOverPath == null
+            ? AnimationCurve.Linear(0f, 1f, 1f, 1f)
+            : new AnimationCurve(settings.guidedWobbleAmplitudeOverPath.keys);
+        guidedWobbleFrequencyOverPath = settings.guidedWobbleFrequencyOverPath == null
+            ? AnimationCurve.Linear(0f, 1f, 1f, 1f)
+            : new AnimationCurve(settings.guidedWobbleFrequencyOverPath.keys);
+        guidedCurveDirection = settings.guidedCurveDirection;
+        seed = settings.seed;
+
+        if (settings.appearanceMaterial != null)
+        {
+            MeshRenderer renderer = GetComponent<MeshRenderer>();
+            if (renderer != null)
+                renderer.sharedMaterial = settings.appearanceMaterial;
+        }
+
+        RebuildMesh();
+    }
+
     public void RebuildMesh()
     {
         NormalizeSettings();

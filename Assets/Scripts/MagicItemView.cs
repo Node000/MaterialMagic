@@ -29,6 +29,11 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private float tooltipFadeDuration = 0.12f;
     [SerializeField] private float tooltipScaleDuration = 0.18f;
     [SerializeField] private Ease tooltipEase = Ease.OutBack;
+    [Header("本地详情提示")]
+    [SerializeField] private RectTransform localDetailTooltipRoot;
+    [SerializeField] private TMP_Text localDetailTooltipTitleText;
+    [SerializeField] private TMP_Text localDetailTooltipBodyText;
+    [SerializeField] private CanvasGroup localDetailTooltipCanvasGroup;
     [Header("动画参数")]
     [SerializeField] private Vector3 tooltipHiddenScale = new Vector3(0.82f, 0.82f, 1f);
     [SerializeField] private float recipeHighlightPunchScale = 0.25f;
@@ -45,6 +50,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private MagicModel magic;
     private Tween pulseTween;
     private Tween modifierMarkerTween;
+    private Tween localDetailTooltipTween;
     private bool warnedMissingBackgroundImage;
     private SpringLineHighlightUI hoverHighlight;
     private Sprite modifierMarkerFallbackSprite;
@@ -70,6 +76,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
+        HideLocalDetailTooltip(true);
         UIManager uiManager = GetComponentInParent<UIManager>();
         uiManager?.HideUnifiedDetailPopup(this);
     }
@@ -78,6 +85,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
+        localDetailTooltipTween?.Kill(false);
     }
 
     public void Bind(MagicModel magic)
@@ -164,15 +172,61 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        UnifiedDetailContent content = magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
+        if (localDetailTooltipRoot != null)
+        {
+            ShowLocalDetailTooltip(content);
+            return;
+        }
+
         UIManager uiManager = GetComponentInParent<UIManager>();
-        if (uiManager != null)
-            uiManager.ShowUnifiedDetailPopup(this, magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot());
+        uiManager?.ShowUnifiedDetailPopup(this, content);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (localDetailTooltipRoot != null)
+        {
+            HideLocalDetailTooltip(false);
+            return;
+        }
+
         UIManager uiManager = GetComponentInParent<UIManager>();
         uiManager?.HideUnifiedDetailPopup(this);
+    }
+
+    private void ShowLocalDetailTooltip(UnifiedDetailContent content)
+    {
+        if (localDetailTooltipTitleText != null)
+            localDetailTooltipTitleText.text = content.Title;
+        if (localDetailTooltipBodyText != null)
+            localDetailTooltipBodyText.text = content.Body;
+
+        localDetailTooltipTween?.Kill(false);
+        localDetailTooltipRoot.gameObject.SetActive(true);
+        localDetailTooltipRoot.SetAsLastSibling();
+        if (localDetailTooltipCanvasGroup != null)
+        {
+            localDetailTooltipCanvasGroup.alpha = 0f;
+            localDetailTooltipCanvasGroup.blocksRaycasts = false;
+            localDetailTooltipTween = localDetailTooltipCanvasGroup.DOFade(1f, tooltipFadeDuration).SetTarget(this);
+        }
+    }
+
+    private void HideLocalDetailTooltip(bool instant)
+    {
+        if (localDetailTooltipRoot == null)
+            return;
+
+        localDetailTooltipTween?.Kill(false);
+        if (instant || localDetailTooltipCanvasGroup == null)
+        {
+            localDetailTooltipRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        localDetailTooltipTween = localDetailTooltipCanvasGroup.DOFade(0f, tooltipFadeDuration).SetTarget(this)
+            .OnComplete(() => localDetailTooltipRoot.gameObject.SetActive(false));
     }
 
     public void OnPointerClick(PointerEventData eventData)
