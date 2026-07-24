@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda58cefba19fce44b03c5f2be1e2ee4, type: 3}
+  m_Name: lazy
+  m_EditorClassIdentifier: 
+  id: lazy
+  script: LazyModifier
+  nameKey: modifier.lazy.name
+  descriptionKey: modifier.lazy.desc
+  lineColor: {r: 0.54901963, g: 0.54901963, b: 1, a: 1}
+  inArrowModifierRewardPool: 0
+  visualMaterial: {fileID: 2100000, guid: 1559c4ddacb6c454aa497761909acb31, type: 2}

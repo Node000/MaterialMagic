@@ -9,7 +9,6 @@ public static class MaterialModifierVisualUtility
     private const string ScreenShaderName = "UI/MaterialModifierScreenEffect";
     private const string ElementShaderName = "UI/MaterialModifierElementAura";
     private const string DefaultAuraMaterialPath = "Materials/MaterialModifierAura";
-    private const string ModifierMaterialFolder = "Materials/MaterialModifiers";
 
     private static readonly Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
     private static readonly Dictionary<MaterialEnum, Texture> arrowTextureCache = new Dictionary<MaterialEnum, Texture>();
@@ -85,22 +84,13 @@ public static class MaterialModifierVisualUtility
     private static Material CreateMaterial(MaterialModifierModel modifier, VisualProfile profile, out bool fromAsset)
     {
         fromAsset = false;
-        Material template = Resources.Load<Material>(GetModifierMaterialPath(modifier));
-        if (template != null)
+        if (MaterialModifierDisplayDatabase.TryGetVisualMaterial(modifier, out Material template))
         {
             fromAsset = true;
             return new Material(template);
         }
 
         return CreateMaterial(profile.ShaderName);
-    }
-
-    private static string GetModifierMaterialPath(MaterialModifierModel modifier)
-    {
-        if (modifier is SturdyModifier)
-            return ModifierMaterialFolder + "/PeriodArrowModifier";
-
-        return ModifierMaterialFolder + "/" + modifier.GetType().Name;
     }
 
     private static Material CreateMaterial(string shaderName)

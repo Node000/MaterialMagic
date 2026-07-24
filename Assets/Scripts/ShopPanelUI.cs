@@ -1065,7 +1065,7 @@ public class ShopPanelUI : MonoBehaviour
         List<string> ids = new List<string>();
         for (int i = 0; modifiers != null && i < modifiers.Count; i++)
         {
-            string id = RunSaveSystem_GetMaterialModifierId(modifiers[i]);
+            string id = MaterialModifierFactory.GetId(modifiers[i]);
             if (!string.IsNullOrEmpty(id))
                 ids.Add(id);
         }
@@ -1086,8 +1086,7 @@ public class ShopPanelUI : MonoBehaviour
             card.enhancementIds.AddRange(data.enhancementIds);
         for (int i = 0; data.modifierIds != null && i < data.modifierIds.Length; i++)
         {
-            MaterialModifierData modifierData = !string.IsNullOrEmpty(data.modifierIds[i]) ? panelModifierDataLookup(data.modifierIds[i]) : null;
-            MaterialModifierModel modifier = modifierData != null ? MaterialModifierFactory.Create(modifierData) : null;
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(data.modifierIds[i]);
             if (modifier != null)
                 card.AddModifier(modifier);
         }
@@ -1107,47 +1106,6 @@ public class ShopPanelUI : MonoBehaviour
         return magic;
     }
 
-    private static MaterialModifierData panelModifierDataLookup(string modifierId)
-    {
-        if (string.IsNullOrEmpty(modifierId))
-            return null;
-        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
-        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
-        {
-            MaterialModifierData data = table.items[i];
-            if (data != null && data.id == modifierId)
-                return data;
-        }
-        return null;
-    }
-
-    private static string RunSaveSystem_GetMaterialModifierId(MaterialModifierModel modifier)
-    {
-        if (modifier is KindlingModifier) return "kindling";
-        if (modifier is FlowModifier) return "flow";
-        if (modifier is LiquefyModifier) return "liquefy";
-        if (modifier is ChargeModifier) return "charge";
-        if (modifier is VortexModifier) return "vortex";
-        if (modifier is RepeatArrowModifier) return "repeat_arrow";
-        if (modifier is OmniArrowModifier) return "omni_arrow";
-        if (modifier is PeriodArrowModifier) return "period_arrow";
-        if (modifier is PackArrowModifier) return "pack_arrow";
-        if (modifier is LinkedArrowModifier) return "linked_arrow";
-        if (modifier is BigArrow2Modifier) return "big_arrow_2";
-        if (modifier is BigArrow3Modifier) return "big_arrow_3";
-        if (modifier is BigArrow4Modifier) return "big_arrow_4";
-        if (modifier is ReturnArrowModifier) return "return_arrow";
-        if (modifier is RandomArrowModifier) return "random_arrow";
-        if (modifier is ProliferatingArrowModifier) return "proliferating_arrow";
-        if (modifier is EternalArrowModifier) return "eternal_arrow";
-        if (modifier is FragileArrowModifier) return "fragile_arrow";
-        if (modifier is RetainedArrowModifier) return "retained_arrow";
-        if (modifier is HalfArrowModifier) return "half_arrow";
-        if (modifier is DoomModifier) return "doom";
-        if (modifier is LazyModifier) return "lazy";
-        if (modifier is TemporaryModifier) return "temporary";
-        return string.Empty;
-    }
 
     private RectTransform GetMagicOfferRect(ShopOffer offer)
     {

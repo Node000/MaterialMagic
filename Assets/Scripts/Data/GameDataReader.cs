@@ -25,6 +25,15 @@ public static class GameDataReader
 
     public static DataTable<T> LoadTable<T>(string tablePath)
     {
+        if (typeof(T) == typeof(MaterialModifierData) && tablePath == "MaterialModifierData")
+        {
+            IReadOnlyList<MaterialModifierData> definitions = MaterialModifierDatabase.RuntimeData;
+            DataTable<T> materialModifierTable = new DataTable<T>();
+            for (int i = 0; i < definitions.Count; i++)
+                materialModifierTable.items.Add((T)(object)definitions[i]);
+            return materialModifierTable;
+        }
+
         TextAsset asset = LoadTextAsset(DataRoot + tablePath);
         if (asset == null)
             return new DataTable<T>();

@@ -1204,61 +1204,11 @@ public static class RunSaveSystem
 
     private static string GetMaterialModifierId(MaterialModifierModel modifier)
     {
-        if (modifier is KindlingModifier) return "kindling";
-        if (modifier is FlowModifier) return "flow";
-        if (modifier is LiquefyModifier) return "liquefy";
-        if (modifier is ChargeModifier) return "charge";
-        if (modifier is VortexModifier) return "vortex";
-        if (modifier is RepeatArrowModifier) return "repeat_arrow";
-        if (modifier is OmniArrowModifier) return "omni_arrow";
-        if (modifier is PeriodArrowModifier) return "period_arrow";
-        if (modifier is PackArrowModifier) return "pack_arrow";
-        if (modifier is LinkedArrowModifier) return "linked_arrow";
-        if (modifier is BigArrow2Modifier) return "big_arrow_2";
-        if (modifier is BigArrow3Modifier) return "big_arrow_3";
-        if (modifier is BigArrow4Modifier) return "big_arrow_4";
-        if (modifier is ReturnArrowModifier) return "return_arrow";
-        if (modifier is RandomArrowModifier) return "random_arrow";
-        if (modifier is ProliferatingArrowModifier) return "proliferating_arrow";
-        if (modifier is EternalArrowModifier) return "eternal_arrow";
-        if (modifier is FragileArrowModifier) return "fragile_arrow";
-        if (modifier is RetainedArrowModifier) return "retained_arrow";
-        if (modifier is HalfArrowModifier) return "half_arrow";
-        if (modifier is DoomModifier) return "doom";
-        if (modifier is LazyModifier) return "lazy";
-        if (modifier is TemporaryModifier) return "temporary";
-        return string.Empty;
+        return MaterialModifierFactory.GetId(modifier);
     }
 
     private static MaterialModifierModel CreateMaterialModifier(string id)
     {
-        switch (id)
-        {
-            case "kindling": return new KindlingModifier();
-            case "flow": return new FlowModifier();
-            case "liquefy": return new LiquefyModifier();
-            case "charge": return new ChargeModifier();
-            case "vortex": return new VortexModifier();
-            case "heavy_arrow": return new RepeatArrowModifier();
-            case "repeat_arrow": return new RepeatArrowModifier();
-            case "omni_arrow": return new OmniArrowModifier();
-            case "period_arrow": return new PeriodArrowModifier();
-            case "pack_arrow": return new PackArrowModifier();
-            case "linked_arrow": return new LinkedArrowModifier();
-            case "big_arrow_2": return new BigArrow2Modifier();
-            case "big_arrow_3": return new BigArrow3Modifier();
-            case "big_arrow_4": return new BigArrow4Modifier();
-            case "return_arrow": return new ReturnArrowModifier();
-            case "random_arrow": return new RandomArrowModifier();
-            case "proliferating_arrow": return new ProliferatingArrowModifier();
-            case "eternal_arrow": return new EternalArrowModifier();
-            case "fragile_arrow": return new FragileArrowModifier();
-            case "retained_arrow": return new RetainedArrowModifier();
-            case "half_arrow": return new HalfArrowModifier();
-            case "doom": return new DoomModifier();
-            case "lazy": return new LazyModifier();
-            case "temporary": return new TemporaryModifier();
-            default: return null;
-        }
+        return MaterialModifierFactory.Create(id);
     }
 }

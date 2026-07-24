@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Scribble_Path_Ribbon_Default
+  m_Shader: {fileID: 4800000, guid: 05e318686fdbb944a98f3f64e00c316f, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BreakupTex:
+        m_Texture: {fileID: 2800000, guid: b4253f852b1aadc4f90d0dbf72d604a8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BrushTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AnimationFramesPerSecond: 12
+    - _BreakupStrength: 0.18
+    - _BreakupThreshold: 0.42
+    - _DepthOffset: 0.001
+    - _Opacity: 1
+    - _PreviewAnimationTime: -1
+    - _SecondaryWobble: 0.32
+    - _Seed: 17
+    - _SteppedAnimation: 1
+    - _WobbleAmplitude: 0.012
+    - _WobbleFrequency: 4
+    - _WobbleSpeed: 0.7
+    m_Colors:
+    - _BrushTiling: {r: 1.5, g: 1, b: 0, a: 0}
+    - _Tint: {r: 0.953, g: 0.933, b: 0.961, a: 1}
+  m_BuildTextureStacks: []

@@ -15,6 +15,19 @@ public static class MaterialModifierFactory
         return TypesByScript.TryGetValue(data.script, out Type type) ? Activator.CreateInstance(type) as MaterialModifierModel : null;
     }
 
+    public static MaterialModifierModel Create(string id)
+    {
+        if (id == "heavy_arrow")
+            id = "repeat_arrow";
+
+        return MaterialModifierDatabase.TryGetData(id, out MaterialModifierData data) ? Create(data) : null;
+    }
+
+    public static string GetId(MaterialModifierModel modifier)
+    {
+        return modifier != null && MaterialModifierDatabase.TryGetDataByScript(modifier.GetType().Name, out MaterialModifierData data) ? data.id : string.Empty;
+    }
+
     private static void EnsureLoaded()
     {
         if (loaded)

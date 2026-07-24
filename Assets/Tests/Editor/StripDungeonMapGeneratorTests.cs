@@ -16,6 +16,7 @@ public class StripDungeonMapGeneratorTests
             Assert.That(generated, Is.True, $"Seed {seed}: {error}");
             Assert.That(StripDungeonMapGenerator.Validate(map, config, out error), Is.True, $"Seed {seed}: {error}");
             Assert.That(map.IsBossVisible, Is.False);
+            Assert.That(HasMiddleCrossing(map), Is.True, $"Seed {seed} 缺少条带中段交叉。");
             for (int stripIndex = 0; stripIndex < map.strips.Count; stripIndex++)
             {
                 StripDungeonStrip strip = map.strips[stripIndex];
@@ -45,5 +46,30 @@ public class StripDungeonMapGeneratorTests
             map.RevealBossIfOnHostStrip(map.bossEntrancePosition);
             Assert.That(map.IsBossVisible, Is.True, $"Seed {seed} 进入 Boss 所属条带后应揭示 Boss。");
         }
+    }
+
+    private static bool HasMiddleCrossing(StripDungeonMap map)
+    {
+        for (int i = 0; i < map.cells.Count; i++)
+        {
+            StripDungeonCell cell = map.cells[i];
+            if (cell == null || cell.stripIds.Count < 2)
+                continue;
+
+            bool isAnyEndpoint = false;
+            for (int j = 0; j < cell.stripIds.Count; j++)
+            {
+                StripDungeonStrip strip = map.strips[cell.stripIds[j]];
+                if (strip.cells[0] == cell.position || strip.cells[strip.cells.Count - 1] == cell.position)
+                {
+                    isAnyEndpoint = true;
+                    break;
+                }
+            }
+
+            if (!isAnyEndpoint)
+                return true;
+        }
+        return false;
     }
 }

@@ -10,6 +10,7 @@ public class StripDungeonMapConfig : ScriptableObject
     [SerializeField] private int stripCountMin = 6;
     [SerializeField] private int stripCountMax = 8;
     [SerializeField] private int[] stripLengths = { 6, 7, 8, 9 };
+    [SerializeField, Range(0, 100)] private int middleCrossingStripChance = 70;
     [SerializeField] private int maxGenerationAttempts = 48;
 
     [Header("Boss")]
@@ -33,6 +34,7 @@ public class StripDungeonMapConfig : ScriptableObject
     public int StripCountMin => stripCountMin;
     public int StripCountMax => stripCountMax;
     public int[] StripLengths => stripLengths;
+    public int MiddleCrossingStripChance => middleCrossingStripChance;
     public int MaxGenerationAttempts => maxGenerationAttempts;
     public int BossMinDistanceFromStart => bossMinDistanceFromStart;
     public StripDungeonContentRule[] ContentRules => contentRules;

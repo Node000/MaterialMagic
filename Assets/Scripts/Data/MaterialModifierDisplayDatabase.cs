@@ -53,6 +53,18 @@ public static class MaterialModifierDisplayDatabase
         return false;
     }
 
+    public static bool TryGetVisualMaterial(MaterialModifierModel modifier, out Material material)
+    {
+        if (modifier != null && MaterialModifierDatabase.TryGetDefinition(modifier.GetType().Name, out MaterialModifierDefinition definition) && definition.VisualMaterial != null)
+        {
+            material = definition.VisualMaterial;
+            return true;
+        }
+
+        material = null;
+        return false;
+    }
+
     private static bool TryGetData(object modifier, out MaterialModifierData data)
     {
         EnsureLoaded();
@@ -71,17 +83,12 @@ public static class MaterialModifierDisplayDatabase
             return;
 
         loaded = true;
-        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
-        if (table == null || table.items == null)
-            return;
-
-        for (int i = 0; i < table.items.Count; i++)
+        IReadOnlyList<MaterialModifierData> data = MaterialModifierDatabase.RuntimeData;
+        for (int i = 0; i < data.Count; i++)
         {
-            MaterialModifierData entry = table.items[i];
-            if (entry == null || string.IsNullOrEmpty(entry.script))
-                continue;
-
-            DataByScript[entry.script] = entry;
+            MaterialModifierData entry = data[i];
+            if (entry != null && !string.IsNullOrEmpty(entry.script))
+                DataByScript[entry.script] = entry;
         }
     }
 

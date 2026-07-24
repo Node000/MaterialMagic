@@ -271,6 +271,9 @@ public static class StripDungeonMapGenerator
 
     private static bool TryAddBranchStrip(StripDungeonMap map, StripDungeonMapConfig config, System.Random random)
     {
+        if (random.Next(100) < config.MiddleCrossingStripChance && TryAddMiddleCrossingStrip(map, config, random))
+            return true;
+
         List<StripDungeonCell> anchors = new List<StripDungeonCell>();
         for (int i = 0; i < map.cells.Count; i++)
         {
@@ -312,6 +315,59 @@ public static class StripDungeonMapGenerator
         return false;
     }
 
+    private static bool TryAddMiddleCrossingStrip(StripDungeonMap map, StripDungeonMapConfig config, System.Random random)
+    {
+        List<StripDungeonCell> crossingCandidates = new List<StripDungeonCell>();
+        for (int i = 0; i < map.cells.Count; i++)
+        {
+            StripDungeonCell cell = map.cells[i];
+            if (cell == null || cell.kind != StripDungeonCellKind.Path || cell.isStart || cell.stripIds.Count != 1 || IsStripEndpoint(map, cell.position))
+                continue;
+            crossingCandidates.Add(cell);
+        }
+        Shuffle(crossingCandidates, random);
+
+        List<int> lengths = new List<int>();
+        for (int i = 0; i < config.StripLengths.Length; i++)
+        {
+            if (config.StripLengths[i] >= 5)
+                lengths.Add(config.StripLengths[i]);
+        }
+        Shuffle(lengths, random);
+
+        for (int i = 0; i < crossingCandidates.Count; i++)
+        {
+            StripDungeonCell crossing = crossingCandidates[i];
+            StripDungeonStrip hostStrip = map.strips[crossing.stripIds[0]];
+            Vector2Int direction = hostStrip.orientation == StripDungeonOrientation.Horizontal ? Vector2Int.up : Vector2Int.right;
+            StripDungeonOrientation orientation = hostStrip.orientation == StripDungeonOrientation.Horizontal ? StripDungeonOrientation.Vertical : StripDungeonOrientation.Horizontal;
+            for (int j = 0; j < lengths.Count; j++)
+            {
+                int length = lengths[j];
+                int before = length / 2;
+                Vector2Int start = crossing.position - direction * before;
+                if (!CanPlaceMiddleCrossing(map, start, direction, length, crossing.position))
+                    continue;
+
+                AddStrip(map, orientation, start, direction, length);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static bool CanPlaceMiddleCrossing(StripDungeonMap map, Vector2Int start, Vector2Int direction, int length, Vector2Int crossing)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            Vector2Int position = start + direction * i;
+            if (!IsInBounds(map, position))
+                return false;
+            if (position != crossing && map.GetCell(position) != null)
+                return false;
+        }
+        return true;
+    }
 
     private static bool CanPlaceBranch(StripDungeonMap map, Vector2Int start, Vector2Int direction, int length)
     {

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35c237743ad2b5c4691cad2001a38151, type: 3}
+  m_Name: ScribblePathStylePreset_Default
+  m_EditorClassIdentifier: 
+  settings:
+    strokeCountMin: 7
+    strokeCountMax: 11
+    samplesPerSegment: 14
+    strokeWidth: 0.038
+    segmentVariation: 0.16
+    strokeColor: {r: 1, g: 0.36, b: 0.13, a: 0.86}
+    densityEdge: 0
+    densityOpacityOverDistance:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.38
+        value: 0.82
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.18
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    frameEnabled: 1
+    frameWidth: 0.055
+    frameColor: {r: 1, g: 0.86, b: 0.48, a: 1}
+    appearanceMaterial: {fileID: 2100000, guid: f4c66d16065baec429a1a411303b9c7e, type: 2}
+    seed: 3417

@@ -17,6 +17,7 @@ MonoBehaviour:
   stripCountMin: 6
   stripCountMax: 8
   stripLengths: 06000000070000000800000009000000
+  middleCrossingStripChance: 70
   maxGenerationAttempts: 48
   bossMinDistanceFromStart: 5
   contentRules:
