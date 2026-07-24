@@ -368,8 +368,6 @@ public class HandSystemUI : MonoBehaviour
 
     private int baseMagicSlotCount;
 
-    private bool initializeStartingMagicSlotsFromEnd;
-
     private readonly List<int> debugMagicDropdownIds = new List<int>();
 
 		private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
@@ -2853,7 +2851,6 @@ public class HandSystemUI : MonoBehaviour
         if (saveData == null)
             DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
 			playerState = playerStatus;
-        initializeStartingMagicSlotsFromEnd = saveData == null;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
         runManager.AttachMapGrid(new RunMapGridModel());
@@ -6136,11 +6133,6 @@ public bool IsCardDragActive => cardDragActive;
 		int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
 		EnsureMagicSlotCapacity(slotLimit, componentsInChildren[0]);
 		componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
-		if (initializeStartingMagicSlotsFromEnd)
-		{
-			InitializeStartingMagicSlotsFromEnd(slotLimit);
-			initializeStartingMagicSlotsFromEnd = false;
-		}
 
 		magicViews.Clear();
 		for (int i = 0; i < componentsInChildren.Length; i++)
@@ -6162,14 +6154,6 @@ public bool IsCardDragActive => cardDragActive;
 			view.Bind(playerState.GetMagicAtSlot(i));
 			magicViews.Add(view);
 		}
-	}
-
-	private void InitializeStartingMagicSlotsFromEnd(int slotLimit)
-	{
-		List<MagicModel> initialMagicBook = new List<MagicModel>(playerState.MagicBook);
-		playerState.MagicBook.Clear();
-		for (int i = 0; i < initialMagicBook.Count; i++)
-			playerState.SetMagicAtSlot(initialMagicBook[i], slotLimit - 1 - initialMagicBook[i].SlotIndex);
 	}
 
 	private void EnsureMagicSlotCapacity(int slotCount, MagicItemView template)
