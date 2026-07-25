@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RunResultPanelUI runResultPanelUI;
     [SerializeField] private RunResultPanelUI victoryResultPanelUI;
     [SerializeField] private RunResultPanelUI defeatResultPanelUI;
+    [SerializeField] private PvOnlyBossEndCinematicUI pvOnlyBossEndCinematicUI;
     [SerializeField] private TutorialManagerUI tutorialManagerUI;
 
     public MapPanelUI MapPanel => mapPanelUI;
@@ -53,6 +54,7 @@ public class UIManager : MonoBehaviour
     public RunResultPanelUI RunResultPanel => runResultPanelUI;
     public RunResultPanelUI VictoryResultPanel => victoryResultPanelUI != null ? victoryResultPanelUI : runResultPanelUI;
     public RunResultPanelUI DefeatResultPanel => defeatResultPanelUI != null ? defeatResultPanelUI : runResultPanelUI;
+    public PvOnlyBossEndCinematicUI PvOnlyBossEndCinematic => pvOnlyBossEndCinematicUI;
     public TutorialManagerUI TutorialManager => tutorialManagerUI;
 
     public void Initialize(HandSystemUI owner, Transform root)

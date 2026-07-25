@@ -47,8 +47,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private Transform environmentRoot;
     private Transform playerRoot;
     private Camera playerCamera;
-    private Material floorMaterial;
-    private Material wallMaterial;
     private Material bossMaterial;
     private StripDungeonMap currentMap;
     private Vector2Int playerPosition;
@@ -70,8 +68,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     {
         if (generateButton != null)
             generateButton.onClick.RemoveListener(GenerateMap);
-        DestroyRuntimeObject(floorMaterial);
-        DestroyRuntimeObject(wallMaterial);
         DestroyRuntimeObject(bossMaterial);
     }
 
@@ -161,8 +157,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         Shader shader = Shader.Find("Universal Render Pipeline/Lit");
         if (shader == null)
             shader = Shader.Find("Standard");
-        floorMaterial = new Material(shader) { color = floorColor };
-        wallMaterial = new Material(shader) { color = wallColor };
         bossMaterial = new Material(shader) { color = bossColor };
     }
 
@@ -323,12 +317,13 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         foreach (Vector2Int position in visiblePositions)
         {
             Vector3 center = GetWorldPosition(position);
-            CreateBlock("Floor", center + Vector3.down * floorThickness * 0.5f, new Vector3(cellWorldSize, floorThickness, cellWorldSize), floorMaterial);
+            StripDungeonThemeDefinition theme = GetCellTheme(position);
+            CreateEnvironmentPrefab("Floor", theme.FloorPrefabs, position, -1, center + Vector3.down * floorThickness * 0.5f, new Vector3(cellWorldSize, floorThickness, cellWorldSize));
             for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
             {
                 Vector2Int direction = directions[directionIndex];
                 if (!visiblePositions.Contains(position + direction))
-                    CreateBoundaryWall(center, direction);
+                    CreateBoundaryWall(center, position, direction, directionIndex, theme);
             }
         }
 
@@ -339,14 +334,63 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         }
     }
 
-    private void CreateBoundaryWall(Vector3 cellCenter, Vector2Int direction)
+    private void CreateBoundaryWall(Vector3 cellCenter, Vector2Int cellPosition, Vector2Int direction, int directionIndex, StripDungeonThemeDefinition theme)
     {
         bool horizontalWall = direction.y != 0;
         Vector3 offset = new Vector3(direction.x, 0f, direction.y) * (cellWorldSize - wallThickness) * 0.5f;
         Vector3 size = horizontalWall
             ? new Vector3(cellWorldSize, wallHeight, wallThickness)
             : new Vector3(wallThickness, wallHeight, cellWorldSize);
-        CreateBlock("Wall", cellCenter + offset + Vector3.up * wallHeight * 0.5f, size, wallMaterial);
+        CreateEnvironmentPrefab("Wall", theme.WallPrefabs, cellPosition, directionIndex, cellCenter + offset + Vector3.up * wallHeight * 0.5f, size);
+    }
+
+    private StripDungeonThemeDefinition GetCellTheme(Vector2Int position)
+    {
+        StripDungeonCell cell = currentMap.GetCell(position);
+        int primaryStripId = cell.stripIds[0];
+        for (int i = 1; i < cell.stripIds.Count; i++)
+            primaryStripId = Mathf.Min(primaryStripId, cell.stripIds[i]);
+        return config.GetTheme(currentMap.strips[primaryStripId].themeId);
+    }
+
+    private void CreateEnvironmentPrefab(string objectName, GameObject[] prefabs, Vector2Int cellPosition, int directionIndex, Vector3 position, Vector3 size)
+    {
+        GameObject prefab = GetVariant(prefabs, cellPosition, directionIndex);
+        GameObject instance = Instantiate(prefab, environmentRoot);
+        instance.name = objectName;
+        instance.transform.position = position;
+        instance.transform.localScale = Vector3.Scale(prefab.transform.localScale, size);
+    }
+
+    private GameObject GetVariant(GameObject[] prefabs, Vector2Int cellPosition, int directionIndex)
+    {
+        int validCount = 0;
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (prefabs[i] != null)
+                validCount++;
+        }
+
+        int index = (GetVariantHash(cellPosition, directionIndex) & int.MaxValue) % validCount;
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (prefabs[i] == null)
+                continue;
+            if (index-- == 0)
+                return prefabs[i];
+        }
+        return null;
+    }
+
+    private int GetVariantHash(Vector2Int cellPosition, int directionIndex)
+    {
+        unchecked
+        {
+            int hash = currentMap.seed;
+            hash = hash * 397 ^ cellPosition.x;
+            hash = hash * 397 ^ cellPosition.y;
+            return hash * 397 ^ directionIndex;
+        }
     }
 
     private void CreateBlock(string objectName, Vector3 position, Vector3 size, Material material)
