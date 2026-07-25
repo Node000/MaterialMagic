@@ -32,7 +32,7 @@ Material:
     - _AspectScale: 0.5625
     - _ColorMask: 15
     - _Feather: 0.04
-    - _Progress: 0
+    - _Progress: 1
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

@@ -42,7 +42,7 @@ Material:
     - _SecondaryWobble: 0.32
     - _Seed: 17
     - _SteppedAnimation: 1
-    - _WobbleAmplitude: 0.012
+    - _WobbleAmplitude: 0.04
     - _WobbleFrequency: 4
     - _WobbleSpeed: 0.7
     m_Colors:

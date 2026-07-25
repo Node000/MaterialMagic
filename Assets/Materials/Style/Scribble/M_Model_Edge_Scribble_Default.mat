@@ -35,5 +35,5 @@ Material:
     - _WobbleFrequency: 0.32
     - _WobbleSpeed: 0.1
     m_Colors:
-    - _Tint: {r: 0.76729554, g: 0.47051135, b: 0.6666907, a: 0.95}
+    - _Tint: {r: 0.92549026, g: 0.054901965, b: 0.3529412, a: 0.95}
   m_BuildTextureStacks: []

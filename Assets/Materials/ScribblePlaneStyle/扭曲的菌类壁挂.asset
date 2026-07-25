@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aac54258524d86a44be9efacf22a51b0, type: 3}
+  m_Name: "\u626D\u66F2\u7684\u83CC\u7C7B\u58C1\u6302"
+  m_EditorClassIdentifier: 
+  settings:
+    fillEnabled: 1
+    fillMode: 1
+    fillLineCount: 23
+    fillSamplesPerLine: 28
+    fillLineWidth: 0.04
+    fillInset: 0
+    fillAngleDegrees: 0
+    fillWobbleAmplitude: 0.1
+    fillWobbleFrequency: 7.28
+    fillVertexColor: {r: 0.6037736, g: 0.078607894, b: 0.024682458, a: 0.58}
+    guidedEdge: 3
+    guidedStartOffsetRange: 1.78
+    guidedEndOffsetRange: 0.5
+    guidedEdgeJitter: 0
+    guidedStrokesPerPointMin: 6
+    guidedStrokesPerPointMax: 6
+    guidedBypassOffset: 1.22
+    guidedBypassOffsetRange: 2.52
+    guidedBypassAspect: 0.1
+    guidedWobbleAmplitudeOverPath:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.030555725
+        value: 0.9720154
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1.019454
+        value: 1.0232756
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    guidedWobbleFrequencyOverPath:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.07222366
+        value: 1.0331726
+        inSlope: -0.107383825
+        outSlope: -0.107383825
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.4371249
+      - serializedVersion: 3
+        time: 0.9500122
+        value: 0.9644623
+        inSlope: -0.1266212
+        outSlope: -0.1266212
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.24051726
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    guidedCurveDirection: 1
+    appearanceMaterial: {fileID: 2100000, guid: 0718171ac5c28374fb64195a80792a72, type: 2}
+    seed: 768

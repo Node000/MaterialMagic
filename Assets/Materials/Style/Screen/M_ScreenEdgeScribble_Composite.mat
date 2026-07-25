@@ -26,13 +26,13 @@ Material:
     m_Ints: []
     m_Floats:
     - _AnimationFramesPerSecond: 12
-    - _NormalThreshold: 0.18
-    - _OutlineWidth: 2.2
+    - _NormalThreshold: 0.307
+    - _OutlineWidth: 1.15
     - _Seed: 241
     - _SteppedAnimation: 1
     - _WobbleAmplitude: 0.32
     - _WobbleFrequency: 9
-    - _WobbleSpeed: 0.7
+    - _WobbleSpeed: 1.71
     m_Colors:
     - _OutlineColor: {r: 1, g: 0.32, b: 0.12, a: 0.95}
   m_BuildTextureStacks: []

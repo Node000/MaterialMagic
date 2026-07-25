@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aac54258524d86a44be9efacf22a51b0, type: 3}
+  m_Name: "\u74F7\u7816\u6D45\u7EFF1"
+  m_EditorClassIdentifier: 
+  settings:
+    fillEnabled: 1
+    fillMode: 0
+    fillLineCount: 6
+    fillSamplesPerLine: 40
+    fillLineWidth: 0.02
+    fillInset: 0
+    fillAngleDegrees: -66
+    fillWobbleAmplitude: 0.35
+    fillWobbleFrequency: 1.34
+    fillVertexColor: {r: 0.46186846, g: 0.7610062, b: 0.4648686, a: 1}
+    guidedEdge: 0
+    guidedStartOffsetRange: 0.8
+    guidedEndOffsetRange: 0.35
+    guidedEdgeJitter: 0.06
+    guidedStrokesPerPointMin: 2
+    guidedStrokesPerPointMax: 5
+    guidedBypassOffset: 0.75
+    guidedBypassOffsetRange: 0.18
+    guidedBypassAspect: 0.7
+    guidedWobbleAmplitudeOverPath:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    guidedWobbleFrequencyOverPath:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    guidedCurveDirection: 0
+    appearanceMaterial: {fileID: 2100000, guid: 0718171ac5c28374fb64195a80792a72, type: 2}
+    seed: 763
