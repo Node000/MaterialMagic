@@ -2937,7 +2937,7 @@ public class HandSystemUI : MonoBehaviour
 
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.U))
+        if (Input.GetKeyDown(KeyCode.U) && GetUIManager().PvOnlyBossEndCinematic == null)
         {
             DebugApplyRandomMaterialModifiersToDeck();
         }
