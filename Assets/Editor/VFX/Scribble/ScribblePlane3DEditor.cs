@@ -250,7 +250,7 @@ internal static class ScribbleRibbonScenePreview
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.EnteredPlayMode)
+        if (state == PlayModeStateChange.EnteredPlayMode)
             ClearPreviewTimes();
     }
 

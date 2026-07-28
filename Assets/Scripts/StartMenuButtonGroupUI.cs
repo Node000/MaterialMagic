@@ -70,6 +70,8 @@ public class StartMenuButtonGroupUI : MonoBehaviour
     public event Action SettingsClicked;
     public event Action ExitClicked;
 
+    public GameObject ContinueButtonObject => continueButton != null ? continueButton.gameObject : null;
+
     private void Awake()
     {
         ResolveReferences();

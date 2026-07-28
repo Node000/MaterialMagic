@@ -437,6 +437,8 @@ public class HandSystemUI : MonoBehaviour
 
     private bool debugBattleActive;
 
+    private bool debugLevelActive;
+
 	    private RunManager runManager;
 
 	private readonly List<RunMapNodeModel> mapNodes = new List<RunMapNodeModel>();
@@ -655,6 +657,7 @@ public class HandSystemUI : MonoBehaviour
 
         HideDebugMagicDropdown();
         debugBattleActive = true;
+        debugLevelActive = false;
         currentLevel = level;
         currentEvent = null;
         refreshUsedThisTurn = false;
@@ -686,6 +689,107 @@ public class HandSystemUI : MonoBehaviour
 
         debugBattleActive = false;
         ShowVictoryPanel();
+    }
+
+    public void DebugStartEvent(EventData eventData)
+    {
+        if (eventData == null || playerState == null || battleManager == null)
+            return;
+
+        HideDebugMagicDropdown();
+        debugBattleActive = false;
+        debugLevelActive = true;
+        ResetBattleDeckState();
+        currentLevel = null;
+        currentEvent = new EventModel(eventData);
+        HideMapPanel();
+        GetUIManager().HideShopPanel();
+        enemyModels.Clear();
+        battleManager.ClearEnemies();
+        ClearEnemyViews();
+
+        if (eventPanel != null)
+            eventPanel.Close();
+        eventPanel = GetOrCreateEventPanel();
+        eventPanel.Initialize(transform as RectTransform, GetDefaultFont(), DrawEventOptionsHand);
+        eventPanel.Bind(currentEvent);
+        refreshUsedThisTurn = false;
+        busy = false;
+        SetButtonsInteractable(true);
+    }
+
+    public void DebugStartShop(LevelData level)
+    {
+        if (level == null || level.levelType != LevelType.Shop || playerState == null || battleManager == null)
+            return;
+
+        HideDebugMagicDropdown();
+        debugBattleActive = false;
+        debugLevelActive = true;
+        ResetBattleDeckState();
+        currentLevel = level;
+        currentEvent = null;
+        HideMapPanel();
+        GetUIManager().HideRewardPanel();
+        GetUIManager().RewardGridPanel?.Hide();
+        GetUIManager().HideSlotSelect();
+        GetUIManager().MagicModifierSelectionPanel?.Hide();
+        enemyModels.Clear();
+        battleManager.ClearEnemies();
+        ClearEnemyViews();
+
+        if (eventPanel != null)
+        {
+            eventPanel.Close();
+            eventPanel = null;
+        }
+
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        GetUIManager().ShowShopPanel(level);
+        refreshUsedThisTurn = false;
+        busy = true;
+        SetButtonsInteractable(false);
+    }
+
+    public void DebugAddMagic(MagicData magicData)
+    {
+        if (magicData == null || playerState == null)
+            return;
+
+        int slotCount = MagicSlotViewCount;
+        for (int slotIndex = 0; slotIndex < slotCount; slotIndex++)
+        {
+            if (playerState.GetMagicAtSlot(slotIndex) != null)
+                continue;
+
+            playerState.SetMagicAtSlot(MagicFactory.Create(magicData, slotIndex), slotIndex);
+            CreateMagicViews();
+            RefreshStaticUI();
+            return;
+        }
+    }
+
+    public void DebugRemoveLastMagic()
+    {
+        if (playerState == null || playerState.MagicBook.Count == 0)
+            return;
+
+        int slotIndex = -1;
+        for (int i = 0; i < playerState.MagicBook.Count; i++)
+        {
+            MagicModel magic = playerState.MagicBook[i];
+            if (magic != null && magic.SlotIndex > slotIndex)
+                slotIndex = magic.SlotIndex;
+        }
+
+        if (slotIndex < 0)
+            return;
+
+        playerState.ClearMagicSlot(slotIndex);
+        CreateMagicViews();
+        RefreshStaticUI();
     }
 
     public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
@@ -7829,6 +7933,8 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0011: Expected O, but got Unknown
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0035: Expected O, but got Unknown
+        bool debugLevel = debugLevelActive;
+        debugLevelActive = false;
         bool finishedBossMapLevel = currentChapterMapBossLevel;
         HideRewardMagicConfirmPanel(false);
         undoRewardAvailable = false;
@@ -7854,9 +7960,16 @@ public bool IsCardDragActive => cardDragActive;
 
 		currentEvent = null;
 		currentLevel = null;
-        currentChapterMapBossLevel = false;
+		currentChapterMapBossLevel = false;
         eliteMagicModifierRewardResolved = false;
 		runManager?.ClearCurrentLevel();
+        if (debugLevel)
+        {
+            busy = false;
+            SetButtonsInteractable(true);
+            return;
+        }
+
 		GameLog.Data($"Finish reward node={currentMapNodeIndex + 1}/{mapNodes.Count}");
         if (ChapterMapGrid != null && ChapterMapGrid.CellCount > 0)
         {

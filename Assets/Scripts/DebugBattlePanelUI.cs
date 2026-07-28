@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,56 +6,49 @@ using UnityEngine.UI;
 public class DebugBattlePanelUI : MonoBehaviour
 {
     [SerializeField] private HandSystemUI handSystem;
-    [SerializeField] private Button damageButton;
-    [SerializeField] private Button healButton;
-    [SerializeField] private Button shieldButton;
-    [SerializeField] private Button drawCardButton;
     [SerializeField] private TMP_Dropdown levelDropdown;
     [SerializeField] private Button startBattleButton;
-    [SerializeField] private Button completeRunButton;
-    [SerializeField] private TMP_Dropdown unlockDropdown;
-    [SerializeField] private Button unlockButton;
+    [SerializeField] private TMP_Dropdown eventDropdown;
+    [SerializeField] private Button startEventButton;
+    [SerializeField] private TMP_Dropdown magicDropdown;
+    [SerializeField] private Button addMagicButton;
+    [SerializeField] private Button removeLastMagicButton;
+    [SerializeField] private TMP_Dropdown shopDropdown;
+    [SerializeField] private Button openShopButton;
     [SerializeField] private Button closeButton;
 
-    private readonly List<int> levelIds = new List<int>();
-    private readonly List<UnlockData> unlockItems = new List<UnlockData>();
-    private const int Amount = 10;
+    private readonly List<int> battleLevelIds = new List<int>();
+    private readonly List<int> eventIds = new List<int>();
+    private readonly List<int> magicIds = new List<int>();
+    private readonly List<int> shopLevelIds = new List<int>();
 
     private void Awake()
     {
         CacheReferences();
-        damageButton?.onClick.AddListener(DealDamage);
-        healButton?.onClick.AddListener(HealPlayer);
-        shieldButton?.onClick.AddListener(GainShield);
-        drawCardButton?.onClick.AddListener(DrawCard);
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
-        completeRunButton?.onClick.AddListener(CompleteRun);
-        unlockButton?.onClick.AddListener(UnlockSelectedItem);
+        startEventButton?.onClick.AddListener(StartSelectedEvent);
+        addMagicButton?.onClick.AddListener(AddSelectedMagic);
+        removeLastMagicButton?.onClick.AddListener(RemoveLastMagic);
+        openShopButton?.onClick.AddListener(OpenSelectedShop);
         closeButton?.onClick.AddListener(Hide);
     }
 
     private void OnEnable()
     {
         CacheReferences();
-        PopulateLevelDropdown();
-        PopulateUnlockDropdown();
-        RefreshBattleOnlyControls();
-    }
-
-    private void OnDisable()
-    {
-        RefreshBattleOnlyControls(false);
+        PopulateBattleDropdown();
+        PopulateEventDropdown();
+        PopulateMagicDropdown();
+        PopulateShopDropdown();
     }
 
     private void OnDestroy()
     {
-        damageButton?.onClick.RemoveListener(DealDamage);
-        healButton?.onClick.RemoveListener(HealPlayer);
-        shieldButton?.onClick.RemoveListener(GainShield);
-        drawCardButton?.onClick.RemoveListener(DrawCard);
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
-        completeRunButton?.onClick.RemoveListener(CompleteRun);
-        unlockButton?.onClick.RemoveListener(UnlockSelectedItem);
+        startEventButton?.onClick.RemoveListener(StartSelectedEvent);
+        addMagicButton?.onClick.RemoveListener(AddSelectedMagic);
+        removeLastMagicButton?.onClick.RemoveListener(RemoveLastMagic);
+        openShopButton?.onClick.RemoveListener(OpenSelectedShop);
         closeButton?.onClick.RemoveListener(Hide);
     }
 
@@ -83,96 +75,102 @@ public class DebugBattlePanelUI : MonoBehaviour
             levelDropdown = transform.Find("LevelDropdown")?.GetComponent<TMP_Dropdown>();
         if (startBattleButton == null)
             startBattleButton = transform.Find("StartBattleButton")?.GetComponent<Button>();
-        if (completeRunButton == null)
-            completeRunButton = transform.Find("CompleteRunButton")?.GetComponent<Button>();
-        if (unlockDropdown == null)
-            unlockDropdown = transform.Find("UnlockDropdown")?.GetComponent<TMP_Dropdown>();
-        if (unlockButton == null)
-            unlockButton = transform.Find("UnlockButton")?.GetComponent<Button>();
-        if (drawCardButton == null)
-            drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
-
+        if (eventDropdown == null)
+            eventDropdown = transform.Find("EventDropdown")?.GetComponent<TMP_Dropdown>();
+        if (startEventButton == null)
+            startEventButton = transform.Find("StartEventButton")?.GetComponent<Button>();
+        if (magicDropdown == null)
+            magicDropdown = transform.Find("MagicDropdown")?.GetComponent<TMP_Dropdown>();
+        if (addMagicButton == null)
+            addMagicButton = transform.Find("AddMagicButton")?.GetComponent<Button>();
+        if (removeLastMagicButton == null)
+            removeLastMagicButton = transform.Find("RemoveLastMagicButton")?.GetComponent<Button>();
+        if (shopDropdown == null)
+            shopDropdown = transform.Find("ShopDropdown")?.GetComponent<TMP_Dropdown>();
+        if (openShopButton == null)
+            openShopButton = transform.Find("OpenShopButton")?.GetComponent<Button>();
         if (closeButton == null)
             closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
     }
 
-    private void PopulateLevelDropdown()
+    private void PopulateBattleDropdown()
     {
-        if (levelDropdown == null)
-            return;
+        PopulateLevelDropdown(levelDropdown, startBattleButton, battleLevelIds, IsDebugBattleLevel, BuildBattleOptionText, "没有可用战斗关卡");
+    }
 
-        levelIds.Clear();
-        levelDropdown.ClearOptions();
+    private void PopulateEventDropdown()
+    {
+        eventIds.Clear();
+        List<EventData> events = new List<EventData>(GameDataDatabase.EventData.Values);
+        events.Sort((left, right) => left.numericId.CompareTo(right.numericId));
+        List<string> options = new List<string>(events.Count);
+        for (int i = 0; i < events.Count; i++)
+        {
+            EventData data = events[i];
+            if (data == null)
+                continue;
 
-        List<LevelData> levels = GameDataDatabase.LevelData.Values
-            .Where(IsDebugBattleLevel)
-            .OrderBy(level => level.numericId)
-            .ToList();
+            eventIds.Add(data.numericId);
+            options.Add($"{data.numericId} {GetLocalizedName(data.titleKey, data.id)}");
+        }
+        ApplyOptions(eventDropdown, startEventButton, options, "没有可用事件");
+    }
 
+    private void PopulateMagicDropdown()
+    {
+        magicIds.Clear();
+        List<MagicData> magics = new List<MagicData>(GameDataDatabase.MagicData.Values);
+        magics.Sort((left, right) => left.numericId.CompareTo(right.numericId));
+        List<string> options = new List<string>(magics.Count);
+        for (int i = 0; i < magics.Count; i++)
+        {
+            MagicData data = magics[i];
+            if (data == null)
+                continue;
+
+            magicIds.Add(data.numericId);
+            options.Add($"{data.numericId} {GetLocalizedName(data.nameKey, data.id)}");
+        }
+        ApplyOptions(magicDropdown, addMagicButton, options, "没有可用魔法");
+    }
+
+    private void PopulateShopDropdown()
+    {
+        PopulateLevelDropdown(shopDropdown, openShopButton, shopLevelIds, IsShopLevel, BuildShopOptionText, "没有可用商店关卡");
+    }
+
+    private static void PopulateLevelDropdown(TMP_Dropdown dropdown, Button actionButton, List<int> ids, System.Predicate<LevelData> predicate, System.Func<LevelData, string> buildText, string emptyText)
+    {
+        ids.Clear();
+        List<LevelData> levels = new List<LevelData>(GameDataDatabase.LevelData.Values);
+        levels.Sort((left, right) => left.numericId.CompareTo(right.numericId));
         List<string> options = new List<string>(levels.Count);
         for (int i = 0; i < levels.Count; i++)
         {
             LevelData level = levels[i];
-            levelIds.Add(level.numericId);
-            options.Add(BuildLevelOptionText(level));
-        }
-
-        if (options.Count == 0)
-        {
-            options.Add("没有可用战斗关卡");
-            startBattleButton?.gameObject.SetActive(false);
-        }
-        else
-        {
-            startBattleButton?.gameObject.SetActive(true);
-        }
-
-        levelDropdown.AddOptions(options);
-        levelDropdown.SetValueWithoutNotify(0);
-        levelDropdown.RefreshShownValue();
-    }
-
-    private void PopulateUnlockDropdown()
-    {
-        if (unlockDropdown == null)
-            return;
-
-        unlockItems.Clear();
-        unlockDropdown.ClearOptions();
-        IReadOnlyList<UnlockData> unlocks = UnlockSystem.Unlocks;
-        List<string> options = new List<string>(unlocks.Count);
-        for (int i = 0; i < unlocks.Count; i++)
-        {
-            UnlockData unlock = unlocks[i];
-            if (unlock == null || string.IsNullOrEmpty(unlock.targetType) || string.IsNullOrEmpty(unlock.targetId))
+            if (!predicate(level))
                 continue;
 
-            unlockItems.Add(unlock);
-            options.Add(BuildUnlockOptionText(unlock));
+            ids.Add(level.numericId);
+            options.Add(buildText(level));
         }
-
-        if (options.Count == 0)
-            options.Add("没有可用解锁成就");
-        unlockDropdown.AddOptions(options);
-        unlockDropdown.SetValueWithoutNotify(0);
-        unlockDropdown.RefreshShownValue();
-        if (unlockButton != null)
-            unlockButton.interactable = unlockItems.Count > 0;
+        ApplyOptions(dropdown, actionButton, options, emptyText);
     }
 
-    private static string BuildUnlockOptionText(UnlockData unlock)
+    private static void ApplyOptions(TMP_Dropdown dropdown, Button actionButton, List<string> options, string emptyText)
     {
-        string state = UnlockSystem.IsUnlocked(unlock.targetType, unlock.targetId) ? "已解锁" : "未解锁";
-        return $"{state} {UnlockSystem.GetTargetTypeName(unlock.targetType)} - {UnlockSystem.GetTargetName(unlock.targetType, unlock.targetId)}";
-    }
+        if (dropdown == null)
+            return;
 
-    private void RefreshBattleOnlyControls(bool battleOnlyInteractable = true)
-    {
-        bool inBattle = battleOnlyInteractable && BattleManager.Instance != null && BattleManager.Instance.CurrentPhase != BattlePhase.None && BattleManager.Instance.CurrentPhase != BattlePhase.Finished;
-        if (drawCardButton != null)
-            drawCardButton.interactable = inBattle;
-        if (completeRunButton != null)
-            completeRunButton.interactable = battleOnlyInteractable && handSystem != null && handSystem.PlayerState != null;
+        bool hasOptions = options.Count > 0;
+        if (!hasOptions)
+            options.Add(emptyText);
+        dropdown.ClearOptions();
+        dropdown.AddOptions(options);
+        dropdown.SetValueWithoutNotify(0);
+        dropdown.RefreshShownValue();
+        if (actionButton != null)
+            actionButton.interactable = hasOptions;
     }
 
     private static bool IsDebugBattleLevel(LevelData level)
@@ -183,11 +181,19 @@ public class DebugBattlePanelUI : MonoBehaviour
         return level.enemyIds?.Length > 0 || level.enemies?.Length > 0 || level.randomEnemyGroups?.Length > 0;
     }
 
-    private static string BuildLevelOptionText(LevelData level)
+    private static bool IsShopLevel(LevelData level)
     {
-        string title = !string.IsNullOrEmpty(level.titleKey) ? LocalizationSystem.GetText(level.titleKey, level.id) : level.id;
-        string enemies = BuildEnemySummary(level);
-        return $"{level.numericId} {UIManager.GetLevelTypeName(level.levelType)} {title}：{enemies}";
+        return level != null && level.levelType == LevelType.Shop;
+    }
+
+    private static string BuildBattleOptionText(LevelData level)
+    {
+        return $"{level.numericId} {UIManager.GetLevelTypeName(level.levelType)} {GetLocalizedName(level.titleKey, level.id)}：{BuildEnemySummary(level)}";
+    }
+
+    private static string BuildShopOptionText(LevelData level)
+    {
+        return $"{level.numericId} {GetLocalizedName(level.titleKey, level.id)}";
     }
 
     private static string BuildEnemySummary(LevelData level)
@@ -202,10 +208,8 @@ public class DebugBattlePanelUI : MonoBehaviour
 
         if (level.enemies != null && level.enemies.Length > 0)
             return BuildEnemyGroupText(level.enemies);
-
         if (level.enemyIds != null && level.enemyIds.Length > 0)
             return BuildEnemyIdGroupText(level.enemyIds);
-
         return "无敌人";
     }
 
@@ -231,59 +235,54 @@ public class DebugBattlePanelUI : MonoBehaviour
     private static string GetEnemyName(int enemyId)
     {
         if (GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
-            return LocalizationSystem.GetText(data.nameKey, data.Id);
+            return GetLocalizedName(data.nameKey, data.Id);
         return enemyId > 0 ? enemyId.ToString() : "未知敌人";
+    }
+
+    private static string GetLocalizedName(string key, string fallback)
+    {
+        return !string.IsNullOrEmpty(key) ? LocalizationSystem.GetText(key, fallback) : fallback;
     }
 
     private void StartSelectedBattle()
     {
-        if (levelDropdown == null || handSystem == null || levelDropdown.value < 0 || levelDropdown.value >= levelIds.Count)
+        if (handSystem == null || levelDropdown == null || levelDropdown.value < 0 || levelDropdown.value >= battleLevelIds.Count)
             return;
 
-        if (GameDataDatabase.TryGetLevelData(levelIds[levelDropdown.value], out LevelData level))
+        if (GameDataDatabase.TryGetLevelData(battleLevelIds[levelDropdown.value], out LevelData level))
             handSystem.DebugStartBattleLevel(level);
     }
 
-    private void CompleteRun()
+    private void StartSelectedEvent()
     {
-        handSystem?.DebugCompleteRun();
-        RefreshBattleOnlyControls(false);
-    }
-
-    private void UnlockSelectedItem()
-    {
-        if (unlockDropdown == null || unlockDropdown.value < 0 || unlockDropdown.value >= unlockItems.Count)
+        if (handSystem == null || eventDropdown == null || eventDropdown.value < 0 || eventDropdown.value >= eventIds.Count)
             return;
 
-        UnlockData unlock = unlockItems[unlockDropdown.value];
-        if (unlock == null)
+        if (GameDataDatabase.TryGetEventData(eventIds[eventDropdown.value], out EventData data))
+            handSystem.DebugStartEvent(data);
+    }
+
+    private void AddSelectedMagic()
+    {
+        if (handSystem == null || magicDropdown == null || magicDropdown.value < 0 || magicDropdown.value >= magicIds.Count)
             return;
 
-        UnlockSystem.GrantUnlock(unlock.targetType, unlock.targetId, true);
-        PopulateUnlockDropdown();
+        if (GameDataDatabase.TryGetMagicData(magicIds[magicDropdown.value], out MagicData data))
+            handSystem.DebugAddMagic(data);
     }
 
-    private void DealDamage()
+    private void RemoveLastMagic()
     {
-        handSystem?.DebugDealDamageToTarget(Amount);
+        handSystem?.DebugRemoveLastMagic();
     }
 
-    private void HealPlayer()
+    private void OpenSelectedShop()
     {
-        handSystem?.DebugHealPlayer(Amount);
-    }
-
-    private void GainShield()
-    {
-        handSystem?.DebugGainPlayerShield(Amount);
-    }
-
-    private void DrawCard()
-    {
-        if (BattleManager.Instance == null || BattleManager.Instance.CurrentPhase == BattlePhase.None || BattleManager.Instance.CurrentPhase == BattlePhase.Finished)
+        if (handSystem == null || shopDropdown == null || shopDropdown.value < 0 || shopDropdown.value >= shopLevelIds.Count)
             return;
 
-        handSystem?.PlayerState?.DrawCards(1);
+        if (GameDataDatabase.TryGetLevelData(shopLevelIds[shopDropdown.value], out LevelData level))
+            handSystem.DebugStartShop(level);
     }
 }
 

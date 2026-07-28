@@ -21,8 +21,7 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     [Header("白模尺寸")]
     [SerializeField, Min(0.5f)] private float cellWorldSize = 3f;
     [SerializeField, Min(0.05f)] private float floorThickness = 0.2f;
-    [SerializeField, Min(0.1f)] private float wallThickness = 0.25f;
-    [SerializeField, Min(0.5f)] private float wallHeight = 3.2f;
+    [SerializeField, Min(0.1f)] private float bossMarkerHeight = 2.2f;
     [SerializeField, Min(0.1f)] private float playerEyeHeight = 1.55f;
     [SerializeField, Range(40f, 100f)] private float fieldOfView = 72f;
 
@@ -327,21 +326,94 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
             }
         }
 
+        CreateVisibleWallDecorations();
+
         if (currentMap.IsBossVisible && visiblePositions.Contains(currentMap.bossPosition))
         {
             Vector3 bossCenter = GetWorldPosition(currentMap.bossPosition);
-            CreateBlock("BossMarker", bossCenter + Vector3.up * (wallHeight * 0.35f), new Vector3(cellWorldSize * 0.46f, wallHeight * 0.7f, cellWorldSize * 0.46f), bossMaterial);
+            CreateBlock("BossMarker", bossCenter + Vector3.up * (bossMarkerHeight * 0.5f), new Vector3(cellWorldSize * 0.46f, bossMarkerHeight, cellWorldSize * 0.46f), bossMaterial);
         }
     }
 
     private void CreateBoundaryWall(Vector3 cellCenter, Vector2Int cellPosition, Vector2Int direction, int directionIndex, StripDungeonThemeDefinition theme)
     {
-        bool horizontalWall = direction.y != 0;
-        Vector3 offset = new Vector3(direction.x, 0f, direction.y) * (cellWorldSize - wallThickness) * 0.5f;
-        Vector3 size = horizontalWall
-            ? new Vector3(cellWorldSize, wallHeight, wallThickness)
-            : new Vector3(wallThickness, wallHeight, cellWorldSize);
-        CreateEnvironmentPrefab("Wall", theme.WallPrefabs, cellPosition, directionIndex, cellCenter + offset + Vector3.up * wallHeight * 0.5f, size);
+        Vector3 outward = new Vector3(direction.x, 0f, direction.y);
+        Vector3 wallPosition = cellCenter + outward * cellWorldSize * 0.5f;
+        Quaternion rotation = Quaternion.LookRotation(-outward, Vector3.up);
+        GameObject wallPrefab = GetVariant(theme.WallPrefabs, cellPosition, directionIndex);
+        GameObject wall = Instantiate(wallPrefab, wallPosition, rotation, environmentRoot);
+        wall.name = "Wall";
+    }
+
+    private void CreateVisibleWallDecorations()
+    {
+        for (int cellIndex = 0; cellIndex < currentMap.cells.Count; cellIndex++)
+        {
+            Vector2Int position = currentMap.cells[cellIndex].position;
+            if (!currentMap.IsPathCell(position))
+                continue;
+
+            for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
+            {
+                Vector2Int direction = directions[directionIndex];
+                if (!IsPermanentWallAt(position, direction))
+                    continue;
+
+                StripDungeonThemeDefinition theme = GetCellTheme(position);
+                Vector2Int alongWall = direction.y != 0 ? Vector2Int.right : Vector2Int.up;
+                if (IsWallSegmentContinuation(position - alongWall, direction, theme))
+                    continue;
+
+                int segmentLength = GetWallSegmentLength(position, direction, alongWall, theme);
+                int segmentHash = GetVariantHash(position, directionIndex);
+                if (theme.WallDecorationChance <= 0 || (segmentHash & int.MaxValue) % 100 >= theme.WallDecorationChance)
+                    continue;
+
+                if (!theme.TryGetWallDecoration(segmentLength, GetVariantHash(position, directionIndex + directions.Length), out StripDungeonWallDecorationDefinition decoration))
+                    continue;
+
+                if (!IsWallDecorationVisible(position, direction, alongWall, segmentLength, decoration.footprintCells))
+                    continue;
+
+                float centerOffset = (segmentLength - 1) * 0.5f;
+                Vector3 outward = new Vector3(direction.x, 0f, direction.y);
+                Vector3 center = GetWorldPosition(position) + outward * cellWorldSize * 0.5f + new Vector3(alongWall.x, 0f, alongWall.y) * cellWorldSize * centerOffset;
+                Quaternion rotation = Quaternion.LookRotation(-outward, Vector3.up);
+                GameObject instance = Instantiate(decoration.prefab, center - outward * decoration.surfaceOffset, rotation, environmentRoot);
+                instance.name = "WallDecoration";
+            }
+        }
+    }
+
+    private bool IsPermanentWallAt(Vector2Int position, Vector2Int outwardDirection)
+    {
+        Vector2Int adjacentPosition = position + outwardDirection;
+        return !currentMap.IsPathCell(adjacentPosition) && (!currentMap.IsBossVisible || adjacentPosition != currentMap.bossPosition);
+    }
+
+    private bool IsWallSegmentContinuation(Vector2Int position, Vector2Int outwardDirection, StripDungeonThemeDefinition theme)
+    {
+        return currentMap.IsPathCell(position) && IsPermanentWallAt(position, outwardDirection) && GetCellTheme(position) == theme;
+    }
+
+    private int GetWallSegmentLength(Vector2Int start, Vector2Int outwardDirection, Vector2Int alongWall, StripDungeonThemeDefinition theme)
+    {
+        int count = 1;
+        for (Vector2Int position = start + alongWall; IsWallSegmentContinuation(position, outwardDirection, theme); position += alongWall)
+            count++;
+        return count;
+    }
+
+    private bool IsWallDecorationVisible(Vector2Int start, Vector2Int outwardDirection, Vector2Int alongWall, int segmentLength, int footprintCells)
+    {
+        int firstCell = (segmentLength - footprintCells) / 2;
+        for (int i = 0; i < footprintCells; i++)
+        {
+            Vector2Int position = start + alongWall * (firstCell + i);
+            if (!visiblePositions.Contains(position) || visiblePositions.Contains(position + outwardDirection))
+                return false;
+        }
+        return true;
     }
 
     private StripDungeonThemeDefinition GetCellTheme(Vector2Int position)

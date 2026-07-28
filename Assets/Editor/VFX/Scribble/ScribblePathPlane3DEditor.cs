@@ -304,7 +304,7 @@ internal static class ScribblePathRibbonScenePreview
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        if (state != PlayModeStateChange.ExitingEditMode && state != PlayModeStateChange.EnteredPlayMode)
+        if (state != PlayModeStateChange.EnteredPlayMode)
             return;
 
         ScribblePathPlane3D[] planes = Object.FindObjectsOfType<ScribblePathPlane3D>();

@@ -5,8 +5,8 @@ Shader "UI/CircleWipeTransition"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (0,0,0,1)
         _Progress ("Progress", Range(0, 1)) = 0
-        _Feather ("Feather", Range(0.001, 0.2)) = 0.04
-        _AspectScale ("Aspect Scale", Float) = 0.5625
+        _Center ("Center", Vector) = (0.5, 0.5, 0, 0)
+        _ShapeScale ("Shape Scale", Vector) = (1, 1, 0, 0)
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -77,8 +77,8 @@ Shader "UI/CircleWipeTransition"
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
             float _Progress;
-            float _Feather;
-            float _AspectScale;
+            float4 _Center;
+            float4 _ShapeScale;
 
             v2f vert(appdata_t v)
             {
@@ -95,13 +95,16 @@ Shader "UI/CircleWipeTransition"
             fixed4 frag(v2f IN) : SV_Target
             {
                 fixed4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
-                float2 centered = IN.texcoord - 0.5;
-                centered.x *= _AspectScale;
+                float2 centered = IN.texcoord - _Center.xy;
+                float2 shapeScale = max(_ShapeScale.xy, float2(0.001, 0.001));
+                float aspectRatio = _ScreenParams.x / _ScreenParams.y;
+                centered.x *= aspectRatio * shapeScale.x;
+                centered.y *= shapeScale.y;
                 float distanceFromCenter = length(centered);
-                float maxRadius = length(float2(0.5 * _AspectScale, 0.5));
-                float progress = saturate(_Progress);
-                float visibleRadius = lerp(maxRadius + _Feather, -_Feather, progress);
-                float blackAlpha = smoothstep(visibleRadius - _Feather, visibleRadius + _Feather, distanceFromCenter);
+                float2 farthestCorner = max(abs(_Center.xy), abs(1.0 - _Center.xy));
+                float maxRadius = length(float2(farthestCorner.x * aspectRatio * shapeScale.x, farthestCorner.y * shapeScale.y));
+                float visibleRadius = lerp(maxRadius, 0.0, saturate(_Progress));
+                float blackAlpha = step(visibleRadius, distanceFromCenter);
                 color.a *= blackAlpha;
 
                 #ifdef UNITY_UI_CLIP_RECT

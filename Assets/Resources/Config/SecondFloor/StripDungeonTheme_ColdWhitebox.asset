@@ -19,3 +19,5 @@ MonoBehaviour:
   wallPrefabs:
   - {fileID: 37338565767568054, guid: cfc104d264e827c4cba1d56aa9e739af, type: 3}
   - {fileID: 8687248324386601664, guid: 9ae7b222a12115c488fc8d2d4fbdb612, type: 3}
+  wallDecorationChance: 0
+  wallDecorations: []
