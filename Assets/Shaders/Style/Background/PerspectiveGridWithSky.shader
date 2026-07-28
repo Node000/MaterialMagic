@@ -14,6 +14,7 @@ Shader "Custom/PerspectiveGridWithSky"
         _LineWidth ("Line Width (线条宽度)", Float) = 1.5
         
         _Speed ("Forward Speed (移动速度)", Float) = 2.0
+        _GridVerticalOffset ("Grid Vertical Offset (网格纵向偏移)", Float) = 0.0
         _FadeRange ("Fade Range (地平线渐隐范围)", Range(0.01, 0.5)) = 0.1
         
         // Unity 内置特性：[Toggle] 会在材质面板生成一个勾选框
@@ -53,6 +54,7 @@ Shader "Custom/PerspectiveGridWithSky"
             float _VSpacing;
             float _LineWidth;
             float _Speed;
+            float _GridVerticalOffset;
             float _FadeRange;
             float _EnableSkyGrid;
 
@@ -72,9 +74,11 @@ Shader "Custom/PerspectiveGridWithSky"
                 // 2. 根据所在区域，动态选择背景色
                 float4 currentBgColor = lerp(_BgColor, _SkyBgColor, isSky);
 
-                // 3. 核心改动：计算当前点到地平线的“绝对距离”
-                // 使用 abs 后，无论是地面(uv.y变小)还是天空(uv.y变大)，deltaY 都会从 0 开始向两边增加
-                float deltaY = abs(i.uv.y - _HorizonY);
+                // 3. 背景地平线保持固定；仅网格使用独立的屏幕 Y 采样偏移。
+                // 增加偏移会让完整透视网格沿屏幕向上移动，而不是改变其深度相位。
+                float gridSampleY = i.uv.y - _GridVerticalOffset;
+                float deltaY = abs(gridSampleY - _HorizonY);
+                float gridIsSky = step(_HorizonY, gridSampleY);
                 
                 // 4. 经典透视变换
                 float depth = 1.0 / max(deltaY, 0.0001);
@@ -83,7 +87,6 @@ Shader "Custom/PerspectiveGridWithSky"
                 // 5. 构建网格空间的 UV
                 float2 gridUV;
                 gridUV.x = perspectiveX * _VSpacing;
-                // 动画公式：因为上下对称了，减去时间会让天空和地面的线条同时向屏幕外流动（产生向前飞行的视觉感）
                 gridUV.y = depth * _HSpacing - _Time.y * _Speed;
 
                 // 6. 计算网格线与抗锯齿
@@ -98,8 +101,8 @@ Shader "Custom/PerspectiveGridWithSky"
                 float fade = smoothstep(0.0, _FadeRange, deltaY);
                 gridMask *= fade;
 
-                // 8. 选项开关控制：如果在天空区域，并且关闭了开关，则将网格遮罩强制归零
-                if (isSky > 0.5 && _EnableSkyGrid < 0.5)
+                // 8. 选项开关控制：网格采样落在天空区域时可选择隐藏。
+                if (gridIsSky > 0.5 && _EnableSkyGrid < 0.5)
                 {
                     gridMask = 0.0;
                 }

@@ -20,6 +20,9 @@ MonoBehaviour:
   middleCrossingStripChance: 70
   maxGenerationAttempts: 48
   bossMinDistanceFromStart: 5
+  allowedThemes:
+  - {fileID: 11400000, guid: de67cb2fe6734f44a96ffe07e761c47d, type: 2}
+  - {fileID: 11400000, guid: 01a3a6a71797c2a43b5a71e875b3043d, type: 2}
   contentRules:
   - levelType: 0
     minCount: 3

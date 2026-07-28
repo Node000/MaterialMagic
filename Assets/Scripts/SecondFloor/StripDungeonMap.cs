@@ -67,6 +67,7 @@ public class StripDungeonStrip
     public StripDungeonOrientation orientation;
     public Vector2Int start;
     public int length;
+    public string themeId;
     public readonly List<Vector2Int> cells = new List<Vector2Int>();
 
     public Vector2Int End => cells.Count > 0 ? cells[cells.Count - 1] : start;

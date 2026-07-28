@@ -18,6 +18,9 @@ public class StripDungeonMapGeneratorTests
             Assert.That(map.IsBossVisible, Is.False);
             Assert.That(HasMiddleCrossing(map), Is.True, $"Seed {seed} 缺少条带中段交叉。");
             for (int stripIndex = 0; stripIndex < map.strips.Count; stripIndex++)
+                Assert.That(map.strips[stripIndex].themeId, Is.Not.Empty, $"Seed {seed} 的条带 {stripIndex} 缺少主题。");
+
+            for (int stripIndex = 0; stripIndex < map.strips.Count; stripIndex++)
             {
                 StripDungeonStrip strip = map.strips[stripIndex];
                 StripDungeonCell first = map.GetCell(strip.cells[0]);
@@ -46,6 +49,18 @@ public class StripDungeonMapGeneratorTests
             map.RevealBossIfOnHostStrip(map.bossEntrancePosition);
             Assert.That(map.IsBossVisible, Is.True, $"Seed {seed} 进入 Boss 所属条带后应揭示 Boss。");
         }
+    }
+
+    [Test]
+    public void SameSeed_AssignsTheSameThemeToEachStrip()
+    {
+        StripDungeonMapConfig config = Resources.Load<StripDungeonMapConfig>("Config/StripDungeonMapConfig");
+        Assert.That(StripDungeonMapGenerator.TryGenerate(config, 31, out StripDungeonMap first, out string error), Is.True, error);
+        Assert.That(StripDungeonMapGenerator.TryGenerate(config, 31, out StripDungeonMap second, out error), Is.True, error);
+        Assert.That(second.strips.Count, Is.EqualTo(first.strips.Count));
+
+        for (int i = 0; i < first.strips.Count; i++)
+            Assert.That(second.strips[i].themeId, Is.EqualTo(first.strips[i].themeId));
     }
 
     private static bool HasMiddleCrossing(StripDungeonMap map)

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4369f12b9026d20479f05e54ea626843, type: 3}
+  m_Name: StripDungeonTheme_Whitebox
+  m_EditorClassIdentifier: 
+  themeId: whitebox
+  floorPrefabs:
+  - {fileID: 3404754695167833952, guid: 7b3371bb39253674088bbd06d6374a5a, type: 3}
+  - {fileID: 5366781548803872859, guid: cec7fb2a557f20a4497e355c6339575c, type: 3}
+  wallPrefabs:
+  - {fileID: 8231582733316652210, guid: 1fbd3b03190e97f4e9da23e567a79a80, type: 3}
+  - {fileID: 3152234019533662496, guid: e840a33651519294cad1671eed7e6b38, type: 3}

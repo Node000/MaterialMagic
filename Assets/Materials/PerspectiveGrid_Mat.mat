@@ -42,21 +42,40 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _CenterBand: 0.035
     - _EnableExternalAlpha: 0
     - _EnableSkyGrid: 1
-    - _FadeRange: 0.358
+    - _FadeRange: 0.5
+    - _FallGridColumns: 8
+    - _FallGridDensity: 10
+    - _FallHorizonOffset: 0
+    - _FallLayerCount: 4
+    - _FallLayerSpacing: 0.45
+    - _FallingMode: 0
+    - _GridRotationAngle: 0
     - _GridScale: 6
+    - _GridSegmentCount: 2
+    - _GridSegmentLength: 3.5
+    - _GridSegmentNearDistance: 1.6
+    - _GridSegmentSpacing: 2.29
+    - _GridVerticalOffset: 0
     - _HSpacing: 1
     - _Horizon: 0.85
+    - _HorizonWidth: 0.06
     - _HorizonY: 0.548
     - _HorizontalCount: 24.12
+    - _LayerAngleSpacing: 15
     - _LineWidth: 1.33
     - _Perspective: 12
+    - _PerspectivePower: 1
+    - _RenderAngleRange: 45
     - _ScrollSpeed: 0
     - _Speed: 0.8
+    - _TopFadeRange: 0.12
     - _VSpacing: 2.96
     - _VanishingX: 0.5
     - _VerticalCount: 20
+    - _ViewPitch: -1
     m_Colors:
     - _Background: {r: 0.05882353, g: 0.08627451, b: 0.23137255, a: 1}
     - _BgColor: {r: 0.039215688, g: 0.011764706, b: 0.07058824, a: 1}

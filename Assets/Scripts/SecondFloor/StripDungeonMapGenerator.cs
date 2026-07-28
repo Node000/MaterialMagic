@@ -222,6 +222,7 @@ public static class StripDungeonMapGenerator
 
         StripDungeonCell startCell = map.GetCell(map.startPosition);
         startCell.isStart = true;
+        AssignStripThemes(map, config, random);
         if (!TryPlaceBoss(map, config, random))
         {
             error = "无法选择满足双路径约束的 Boss 入口。";
@@ -409,6 +410,13 @@ public static class StripDungeonMapGenerator
             if (!cell.stripIds.Contains(strip.id))
                 cell.stripIds.Add(strip.id);
         }
+    }
+
+    private static void AssignStripThemes(StripDungeonMap map, StripDungeonMapConfig config, System.Random random)
+    {
+        StripDungeonThemeDefinition[] themes = config.AllowedThemes;
+        for (int i = 0; i < map.strips.Count; i++)
+            map.strips[i].themeId = themes[random.Next(themes.Length)].ThemeId;
     }
 
     private static bool TryPlaceBoss(StripDungeonMap map, StripDungeonMapConfig config, System.Random random)

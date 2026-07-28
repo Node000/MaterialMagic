@@ -2937,7 +2937,7 @@ public class HandSystemUI : MonoBehaviour
 
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.U))
+        if (Input.GetKeyDown(KeyCode.U) && GetUIManager().PvOnlyBossEndCinematic == null)
         {
             DebugApplyRandomMaterialModifiersToDeck();
         }
@@ -6814,6 +6814,9 @@ public bool IsCardDragActive => cardDragActive;
             if (debugBattleActive)
             {
                 debugBattleActive = false;
+                PvOnlyBossEndCinematicUI bossEndCinematic = GetUIManager().PvOnlyBossEndCinematic;
+                if (bossEndCinematic != null)
+                    yield return bossEndCinematic.Play();
                 currentLevel = null;
                 busy = false;
                 SetButtonsInteractable(true);
@@ -8388,8 +8391,25 @@ public bool IsCardDragActive => cardDragActive;
 		if (playerState == null || playerState.CurrentHealth > 0)
 			return false;
 
+		if (debugBattleActive)
+		{
+			debugBattleActive = false;
+			StartCoroutine(PlayDebugBattleEndCinematicRoutine());
+			return true;
+		}
+
 		ShowDefeatPanel();
 		return true;
+	}
+
+	private IEnumerator PlayDebugBattleEndCinematicRoutine()
+	{
+		PvOnlyBossEndCinematicUI bossEndCinematic = GetUIManager().PvOnlyBossEndCinematic;
+		if (bossEndCinematic != null)
+			yield return bossEndCinematic.Play();
+		currentLevel = null;
+		busy = false;
+		SetButtonsInteractable(true);
 	}
 
 	private void ShowVictoryPanel()
@@ -8472,6 +8492,9 @@ public bool IsCardDragActive => cardDragActive;
 
 	private IEnumerator PlayPendingEnemyDeaths()
 	{
+		if (debugBattleActive && AllEnemiesDead())
+			GetUIManager().PvOnlyBossEndCinematic?.ShowCrashImpact();
+
 		for (int i = 0; i < enemyModels.Count; i++)
 		{
 			EnemyModel enemyModel = enemyModels[i];

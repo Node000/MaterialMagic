@@ -16,6 +16,9 @@ public class StripDungeonMapConfig : ScriptableObject
     [Header("Boss")]
     [SerializeField] private int bossMinDistanceFromStart = 5;
 
+    [Header("条带主题")]
+    [SerializeField] private StripDungeonThemeDefinition[] allowedThemes;
+
     [Header("普通内容")]
     [SerializeField] private StripDungeonContentRule[] contentRules =
     {
@@ -37,7 +40,18 @@ public class StripDungeonMapConfig : ScriptableObject
     public int MiddleCrossingStripChance => middleCrossingStripChance;
     public int MaxGenerationAttempts => maxGenerationAttempts;
     public int BossMinDistanceFromStart => bossMinDistanceFromStart;
+    public StripDungeonThemeDefinition[] AllowedThemes => allowedThemes;
     public StripDungeonContentRule[] ContentRules => contentRules;
+
+    public StripDungeonThemeDefinition GetTheme(string themeId)
+    {
+        for (int i = 0; i < allowedThemes.Length; i++)
+        {
+            if (allowedThemes[i].ThemeId == themeId)
+                return allowedThemes[i];
+        }
+        return null;
+    }
 
     public bool TryValidate(out string error)
     {
@@ -74,6 +88,34 @@ public class StripDungeonMapConfig : ScriptableObject
         {
             error = "条带长度中必须各有一个可用于横向和纵向环的长度（至少为 5）。";
             return false;
+        }
+
+        if (allowedThemes == null || allowedThemes.Length == 0)
+        {
+            error = "至少需要配置一个条带主题。";
+            return false;
+        }
+
+        for (int i = 0; i < allowedThemes.Length; i++)
+        {
+            StripDungeonThemeDefinition theme = allowedThemes[i];
+            if (theme == null)
+            {
+                error = "条带主题列表不能包含空引用。";
+                return false;
+            }
+
+            if (!theme.TryValidate(out error))
+                return false;
+
+            for (int j = i + 1; j < allowedThemes.Length; j++)
+            {
+                if (allowedThemes[j] != null && allowedThemes[j].ThemeId == theme.ThemeId)
+                {
+                    error = "条带主题不能重复配置相同的主题 ID。";
+                    return false;
+                }
+            }
         }
 
         if (contentRules == null || contentRules.Length == 0)
