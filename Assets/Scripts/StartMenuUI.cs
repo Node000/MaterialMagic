@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class StartMenuUI : MonoBehaviour
 {
-    [SerializeField] private string gameSceneName = "SampleScene";
+    [SerializeField] private string gameSceneName = "SampleScene_PC";
     [SerializeField] private StartMenuButtonGroupUI buttonGroupUI;
     [SerializeField] private StartConfigSelectionUI startConfigSelectionUI;
     [SerializeField] private AscensionDetailPanelUI ascensionDetailPanelUI;
@@ -139,7 +139,7 @@ public class StartMenuUI : MonoBehaviour
 
         PlayerState.ContinueSavedRun = true;
         if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadSceneWithTransition(gameSceneName);
+            SceneTransitionManager.Instance.LoadGameSceneWithTransition(buttonGroupUI.ContinueButtonObject);
         else
             SceneManager.LoadScene(gameSceneName);
     }
@@ -212,7 +212,7 @@ public class StartMenuUI : MonoBehaviour
             RunSaveSystem.BeginNewRun();
 
         if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadSceneWithTransition(gameSceneName);
+            SceneTransitionManager.Instance.LoadGameSceneWithTransition();
         else
             SceneManager.LoadScene(gameSceneName);
     }
