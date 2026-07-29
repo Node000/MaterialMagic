@@ -321,7 +321,7 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
             for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
             {
                 Vector2Int direction = directions[directionIndex];
-                if (!visiblePositions.Contains(position + direction))
+                if (!IsWalkable(position + direction))
                     CreateBoundaryWall(center, position, direction, directionIndex, theme);
             }
         }
