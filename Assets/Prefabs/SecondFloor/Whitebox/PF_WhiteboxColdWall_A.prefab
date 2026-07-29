@@ -114,7 +114,7 @@ Transform:
   m_GameObject: {fileID: 4642938037117050646}
   serializedVersion: 2
   m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: 4.5, y: -0.5, z: 5}
+  m_LocalPosition: {x: 3.5, y: -0, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -189,8 +189,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.19999981
-    height: 1
+    width: 0.5999999
+    height: 3
   fillLineCount: 17
   fillSamplesPerLine: 40
   fillLineWidth: 0.01
@@ -286,8 +286,8 @@ Transform:
   m_GameObject: {fileID: 6545200179379907844}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 4.5, y: 4.5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 13.5, y: 15, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
@@ -364,12 +364,12 @@ MonoBehaviour:
     width: 1
     height: 1
   fillLineCount: 15
-  fillSamplesPerLine: 14
+  fillSamplesPerLine: 5
   fillLineWidth: 0.01
   fillInset: 0
   fillAngleDegrees: 0
-  fillWobbleAmplitude: 0.04
-  fillWobbleFrequency: 8.75
+  fillWobbleAmplitude: 0.82
+  fillWobbleFrequency: 9.11
   fillVertexColor: {r: 0.20435202, g: 0.15822153, b: 0.40251565, a: 1}
   guidedEdge: 0
   guidedStartOffsetRange: 0.8
@@ -457,13 +457,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7032999203635192101}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.6830127, y: -0.6830127, z: -0.18301271, w: 0.18301271}
-  m_LocalPosition: {x: 4.5, y: 4.7, z: 2.5}
+  m_LocalRotation: {x: 0.61237246, y: 0.61237246, z: 0.3535534, w: -0.3535534}
+  m_LocalPosition: {x: 3.5, y: 5.5, z: 4.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
-  m_LocalEulerAnglesHint: {x: 60, y: 0, z: 90}
+  m_LocalEulerAnglesHint: {x: -60, y: 180, z: 90}
 --- !u!33 &4019569210213202975
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -533,13 +533,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.099999905
-    height: 1
+    width: 0.5999999
+    height: 3
   fillLineCount: 74
   fillSamplesPerLine: 9
   fillLineWidth: 0.005
   fillInset: 0
-  fillAngleDegrees: -33
+  fillAngleDegrees: 0
   fillWobbleAmplitude: 0.02
   fillWobbleFrequency: 0.04
   fillVertexColor: {r: 0.2578616, g: 0.2578616, b: 0.2578616, a: 1}

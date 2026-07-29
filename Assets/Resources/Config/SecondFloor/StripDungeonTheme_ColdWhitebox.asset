@@ -14,10 +14,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeId: cold-whitebox
   floorPrefabs:
-  - {fileID: 8692733061609335970, guid: 38a0523b75f467d418b01c8d2f4036ea, type: 3}
-  - {fileID: 1917624013250794116, guid: d4accd7c32d2d7b43b8b7280416723f3, type: 3}
+  - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
+  - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   wallPrefabs:
   - {fileID: 37338565767568054, guid: cfc104d264e827c4cba1d56aa9e739af, type: 3}
-  - {fileID: 8687248324386601664, guid: 9ae7b222a12115c488fc8d2d4fbdb612, type: 3}
-  wallDecorationChance: 0
-  wallDecorations: []
+  - {fileID: 37338565767568054, guid: 4f4927e4e8ebd254fb34c22e55cc9a04, type: 3}
+  wallDecorationChance: 50
+  wallDecorations:
+  - prefab: {fileID: 37338565767568054, guid: 8890c302210d53342988767ea22befbb, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: ec10812395ce4b245b33c80ffee9d46c, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: 5e2e93643c4068942b47a3e169af7012, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: d4f1e4919e37dff4c9dbbc70b396e7ce, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: f0fa7e66e8d57594eb6e0196c6b61338, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: 0362d4a32be1a404ba8740644d030858, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: 20b7e9daec471ba4397c859d1037f20b, type: 3}
+    footprintCells: 1
+    surfaceOffset: 0.05
