@@ -104,22 +104,26 @@ public class SceneTransitionManager : MonoBehaviour
     {
         transitioning = true;
         transitionImage.raycastTarget = true;
-        SetCenterFromCurrentScene(true);
-        SetShapeScale(startSceneFocusShapeScale);
-        yield return PlayDepartureCover();
-        departureFocusTarget = null;
-        yield return null;
 
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
         if (operation == null)
         {
             Debug.LogError($"Unable to load scene '{sceneName}'. Ensure it exists and is enabled in Build Settings.");
-            yield return PlayProgress(1f, 0f, coverDuration, coverCurve);
             transitionImage.raycastTarget = false;
             transitioning = false;
             yield break;
         }
 
+        operation.allowSceneActivation = false;
+        SetCenterFromCurrentScene(true);
+        SetShapeScale(startSceneFocusShapeScale);
+        yield return PlayDepartureCover();
+        departureFocusTarget = null;
+
+        while (operation.progress < 0.9f)
+            yield return null;
+
+        operation.allowSceneActivation = true;
         while (!operation.isDone)
             yield return null;
 

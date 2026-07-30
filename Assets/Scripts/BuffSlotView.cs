@@ -159,6 +159,24 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         motionTween = sequence;
     }
 
+    public void ResetBinding()
+    {
+        KillMotion();
+        owner?.ClearPinnedBuffTooltip(this);
+        owner?.HideBuffTooltip(this);
+        buff = null;
+        owner = null;
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = null;
+            iconImage.color = Color.white;
+        }
+
+        if (stackText != null)
+            stackText.text = string.Empty;
+    }
+
     private void PlayAddMotion()
     {
         KillMotion();

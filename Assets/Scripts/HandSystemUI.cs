@@ -3039,6 +3039,17 @@ public class HandSystemUI : MonoBehaviour
 				ToggleSettingsPanel();
 			}
 
+			if (!tutorialClickConsumedThisFrame && runManager != null && runManager.State == RunFlowState.MapSelection)
+			{
+				if (Input.GetKeyDown(KeyCode.W))
+					OnChapterMapDirectionClicked(MaterialEnum.Fire);
+				else if (Input.GetKeyDown(KeyCode.A))
+					OnChapterMapDirectionClicked(MaterialEnum.Wind);
+				else if (Input.GetKeyDown(KeyCode.S))
+					OnChapterMapDirectionClicked(MaterialEnum.Water);
+				else if (Input.GetKeyDown(KeyCode.D))
+					OnChapterMapDirectionClicked(MaterialEnum.Earth);
+			}
 
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.U) && GetUIManager().PvOnlyBossEndCinematic == null)
@@ -3046,6 +3057,12 @@ public class HandSystemUI : MonoBehaviour
             DebugApplyRandomMaterialModifiersToDeck();
         }
 #endif
+
+        if (!tutorialClickConsumedThisFrame && CanUseBattleCardInput() && Input.GetKeyDown(KeyCode.R))
+        {
+            RefreshSelectedCards();
+            return;
+        }
 
         if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.R))
         {
@@ -3055,7 +3072,7 @@ public class HandSystemUI : MonoBehaviour
                 return;
         }
 
-		if (!tutorialClickConsumedThisFrame && CanUsePlayZoneCardInput() && IsPlaySelectedCardsInputDown())
+		if (!tutorialClickConsumedThisFrame && CanUsePlayZoneCardInput() && (Input.GetKeyDown(KeyCode.Space) || IsPlaySelectedCardsInputDown()))
 		{
 			PlaySelectedCardsByInput();
 		}
@@ -6310,6 +6327,15 @@ public bool IsCardDragActive => cardDragActive;
             return;
 
         state.viewRect.DOKill(false);
+        if ((Object)state.buffRoot != (Object)null)
+        {
+            BuffSlotView[] buffSlots = state.buffRoot.GetComponentsInChildren<BuffSlotView>(true);
+            for (int i = 0; i < buffSlots.Length; i++)
+            {
+                buffSlots[i].ResetBinding();
+                buffSlots[i].gameObject.SetActive(false);
+            }
+        }
         state.viewRect.gameObject.SetActive(false);
         if (!enemyViewPool.Contains(state.viewRect))
             enemyViewPool.Add(state.viewRect);
