@@ -113,7 +113,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.5, y: 0, z: -0.5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
@@ -184,11 +184,11 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1
-    height: 1
-  columns: 6
+    width: 4
+    height: 4
+  columns: 8
   rows: 8
-  baseTileChance: 0.759
+  baseTileChance: 0.389
   tileChanceOverRows:
     serializedVersion: 2
     m_Curve:
@@ -220,11 +220,11 @@ MonoBehaviour:
   lineCountMin: 8
   lineCountMax: 16
   samplesPerLine: 40
-  lineWidth: 0.01
+  lineWidth: 0.005
   inset: 0
   lineAngleRange: {x: -66, y: 31}
   wobbleAmplitudeRange: {x: 0.35, y: 0.86}
   wobbleFrequencyRange: {x: 1.42, y: 3.5}
   tileColor: {r: 0.462, g: 0.761, b: 0.465, a: 1}
   colorValueVariation: 0.327
-  seed: 763
+  seed: 778
