@@ -3055,7 +3055,7 @@ public class HandSystemUI : MonoBehaviour
                 return;
         }
 
-		if (!tutorialClickConsumedThisFrame && CanUseBattleCardInput() && IsPlaySelectedCardsInputDown())
+		if (!tutorialClickConsumedThisFrame && CanUsePlayZoneCardInput() && IsPlaySelectedCardsInputDown())
 		{
 			PlaySelectedCardsByInput();
 		}
@@ -3166,6 +3166,14 @@ public class HandSystemUI : MonoBehaviour
             && battleManager.CurrentPhase == BattlePhase.PlayerTurn;
     }
 
+    private bool CanUsePlayZoneCardInput()
+    {
+        if (!busy && !choosingEventCard && runManager != null && runManager.State == RunFlowState.Event)
+            return true;
+
+        return CanUseBattleCardInput();
+    }
+
 	public void OnCardLeftClicked(HandCardView cardView)
 	{
 		if (choosingEventCard)
@@ -3174,7 +3182,7 @@ public class HandSystemUI : MonoBehaviour
 			return;
 		}
 
-        if (!CanUseBattleCardInput())
+        if (!CanUsePlayZoneCardInput())
             return;
 
             if (cardView.InPlayZone)
@@ -3202,7 +3210,7 @@ public class HandSystemUI : MonoBehaviour
 
 			public void OnCardPlayRequested(HandCardView cardView)
 			{
-			if (!CanUseBattleCardInput() || cardView.InPlayZone)
+			if (!CanUsePlayZoneCardInput() || cardView.InPlayZone)
 	            return;
 
 		        if (playerState.IsMaterialDisabled(cardView.Card))
@@ -3823,7 +3831,7 @@ public bool IsCardDragActive => cardDragActive;
 
 	public void PlaySelectedCardsByInput()
 	{
-		if (CanUseBattleCardInput())
+		if (CanUsePlayZoneCardInput())
 		{
 			PlaySelectedCards();
 		}
@@ -3868,7 +3876,7 @@ public bool IsCardDragActive => cardDragActive;
 
 	public bool TryPlaySelectedCardsFromCardClick(HandCardView cardView, PointerEventData eventData)
 	{
-        if (!CanUseBattleCardInput())
+        if (!CanUsePlayZoneCardInput())
             return false;
 
 		if (cardView == null || eventData == null || eventData.button != PointerEventData.InputButton.Left)
@@ -4133,7 +4141,7 @@ public bool IsCardDragActive => cardDragActive;
 		if (runEnded)
 			return;
 
-			if (!CanUseBattleCardInput())
+			if (!CanUsePlayZoneCardInput())
 	            return;
 
             RemoveInvalidSelectedCards();
@@ -9847,11 +9855,11 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0011: Expected O, but got Unknown
 		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0050: Expected O, but got Unknown
-		        buttonsInteractable = interactable && CanUseBattleCardInput();
+		        buttonsInteractable = interactable && CanUsePlayZoneCardInput();
 			if ((Object)refreshButton != (Object)null)
 			{
 				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.ExtraRefreshChancesThisTurn > 0);
-				refreshButton.interactable = buttonsInteractable && canRefresh;
+				refreshButton.interactable = interactable && CanUseBattleCardInput() && canRefresh;
 			}
 	        RefreshRefreshChanceUI();
 	        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());
