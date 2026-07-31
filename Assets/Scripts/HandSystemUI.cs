@@ -3185,8 +3185,12 @@ public class HandSystemUI : MonoBehaviour
 
     private bool CanUsePlayZoneCardInput()
     {
-        if (!busy && !choosingEventCard && runManager != null && runManager.State == RunFlowState.Event)
-            return true;
+        if (!busy && !choosingEventCard && runManager != null)
+        {
+            RunFlowState state = runManager.State;
+            if (state == RunFlowState.Event || state == RunFlowState.Rest || state == RunFlowState.Reward)
+                return true;
+        }
 
         return CanUseBattleCardInput();
     }

@@ -537,6 +537,9 @@ public class EnemyModel : UnitModel
         int attackValue = intent.value;
         CombatantModel target = playerState != null ? new CombatantModel(playerState) : null;
         TriggerOnAttack(target, ref attackValue);
+        if (attackValue <= 0)
+            return 0;
+
         if (playerState != null)
             playerState.TriggerOnTakeDamage(new CombatantModel(this), ref attackValue);
         if (attackValue < 0)
