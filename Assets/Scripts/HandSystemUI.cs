@@ -3058,7 +3058,7 @@ public class HandSystemUI : MonoBehaviour
         }
 #endif
 
-        if (!tutorialClickConsumedThisFrame && CanUseBattleCardInput() && Input.GetKeyDown(KeyCode.R))
+        if (!tutorialClickConsumedThisFrame && CanUseRefreshCardInput() && Input.GetKeyDown(KeyCode.R))
         {
             RefreshSelectedCards();
             return;
@@ -3072,10 +3072,10 @@ public class HandSystemUI : MonoBehaviour
                 return;
         }
 
-		if (!tutorialClickConsumedThisFrame && CanUsePlayZoneCardInput() && (Input.GetKeyDown(KeyCode.Space) || IsPlaySelectedCardsInputDown()))
-		{
-			PlaySelectedCardsByInput();
-		}
+			if (!tutorialClickConsumedThisFrame && CanUsePlayZoneCardInput() && (Input.GetKeyDown(KeyCode.Space) || IsPlaySelectedCardsInputDown()))
+			{
+				PlaySelectedCardsByInput();
+			}
 
 			if (!tutorialClickConsumedThisFrame && currentLevel != null && currentLevel.levelType == LevelType.Rest && eventPanel != null && eventPanel.WaitingForFinalClick && Input.GetMouseButtonDown(0))
 
@@ -3185,14 +3185,30 @@ public class HandSystemUI : MonoBehaviour
 
     private bool CanUsePlayZoneCardInput()
     {
-        if (!busy && !choosingEventCard && runManager != null)
-        {
-            RunFlowState state = runManager.State;
-            if (state == RunFlowState.Event || state == RunFlowState.Rest || state == RunFlowState.Reward)
-                return true;
-        }
+        return CanUseNonBattleCardInput() || CanUseBattleCardInput();
+    }
 
-        return CanUseBattleCardInput();
+    private bool CanUseNonBattleCardInput()
+    {
+        if (busy || choosingEventCard)
+            return false;
+
+        if (currentEvent != null)
+            return true;
+
+        if (currentLevel != null && (currentLevel.levelType == LevelType.Rest || currentLevel.levelType == LevelType.Reward))
+            return true;
+
+        if (runManager == null)
+            return false;
+
+        RunFlowState state = runManager.State;
+        return state == RunFlowState.Event || state == RunFlowState.Rest || state == RunFlowState.Reward;
+    }
+
+    private bool CanUseRefreshCardInput()
+    {
+        return CanUseBattleCardInput() || CanUseNonBattleCardInput();
     }
 
 	public void OnCardLeftClicked(HandCardView cardView)
@@ -4090,7 +4106,7 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				return;
 			}
-			if (!CanUseBattleCardInput() || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
+			if (!CanUseRefreshCardInput() || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
 			{
 				return;
 			}
@@ -9889,7 +9905,7 @@ public bool IsCardDragActive => cardDragActive;
 			if ((Object)refreshButton != (Object)null)
 			{
 				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.ExtraRefreshChancesThisTurn > 0);
-				refreshButton.interactable = interactable && CanUseBattleCardInput() && canRefresh;
+				refreshButton.interactable = interactable && CanUseRefreshCardInput() && canRefresh;
 			}
 	        RefreshRefreshChanceUI();
 	        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());
