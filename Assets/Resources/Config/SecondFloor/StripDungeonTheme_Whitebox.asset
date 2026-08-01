@@ -25,9 +25,9 @@ MonoBehaviour:
   - prefab: {fileID: 37338565767568054, guid: 8c1fa019b05689d4399ac57067a4cce6, type: 3}
     footprintCells: 1
     surfaceOffset: 0.05
-  - prefab: {fileID: 37338565767568054, guid: dd9fdc798a3ade44b8a1dc429fed26e5, type: 3}
-    footprintCells: 2
-    surfaceOffset: 0.05
   - prefab: {fileID: 37338565767568054, guid: 57693d6f0112fcf4c9493459dcdec557, type: 3}
-    footprintCells: 3
+    footprintCells: 1
+    surfaceOffset: 0.05
+  - prefab: {fileID: 37338565767568054, guid: dd9fdc798a3ade44b8a1dc429fed26e5, type: 3}
+    footprintCells: 1
     surfaceOffset: 0.05

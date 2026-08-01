@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 12554273329940675}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 16.5, z: 0}
+  m_LocalPosition: {x: 13.5, y: 16.35, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -364,12 +364,12 @@ MonoBehaviour:
     y: -5
     width: 0.3000002
     height: 3
-  fillLineCount: 29
-  fillSamplesPerLine: 40
+  fillLineCount: 15
+  fillSamplesPerLine: 53
   fillLineWidth: 0.01
   fillInset: 0
-  fillAngleDegrees: 90
-  fillWobbleAmplitude: 0.55
+  fillAngleDegrees: 0
+  fillWobbleAmplitude: -0
   fillWobbleFrequency: 0
   fillVertexColor: {r: 0.05468527, g: 0.22865875, b: 0.49685526, a: 1}
   guidedEdge: 0
@@ -536,10 +536,10 @@ MonoBehaviour:
     y: -5
     width: 1.5
     height: 3
-  fillLineCount: 5
+  fillLineCount: 6
   fillSamplesPerLine: 2
-  fillLineWidth: 0.01
-  fillInset: 0.12
+  fillLineWidth: 0.03
+  fillInset: 0.28
   fillAngleDegrees: 0
   fillWobbleAmplitude: 0.12
   fillWobbleFrequency: 8.75

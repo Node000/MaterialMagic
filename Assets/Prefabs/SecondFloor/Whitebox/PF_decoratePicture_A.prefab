@@ -109,7 +109,7 @@ Transform:
   m_GameObject: {fileID: 2021275265391128130}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.81, y: 0.98, z: 0}
+  m_LocalPosition: {x: -0.8, y: 0.61, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -218,8 +218,8 @@ MonoBehaviour:
   strokeCountMax: 9
   samplesPerSegment: 12
   strokeWidth: 0.035
-  pathPointOffsetRange: 0.42
-  segmentVariation: 1.11
+  pathPointOffsetRange: 0.25
+  segmentVariation: 0.2
   strokeColor: {r: 1, g: 0.38, b: 0.16, a: 0.75}
   densityEdge: 0
   densityOpacityOverDistance:
@@ -248,10 +248,10 @@ MonoBehaviour:
     m_RotationOrder: 4
   frameEnabled: 1
   frameCorners:
-  - {x: -2.845381, y: -0.9731686}
-  - {x: -0.5475962, y: -1.3559511}
-  - {x: -0.53093433, y: 1.1549578}
-  - {x: -2.7147276, y: 1.0670094}
+  - {x: -2.8559926, y: -0.5897732}
+  - {x: -0.7243233, y: -0.31510735}
+  - {x: -0.6740413, y: 0.8073745}
+  - {x: -2.7656245, y: 0.663044}
   frameWidth: 0.15
   frameColor: {r: 1, g: 0.86, b: 0.48, a: 1}
   appearanceMaterial: {fileID: 0}
@@ -281,7 +281,7 @@ Transform:
   m_GameObject: {fileID: 5788226617506841048}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.64, y: -0.97, z: 0}
+  m_LocalPosition: {x: -2.82, y: -0.47, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
