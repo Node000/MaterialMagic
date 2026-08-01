@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 12554273329940675}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 18, z: 0}
+  m_LocalPosition: {x: 13.5, y: 16.5, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -103,12 +103,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.07999992
+    width: 0.03000021
     height: 1
-  fillLineCount: 5
-  fillSamplesPerLine: 22
+  fillLineCount: 9
+  fillSamplesPerLine: 14
   fillLineWidth: 0.005
-  fillInset: 0.02
+  fillInset: 0
   fillAngleDegrees: -90
   fillWobbleAmplitude: 0.39
   fillWobbleFrequency: 8.75
@@ -362,7 +362,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.5999999
+    width: 0.3000002
     height: 3
   fillLineCount: 29
   fillSamplesPerLine: 40
@@ -459,8 +459,8 @@ Transform:
   m_GameObject: {fileID: 6545200179379907844}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 15, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalPosition: {x: 3.5, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
@@ -534,9 +534,9 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 1
-    height: 1
-  fillLineCount: 3
+    width: 1.5
+    height: 3
+  fillLineCount: 5
   fillSamplesPerLine: 2
   fillLineWidth: 0.01
   fillInset: 0.12

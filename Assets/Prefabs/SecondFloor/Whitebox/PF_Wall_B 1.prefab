@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2098367884530349382}
   - component: {fileID: 1990195832049655644}
   m_Layer: 0
-  m_Name: PF_WhiteboxColdWall_E
+  m_Name: PF_Wall_B 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.5999999
+    width: 0.3000002
     height: 3
   fillLineCount: 17
   fillSamplesPerLine: 40
@@ -286,8 +286,8 @@ Transform:
   m_GameObject: {fileID: 6545200179379907844}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 15, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalPosition: {x: 3.5, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
@@ -361,15 +361,15 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 1
-    height: 1
-  fillLineCount: 15
-  fillSamplesPerLine: 14
+    width: 1.5
+    height: 3
+  fillLineCount: 96
+  fillSamplesPerLine: 2
   fillLineWidth: 0.01
-  fillInset: 0
+  fillInset: 0.18
   fillAngleDegrees: 0
-  fillWobbleAmplitude: 0.04
-  fillWobbleFrequency: 8.75
+  fillWobbleAmplitude: 0.82
+  fillWobbleFrequency: 9.11
   fillVertexColor: {r: 0.20435202, g: 0.15822153, b: 0.40251565, a: 1}
   guidedEdge: 0
   guidedStartOffsetRange: 0.8
@@ -458,7 +458,7 @@ Transform:
   m_GameObject: {fileID: 7032999203635192101}
   serializedVersion: 2
   m_LocalRotation: {x: 0.61237246, y: 0.61237246, z: 0.3535534, w: -0.3535534}
-  m_LocalPosition: {x: 3.5, y: 5.5, z: 4.5}
+  m_LocalPosition: {x: 3.5, y: 4, z: 4.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -533,7 +533,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.5999999
+    width: 0.3000002
     height: 3
   fillLineCount: 74
   fillSamplesPerLine: 9

@@ -17,7 +17,7 @@ MonoBehaviour:
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   wallPrefabs:
-  - {fileID: 37338565767568054, guid: cfc104d264e827c4cba1d56aa9e739af, type: 3}
+  - {fileID: 37338565767568054, guid: 92aca3d282b61154db8a5e6d413f8c03, type: 3}
   - {fileID: 37338565767568054, guid: 4f4927e4e8ebd254fb34c22e55cc9a04, type: 3}
   wallDecorationChance: 50
   wallDecorations:

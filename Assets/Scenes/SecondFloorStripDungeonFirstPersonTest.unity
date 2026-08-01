@@ -221,16 +221,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config: {fileID: 11400000, guid: ad5a0f7d83c9c604f9c088fad62cd95c, type: 2}
   nextSeed: 1
+  maxForwardSightCells: 6
+  minimapCellSize: 22
+  minimapCellSpacing: 2
+  minimapMargin: 28
   cellWorldSize: 3
   floorThickness: 0.2
-  wallThickness: 0.25
-  wallHeight: 3.2
-  playerEyeHeight: 1.55
+  bossMarkerHeight: 2.2
+  playerEyeHeight: 0.8
   fieldOfView: 72
   floorColor: {r: 0.74, g: 0.74, b: 0.71, a: 1}
   wallColor: {r: 0.88, g: 0.88, b: 0.84, a: 1}
   bossColor: {r: 0.68, g: 0.12, b: 0.14, a: 1}
   skyColor: {r: 0.08, g: 0.1, b: 0.14, a: 1}
+  minimapPanelColor: {r: 0.015, g: 0.02, b: 0.03, a: 0.9}
+  minimapFogColor: {r: 0, g: 0, b: 0, a: 1}
+  minimapPathColor: {r: 0.25, g: 0.28, b: 0.27, a: 1}
+  minimapBossColor: {r: 0.48, g: 0.1, b: 0.13, a: 1}
+  minimapVisiblePathColor: {r: 0.72, g: 0.75, b: 0.71, a: 1}
+  minimapVisibleBossColor: {r: 0.78, g: 0.16, b: 0.2, a: 1}
+  minimapPlayerColor: {r: 0.25, g: 0.78, b: 1, a: 1}
 --- !u!4 &938515491
 Transform:
   m_ObjectHideFlags: 0

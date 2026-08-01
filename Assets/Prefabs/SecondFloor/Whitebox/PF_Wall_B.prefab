@@ -1,177 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &12554273329940675
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5391997534787346053}
-  - component: {fileID: 9101831014356272268}
-  - component: {fileID: 7755321771032999880}
-  - component: {fileID: 5688383256546114968}
-  m_Layer: 0
-  m_Name: "\u5899\u7EB8 (2)"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5391997534787346053
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12554273329940675}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 18, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8649678352531467060}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 90}
---- !u!33 &9101831014356272268
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12554273329940675}
-  m_Mesh: {fileID: 0}
---- !u!23 &7755321771032999880
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12554273329940675}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 0718171ac5c28374fb64195a80792a72, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &5688383256546114968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12554273329940675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 96cffff42f807e64bb3d5e75cb80ea95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  planeAxes: 0
-  fillEnabled: 1
-  fillMode: 0
-  fillArea:
-    serializedVersion: 2
-    x: -5
-    y: -5
-    width: 0.07999992
-    height: 1
-  fillLineCount: 5
-  fillSamplesPerLine: 22
-  fillLineWidth: 0.005
-  fillInset: 0.02
-  fillAngleDegrees: -90
-  fillWobbleAmplitude: 0.39
-  fillWobbleFrequency: 8.75
-  fillVertexColor: {r: 0.20435202, g: 0.15822153, b: 0.40251565, a: 1}
-  guidedEdge: 0
-  guidedStartOffsetRange: 0.8
-  guidedEndOffsetRange: 0.35
-  guidedEdgeJitter: 0.06
-  guidedStrokesPerPointMin: 2
-  guidedStrokesPerPointMax: 5
-  guidedBypassOffset: 0.75
-  guidedBypassOffsetRange: 0.18
-  guidedBypassAspect: 0.7
-  guidedWobbleAmplitudeOverPath:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  guidedWobbleFrequencyOverPath:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  guidedCurveDirection: 0
-  seed: 763
 --- !u!1 &37338565767568054
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,7 +12,7 @@ GameObject:
   - component: {fileID: 2098367884530349382}
   - component: {fileID: 1990195832049655644}
   m_Layer: 0
-  m_Name: PF_WhiteboxColdWall_D
+  m_Name: PF_Wall_B
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -203,10 +31,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2063364093952968668}
   - {fileID: 7891974888074207158}
   - {fileID: 5575549337885772944}
-  - {fileID: 2770872812624648928}
-  - {fileID: 5391997534787346053}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &2098367884530349382
@@ -362,14 +189,14 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.5999999
+    width: 0.3000002
     height: 3
-  fillLineCount: 29
+  fillLineCount: 17
   fillSamplesPerLine: 40
   fillLineWidth: 0.01
   fillInset: 0
   fillAngleDegrees: 90
-  fillWobbleAmplitude: 0.55
+  fillWobbleAmplitude: 0.1
   fillWobbleFrequency: 0
   fillVertexColor: {r: 0.05468527, g: 0.22865875, b: 0.49685526, a: 1}
   guidedEdge: 0
@@ -459,8 +286,8 @@ Transform:
   m_GameObject: {fileID: 6545200179379907844}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 15, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalPosition: {x: 3.5, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
@@ -534,15 +361,15 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 1
-    height: 1
-  fillLineCount: 3
-  fillSamplesPerLine: 2
+    width: 1.5
+    height: 3
+  fillLineCount: 25
+  fillSamplesPerLine: 10
   fillLineWidth: 0.01
-  fillInset: 0.12
+  fillInset: 0
   fillAngleDegrees: 0
-  fillWobbleAmplitude: 0.12
-  fillWobbleFrequency: 8.75
+  fillWobbleAmplitude: 0.82
+  fillWobbleFrequency: 9.11
   fillVertexColor: {r: 0.20435202, g: 0.15822153, b: 0.40251565, a: 1}
   guidedEdge: 0
   guidedStartOffsetRange: 0.8
@@ -603,7 +430,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   guidedCurveDirection: 0
   seed: 763
---- !u!1 &8984502120472361376
+--- !u!1 &7032999203635192101
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -611,47 +438,47 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2770872812624648928}
-  - component: {fileID: 8396423288239621111}
-  - component: {fileID: 1284838744490947143}
-  - component: {fileID: 2016339665767664141}
+  - component: {fileID: 2063364093952968668}
+  - component: {fileID: 4019569210213202975}
+  - component: {fileID: 8487029484255488758}
+  - component: {fileID: 7100459157400963677}
   m_Layer: 0
-  m_Name: "\u5899\u7EB8 (1)"
+  m_Name: "\u5899\u6CBF\u9876"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2770872812624648928
+--- !u!4 &2063364093952968668
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8984502120472361376}
+  m_GameObject: {fileID: 7032999203635192101}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: -0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 13.5, y: 15, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalRotation: {x: 0.61237246, y: 0.61237246, z: 0.3535534, w: -0.3535534}
+  m_LocalPosition: {x: 3.5, y: 4, z: 4.35}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8649678352531467060}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 90}
---- !u!33 &8396423288239621111
+  m_LocalEulerAnglesHint: {x: -60, y: 180, z: 90}
+--- !u!33 &4019569210213202975
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8984502120472361376}
+  m_GameObject: {fileID: 7032999203635192101}
   m_Mesh: {fileID: 0}
---- !u!23 &1284838744490947143
+--- !u!23 &8487029484255488758
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8984502120472361376}
+  m_GameObject: {fileID: 7032999203635192101}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -687,13 +514,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &2016339665767664141
+--- !u!114 &7100459157400963677
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8984502120472361376}
+  m_GameObject: {fileID: 7032999203635192101}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96cffff42f807e64bb3d5e75cb80ea95, type: 3}
@@ -706,16 +533,16 @@ MonoBehaviour:
     serializedVersion: 2
     x: -5
     y: -5
-    width: 0.07999992
-    height: 1
-  fillLineCount: 5
-  fillSamplesPerLine: 22
+    width: 0.3000002
+    height: 3
+  fillLineCount: 74
+  fillSamplesPerLine: 9
   fillLineWidth: 0.005
-  fillInset: 0.02
-  fillAngleDegrees: -90
-  fillWobbleAmplitude: 0.39
-  fillWobbleFrequency: 8.75
-  fillVertexColor: {r: 0.20435202, g: 0.15822153, b: 0.40251565, a: 1}
+  fillInset: 0
+  fillAngleDegrees: 0
+  fillWobbleAmplitude: 0.02
+  fillWobbleFrequency: 0.04
+  fillVertexColor: {r: 0.2578616, g: 0.2578616, b: 0.2578616, a: 1}
   guidedEdge: 0
   guidedStartOffsetRange: 0.8
   guidedEndOffsetRange: 0.35

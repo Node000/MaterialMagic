@@ -112,7 +112,7 @@ Transform:
   m_GameObject: {fileID: 6545200179379907844}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5, y: 0, z: -0.5}
+  m_LocalPosition: {x: -0.3, y: 0, z: -0.5}
   m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -184,7 +184,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 4
+    width: 2.5
     height: 4
   columns: 8
   rows: 8
@@ -215,7 +215,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   tileSizeMin: {x: 0.45, y: 0.65}
   tileSizeMax: {x: 0.6, y: 0.8}
-  tilePositionJitter: {x: 0.04, y: 0.04}
+  tilePositionJitter: {x: 0, y: 0.04}
   surfaceHeight: 0
   lineCountMin: 8
   lineCountMax: 16

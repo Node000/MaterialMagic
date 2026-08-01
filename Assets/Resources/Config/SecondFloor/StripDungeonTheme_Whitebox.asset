@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeId: whitebox
   floorPrefabs:
-  - {fileID: 3404754695167833952, guid: 7b3371bb39253674088bbd06d6374a5a, type: 3}
-  - {fileID: 5366781548803872859, guid: cec7fb2a557f20a4497e355c6339575c, type: 3}
+  - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
+  - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   wallPrefabs:
-  - {fileID: 37338565767568054, guid: cfc104d264e827c4cba1d56aa9e739af, type: 3}
-  - {fileID: 37338565767568054, guid: e43d068c2ec699646a8c81efcba5a343, type: 3}
+  - {fileID: 37338565767568054, guid: 92aca3d282b61154db8a5e6d413f8c03, type: 3}
+  - {fileID: 37338565767568054, guid: 561fedc100accdd4b8daa66e8e9465b2, type: 3}
+  - {fileID: 37338565767568054, guid: bfbe163246e66c04abaee9be793e1e19, type: 3}
   wallDecorationChance: 100
   wallDecorations:
   - prefab: {fileID: 37338565767568054, guid: 8c1fa019b05689d4399ac57067a4cce6, type: 3}

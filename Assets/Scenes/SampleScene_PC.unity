@@ -2733,6 +2733,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 2.550003
       objectReference: {fileID: 0}
+    - target: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+      propertyPath: recipeIconSize.x
+      value: 80
+      objectReference: {fileID: 0}
     - target: {fileID: 3829653688376179266, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 7.3984375
@@ -28647,8 +28651,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 57.79, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -375.59998, y: 400.55737}
-  m_SizeDelta: {x: 518, y: 12.905243}
+  m_AnchoredPosition: {x: -375.59998, y: 424.60242}
+  m_SizeDelta: {x: 518, y: 60.99524}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &774484493
 MonoBehaviour:
@@ -28669,11 +28673,11 @@ MonoBehaviour:
     m_Bottom: 0
   m_ChildAlignment: 2
   m_StartCorner: 1
-  m_StartAxis: 1
+  m_StartAxis: 0
   m_CellSize: {x: 244.5, y: 81}
-  m_Spacing: {x: 30, y: 43.8}
+  m_Spacing: {x: 30, y: -14.7}
   m_Constraint: 2
-  m_ConstraintCount: 4
+  m_ConstraintCount: 8
 --- !u!1 &775757455
 GameObject:
   m_ObjectHideFlags: 0
