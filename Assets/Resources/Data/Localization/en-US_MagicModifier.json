@@ -54,23 +54,23 @@
     },
     {
       "key": "rest.option.rest",
-      "text": "Rest"
+      "text": "Recover Health"
     },
     {
       "key": "rest.option.study",
-      "text": "Study Item"
+      "text": "Item Enhancement"
     },
     {
       "key": "rest.option.study.effect",
       "text": "Choose 1 of 2 enhancements and enchant an item with it."
     },
     {
-      "key": "rest.option.deep_study",
-      "text": "Deep Study"
+      "key": "rest.option.arrow_modifier",
+      "text": "Arrow Enchantment"
     },
     {
-      "key": "rest.option.deep_study.effect",
-      "text": "Choose 1 of 3 enhancements and enchant an item with it."
+      "key": "rest.option.arrow_modifier.effect",
+      "text": "Choose 1 of 2 enhancements and enchant an arrow with it."
     },
     {
       "key": "rest.default_heal",

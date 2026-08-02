@@ -194,7 +194,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "Apply 2 VULNERABLE to the enemy."
+      "text": "Apply 1 VULNERABLE to the enemy."
     },
     {
       "key": "magic.stone_wall.name",

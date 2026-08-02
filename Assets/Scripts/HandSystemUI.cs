@@ -92,6 +92,9 @@ public class HandSystemUI : MonoBehaviour
 		private RectTransform magicViewPrefab;
 
 		[SerializeField]
+		private RectTransform magicSlotPrefab;
+
+		[SerializeField]
 		private RectTransform enemyViewPrefab;
 
 	[SerializeField]
@@ -571,7 +574,9 @@ public class HandSystemUI : MonoBehaviour
 
 			private bool choosingEventCard;
 
-	private EventOptionData pendingChoiceOption;
+        private bool skipNextEventOptionsDraw;
+
+		private EventOptionData pendingChoiceOption;
 
 	private int pendingChoiceCount;
 
@@ -593,7 +598,7 @@ public class HandSystemUI : MonoBehaviour
 
 	private const int RestStudyResultId = 301;
 
-	private const int RestDeepStudyResultId = 302;
+	private const int RestArrowModifierResultId = 302;
 
     private const float RestDefaultHealRatio = 0.3f;
 
@@ -623,13 +628,87 @@ public class HandSystemUI : MonoBehaviour
         if (damage <= 0 || battleManager == null)
             return;
 
-        EnemyModel target = battleManager.GetTargetEnemy();
-        if (target == null)
+        EnemyModel target = battleManager.FocusTarget;
+        if (target == null && battleManager.Enemies.Count > 0)
+            target = battleManager.Enemies[0];
+        if (target == null || target.IsDead)
             return;
 
         target.TakeDamage(damage, playerState != null ? new CombatantModel(playerState) : null);
         RefreshEnemyUI((RectTransform)null, false);
         StartCoroutine(DebugHandleBattleResult());
+    }
+
+    public void DebugKillTargetEnemy()
+    {
+        if (battleManager == null)
+            return;
+
+        EnemyModel target = battleManager.FocusTarget;
+        if (target == null && battleManager.Enemies.Count > 0)
+            target = battleManager.Enemies[0];
+        if (target == null || target.IsDead)
+            return;
+
+        target.TakeDamage(Mathf.Max(1, target.CurrentHealth + target.Shield), playerState != null ? new CombatantModel(playerState) : null);
+        RefreshEnemyUI((RectTransform)null, false);
+        StartCoroutine(DebugHandleBattleResult());
+    }
+
+    public void DebugDrawCards(int count)
+    {
+        if (count <= 0 || playerState == null)
+            return;
+
+        playerState.DrawCards(count);
+        RefreshStaticUI();
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+    }
+
+    public void DebugStartRestLevel(LevelData level)
+    {
+        if (level == null || level.levelType != LevelType.Rest || playerState == null || battleManager == null)
+            return;
+
+        PrepareDebugLevelTransition();
+        debugBattleActive = false;
+        debugLevelActive = true;
+        StartRestLevel(level);
+    }
+
+    private void PrepareDebugLevelTransition()
+    {
+        HideDebugMagicDropdown();
+        HideRewardMagicConfirmPanel(false);
+        undoRewardAvailable = false;
+        undoRewardMagicSlotIndex = -1;
+        undoRewardPreviousMagic = null;
+        pendingRewardMagic = null;
+        pendingShopMagic = null;
+        pendingShopMagicSlotChosen = null;
+        pendingMagicModifier = null;
+        pendingMaterialModifier = null;
+        ClearSelectedCards(true);
+        ResetBattleDeckState();
+        RebuildCards(animateFromCurrent: false);
+        HideMapPanel();
+        GetUIManager().HideShopPanel();
+        GetUIManager().HideRewardPanel();
+        GetUIManager().RewardGridPanel?.Hide();
+        GetUIManager().HideSlotSelect();
+        GetUIManager().MagicModifierSelectionPanel?.Hide();
+        if (eventPanel != null)
+        {
+            eventPanel.Close();
+            eventPanel = null;
+        }
+        enemyModels.Clear();
+        battleManager.ClearEnemies();
+        ClearEnemyViews();
+        currentEvent = null;
+        skipNextEventOptionsDraw = false;
+        refreshUsedThisTurn = false;
     }
 
     public void DebugHealPlayer(int amount)
@@ -655,18 +734,11 @@ public class HandSystemUI : MonoBehaviour
         if (level == null || battleManager == null)
             return;
 
-        HideDebugMagicDropdown();
+        PrepareDebugLevelTransition();
         debugBattleActive = true;
         debugLevelActive = false;
         currentLevel = level;
-        currentEvent = null;
-        refreshUsedThisTurn = false;
-        ResetBattleDeckState();
-        HideMapPanel();
-        enemyModels.Clear();
-        battleManager.ClearEnemies();
         battleManager.ConfigureLevelContext(level, activeChapter != null ? activeChapter.numericId : 0, false);
-        ClearEnemyViews();
         SpawnDebugLevelEnemies(level);
         if (battleManager.Enemies.Count == 0)
             return;
@@ -696,22 +768,21 @@ public class HandSystemUI : MonoBehaviour
         if (eventData == null || playerState == null || battleManager == null)
             return;
 
-        HideDebugMagicDropdown();
+        PrepareDebugLevelTransition();
         debugBattleActive = false;
         debugLevelActive = true;
-        ResetBattleDeckState();
         currentLevel = null;
         currentEvent = new EventModel(eventData);
-        HideMapPanel();
-        GetUIManager().HideShopPanel();
-        enemyModels.Clear();
-        battleManager.ClearEnemies();
-        ClearEnemyViews();
 
         if (eventPanel != null)
             eventPanel.Close();
         eventPanel = GetOrCreateEventPanel();
         eventPanel.Initialize(transform as RectTransform, GetDefaultFont(), DrawEventOptionsHand);
+        if (currentEvent.CurrentOptions.Length > 0)
+        {
+            DrawEventOptionsHand();
+            skipNextEventOptionsDraw = true;
+        }
         eventPanel.Bind(currentEvent);
         refreshUsedThisTurn = false;
         busy = false;
@@ -723,26 +794,10 @@ public class HandSystemUI : MonoBehaviour
         if (level == null || level.levelType != LevelType.Shop || playerState == null || battleManager == null)
             return;
 
-        HideDebugMagicDropdown();
+        PrepareDebugLevelTransition();
         debugBattleActive = false;
         debugLevelActive = true;
-        ResetBattleDeckState();
         currentLevel = level;
-        currentEvent = null;
-        HideMapPanel();
-        GetUIManager().HideRewardPanel();
-        GetUIManager().RewardGridPanel?.Hide();
-        GetUIManager().HideSlotSelect();
-        GetUIManager().MagicModifierSelectionPanel?.Hide();
-        enemyModels.Clear();
-        battleManager.ClearEnemies();
-        ClearEnemyViews();
-
-        if (eventPanel != null)
-        {
-            eventPanel.Close();
-            eventPanel = null;
-        }
 
         RebuildCards(animateFromCurrent: true);
         RefreshStaticUI();
@@ -1579,6 +1634,11 @@ public class HandSystemUI : MonoBehaviour
 		eventPanel.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawRestOptionsHand);
 			currentEvent = CreateRestEventModel(level);
             currentEvent.RestoreSaveData(savedEvent);
+            if (currentEvent.CurrentOptions.Length > 0)
+            {
+                DrawRestOptionsHand();
+                skipNextEventOptionsDraw = true;
+            }
 				eventPanel.Bind(currentEvent);
             SaveRunProgress();
 
@@ -1675,8 +1735,13 @@ public class HandSystemUI : MonoBehaviour
 		eventPanel = GetOrCreateEventPanel();
 		EventPanelUI eventPanelUI = eventPanel;
 		Transform transform = ((Component)this).transform;
-		eventPanelUI.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawEventOptionsHand);
-			eventPanel.Bind(currentEvent);
+			eventPanelUI.Initialize((RectTransform)((transform is RectTransform) ? transform : null), GetDefaultFont(), DrawEventOptionsHand);
+            if (currentEvent.CurrentOptions.Length > 0)
+            {
+                DrawEventOptionsHand();
+                skipNextEventOptionsDraw = true;
+            }
+				eventPanel.Bind(currentEvent);
             SaveRunProgress();
 			refreshUsedThisTurn = false;
 
@@ -1694,6 +1759,12 @@ public class HandSystemUI : MonoBehaviour
 		{
 			return;
 		}
+
+        if (skipNextEventOptionsDraw)
+        {
+            skipNextEventOptionsDraw = false;
+            return;
+        }
 
 		int drawCount = currentEvent.Data.drawCount >= 0 ? currentEvent.Data.drawCount : playerState.DrawCount;
 		GameLog.Data($"Draw event options hand count={drawCount}");
@@ -1732,12 +1803,12 @@ public class HandSystemUI : MonoBehaviour
             recipe = CreateRandomRecipe(1),
             resultId = RestStudyResultId
         };
-        EventOptionData deepStudy = new EventOptionData
+        EventOptionData arrowModifier = new EventOptionData
         {
-            id = "deep_study_magic",
-            titleKey = "rest.option.deep_study",
-            recipe = CreateRandomRecipe(2),
-            resultId = RestDeepStudyResultId
+            id = "arrow_modifier",
+            titleKey = "rest.option.arrow_modifier",
+            recipe = CreateRandomRecipe(1),
+            resultId = RestArrowModifierResultId
         };
         string[] restTextKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>();
         string startTextKey = restTextKeys.Length > 0 ? restTextKeys[0] : string.Empty;
@@ -1754,7 +1825,7 @@ public class HandSystemUI : MonoBehaviour
                 {
                     id = "start",
                     textKeys = !string.IsNullOrEmpty(startTextKey) ? new[] { startTextKey } : Array.Empty<string>(),
-                    options = new[] { defaultRest, study, deepStudy }
+                    options = new[] { defaultRest, study, arrowModifier }
                 },
                 new EventNodeData
                 {
@@ -1780,9 +1851,16 @@ public class HandSystemUI : MonoBehaviour
         if (playerState == null)
             return;
 
-        GameLog.Data($"Draw rest options hand count={playerState.DrawCount}");
+        if (skipNextEventOptionsDraw)
+        {
+            skipNextEventOptionsDraw = false;
+            return;
+        }
+
+        const int restDrawCount = 2;
+        GameLog.Data($"Draw rest options hand count={restDrawCount}");
         refreshUsedThisTurn = false;
-        playerState.DrawCards(playerState.DrawCount);
+        playerState.DrawCards(restDrawCount);
         RefreshStaticUI();
         RefreshMaterialListPanel();
         RebuildCards(animateFromCurrent: true);
@@ -4349,9 +4427,23 @@ public bool IsCardDragActive => cardDragActive;
 
         RebuildCards(animateFromCurrent: true);
         refreshUsedThisTurn = false;
-        if (matched && matchedOption != null && (matchedOption.resultId == RestStudyResultId || matchedOption.resultId == RestDeepStudyResultId))
+        if (matched && matchedOption != null && matchedOption.resultId == RestStudyResultId)
         {
-            ShowMagicModifierSelection(matchedOption.resultId == RestDeepStudyResultId ? 3 : 2);
+            ShowMagicModifierSelection(2);
+            yield break;
+        }
+
+        if (matched && matchedOption != null && matchedOption.resultId == RestArrowModifierResultId)
+        {
+            List<MaterialModifierData> choices = GetArrowModifierChoices(2);
+            if (choices.Count > 0 && CountSelectableArrowModifierTargets() > 0)
+            {
+                bool completed = false;
+                ShowArrowModifierRewardSelection(choices, delegate { completed = true; });
+                while (!completed)
+                    yield return null;
+            }
+            FinishRestLevel();
             yield break;
         }
 
@@ -6273,8 +6365,8 @@ public bool IsCardDragActive => cardDragActive;
 		if (baseMagicSlotCount <= 0)
 			baseMagicSlotCount = componentsInChildren.Length;
 
-		int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
-		EnsureMagicSlotCapacity(slotLimit, componentsInChildren[0]);
+			int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
+			EnsureMagicSlotCapacity(slotLimit);
 		componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
 
 		magicViews.Clear();
@@ -6294,18 +6386,23 @@ public bool IsCardDragActive => cardDragActive;
 			if (clickHandler == null)
 				clickHandler = view.gameObject.AddComponent<MagicSlotClickHandler>();
 			clickHandler.Bind(this, i);
-			view.Bind(playerState.GetMagicAtSlot(i));
-			magicViews.Add(view);
-		}
-	}
+				view.Bind(playerState.GetMagicAtSlot(i));
+				magicViews.Add(view);
+			}
 
-	private void EnsureMagicSlotCapacity(int slotCount, MagicItemView template)
+            magicBookArea.GetComponent<MagicBookAutoSpacing>()?.RefreshSpacing();
+		}
+
+	private void EnsureMagicSlotCapacity(int slotCount)
 	{
+		if ((Object)magicSlotPrefab == (Object)null)
+			return;
+
 		for (int i = magicBookArea.GetComponentsInChildren<MagicItemView>(true).Length; i < slotCount; i++)
 		{
-			GameObject slot = Object.Instantiate(template.gameObject, magicBookArea);
-			slot.name = template.gameObject.name;
-			slot.SetActive(true);
+			RectTransform slot = Object.Instantiate(magicSlotPrefab, magicBookArea);
+			slot.name = magicSlotPrefab.name;
+			slot.gameObject.SetActive(true);
 		}
 	}
 

@@ -54,23 +54,23 @@
     },
     {
       "key": "rest.option.rest",
-      "text": "休息"
+      "text": "回复血量"
     },
     {
       "key": "rest.option.study",
-      "text": "研习道具"
+      "text": "道具强化"
     },
     {
       "key": "rest.option.study.effect",
       "text": "从2个强化中选择1个，附魔到一个道具上"
     },
     {
-      "key": "rest.option.deep_study",
-      "text": "深入研习道具"
+      "key": "rest.option.arrow_modifier",
+      "text": "箭头附魔"
     },
     {
-      "key": "rest.option.deep_study.effect",
-      "text": "从3个强化中选择1个，附魔到一个道具上"
+      "key": "rest.option.arrow_modifier.effect",
+      "text": "从2个强化中选择1个，附魔到一个箭头上"
     },
     {
       "key": "rest.default_heal",

@@ -12,12 +12,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private Image backgroundImage;
     [SerializeField] private TMP_Text magicNameText;
     [SerializeField] private RectTransform recipeRoot;
-    [SerializeField] private Image modifierMarkerImage;
-    [SerializeField] private SpringLineHighlightUI slotFrame;
     [Header("施法序列")]
     [SerializeField] private Vector2 recipeIconSize = new Vector2(36f, 36f);
-    [SerializeField] private Vector2 recipeIconSpacing = new Vector2(22f, 22f);
-    [SerializeField] private Vector2 recipeIconPadding = Vector2.zero;
+    [SerializeField] private Vector2 recipeIconSpacing = new Vector2(-14f, -14f);
+    [SerializeField] private RectOffset recipeIconPadding = new RectOffset();
+    [SerializeField] private Image modifierMarkerImage;
+    [SerializeField] private SpringLineHighlightUI slotFrame;
     [SerializeField] private RectTransform tagTooltipRoot;
     [SerializeField] private TMP_Text tagTooltipText;
     [SerializeField] private bool showTagTooltipOnLeft;
@@ -421,6 +421,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (recipeRoot == null)
             return;
 
+        GridLayoutGroup recipeLayout = recipeRoot.GetComponent<GridLayoutGroup>();
+        if (recipeLayout == null)
+            return;
+        recipeLayout.cellSize = recipeIconSize;
+        recipeLayout.spacing = recipeIconSpacing;
+        recipeLayout.padding = recipeIconPadding;
+
         recipeBlocks.Clear();
         int recipeCount = magic != null && magic.Data.recipe != null ? magic.Data.recipe.Length : 0;
         for (int i = 0; i < recipeRoot.childCount; i++)
@@ -445,12 +452,6 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             SetBlockOpaque(block);
             recipeBlocks.Add(block);
 
-            RectTransform blockRect = (RectTransform)block.transform;
-            blockRect.anchorMin = new Vector2(0f, 1f);
-            blockRect.anchorMax = new Vector2(0f, 1f);
-            blockRect.pivot = new Vector2(0f, 1f);
-            blockRect.anchoredPosition = new Vector2(recipeIconPadding.x + (i % 4) * recipeIconSpacing.x, -recipeIconPadding.y - (i / 4) * recipeIconSpacing.y);
-            blockRect.sizeDelta = recipeIconSize;
         }
     }
 

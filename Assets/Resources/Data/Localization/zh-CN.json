@@ -190,7 +190,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "对敌方施加2层【易损】"
+      "text": "对敌方施加1层【易损】"
     },
     {
       "key": "magic.stone_wall.name",

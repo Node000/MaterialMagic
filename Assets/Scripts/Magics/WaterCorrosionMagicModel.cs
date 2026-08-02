@@ -5,6 +5,6 @@ public class WaterCorrosionMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         EnemyModel target = Target(battleManager);
-        AddBuff(target, BuffEnum.Vulnerable, 2, result);
+        AddBuff(target, BuffEnum.Vulnerable, 1, result);
     }
 }

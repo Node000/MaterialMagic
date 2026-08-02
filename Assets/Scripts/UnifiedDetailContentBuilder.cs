@@ -756,7 +756,7 @@ public static class EventDetailTextUtility
         if (option.resultId == 301)
             return LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个道具上");
         if (option.resultId == 302)
-            return LocalizationSystem.GetText("rest.option.deep_study.effect", "从3个强化中选择1个，附魔到一个道具上");
+            return LocalizationSystem.GetText("rest.option.arrow_modifier.effect", "从2个强化中选择1个，附魔到一个箭头上");
 
         return GetNoDirectEffectText();
     }

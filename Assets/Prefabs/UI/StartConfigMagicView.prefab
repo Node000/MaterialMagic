@@ -414,11 +414,15 @@ MonoBehaviour:
   backgroundImage: {fileID: 0}
   magicNameText: {fileID: 1340398558595696215}
   recipeRoot: {fileID: 2714448743960716031}
+  recipeElementSize: {x: 36, y: 36}
+  recipeElementSpacing: {x: -14, y: -14}
+  recipePadding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
   modifierMarkerImage: {fileID: 3061875667698673557}
   slotFrame: {fileID: 0}
-  recipeIconSize: {x: 80, y: 80}
-  recipeIconSpacing: {x: 22, y: 22}
-  recipeIconPadding: {x: 0, y: 0}
   tagTooltipRoot: {fileID: 0}
   tagTooltipText: {fileID: 0}
   showTagTooltipOnLeft: 0
@@ -1181,6 +1185,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2714448743960716031}
+  - component: {fileID: 3952149362069550979}
   m_Layer: 0
   m_Name: Recipe
   m_TagString: Untagged
@@ -1207,6 +1212,30 @@ RectTransform:
   m_AnchoredPosition: {x: 82.805756, y: 2.55}
   m_SizeDelta: {x: -94.8058, y: 38}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &3952149362069550979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5710982040065098965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 36, y: 36}
+  m_Spacing: {x: -14, y: -14}
+  m_Constraint: 0
+  m_ConstraintCount: 2
 --- !u!1 &5918868775102772169
 GameObject:
   m_ObjectHideFlags: 0

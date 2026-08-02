@@ -8,6 +8,10 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private HandSystemUI handSystem;
     [SerializeField] private TMP_Dropdown levelDropdown;
     [SerializeField] private Button startBattleButton;
+    [SerializeField] private Button damageButton;
+    [SerializeField] private Button killTargetButton;
+    [SerializeField] private Button drawCardButton;
+    [SerializeField] private Button startRestButton;
     [SerializeField] private TMP_Dropdown eventDropdown;
     [SerializeField] private Button startEventButton;
     [SerializeField] private TMP_Dropdown magicDropdown;
@@ -25,7 +29,36 @@ public class DebugBattlePanelUI : MonoBehaviour
     private void Awake()
     {
         CacheReferences();
+    }
+
+    private void OnEnable()
+    {
+        CacheReferences();
+        RegisterListeners();
+        PopulateBattleDropdown();
+        PopulateEventDropdown();
+        PopulateMagicDropdown();
+        PopulateShopDropdown();
+    }
+
+    private void RegisterListeners()
+    {
+        startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
+        damageButton?.onClick.RemoveListener(DealDamageToTarget);
+        killTargetButton?.onClick.RemoveListener(KillTargetEnemy);
+        drawCardButton?.onClick.RemoveListener(DrawCard);
+        startRestButton?.onClick.RemoveListener(StartSelectedRest);
+        startEventButton?.onClick.RemoveListener(StartSelectedEvent);
+        addMagicButton?.onClick.RemoveListener(AddSelectedMagic);
+        removeLastMagicButton?.onClick.RemoveListener(RemoveLastMagic);
+        openShopButton?.onClick.RemoveListener(OpenSelectedShop);
+        closeButton?.onClick.RemoveListener(Hide);
+
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
+        damageButton?.onClick.AddListener(DealDamageToTarget);
+        killTargetButton?.onClick.AddListener(KillTargetEnemy);
+        drawCardButton?.onClick.AddListener(DrawCard);
+        startRestButton?.onClick.AddListener(StartSelectedRest);
         startEventButton?.onClick.AddListener(StartSelectedEvent);
         addMagicButton?.onClick.AddListener(AddSelectedMagic);
         removeLastMagicButton?.onClick.AddListener(RemoveLastMagic);
@@ -33,18 +66,13 @@ public class DebugBattlePanelUI : MonoBehaviour
         closeButton?.onClick.AddListener(Hide);
     }
 
-    private void OnEnable()
-    {
-        CacheReferences();
-        PopulateBattleDropdown();
-        PopulateEventDropdown();
-        PopulateMagicDropdown();
-        PopulateShopDropdown();
-    }
-
     private void OnDestroy()
     {
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
+        damageButton?.onClick.RemoveListener(DealDamageToTarget);
+        killTargetButton?.onClick.RemoveListener(KillTargetEnemy);
+        drawCardButton?.onClick.RemoveListener(DrawCard);
+        startRestButton?.onClick.RemoveListener(StartSelectedRest);
         startEventButton?.onClick.RemoveListener(StartSelectedEvent);
         addMagicButton?.onClick.RemoveListener(AddSelectedMagic);
         removeLastMagicButton?.onClick.RemoveListener(RemoveLastMagic);
@@ -75,6 +103,14 @@ public class DebugBattlePanelUI : MonoBehaviour
             levelDropdown = transform.Find("LevelDropdown")?.GetComponent<TMP_Dropdown>();
         if (startBattleButton == null)
             startBattleButton = transform.Find("StartBattleButton")?.GetComponent<Button>();
+        if (damageButton == null)
+            damageButton = transform.Find("DamageButton")?.GetComponent<Button>();
+        if (killTargetButton == null)
+            killTargetButton = transform.Find("KillTargetButton")?.GetComponent<Button>();
+        if (drawCardButton == null)
+            drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
+        if (startRestButton == null)
+            startRestButton = transform.Find("StartRestButton")?.GetComponent<Button>();
         if (eventDropdown == null)
             eventDropdown = transform.Find("EventDropdown")?.GetComponent<TMP_Dropdown>();
         if (startEventButton == null)
@@ -251,6 +287,33 @@ public class DebugBattlePanelUI : MonoBehaviour
 
         if (GameDataDatabase.TryGetLevelData(battleLevelIds[levelDropdown.value], out LevelData level))
             handSystem.DebugStartBattleLevel(level);
+    }
+
+    private void DealDamageToTarget()
+    {
+        handSystem?.DebugDealDamageToTarget(10);
+    }
+
+    private void KillTargetEnemy()
+    {
+        handSystem?.DebugKillTargetEnemy();
+    }
+
+    private void DrawCard()
+    {
+        handSystem?.DebugDrawCards(1);
+    }
+
+    private void StartSelectedRest()
+    {
+        foreach (LevelData level in GameDataDatabase.LevelData.Values)
+        {
+            if (level != null && level.levelType == LevelType.Rest)
+            {
+                handSystem?.DebugStartRestLevel(level);
+                return;
+            }
+        }
     }
 
     private void StartSelectedEvent()
