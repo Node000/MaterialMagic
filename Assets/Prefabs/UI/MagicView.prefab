@@ -415,7 +415,7 @@ MonoBehaviour:
   magicNameText: {fileID: 1340398558595696215}
   recipeRoot: {fileID: 2714448743960716031}
   recipeIconSize: {x: 64, y: 64}
-  recipeIconSpacing: {x: -28, y: -14}
+  recipeIconSpacing: {x: -36, y: -14}
   recipeIconPadding:
     m_Left: 0
     m_Right: 0
@@ -1232,10 +1232,10 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 36, y: 36}
-  m_Spacing: {x: -14, y: -14}
-  m_Constraint: 0
-  m_ConstraintCount: 2
+  m_CellSize: {x: 64, y: 64}
+  m_Spacing: {x: -36, y: -14}
+  m_Constraint: 1
+  m_ConstraintCount: 4
 --- !u!1 &5918868775102772169
 GameObject:
   m_ObjectHideFlags: 0
