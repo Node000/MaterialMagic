@@ -21,7 +21,7 @@ MonoBehaviour:
   healthBarMinWidth: 0
   healthBarMaxWidth: 600
   buffSlotSize: 64
-  buffSlotSpacing: 8
+  buffSlotSpacing: -36
   buffMinColumnCount: 1
   buffMaxColumnCount: 5
   buffColumnsPerHealthBarWidth: 32

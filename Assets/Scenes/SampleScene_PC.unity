@@ -2562,10 +2562,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2645,6 +2641,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5275,10 +5275,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (2)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5358,6 +5354,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8456,7 +8456,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -769}
+  m_AnchoredPosition: {x: 190, y: -719}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &223453485
@@ -13640,7 +13640,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -437}
+  m_AnchoredPosition: {x: 190, y: -387}
   m_SizeDelta: {x: 356, y: 42}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &393776266
@@ -17617,7 +17617,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -627}
+  m_AnchoredPosition: {x: 190, y: -577}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &532676397
@@ -26911,10 +26911,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (6)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -26994,6 +26990,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (6)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -27410,8 +27410,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 57.79, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -375.59998, y: 424.60242}
-  m_SizeDelta: {x: 518, y: 60.99524}
+  m_AnchoredPosition: {x: -375.59998, y: 451.05237}
+  m_SizeDelta: {x: 518, y: 113.895294}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &774484493
 MonoBehaviour:
@@ -27434,7 +27434,7 @@ MonoBehaviour:
   m_StartCorner: 1
   m_StartAxis: 0
   m_CellSize: {x: 244.5, y: 81}
-  m_Spacing: {x: 30, y: -14.700004}
+  m_Spacing: {x: 30, y: -1.1}
   m_Constraint: 1
   m_ConstraintCount: 1
 --- !u!114 &774484494
@@ -27449,7 +27449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5993b341b41d9a24a88b5c93a85ea380, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHeight: 545.1
+  maxHeight: 625
 --- !u!1 &775757455
 GameObject:
   m_ObjectHideFlags: 0
@@ -27860,10 +27860,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (7)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -27943,6 +27939,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (7)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -31728,7 +31728,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -389}
+  m_AnchoredPosition: {x: 190, y: -339}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &937075431
@@ -31886,7 +31886,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.72, g: 0.86, b: 0.95, a: 1}
+  m_Color: {r: 0.44705883, g: 0.6784314, b: 0.83137256, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -31956,10 +31956,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (3)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -32039,6 +32035,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (3)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -35376,10 +35376,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (4)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -35459,6 +35455,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (4)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -36948,16 +36948,16 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1099119134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -57.56}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105201879}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150.2, y: -54}
-  m_SizeDelta: {x: 433.7, y: 43.3}
+  m_AnchoredPosition: {x: 150.2, y: -89.14}
+  m_SizeDelta: {x: 433.7, y: 72}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1099119136
 MonoBehaviour:
@@ -37362,7 +37362,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -581}
+  m_AnchoredPosition: {x: 190, y: -531}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1108988258
@@ -39215,7 +39215,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -675}
+  m_AnchoredPosition: {x: 190, y: -625}
   m_SizeDelta: {x: 356, y: 42}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1168756227
@@ -41528,7 +41528,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1235505136
 RectTransform:
   m_ObjectHideFlags: 0
@@ -45543,7 +45543,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 27.19}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -66.7, y: 843}
+  m_AnchoredPosition: {x: 59.6, y: 823.6}
   m_SizeDelta: {x: 200, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1339357943
@@ -49022,7 +49022,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.72, g: 0.86, b: 0.95, a: 1}
+  m_Color: {r: 0.44705883, g: 0.6784314, b: 0.83137256, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -51328,10 +51328,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (5)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -51411,6 +51407,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (5)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -51810,7 +51810,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -813}
+  m_AnchoredPosition: {x: 190, y: -763}
   m_SizeDelta: {x: 356, y: 34}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1534417012
@@ -52898,7 +52898,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -485}
+  m_AnchoredPosition: {x: 190, y: -435}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1562346200
@@ -56330,10 +56330,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 774484492}
     m_Modifications:
-    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
-      propertyPath: m_Name
-      value: MagicSlot_PC (1)
-      objectReference: {fileID: 0}
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -56413,6 +56409,10 @@ PrefabInstance:
     - target: {fileID: 262373051968281756, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7460076679345486477, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
+      propertyPath: m_Name
+      value: MagicSlot_PC (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -57151,7 +57151,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -533}
+  m_AnchoredPosition: {x: 190, y: -483}
   m_SizeDelta: {x: 356, y: 42}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1670143073
@@ -74045,7 +74045,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -723}
+  m_AnchoredPosition: {x: 190, y: -673}
   m_SizeDelta: {x: 356, y: 38}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2133509271
@@ -75438,7 +75438,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.72, g: 0.86, b: 0.95, a: 1}
+  m_Color: {r: 0.44705883, g: 0.6784314, b: 0.83137256, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

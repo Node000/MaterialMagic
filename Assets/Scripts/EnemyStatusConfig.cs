@@ -20,7 +20,7 @@ public class EnemyStatusConfig : ScriptableObject
     };
     [SerializeField] private float healthBarMinWidth = 90f;
     [SerializeField] private float healthBarMaxWidth = 220f;
-    [SerializeField] private float buffSlotSize = 42f;
+    [SerializeField] private float buffSlotSize = 64f;
     [SerializeField] private float buffSlotSpacing = 6f;
     [SerializeField] private int buffMinColumnCount = 1;
     [SerializeField] private int buffMaxColumnCount = 5;

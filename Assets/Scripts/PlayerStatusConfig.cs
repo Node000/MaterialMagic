@@ -12,7 +12,7 @@ public class BreakpointRateData
 [CreateAssetMenu(fileName = "PlayerStatusConfig", menuName = "Config/Player Status Config")]
 public class PlayerStatusConfig : ScriptableObject
 {
-    [SerializeField] private float buffSlotSize = 42f;
+    [SerializeField] private float buffSlotSize = 64f;
     [SerializeField] private float buffSlotSpacing = 6f;
     [SerializeField] private int buffRootColumnCount = 5;
     [SerializeField] private int buffRootRowCount = 2;

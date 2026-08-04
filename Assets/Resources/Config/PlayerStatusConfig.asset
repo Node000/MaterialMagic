@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cab550b0e54cd743b02f79928dfbcd8, type: 3}
   m_Name: PlayerStatusConfig
   m_EditorClassIdentifier: 
-  buffSlotSize: 64
-  buffSlotSpacing: 8
+  buffSlotSize: 96
+  buffSlotSpacing: -100
   buffRootColumnCount: 5
   buffRootRowCount: 2

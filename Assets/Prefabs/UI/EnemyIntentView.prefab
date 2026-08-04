@@ -190,7 +190,7 @@ MonoBehaviour:
   floatAmplitude: 4
   floatFrequency: 1.15
   rippleDuration: 0.58
-  rippleSize: 116
+  rippleSize: 128
   rippleRingCount: 3
   fadeOutDuration: 0.18
   horizontalPadding: 10
