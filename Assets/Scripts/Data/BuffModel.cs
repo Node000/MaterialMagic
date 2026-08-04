@@ -321,6 +321,7 @@ public class BuffModel
             case BuffEnum.TemporaryWindOnMaterialConsumed:
             case BuffEnum.Claw:
             case BuffEnum.ShieldReflect:
+            case BuffEnum.Thorns:
             case BuffEnum.ExtraDraw:
             case BuffEnum.ExtraRefresh:
             case BuffEnum.ChargeNextDraw:

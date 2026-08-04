@@ -538,6 +538,7 @@ public class BattleManager
         else
             PlayerState.ClearShield();
         PlayerState.TriggerOnTurnStart(opponent);
+        ArrowUpgradeSystem.TriggerTurnStart(PlayerState);
         int handCountBeforeTurnDraw = PlayerState.Hand.Count;
         bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
         DrawPlayerTurnCards(drawCount, skipNormalDraw);
@@ -579,6 +580,7 @@ public class BattleManager
         TriggerEnemyPlayerTurnEndBuffs();
         TriggerMagicTurnEnd();
         PlayerState.RemoveTurnOnlyModifiers();
+        ArrowUpgradeSystem.TriggerEndTurn(PlayerState);
         PlayerState.EndTurn(removedTemporaryCards);
         PlayerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         PlayerState.TriggerMaterialEnd();

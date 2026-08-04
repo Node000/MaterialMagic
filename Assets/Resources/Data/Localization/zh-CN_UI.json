@@ -1663,6 +1663,210 @@
     {
       "key": "difficulty.extra_top_boss_cells_2.desc",
       "text": "顶层额外添加2个首领格。"
+    },
+    {
+      "key": "arrow_upgrade.panel.title",
+      "text": "箭头强化"
+    },
+    {
+      "key": "arrow_upgrade.close",
+      "text": "关闭"
+    },
+    {
+      "key": "arrow_upgrade.confirm",
+      "text": "确认投入"
+    },
+    {
+      "key": "arrow_upgrade.cancel",
+      "text": "取消选择"
+    },
+    {
+      "key": "arrow_upgrade.magic.title",
+      "text": "投入道具"
+    },
+    {
+      "key": "arrow_upgrade.page.up",
+      "text": "上箭头"
+    },
+    {
+      "key": "arrow_upgrade.page.down",
+      "text": "下箭头"
+    },
+    {
+      "key": "arrow_upgrade.page.left",
+      "text": "左箭头"
+    },
+    {
+      "key": "arrow_upgrade.page.right",
+      "text": "右箭头"
+    },
+    {
+      "key": "arrow_upgrade.page.body",
+      "text": "玩家本体"
+    },
+    {
+      "key": "arrow_upgrade.direction.up",
+      "text": "上"
+    },
+    {
+      "key": "arrow_upgrade.direction.down",
+      "text": "下"
+    },
+    {
+      "key": "arrow_upgrade.direction.left",
+      "text": "左"
+    },
+    {
+      "key": "arrow_upgrade.direction.right",
+      "text": "右"
+    },
+    {
+      "key": "arrow_upgrade.deck_summary",
+      "text": "牌组：上 {0}  下 {1}  左 {2}  右 {3}  其他 {4}  总计 {5}"
+    },
+    {
+      "key": "arrow_upgrade.no_player",
+      "text": "当前没有可用玩家状态。"
+    },
+    {
+      "key": "arrow_upgrade.state.unlocked",
+      "text": "已激活"
+    },
+    {
+      "key": "arrow_upgrade.state.available",
+      "text": "可激活"
+    },
+    {
+      "key": "arrow_upgrade.state.locked",
+      "text": "未解锁"
+    },
+    {
+      "key": "arrow_upgrade.select_node",
+      "text": "选择一个可激活节点"
+    },
+    {
+      "key": "arrow_upgrade.select_node_hint",
+      "text": "切换节点会清空已选道具。免费根节点不需要投入。"
+    },
+    {
+      "key": "arrow_upgrade.requirement.free",
+      "text": "需求：免费激活"
+    },
+    {
+      "key": "arrow_upgrade.requirement.prefix",
+      "text": "需求："
+    },
+    {
+      "key": "arrow_upgrade.requirement_met",
+      "text": "需求已满足，确认后会消耗所选道具。"
+    },
+    {
+      "key": "arrow_upgrade.requirement_unmet",
+      "text": "选择道具，使其配方合计覆盖以上方向；多余方向不会浪费。"
+    },
+    {
+      "key": "arrow_upgrade.selected_count",
+      "text": "已选 {0} 件"
+    },
+    {
+      "key": "arrow_upgrade.magic.slot",
+      "text": "槽"
+    },
+    {
+      "key": "arrow_upgrade.no_matching_magic",
+      "text": "没有能满足当前需求的道具。"
+    },
+    {
+      "key": "arrow_upgrade.up_root.description",
+      "text": "激活上箭头强化树。"
+    },
+    {
+      "key": "arrow_upgrade.up_up.description",
+      "text": "读取时额外造成{0}点伤害。"
+    },
+    {
+      "key": "arrow_upgrade.up_down.description",
+      "text": "读取时施加{0}层燃烧。"
+    },
+    {
+      "key": "arrow_upgrade.up_left.description",
+      "text": "抽到时造成{0}点伤害。"
+    },
+    {
+      "key": "arrow_upgrade.up_right.description",
+      "text": "抽到时获得{0}点护盾。"
+    },
+    {
+      "key": "arrow_upgrade.down_root.description",
+      "text": "激活下箭头强化树。"
+    },
+    {
+      "key": "arrow_upgrade.down_up.description",
+      "text": "进入弃牌堆时造成{0}点伤害。"
+    },
+    {
+      "key": "arrow_upgrade.down_down.description",
+      "text": "读取时随机施加{0}层电弧、燃烧或易损。"
+    },
+    {
+      "key": "arrow_upgrade.down_left.description",
+      "text": "抽到时施加{0}层易损。"
+    },
+    {
+      "key": "arrow_upgrade.down_right.description",
+      "text": "进入弃牌堆时施加{0}层易损。"
+    },
+    {
+      "key": "arrow_upgrade.left_root.description",
+      "text": "激活左箭头强化树。"
+    },
+    {
+      "key": "arrow_upgrade.left_up.description",
+      "text": "抽到时造成{0}点伤害。"
+    },
+    {
+      "key": "arrow_upgrade.left_down.description",
+      "text": "抽到时施加{0}层易损。"
+    },
+    {
+      "key": "arrow_upgrade.left_left.description",
+      "text": "抽到时立刻再抽{0}张箭头。"
+    },
+    {
+      "key": "arrow_upgrade.left_right.description",
+      "text": "抽到时获得{0}点护盾。"
+    },
+    {
+      "key": "arrow_upgrade.right_root.description",
+      "text": "激活右箭头强化树。"
+    },
+    {
+      "key": "arrow_upgrade.right_up.description",
+      "text": "读取时自己受到{0}点伤害，并造成{1}点伤害。"
+    },
+    {
+      "key": "arrow_upgrade.right_down.description",
+      "text": "读取时获得{0}层荆棘。"
+    },
+    {
+      "key": "arrow_upgrade.right_left.description",
+      "text": "抽到时获得保留；回合结束时未打出则获得{0}点护盾。"
+    },
+    {
+      "key": "arrow_upgrade.right_right.description",
+      "text": "读取时安排下回合开始获得{0}点护盾。"
+    },
+    {
+      "key": "arrow_upgrade.body_draw_1.description",
+      "text": "每回合抽牌数+{0}。"
+    },
+    {
+      "key": "arrow_upgrade.body_refresh.description",
+      "text": "每回合额外换牌次数+{0}。"
+    },
+    {
+      "key": "arrow_upgrade.body_draw_2.description",
+      "text": "每回合抽牌数+{0}。"
     }
   ]
 }

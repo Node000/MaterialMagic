@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5828b18f734db624486681921cf21236, type: 3}
+  m_Name: SecondFloorPCMapConfig
+  m_EditorClassIdentifier: 
+  regionWidth: 12
+  regionHeight: 11
+  stripsPerRegion: 6
+  contentRules:
+  - levelType: 0
+    minCount: 0
+    maxCount: 0
+    weight: 8
+  - levelType: 1
+    minCount: 0
+    maxCount: 0
+    weight: 4
+  - levelType: 5
+    minCount: 0
+    maxCount: 0
+    weight: 2
+  - levelType: 2
+    minCount: 0
+    maxCount: 0
+    weight: 2
+  - levelType: 3
+    minCount: 0
+    maxCount: 0
+    weight: 2
+  - levelType: 4
+    minCount: 0
+    maxCount: 0
+    weight: 3
+  - levelType: 7
+    minCount: 0
+    maxCount: 0
+    weight: 1
+  - levelType: 6
+    minCount: 0
+    maxCount: 0
+    weight: 1

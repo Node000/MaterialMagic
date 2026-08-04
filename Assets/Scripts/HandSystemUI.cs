@@ -369,7 +369,8 @@ public class HandSystemUI : MonoBehaviour
 
 		private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
 
-    private int baseMagicSlotCount;
+    [SerializeField, Min(1)]
+    private int baseMagicSlotCount = 8;
 
     private readonly List<int> debugMagicDropdownIds = new List<int>();
 
@@ -562,9 +563,14 @@ public class HandSystemUI : MonoBehaviour
 
 	private int currentMapNodeIndex;
 
+    private const string SecondFloorSceneName = "SampleScene_PC_SecondFloor";
+    private const string SecondFloorMapConfigResourcePath = "Config/SecondFloorPCMapConfig";
+
     private bool pendingChapterMapBossStart;
     private bool currentChapterMapBossLevel;
     private bool chapterMapMoveInProgress;
+    private bool directSampleDebugRun;
+    private bool secondFloorRun;
 
 		private bool busy;
 
@@ -615,7 +621,19 @@ public class HandSystemUI : MonoBehaviour
 
     private const string EnemyDeathExplosionMaterialPath = "Materials/Style/Sprite/M_Sprite_FragmentExplosion_Default";
 
-	public PlayerState PlayerState => playerState;
+		public PlayerState PlayerState => playerState;
+
+    public void RefreshArrowUpgradeVisuals()
+    {
+        for (int i = 0; i < cardViews.Count; i++)
+        {
+            HandCardView view = cardViews[i];
+            if (view != null)
+                view.RefreshUpgradeVisual();
+        }
+
+        RefreshMaterialListPanel();
+    }
 
     public RunManager RunManager => runManager;
 
@@ -1061,12 +1079,12 @@ public class HandSystemUI : MonoBehaviour
 
 	private const int SecondFixedEventNodeIndex = 15;
 
-	private void ShowLevelSelect()
-	{
+    private void ShowLevelSelect()
+    {
         chapterMapMoveInProgress = false;
-		busy = true;
-		SetButtonsInteractable(interactable: false);
-		HideLevelSelectPanel();
+        busy = true;
+        SetButtonsInteractable(interactable: false);
+        HideLevelSelectPanel();
         EnsureChapterMapGrid();
         RunMapGridModel grid = ChapterMapGrid;
         if (grid == null || grid.CellCount == 0)
@@ -1079,8 +1097,12 @@ public class HandSystemUI : MonoBehaviour
         if (panel != null)
             panel.SetDirectionCardSource(handArea, mapDirectionCardPrefab, cardSpacing);
         GetUIManager().ShowChapterGridPanel(grid);
+        if (secondFloorRun)
+            return;
+
         TutorialManager?.OnLevelSelectShown(currentMapNodeIndex);
         if (ShouldActivateBossMapForCurrentSelection(grid))
+
         {
             if (panel != null)
             {
@@ -2346,6 +2368,64 @@ public class HandSystemUI : MonoBehaviour
 		GameLog.Data($"Build map nodes={mapNodes.Count} randomizedEvents={eventLevels.Count}");
 	}
 
+    public void EnterSecondFloor()
+    {
+        if (directSampleDebugRun || runEnded || playerState == null || currentLevel != null || runManager == null)
+            return;
+
+        BuildSecondFloorMap(activeChapter ?? GetActiveChapter());
+        if (ChapterMapGrid == null || ChapterMapGrid.CellCount == 0)
+            return;
+
+        RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), null, GetCurrentRunPlaySeconds(), battleManager, null, SecondFloorSceneName);
+        PlayerState.ContinueSavedRun = true;
+        PlayerState.GameSceneEntryRequested = true;
+        if (SceneTransitionManager.Instance != null)
+            SceneTransitionManager.Instance.LoadSecondFloorWithTransition(gameObject);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(SecondFloorSceneName);
+    }
+
+    private void BuildSecondFloorMap(ChapterData chapter)
+    {
+        SecondFloorPCMapConfig config = Resources.Load<SecondFloorPCMapConfig>(SecondFloorMapConfigResourcePath);
+        if (config == null)
+        {
+            Debug.LogError("缺少第二层 PC 地图配置。");
+            return;
+        }
+
+        EnsureSecondFloorMapNode();
+        LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
+        int seed = NextRunRandomInt(1, int.MaxValue);
+        if (!SecondFloorPCMapGenerator.TryGenerate(config, seed, GetSecondFloorLevel, bossLevel, out RunMapGridModel grid, out string error))
+        {
+            Debug.LogError(error);
+            return;
+        }
+
+        runManager.AttachMapGrid(grid);
+        runManager.RevealCurrentMapNeighbors();
+        runManager.SetCurrentMapNodeIndex(0);
+        currentMapNodeIndex = 0;
+        GameLog.Data($"Build second floor map seed={seed} cells={grid.CellCount}");
+    }
+
+    private void EnsureSecondFloorMapNode()
+    {
+        if (mapNodes.Count == 1)
+            return;
+
+        mapNodes.Clear();
+        mapNodes.Add(new RunMapNodeModel { fixedSingleChoice = true });
+    }
+
+    private LevelData GetSecondFloorLevel(LevelType type)
+    {
+        List<LevelData> levels = type == LevelType.Battle ? GetBattleLevels() : GetLevels(type);
+        return levels.Count > 0 ? levels[NextRunRandomInt(0, levels.Count)] : null;
+    }
+
     public void BuildChapterMapGrid(ChapterData chapter, int additionalTopBossCellCount = 0)
     {
         if (runManager == null)
@@ -2399,6 +2479,31 @@ public class HandSystemUI : MonoBehaviour
         SetMapGridLevel(levels, width, 0, 3, GetLevelData(TutorialManagerUI.TutorialShopLevelId));
         SetMapGridLevel(levels, width, 0, 4, GetLevelData(TutorialManagerUI.TutorialRestLevelId));
         SetMapGridLevel(levels, width, 0, 5, GetLevelData(TutorialManagerUI.TutorialBossLevelId));
+    }
+
+    private void BuildDirectSampleDebugMap(ChapterData chapter)
+    {
+        const int width = 1;
+        const int height = 5;
+        const int shopLevelId = 401;
+        const int restLevelId = 201;
+        const int eventLevelId = 101;
+        const int bossLevelId = 1006;
+
+        List<LevelData> levels = new List<LevelData>(height)
+        {
+            null,
+            GetLevelData(shopLevelId),
+            GetLevelData(restLevelId),
+            GetLevelData(eventLevelId),
+            GetLevelData(bossLevelId)
+        };
+        runManager.BuildMapGrid(chapter, levels, width, height);
+        RunMapCellModel bossCell = runManager.MapGrid.GetCell(0, height - 1);
+        bossCell.isBoss = true;
+        bossCell.isEnd = true;
+        bossCell.isRevealed = true;
+        runManager.RevealCurrentMapNeighbors();
     }
 
     private void ApplyTutorialChapterMapCellFlags()
@@ -2645,7 +2750,9 @@ public class HandSystemUI : MonoBehaviour
         }
 
         pendingChapterMapBossStart = targetCell.isBoss || (ChapterMapGrid != null && ChapterMapGrid.bossMapActive);
-        LevelData level = pendingChapterMapBossStart ? runManager.DrawBossLevel(activeChapter ?? GetActiveChapter()) : targetCell.level;
+        LevelData level = pendingChapterMapBossStart
+            ? directSampleDebugRun ? targetCell.level : runManager.DrawBossLevel(activeChapter ?? GetActiveChapter())
+            : targetCell.level;
         if (level == null)
         {
             if (panel != null)
@@ -3015,6 +3122,9 @@ public class HandSystemUI : MonoBehaviour
 		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0084: Expected O, but got Unknown
         RunSaveData saveData = null;
+        bool gameSceneEntryRequested = PlayerState.ConsumeGameSceneEntryRequested();
+        secondFloorRun = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SecondFloorSceneName;
+        directSampleDebugRun = !gameSceneEntryRequested && !secondFloorRun;
         bool continueSavedRun = PlayerState.ContinueSavedRun && !RunSaveSystem.ConsumeForceNewRun();
         if (continueSavedRun)
             saveData = RunSaveSystem.LoadCurrentRun();
@@ -3071,9 +3181,14 @@ public class HandSystemUI : MonoBehaviour
         }
         else
         {
-		    BuildDebugMap();
-            runManager.SetActiveChapter(activeChapter ?? GetActiveChapter());
+            ChapterData chapter = activeChapter ?? GetActiveChapter();
+            if (directSampleDebugRun)
+                BuildDirectSampleDebugMap(chapter);
+            else
+                BuildDebugMap();
+            runManager.SetActiveChapter(chapter);
         }
+
 		CreateMagicViews();
 		CreateParticleCaster();
 		CreatePlayerCastAnimator();
@@ -5207,9 +5322,10 @@ public bool IsCardDragActive => cardDragActive;
 		if (step == null || step.SourceCard == null || playerState == null)
 			return result;
 
-			step.SourceCard.TriggerOnArrowBaseEffectResolve(new ArrowReadContext(playerState, battleManager));
+				step.SourceCard.TriggerOnArrowBaseEffectResolve(new ArrowReadContext(playerState, battleManager));
+				ArrowUpgradeSystem.TriggerOnRead(playerState, step.SourceCard, battleManager);
 
-			int repeatCount = 1 + playerState.GetBuffStack(BuffEnum.MaterialBaseEffectRepeat);
+				int repeatCount = 1 + playerState.GetBuffStack(BuffEnum.MaterialBaseEffectRepeat);
 			for (int repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++)
 			{
 				for (int i = 0; i < step.BaseEffectDirections.Count; i++)
@@ -5761,7 +5877,7 @@ public bool IsCardDragActive => cardDragActive;
 		            return 0;
 
 		        int remaining = refreshUsedThisTurn ? 0 : 1;
-		        return remaining + playerState.ExtraRefreshChancesThisTurn;
+		        return remaining + playerState.RemainingPermanentRefreshChancesThisTurn + playerState.ExtraRefreshChancesThisTurn;
 		    }
 
 
@@ -6361,9 +6477,6 @@ public bool IsCardDragActive => cardDragActive;
 		MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
 		if (componentsInChildren.Length == 0)
 			return;
-
-		if (baseMagicSlotCount <= 0)
-			baseMagicSlotCount = componentsInChildren.Length;
 
 			int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
 			EnsureMagicSlotCapacity(slotLimit);
@@ -7123,7 +7236,7 @@ public bool IsCardDragActive => cardDragActive;
 
     private void SaveRunProgress()
     {
-        if (runEnded || !TryBuildRunCheckpointKey(out string checkpointKey) || checkpointKey == lastRunCheckpointKey)
+        if (directSampleDebugRun || runEnded || !TryBuildRunCheckpointKey(out string checkpointKey) || checkpointKey == lastRunCheckpointKey)
             return;
 
         RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds(), battleManager, currentEvent);
@@ -8134,9 +8247,12 @@ public bool IsCardDragActive => cardDragActive;
                 }
             }
 
-            currentMapNodeIndex++;
-            runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
-            RefreshChapterProgressUI();
+            if (!secondFloorRun)
+            {
+                currentMapNodeIndex++;
+                runManager?.SetCurrentMapNodeIndex(currentMapNodeIndex);
+                RefreshChapterProgressUI();
+            }
             SaveRunProgress();
             ShowLevelSelect();
             return;
@@ -10001,7 +10117,7 @@ public bool IsCardDragActive => cardDragActive;
 		        buttonsInteractable = interactable && CanUsePlayZoneCardInput();
 			if ((Object)refreshButton != (Object)null)
 			{
-				bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.ExtraRefreshChancesThisTurn > 0);
+					bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.HasAdditionalRefreshChance());
 				refreshButton.interactable = interactable && CanUseRefreshCardInput() && canRefresh;
 			}
 	        RefreshRefreshChanceUI();

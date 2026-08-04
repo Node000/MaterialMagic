@@ -231,7 +231,7 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
         MaterialCardView view = item.GetComponent<MaterialCardView>();
         if (view != null)
         {
-            view.Bind(material, !selectable);
+            view.Bind(material, !selectable, ownerPanel != null ? ownerPanel.UpgradeVisualPlayer : null);
             view.SetSelectionVisual(IsSelected(material), true);
             view.SetSpringHighlightEnabled(hoverSelectionOutlineEnabled);
         }

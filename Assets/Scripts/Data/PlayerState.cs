@@ -5,6 +5,14 @@ public class PlayerState
 {
     public static string SelectedStartConfigId { get; set; } = "balanced";
     public static bool ContinueSavedRun { get; set; }
+    public static bool GameSceneEntryRequested { get; set; }
+
+    public static bool ConsumeGameSceneEntryRequested()
+    {
+        bool value = GameSceneEntryRequested;
+        GameSceneEntryRequested = false;
+        return value;
+    }
 
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
 
@@ -14,6 +22,7 @@ public class PlayerState
 
     private int temporaryMaterialIndex;
     private int extraRefreshChancesThisTurn;
+    private int permanentRefreshChancesUsedThisTurn;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
@@ -22,6 +31,9 @@ public class PlayerState
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
     public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
+    public int PermanentRefreshChances { get; private set; }
+    public int RemainingPermanentRefreshChancesThisTurn => Mathf.Max(0, PermanentRefreshChances - permanentRefreshChancesUsedThisTurn);
+    public ArrowUpgradeState ArrowUpgrades { get; } = new ArrowUpgradeState();
     public bool KeepHandOnEndTurn { get; private set; }
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
@@ -264,7 +276,7 @@ public class PlayerState
         }
 
         half.AddModifier(new HalfArrowModifier());
-        DiscardPile.Add(half);
+        AddCardToDiscardPile(half);
     }
 
     private bool RemoveCardFromCombatPiles(MaterialModel card)
@@ -608,7 +620,7 @@ public class PlayerState
                 continue;
             }
 
-            DiscardPile.Add(card);
+            AddCardToDiscardPile(card);
             returnedCount++;
             GameLog.Data($"Refresh discards combat card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
         }
@@ -700,7 +712,7 @@ public class PlayerState
                 continue;
             }
 
-            DiscardPile.Add(card);
+            AddCardToDiscardPile(card);
             discardedCount++;
             GameLog.Data($"Refresh discards card {DescribeMaterial(card)}. hand={Hand.Count} discardPile={DiscardPile.Count}");
         }
@@ -813,7 +825,7 @@ public class PlayerState
             }
             else
             {
-                DiscardPile.Add(card);
+                AddCardToDiscardPile(card);
                 GameLog.Data($"Return play zone card {DescribeMaterial(card)} to discard pile. discardPile={DiscardPile.Count}");
             }
         }
@@ -871,7 +883,7 @@ public class PlayerState
                     }
                     else
                     {
-                        DiscardPile.Add(card);
+                        AddCardToDiscardPile(card);
                         GameLog.Data($"End turn discards hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
                     }
                 }
@@ -1292,11 +1304,32 @@ public class PlayerState
     public void TriggerAfterDraw(MaterialModel card)
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDraw(self, card));
+        ArrowUpgradeSystem.TriggerOnDraw(this, card, BattleManager.Instance);
+    }
+
+    public int DrawArrowUpgradeBonusCard(int count = 1)
+    {
+        int drawn = 0;
+        for (int i = 0; i < count; i++)
+        {
+            if (DrawCardToHand(true) != null)
+                drawn++;
+        }
+        return drawn;
     }
 
     public void TriggerAfterDiscard(MaterialModel card)
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDiscard(self, card));
+    }
+
+    public void AddCardToDiscardPile(MaterialModel card)
+    {
+        if (card == null)
+            return;
+
+        DiscardPile.Add(card);
+        ArrowUpgradeSystem.TriggerOnDiscard(this, card, BattleManager.Instance);
     }
 
     public void TriggerAfterMaterialConsumed(MaterialModel card)
@@ -1489,6 +1522,7 @@ public class PlayerState
         MaterialModel card = Hand[0];
         Hand.RemoveAt(0);
         card.TriggerOnDiscard();
+        TriggerAfterDiscard(card);
         if (card.isTemporary)
         {
             removedTemporaryCards?.Add(card);
@@ -1497,7 +1531,7 @@ public class PlayerState
         }
         else
         {
-            DiscardPile.Add(card);
+            AddCardToDiscardPile(card);
             GameLog.Data($"Discard leftmost hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
         }
         return true;
@@ -1628,6 +1662,36 @@ public class PlayerState
     public void ResetExtraRefreshChancesThisTurn()
     {
         extraRefreshChancesThisTurn = 0;
+        permanentRefreshChancesUsedThisTurn = 0;
+    }
+
+    public void AddPermanentRefreshChance(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        PermanentRefreshChances += amount;
+        GameLog.Data($"Player permanent refresh chances +={amount} perTurn={PermanentRefreshChances}");
+    }
+
+    public bool UsePermanentRefreshChance()
+    {
+        if (RemainingPermanentRefreshChancesThisTurn <= 0)
+            return false;
+
+        permanentRefreshChancesUsedThisTurn++;
+        GameLog.Data($"Player use permanent refresh chance remainingThisTurn={RemainingPermanentRefreshChancesThisTurn}");
+        return true;
+    }
+
+    public bool HasAdditionalRefreshChance()
+    {
+        return RemainingPermanentRefreshChancesThisTurn > 0 || ExtraRefreshChancesThisTurn > 0;
+    }
+
+    public bool UseAdditionalRefreshChance()
+    {
+        return UsePermanentRefreshChance() || UseExtraRefreshChance();
     }
 
     public void AddExtraRefreshChances(int amount)
@@ -1647,6 +1711,34 @@ public class PlayerState
         extraRefreshChancesThisTurn--;
         GameLog.Data($"Player use extra refresh chance now={extraRefreshChancesThisTurn}");
         return true;
+    }
+
+    public bool CanConsumeArrowUpgradeMagics(IReadOnlyList<MagicModel> selectedMagics)
+    {
+        if (selectedMagics == null || selectedMagics.Count == 0)
+            return false;
+
+        HashSet<MagicModel> selected = new HashSet<MagicModel>();
+        for (int i = 0; i < selectedMagics.Count; i++)
+        {
+            MagicModel magic = selectedMagics[i];
+            if (magic == null || !MagicBook.Contains(magic) || !selected.Add(magic))
+                return false;
+        }
+        return true;
+    }
+
+    public void ConsumeArrowUpgradeMagics(IReadOnlyList<MagicModel> selectedMagics)
+    {
+        for (int i = 0; selectedMagics != null && i < selectedMagics.Count; i++)
+            ClearMagicSlot(selectedMagics[i].SlotIndex);
+    }
+
+    public void RestoreArrowUpgradeState(IEnumerable<string> unlockedNodeIds, int pendingNextTurnShield, int permanentRefreshChanceCount)
+    {
+        ArrowUpgrades.Restore(unlockedNodeIds, pendingNextTurnShield);
+        PermanentRefreshChances = Mathf.Max(0, permanentRefreshChanceCount);
+        permanentRefreshChancesUsedThisTurn = 0;
     }
 
     public void ClearMagicSlot(int slotIndex)

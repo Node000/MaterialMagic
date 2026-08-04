@@ -1663,6 +1663,210 @@
     {
       "key": "difficulty.extra_top_boss_cells_2.desc",
       "text": "Adds 2 extra boss cells at the top."
+    },
+    {
+      "key": "arrow_upgrade.panel.title",
+      "text": "Arrow Upgrades"
+    },
+    {
+      "key": "arrow_upgrade.close",
+      "text": "Close"
+    },
+    {
+      "key": "arrow_upgrade.confirm",
+      "text": "Confirm Sacrifice"
+    },
+    {
+      "key": "arrow_upgrade.cancel",
+      "text": "Cancel Selection"
+    },
+    {
+      "key": "arrow_upgrade.magic.title",
+      "text": "Sacrifice Items"
+    },
+    {
+      "key": "arrow_upgrade.page.up",
+      "text": "Up Arrow"
+    },
+    {
+      "key": "arrow_upgrade.page.down",
+      "text": "Down Arrow"
+    },
+    {
+      "key": "arrow_upgrade.page.left",
+      "text": "Left Arrow"
+    },
+    {
+      "key": "arrow_upgrade.page.right",
+      "text": "Right Arrow"
+    },
+    {
+      "key": "arrow_upgrade.page.body",
+      "text": "Player"
+    },
+    {
+      "key": "arrow_upgrade.direction.up",
+      "text": "Up"
+    },
+    {
+      "key": "arrow_upgrade.direction.down",
+      "text": "Down"
+    },
+    {
+      "key": "arrow_upgrade.direction.left",
+      "text": "Left"
+    },
+    {
+      "key": "arrow_upgrade.direction.right",
+      "text": "Right"
+    },
+    {
+      "key": "arrow_upgrade.deck_summary",
+      "text": "Deck: Up {0}  Down {1}  Left {2}  Right {3}  Other {4}  Total {5}"
+    },
+    {
+      "key": "arrow_upgrade.no_player",
+      "text": "No player state is currently available."
+    },
+    {
+      "key": "arrow_upgrade.state.unlocked",
+      "text": "Unlocked"
+    },
+    {
+      "key": "arrow_upgrade.state.available",
+      "text": "Available"
+    },
+    {
+      "key": "arrow_upgrade.state.locked",
+      "text": "Locked"
+    },
+    {
+      "key": "arrow_upgrade.select_node",
+      "text": "Select an available node"
+    },
+    {
+      "key": "arrow_upgrade.select_node_hint",
+      "text": "Changing nodes clears selected items. Root nodes are free."
+    },
+    {
+      "key": "arrow_upgrade.requirement.free",
+      "text": "Requirement: Free"
+    },
+    {
+      "key": "arrow_upgrade.requirement.prefix",
+      "text": "Requirement: "
+    },
+    {
+      "key": "arrow_upgrade.requirement_met",
+      "text": "Requirement met. Selected items are consumed on confirmation."
+    },
+    {
+      "key": "arrow_upgrade.requirement_unmet",
+      "text": "Select items whose combined recipes cover these directions. Extra directions are allowed."
+    },
+    {
+      "key": "arrow_upgrade.selected_count",
+      "text": "Selected: {0}"
+    },
+    {
+      "key": "arrow_upgrade.magic.slot",
+      "text": "Slot"
+    },
+    {
+      "key": "arrow_upgrade.no_matching_magic",
+      "text": "No item can contribute to this requirement."
+    },
+    {
+      "key": "arrow_upgrade.up_root.description",
+      "text": "Unlock the Up arrow upgrade path."
+    },
+    {
+      "key": "arrow_upgrade.up_up.description",
+      "text": "On read, deal an additional {0} damage."
+    },
+    {
+      "key": "arrow_upgrade.up_down.description",
+      "text": "On read, apply {0} Burn."
+    },
+    {
+      "key": "arrow_upgrade.up_left.description",
+      "text": "On draw, deal {0} damage."
+    },
+    {
+      "key": "arrow_upgrade.up_right.description",
+      "text": "On draw, gain {0} Shield."
+    },
+    {
+      "key": "arrow_upgrade.down_root.description",
+      "text": "Unlock the Down arrow upgrade path."
+    },
+    {
+      "key": "arrow_upgrade.down_up.description",
+      "text": "When moved to the discard pile, deal {0} damage."
+    },
+    {
+      "key": "arrow_upgrade.down_down.description",
+      "text": "On read, randomly apply {0} Arc, Burn, or Vulnerable."
+    },
+    {
+      "key": "arrow_upgrade.down_left.description",
+      "text": "On draw, apply {0} Vulnerable."
+    },
+    {
+      "key": "arrow_upgrade.down_right.description",
+      "text": "When moved to the discard pile, apply {0} Vulnerable."
+    },
+    {
+      "key": "arrow_upgrade.left_root.description",
+      "text": "Unlock the Left arrow upgrade path."
+    },
+    {
+      "key": "arrow_upgrade.left_up.description",
+      "text": "On draw, deal {0} damage."
+    },
+    {
+      "key": "arrow_upgrade.left_down.description",
+      "text": "On draw, apply {0} Vulnerable."
+    },
+    {
+      "key": "arrow_upgrade.left_left.description",
+      "text": "On draw, immediately draw {0} arrow."
+    },
+    {
+      "key": "arrow_upgrade.left_right.description",
+      "text": "On draw, gain {0} Shield."
+    },
+    {
+      "key": "arrow_upgrade.right_root.description",
+      "text": "Unlock the Right arrow upgrade path."
+    },
+    {
+      "key": "arrow_upgrade.right_up.description",
+      "text": "On read, take {0} damage and deal {1} damage."
+    },
+    {
+      "key": "arrow_upgrade.right_down.description",
+      "text": "On read, gain {0} Thorns."
+    },
+    {
+      "key": "arrow_upgrade.right_left.description",
+      "text": "On draw, gain Retain; if unplayed at turn end, gain {0} Shield."
+    },
+    {
+      "key": "arrow_upgrade.right_right.description",
+      "text": "On read, gain {0} Shield at the start of your next turn."
+    },
+    {
+      "key": "arrow_upgrade.body_draw_1.description",
+      "text": "Draw +{0} each turn."
+    },
+    {
+      "key": "arrow_upgrade.body_refresh.description",
+      "text": "Gain {0} extra redraw each turn."
+    },
+    {
+      "key": "arrow_upgrade.body_draw_2.description",
+      "text": "Draw +{0} each turn."
     }
   ]
 }

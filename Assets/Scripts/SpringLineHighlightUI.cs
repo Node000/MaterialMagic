@@ -54,6 +54,7 @@ public class SpringLineHighlightUI : MaskableGraphic
     private float animationTime;
     private float visibleAnimationTime;
     private float redrawTimer;
+    private bool renderingEnabled = true;
 
     protected override void Awake()
     {
@@ -143,6 +144,8 @@ public class SpringLineHighlightUI : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
+        if (!renderingEnabled)
+            return;
 
         Rect rect = GetPixelAdjustedRect();
         if (rect.width <= 0f || rect.height <= 0f || lineWidth <= 0f)
@@ -220,9 +223,52 @@ public class SpringLineHighlightUI : MaskableGraphic
         SetVerticesDirty();
     }
 
+    public bool FillEnabled => fillEnabled;
+
+    public void SetRenderingEnabled(bool value)
+    {
+        renderingEnabled = value;
+        SetVerticesDirty();
+    }
+
     public void SetFillEnabled(bool enabled)
     {
         fillEnabled = enabled;
+        SetVerticesDirty();
+    }
+
+    public void CopyVisualSettingsFrom(SpringLineHighlightUI source)
+    {
+        shape = source.shape;
+        lineCount = source.lineCount;
+        samplesPerLine = source.samplesPerLine;
+        lineWidth = source.lineWidth;
+        outset = source.outset;
+        lineSpacing = source.lineSpacing;
+        roundedRectSharpness = source.roundedRectSharpness;
+        fillEnabled = source.fillEnabled;
+        fillColor = source.fillColor;
+        wobbleAmplitude = source.wobbleAmplitude;
+        waveCount = source.waveCount;
+        scribbleAmount = source.scribbleAmount;
+        tangentWobble = source.tangentWobble;
+        linePhaseOffset = source.linePhaseOffset;
+        seed = source.seed;
+        animate = source.animate;
+        useUnscaledTime = source.useUnscaledTime;
+        flowSpeed = source.flowSpeed;
+        pulseAmount = source.pulseAmount;
+        pulseSpeed = source.pulseSpeed;
+        steppedAnimation = source.steppedAnimation;
+        animationFramesPerSecond = source.animationFramesPerSecond;
+        redrawInterval = source.redrawInterval;
+        color = source.color;
+        material = source.material;
+        maskable = source.maskable;
+        raycastTarget = false;
+        hoverTarget = null;
+        bindHoverTarget = false;
+        hideOnAwake = false;
         SetVerticesDirty();
     }
 

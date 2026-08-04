@@ -137,11 +137,14 @@ public class StartMenuUI : MonoBehaviour
         if (!RunSaveSystem.HasCurrentRun())
             return;
 
+        RunSaveData saveData = RunSaveSystem.LoadCurrentRun();
+        string sceneName = saveData != null && !string.IsNullOrWhiteSpace(saveData.sceneName) ? saveData.sceneName : gameSceneName;
         PlayerState.ContinueSavedRun = true;
+        PlayerState.GameSceneEntryRequested = true;
         if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadGameSceneWithTransition(buttonGroupUI.ContinueButtonObject);
+            SceneTransitionManager.Instance.LoadSceneWithTransition(sceneName, buttonGroupUI.ContinueButtonObject);
         else
-            SceneManager.LoadScene(gameSceneName);
+            SceneManager.LoadScene(sceneName);
     }
 
     private void OpenSaveSlotSelection()
@@ -206,6 +209,7 @@ public class StartMenuUI : MonoBehaviour
         PlayerState.SelectedStartConfigId = selectedConfig.id;
 
         PlayerState.ContinueSavedRun = false;
+        PlayerState.GameSceneEntryRequested = true;
         if (startingTutorial)
             RunSaveSystem.BeginNewTutorialRun();
         else

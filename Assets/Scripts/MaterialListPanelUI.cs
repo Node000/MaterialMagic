@@ -64,6 +64,8 @@ public class MaterialListPanelUI : MonoBehaviour
     private string selectionTitleOverride;
     private DisplayMode displayMode = DisplayMode.CombatPiles;
 
+    public PlayerState UpgradeVisualPlayer => owner != null ? owner.PlayerState : null;
+
     public void Initialize(HandSystemUI owner)
     {
         this.owner = owner;

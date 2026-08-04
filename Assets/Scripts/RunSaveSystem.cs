@@ -52,6 +52,7 @@ public class RunSaveData
     public string lastSavedAtUtc;
     public string startConfigId;
     public string runState;
+    public string sceneName;
     public int chapterNumericId;
     public int currentMapNodeIndex;
     public int victoryCount;
@@ -242,6 +243,9 @@ public class PlayerSaveData
     public int runRandomStep;
     public MaterialCardSaveData[] deck = Array.Empty<MaterialCardSaveData>();
     public MagicSlotSaveData[] magicBook = Array.Empty<MagicSlotSaveData>();
+    public string[] arrowUpgradeUnlockedNodeIds = Array.Empty<string>();
+    public int arrowUpgradePendingNextTurnShield;
+    public int permanentRefreshChances;
 }
 
 [Serializable]
@@ -503,7 +507,7 @@ public static class RunSaveSystem
         return LoadRun(CurrentSlotIndex);
     }
 
-    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f, BattleManager battleManager = null, EventModel currentEvent = null)
+    public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f, BattleManager battleManager = null, EventModel currentEvent = null, string sceneName = null)
     {
         if (player == null || mapNodes == null || mapNodes.Count == 0)
             return;
@@ -525,6 +529,7 @@ public static class RunSaveSystem
             totalPlaySeconds = playSeconds >= 0f ? playSeconds : (previousData != null ? previousData.totalPlaySeconds : 0f),
             startConfigId = currentData != null && !string.IsNullOrEmpty(currentData.startConfigId) ? currentData.startConfigId : PlayerState.SelectedStartConfigId,
             runState = currentLevel != null ? BeforeNodeState : MapSelectionState,
+            sceneName = sceneName,
             chapterNumericId = chapter != null ? chapter.numericId : 0,
             currentMapNodeIndex = currentMapNodeIndex,
             mapNodes = ExportMapNodes(mapNodes),
@@ -595,6 +600,7 @@ public static class RunSaveSystem
             player.TakeDirectDamage(playerData.maxHealth - playerData.currentHealth);
         player.DrawCount = playerData.drawCount;
         player.MaxPlayCount = playerData.maxPlayCount;
+        player.RestoreArrowUpgradeState(playerData.arrowUpgradeUnlockedNodeIds, playerData.arrowUpgradePendingNextTurnShield, playerData.permanentRefreshChances);
         ApplyPreparedBuffs(player, playerData.preparedBuffs);
         player.SetRunRandomState(playerData.runRandomSeed, playerData.runRandomStep);
         player.Deck.Clear();
@@ -1082,9 +1088,23 @@ public static class RunSaveSystem
             runRandomSeed = player is PlayerStatus status ? status.RunRandomSeed : 0,
             runRandomStep = player is PlayerStatus statusForStep ? statusForStep.RunRandomStep : 0,
             deck = ExportDeck(player.Deck),
-            magicBook = ExportMagicBook(player.MagicBook)
+            magicBook = ExportMagicBook(player.MagicBook),
+            arrowUpgradeUnlockedNodeIds = CopyArrowUpgradeNodeIds(player.ArrowUpgrades.UnlockedNodeIds),
+            arrowUpgradePendingNextTurnShield = player.ArrowUpgrades.PendingNextTurnShield,
+            permanentRefreshChances = player.PermanentRefreshChances
         };
         return data;
+    }
+
+    private static string[] CopyArrowUpgradeNodeIds(IReadOnlyList<string> nodeIds)
+    {
+        if (nodeIds == null || nodeIds.Count == 0)
+            return Array.Empty<string>();
+
+        string[] copy = new string[nodeIds.Count];
+        for (int i = 0; i < nodeIds.Count; i++)
+            copy[i] = nodeIds[i];
+        return copy;
     }
 
     private static MaterialCardSaveData[] ExportDeck(IReadOnlyList<MaterialModel> deck)

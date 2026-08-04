@@ -9,6 +9,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
+    [SerializeField] private Image upgradeOutlineImage;
     [SerializeField] private TMP_Text labelText;
     [SerializeField] private SpringLineHighlightUI springHighlight;
     [SerializeField] private float selectedScale = 1f;
@@ -112,6 +113,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     public void RefreshFeedback()
     {
         PlayFeedback(false);
+    }
+
+    public void RefreshUpgradeVisual()
+    {
+        RefreshVisual();
     }
 
     public void SetLayoutHover(bool value, float hoverScale, bool instant)
@@ -301,6 +307,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             MaterialModifierVisualUtility.ApplyTo(iconImage, card);
         }
 
+        CacheUpgradeOutline();
+        ArrowUpgradeVisualUtility.ApplyTo(upgradeOutlineImage, card, owner != null ? owner.PlayerState : null, iconImage != null ? iconImage.rectTransform.localScale : Vector3.one);
         RefreshRaycastTargets();
     }
 
@@ -346,6 +354,15 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
         if (springHighlight != null)
             springHighlight.raycastTarget = false;
+    }
+
+    private void CacheUpgradeOutline()
+    {
+        if (upgradeOutlineImage == null)
+            upgradeOutlineImage = transform.Find("UpgradeOutline")?.GetComponent<Image>();
+
+        if (upgradeOutlineImage != null)
+            upgradeOutlineImage.raycastTarget = false;
     }
 
     private void SetFrameTransparent()

@@ -8,6 +8,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 {
     [SerializeField] private Image frameImage;
     [SerializeField] private Image iconImage;
+    [SerializeField] private Image upgradeOutlineImage;
     [SerializeField] private TMP_Text labelText;
     [SerializeField] private SpringLineHighlightUI springHighlight;
     [Header("动画参数")]
@@ -24,6 +25,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     private bool selected;
     private bool hovered;
     private bool springHighlightEnabled = true;
+    private PlayerState upgradeVisualPlayer;
 
     public RectTransform RectTransform => (RectTransform)transform;
     public MaterialModel MaterialModel => materialModel;
@@ -68,12 +70,18 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
 
     public void Bind(MaterialModel materialModel)
     {
-        Bind(materialModel, false);
+        Bind(materialModel, false, null);
     }
 
     public void Bind(MaterialModel materialModel, bool consumed)
     {
+        Bind(materialModel, consumed, null);
+    }
+
+    public void Bind(MaterialModel materialModel, bool consumed, PlayerState upgradeVisualPlayer)
+    {
         this.materialModel = materialModel;
+        this.upgradeVisualPlayer = upgradeVisualPlayer;
         this.inactive = consumed;
         selected = false;
         hovered = false;
@@ -141,6 +149,8 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             MaterialModifierVisualUtility.ApplyTo(iconImage, materialModel);
         }
 
+        CacheUpgradeOutline();
+        ArrowUpgradeVisualUtility.ApplyTo(upgradeOutlineImage, materialModel, upgradeVisualPlayer, iconImage != null ? iconImage.rectTransform.localScale : Vector3.one);
         RefreshRaycastTargets();
 
         if (canvasGroup != null)
@@ -190,6 +200,15 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
             return;
 
         springHighlight.raycastTarget = false;
+    }
+
+    private void CacheUpgradeOutline()
+    {
+        if (upgradeOutlineImage == null)
+            upgradeOutlineImage = transform.Find("UpgradeOutline")?.GetComponent<Image>();
+
+        if (upgradeOutlineImage != null)
+            upgradeOutlineImage.raycastTarget = false;
     }
 
     private SpringLineHighlightUI CreateSpringHighlight()

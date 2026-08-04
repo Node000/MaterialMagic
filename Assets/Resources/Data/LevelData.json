@@ -692,6 +692,23 @@
           "y": 0
         }
       ]
+    },
+    {
+      "id": "level_debug_boss",
+      "titleKey": "level.debug_boss.title",
+      "levelType": 0,
+      "numericId": 1006,
+      "rewardPoolId": 1,
+      "enemyIds": [
+        1003
+      ],
+      "enemies": [
+        {
+          "enemyId": 1003,
+          "x": 0,
+          "y": 0
+        }
+      ]
     }
   ]
 }

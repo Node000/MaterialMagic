@@ -108,6 +108,7 @@ public static class LocalizationKeys
             case BuffEnum.DebuffPower: return "debuff_power";
             case BuffEnum.VortexNextDraw: return "vortex_next_draw";
             case BuffEnum.ShieldReflect: return "shield_reflect";
+            case BuffEnum.Thorns: return "thorns";
             case BuffEnum.ExtraDraw: return "extra_draw";
             case BuffEnum.ExtraRefresh: return "extra_refresh";
             case BuffEnum.Sturdy: return "sturdy";

@@ -81,6 +81,14 @@
       "text": "反弹被护盾格挡的伤害，回合结束时清除。"
     },
     {
+      "key": "buff.thorns.name",
+      "text": "荆棘"
+    },
+    {
+      "key": "buff.thorns.desc",
+      "text": "受到来自敌人的伤害时，对伤害来源造成等同层数的伤害，回合结束时清除。"
+    },
+    {
       "key": "buff.extra_draw.name",
       "text": "额外抽牌"
     },

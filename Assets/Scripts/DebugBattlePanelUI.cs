@@ -19,6 +19,8 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button removeLastMagicButton;
     [SerializeField] private TMP_Dropdown shopDropdown;
     [SerializeField] private Button openShopButton;
+    [SerializeField] private Button arrowUpgradeButton;
+    [SerializeField] private ArrowUpgradePanelUI arrowUpgradePanel;
     [SerializeField] private Button closeButton;
 
     private readonly List<int> battleLevelIds = new List<int>();
@@ -52,6 +54,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         addMagicButton?.onClick.RemoveListener(AddSelectedMagic);
         removeLastMagicButton?.onClick.RemoveListener(RemoveLastMagic);
         openShopButton?.onClick.RemoveListener(OpenSelectedShop);
+        arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
 
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
@@ -63,6 +66,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         addMagicButton?.onClick.AddListener(AddSelectedMagic);
         removeLastMagicButton?.onClick.AddListener(RemoveLastMagic);
         openShopButton?.onClick.AddListener(OpenSelectedShop);
+        arrowUpgradeButton?.onClick.AddListener(OpenArrowUpgradePanel);
         closeButton?.onClick.AddListener(Hide);
     }
 
@@ -77,6 +81,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         addMagicButton?.onClick.RemoveListener(AddSelectedMagic);
         removeLastMagicButton?.onClick.RemoveListener(RemoveLastMagic);
         openShopButton?.onClick.RemoveListener(OpenSelectedShop);
+        arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
     }
 
@@ -125,6 +130,12 @@ public class DebugBattlePanelUI : MonoBehaviour
             shopDropdown = transform.Find("ShopDropdown")?.GetComponent<TMP_Dropdown>();
         if (openShopButton == null)
             openShopButton = transform.Find("OpenShopButton")?.GetComponent<Button>();
+        if (arrowUpgradeButton == null)
+            arrowUpgradeButton = transform.Find("ArrowUpgradeButton")?.GetComponent<Button>();
+        if (arrowUpgradePanel == null)
+            arrowUpgradePanel = GetComponentInParent<ArrowUpgradePanelUI>(true);
+        if (arrowUpgradePanel == null && transform.parent != null)
+            arrowUpgradePanel = transform.parent.Find("ArrowUpgradePanel")?.GetComponent<ArrowUpgradePanelUI>();
         if (closeButton == null)
             closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
     }
@@ -346,6 +357,14 @@ public class DebugBattlePanelUI : MonoBehaviour
 
         if (GameDataDatabase.TryGetLevelData(shopLevelIds[shopDropdown.value], out LevelData level))
             handSystem.DebugStartShop(level);
+    }
+
+    private void OpenArrowUpgradePanel()
+    {
+        if (arrowUpgradePanel == null)
+            return;
+
+        arrowUpgradePanel.Show(handSystem != null ? handSystem.PlayerState : BattleManager.Instance?.PlayerState);
     }
 }
 

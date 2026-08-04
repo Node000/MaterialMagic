@@ -15,7 +15,7 @@ public class ProliferatingArrowModifier : MaterialModifierModel
         copy.removeCardAfterBattle = true;
         copy.isPlayed = false;
         copy.RemoveModifiers<ProliferatingArrowModifier>();
-        playerState.DiscardPile.Add(copy);
+        playerState.AddCardToDiscardPile(copy);
         GameLog.Data($"Add proliferated arrow copy to discard pile {copy.instanceId}");
     }
 }

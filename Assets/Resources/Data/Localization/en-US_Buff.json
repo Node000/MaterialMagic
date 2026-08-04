@@ -81,6 +81,14 @@
       "text": "Reflect damage blocked by Shield. Cleared at turn end."
     },
     {
+      "key": "buff.thorns.name",
+      "text": "Thorns"
+    },
+    {
+      "key": "buff.thorns.desc",
+      "text": "When damaged by an enemy, deal damage equal to the stack count back to that enemy. Cleared at turn end."
+    },
+    {
       "key": "buff.extra_draw.name",
       "text": "Extra Draw"
     },

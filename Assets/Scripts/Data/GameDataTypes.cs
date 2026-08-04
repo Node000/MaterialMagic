@@ -121,7 +121,8 @@ public enum BuffEnum
     TemporaryWindOnMaterialConsumed = 54,
     WeakNextTurn = 55,
     FoamShield = 56,
-    ShieldOnNextDraw = 57
+    ShieldOnNextDraw = 57,
+    Thorns = 58
 }
 
 public enum BuffKindEnum

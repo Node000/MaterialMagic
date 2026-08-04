@@ -81,6 +81,11 @@ public class SceneTransitionManager : MonoBehaviour
 #endif
     }
 
+    public void LoadSecondFloorWithTransition(GameObject focusTarget = null)
+    {
+        LoadSceneWithTransition("SampleScene_PC_SecondFloor", focusTarget);
+    }
+
     public void LoadSceneWithTransition(string sceneName, GameObject focusTarget = null)
     {
         if (!transitioning && !string.IsNullOrWhiteSpace(sceneName))
