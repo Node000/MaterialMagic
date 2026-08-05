@@ -11,8 +11,8 @@ public class ScribbleTileGrid3D : MonoBehaviour
 
     [Header("Grid Layout")]
     [SerializeField] private Rect layoutArea = new Rect(1.65f, -8.5f, 4.1f, 1.85f);
-    [SerializeField, Range(1, 32)] private int columns = 6;
-    [SerializeField, Range(1, 32)] private int rows = 2;
+    [SerializeField, Range(1, 128)] private int columns = 6;
+    [SerializeField, Range(1, 128)] private int rows = 2;
     [SerializeField, Range(0f, 1f)] private float baseTileChance = 0.9f;
     [SerializeField] private AnimationCurve tileChanceOverRows = AnimationCurve.Linear(0f, 1f, 1f, 1f);
     [SerializeField] private Vector2 tileSizeMin = new Vector2(0.45f, 0.65f);
@@ -48,7 +48,17 @@ public class ScribbleTileGrid3D : MonoBehaviour
     private int generatedTileCount;
 
     public Rect LayoutArea => NormalizeRect(layoutArea);
+    public int Columns => columns;
+    public int Rows => rows;
     public int GeneratedTileCount => generatedTileCount;
+
+    public void SetLayoutArea(Rect area, int targetColumns, int targetRows)
+    {
+        layoutArea = NormalizeRect(area);
+        columns = Mathf.Clamp(targetColumns, 1, 128);
+        rows = Mathf.Clamp(targetRows, 1, 128);
+        RebuildMesh();
+    }
 
     private void OnEnable()
     {
@@ -246,8 +256,8 @@ public class ScribbleTileGrid3D : MonoBehaviour
         layoutArea = NormalizeRect(layoutArea);
         layoutArea.width = Mathf.Max(0.001f, layoutArea.width);
         layoutArea.height = Mathf.Max(0.001f, layoutArea.height);
-        columns = Mathf.Clamp(columns, 1, 32);
-        rows = Mathf.Clamp(rows, 1, 32);
+        columns = Mathf.Clamp(columns, 1, 128);
+        rows = Mathf.Clamp(rows, 1, 128);
         baseTileChance = Mathf.Clamp01(baseTileChance);
         if (tileChanceOverRows == null)
             tileChanceOverRows = AnimationCurve.Linear(0f, 1f, 1f, 1f);

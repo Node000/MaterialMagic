@@ -348,7 +348,10 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         Vector3 size = strip.orientation == StripDungeonOrientation.Horizontal
             ? new Vector3(cellWorldSize * length, floorThickness, cellWorldSize)
             : new Vector3(cellWorldSize, floorThickness, cellWorldSize * length);
-        CreateEnvironmentPrefab("Floor", theme.FloorPrefabs, startPosition, -1, center + Vector3.down * floorThickness * 0.5f, size);
+        GameObject floorPrefab = GetVariant(theme.FloorPrefabs, startPosition, -1);
+        GameObject floor = CreateEnvironmentPrefab("Floor", floorPrefab, center + Vector3.down * floorThickness * 0.5f, size);
+        DisableScribbleRenderers(floor);
+        CreateFloorMural(floorPrefab, center, size);
 
         GeneralThemeGenConfig generationConfig = config.GeneralThemeGenConfig;
         float ceilingHeight = generationConfig.GetCeilingHeight(theme.UniqueGenConfig);
@@ -390,9 +393,12 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         Vector3 outward = new Vector3(direction.x, 0f, direction.y);
         Vector3 center = GetWorldPosition(startPosition) + outward * cellWorldSize * 0.5f + new Vector3(alongWall.x, 0f, alongWall.y) * cellWorldSize * (length - 1) * 0.5f;
         Quaternion rotation = Quaternion.LookRotation(-outward, Vector3.up);
-        GameObject wall = Instantiate(GetVariant(theme.WallPrefabs, startPosition, directionIndex), center, rotation, environmentRoot);
+        GameObject wallPrefab = GetVariant(theme.WallPrefabs, startPosition, directionIndex);
+        GameObject wall = Instantiate(wallPrefab, center, rotation, environmentRoot);
         wall.name = "Wall";
-        wall.transform.localScale = Vector3.Scale(wall.transform.localScale, new Vector3(cellWorldSize * length / wallWidth, ceilingHeight / wallHeight, 1f));
+        wall.transform.localScale = Vector3.Scale(wallPrefab.transform.localScale, new Vector3(cellWorldSize * length / wallWidth, ceilingHeight / wallHeight, 1f));
+        DisableScribbleRenderers(wall);
+        CreateWallMural(wallPrefab, center, rotation, cellWorldSize * length, ceilingHeight);
     }
 
     private void CreateWallDecorations()
@@ -483,9 +489,108 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         return config.GetTheme(currentMap.strips[primaryStripId].themeId);
     }
 
+    private void CreateFloorMural(GameObject floorPrefab, Vector3 center, Vector3 size)
+    {
+        GameObject mural = Instantiate(floorPrefab, center, Quaternion.identity, environmentRoot);
+        mural.name = "FloorMural";
+        ScribbleTileGrid3D[] grids = mural.GetComponentsInChildren<ScribbleTileGrid3D>(true);
+        if (grids.Length == 0)
+        {
+            DestroyRuntimeObject(mural);
+            return;
+        }
+
+        DisableAllRenderersExcept(mural, grids);
+        for (int index = 0; index < grids.Length; index++)
+        {
+            ScribbleTileGrid3D grid = grids[index];
+            Rect sourceArea = grid.LayoutArea;
+            Vector3 sourceScale = grid.transform.localScale;
+            float scaleX = Mathf.Abs(sourceScale.x);
+            float scaleZ = Mathf.Abs(sourceScale.z);
+            grid.transform.localPosition = Vector3.up * 0.01f;
+            grid.transform.localRotation = Quaternion.identity;
+            grid.transform.localScale = sourceScale;
+            int columns = Mathf.CeilToInt(grid.Columns * size.x / (sourceArea.width * scaleX));
+            int rows = Mathf.CeilToInt(grid.Rows * size.z / (sourceArea.height * scaleZ));
+            grid.SetLayoutArea(new Rect(-size.x * 0.5f / scaleX, -size.z * 0.5f / scaleZ, size.x / scaleX, size.z / scaleZ), columns, rows);
+        }
+    }
+
+    private void CreateWallMural(GameObject wallPrefab, Vector3 center, Quaternion rotation, float width, float height)
+    {
+        GameObject mural = Instantiate(wallPrefab, center, rotation, environmentRoot);
+        mural.name = "WallMural";
+        ScribblePlane3D[] planes = mural.GetComponentsInChildren<ScribblePlane3D>(true);
+        if (planes.Length == 0)
+        {
+            DestroyRuntimeObject(mural);
+            return;
+        }
+
+        ScribblePlane3D wallpaper = GetLargestFillPlane(planes);
+        DisableAllRenderersExcept(mural, new[] { wallpaper });
+        Rect sourceArea = wallpaper.FillArea;
+        float sourceWidth = sourceArea.height;
+        float horizontalCenter = sourceArea.y + sourceWidth * 0.5f;
+        float verticalMin = sourceArea.x;
+        int lineCount = Mathf.CeilToInt(wallpaper.FillLineCount * width / sourceWidth);
+        int samplesPerLine = Mathf.CeilToInt(wallpaper.FillSamplesPerLine * width / sourceWidth);
+        wallpaper.SetFillArea(new Rect(verticalMin, horizontalCenter - width * 0.5f, height, width), lineCount, samplesPerLine);
+    }
+
+    private static ScribblePlane3D GetLargestFillPlane(ScribblePlane3D[] planes)
+    {
+        ScribblePlane3D largest = planes[0];
+        float largestArea = largest.FillArea.width * largest.FillArea.height;
+        for (int index = 1; index < planes.Length; index++)
+        {
+            float area = planes[index].FillArea.width * planes[index].FillArea.height;
+            if (area > largestArea)
+            {
+                largest = planes[index];
+                largestArea = area;
+            }
+        }
+        return largest;
+    }
+
+    private static void DisableScribbleRenderers(GameObject root)
+    {
+        ScribbleTileGrid3D[] grids = root.GetComponentsInChildren<ScribbleTileGrid3D>(true);
+        for (int index = 0; index < grids.Length; index++)
+            grids[index].GetComponent<MeshRenderer>().enabled = false;
+
+        ScribblePlane3D[] planes = root.GetComponentsInChildren<ScribblePlane3D>(true);
+        for (int index = 0; index < planes.Length; index++)
+            planes[index].GetComponent<MeshRenderer>().enabled = false;
+    }
+
+    private static void DisableAllRenderersExcept(GameObject root, Component[] includedComponents)
+    {
+        MeshRenderer[] renderers = root.GetComponentsInChildren<MeshRenderer>(true);
+        for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+        {
+            bool keep = false;
+            for (int componentIndex = 0; componentIndex < includedComponents.Length; componentIndex++)
+            {
+                if (includedComponents[componentIndex].gameObject == renderers[rendererIndex].gameObject)
+                {
+                    keep = true;
+                    break;
+                }
+            }
+            renderers[rendererIndex].enabled = keep;
+        }
+    }
+
     private GameObject CreateEnvironmentPrefab(string objectName, GameObject[] prefabs, Vector2Int cellPosition, int directionIndex, Vector3 position, Vector3 size)
     {
-        GameObject prefab = GetVariant(prefabs, cellPosition, directionIndex);
+        return CreateEnvironmentPrefab(objectName, GetVariant(prefabs, cellPosition, directionIndex), position, size);
+    }
+
+    private GameObject CreateEnvironmentPrefab(string objectName, GameObject prefab, Vector3 position, Vector3 size)
+    {
         GameObject instance = Instantiate(prefab, environmentRoot);
         instance.name = objectName;
         instance.transform.position = position;

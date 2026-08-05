@@ -43,7 +43,7 @@ public class ScribblePlane3D : MonoBehaviour
     [SerializeField] private bool fillEnabled = true;
     [SerializeField] private FillMode fillMode;
     [SerializeField] private Rect fillArea = new Rect(-1.35f, -0.75f, 2.7f, 1.5f);
-    [SerializeField, Range(1, 96)] private int fillLineCount = 18;
+    [SerializeField, Range(1, 384)] private int fillLineCount = 18;
     [SerializeField, Range(2, 128)] private int fillSamplesPerLine = 24;
     [SerializeField, Min(0.001f)] private float fillLineWidth = 0.035f;
     [SerializeField, Min(0f)] private float fillInset = 0.05f;
@@ -94,6 +94,8 @@ public class ScribblePlane3D : MonoBehaviour
     public FillMode CurrentFillMode => fillMode;
     public int GuidePointCount => transform.childCount;
     public Rect FillArea => GetNormalizedFillArea();
+    public int FillLineCount => fillLineCount;
+    public int FillSamplesPerLine => fillSamplesPerLine;
 
     public Vector2 GetGuidePoint(int index)
     {
@@ -144,7 +146,19 @@ public class ScribblePlane3D : MonoBehaviour
 
     public void SetFillArea(Rect area)
     {
+        SetFillArea(area, fillLineCount, fillSamplesPerLine);
+    }
+
+    public void SetFillArea(Rect area, int targetLineCount)
+    {
+        SetFillArea(area, targetLineCount, fillSamplesPerLine);
+    }
+
+    public void SetFillArea(Rect area, int targetLineCount, int targetSamplesPerLine)
+    {
         fillArea = NormalizeFillArea(area);
+        fillLineCount = Mathf.Clamp(targetLineCount, 1, 384);
+        fillSamplesPerLine = Mathf.Clamp(targetSamplesPerLine, 2, 128);
         RebuildMesh();
     }
 
@@ -304,7 +318,7 @@ public class ScribblePlane3D : MonoBehaviour
         Vector2 halfSize = area.size * 0.5f;
         float lineExtent = Mathf.Abs(direction.x) * halfSize.x + Mathf.Abs(direction.y) * halfSize.y;
         float spreadExtent = Mathf.Abs(perpendicular.x) * halfSize.x + Mathf.Abs(perpendicular.y) * halfSize.y;
-        int lineCount = Mathf.Clamp(fillLineCount, 1, 96);
+        int lineCount = Mathf.Clamp(fillLineCount, 1, 384);
         int sampleCount = Mathf.Clamp(fillSamplesPerLine, 2, 128);
         for (int lineIndex = 0; lineIndex < lineCount; lineIndex++)
         {
@@ -635,7 +649,7 @@ public class ScribblePlane3D : MonoBehaviour
         fillInset = Mathf.Max(0f, fillInset);
         fillWobbleAmplitude = Mathf.Max(0f, fillWobbleAmplitude);
         fillWobbleFrequency = Mathf.Max(0f, fillWobbleFrequency);
-        fillLineCount = Mathf.Clamp(fillLineCount, 1, 96);
+        fillLineCount = Mathf.Clamp(fillLineCount, 1, 384);
         fillSamplesPerLine = Mathf.Clamp(fillSamplesPerLine, 2, 128);
         guidedStartOffsetRange = Mathf.Max(0f, guidedStartOffsetRange);
         guidedEndOffsetRange = Mathf.Max(0f, guidedEndOffsetRange);
