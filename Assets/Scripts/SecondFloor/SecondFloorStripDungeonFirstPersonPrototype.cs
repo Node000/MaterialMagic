@@ -10,8 +10,10 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     [SerializeField] private StripDungeonMapConfig config;
     [SerializeField] private int nextSeed = 1;
 
-    [Header("视距")]
-    [SerializeField, Min(1)] private int maxForwardSightCells = 2;
+    [Header("场景引用")]
+    [SerializeField] private Transform playerRoot;
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private Light dungeonLight;
 
     [Header("小地图")]
     [SerializeField, Min(8f)] private float minimapCellSize = 22f;
@@ -44,8 +46,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private readonly HashSet<Vector2Int> visiblePositions = new HashSet<Vector2Int>();
     private readonly Dictionary<Vector2Int, Image> minimapCells = new Dictionary<Vector2Int, Image>();
     private Transform environmentRoot;
-    private Transform playerRoot;
-    private Camera playerCamera;
     private Material bossMaterial;
     private StripDungeonMap currentMap;
     private Vector2Int playerPosition;
@@ -58,7 +58,7 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private void Awake()
     {
         CreateWorldRoot();
-        CreatePlayerCamera();
+        ConfigureSceneCamera();
         CreateOverlay();
         GenerateMap();
     }
@@ -98,8 +98,9 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         playerPosition = currentMap.startPosition;
         facing = FindInitialFacing();
         BuildMinimap();
+        RebuildEnvironment();
         RefreshView();
-        statusText.text = $"Seed {currentMap.seed} · 点击中间前进 · 点击左右转向 · 最大视距 {maxForwardSightCells} 格";
+        statusText.text = $"Seed {currentMap.seed} · 点击中间前进 · 点击左右转向";
     }
 
     private void TryMoveForward()
@@ -120,6 +121,7 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         RefreshView();
         if (!wasBossVisible && currentMap.IsBossVisible)
         {
+            RebuildEnvironment();
             statusText.text = "你进入了 Boss 所属条带，Boss 入口已揭示。";
         }
         else if (playerPosition == currentMap.bossPosition)
@@ -159,26 +161,17 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         bossMaterial = new Material(shader) { color = bossColor };
     }
 
-    private void CreatePlayerCamera()
+    private void ConfigureSceneCamera()
     {
-        playerRoot = new GameObject("DungeonPlayer").transform;
-        playerRoot.SetParent(transform, false);
-        GameObject cameraObject = new GameObject("DungeonFirstPersonCamera", typeof(Camera), typeof(AudioListener));
-        cameraObject.transform.SetParent(playerRoot, false);
-        playerCamera = cameraObject.GetComponent<Camera>();
         playerCamera.clearFlags = CameraClearFlags.SolidColor;
         playerCamera.backgroundColor = skyColor;
         playerCamera.fieldOfView = fieldOfView;
         playerCamera.nearClipPlane = 0.03f;
         playerCamera.tag = "MainCamera";
 
-        GameObject lightObject = new GameObject("DungeonDirectionalLight", typeof(Light));
-        lightObject.transform.SetParent(transform, false);
-        lightObject.transform.rotation = Quaternion.Euler(52f, -32f, 0f);
-        Light light = lightObject.GetComponent<Light>();
-        light.type = LightType.Directional;
-        light.intensity = 1.15f;
-        light.color = Color.white;
+        dungeonLight.type = LightType.Directional;
+        dungeonLight.intensity = 1.15f;
+        dungeonLight.color = Color.white;
     }
 
     private void CreateOverlay()
@@ -223,7 +216,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     {
         UpdatePlayerTransform();
         RefreshVisiblePositions();
-        RebuildEnvironment();
         RefreshMinimap();
     }
 
@@ -232,28 +224,7 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         visiblePositions.Clear();
         visiblePositions.Add(playerPosition);
 
-        Vector2Int left = new Vector2Int(-facing.y, facing.x);
-        AddVisibleIfWalkable(playerPosition + left);
-        AddVisibleIfWalkable(playerPosition - left);
-
-        for (int distance = 1; distance <= maxForwardSightCells; distance++)
-        {
-            Vector2Int position = playerPosition + facing * distance;
-            if (!IsWalkable(position))
-                break;
-
-            visiblePositions.Add(position);
-            if (distance == 1)
-            {
-                AddVisibleIfWalkable(position + left);
-                AddVisibleIfWalkable(position - left);
-            }
-        }
-    }
-
-    private void AddVisibleIfWalkable(Vector2Int position)
-    {
-        if (IsWalkable(position))
+        for (Vector2Int position = playerPosition + facing; IsWalkable(position); position += facing)
             visiblePositions.Add(position);
     }
 
@@ -313,39 +284,118 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private void RebuildEnvironment()
     {
         ClearChildren(environmentRoot);
-        foreach (Vector2Int position in visiblePositions)
-        {
-            Vector3 center = GetWorldPosition(position);
-            StripDungeonThemeDefinition theme = GetCellTheme(position);
-            CreateEnvironmentPrefab("Floor", theme.FloorPrefabs, position, -1, center + Vector3.down * floorThickness * 0.5f, new Vector3(cellWorldSize, floorThickness, cellWorldSize));
-            for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
-            {
-                Vector2Int direction = directions[directionIndex];
-                if (!IsWalkable(position + direction))
-                    CreateBoundaryWall(center, position, direction, directionIndex, theme);
-            }
-        }
+        CreateSurfaceSegments();
+        CreateWallSegments();
+        CreateWallDecorations();
 
-        CreateVisibleWallDecorations();
-
-        if (currentMap.IsBossVisible && visiblePositions.Contains(currentMap.bossPosition))
+        if (currentMap.IsBossVisible)
         {
             Vector3 bossCenter = GetWorldPosition(currentMap.bossPosition);
             CreateBlock("BossMarker", bossCenter + Vector3.up * (bossMarkerHeight * 0.5f), new Vector3(cellWorldSize * 0.46f, bossMarkerHeight, cellWorldSize * 0.46f), bossMaterial);
         }
     }
 
-    private void CreateBoundaryWall(Vector3 cellCenter, Vector2Int cellPosition, Vector2Int direction, int directionIndex, StripDungeonThemeDefinition theme)
+    private void CreateSurfaceSegments()
     {
-        Vector3 outward = new Vector3(direction.x, 0f, direction.y);
-        Vector3 wallPosition = cellCenter + outward * cellWorldSize * 0.5f;
-        Quaternion rotation = Quaternion.LookRotation(-outward, Vector3.up);
-        GameObject wallPrefab = GetVariant(theme.WallPrefabs, cellPosition, directionIndex);
-        GameObject wall = Instantiate(wallPrefab, wallPosition, rotation, environmentRoot);
-        wall.name = "Wall";
+        for (int stripIndex = 0; stripIndex < currentMap.strips.Count; stripIndex++)
+        {
+            StripDungeonStrip strip = currentMap.strips[stripIndex];
+            StripDungeonThemeDefinition theme = config.GetTheme(strip.themeId);
+            int segmentStart = 0;
+            while (segmentStart < strip.cells.Count)
+            {
+                while (segmentStart < strip.cells.Count && !IsSingleStripCell(strip.cells[segmentStart], strip.id))
+                    segmentStart++;
+                if (segmentStart == strip.cells.Count)
+                    break;
+
+                int segmentEnd = segmentStart + 1;
+                while (segmentEnd < strip.cells.Count && IsSingleStripCell(strip.cells[segmentEnd], strip.id))
+                    segmentEnd++;
+
+                CreateSurfaceSegment(strip, theme, segmentStart, segmentEnd - segmentStart);
+                segmentStart = segmentEnd;
+            }
+        }
+
+        for (int cellIndex = 0; cellIndex < currentMap.cells.Count; cellIndex++)
+        {
+            StripDungeonCell cell = currentMap.cells[cellIndex];
+            if (cell != null && cell.kind == StripDungeonCellKind.Path && cell.stripIds.Count > 1)
+            {
+                StripDungeonStrip strip = currentMap.strips[cell.stripIds[0]];
+                CreateSurfaceSegment(strip, GetCellTheme(cell.position), cell.position, 1);
+            }
+        }
+
+        if (currentMap.IsBossVisible)
+        {
+            StripDungeonStrip hostStrip = currentMap.strips[currentMap.bossHostStripId];
+            CreateSurfaceSegment(hostStrip, config.GetTheme(hostStrip.themeId), currentMap.bossPosition, 1);
+        }
     }
 
-    private void CreateVisibleWallDecorations()
+    private void CreateSurfaceSegment(StripDungeonStrip strip, StripDungeonThemeDefinition theme, int startIndex, int length)
+    {
+        CreateSurfaceSegment(strip, theme, strip.cells[startIndex], length);
+    }
+
+    private void CreateSurfaceSegment(StripDungeonStrip strip, StripDungeonThemeDefinition theme, Vector2Int startPosition, int length)
+    {
+        Vector2Int direction = strip.orientation == StripDungeonOrientation.Horizontal ? Vector2Int.right : Vector2Int.up;
+        Vector2Int endPosition = startPosition + direction * (length - 1);
+        Vector3 center = (GetWorldPosition(startPosition) + GetWorldPosition(endPosition)) * 0.5f;
+        Vector3 size = strip.orientation == StripDungeonOrientation.Horizontal
+            ? new Vector3(cellWorldSize * length, floorThickness, cellWorldSize)
+            : new Vector3(cellWorldSize, floorThickness, cellWorldSize * length);
+        CreateEnvironmentPrefab("Floor", theme.FloorPrefabs, startPosition, -1, center + Vector3.down * floorThickness * 0.5f, size);
+
+        GeneralThemeGenConfig generationConfig = config.GeneralThemeGenConfig;
+        float ceilingHeight = generationConfig.GetCeilingHeight(theme.UniqueGenConfig);
+        float ceilingThickness = generationConfig.GetCeilingThickness(theme.UniqueGenConfig);
+        GameObject ceiling = CreateEnvironmentPrefab("Ceiling", generationConfig.GetCeilingPrefabs(theme.UniqueGenConfig), startPosition, -2, center + Vector3.up * (ceilingHeight + ceilingThickness * 0.5f), new Vector3(size.x, ceilingThickness, size.z));
+        ceiling.transform.rotation = Quaternion.Euler(180f, 0f, 0f);
+    }
+
+    private void CreateWallSegments()
+    {
+        for (int cellIndex = 0; cellIndex < currentMap.cells.Count; cellIndex++)
+        {
+            Vector2Int position = currentMap.cells[cellIndex].position;
+            if (!IsEnvironmentCell(position))
+                continue;
+
+            for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
+            {
+                Vector2Int direction = directions[directionIndex];
+                if (!IsPermanentWallAt(position, direction))
+                    continue;
+
+                StripDungeonThemeDefinition theme = GetEnvironmentTheme(position);
+                Vector2Int alongWall = direction.y != 0 ? Vector2Int.right : Vector2Int.up;
+                if (IsWallSegmentContinuation(position - alongWall, direction, theme))
+                    continue;
+
+                CreateWallSegment(position, direction, directionIndex, theme, alongWall, GetWallSegmentLength(position, direction, alongWall, theme));
+            }
+        }
+    }
+
+    private void CreateWallSegment(Vector2Int startPosition, Vector2Int direction, int directionIndex, StripDungeonThemeDefinition theme, Vector2Int alongWall, int length)
+    {
+        GeneralThemeGenConfig generationConfig = config.GeneralThemeGenConfig;
+        float wallWidth = generationConfig.GetWallPrefabWidth(theme.UniqueGenConfig);
+        float wallHeight = generationConfig.GetWallPrefabHeight(theme.UniqueGenConfig);
+        float ceilingHeight = generationConfig.GetCeilingHeight(theme.UniqueGenConfig);
+        Vector3 outward = new Vector3(direction.x, 0f, direction.y);
+        Vector3 center = GetWorldPosition(startPosition) + outward * cellWorldSize * 0.5f + new Vector3(alongWall.x, 0f, alongWall.y) * cellWorldSize * (length - 1) * 0.5f;
+        Quaternion rotation = Quaternion.LookRotation(-outward, Vector3.up);
+        GameObject wall = Instantiate(GetVariant(theme.WallPrefabs, startPosition, directionIndex), center, rotation, environmentRoot);
+        wall.name = "Wall";
+        wall.transform.localScale = Vector3.Scale(wall.transform.localScale, new Vector3(cellWorldSize * length / wallWidth, ceilingHeight / wallHeight, 1f));
+    }
+
+    private void CreateWallDecorations()
     {
         for (int cellIndex = 0; cellIndex < currentMap.cells.Count; cellIndex++)
         {
@@ -372,9 +422,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
                 if (!theme.TryGetWallDecoration(segmentLength, GetVariantHash(position, directionIndex + directions.Length), out StripDungeonWallDecorationDefinition decoration))
                     continue;
 
-                if (!IsWallDecorationVisible(position, direction, alongWall, segmentLength, decoration.footprintCells))
-                    continue;
-
                 float centerOffset = (segmentLength - 1) * 0.5f;
                 Vector3 outward = new Vector3(direction.x, 0f, direction.y);
                 Vector3 center = GetWorldPosition(position) + outward * cellWorldSize * 0.5f + new Vector3(alongWall.x, 0f, alongWall.y) * cellWorldSize * centerOffset;
@@ -383,6 +430,29 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
                 instance.name = "WallDecoration";
             }
         }
+    }
+
+    private bool IsSingleStripCell(Vector2Int position, int stripId)
+    {
+        StripDungeonCell cell = currentMap.GetCell(position);
+        return cell != null && cell.kind == StripDungeonCellKind.Path && cell.stripIds.Count == 1 && cell.stripIds[0] == stripId;
+    }
+
+    private bool IsEnvironmentCell(Vector2Int position)
+    {
+        StripDungeonCell cell = currentMap.GetCell(position);
+        return cell != null && (cell.kind == StripDungeonCellKind.Path || currentMap.IsBossVisible && position == currentMap.bossPosition);
+    }
+
+    private StripDungeonThemeDefinition GetEnvironmentTheme(Vector2Int position)
+    {
+        if (currentMap.IsBossVisible && position == currentMap.bossPosition)
+        {
+            StripDungeonStrip hostStrip = currentMap.strips[currentMap.bossHostStripId];
+            return config.GetTheme(hostStrip.themeId);
+        }
+
+        return GetCellTheme(position);
     }
 
     private bool IsPermanentWallAt(Vector2Int position, Vector2Int outwardDirection)
@@ -404,18 +474,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         return count;
     }
 
-    private bool IsWallDecorationVisible(Vector2Int start, Vector2Int outwardDirection, Vector2Int alongWall, int segmentLength, int footprintCells)
-    {
-        int firstCell = (segmentLength - footprintCells) / 2;
-        for (int i = 0; i < footprintCells; i++)
-        {
-            Vector2Int position = start + alongWall * (firstCell + i);
-            if (!visiblePositions.Contains(position) || visiblePositions.Contains(position + outwardDirection))
-                return false;
-        }
-        return true;
-    }
-
     private StripDungeonThemeDefinition GetCellTheme(Vector2Int position)
     {
         StripDungeonCell cell = currentMap.GetCell(position);
@@ -425,13 +483,14 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         return config.GetTheme(currentMap.strips[primaryStripId].themeId);
     }
 
-    private void CreateEnvironmentPrefab(string objectName, GameObject[] prefabs, Vector2Int cellPosition, int directionIndex, Vector3 position, Vector3 size)
+    private GameObject CreateEnvironmentPrefab(string objectName, GameObject[] prefabs, Vector2Int cellPosition, int directionIndex, Vector3 position, Vector3 size)
     {
         GameObject prefab = GetVariant(prefabs, cellPosition, directionIndex);
         GameObject instance = Instantiate(prefab, environmentRoot);
         instance.name = objectName;
         instance.transform.position = position;
         instance.transform.localScale = Vector3.Scale(prefab.transform.localScale, size);
+        return instance;
     }
 
     private GameObject GetVariant(GameObject[] prefabs, Vector2Int cellPosition, int directionIndex)

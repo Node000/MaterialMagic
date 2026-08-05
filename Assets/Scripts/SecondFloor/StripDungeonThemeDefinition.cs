@@ -4,12 +4,14 @@ using UnityEngine;
 public class StripDungeonThemeDefinition : ScriptableObject
 {
     [SerializeField] private string themeId = "default";
+    [SerializeField] private ThemeUniqueGenConfig uniqueGenConfig;
     [SerializeField] private GameObject[] floorPrefabs;
     [SerializeField] private GameObject[] wallPrefabs;
     [SerializeField, Range(0, 100)] private int wallDecorationChance;
     [SerializeField] private StripDungeonWallDecorationDefinition[] wallDecorations;
 
     public string ThemeId => themeId;
+    public ThemeUniqueGenConfig UniqueGenConfig => uniqueGenConfig;
     public GameObject[] FloorPrefabs => floorPrefabs;
     public GameObject[] WallPrefabs => wallPrefabs;
     public int WallDecorationChance => wallDecorationChance;
@@ -72,6 +74,9 @@ public class StripDungeonThemeDefinition : ScriptableObject
             error = $"主题 {themeId} 至少需要一个墙壁 Prefab。";
             return false;
         }
+
+        if (uniqueGenConfig != null && !uniqueGenConfig.TryValidate(out error))
+            return false;
 
         if (wallDecorationChance > 0 && !HasUsableWallDecoration())
         {

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: StripDungeonTheme_ColdWhitebox
   m_EditorClassIdentifier: 
   themeId: cold-whitebox
+  uniqueGenConfig: {fileID: 11400000, guid: e6e5c0cad5fd12849a1c595ca99ea89d, type: 2}
   floorPrefabs:
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}

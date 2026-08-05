@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0a54818901045948941636c8cd3c93b, type: 3}
+  m_Name: GeneralThemeGenConfig
+  m_EditorClassIdentifier: 
+  ceilingHeight: 3.2
+  ceilingThickness: 0.2
+  ceilingPrefabs:
+  - {fileID: 7120081035772112628, guid: 8312c0af529d3c6429217ed2ea1780f8, type: 3}
+  wallPrefabWidth: 3
+  wallPrefabHeight: 3.2

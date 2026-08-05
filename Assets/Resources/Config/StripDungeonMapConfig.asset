@@ -20,6 +20,7 @@ MonoBehaviour:
   middleCrossingStripChance: 70
   maxGenerationAttempts: 48
   bossMinDistanceFromStart: 5
+  generalThemeGenConfig: {fileID: 11400000, guid: d21d6b4742b9de8479834b12ac8b314a, type: 2}
   allowedThemes:
   - {fileID: 11400000, guid: de67cb2fe6734f44a96ffe07e761c47d, type: 2}
   - {fileID: 11400000, guid: 01a3a6a71797c2a43b5a71e875b3043d, type: 2}

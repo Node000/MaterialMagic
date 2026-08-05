@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: StripDungeonTheme_Whitebox
   m_EditorClassIdentifier: 
   themeId: whitebox
+  uniqueGenConfig: {fileID: 11400000, guid: 219047ba8caee244baf6fa1d86cfbf3e, type: 2}
   floorPrefabs:
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}
   - {fileID: 37338565767568054, guid: 19d40ea1aa8cafc4eaefc31408751fb6, type: 3}

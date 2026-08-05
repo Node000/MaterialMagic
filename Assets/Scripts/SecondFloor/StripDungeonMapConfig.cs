@@ -16,6 +16,9 @@ public class StripDungeonMapConfig : ScriptableObject
     [Header("Boss")]
     [SerializeField] private int bossMinDistanceFromStart = 5;
 
+    [Header("主题生成")]
+    [SerializeField] private GeneralThemeGenConfig generalThemeGenConfig;
+
     [Header("条带主题")]
     [SerializeField] private StripDungeonThemeDefinition[] allowedThemes;
 
@@ -40,6 +43,7 @@ public class StripDungeonMapConfig : ScriptableObject
     public int MiddleCrossingStripChance => middleCrossingStripChance;
     public int MaxGenerationAttempts => maxGenerationAttempts;
     public int BossMinDistanceFromStart => bossMinDistanceFromStart;
+    public GeneralThemeGenConfig GeneralThemeGenConfig => generalThemeGenConfig;
     public StripDungeonThemeDefinition[] AllowedThemes => allowedThemes;
     public StripDungeonContentRule[] ContentRules => contentRules;
 
@@ -89,6 +93,15 @@ public class StripDungeonMapConfig : ScriptableObject
             error = "条带长度中必须各有一个可用于横向和纵向环的长度（至少为 5）。";
             return false;
         }
+
+        if (generalThemeGenConfig == null)
+        {
+            error = "必须配置默认主题生成配置。";
+            return false;
+        }
+
+        if (!generalThemeGenConfig.TryValidate(out error))
+            return false;
 
         if (allowedThemes == null || allowedThemes.Length == 0)
         {
