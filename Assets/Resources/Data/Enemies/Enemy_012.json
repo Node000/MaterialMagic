@@ -20,11 +20,11 @@
               "buffs": [
                 {
                   "buffType": 3,
-                  "stack": 4
+                  "stack": 5
                 },
                 {
                   "buffType": 7,
-                  "stack": 4
+                  "stack": 5
                 }
               ],
               "displayType": "debuff"
@@ -38,6 +38,11 @@
               "actionType": 9,
               "value": 1,
               "displayType": "special"
+            },
+            {
+              "actionType": 2,
+              "value": 5,
+              "displayType": "defend"
             }
           ]
         },

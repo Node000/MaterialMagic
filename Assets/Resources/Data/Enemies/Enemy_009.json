@@ -20,7 +20,7 @@
               "buffs": [
                 {
                   "buffType": 6,
-                  "stack": 8
+                  "stack": 5
                 }
               ],
               "displayType": "debuff"
@@ -40,7 +40,7 @@
               "buffs": [
                 {
                   "buffType": 7,
-                  "stack": 2
+                  "stack": 5
                 }
               ],
               "displayType": "debuff"

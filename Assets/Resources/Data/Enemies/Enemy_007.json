@@ -25,7 +25,7 @@
               "buffs": [
                 {
                   "buffType": 6,
-                  "stack": 5
+                  "stack": 3
                 }
               ],
               "displayType": "debuff"
@@ -45,7 +45,7 @@
               "buffs": [
                 {
                   "buffType": 6,
-                  "stack": 5
+                  "stack": 4
                 }
               ],
               "displayType": "debuff"
