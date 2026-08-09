@@ -81,9 +81,10 @@ public class MagicModel
             GameLog.Data($"Magic {Id} resolve index={castIndex + 1}/{castCount} target={(target != null ? target.Id : "none")}");
             SetModifierContext(playerState, battleManager);
             TriggerMagicBeforeCast();
-            TriggerInvoke(playerState, target);
+            TriggerPlayerInvoke(playerState, target);
             ResolveCast(playerState, battleManager, result);
             TriggerMagicAfterCast(result);
+            TriggerEnemyArcAfterCast(battleManager, result);
             MagicModifierModel.CurrentContext = null;
             battleManager.EndCastTarget();
         }
@@ -95,12 +96,36 @@ public class MagicModel
     {
     }
 
-    protected void TriggerInvoke(PlayerState playerState, EnemyModel enemyModel)
+    protected void TriggerPlayerInvoke(PlayerState playerState, EnemyModel enemyModel)
     {
         CombatantModel primaryTarget = enemyModel != null ? new CombatantModel(enemyModel) : null;
         playerState.TriggerOnInvoke(primaryTarget);
-        if (enemyModel != null)
-            enemyModel.TriggerOnInvoke(new CombatantModel(playerState));
+    }
+
+    protected void TriggerEnemyArcAfterCast(BattleManager battleManager, MagicCastResult result)
+    {
+        IReadOnlyList<EnemyModel> enemies = battleManager != null ? battleManager.Enemies : null;
+        bool hasArcTarget = false;
+        for (int i = 0; enemies != null && i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead && enemy.GetBuffStack(BuffEnum.Arc) > 0)
+            {
+                hasArcTarget = true;
+                break;
+            }
+        }
+
+        if (!hasArcTarget)
+            return;
+
+        result.AdvanceDamageStep();
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                enemy.TriggerArcAfterMagic(result);
+        }
     }
 
     protected void SetModifierContext(PlayerState playerState, BattleManager battleManager)

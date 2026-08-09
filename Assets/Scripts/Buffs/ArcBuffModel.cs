@@ -6,10 +6,21 @@ public class ArcBuffModel : BuffModel
 
     public override void OnInvoke(CombatantModel self, CombatantModel target)
     {
+        ApplyDamage(self);
+    }
+
+    public void ResolveAfterMagic(CombatantModel self, MagicCastResult result)
+    {
+        CombatDamageResult damageResult = ApplyDamage(self);
+        result.AddEnemyDamageHit(self.Enemy, damageResult.HealthDamage, damageResult.ShieldDamage);
+    }
+
+    private CombatDamageResult ApplyDamage(CombatantModel self)
+    {
         if (self != null && self.IsEnemy)
-            self.Enemy.TakeDamageIgnoringVulnerable(stack);
-        else
-            self?.TakeDamage(stack);
+            return self.Enemy.TakeDamageIgnoringVulnerableResult(stack);
+
+        return self != null ? self.TakeDamageResult(stack, null) : new CombatDamageResult();
     }
 
     public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)

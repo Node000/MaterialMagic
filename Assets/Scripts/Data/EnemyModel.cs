@@ -267,7 +267,12 @@ public class EnemyModel : UnitModel
 
     public int TakeDamageIgnoringVulnerable(int damage)
     {
-        return TakeDamageResult(damage, null, BuffEnum.Vulnerable).HealthDamage;
+        return TakeDamageIgnoringVulnerableResult(damage).HealthDamage;
+    }
+
+    public CombatDamageResult TakeDamageIgnoringVulnerableResult(int damage)
+    {
+        return TakeDamageResult(damage, null, BuffEnum.Vulnerable);
     }
 
     public override CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
@@ -956,6 +961,15 @@ public class EnemyModel : UnitModel
     public void TriggerOnInvoke(CombatantModel target)
     {
         TriggerBuffs(target, (buff, self, opponent) => buff.OnInvoke(self, opponent));
+    }
+
+    public void TriggerArcAfterMagic(MagicCastResult result)
+    {
+        if (result == null || IsDead || !buffs.TryGetValue(BuffEnum.Arc, out BuffModel arc) || arc.stack <= 0)
+            return;
+
+        if (arc is ArcBuffModel arcBuff)
+            arcBuff.ResolveAfterMagic(new CombatantModel(this), result);
     }
 
     public void TriggerOnGetAction(CombatantModel opponent)

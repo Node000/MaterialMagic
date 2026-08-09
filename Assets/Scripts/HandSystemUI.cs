@@ -3892,8 +3892,6 @@ public bool IsCardDragActive => cardDragActive;
 	        try
 	        {
 	            moved = playerState.TryMoveHandCardToPlay(card, targetIndex);
-	            if (moved)
-	                TriggerArcOnCardPlayed();
 	        }
 	        finally
 	        {
@@ -4190,7 +4188,6 @@ public bool IsCardDragActive => cardDragActive;
 					    bool moved = playerState.TryMoveHandCardToPlay(materialModel);
 	                            if (moved)
 	                            {
-	                                TriggerArcOnCardPlayed();
 	                                movedCards.Add(materialModel);
 	                            }
 					    flag |= moved;
@@ -4237,8 +4234,6 @@ public bool IsCardDragActive => cardDragActive;
         try
         {
             moved = playerState.TryMoveHandCardToPlay(card);
-            if (moved)
-                TriggerArcOnCardPlayed();
         }
         finally
         {
@@ -4267,31 +4262,6 @@ public bool IsCardDragActive => cardDragActive;
         ClearCardHover(view, false);
         view.ClearPlayFeedback(false);
         GetUIManager()?.HideUnifiedDetailPopup(view);
-    }
-
-    private void TriggerArcOnCardPlayed()
-    {
-        if (battleManager == null)
-            return;
-
-        bool changed = false;
-        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
-        for (int i = 0; enemies != null && i < enemies.Count; i++)
-        {
-            EnemyModel enemy = enemies[i];
-            if (enemy == null || enemy.IsDead)
-                continue;
-
-            int arcStack = enemy.GetBuffStack(BuffEnum.Arc);
-            if (arcStack <= 0)
-                continue;
-
-            enemy.TakeDamageIgnoringVulnerable(arcStack);
-            changed = true;
-        }
-
-        if (changed)
-            RefreshEnemyUI();
     }
 
 	private void RefreshSelectedCards()
@@ -7312,14 +7282,14 @@ public bool IsCardDragActive => cardDragActive;
         ShowMagicModifierSelection(GetMagicModifierChoices(choiceCount), completed ?? FinishRestLevel);
     }
 
-    private void ShowMagicModifierSelection(IReadOnlyList<MagicModifierData> choices, Action completed)
+    private void ShowMagicModifierSelection(IReadOnlyList<MagicModifierData> choices, Action completed, Action cancelled = null)
     {
         busy = true;
         SetButtonsInteractable(interactable: false);
         pendingMagicModifier = null;
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (panel != null)
-            panel.Show(choices, completed);
+            panel.Show(choices, completed, cancelled);
         else
             completed?.Invoke();
     }
@@ -8303,6 +8273,16 @@ public bool IsCardDragActive => cardDragActive;
         return ShouldShowEliteExtraReward() && HasAnyMagicModifierChoice();
     }
 
+    private void CancelEliteModifierRewardSelection()
+    {
+        pendingMagicModifier = null;
+        pendingMaterialModifier = null;
+        RefreshPlayerAnimationState();
+        busy = false;
+        SetButtonsInteractable(true);
+        GetUIManager().RewardPanel?.RefreshCurrentOptions();
+    }
+
     public void ClaimEliteMagicModifierReward(Action completed)
     {
         if (!ShouldShowEliteExtraReward())
@@ -8311,20 +8291,20 @@ public bool IsCardDragActive => cardDragActive;
             return;
         }
 
-        eliteMagicModifierRewardResolved = true;
         List<MagicModifierData> choices = GetMagicModifierChoices(1);
         if (choices.Count == 0)
         {
-            completed?.Invoke();
+            CancelEliteModifierRewardSelection();
             return;
         }
 
         ShowMagicModifierSelection(choices, delegate
         {
+            eliteMagicModifierRewardResolved = true;
             RefreshStaticUI();
             SaveRunProgress();
             completed?.Invoke();
-        });
+        }, CancelEliteModifierRewardSelection);
     }
 
     public void ClaimEliteArrowModifierReward(Action completed)
@@ -8335,20 +8315,20 @@ public bool IsCardDragActive => cardDragActive;
             return;
         }
 
-        eliteMagicModifierRewardResolved = true;
         List<MaterialModifierData> choices = GetArrowModifierChoices(3);
         if (choices.Count == 0)
         {
-            completed?.Invoke();
+            CancelEliteModifierRewardSelection();
             return;
         }
 
         ShowArrowModifierRewardSelection(choices, delegate
         {
+            eliteMagicModifierRewardResolved = true;
             RefreshStaticUI();
             SaveRunProgress();
             completed?.Invoke();
-        });
+        }, CancelEliteModifierRewardSelection);
     }
 
     private IEnumerator ShowEventMaterialModifierRoutine(string modifierId)
@@ -8459,19 +8439,19 @@ public bool IsCardDragActive => cardDragActive;
         return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && materialModel.material != MaterialEnum.None;
     }
 
-    private void ShowArrowModifierRewardSelection(IReadOnlyList<MaterialModifierData> choices, Action completed)
+    private void ShowArrowModifierRewardSelection(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled = null)
     {
         busy = true;
         SetButtonsInteractable(interactable: false);
         pendingMaterialModifier = null;
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (panel != null)
-            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(choices, selected, completed), completed);
+            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(choices, selected, completed, cancelled), completed, cancelled);
         else
             completed?.Invoke();
     }
 
-    private void StartArrowModifierTargetSelection(IReadOnlyList<MaterialModifierData> choices, MaterialModifierData selectedModifier, Action completed)
+    private void StartArrowModifierTargetSelection(IReadOnlyList<MaterialModifierData> choices, MaterialModifierData selectedModifier, Action completed, Action cancelled)
     {
         if (selectedModifier == null)
             return;
@@ -8496,15 +8476,15 @@ public bool IsCardDragActive => cardDragActive;
             MaterialModel target = selectedMaterials != null && selectedMaterials.Count > 0 ? selectedMaterials[0] : null;
             if (TryApplyPendingMaterialModifier(target))
                 GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
-        }, () => ReturnToArrowModifierChoices(choices, completed), LocalizationSystem.GetText("ui.arrow_modifier.select_target_title", "选择要附魔的箭头"));
+        }, () => ReturnToArrowModifierChoices(choices, completed, cancelled), LocalizationSystem.GetText("ui.arrow_modifier.select_target_title", "选择要附魔的箭头"));
     }
 
-    private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed)
+    private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled)
     {
         pendingMaterialModifier = null;
         MaterialListPanelUI materialListPanel = GetUIManager().MaterialSelectionPanel;
         materialListPanel?.EndSelectionMode();
-        ShowArrowModifierRewardSelection(choices, completed);
+        ShowArrowModifierRewardSelection(choices, completed, cancelled);
     }
 
     private bool TryApplyPendingMaterialModifier(MaterialModel target)

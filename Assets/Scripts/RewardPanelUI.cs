@@ -186,6 +186,11 @@ public class RewardPanelUI : MonoBehaviour
         RefreshOptions();
     }
 
+    public void RefreshCurrentOptions()
+    {
+        RefreshOptions();
+    }
+
     public void CompleteMagicRewardSelection()
     {
         magicClaimed = true;

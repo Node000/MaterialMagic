@@ -39,6 +39,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private MaterialModifierData selectedMaterialModifier;
     private int hoveredOptionIndex = -1;
     private Action completed;
+    private Action cancelled;
     private Action<MaterialModifierData> materialModifierSelected;
     private bool materialModifierMode;
     private Sprite fallbackModifierIcon;
@@ -67,13 +68,14 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         return owner != null && owner.ShouldUseMobileInteraction();
     }
 
-    public void Show(IReadOnlyList<MagicModifierData> choices, Action completed)
+    public void Show(IReadOnlyList<MagicModifierData> choices, Action completed, Action cancelled = null)
     {
         materialModifierMode = false;
         materialModifierSelected = null;
         selectedMaterialModifier = null;
         hoveredOptionIndex = -1;
         this.completed = completed;
+        this.cancelled = cancelled ?? completed;
         selectedModifier = null;
         currentChoices.Clear();
         currentMaterialChoices.Clear();
@@ -95,11 +97,12 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         RefreshOptions();
     }
 
-    public void ShowMaterialModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action<MaterialModifierData> selected, Action completed)
+    public void ShowMaterialModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action<MaterialModifierData> selected, Action completed, Action cancelled = null)
     {
         materialModifierMode = true;
         materialModifierSelected = selected;
         this.completed = completed;
+        this.cancelled = cancelled ?? completed;
         selectedModifier = null;
         selectedMaterialModifier = null;
         hoveredOptionIndex = -1;
@@ -156,9 +159,20 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     public void CompleteSelection()
     {
-        Hide();
-        completed?.Invoke();
+        Action callback = completed;
         completed = null;
+        cancelled = null;
+        Hide();
+        callback?.Invoke();
+    }
+
+    public void CancelSelection()
+    {
+        Action callback = cancelled;
+        completed = null;
+        cancelled = null;
+        Hide();
+        callback?.Invoke();
     }
 
     public void ShowPopup(string message)
@@ -198,7 +212,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         if (backButton != null)
         {
             backButton.onClick.RemoveAllListeners();
-            backButton.onClick.AddListener(CompleteSelection);
+            backButton.onClick.AddListener(CancelSelection);
             TMP_Text backText = UIManager.FindChildComponent<TMP_Text>(backButton.transform, "Text");
             if (backText != null)
                 backText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.back", "返回");
