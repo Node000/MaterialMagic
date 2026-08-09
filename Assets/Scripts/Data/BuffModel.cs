@@ -245,6 +245,14 @@ public class BuffModel
                 return new FoamShieldBuffModel(stack);
             case BuffEnum.ShieldOnNextDraw:
                 return new ShieldOnNextDrawBuffModel(stack);
+            case BuffEnum.RefreshLimitNextTurn:
+                return new RefreshLimitNextTurnBuffModel(stack);
+            case BuffEnum.RandomNextDraw:
+                return new RandomNextDrawBuffModel(stack);
+            case BuffEnum.TemporaryProliferatingNextDraw:
+                return new TemporaryProliferatingNextDrawBuffModel(stack);
+            case BuffEnum.HandLimitNextTurn:
+                return new HandLimitNextTurnBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -333,6 +341,11 @@ public class BuffModel
             case BuffEnum.FoamShield:
             case BuffEnum.ShieldOnNextDraw:
                 return BuffKindEnum.Buff;
+            case BuffEnum.RefreshLimitNextTurn:
+            case BuffEnum.RandomNextDraw:
+            case BuffEnum.TemporaryProliferatingNextDraw:
+            case BuffEnum.HandLimitNextTurn:
+                return BuffKindEnum.DeBuff;
             default:
                 return BuffKindEnum.Neutral;
         }

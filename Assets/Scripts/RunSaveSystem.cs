@@ -279,6 +279,7 @@ public static class RunSaveSystem
     private const string BeforeNodeState = "BeforeNode";
     private static bool forceNewRun;
     private static bool startingTutorialRun;
+    private static bool tutorialRunActive;
     private static int currentSlotIndex = 1;
     private static bool currentSlotIndexLoaded;
 
@@ -344,6 +345,7 @@ public static class RunSaveSystem
     {
         forceNewRun = true;
         startingTutorialRun = false;
+        tutorialRunActive = false;
         ClearCurrentRun();
     }
 
@@ -351,48 +353,25 @@ public static class RunSaveSystem
     {
         forceNewRun = true;
         startingTutorialRun = true;
-        ClearCurrentRun();
+        tutorialRunActive = false;
     }
 
     public static bool ConsumeStartingTutorialRun()
     {
         bool value = startingTutorialRun;
         startingTutorialRun = false;
+        tutorialRunActive = value;
         return value;
     }
 
-    public static bool IsTutorialCompleted()
+    public static bool IsTutorialRunActive()
     {
-        RunSaveData data = LoadSummary(CurrentSlotIndex);
-        return data != null && data.tutorialCompleted;
+        return tutorialRunActive;
     }
 
-    public static bool ShouldShowTutorialEntry()
+    public static void EndTutorialRun()
     {
-        RunSaveData data = LoadSummary(CurrentSlotIndex);
-        return data == null || !data.tutorialCompleted;
-    }
-
-    public static bool IsTutorialEventShown()
-    {
-        RunSaveData data = LoadSummary(CurrentSlotIndex);
-        return data != null && data.tutorialEventShown;
-    }
-
-    public static void SetTutorialCompleted(bool completed)
-    {
-        RunSaveData data = LoadSummary(CurrentSlotIndex) ?? CreateEmptySlotData();
-        data.tutorialCompleted = completed;
-        if (!completed)
-            data.tutorialEventShown = false;
-        SaveSummaryOnly(data);
-    }
-
-    public static void SetTutorialEventShown(bool shown)
-    {
-        RunSaveData data = LoadSummary(CurrentSlotIndex) ?? CreateEmptySlotData();
-        data.tutorialEventShown = shown;
-        SaveSummaryOnly(data);
+        tutorialRunActive = false;
     }
 
     public static bool ConsumeForceNewRun()
@@ -422,6 +401,9 @@ public static class RunSaveSystem
 
     public static void RecordRunEndAndClearCurrentRun(RunHistoryResultType resultType, PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f)
     {
+        if (tutorialRunActive)
+            return;
+
         RunSaveData data = CreateRunEndSnapshot(player, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
         if (data != null)
         {
@@ -509,7 +491,7 @@ public static class RunSaveSystem
 
     public static void SaveCurrentRun(PlayerState player, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel, float playSeconds = -1f, BattleManager battleManager = null, EventModel currentEvent = null, string sceneName = null)
     {
-        if (player == null || mapNodes == null || mapNodes.Count == 0)
+        if (tutorialRunActive || player == null || mapNodes == null || mapNodes.Count == 0)
             return;
 
         RunSaveData currentData = LoadCurrentRun();
@@ -596,8 +578,7 @@ public static class RunSaveSystem
             return PlayerStatus.CreateDefaultStatus();
 
         PlayerStatus player = new PlayerStatus(playerData.maxHealth, playerData.gold);
-        if (playerData.currentHealth < playerData.maxHealth)
-            player.TakeDirectDamage(playerData.maxHealth - playerData.currentHealth);
+        player.RestoreCurrentHealth(playerData.currentHealth);
         player.DrawCount = playerData.drawCount;
         player.MaxPlayCount = playerData.maxPlayCount;
         player.RestoreArrowUpgradeState(playerData.arrowUpgradeUnlockedNodeIds, playerData.arrowUpgradePendingNextTurnShield, playerData.permanentRefreshChances);

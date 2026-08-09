@@ -5,7 +5,8 @@ using UnityEngine.UI;
 public enum JaggedWaveHighlightMode
 {
     Jagged = 0,
-    Spectrum = 1
+    Spectrum = 1,
+    BottomWave = 2
 }
 
 [AddComponentMenu("UI/Jagged Wave Highlight")]
@@ -146,13 +147,18 @@ public class JaggedWaveHighlightUI : MaskableGraphic
             float linePhase = Application.isPlaying ? phase * flowSpeed + i * 0.37f : i * 0.37f;
             if (mode == JaggedWaveHighlightMode.Spectrum)
                 AddSpectrumRectPoints(lineRect, linePhase);
+            else if (mode == JaggedWaveHighlightMode.BottomWave)
+                AddBottomWavePoints(lineRect, GetAnimatedAmplitude(i), linePhase);
             else
                 AddJaggedRectPoints(lineRect, GetAnimatedAmplitude(i), linePhase);
 
-            if (fillEnabled && i == 0)
+            if (fillEnabled && i == 0 && mode != JaggedWaveHighlightMode.BottomWave)
                 AddFilledShape(vh, points, lineRect.center, fillColor);
 
-            AddClosedStroke(vh, points, lineWidth, lineColor);
+            if (mode == JaggedWaveHighlightMode.BottomWave)
+                AddOpenStroke(vh, points, lineWidth, lineColor);
+            else
+                AddClosedStroke(vh, points, lineWidth, lineColor);
         }
     }
 
@@ -312,6 +318,19 @@ public class JaggedWaveHighlightUI : MaskableGraphic
         return baseAmplitude * Mathf.Max(0f, pulse);
     }
 
+    private void AddBottomWavePoints(Rect rect, float waveAmplitude, float linePhase)
+    {
+        int subdivisions = Mathf.Max(8, teethPerSide * 3);
+        Vector2 from = new Vector2(rect.xMin, rect.yMin);
+        Vector2 to = new Vector2(rect.xMax, rect.yMin);
+        for (int i = 0; i <= subdivisions; i++)
+        {
+            float t = i / (float)subdivisions;
+            float wave = GetJaggedWave(t, linePhase) * waveAmplitude * GetCornerFade(t);
+            points.Add(Vector2.Lerp(from, to, t) + Vector2.down * wave);
+        }
+    }
+
     private void AddSpectrumRectPoints(Rect rect, float linePhase)
     {
         int pointCount = Mathf.Max(16, spectrumPointCount);
@@ -436,6 +455,12 @@ public class JaggedWaveHighlightUI : MaskableGraphic
             int next = centerIndex + 1 + ((i + 1) % pointCount);
             vh.AddTriangle(centerIndex, current, next);
         }
+    }
+
+    private void AddOpenStroke(VertexHelper vh, List<Vector2> strokePoints, float width, Color32 lineColor)
+    {
+        for (int i = 0; i < strokePoints.Count - 1; i++)
+            AddStrokeSegment(vh, strokePoints[i], strokePoints[i + 1], width, lineColor);
     }
 
     private void AddClosedStroke(VertexHelper vh, List<Vector2> strokePoints, float width, Color32 lineColor)

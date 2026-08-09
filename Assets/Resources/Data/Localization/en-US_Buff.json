@@ -182,7 +182,7 @@
     },
     {
       "key": "buff.shieldonhealthloss.desc",
-      "text": "Persistent: when HP decreases, gain Shield equal to lost HP × {0}."
+      "text": "When HP decreases, gain Shield equal to half the lost HP; at the end of the enemy turn, convert remaining Shield into equal Slow on the player."
     },
     {
       "key": "buff.shufflehandoninvokechance.name",
@@ -190,7 +190,7 @@
     },
     {
       "key": "buff.shufflehandoninvokechance.desc",
-      "text": "Persistent: when the player confirms a play, has a 1/3 chance to shuffle the play area."
+      "text": "When the player confirms a play next turn, shuffle the play area."
     },
     {
       "key": "buff.attributedisabled.name",
@@ -459,6 +459,38 @@
     {
       "key": "modifier.sturdy.desc",
       "text": "When this arrow triggers an item, gain 1 Shield."
+    },
+    {
+      "key": "buff.refresh_limit_next_turn.name",
+      "text": "Fewer Refreshes Next Turn"
+    },
+    {
+      "key": "buff.refresh_limit_next_turn.desc",
+      "text": "Have {0} fewer refresh chance(s) next turn."
+    },
+    {
+      "key": "buff.random_next_draw.name",
+      "text": "Random Next Draw"
+    },
+    {
+      "key": "buff.random_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain RANDOM. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.temporary_proliferating_next_draw.name",
+      "text": "Temporary Proliferating Next Draw"
+    },
+    {
+      "key": "buff.temporary_proliferating_next_draw.desc",
+      "text": "The first {0} arrows drawn next turn gain EPHEMERAL and PROLIFERATING. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+    },
+    {
+      "key": "buff.hand_limit_next_turn.name",
+      "text": "Next Turn Hand Limit"
+    },
+    {
+      "key": "buff.hand_limit_next_turn.desc",
+      "text": "Your hand limit is {0} next turn."
     }
   ]
 }

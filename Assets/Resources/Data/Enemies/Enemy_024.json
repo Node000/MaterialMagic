@@ -2,7 +2,7 @@
   "numericId": 24,
   "string_id": "enemy_024",
   "nameKey": "enemy.024.name",
-  "maxHealth": 201,
+  "maxHealth": 153,
   "baseAttack": 14,
   "imageScale": 4.01,
   "hoverEffect": false,
@@ -31,6 +31,16 @@
           "id": 1,
           "intents": [
             {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 62,
+                  "stack": 2
+                }
+              ],
+              "displayType": "debuff"
+            },
+            {
               "actionType": 1,
               "value": 3,
               "times": 4,
@@ -41,7 +51,7 @@
               "buffs": [
                 {
                   "buffType": 6,
-                  "stack": 2
+                  "stack": 4
                 }
               ],
               "displayType": "debuff"
@@ -55,6 +65,16 @@
               "actionType": 1,
               "value": 14,
               "displayType": "bigAttack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 62,
+                  "stack": 2
+                }
+              ],
+              "displayType": "debuff"
             }
           ]
         },
@@ -72,10 +92,20 @@
               "buffs": [
                 {
                   "buffType": 10,
-                  "stack": 2
+                  "stack": 4
                 }
               ],
               "displayType": "buff"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 62,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
             }
           ]
         },
@@ -102,7 +132,7 @@
               "buffs": [
                 {
                   "buffType": 3,
-                  "stack": 1
+                  "stack": 6
                 }
               ],
               "displayType": "debuff"

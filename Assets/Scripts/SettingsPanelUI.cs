@@ -29,6 +29,27 @@ public class SettingsPanelUI : MonoBehaviour
         BindCloseButton();
         BindReturnButton();
         BindSliders();
+        RefreshLocalizedText();
+    }
+
+    private void RefreshLocalizedText()
+    {
+        SetLocalizedText("PopupDragonWindowBackground/TitleText", "ui.start_settings.title", "C:/设置");
+        SetLocalizedText("Title", "ui.battle_settings.title", "设置");
+        SetLocalizedText("MusicLabel", "ui.battle_settings.music", "音乐");
+        SetLocalizedText("SfxLabel", "ui.battle_settings.sfx", "音效");
+        SetLocalizedText("CloseButton/Text", "ui.common.close", "关闭");
+        SetLocalizedText(
+            "ReturnStartButton/Text",
+            RunSaveSystem.IsTutorialRunActive() ? "ui.battle_settings.return_menu" : "ui.battle_settings.return_start",
+            RunSaveSystem.IsTutorialRunActive() ? "返回主菜单" : "保存并退出");
+    }
+
+    private void SetLocalizedText(string path, string key, string fallback)
+    {
+        TMPro.TMP_Text target = UIManager.FindChildComponent<TMPro.TMP_Text>(transform, path);
+        if (target != null)
+            target.text = LocalizationSystem.GetText(key, fallback);
     }
 
     private void BindCloseButton()

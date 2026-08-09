@@ -1,159 +1,111 @@
 using UnityEngine;
+using DG.Tweening;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class BouncingTitleUI : MonoBehaviour
 {
-    [SerializeField, Min(0f)] private float speed = 220f;
-    [SerializeField] private Vector2 direction = new Vector2(1f, -1f);
-    [SerializeField] private RectTransform boundary;
+    [SerializeField] private Vector2 floatAmplitude = new Vector2(24f, 14f);
+    [SerializeField, Min(0f)] private Vector2 floatFrequency = new Vector2(0.08f, 0.11f);
+    [SerializeField] private Vector2 floatPhase;
     [SerializeField] private bool useUnscaledTime = true;
-    [SerializeField] private Button closeButton;
-    [SerializeField, Min(0f)] private float restoreDelay = 30f;
+    [SerializeField] private Image dissolveTargetImage;
+    [SerializeField] private CanvasGroup dissolveTargetCanvasGroup;
+    [SerializeField] private Material dissolveMaterialTemplate;
+    [SerializeField, Min(0.01f)] private float dissolveDuration = 0.45f;
 
-    private readonly Vector3[] corners = new Vector3[4];
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
-    private Vector2 velocity;
+    private Image image;
+    private Material dissolveMaterial;
+    private Tween dissolveTween;
+    private Vector2 anchorPosition;
+    private float floatTime;
+    private bool anchorCaptured;
 
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
-        canvasGroup = GetComponent<CanvasGroup>();
+        CaptureAnchor();
+        canvasGroup = dissolveTargetCanvasGroup != null ? dissolveTargetCanvasGroup : GetComponent<CanvasGroup>();
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
-        if (closeButton == null)
-            closeButton = transform.Find("Close")?.GetComponent<Button>();
-        if (closeButton != null)
-            closeButton.onClick.AddListener(HideTemporarily);
-        if (boundary == null)
-            boundary = rectTransform.parent as RectTransform;
-        ResetVelocity();
-        KeepInsideBounds();
+        image = dissolveTargetImage != null ? dissolveTargetImage : GetComponent<Image>();
+        if (image != null && dissolveMaterialTemplate != null)
+        {
+            dissolveMaterial = new Material(dissolveMaterialTemplate);
+            image.material = dissolveMaterial;
+        }
     }
 
     private void OnEnable()
     {
         if (rectTransform == null)
             rectTransform = (RectTransform)transform;
-        if (boundary == null)
-            boundary = rectTransform.parent as RectTransform;
-        ResetVelocity();
+        CaptureAnchor();
     }
 
     private void Update()
     {
-        if (boundary == null || speed <= 0f)
+        if (floatAmplitude.sqrMagnitude <= 0f)
             return;
 
-        Vector2 normalizedVelocity = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : NormalizedDirection();
-        velocity = normalizedVelocity * speed;
-
         float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-        rectTransform.localPosition += (Vector3)(velocity * deltaTime);
-        KeepInsideBounds();
+        floatTime += deltaTime;
+        float xOffset = Mathf.Sin((floatTime * floatFrequency.x + floatPhase.x) * Mathf.PI * 2f) * floatAmplitude.x;
+        float yOffset = Mathf.Sin((floatTime * floatFrequency.y + floatPhase.y) * Mathf.PI * 2f) * floatAmplitude.y;
+        rectTransform.anchoredPosition = anchorPosition + new Vector2(xOffset, yOffset);
     }
 
     private void OnDestroy()
     {
-        if (closeButton != null)
-            closeButton.onClick.RemoveListener(HideTemporarily);
+        dissolveTween?.Kill(false);
+        if (dissolveMaterial != null)
+            Destroy(dissolveMaterial);
     }
 
-    private void HideTemporarily()
+    public void SetVisible(bool visible)
     {
         if (canvasGroup == null)
             return;
 
-        canvasGroup.alpha = 0f;
-        canvasGroup.blocksRaycasts = false;
-        canvasGroup.interactable = false;
-        if (closeButton != null)
-            closeButton.interactable = false;
-        CancelInvoke(nameof(RestoreVisibility));
-        Invoke(nameof(RestoreVisibility), restoreDelay);
-    }
-
-    private void RestoreVisibility()
-    {
-        if (canvasGroup == null)
+        dissolveTween?.Kill(false);
+        canvasGroup.blocksRaycasts = visible;
+        canvasGroup.interactable = visible;
+        if (dissolveMaterial == null)
+        {
+            canvasGroup.alpha = visible ? 1f : 0f;
             return;
+        }
 
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
-        canvasGroup.interactable = true;
-        if (closeButton != null)
-            closeButton.interactable = true;
+        float targetProgress = visible ? 0f : 1f;
+        dissolveTween = DOTween.To(
+                () => dissolveMaterial.GetFloat("_DissolveProgress"),
+                value => dissolveMaterial.SetFloat("_DissolveProgress", value),
+                targetProgress,
+                dissolveDuration)
+            .SetUpdate(true)
+            .SetEase(Ease.OutCubic)
+            .SetTarget(this);
     }
 
-    private void ResetVelocity()
+    private void CaptureAnchor()
     {
-        velocity = NormalizedDirection() * speed;
-    }
-
-    private Vector2 NormalizedDirection()
-    {
-        if (direction.sqrMagnitude <= 0.0001f)
-            return new Vector2(1f, -1f).normalized;
-        return direction.normalized;
-    }
-
-    private void KeepInsideBounds()
-    {
-        Rect boundaryRect = boundary.rect;
-        rectTransform.GetWorldCorners(corners);
-
-        Vector3 firstCorner = boundary.InverseTransformPoint(corners[0]);
-        float minX = firstCorner.x;
-        float maxX = firstCorner.x;
-        float minY = firstCorner.y;
-        float maxY = firstCorner.y;
-
-        for (int i = 1; i < corners.Length; i++)
+        if (!anchorCaptured)
         {
-            Vector3 corner = boundary.InverseTransformPoint(corners[i]);
-            minX = Mathf.Min(minX, corner.x);
-            maxX = Mathf.Max(maxX, corner.x);
-            minY = Mathf.Min(minY, corner.y);
-            maxY = Mathf.Max(maxY, corner.y);
+            anchorPosition = rectTransform.anchoredPosition;
+            anchorCaptured = true;
         }
-
-        float offsetX = 0f;
-        float offsetY = 0f;
-
-        if (minX < boundaryRect.xMin)
-        {
-            offsetX = boundaryRect.xMin - minX;
-            velocity.x = Mathf.Abs(velocity.x);
-        }
-        else if (maxX > boundaryRect.xMax)
-        {
-            offsetX = boundaryRect.xMax - maxX;
-            velocity.x = -Mathf.Abs(velocity.x);
-        }
-
-        if (minY < boundaryRect.yMin)
-        {
-            offsetY = boundaryRect.yMin - minY;
-            velocity.y = Mathf.Abs(velocity.y);
-        }
-        else if (maxY > boundaryRect.yMax)
-        {
-            offsetY = boundaryRect.yMax - maxY;
-            velocity.y = -Mathf.Abs(velocity.y);
-        }
-
-        if (offsetX != 0f || offsetY != 0f)
-            rectTransform.position += boundary.TransformVector(new Vector3(offsetX, offsetY, 0f));
     }
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        speed = Mathf.Max(0f, speed);
-        restoreDelay = Mathf.Max(0f, restoreDelay);
-        if (direction.sqrMagnitude <= 0.0001f)
-            direction = new Vector2(1f, -1f);
+        floatAmplitude.x = Mathf.Max(0f, floatAmplitude.x);
+        floatAmplitude.y = Mathf.Max(0f, floatAmplitude.y);
+        floatFrequency.x = Mathf.Max(0f, floatFrequency.x);
+        floatFrequency.y = Mathf.Max(0f, floatFrequency.y);
+        dissolveDuration = Mathf.Max(0.01f, dissolveDuration);
     }
 #endif
 }

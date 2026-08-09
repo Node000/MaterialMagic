@@ -46,7 +46,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 6
-            stack: 8
+            stack: 5
           displayType: debuff
           descriptionKey: 
       - id: 2
@@ -71,7 +71,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 7
-            stack: 2
+            stack: 5
           displayType: debuff
           descriptionKey: 
       - id: 3

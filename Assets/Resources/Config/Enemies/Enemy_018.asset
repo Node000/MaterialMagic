@@ -94,7 +94,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 10
-            stack: 2
+            stack: 3
           displayType: buff
           descriptionKey: 
       intentLoop:

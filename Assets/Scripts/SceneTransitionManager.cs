@@ -44,6 +44,7 @@ public class SceneTransitionManager : MonoBehaviour
     private Material runtimeTransitionMaterial;
     private GameObject departureFocusTarget;
     private bool transitioning;
+    private string transitionEntrySceneName;
 
     private void Awake()
     {
@@ -86,10 +87,20 @@ public class SceneTransitionManager : MonoBehaviour
         LoadSceneWithTransition("SampleScene_PC_SecondFloor", focusTarget);
     }
 
+    public bool ConsumeSceneEntry(string sceneName)
+    {
+        if (!string.Equals(transitionEntrySceneName, sceneName, System.StringComparison.Ordinal))
+            return false;
+
+        transitionEntrySceneName = null;
+        return true;
+    }
+
     public void LoadSceneWithTransition(string sceneName, GameObject focusTarget = null)
     {
         if (!transitioning && !string.IsNullOrWhiteSpace(sceneName))
         {
+            transitionEntrySceneName = sceneName;
             departureFocusTarget = focusTarget;
             StartCoroutine(LoadSceneRoutine(sceneName));
         }

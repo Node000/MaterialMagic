@@ -30,6 +30,8 @@ public class PlayerState
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
+    public int RefreshLimitReductionThisTurn { get; private set; }
+    public int HandLimitThisTurn { get; private set; } = int.MaxValue;
     public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
     public int PermanentRefreshChances { get; private set; }
     public int RemainingPermanentRefreshChancesThisTurn => Mathf.Max(0, PermanentRefreshChances - permanentRefreshChancesUsedThisTurn);
@@ -126,6 +128,9 @@ public class PlayerState
 
     public MaterialModel DrawCardToHand(bool triggerAfterDraw, System.Predicate<MaterialModel> canDraw)
     {
+        if (Hand.Count >= HandLimitThisTurn)
+            return null;
+
         if (!EnsureDrawPileHasCards(canDraw))
             return null;
 
@@ -168,6 +173,9 @@ public class PlayerState
         int drawnCount = 0;
         for (int i = 0; i < materials.Count; i++)
         {
+            if (Hand.Count >= HandLimitThisTurn)
+                break;
+
             MaterialEnum material = materials[i];
             if (material == MaterialEnum.None)
                 continue;
@@ -946,6 +954,11 @@ public class PlayerState
         return result;
     }
 
+    public void RestoreCurrentHealth(int currentHealth)
+    {
+        CurrentHealth = Mathf.Clamp(currentHealth, 0, MaxHealth);
+    }
+
     public int TakeDirectDamage(int damage)
     {
         if (damage <= 0)
@@ -1095,6 +1108,8 @@ public class PlayerState
         TemporaryMaterialsNextTurn.Clear();
         ConsumedPile.Clear();
         extraRefreshChancesThisTurn = 0;
+        RefreshLimitReductionThisTurn = 0;
+        HandLimitThisTurn = int.MaxValue;
     }
 
     public void RemoveBattleOnlyArrowState()
@@ -1545,6 +1560,8 @@ public class PlayerState
             MaterialModel source = TemporaryMaterialsNextTurn[i];
             if (source == null)
                 continue;
+            if (Hand.Count >= HandLimitThisTurn)
+                break;
 
             Hand.Add(source);
             source.TriggerOnDraw();
@@ -1663,6 +1680,20 @@ public class PlayerState
     {
         extraRefreshChancesThisTurn = 0;
         permanentRefreshChancesUsedThisTurn = 0;
+        RefreshLimitReductionThisTurn = 0;
+        HandLimitThisTurn = int.MaxValue;
+    }
+
+    public void SetRefreshLimitReductionThisTurn(int amount)
+    {
+        if (amount > RefreshLimitReductionThisTurn)
+            RefreshLimitReductionThisTurn = amount;
+    }
+
+    public void SetHandLimitThisTurn(int limit)
+    {
+        if (limit > 0 && limit < HandLimitThisTurn)
+            HandLimitThisTurn = limit;
     }
 
     public void AddPermanentRefreshChance(int amount)

@@ -9,13 +9,12 @@ public class StartExitConfirmPanelUI : MonoBehaviour
     [SerializeField] private TMP_Text promptText;
     [SerializeField] private string promptKey = "ui.start_menu.exit_prompt";
     [SerializeField] private string prompt = "是否退出游戏？";
-    [SerializeField] private Vector2 shownPosition = new Vector2(280f, -220f);
-    [SerializeField] private Vector2 hiddenPosition = new Vector2(-620f, -220f);
+    [SerializeField] private float moveRightDistance = 900f;
     [SerializeField] private float moveDuration = 0.32f;
-    [SerializeField] private Ease showEase = Ease.OutCubic;
-    [SerializeField] private Ease hideEase = Ease.OutCubic;
+    [SerializeField] private Ease moveEase = Ease.OutCubic;
 
     private Tween moveTween;
+    private Vector2 hiddenPosition;
     private string currentPromptKey;
     private string currentPromptFallback;
 
@@ -29,7 +28,10 @@ public class StartExitConfirmPanelUI : MonoBehaviour
             SetCurrentPrompt(promptKey, prompt);
         RefreshPromptText();
         if (panelRect != null)
+        {
+            hiddenPosition = panelRect.anchoredPosition;
             panelRect.anchoredPosition = hiddenPosition;
+        }
     }
 
     private void OnDestroy()
@@ -59,8 +61,8 @@ public class StartExitConfirmPanelUI : MonoBehaviour
         gameObject.SetActive(true);
         moveTween?.Kill(false);
         panelRect.anchoredPosition = hiddenPosition;
-        moveTween = panelRect.DOAnchorPos(shownPosition, moveDuration)
-            .SetEase(showEase)
+        moveTween = panelRect.DOAnchorPos(hiddenPosition + Vector2.right * moveRightDistance, moveDuration)
+            .SetEase(moveEase)
             .SetUpdate(true)
             .SetTarget(this);
     }
@@ -72,7 +74,7 @@ public class StartExitConfirmPanelUI : MonoBehaviour
 
         moveTween?.Kill(false);
         moveTween = panelRect.DOAnchorPos(hiddenPosition, moveDuration)
-            .SetEase(hideEase)
+            .SetEase(moveEase)
             .SetUpdate(true)
             .SetTarget(this)
             .OnComplete(() => gameObject.SetActive(false));

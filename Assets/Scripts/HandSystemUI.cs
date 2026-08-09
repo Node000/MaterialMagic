@@ -1818,18 +1818,26 @@ public class HandSystemUI : MonoBehaviour
             nextNodeId = "rest_result",
             isExitOption = true
         };
+        string studyRecipe = CreateRandomRecipe(1);
+        string arrowModifierRecipe;
+        do
+        {
+            arrowModifierRecipe = CreateRandomRecipe(1);
+        }
+        while (arrowModifierRecipe == studyRecipe);
+
         EventOptionData study = new EventOptionData
         {
             id = "study_magic",
             titleKey = "rest.option.study",
-            recipe = CreateRandomRecipe(1),
+            recipe = studyRecipe,
             resultId = RestStudyResultId
         };
         EventOptionData arrowModifier = new EventOptionData
         {
             id = "arrow_modifier",
             titleKey = "rest.option.arrow_modifier",
-            recipe = CreateRandomRecipe(1),
+            recipe = arrowModifierRecipe,
             resultId = RestArrowModifierResultId
         };
         string[] restTextKeys = level != null && level.restTextKeys != null ? level.restTextKeys : Array.Empty<string>();
@@ -3122,10 +3130,14 @@ public class HandSystemUI : MonoBehaviour
 		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0084: Expected O, but got Unknown
         RunSaveData saveData = null;
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         bool gameSceneEntryRequested = PlayerState.ConsumeGameSceneEntryRequested();
-        secondFloorRun = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == SecondFloorSceneName;
+        if (!gameSceneEntryRequested && SceneTransitionManager.Instance != null)
+            gameSceneEntryRequested = SceneTransitionManager.Instance.ConsumeSceneEntry(sceneName);
+        secondFloorRun = sceneName == SecondFloorSceneName;
         directSampleDebugRun = !gameSceneEntryRequested && !secondFloorRun;
-        bool continueSavedRun = PlayerState.ContinueSavedRun && !RunSaveSystem.ConsumeForceNewRun();
+        bool forceNewRun = RunSaveSystem.ConsumeForceNewRun();
+        bool continueSavedRun = PlayerState.ContinueSavedRun && !forceNewRun;
         if (continueSavedRun)
             saveData = RunSaveSystem.LoadCurrentRun();
         PlayerState.ContinueSavedRun = false;
@@ -4299,7 +4311,7 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				return;
 			}
-			if (!CanUseRefreshCardInput() || (refreshUsedThisTurn && !ignoreOncePerTurn && playerState.ExtraRefreshChancesThisTurn <= 0) || selectedCards.Count == 0)
+			if (!CanUseRefreshCardInput() || (!ignoreOncePerTurn && GetRemainingRefreshChanceCount() <= 0) || selectedCards.Count == 0)
 			{
 				return;
 			}
@@ -4342,14 +4354,10 @@ public bool IsCardDragActive => cardDragActive;
 		}
 		if (!ignoreOncePerTurn)
 		{
-			if (refreshUsedThisTurn)
-			{
-				playerState.UseExtraRefreshChance();
-			}
-			else
-			{
-				refreshUsedThisTurn = true;
-			}
+                if (!refreshUsedThisTurn && playerState.RefreshLimitReductionThisTurn <= 0)
+                    refreshUsedThisTurn = true;
+                else
+                    playerState.UseAdditionalRefreshChance();
 		}
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -5871,13 +5879,13 @@ public bool IsCardDragActive => cardDragActive;
             return null;
         }
 
-	    private int GetRemainingRefreshChanceCount()
-	    {
+		    private int GetRemainingRefreshChanceCount()
+		    {
 		        if (playerState == null)
 		            return 0;
 
-		        int remaining = refreshUsedThisTurn ? 0 : 1;
-		        return remaining + playerState.RemainingPermanentRefreshChancesThisTurn + playerState.ExtraRefreshChancesThisTurn;
+		        int baseChance = !refreshUsedThisTurn && playerState.RefreshLimitReductionThisTurn <= 0 ? 1 : 0;
+		        return baseChance + playerState.RemainingPermanentRefreshChancesThisTurn + playerState.ExtraRefreshChancesThisTurn;
 		    }
 
 
@@ -6888,11 +6896,13 @@ public bool IsCardDragActive => cardDragActive;
 			if (state == null || state.model != enemy)
 				continue;
 
-			if ((Object)state.buffPopupEffect == (Object)null)
-				state.buffPopupEffect = state.viewUI != null ? state.viewUI.BuffPopupEffect : null;
-			if ((Object)state.buffPopupEffect != (Object)null)
-				state.buffPopupEffect.Play(buffType);
-			return;
+				if ((Object)state.buffPopupEffect == (Object)null)
+					state.buffPopupEffect = state.viewUI != null ? state.viewUI.BuffPopupEffect : null;
+				if ((Object)state.buffPopupEffect != (Object)null)
+					state.buffPopupEffect.Play(buffType);
+				if (buffType == BuffEnum.Arc)
+					RefreshEnemyUI(state, true);
+				return;
 		}
 	}
 
@@ -8833,7 +8843,11 @@ public bool IsCardDragActive => cardDragActive;
 
     public void SaveCurrentRunAndReturnToStart(string startSceneName)
     {
-        SaveRunProgress();
+        if (RunSaveSystem.IsTutorialRunActive())
+            RunSaveSystem.EndTutorialRun();
+        else
+            SaveRunProgress();
+
         if (SceneTransitionManager.Instance != null)
             SceneTransitionManager.Instance.LoadSceneWithTransition(startSceneName);
         else
@@ -10117,7 +10131,7 @@ public bool IsCardDragActive => cardDragActive;
 		        buttonsInteractable = interactable && CanUsePlayZoneCardInput();
 			if ((Object)refreshButton != (Object)null)
 			{
-					bool canRefresh = playerState != null && (!refreshUsedThisTurn || playerState.HasAdditionalRefreshChance());
+					bool canRefresh = GetRemainingRefreshChanceCount() > 0;
 				refreshButton.interactable = interactable && CanUseRefreshCardInput() && canRefresh;
 			}
 	        RefreshRefreshChanceUI();

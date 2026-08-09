@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Test_EmbossedWindowFrame_Inset
+  m_Shader: {fileID: 4800000, guid: 585ea9be3aa631e459dc386ac5f0682b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorMask: 15
+    - _CornerRadius: 8
+    - _EmbossAmount: -1
+    - _FrameBevel: 4
+    - _FrameWidth: 15
+    - _FrostScale: 92
+    - _FrostStrength: 0.003
+    - _InnerBevel: 4
+    - _Opacity: 1
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FaceColor: {r: 0.018, g: 0.027, b: 0.025, a: 1}
+    - _HighlightColor: {r: 0.62, g: 0.71, b: 0.69, a: 1}
+    - _InnerHighlightColor: {r: 0.12, g: 0.18, b: 0.17, a: 1}
+    - _InnerShadowColor: {r: 0.002, g: 0.004, b: 0.004, a: 1}
+    - _ShadowColor: {r: 0.008, g: 0.014, b: 0.013, a: 1}
+  m_BuildTextureStacks: []

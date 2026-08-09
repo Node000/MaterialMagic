@@ -52,13 +52,15 @@ public class TutorialManagerUI : MonoBehaviour
     private bool mapTutorialShown;
     private bool shopUndoHintShown;
     private bool rewardEquipHintShown;
+    private bool tutorialCompleted;
+    private bool tutorialEventShown;
     private bool consumedStepClickThisFrame;
 
     public TutorialStep CurrentStep => currentStep;
     public bool MainTutorialRunning => mainTutorialRunning;
     public bool TutorialBattleRunning => tutorialBattleRunning;
     public bool ShouldKillTutorialEnemyAfterPlayerTurn => tutorialBattleRunning && battleTurnIndex >= 2;
-    public bool IsCompleted => RunSaveSystem.IsTutorialCompleted();
+    public bool IsCompleted => tutorialCompleted;
     public bool IsTutorialRun { get; private set; }
     public bool IsMapTutorialBlockingInput => currentStep == TutorialStep.MapPanel || currentStep == TutorialStep.MapMovement || currentStep == TutorialStep.MapStepLimit;
 
@@ -72,7 +74,7 @@ public class TutorialManagerUI : MonoBehaviour
         HideAllSteps();
         SetMapTutorialInputLocked(false);
         IsTutorialRun = owner != null && owner.ActiveChapterNumericId == TutorialChapterNumericId;
-        mainTutorialRunning = IsTutorialRun && !RunSaveSystem.IsTutorialCompleted();
+        mainTutorialRunning = IsTutorialRun;
     }
 
     private void Update()
@@ -261,7 +263,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRewardPanelShown()
     {
-        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted())
+        if (mainTutorialRunning && !tutorialCompleted)
             ShowStep(TutorialStep.RewardClaim, true);
     }
 
@@ -271,7 +273,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRewardMagicSelected()
     {
-        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted() && !rewardEquipHintShown)
+        if (mainTutorialRunning && !tutorialCompleted && !rewardEquipHintShown)
         {
             rewardEquipHintShown = true;
             ShowStep(TutorialStep.RewardEquipMagic, true);
@@ -280,7 +282,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRewardMagicEquipped(PlayerState playerState, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
     {
-        if (mainTutorialRunning && !RunSaveSystem.IsTutorialCompleted() && ShouldShowKeyboardUndoHint())
+        if (mainTutorialRunning && !tutorialCompleted && ShouldShowKeyboardUndoHint())
             ShowStep(TutorialStep.RewardUndoHint, true);
     }
 
@@ -289,8 +291,7 @@ public class TutorialManagerUI : MonoBehaviour
         if (!IsTutorialRun)
             return;
 
-        RunSaveSystem.SetTutorialCompleted(true);
-        RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, chapter, currentLevel);
+        tutorialCompleted = true;
         mainTutorialRunning = false;
         tutorialBattleRunning = false;
         ShowStep(TutorialStep.Completed, false);
@@ -299,10 +300,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnEventOptionsShown()
     {
-        if (RunSaveSystem.IsTutorialEventShown())
-            return;
-
-        if (IsTutorialRun && !RunSaveSystem.IsTutorialEventShown())
+        if (IsTutorialRun && !tutorialEventShown)
             ShowStep(TutorialStep.EventOptions, true);
     }
 
@@ -311,7 +309,7 @@ public class TutorialManagerUI : MonoBehaviour
         if (currentStep != TutorialStep.EventOptions && currentStep != TutorialStep.EventRefresh)
             return;
 
-        RunSaveSystem.SetTutorialEventShown(true);
+        tutorialEventShown = true;
         HideAllSteps();
     }
 

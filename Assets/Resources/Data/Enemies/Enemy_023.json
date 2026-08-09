@@ -13,7 +13,7 @@
       "phase": 0,
       "intentGroups": [
         {
-          "id": 5,
+          "id": 1,
           "intents": [
             {
               "actionType": 6,
@@ -24,21 +24,21 @@
                 }
               ],
               "displayType": "debuff"
-            }
-          ]
-        },
-        {
-          "id": 1,
-          "intents": [
-            {
-              "actionType": 9,
-              "value": 1,
-              "displayType": "special"
             },
             {
-              "actionType": 9,
-              "value": 5,
-              "displayType": "spDefend"
+              "actionType": 1,
+              "value": 14,
+              "displayType": "bigAttack"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 3,
+                  "stack": 3
+                }
+              ],
+              "displayType": "debuff"
             }
           ]
         },
@@ -46,14 +46,29 @@
           "id": 2,
           "intents": [
             {
-              "actionType": 9,
-              "value": 2,
-              "displayType": "special"
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 60,
+                  "stack": 1
+                }
+              ],
+              "displayType": "debuff"
             },
             {
-              "actionType": 9,
-              "value": 5,
-              "displayType": "spDefend"
+              "actionType": 2,
+              "value": 15,
+              "displayType": "bigDefend"
+            },
+            {
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 6,
+                  "stack": 8
+                }
+              ],
+              "displayType": "debuff"
             }
           ]
         },
@@ -61,14 +76,30 @@
           "id": 3,
           "intents": [
             {
-              "actionType": 9,
-              "value": 3,
-              "displayType": "special"
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 61,
+                  "stack": 4
+                }
+              ],
+              "displayType": "debuff"
             },
             {
-              "actionType": 9,
-              "value": 5,
-              "displayType": "spDefend"
+              "actionType": 1,
+              "value": 2,
+              "times": 6,
+              "displayType": "multiAttack"
+            },
+            {
+              "actionType": 3,
+              "buffs": [
+                {
+                  "buffType": 10,
+                  "stack": 4
+                }
+              ],
+              "displayType": "buff"
             }
           ]
         },
@@ -76,23 +107,30 @@
           "id": 4,
           "intents": [
             {
-              "actionType": 9,
-              "value": 4,
-              "displayType": "special"
+              "actionType": 6,
+              "buffs": [
+                {
+                  "buffType": 63,
+                  "stack": 6
+                }
+              ],
+              "displayType": "debuff"
             },
             {
-              "actionType": 9,
-              "value": 5,
-              "displayType": "spDefend"
+              "actionType": 1,
+              "value": 9,
+              "times": 2,
+              "displayType": "multiAttack"
+            },
+            {
+              "actionType": 2,
+              "value": 10,
+              "displayType": "defend"
             }
           ]
         }
       ],
       "intentLoop": [
-        {
-          "groupId": 5,
-          "onlyOnce": true
-        },
         {
           "randomGroupIds": [
             1,

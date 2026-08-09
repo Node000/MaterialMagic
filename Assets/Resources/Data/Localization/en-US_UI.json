@@ -645,6 +645,10 @@
       "text": "Save and Exit"
     },
     {
+      "key": "ui.battle_settings.return_menu",
+      "text": "Return to Main Menu"
+    },
+    {
       "key": "ui.common.confirm",
       "text": "Confirm"
     },

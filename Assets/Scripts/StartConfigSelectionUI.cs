@@ -78,27 +78,33 @@ public class StartConfigSelectionUI : MonoBehaviour
             root.gameObject.SetActive(false);
     }
 
-    public void Show()
+    public void Show(Action onShown = null)
     {
-        ShowInternal(null);
+        ShowInternal(null, onShown);
     }
 
-    public void ShowOnly(string configId)
+    public void ShowOnly(string configId, Action onShown = null)
     {
-        ShowInternal(configId);
+        ShowInternal(configId, onShown);
     }
 
-    private void ShowInternal(string onlyConfigId)
+    private void ShowInternal(string onlyConfigId, Action onShown = null)
     {
         ResolveReferences();
         if (root == null || startConfigBookmark == null)
+        {
+            onShown?.Invoke();
             return;
+        }
 
         visibleOnlyConfigId = onlyConfigId;
         LoadStartConfigs();
         currentConfigIndex = FindFirstVisibleConfigIndex();
         if (currentConfigIndex < 0)
+        {
+            onShown?.Invoke();
             return;
+        }
 
         PlayerStartConfigData currentConfig = startConfigs[currentConfigIndex];
         SelectedConfig = IsConfigUnlocked(currentConfig) ? currentConfig : null;
@@ -106,12 +112,12 @@ public class StartConfigSelectionUI : MonoBehaviour
         SetDragonFrontWindowReplacement(true);
         ApplyDragonFrontWindowPose();
         EnsureBookmarkPool();
-        ShowCurrentBookmark(true);
+        ShowCurrentBookmark(true, onShown);
         UpdateNavigationButtons();
         ConfigSelected?.Invoke(SelectedConfig);
     }
 
-    public void Hide()
+    public void Hide(Action onHidden = null)
     {
         CancelSwitchTransition();
         SelectedConfig = null;
@@ -123,6 +129,7 @@ public class StartConfigSelectionUI : MonoBehaviour
             if (root != null)
                 root.gameObject.SetActive(false);
             SetDragonFrontWindowReplacement(false);
+            onHidden?.Invoke();
             return;
         }
 
@@ -132,10 +139,15 @@ public class StartConfigSelectionUI : MonoBehaviour
             if (root != null)
                 root.gameObject.SetActive(false);
             SetDragonFrontWindowReplacement(false);
+            onHidden?.Invoke();
             return;
         }
 
-        bookmark.Hide(bookmark.RectTransform.anchoredPosition.x, 0f, HideBookmark);
+        bookmark.Hide(bookmark.RectTransform.anchoredPosition.x, 0f, hiddenBookmark =>
+        {
+            HideBookmark(hiddenBookmark);
+            onHidden?.Invoke();
+        });
     }
 
     public bool EnsureConfigWindows()
@@ -315,14 +327,20 @@ public class StartConfigSelectionUI : MonoBehaviour
         SetNavigationInteractable(true);
     }
 
-    private void ShowCurrentBookmark(bool animate)
+    private void ShowCurrentBookmark(bool animate, Action onShown = null)
     {
         if (bookmarks.Count == 0 || bookmarks[0] == null)
+        {
+            onShown?.Invoke();
             return;
+        }
 
         PlayerStartConfigData currentConfig = currentConfigIndex >= 0 && currentConfigIndex < startConfigs.Count ? startConfigs[currentConfigIndex] : SelectedConfig;
         if (currentConfig == null)
+        {
+            onShown?.Invoke();
             return;
+        }
 
         bool locked = !IsConfigUnlocked(currentConfig);
         StartConfigBookmarkUI bookmark = bookmarks[0];
@@ -333,8 +351,11 @@ public class StartConfigSelectionUI : MonoBehaviour
         if (animate)
         {
             float readyX = bookmark.RectTransform.anchoredPosition.x;
-            bookmark.Show(readyX, readyX, 0f);
+            bookmark.Show(readyX, readyX, 0f, onShown);
+            return;
         }
+
+        onShown?.Invoke();
     }
 
     private int FindFirstVisibleConfigIndex()

@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Test_TVRectGlitch
+  m_Shader: {fileID: 4800000, guid: 071757450c5af374e9a8a62252330ff4, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _CycleDuration: 3
+    - _EdgeSoftnessPixels: 1
+    - _FlashIntensity: 0.12
+    - _HorizontalDisplacementPixels: 34
+    - _Intensity: 1
+    - _LineHeightPixels: 3
+    - _MaxActiveDuration: 0.65
+    - _MaxQuietDuration: 2
+    - _MaxRectHeightPixels: 90
+    - _MaxRectWidthPixels: 500
+    - _MinActiveDuration: 0.2
+    - _MinQuietDuration: 0.7
+    - _MinRectHeightPixels: 14
+    - _MinRectWidthPixels: 110
+    - _NoiseIntensity: 0.06
+    - _RGBSplitPixels: 5
+    - _RectangleCount: 4
+    - _ScanlineIntensity: 0.16
+    - _Seed: 13
+    - _UseTime: 1
+    - _VerticalDisplacementPixels: 2
+    m_Colors: []
+  m_BuildTextureStacks: []

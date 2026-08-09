@@ -13,8 +13,29 @@
 - `Sprite/Sprite_PsychedelicDistortion.shader`：S07，特殊状态低幅 UV 扭曲、色偏与残像。
 - `Sprite/Sprite_HologramCRT.shader`：S08，全息/CRT 投影感。
 - `Screen/Screen_EventGlitchOverlay.shader`：S10，短时全屏事件 glitch 叠加层。
+- `Screen/TVRectGlitch.shader`：旧的独立 URP 全屏随机矩形横线扭曲、色散与扫描线测试效果。
+- `UI/UI_TVRectGlitch.shader`：可直接挂在 UGUI Image 上的随机矩形横线扭曲、色散与扫描线效果。
+- `UI/UI_TVRectGlitchSubtract.shader`：UGUI Image 减色叠加版本；用 RevSub 混合在随机故障矩形内扣减下方颜色，适合背景图。
 - `Background/BG_LayeredVaporwave.shader`：BG01/BG02/BG04/BG06/BG07 合并底层背景 Shader。
 - `Background/BG_EdgeDecorTint.shader`：BG03 边缘剪影/装饰贴图染色与弱质感 Shader。
+- `Test/PixelParticleDissolve.shader`：像素粒子汇聚/消散测试效果，参考 `Assets/Shaders/Ref/Dissolve.gdshader` 的固定网格噪声消散方向；直接采样所挂 `Image` 的 Sprite，初态保留原贴图，消散时才转粒子色并透明。
+- `Test/SpatialRift.shader`：程序化空间裂缝，支持尺寸与裂缝密度。
+- `Test/FluidInkBackground.shader`：多色液体颜料扩散背景，支持颜色数量与流速。
+- `Test/HalftoneFloatingBackground.shader`：暗色半调网点与低频浮动面板背景。
+- `Test/SquareParticleBurst.shader`：方形粒子描边、染色与透明材质，交由 Particle System 提供敌人死亡爆散运动。
+
+## 独立测试场景
+
+测试场景及专用材质在 `Assets/Shaders/TestScene/`：
+
+- `PixelParticleDissolveTest.unity`：提供“汇聚”“消散”按钮；按钮平滑驱动 `_DissolveProgress`。
+- `SpatialRiftTest.unity`：提供“大小”“密度”滑条，分别驱动 `_RiftSize` 与 `_RiftDensity`。
+- `FluidInkBackgroundTest.unity`：提供“颜色数量”“速度”滑条，分别驱动 `_ColorCount` 与 `_FlowSpeed`。
+- `HalftoneBackgroundTest.unity`：半调浮动背景预览。当前以 StartScene 的暗色低频浮动语汇为基础；提供实际图片后可改为采样图片的半调版本。
+- `SquareParticleBurstTest.unity`：方形粒子爆散预览；点击“播放爆散”重放敌人死亡用的 Particle System。
+- `TVRectGlitchTest.unity`：UGUI Image 电视信号测试；`TV Signal Image` 使用专用材质，RectTransform 可直接调整位置、大小和旋转，随机矩形会在静默、故障、恢复之间循环。
+
+测试交互控制脚本为 `Assets/Scripts/VFX/ShaderEffectTestController.cs`。每个场景只引用其在 `Assets/Shaders/TestScene/Materials/` 中的专用材质，调参不会影响项目已有材质。
 
 ## 材质预设
 

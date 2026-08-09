@@ -610,8 +610,8 @@ public class BattleManager
         result.CapturePlayerBefore(PlayerState);
         result.CaptureEnemyShieldBefore(enemy);
         CombatantModel opponent = new CombatantModel(PlayerState);
-        enemy.ClearShield();
         enemy.TriggerOnTurnStart(opponent);
+        enemy.ClearShield();
         enemy.TriggerAfterTurnStart(opponent);
         enemy.BeginResolveIntents(PlayerState);
         result.CapturePlayerAfter(PlayerState);

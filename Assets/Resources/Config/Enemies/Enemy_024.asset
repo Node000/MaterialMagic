@@ -17,7 +17,7 @@ MonoBehaviour:
     id: 
     string_id: enemy_024
     nameKey: enemy.024.name
-    maxHealth: 201
+    maxHealth: 153
     baseAttack: 14
     imageScale: 4.01
     hoverEffect: 0
@@ -40,6 +40,18 @@ MonoBehaviour:
         onlyOnce: 0
         intents:
         - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 62
+            stack: 2
+          displayType: debuff
+          descriptionKey: 
+        - intentType: 0
           actionType: 1
           value: 3
           times: 4
@@ -58,7 +70,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 6
-            stack: 2
+            stack: 4
           displayType: debuff
           descriptionKey: 
       - id: 2
@@ -73,6 +85,18 @@ MonoBehaviour:
           summonCount: 1
           buffs: []
           displayType: bigAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 62
+            stack: 2
+          displayType: debuff
           descriptionKey: 
       - id: 3
         onlyOnce: 0
@@ -96,8 +120,20 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 10
-            stack: 2
+            stack: 4
           displayType: buff
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 62
+            stack: 4
+          displayType: debuff
           descriptionKey: 
       - id: 4
         onlyOnce: 0
@@ -134,7 +170,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 3
-            stack: 1
+            stack: 6
           displayType: debuff
           descriptionKey: 
       intentLoop:

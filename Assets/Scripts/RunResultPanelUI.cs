@@ -201,7 +201,11 @@ public class RunResultPanelUI : MonoBehaviour
 
     private void ReturnToStartMenu()
     {
-        RunSaveSystem.ClearCurrentRun();
+        if (RunSaveSystem.IsTutorialRunActive())
+            RunSaveSystem.EndTutorialRun();
+        else
+            RunSaveSystem.ClearCurrentRun();
+
         if (SceneTransitionManager.Instance != null)
             SceneTransitionManager.Instance.LoadSceneWithTransition(startSceneName);
         else

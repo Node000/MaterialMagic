@@ -34,7 +34,7 @@ MonoBehaviour:
     phases:
     - phase: 0
       intentGroups:
-      - id: 5
+      - id: 1
         onlyOnce: 0
         intents:
         - intentType: 0
@@ -49,102 +49,138 @@ MonoBehaviour:
             stack: 1
           displayType: debuff
           descriptionKey: 
-      - id: 1
-        onlyOnce: 0
-        intents:
         - intentType: 0
-          actionType: 9
-          value: 1
+          actionType: 1
+          value: 14
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
           buffs: []
-          displayType: special
+          displayType: bigAttack
           descriptionKey: 
         - intentType: 0
-          actionType: 9
-          value: 5
+          actionType: 6
+          value: 0
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
-          buffs: []
-          displayType: spDefend
+          buffs:
+          - buffType: 3
+            stack: 3
+          displayType: debuff
           descriptionKey: 
       - id: 2
         onlyOnce: 0
         intents:
         - intentType: 0
-          actionType: 9
-          value: 2
+          actionType: 6
+          value: 0
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
-          buffs: []
-          displayType: special
+          buffs:
+          - buffType: 60
+            stack: 1
+          displayType: debuff
           descriptionKey: 
         - intentType: 0
-          actionType: 9
-          value: 5
+          actionType: 2
+          value: 15
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
           buffs: []
-          displayType: spDefend
+          displayType: bigDefend
+          descriptionKey: 
+        - intentType: 0
+          actionType: 6
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 6
+            stack: 8
+          displayType: debuff
           descriptionKey: 
       - id: 3
         onlyOnce: 0
         intents:
         - intentType: 0
-          actionType: 9
-          value: 3
+          actionType: 6
+          value: 0
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
-          buffs: []
-          displayType: special
+          buffs:
+          - buffType: 61
+            stack: 4
+          displayType: debuff
           descriptionKey: 
         - intentType: 0
-          actionType: 9
-          value: 5
-          times: 1
+          actionType: 1
+          value: 2
+          times: 6
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
           buffs: []
-          displayType: spDefend
+          displayType: multiAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 3
+          value: 0
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs:
+          - buffType: 10
+            stack: 4
+          displayType: buff
           descriptionKey: 
       - id: 4
         onlyOnce: 0
         intents:
         - intentType: 0
-          actionType: 9
-          value: 4
+          actionType: 6
+          value: 0
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
-          buffs: []
-          displayType: special
+          buffs:
+          - buffType: 63
+            stack: 6
+          displayType: debuff
           descriptionKey: 
         - intentType: 0
-          actionType: 9
-          value: 5
+          actionType: 1
+          value: 9
+          times: 2
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: multiAttack
+          descriptionKey: 
+        - intentType: 0
+          actionType: 2
+          value: 10
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
           buffs: []
-          displayType: spDefend
+          displayType: defend
           descriptionKey: 
       intentLoop:
-      - groupId: 5
-        randomGroupIds: 
-        onlyOnce: 1
       - groupId: 0
         randomGroupIds: 01000000020000000300000004000000
         onlyOnce: 0

@@ -46,9 +46,9 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 3
-            stack: 4
+            stack: 5
           - buffType: 7
-            stack: 4
+            stack: 5
           displayType: debuff
           descriptionKey: 
       - id: 2
@@ -63,6 +63,16 @@ MonoBehaviour:
           summonCount: 1
           buffs: []
           displayType: special
+          descriptionKey: 
+        - intentType: 0
+          actionType: 2
+          value: 5
+          times: 1
+          hitInterval: 0.2
+          summonEnemyId: 0
+          summonCount: 1
+          buffs: []
+          displayType: defend
           descriptionKey: 
       - id: 3
         onlyOnce: 0

@@ -159,7 +159,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         RectTransform.localScale = Vector3.one;
     }
 
-    public void Show(float initialX, float readyX, float delay)
+    public void Show(float initialX, float readyX, float delay, Action onComplete = null)
     {
         visible = true;
         currentFloatOffset = Vector2.zero;
@@ -172,7 +172,8 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             .SetDelay(delay)
             .SetEase(enterEase)
             .SetUpdate(true)
-            .SetTarget(this);
+            .SetTarget(this)
+            .OnComplete(() => onComplete?.Invoke());
     }
 
     public void Hide(float initialX, float delay, Action<StartConfigBookmarkUI> onComplete)

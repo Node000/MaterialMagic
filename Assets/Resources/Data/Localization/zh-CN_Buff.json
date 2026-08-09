@@ -190,7 +190,7 @@
     },
     {
       "key": "buff.shieldonhealthloss.desc",
-      "text": "持续生效：生命值减少时，获得减少量×{0}的护盾。"
+      "text": "生命值减少时，获得减少量的一半护盾；敌方回合结束时，将剩余护盾等量转化为施加给玩家的迟缓。"
     },
     {
       "key": "buff.shufflehandoninvokechance.name",
@@ -198,7 +198,7 @@
     },
     {
       "key": "buff.shufflehandoninvokechance.desc",
-      "text": "持续生效：玩家确认出牌时，有1/3概率打乱出牌区顺序。"
+      "text": "下回合玩家确认出牌时，打乱出牌区顺序。"
     },
     {
       "key": "buff.attributedisabled.name",
@@ -459,6 +459,38 @@
     {
       "key": "buff.shield_on_next_draw.desc",
       "text": "下回合开始时，每抽1张牌获得{0}点护盾，然后清除。"
+    },
+    {
+      "key": "buff.refresh_limit_next_turn.name",
+      "text": "下回合少换牌"
+    },
+    {
+      "key": "buff.refresh_limit_next_turn.desc",
+      "text": "下回合换牌次数减少{0}次。"
+    },
+    {
+      "key": "buff.random_next_draw.name",
+      "text": "下回合随机"
+    },
+    {
+      "key": "buff.random_next_draw.desc",
+      "text": "下回合抽到的前{0}张素材牌获得【随机】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
+    },
+    {
+      "key": "buff.temporary_proliferating_next_draw.name",
+      "text": "下回合临时增殖"
+    },
+    {
+      "key": "buff.temporary_proliferating_next_draw.desc",
+      "text": "下回合抽到的前{0}张素材牌获得【临时】和【增殖】，每生效1张消耗1层，抽牌结束后清除剩余层数。"
+    },
+    {
+      "key": "buff.hand_limit_next_turn.name",
+      "text": "下回合手牌上限"
+    },
+    {
+      "key": "buff.hand_limit_next_turn.desc",
+      "text": "下回合手牌上限为{0}。"
     }
   ]
 }

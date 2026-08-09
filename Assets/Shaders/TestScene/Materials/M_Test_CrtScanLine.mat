@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Test_CrtScanLine
+  m_Shader: {fileID: 4800000, guid: 9fa7d7645b11c674bbe0671edb58f3e2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _DistortionFrequency: 7
+    - _DistortionWidthPixels: 32
+    - _HorizontalDisplacementPixels: 8
+    - _Intensity: 1
+    - _ScanGlowIntensity: 0.12
+    - _ScanGlowWidthPixels: 44
+    - _ScanLineWidthPixels: 2
+    - _ScanSpeed: 0.13
+    - _StaticScanlineDensity: 420
+    - _StaticScanlineIntensity: 0.045
+    m_Colors:
+    - _ScanColor: {r: 0.12, g: 0.48, b: 0.22, a: 1}
+  m_BuildTextureStacks: []

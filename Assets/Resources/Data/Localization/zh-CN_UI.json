@@ -177,6 +177,10 @@
       "text": "保存并退出"
     },
     {
+      "key": "ui.battle_settings.return_menu",
+      "text": "返回主菜单"
+    },
+    {
       "key": "ui.unified_detail.section.modifier",
       "text": "强化效果"
     },
@@ -298,7 +302,7 @@
     },
     {
       "key": "ui.start_menu.tutorial_button",
-      "text": "游戏教程"
+      "text": "教程"
     },
     {
       "key": "ui.start_menu.forum_button",

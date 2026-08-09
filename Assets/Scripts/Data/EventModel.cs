@@ -342,14 +342,12 @@ public class EventModel
             if (node == null || node.options == null)
                 continue;
 
-            HashSet<string> usedRecipeKeys = new HashSet<string>();
+            List<EventOptionData> assignedOptions = new List<EventOptionData>();
             for (int optionIndex = 0; optionIndex < node.options.Length; optionIndex++)
             {
                 EventOptionData option = node.options[optionIndex];
-                if (option == null || option.isExitOption || option.randomRecipeLength > 0 || string.IsNullOrEmpty(option.recipe))
-                    continue;
-
-                usedRecipeKeys.Add(CreateRecipeKey(option.recipe, option.ignoreOrder));
+                if (option != null && !option.isExitOption && option.randomRecipeLength <= 0 && !string.IsNullOrEmpty(option.recipe))
+                    assignedOptions.Add(option);
             }
 
             string nodeKey = !string.IsNullOrEmpty(node.id) ? node.id : nodeIndex.ToString();
@@ -361,8 +359,9 @@ public class EventModel
                 if (option == null || option.randomRecipeLength <= 0)
                     continue;
 
-                option.recipe = CreateUniqueRandomRecipe(option.randomRecipeLength, option.ignoreOrder, usedRecipeKeys, lastRecipe, out string rolledRecipe);
-                usedRecipeKeys.Add(CreateRecipeKey(option.recipe, option.ignoreOrder));
+                option.recipe = CreateUniqueRandomRecipe(option.randomRecipeLength, option.ignoreOrder, assignedOptions, lastRecipe, out string rolledRecipe);
+                if (!string.IsNullOrEmpty(option.recipe))
+                    assignedOptions.Add(option);
                 if (!string.IsNullOrEmpty(rolledRecipe))
                     selectedRecipe = rolledRecipe;
             }
@@ -372,33 +371,44 @@ public class EventModel
         }
     }
 
-    private static string CreateUniqueRandomRecipe(int length, bool ignoreOrder, HashSet<string> usedRecipeKeys, string lastRecipe, out string selectedRecipe)
+    private static string CreateUniqueRandomRecipe(int length, bool ignoreOrder, List<EventOptionData> assignedOptions, string lastRecipe, out string selectedRecipe)
     {
         selectedRecipe = null;
-        if (usedRecipeKeys == null)
-        {
-            selectedRecipe = CreateRandomRecipe(length);
-            return selectedRecipe;
-        }
-
         List<string> candidates = new List<string>();
         HashSet<string> candidateKeys = new HashSet<string>();
-        CollectUnusedRecipeCandidates(Math.Max(1, length), ignoreOrder, usedRecipeKeys, candidateKeys, new char[Math.Max(1, length)], 0, candidates);
-        if (candidates.Count == 0)
+        CollectRecipeCandidates(Math.Max(1, length), ignoreOrder, candidateKeys, new char[Math.Max(1, length)], 0, candidates);
+
+        List<string> availableCandidates = new List<string>();
+        for (int i = 0; i < candidates.Count; i++)
         {
-            selectedRecipe = CreateRandomRecipe(length);
-            return selectedRecipe;
+            string candidate = candidates[i];
+            bool conflicts = false;
+            for (int optionIndex = 0; assignedOptions != null && optionIndex < assignedOptions.Count; optionIndex++)
+            {
+                EventOptionData assignedOption = assignedOptions[optionIndex];
+                if (RecipesCanOverlap(candidate, ignoreOrder, assignedOption.recipe, assignedOption.ignoreOrder))
+                {
+                    conflicts = true;
+                    break;
+                }
+            }
+
+            if (!conflicts)
+                availableCandidates.Add(candidate);
         }
 
+        if (availableCandidates.Count == 0)
+            return string.Empty;
+
         string lastRecipeKey = CreateRecipeKey(lastRecipe, ignoreOrder);
-        List<string> choicePool = candidates;
+        List<string> choicePool = availableCandidates;
         if (!string.IsNullOrEmpty(lastRecipeKey))
         {
             List<string> filteredCandidates = new List<string>();
-            for (int i = 0; i < candidates.Count; i++)
+            for (int i = 0; i < availableCandidates.Count; i++)
             {
-                if (CreateRecipeKey(candidates[i], ignoreOrder) != lastRecipeKey)
-                    filteredCandidates.Add(candidates[i]);
+                if (CreateRecipeKey(availableCandidates[i], ignoreOrder) != lastRecipeKey)
+                    filteredCandidates.Add(availableCandidates[i]);
             }
 
             if (filteredCandidates.Count > 0)
@@ -409,13 +419,13 @@ public class EventModel
         return selectedRecipe;
     }
 
-    private static void CollectUnusedRecipeCandidates(int length, bool ignoreOrder, HashSet<string> usedRecipeKeys, HashSet<string> candidateKeys, char[] buffer, int index, List<string> candidates)
+    private static void CollectRecipeCandidates(int length, bool ignoreOrder, HashSet<string> candidateKeys, char[] buffer, int index, List<string> candidates)
     {
         if (index >= length)
         {
             string recipe = new string(buffer);
             string key = CreateRecipeKey(recipe, ignoreOrder);
-            if (!usedRecipeKeys.Contains(key) && candidateKeys.Add(key))
+            if (candidateKeys.Add(key))
                 candidates.Add(recipe);
             return;
         }
@@ -423,8 +433,19 @@ public class EventModel
         for (char material = '1'; material <= '4'; material++)
         {
             buffer[index] = material;
-            CollectUnusedRecipeCandidates(length, ignoreOrder, usedRecipeKeys, candidateKeys, buffer, index + 1, candidates);
+            CollectRecipeCandidates(length, ignoreOrder, candidateKeys, buffer, index + 1, candidates);
         }
+    }
+
+    private static bool RecipesCanOverlap(string firstRecipe, bool firstIgnoreOrder, string secondRecipe, bool secondIgnoreOrder)
+    {
+        if (string.IsNullOrEmpty(firstRecipe) || string.IsNullOrEmpty(secondRecipe) || firstRecipe.Length != secondRecipe.Length)
+            return false;
+
+        if (firstIgnoreOrder || secondIgnoreOrder)
+            return CreateRecipeKey(firstRecipe, true) == CreateRecipeKey(secondRecipe, true);
+
+        return firstRecipe == secondRecipe;
     }
 
     private static string CreateRecipeKey(string recipe, bool ignoreOrder)

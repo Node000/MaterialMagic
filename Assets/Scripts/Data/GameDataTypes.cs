@@ -122,7 +122,11 @@ public enum BuffEnum
     WeakNextTurn = 55,
     FoamShield = 56,
     ShieldOnNextDraw = 57,
-    Thorns = 58
+    Thorns = 58,
+    RefreshLimitNextTurn = 60,
+    RandomNextDraw = 61,
+    TemporaryProliferatingNextDraw = 62,
+    HandLimitNextTurn = 63
 }
 
 public enum BuffKindEnum

@@ -55,8 +55,8 @@
               "actionType": 3,
               "buffs": [
                 {
-                  "buffType": 10,
-                  "stack": 2
+              "buffType": 10,
+              "stack": 3
                 }
               ],
               "displayType": "buff"
