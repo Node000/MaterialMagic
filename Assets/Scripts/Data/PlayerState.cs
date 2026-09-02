@@ -431,6 +431,11 @@ public class PlayerState
 
     public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex)
     {
+        return TryMoveHandCardToPlay(card, playZoneIndex, false);
+    }
+
+    public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex, bool allowDisabled)
+    {
         if (card == null)
             return false;
 
@@ -438,7 +443,7 @@ public class PlayerState
         if (index < 0)
             return false;
 
-        if (IsMaterialDisabled(card))
+        if (!allowDisabled && IsMaterialDisabled(card))
             return false;
 
         Hand.RemoveAt(index);
@@ -562,6 +567,72 @@ public class PlayerState
     public RefreshHandResult RefreshBasicCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
         return RefreshCombatCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);
+    }
+
+    public RefreshHandResult RefreshPlayZoneCardsToHand(List<MaterialModel> removedTemporaryCards, BattleManager battleManager, IReadOnlyList<MaterialEnum> forcedMaterials = null)
+    {
+        if (PlayZone.Count == 0)
+            return new RefreshHandResult(0, 0);
+
+        List<MaterialModel> cards = new List<MaterialModel>(PlayZone);
+        if (forcedMaterials == null)
+        {
+            MaterialModifierContext previousContext = MaterialModifierModel.CurrentContext;
+            MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = this, BattleManager = battleManager };
+            try
+            {
+                for (int i = 0; i < cards.Count; i++)
+                    cards[i].TriggerOnRefresh();
+            }
+            finally
+            {
+                MaterialModifierModel.CurrentContext = previousContext;
+            }
+        }
+
+        int returnedCount = 0;
+        for (int i = 0; i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (!PlayZone.Remove(card))
+                continue;
+
+            card.TriggerOnDiscard();
+            TriggerAfterDiscard(card);
+            if (card.isTemporary)
+            {
+                removedTemporaryCards?.Add(card);
+                AddConsumedCard(card);
+                GameLog.Data($"Refresh removes temporary play zone card {DescribeMaterial(card)}.");
+                continue;
+            }
+
+            AddCardToDiscardPile(card);
+            returnedCount++;
+            GameLog.Data($"Refresh discards play zone card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
+        }
+
+        int drawnCount = 0;
+        if (forcedMaterials != null)
+        {
+            drawnCount = DrawSpecificMaterialsToHand(forcedMaterials, true);
+        }
+        else
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                MaterialModel replacement = DrawCombatRefreshReplacement(null, true);
+                if (replacement == null)
+                    break;
+
+                replacement.isPlayed = false;
+                Hand.Add(replacement);
+                drawnCount++;
+            }
+        }
+
+        GameLog.Data($"Refresh play zone cards to hand selected={cards.Count} drawn={drawnCount} discarded={returnedCount} temporaryRemoved={removedTemporaryCards?.Count ?? 0}");
+        return new RefreshHandResult(drawnCount, returnedCount);
     }
 
     public RefreshHandResult RefreshCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
@@ -1800,6 +1871,65 @@ public class PlayerState
 
         MagicBook.Insert(insertIndex, magic);
         MagicCodexProgressSystem.MarkMagicDiscovered(magic.Data);
+    }
+
+    /// <summary>
+    /// 按道具栏的视觉序列（含空格）移动一个道具并让其余槽位向目标挤压，
+    /// 之后槽位索引即触发顺序，与视图布局保持一致。
+    /// </summary>
+    public void RearrangeMagicSlotsByVisualOrder(int fromIndex, int toIndex, int visualCount)
+    {
+        if (visualCount <= 0 || fromIndex == toIndex || fromIndex < 0 || fromIndex >= visualCount || toIndex < 0 || toIndex >= visualCount)
+            return;
+
+        MagicModel moved = GetMagicAtSlot(fromIndex);
+        if (moved == null)
+            return;
+
+        List<MagicModel> content = new List<MagicModel>(visualCount);
+        for (int i = 0; i < visualCount; i++)
+            content.Add(GetMagicAtSlot(i));
+
+        content.RemoveAt(fromIndex);
+        content.Insert(toIndex, moved);
+
+        MagicBook.Clear();
+        for (int i = 0; i < content.Count; i++)
+        {
+            MagicModel model = content[i];
+            if (model == null)
+                continue;
+
+            model.SlotIndex = i;
+            MagicBook.Add(model);
+        }
+        GameLog.Data($"Rearrange magic slot from={fromIndex} to={toIndex} count={MagicBook.Count}");
+    }
+
+    /// <summary>
+    /// 清掉超限槽位并按槽位升序重新压实到 0..count-1，避免出现空洞。
+    /// 道具栏从此只显示已占用道具，slotIndex 即从左到右的触发顺序。
+    /// </summary>
+    public void NormalizeMagicSlots(int slotLimit)
+    {
+        if (MagicBook.Count == 0)
+            return;
+
+        MagicBook.Sort((a, b) =>
+        {
+            int ai = a != null ? a.SlotIndex : 0;
+            int bi = b != null ? b.SlotIndex : 0;
+            return ai.CompareTo(bi);
+        });
+
+        if (slotLimit > 0 && MagicBook.Count > slotLimit)
+            MagicBook.RemoveRange(slotLimit, MagicBook.Count - slotLimit);
+
+        for (int i = 0; i < MagicBook.Count; i++)
+        {
+            if (MagicBook[i] != null)
+                MagicBook[i].SlotIndex = i;
+        }
     }
 
     public static MagicModel CreateMagicFromData(int magicId, int slotIndex)

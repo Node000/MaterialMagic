@@ -153,6 +153,8 @@ public class TutorialManagerUI : MonoBehaviour
         {
             case TutorialStep.BattlePlay:
                 return card != null && card.CanActAs(MaterialEnum.Fire) && CountMaterial(playZone, MaterialEnum.Fire) < 2;
+            case TutorialStep.BattleRefresh:
+                return card != null && card.CanActAs(MaterialEnum.Earth) && CountMaterial(playZone, MaterialEnum.Earth) < 3;
             default:
                 return false;
         }
@@ -165,7 +167,44 @@ public class TutorialManagerUI : MonoBehaviour
         if (waitingForStepClick)
             return false;
 
-        return currentStep == TutorialStep.BattlePlay && card != null && card.CanActAs(MaterialEnum.Fire);
+        if (currentStep == TutorialStep.BattlePlay && card != null && card.CanActAs(MaterialEnum.Fire))
+            return true;
+
+        return currentStep == TutorialStep.BattleRefresh && card != null && card.CanActAs(MaterialEnum.Earth);
+    }
+
+    public bool CanReplacePlayZone(int playZoneCount)
+    {
+        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
+            return true;
+        if (waitingForStepClick)
+            return false;
+
+        return currentStep == TutorialStep.BattleRefresh && playZoneCount == 3;
+    }
+
+    public bool TryGetForcedRefreshMaterialsForPlayZone(int playZoneCount, List<MaterialEnum> materials)
+    {
+        if (materials == null)
+            return false;
+
+        materials.Clear();
+        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh && playZoneCount == 3)
+        {
+            materials.Add(MaterialEnum.Fire);
+            materials.Add(MaterialEnum.Fire);
+            materials.Add(MaterialEnum.Water);
+            return true;
+        }
+
+        if (IsTutorialRun && currentStep == TutorialStep.EventRefresh && playZoneCount > 0)
+        {
+            for (int i = 0; i < playZoneCount; i++)
+                materials.Add(MaterialEnum.Earth);
+            return true;
+        }
+
+        return false;
     }
 
     public bool CanRefreshSelected(IReadOnlyList<MaterialModel> selectedCards)

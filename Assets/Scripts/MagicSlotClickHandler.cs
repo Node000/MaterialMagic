@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
+public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private HandSystemUI owner;
     private int slotIndex;
+    private bool dragActive;
+    private bool suppressClick;
 
     public void Bind(HandSystemUI owner, int slotIndex)
     {
@@ -12,8 +14,45 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler
         this.slotIndex = slotIndex;
     }
 
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        suppressClick = false;
+        if (eventData == null || eventData.button != PointerEventData.InputButton.Left)
+            return;
+
+        if (owner == null || !owner.CanBeginMagicBookReorder || !owner.IsMagicSlotOccupied(slotIndex))
+            return;
+
+        dragActive = owner.BeginMagicBookDrag(slotIndex, (RectTransform)transform, eventData);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (!dragActive || owner == null)
+            return;
+
+        owner.MoveMagicBookDrag(eventData);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (!dragActive)
+            return;
+
+        dragActive = false;
+        suppressClick = true;
+        if (owner != null)
+            owner.EndMagicBookDrag(eventData);
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (suppressClick)
+        {
+            suppressClick = false;
+            return;
+        }
+
         if (eventData != null && eventData.button == PointerEventData.InputButton.Right)
         {
             owner?.ShowDebugMagicReplacementDropdown(slotIndex, eventData.position);

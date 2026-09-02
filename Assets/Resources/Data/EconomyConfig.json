@@ -11,6 +11,7 @@
       "battleGoldMax": 2,
       "eliteBattleGoldMin": 4,
       "eliteBattleGoldMax": 5,
+      "battleArrowRewardEnchantChance": 0.1,
       "shopMagicRewardPoolId": 1,
       "shopMaterialPool": [
         1,

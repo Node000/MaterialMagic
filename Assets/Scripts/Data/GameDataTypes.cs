@@ -27,6 +27,7 @@ public class EconomyConfigData : INumericDataRecord
     public int battleGoldMax = 2;
     public int eliteBattleGoldMin = 4;
     public int eliteBattleGoldMax = 5;
+    public float battleArrowRewardEnchantChance = 0.1f;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
 

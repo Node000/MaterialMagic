@@ -20,7 +20,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private HandSystemUI owner;
     private RectTransform rectTransform;
     private Tween feedbackTween;
-    private bool selected;
     private bool inPlayZone;
     private bool hovered;
     private bool dragging;
@@ -34,7 +33,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private bool hasTooltipContentOverride;
 
     public MaterialModel Card => card;
-    public bool Selected => selected;
     public bool InPlayZone => inPlayZone;
     public RectTransform RectTransform => rectTransform;
 
@@ -76,7 +74,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     {
         this.card = card;
         this.inPlayZone = inPlayZone;
-        SetSelected(false, true);
         RefreshVisual();
     }
 
@@ -91,18 +88,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         PlayFeedback(instant);
     }
 
-    public void SetSelected(bool value, bool instant)
-    {
-        selected = value;
-        SetFrameTransparent();
-        RefreshSpringHighlight();
-
-        PlayFeedback(instant);
-    }
-
     public void ClearPlayFeedback(bool instant)
     {
-        selected = false;
         hovered = false;
         layoutHovered = false;
         SetFrameTransparent();
@@ -168,26 +155,12 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             return;
         }
 
-        if (owner == null)
+        if (owner == null || eventData == null || eventData.button != PointerEventData.InputButton.Left)
             return;
 
-        if (owner.TryPlaySelectedCardsFromCardClick(this, eventData))
-            return;
-
-        if (eventData.button == PointerEventData.InputButton.Right)
-        {
-            owner.OnCardPlayRequested(this);
-            if (touchPointer)
-                ClearHoverAndHideTooltip();
-            return;
-        }
-
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            if (TryGetTooltipContent(out UnifiedDetailContent content))
-                owner.GetUIManager()?.PinUnifiedDetailPopup(this, content);
-            owner.OnCardLeftClicked(this);
-        }
+        if (TryGetTooltipContent(out UnifiedDetailContent cardContent))
+            owner.GetUIManager()?.PinUnifiedDetailPopup(this, cardContent);
+        owner.OnCardLeftClicked(this);
 
         if (touchPointer)
             ClearHoverAndHideTooltip();
@@ -227,11 +200,16 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
             return;
 
         suppressClick = true;
+        if (!owner.OnCardDragBegin(this, eventData))
+        {
+            suppressClick = false;
+            return;
+        }
+
         dragging = true;
         hovered = false;
         RefreshSpringHighlight();
         PlayFeedback(false);
-        owner.OnCardDragBegin(this, eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -399,8 +377,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     {
         feedbackTween?.Kill(false);
 
-        Vector3 targetScale = layoutHovered ? Vector3.one * layoutHoverScale : selected ? Vector3.one * selectedScale : Vector3.one;
-        float hoverOffset = hovered ? selected ? -hoverTilt : hoverTilt : 0f;
+        Vector3 targetScale = layoutHovered ? Vector3.one * layoutHoverScale : Vector3.one;
+        float hoverOffset = hovered ? hoverTilt : 0f;
         Vector3 targetRotation = new Vector3(0f, 0f, baseZRotation + hoverOffset);
 
         if (instant)

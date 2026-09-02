@@ -28,6 +28,14 @@ public class RewardOptionsModel
     }
 }
 
+public class RewardArrowOption
+{
+    public MaterialEnum material;
+    public MaterialModifierData modifierData;
+
+    public bool HasModifier => modifierData != null;
+}
+
 public class RewardOptionView : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
@@ -67,6 +75,7 @@ public class RewardPanelUI : MonoBehaviour
     [SerializeField] private int battleGoldReward = 1;
     [SerializeField] private Vector2 magicChoiceCellSize = new Vector2(196f, 92f);
     [SerializeField] private float magicChoiceSpacing = 230f;
+    [SerializeField] private RectTransform materialCardPrefab;
 
     private readonly List<MagicItemView> rewardMagicViews = new List<MagicItemView>();
     private readonly List<RewardOptionView> optionViews = new List<RewardOptionView>();
@@ -84,6 +93,13 @@ public class RewardPanelUI : MonoBehaviour
     private int currentGoldReward;
     private bool magicOnlyMode;
     private Action magicOnlyCompleted;
+    private bool arrowRewardMode;
+    private bool arrowClaimed;
+    private readonly List<RewardArrowOption> currentArrowOptions = new List<RewardArrowOption>();
+    private RectTransform arrowChoicePanel;
+    private RectTransform arrowChoiceContent;
+    private Button arrowChoiceBackButton;
+    private RectTransform cachedMaterialCardPrefab;
     private RewardOptionsModel currentRewardOptions;
     private RewardOptionKind eliteExtraRewardKind;
     private Coroutine magicChoicePrewarmRoutine;
@@ -109,7 +125,13 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimed = false;
         goldClaimInProgress = false;
         magicClaimed = false;
-        currentRewardOptions = new RewardOptionsModel(RollBattleGoldReward(), owner.GetRewardMagicChoices(3));
+        arrowRewardMode = true;
+        arrowClaimed = false;
+        currentArrowOptions.Clear();
+        List<RewardArrowOption> arrowOptions = owner.GetRewardArrowOptions(3);
+        if (arrowOptions != null)
+            currentArrowOptions.AddRange(arrowOptions);
+        currentRewardOptions = new RewardOptionsModel(RollBattleGoldReward(), arrowRewardMode ? new List<MagicData>() : owner.GetRewardMagicChoices(3));
         eliteExtraRewardKind = owner.RollEliteExtraRewardKind();
         currentGoldReward = currentRewardOptions.GoldReward;
         selectedMagicView = null;
@@ -122,12 +144,16 @@ public class RewardPanelUI : MonoBehaviour
 
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(transform, "Hint");
         if (hint != null)
-            hint.text = LocalizationSystem.GetText("ui.reward_panel.hint", "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。");
+            hint.text = arrowRewardMode
+                ? LocalizationSystem.GetText("ui.reward_panel.arrow.hint", "选择奖励；领取箭头后会自动进入商店。")
+                : LocalizationSystem.GetText("ui.reward_panel.hint", "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。");
 
         CacheReferences();
         HideMagicChoices();
+        HideArrowChoices();
         RefreshOptions();
-        ScheduleMagicChoicePrewarm();
+        if (!arrowRewardMode)
+            ScheduleMagicChoicePrewarm();
         owner.GetUIManager().TutorialManager?.OnRewardPanelShown();
     }
 
@@ -141,6 +167,9 @@ public class RewardPanelUI : MonoBehaviour
         goldClaimed = true;
         goldClaimInProgress = false;
         magicClaimed = false;
+        arrowRewardMode = false;
+        arrowClaimed = false;
+        HideArrowChoices();
         currentRewardOptions = new RewardOptionsModel(0, owner.GetRewardMagicChoices(3));
         eliteExtraRewardKind = RewardOptionKind.None;
         currentGoldReward = currentRewardOptions.GoldReward;
@@ -158,6 +187,7 @@ public class RewardPanelUI : MonoBehaviour
 
         CacheReferences();
         HideMagicChoices();
+        HideArrowChoices();
         RefreshOptions();
         ScheduleMagicChoicePrewarm();
     }
@@ -167,6 +197,7 @@ public class RewardPanelUI : MonoBehaviour
         StopMagicChoicePrewarm();
         owner?.SelectPendingRewardMagic(null);
         HideMagicChoices();
+        HideArrowChoices();
         currentRewardOptions = null;
         gameObject.SetActive(false);
     }
@@ -244,8 +275,14 @@ public class RewardPanelUI : MonoBehaviour
             }
             if (optionViews.Count > 1)
             {
-                if (!magicClaimed && !goldClaimInProgress)
-                    optionViews[1].Bind(LocalizationSystem.GetText("ui.reward_panel.option.magic", "获得道具"), ShowMagicChoices);
+                bool itemAvailable = arrowRewardMode ? !arrowClaimed : !magicClaimed;
+                if (itemAvailable && !goldClaimInProgress)
+                {
+                    if (arrowRewardMode)
+                        optionViews[1].Bind(LocalizationSystem.GetText("ui.reward_panel.option.arrow", "获得箭头"), ShowArrowChoices);
+                    else
+                        optionViews[1].Bind(LocalizationSystem.GetText("ui.reward_panel.option.magic", "获得道具"), ShowMagicChoices);
+                }
                 else
                     optionViews[1].Hide();
             }
@@ -584,6 +621,270 @@ public class RewardPanelUI : MonoBehaviour
                 rewardMagicViews[i].gameObject.SetActive(false);
             }
         }
+    }
+
+    private void ShowArrowChoices()
+    {
+        if (arrowClaimed || goldClaimInProgress)
+            return;
+
+        HideMagicChoices();
+        EnsureArrowChoicePanel();
+        arrowChoicePanel.gameObject.SetActive(true);
+        arrowChoicePanel.SetAsLastSibling();
+        RebuildArrowChoiceViews();
+    }
+
+    private void HideArrowChoices()
+    {
+        if (arrowChoicePanel != null)
+            arrowChoicePanel.gameObject.SetActive(false);
+    }
+
+    private void EnsureArrowChoicePanel()
+    {
+        if (arrowChoicePanel != null)
+        {
+            CacheArrowChoicePanelReferences();
+            return;
+        }
+
+        RectTransform existingPanel = transform.parent != null ? transform.parent.Find("RewardArrowChoicePanel") as RectTransform : null;
+        if (existingPanel != null)
+        {
+            arrowChoicePanel = existingPanel;
+            CacheArrowChoicePanelReferences();
+            return;
+        }
+
+        RectTransform sourceRect = (RectTransform)transform;
+        Image panelImage = new GameObject("RewardArrowChoicePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+        arrowChoicePanel = panelImage.rectTransform;
+        arrowChoicePanel.SetParent(transform.parent, false);
+        arrowChoicePanel.anchorMin = sourceRect.anchorMin;
+        arrowChoicePanel.anchorMax = sourceRect.anchorMax;
+        arrowChoicePanel.pivot = sourceRect.pivot;
+        arrowChoicePanel.anchoredPosition = sourceRect.anchoredPosition;
+        arrowChoicePanel.sizeDelta = sourceRect.sizeDelta;
+        arrowChoicePanel.localScale = Vector3.one;
+        panelImage.color = new Color(0.02f, 0.02f, 0.04f, 1f);
+        panelImage.raycastTarget = true;
+
+        TMP_Text title = CreatePanelText(arrowChoicePanel, "Title", LocalizationSystem.GetText("ui.reward_panel.arrow_choice.title", "选择一张箭头"), 26, FontStyles.Bold, new Vector2(0f, 150f), new Vector2(420f, 40f));
+        title.color = new Color(1f, 0.9f, 0.55f, 1f);
+        TMP_Text hint = CreatePanelText(arrowChoicePanel, "Hint", LocalizationSystem.GetText("ui.reward_panel.arrow_choice.hint", "获得后会加入你的箭头牌组；小概率带附魔。"), 16, FontStyles.Normal, new Vector2(0f, 104f), new Vector2(620f, 30f));
+        hint.color = new Color(0.82f, 0.84f, 0.9f, 1f);
+
+        arrowChoiceBackButton = CreatePanelButton(arrowChoicePanel, "BackButton", LocalizationSystem.GetText("ui.common.back", "返回"), new Vector2(-360f, 150f), new Vector2(110f, 42f));
+        arrowChoiceBackButton.onClick.RemoveAllListeners();
+        arrowChoiceBackButton.onClick.AddListener(HideArrowChoices);
+
+        arrowChoiceContent = new GameObject("ArrowChoices", typeof(RectTransform)).GetComponent<RectTransform>();
+        arrowChoiceContent.SetParent(arrowChoicePanel, false);
+        arrowChoiceContent.anchorMin = new Vector2(0.5f, 0.5f);
+        arrowChoiceContent.anchorMax = new Vector2(0.5f, 0.5f);
+        arrowChoiceContent.pivot = new Vector2(0.5f, 0.5f);
+        arrowChoiceContent.anchoredPosition = new Vector2(0f, -24f);
+        arrowChoiceContent.sizeDelta = new Vector2(760f, 160f);
+        arrowChoicePanel.gameObject.SetActive(false);
+    }
+
+    private void CacheArrowChoicePanelReferences()
+    {
+        if (arrowChoicePanel == null)
+            return;
+
+        TMP_Text title = UIManager.FindChildComponent<TMP_Text>(arrowChoicePanel, "Title");
+        if (title != null)
+            title.text = LocalizationSystem.GetText("ui.reward_panel.arrow_choice.title", "选择一张箭头");
+        TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(arrowChoicePanel, "Hint");
+        if (hint != null)
+            hint.text = LocalizationSystem.GetText("ui.reward_panel.arrow_choice.hint", "获得后会加入你的箭头牌组；小概率带附魔。");
+
+        arrowChoiceBackButton = UIManager.FindChildComponent<Button>(arrowChoicePanel, "BackButton");
+        if (arrowChoiceBackButton != null)
+        {
+            arrowChoiceBackButton.onClick.RemoveAllListeners();
+            arrowChoiceBackButton.onClick.AddListener(HideArrowChoices);
+        }
+
+        arrowChoiceContent = UIManager.FindChildRect(arrowChoicePanel, "ArrowChoices");
+        if (arrowChoiceContent == null)
+        {
+            arrowChoiceContent = new GameObject("ArrowChoices", typeof(RectTransform)).GetComponent<RectTransform>();
+            arrowChoiceContent.SetParent(arrowChoicePanel, false);
+            arrowChoiceContent.anchorMin = new Vector2(0.5f, 0.5f);
+            arrowChoiceContent.anchorMax = new Vector2(0.5f, 0.5f);
+            arrowChoiceContent.pivot = new Vector2(0.5f, 0.5f);
+            arrowChoiceContent.anchoredPosition = new Vector2(0f, -24f);
+            arrowChoiceContent.sizeDelta = new Vector2(760f, 160f);
+        }
+    }
+
+    private void RebuildArrowChoiceViews()
+    {
+        if (arrowChoiceContent == null)
+            return;
+
+        for (int i = arrowChoiceContent.childCount - 1; i >= 0; i--)
+        {
+            Transform child = arrowChoiceContent.GetChild(i);
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+
+        int visibleChoiceCount = Mathf.Min(currentArrowOptions.Count, 3);
+        float spacing = 250f;
+        float startX = visibleChoiceCount > 1 ? -spacing * (visibleChoiceCount - 1) * 0.5f : 0f;
+        for (int i = 0; i < visibleChoiceCount; i++)
+            CreateArrowChoiceView(i, startX + spacing * i);
+    }
+
+    private void CreateArrowChoiceView(int index, float centerX)
+    {
+        RewardArrowOption option = index >= 0 && index < currentArrowOptions.Count ? currentArrowOptions[index] : null;
+        if (option == null || option.material == MaterialEnum.None)
+            return;
+
+        Image image = new GameObject("RewardArrow" + index, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Image>();
+        image.transform.SetParent(arrowChoiceContent, false);
+        image.color = new Color(0.08f, 0.08f, 0.12f, 1f);
+        image.raycastTarget = true;
+        RectTransform rect = image.rectTransform;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(centerX, -6f);
+        rect.sizeDelta = new Vector2(210f, 250f);
+
+        RectTransform previewRect = CreateArrowPreview(rect, option, index);
+        TMP_Text enchantText = CreateEnchantLabel(rect);
+        string enchant = BuildEnchantText(option);
+        enchantText.text = enchant;
+        enchantText.gameObject.SetActive(!string.IsNullOrEmpty(enchant));
+        Button button = image.GetComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.onClick.RemoveAllListeners();
+        RectTransform source = previewRect != null ? previewRect : rect;
+        button.onClick.AddListener(() => OnArrowOptionClicked(option, source));
+    }
+
+    private static TMP_Text CreateEnchantLabel(RectTransform parent)
+    {
+        TMP_Text label = new GameObject("EnchantText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+        label.transform.SetParent(parent, false);
+        label.font = UIManager.GetDefaultTMPFont();
+        label.fontSize = 16f;
+        label.fontStyle = FontStyles.Bold;
+        label.alignment = TextAlignmentOptions.Center;
+        label.enableWordWrapping = true;
+        label.color = new Color(1f, 0.9f, 0.55f, 1f);
+        label.raycastTarget = false;
+        RectTransform rect = label.rectTransform;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0f, -102f);
+        rect.sizeDelta = new Vector2(196f, 72f);
+        return label;
+    }
+
+    private static string BuildEnchantText(RewardArrowOption option)
+    {
+        if (option == null || !option.HasModifier || option.modifierData == null)
+            return string.Empty;
+
+        return LocalizationSystem.GetText(option.modifierData.nameKey, option.modifierData.id);
+    }
+
+    private RectTransform CreateArrowPreview(RectTransform parent, RewardArrowOption option, int index)
+    {
+        RectTransform prefab = GetMaterialCardPrefab();
+        if (prefab == null)
+        {
+            TMP_Text fallback = CreatePanelText(parent, "Text", GetArrowOptionLabel(option), 20, FontStyles.Bold, new Vector2(0f, -20f), new Vector2(180f, 40f));
+            fallback.raycastTarget = false;
+            return null;
+        }
+
+        RectTransform previewRect = Instantiate(prefab, parent);
+        previewRect.name = "ArrowPreview" + index;
+        previewRect.gameObject.SetActive(true);
+        previewRect.anchorMin = new Vector2(0.5f, 0.5f);
+        previewRect.anchorMax = new Vector2(0.5f, 0.5f);
+        previewRect.pivot = new Vector2(0.5f, 0.5f);
+        previewRect.anchoredPosition = new Vector2(0f, 22f);
+        previewRect.sizeDelta = new Vector2(150f, 190f);
+        previewRect.localScale = Vector3.one;
+
+        MaterialCardView cardView = previewRect.GetComponent<MaterialCardView>();
+        MaterialModel preview = new MaterialModel("reward_arrow_" + index + "_" + option.material, option.material);
+        if (option.HasModifier)
+        {
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(option.modifierData);
+            if (modifier != null)
+                preview.AddModifier(modifier);
+        }
+        if (cardView != null)
+        {
+            cardView.Bind(preview);
+            DisableChildRaycasts(previewRect);
+        }
+        return previewRect;
+    }
+
+    private RectTransform GetMaterialCardPrefab()
+    {
+        if (materialCardPrefab != null)
+        {
+            cachedMaterialCardPrefab = materialCardPrefab;
+            return materialCardPrefab;
+        }
+        if (cachedMaterialCardPrefab != null)
+            return cachedMaterialCardPrefab;
+
+        PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
+        if (library != null)
+            cachedMaterialCardPrefab = library.MaterialCardPrefab;
+        return cachedMaterialCardPrefab;
+    }
+
+    private static string GetArrowOptionLabel(RewardArrowOption option)
+    {
+        if (option == null)
+            return string.Empty;
+
+        string label = LocalizationKeys.GetMaterialName(option.material);
+        if (option.HasModifier && !string.IsNullOrEmpty(option.modifierData.nameKey))
+            label = label + " · " + LocalizationSystem.GetText(option.modifierData.nameKey, option.modifierData.id);
+        return label;
+    }
+
+    private static void DisableChildRaycasts(RectTransform root)
+    {
+        if (root == null)
+            return;
+
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+    }
+
+    private void OnArrowOptionClicked(RewardArrowOption option, RectTransform sourceRect)
+    {
+        if (option == null || arrowClaimed || goldClaimInProgress || owner == null)
+            return;
+
+        StartCoroutine(ClaimArrowRewardRoutine(option, sourceRect));
+    }
+
+    private IEnumerator ClaimArrowRewardRoutine(RewardArrowOption option, RectTransform sourceRect)
+    {
+        arrowClaimed = true;
+        HideArrowChoices();
+        RefreshOptions();
+        yield return owner.GainRewardArrow(option, sourceRect);
+        RefreshOptions();
     }
 
     private Vector2 GetMagicChoiceCellSize()
