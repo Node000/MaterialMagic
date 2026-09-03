@@ -5270,7 +5270,14 @@ public bool IsCardDragActive => cardDragActive;
 				else
 				{
 					bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
-					AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView);
+					float drawDelay = 0f;
+					if (!animateFromExistingView)
+					{
+						int n = Mathf.Max(1, layoutCount);
+						float stagger = Mathf.Min(1f / n, 0.1f);
+						drawDelay = Mathf.Max(0f, (layoutCount - 1 - layoutIndex) * stagger);
+					}
+					AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView, drawDelay, !animateFromExistingView);
 				}
 			}
 		}
@@ -5372,7 +5379,7 @@ public bool IsCardDragActive => cardDragActive;
         return playZone ? playLayoutZ : handLayoutZ;
     }
 
-	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool playZone, bool animateFromExistingView)
+	private void AnimateCardToLayoutTarget(HandCardView view, RectTransform targetParent, Vector2 targetAnchoredPosition, bool playZone, bool animateFromExistingView, float delay = 0f, bool createFromZero = false)
 	{
 		Vector3 position = ((Transform)view.RectTransform).position;
 		Quaternion rotation = ((Transform)view.RectTransform).rotation;
@@ -5388,9 +5395,17 @@ public bool IsCardDragActive => cardDragActive;
         }
 
         Vector3 targetLocalPosition = GetCardLayoutLocalPosition(view.RectTransform, targetAnchoredPosition, playZone);
+        Vector3 baseScale = ((Transform)view.RectTransform).localScale;
+        if (createFromZero)
+            ((Transform)view.RectTransform).localScale = Vector3.zero;
+
         Sequence sequence = DOTween.Sequence();
+        if (delay > 0f)
+            TweenSettingsExtensions.SetDelay<Sequence>(sequence, delay);
         TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, layoutDuration, false), layoutEase));
         TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0), layoutEase));
+        if (createFromZero)
+            TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOScale((Transform)view.RectTransform, baseScale, layoutDuration), layoutEase));
         TweenSettingsExtensions.SetTarget<Sequence>(sequence, (object)view.RectTransform);
 	}
 
@@ -6090,7 +6105,7 @@ public bool IsCardDragActive => cardDragActive;
 		magicBookArea.GetComponent<MagicBookAutoSpacing>()?.RefreshSpacing();
 		MagicBookCurveLayout curveLayout = magicBookArea.GetComponent<MagicBookCurveLayout>();
 		if (curveLayout != null)
-			curveLayout.RefreshLayout();
+			curveLayout.RefreshLayoutAnimated();
 	}
 
 	/// <summary>
@@ -7632,7 +7647,10 @@ public bool IsCardDragActive => cardDragActive;
                 return false;
             if (!busy)
                 return true;
-            return currentLevel == null && !chapterMapMoveInProgress && runManager != null && runManager.State == RunFlowState.MapSelection;
+            if (currentLevel == null && !chapterMapMoveInProgress && runManager != null && runManager.State == RunFlowState.MapSelection)
+                return true;
+            // 属于持久背包管理：允许在商店/事件/休息/奖励等非战斗关卡内排序道具，仅战斗（含精英）期间禁止。
+            return currentLevel != null && currentLevel.levelType != LevelType.Battle && currentLevel.levelType != LevelType.Elite;
         }
     }
 
@@ -7674,9 +7692,22 @@ public bool IsCardDragActive => cardDragActive;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(magicBookArea, eventData.position, GetMagicDragCamera(eventData), out localPoint))
         {
-            magicDraggedRect.anchoredPosition = localPoint + magicDragLocalOffset;
-            magicDraggedRect.localEulerAngles = Vector3.zero;
-            magicDraggedRect.localScale = new Vector3(1.12f, 1.12f, 1f);
+            MagicBookCurveLayout curve = magicBookArea.GetComponent<MagicBookCurveLayout>();
+            if (curve != null)
+            {
+                // 拖拽只把鼠标的 X 喂给道具栏，位置/旋转/缩放由曲线布局算出，让道具保持沿曲线移动。
+                float dragX = localPoint.x + magicDragLocalOffset.x;
+                curve.ComputeCurvePoseAtX(Mathf.Max(1, magicViews.Count), dragX, out Vector2 pose, out float rotDeg, out float slotScale);
+                magicDraggedRect.anchoredPosition = pose;
+                magicDraggedRect.localEulerAngles = new Vector3(0f, 0f, rotDeg);
+                magicDraggedRect.localScale = new Vector3(slotScale * 1.12f, slotScale * 1.12f, 1f);
+            }
+            else
+            {
+                magicDraggedRect.anchoredPosition = localPoint + magicDragLocalOffset;
+                magicDraggedRect.localEulerAngles = Vector3.zero;
+                magicDraggedRect.localScale = new Vector3(1.12f, 1.12f, 1f);
+            }
         }
 
         int target = GetMagicBookDropPreviewIndex(eventData);
@@ -9658,22 +9689,68 @@ public bool IsCardDragActive => cardDragActive;
 	private IEnumerator PlayMagicAcquireAnimation(MagicData magicData, int slotIndex, RectTransform sourceRect)
     {
         RectTransform targetRect = GetMagicSlotRect(slotIndex);
-        RectTransform animationRoot = transform as RectTransform;
-        if (magicData == null || sourceRect == null || targetRect == null || magicViewPrefab == null || animationRoot == null)
+        if (magicData == null || sourceRect == null || targetRect == null)
             yield break;
 
-        RectTransform clone = Object.Instantiate(magicViewPrefab, animationRoot);
-        clone.gameObject.SetActive(true);
-        clone.SetAsLastSibling();
-        MagicItemView view = clone.GetComponent<MagicItemView>();
+        MagicBookCurveLayout curve = magicBookArea != null ? magicBookArea.GetComponent<MagicBookCurveLayout>() : null;
+        int futureCount = playerState != null ? playerState.MagicBook.Count + 1 : slotIndex + 1;
+        Vector2 finalAnchor = default;
+        bool hasCurvePose = curve != null && playerState != null;
+        if (hasCurvePose)
+        {
+            // 先按新增后的槽数算好最终姿态，并直接把目标槽壳 Snap 到该姿态（未激活时预置），
+            // 这样飞行结束后 CreateMagicViews 激活该壳时不会从旧位置“闪一下”再移动。
+            curve.ComputeSlotPose(futureCount, slotIndex, out finalAnchor, out float rotDeg, out float slotScale);
+            SnapshotSlotPose(targetRect, finalAnchor, rotDeg, slotScale);
+            // 让未激活槽壳立即刷新世界矩阵，后续读取其世界中心/旋转/缩放/尺寸时才是最终姿态。
+            Canvas.ForceUpdateCanvases();
+        }
+
+        MagicItemView view = targetRect.GetComponent<MagicItemView>();
         if (view != null)
             view.Bind(MagicFactory.Create(magicData, slotIndex));
-        UIManager.RemoveJuicyMotion(clone.transform);
-        DisableGraphicRaycasts(clone);
+        UIManager.RemoveJuicyMotion(targetRect);
 
-        yield return PlayAcquireRectAnimation(clone, sourceRect, GetAreaCenterWorldPosition(targetRect), targetRect.rotation, GetScaleRelativeToParent(targetRect, animationRoot), targetRect.rect.size, AcquireMagicAnimationDuration);
-        if (clone != null)
-            Object.Destroy(clone.gameObject);
+        // 记录并临时关闭该壳的 Raycast，飞行中不拦截点击；落地后恢复原状。
+        Graphic[] flyGraphics = targetRect.GetComponentsInChildren<Graphic>(true);
+        bool[] flyRaycast = new bool[flyGraphics.Length];
+        for (int g = 0; g < flyGraphics.Length; g++) { flyRaycast[g] = flyGraphics[g].raycastTarget; flyGraphics[g].raycastTarget = false; }
+        targetRect.gameObject.SetActive(true);
+
+        // 关键：飞行期间把真实槽壳提升到画布根（DebugBattleUI，即本组件所在的 UI 根）的最后一个兄弟，
+        // 使其绘制在商店之上，避免飞入中途被 ShopPanel 遮盖；落地后再把世界姿态保真还回魔法道具栏。
+        // 注意：SetParent 会把壳追加到 magicBookArea 末尾、改变其兄弟顺序（布局按子物体顺序映射“壳↔槽位索引”），
+        // 所以必须保存并在落地后恢复其原始兄弟索引，否则会被映射到错误索引/位置。
+        Transform slotParent = targetRect.parent;
+        int originalSiblingIndex = targetRect.GetSiblingIndex();
+        targetRect.SetParent(transform, true);
+        targetRect.SetAsLastSibling();
+
+        // 以目标槽壳“最终姿态”作为飞入终点：位置取槽壳世界中心，缩放/旋转/尺寸取槽壳自身最终值。
+        Vector3 targetWorldPos = GetAreaCenterWorldPosition(targetRect);
+        // 在飞入的同时让现有道具滑块沿新增后的圆弧向左让位（同时长启动）。
+        if (hasCurvePose)
+            curve.ArrangeExistingSlotsForCount(futureCount, AcquireMagicAnimationDuration);
+
+        yield return PlayAcquireRectAnimation(targetRect, sourceRect, targetWorldPos, targetRect.rotation, targetRect.localScale, targetRect.rect.size, AcquireMagicAnimationDuration);
+
+        // 落点后把槽壳还回魔法道具栏并恢复其原始兄弟索引；世界姿态保真，localScale/anchoredPosition 会按新父级自动还原为曲线布局值。
+        targetRect.SetParent(slotParent, true);
+        targetRect.SetSiblingIndex(originalSiblingIndex);
+        for (int g = 0; g < flyGraphics.Length; g++) { if (flyGraphics[g] != null) flyGraphics[g].raycastTarget = flyRaycast[g]; }
+    }
+
+    /// <summary>把（通常未激活的）目标槽壳预置到给定姿态，避免激活后被布局菜单重新排位而产生闪动。</summary>
+    private static void SnapshotSlotPose(RectTransform slot, Vector2 anchoredPosition, float rotationDeg, float scale)
+    {
+        if (slot == null)
+            return;
+        slot.anchorMin = new Vector2(0.5f, 0.5f);
+        slot.anchorMax = new Vector2(0.5f, 0.5f);
+        slot.pivot = new Vector2(0.5f, 0.5f);
+        slot.anchoredPosition = anchoredPosition;
+        slot.localEulerAngles = new Vector3(0f, 0f, rotationDeg);
+        slot.localScale = new Vector3(scale, scale, 1f);
     }
 
     private IEnumerator PlayMaterialAcquireAnimation(MaterialEnum material, RectTransform sourceRect)
@@ -9729,10 +9806,13 @@ public bool IsCardDragActive => cardDragActive;
 
     private RectTransform GetMagicSlotRect(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= magicViews.Count || magicViews[slotIndex] == null)
+        if (magicBookArea == null || slotIndex < 0)
             return null;
 
-        return magicViews[slotIndex].transform as RectTransform;
+        MagicItemView[] all = magicBookArea.GetComponentsInChildren<MagicItemView>(true);
+        if (slotIndex >= all.Length || all[slotIndex] == null)
+            return null;
+        return all[slotIndex].transform as RectTransform;
     }
 
     private static Vector3 GetScaleRelativeToParent(RectTransform rect, RectTransform parent)
@@ -9929,59 +10009,51 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void AnimateViewsToArea(List<HandCardView> views, RectTransform targetArea, TweenCallback onComplete)
 	{
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Expected O, but got Unknown
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Expected O, but got Unknown
-		if (views.Count == 0)
+		if (views == null || views.Count == 0)
 		{
-			TweenCallback val = onComplete;
-			if (val != null)
-			{
-				val.Invoke();
-			}
+			if (onComplete != null) onComplete.Invoke();
 			return;
 		}
-		int remaining = 0;
+
+		List<HandCardView> ordered = new List<HandCardView>(views.Count);
 		for (int i = 0; i < views.Count; i++)
 		{
-			HandCardView view = views[i];
-			if ((Object)view == (Object)null)
-			{
-				continue;
-			}
+			if (!((Object)views[i] == (Object)null))
+				ordered.Add(views[i]);
+		}
+		if (ordered.Count == 0)
+		{
+			if (onComplete != null) onComplete.Invoke();
+			return;
+		}
+
+		ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
+		float stagger = Mathf.Min(1f / ordered.Count, 0.1f);
+		int remaining = 0;
+		for (int j = 0; j < ordered.Count; j++)
+		{
+			HandCardView view = ordered[j];
+			if ((Object)view == (Object)null) continue;
 			cardViews.Remove(view);
-			int num = remaining;
-			remaining = num + 1;
-			AnimateCardToArea(view, targetArea, GetAreaCenterWorldPosition(targetArea), 90f, (TweenCallback)delegate
+			remaining++;
+			HandCardView captured = view;
+			AnimateCardToArea(captured, targetArea, GetAreaCenterWorldPosition(targetArea), 90f, (TweenCallback)delegate
 			{
-				//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-				//IL_0015: Expected O, but got Unknown
-				Object.Destroy((Object)((Component)view).gameObject);
-				int num2 = remaining;
-				remaining = num2 - 1;
+				Object.Destroy((Object)((Component)captured).gameObject);
+				remaining--;
 				if (remaining == 0)
 				{
-					TweenCallback val3 = onComplete;
-					if (val3 != null)
-					{
-						val3.Invoke();
-					}
+					if (onComplete != null) onComplete.Invoke();
 				}
-			});
+			}, j * stagger, true);
 		}
 		if (remaining == 0)
 		{
-			TweenCallback val2 = onComplete;
-			if (val2 != null)
-			{
-				val2.Invoke();
-			}
+			if (onComplete != null) onComplete.Invoke();
 		}
 	}
 
-	private void AnimateCardToArea(HandCardView view, RectTransform targetParent, Vector3 targetWorldPosition, float targetZRotation, TweenCallback onComplete)
+	private void AnimateCardToArea(HandCardView view, RectTransform targetParent, Vector3 targetWorldPosition, float targetZRotation, TweenCallback onComplete, float delay = 0f, bool shrinkToZero = false)
 	{
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
@@ -10014,8 +10086,12 @@ public bool IsCardDragActive => cardDragActive;
 		((Transform)view.RectTransform).position = position;
 		((Transform)view.RectTransform).rotation = rotation;
 		Sequence obj = DOTween.Sequence();
+		if (delay > 0f)
+			TweenSettingsExtensions.SetDelay<Sequence>(obj, delay);
 		TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOMove((Transform)view.RectTransform, targetWorldPosition, layoutDuration, false), layoutEase));
 		TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DORotate((Transform)view.RectTransform, new Vector3(0f, 0f, targetZRotation), layoutDuration, (RotateMode)0), layoutEase));
+		if (shrinkToZero)
+			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOScale((Transform)view.RectTransform, Vector3.zero, layoutDuration), layoutEase));
 		TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
 		TweenSettingsExtensions.OnComplete<Sequence>(obj, onComplete);
 	}

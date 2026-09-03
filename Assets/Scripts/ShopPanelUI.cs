@@ -41,10 +41,14 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private RectTransform itemRoot;
     [SerializeField] private RectTransform magicViewPrefab;
     [SerializeField] private RectTransform materialCardPrefab;
+    [SerializeField] private RectTransform shopItemSlotPrefab;
+    [SerializeField] private RectTransform shopArrowSlotPrefab;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private TMP_Text goldText;
     [SerializeField] private Button leaveButton;
+    [SerializeField] private Button refreshButton;
+    [SerializeField] private Button removeArrowButton;
     [SerializeField] private RectTransform revealMask;
     [SerializeField] private RectTransform contentRoot;
     [Header("开关动画")]
@@ -54,13 +58,19 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private Ease panelHideEase = Ease.InCubic;
     [SerializeField] private Vector2 panelOpenMoveOffset = new Vector2(-36f, 36f);
     [SerializeField] private Vector2 panelCloseMoveOffset = new Vector2(36f, -36f);
-    [Header("商品槽弹出")]
-    [SerializeField] private float itemPopDelayStep = 0.045f;
-    [SerializeField] private float itemPopDuration = 0.28f;
-    [SerializeField] private Ease itemPopEase = Ease.OutBack;
+    [Header("商品槽出现/消失")]
+    [SerializeField] private float slotAppearDuration = 0.28f;
+    [SerializeField] private float slotDisappearDuration = 0.2f;
+    [SerializeField] private float slotStaggerDelay = 0.1f;
+    [SerializeField] private Ease slotAppearEase = Ease.OutBack;
+    [SerializeField] private Ease slotDisappearEase = Ease.InBack;
+    [SerializeField] private AnimationCurve slotScaleCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
+    [SerializeField] private bool slotUseCurve = false;
 
-    private readonly List<ShopItemView> itemViews = new List<ShopItemView>();
+    private readonly List<ShopSlotView> slotViews = new List<ShopSlotView>();
     private readonly List<ShopOffer> offers = new List<ShopOffer>();
+    private readonly List<ShopLayer> shopLayers = new List<ShopLayer>();
+    private readonly List<List<ShopOffer>> layerOffers = new List<List<ShopOffer>>();
     private readonly List<MagicData> magicPool = new List<MagicData>();
     private readonly List<ShopMaterialOfferData> strongMaterialOfferPool = new List<ShopMaterialOfferData>();
     private readonly List<ShopMaterialOfferData> normalMaterialOfferPool = new List<ShopMaterialOfferData>();
@@ -80,8 +90,11 @@ public class ShopPanelUI : MonoBehaviour
     private bool undoAvailable;
     private Vector2 panelOpenPosition;
     private Vector2 panelSize;
+    private Vector3 panelBaseScale;
     private bool hasPanelLayout;
     private Coroutine showRoutine;
+    private int refreshCount;
+    private bool refreshInProgress;
 
     public RectTransform MagicViewPrefab => magicViewPrefab;
     public RectTransform MaterialCardPrefab => materialCardPrefab;
@@ -91,6 +104,102 @@ public class ShopPanelUI : MonoBehaviour
         this.owner = owner;
         CacheReferences();
         gameObject.SetActive(false);
+    }
+
+    public void InitShop(List<ShopLayer> layers)
+    {
+        shopLayers.Clear();
+        if (layers != null && layers.Count > 0)
+            shopLayers.AddRange(layers);
+    }
+
+    public int RemoveArrowPrice => GetOfferPrice(config != null ? config.shopRemoveMaterialPrice : 0);
+    public int RefreshCost => GetRefreshCost();
+
+    private int GetRefreshCost()
+    {
+        int basePrice = config != null ? config.shopRefreshPrice : 0;
+        return basePrice + refreshCount;
+    }
+
+    public void RefreshShop()
+    {
+        if (owner == null || config == null || refreshInProgress)
+            return;
+        int cost = GetRefreshCost();
+        if (owner.PlayerState == null || owner.PlayerState.Gold < cost)
+        {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
+            return;
+        }
+        if (!owner.TrySpendShopGold(cost))
+        {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
+            return;
+        }
+        refreshCount++;
+        refreshInProgress = true;
+        StartCoroutine(RefreshRoutine());
+    }
+
+    private System.Collections.IEnumerator RefreshRoutine()
+    {
+        yield return AnimateSlotsDisappearRoutine();
+        owner.ClearPendingShopMagic();
+        ClearUndoPurchase();
+        selectedOffer = null;
+        waitingForSelection = false;
+        purchaseInProgress = false;
+        BuildOffers();
+        BuildLayerViews();
+        Refresh();
+        AnimateSlotsAppear();
+        UpdateButtonCosts();
+        refreshInProgress = false;
+    }
+
+    public void BeginRemoveArrowPurchase()
+    {
+        if (!HasRemovableMaterial())
+            return;
+        int price = GetOfferPrice(config != null ? config.shopRemoveMaterialPrice : 0);
+        if (owner.PlayerState == null || owner.PlayerState.Gold < price)
+        {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
+            return;
+        }
+        if (!owner.TrySpendShopGold(price))
+        {
+            PlayShopSfx(GameSfxId.NotEnoughMoney);
+            return;
+        }
+        BeginRemoveArrowSelection();
+    }
+
+    private void BeginRemoveArrowSelection()
+    {
+        owner.ClearPendingShopMagic();
+        waitingForSelection = true;
+        Refresh();
+        MaterialListPanelUI materialListPanel = owner.GetUIManager().MaterialSelectionPanel;
+        materialListPanel?.BeginSelection(1, IsRemovableMaterial, selected => CompleteRemoveArrowSelection(selected), CancelSelectionPurchase, LocalizationSystem.GetText("ui.shop.remove_material.title", "选择要删的牌"));
+        RectTransform materialRect = materialListPanel != null ? materialListPanel.transform as RectTransform : null;
+        if (materialRect != null)
+            PopupLayerUtility.ApplyTo(materialRect);
+    }
+
+    private void CompleteRemoveArrowSelection(IReadOnlyList<MaterialModel> selected)
+    {
+        waitingForSelection = false;
+        selectedOffer = null;
+        if (selected == null || selected.Count == 0)
+        {
+            Refresh();
+            return;
+        }
+        if (owner.RemoveShopMaterial(selected[0]))
+            PlayShopSfx(GameSfxId.Buy);
+        Refresh();
     }
 
     public void Show(LevelData level)
@@ -108,6 +217,8 @@ public class ShopPanelUI : MonoBehaviour
         selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
+        refreshCount = 0;
+        refreshInProgress = false;
         ClearUndoPurchase();
         owner.ClearPendingShopMagic();
         gameObject.SetActive(true);
@@ -118,9 +229,10 @@ public class ShopPanelUI : MonoBehaviour
             hintText.text = LocalizationSystem.GetText("ui.shop.hint", "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。");
 
         BuildOffers();
+        BuildLayerViews();
         if (savedState != null)
             RestoreState(savedState);
-        BindLeaveButton();
+        BindActionButtons();
         StartShowRoutine();
     }
 
@@ -144,21 +256,21 @@ public class ShopPanelUI : MonoBehaviour
         PlayCloseAnimation();
     }
 
-    public void ShowMaterialTooltip(ShopItemView itemView, ShopOffer offer)
+    public void ShowMaterialTooltip(RectTransform anchor, ShopOffer offer)
     {
-        if (itemView == null || offer == null || offer.kind != ShopItemKind.Material)
+        if (anchor == null || offer == null || offer.kind != ShopItemKind.Material)
             return;
 
         MaterialModel preview = new MaterialModel("shop_tooltip_" + offer.material, offer.material);
         MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
         if (modifier != null)
             preview.AddModifier(modifier);
-        owner.GetUIManager().MaterialListPanel?.ShowModifierTooltip(itemView.MaterialVisualRect != null ? itemView.MaterialVisualRect : itemView.transform as RectTransform, preview);
+        owner.GetUIManager().MaterialListPanel?.ShowModifierTooltip(anchor, preview);
     }
 
-    public void HideMaterialTooltip(ShopItemView itemView)
+    public void HideMaterialTooltip(RectTransform anchor)
     {
-        owner.GetUIManager().MaterialListPanel?.HideModifierTooltip(itemView != null ? (itemView.MaterialVisualRect != null ? itemView.MaterialVisualRect : itemView.transform as RectTransform) : null);
+        owner.GetUIManager().MaterialListPanel?.HideModifierTooltip(anchor);
     }
 
     private void CacheReferences()
@@ -181,31 +293,108 @@ public class ShopPanelUI : MonoBehaviour
             goldText.gameObject.SetActive(false);
         if (leaveButton == null)
             leaveButton = FindChildComponentRecursive<Button>(searchRoot, "LeaveButton");
+        if (refreshButton == null)
+            refreshButton = FindChildComponentRecursive<Button>(searchRoot, "RefreshButton");
+        if (removeArrowButton == null)
+            removeArrowButton = FindChildComponentRecursive<Button>(searchRoot, "RemoveArrowButton");
         if (materialCardPrefab == null)
         {
             PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
             if (library != null)
                 materialCardPrefab = library.MaterialCardPrefab;
         }
-
-        CacheItemViews();
     }
 
-    private void CacheItemViews()
+    private void BuildLayerViews()
     {
-        itemViews.Clear();
+        slotViews.Clear();
         if (itemRoot == null)
             return;
 
-        ShopItemView[] views = itemRoot.GetComponentsInChildren<ShopItemView>(true);
-        for (int i = 0; i < views.Length; i++)
-            itemViews.Add(views[i]);
-        itemViews.Sort(CompareItemViewNames);
+        for (int l = 0; l < layerOffers.Count; l++)
+        {
+            string rowName = GetLayerRowName(shopLayers[l]);
+            Transform row = FindChildRecursive(itemRoot, rowName);
+            if (row == null)
+                continue;
+            ShopSlotView[] views = row.GetComponentsInChildren<ShopSlotView>(true);
+            System.Array.Sort(views, (ShopSlotView a, ShopSlotView b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+            for (int i = 0; i < views.Length; i++)
+            {
+                if (views[i] != null)
+                    slotViews.Add(views[i]);
+            }
+        }
+        LayoutLayerRows();
     }
 
-    private static int CompareItemViewNames(ShopItemView left, ShopItemView right)
+    private void LayoutLayerRows()
     {
-        return string.CompareOrdinal(left != null ? left.name : string.Empty, right != null ? right.name : string.Empty);
+        if (itemRoot == null)
+            return;
+        int layerCount = layerOffers.Count;
+        const float layerGap = 6f;
+        const float sepHeight = 1f;
+
+        float[] rowHeight = new float[layerCount];
+        float totalHeight = 0f;
+        for (int l = 0; l < layerCount; l++)
+        {
+            int n = layerOffers[l].Count;
+            ShopOffer first = n > 0 ? layerOffers[l][0] : null;
+            rowHeight[l] = n > 0 ? (first != null && first.kind == ShopItemKind.Magic ? 160f : 120f) : 0f;
+            totalHeight += rowHeight[l];
+            if (l < layerCount - 1)
+                totalHeight += layerGap + sepHeight;
+        }
+
+        float y = totalHeight * 0.5f + Mathf.Max(1f, Mathf.RoundToInt(439.2f * 0.1f));
+        for (int l = 0; l < layerCount; l++)
+        {
+            string rowName = GetLayerRowName(shopLayers[l]);
+            RectTransform row = FindChildRectRecursive(itemRoot, rowName);
+            if (row != null)
+            {
+                HorizontalLayoutGroup hlg = row.GetComponent<HorizontalLayoutGroup>();
+                if (hlg != null) hlg.enabled = true;
+                ContentSizeFitter csf = row.GetComponent<ContentSizeFitter>();
+                if (csf != null) { csf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize; csf.enabled = true; }
+                row.anchorMin = new Vector2(0.5f, 0.5f);
+                row.anchorMax = new Vector2(0.5f, 0.5f);
+                row.pivot = new Vector2(0.5f, 0.5f);
+                row.anchoredPosition = new Vector2(0f, y - rowHeight[l] * 0.5f);
+            }
+            y -= rowHeight[l] + layerGap + sepHeight;
+            RectTransform sep = FindChildRectRecursive(itemRoot, "LayerSep" + l);
+            if (sep != null)
+            {
+                sep.anchorMin = new Vector2(0.5f, 0.5f);
+                sep.anchorMax = new Vector2(0.5f, 0.5f);
+                sep.pivot = new Vector2(0.5f, 0.5f);
+                sep.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
+                sep.sizeDelta = new Vector2(754f, sepHeight);
+            }
+            y -= sepHeight;
+        }
+    }
+
+    private static string GetLayerRowName(ShopLayer layer)
+    {
+        if (layer == null || layer.weights == null)
+            return string.Empty;
+        foreach (KeyValuePair<ShopSlotEnum, float> kvp in layer.weights)
+        {
+            switch (kvp.Key)
+            {
+                case ShopSlotEnum.Item:
+                    return "ItemLayer";
+                case ShopSlotEnum.Arrow:
+                    return "ArrowLayer";
+                case ShopSlotEnum.Relic:
+                    return "RelicLayer";
+            }
+        }
+        return string.Empty;
     }
 
     private static RectTransform FindChildRectRecursive(Transform root, string name)
@@ -250,19 +439,102 @@ public class ShopPanelUI : MonoBehaviour
             text.text = LocalizationSystem.GetText("ui.common.leave", "离开");
     }
 
+    private void BindActionButtons()
+    {
+        BindLeaveButton();
+        if (refreshButton != null)
+        {
+            refreshButton.onClick.RemoveAllListeners();
+            refreshButton.onClick.AddListener(RefreshShop);
+        }
+        if (removeArrowButton != null)
+        {
+            removeArrowButton.onClick.RemoveAllListeners();
+            removeArrowButton.onClick.AddListener(BeginRemoveArrowPurchase);
+        }
+        UpdateButtonCosts();
+    }
+
+    private void UpdateButtonCosts()
+    {
+        if (refreshButton != null)
+        {
+            TMP_Text cost = UIManager.FindChildComponent<TMP_Text>(refreshButton.transform, "Cost");
+            if (cost != null)
+                cost.text = RefreshCost + "$";
+        }
+        if (removeArrowButton != null)
+        {
+            TMP_Text cost = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
+            if (cost != null)
+                cost.text = RemoveArrowPrice + "$";
+        }
+    }
+
+
     private void BuildOffers()
     {
         offers.Clear();
+        layerOffers.Clear();
         productPool = GetShopProductPool();
         BuildMagicPool();
         BuildMaterialOfferPools();
 
-        for (int i = 0; i < 3; i++)
-            AddMagicOffer();
-        AddStrongMaterialOffer();
-        for (int i = 0; i < 3; i++)
-            AddNormalMaterialOffer();
-        offers.Add(new ShopOffer { kind = ShopItemKind.RemoveMaterial, price = GetOfferPrice(config.shopRemoveMaterialPrice) });
+        if (shopLayers.Count == 0)
+            SetDefaultLayers();
+
+        for (int i = 0; i < shopLayers.Count; i++)
+        {
+            List<ShopOffer> layerList = new List<ShopOffer>();
+            GenerateLayerOffers(shopLayers[i], layerList);
+            layerOffers.Add(layerList);
+            offers.AddRange(layerList);
+        }
+    }
+
+    private void SetDefaultLayers()
+    {
+        shopLayers.Clear();
+        shopLayers.Add(ShopLayer.CreateItemLayer());
+        shopLayers.Add(ShopLayer.CreateArrowLayer());
+    }
+
+    private void GenerateLayerOffers(ShopLayer layer, List<ShopOffer> target)
+    {
+        if (layer == null || layer.weights == null)
+            return;
+
+        float used = 0f;
+        bool progressed = true;
+        int safety = 0;
+        while (progressed && safety < 64)
+        {
+            safety++;
+            progressed = false;
+            foreach (KeyValuePair<ShopSlotEnum, float> kvp in layer.weights)
+            {
+                float cost = ShopLayer.GetSlotCost(kvp.Key);
+                if (!layer.isLastLayer && used + cost > layer.slotLimit)
+                    continue;
+                if (!TryGenerateLayerOffer(kvp.Key, target))
+                    continue;
+                used += cost;
+                progressed = true;
+            }
+        }
+    }
+
+    private bool TryGenerateLayerOffer(ShopSlotEnum type, List<ShopOffer> target)
+    {
+        switch (type)
+        {
+            case ShopSlotEnum.Item:
+                return TryAddMagicOffer(target);
+            case ShopSlotEnum.Arrow:
+                return TryAddMaterialOffer(target);
+            default:
+                return false;
+        }
     }
 
     private ShopProductPoolData GetShopProductPool()
@@ -430,17 +702,18 @@ public class ShopPanelUI : MonoBehaviour
         return null;
     }
 
-    private void AddMagicOffer()
+    private bool TryAddMagicOffer(List<ShopOffer> target)
     {
         if (magicPool.Count == 0)
-            return;
+            return false;
 
         MagicData data = MagicRaritySystem.SelectWeightedMagic(magicPool, NextRunRandomInt);
         if (data == null)
-            return;
+            return false;
 
         magicPool.Remove(data);
-        offers.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice + GetMagicRarityPriceOffset(data.rarity)), magicData = data });
+        target.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice + GetMagicRarityPriceOffset(data.rarity)), magicData = data });
+        return true;
     }
 
     private static int GetMagicRarityPriceOffset(MagicRarity rarity)
@@ -458,18 +731,13 @@ public class ShopPanelUI : MonoBehaviour
         }
     }
 
-    private void AddStrongMaterialOffer()
+    private bool TryAddMaterialOffer(List<ShopOffer> target)
     {
-        if (strongMaterialOfferPool.Count == 0)
-            return;
+        if (strongMaterialOfferPool.Count > 0)
+            return AddMaterialOfferFromPool(strongMaterialOfferPool, target);
 
-        AddMaterialOfferFromPool(strongMaterialOfferPool);
-    }
-
-    private void AddNormalMaterialOffer()
-    {
         List<ShopMaterialOfferData> pool = ShouldUseWeakMaterialOffer() && weakMaterialOfferPool.Count > 0 ? weakMaterialOfferPool : normalMaterialOfferPool;
-        AddMaterialOfferFromPool(pool);
+        return AddMaterialOfferFromPool(pool, target);
     }
 
     private bool ShouldUseWeakMaterialOffer()
@@ -484,16 +752,17 @@ public class ShopPanelUI : MonoBehaviour
         return NextRunRandomInt(0, 10000) < threshold;
     }
 
-    private void AddMaterialOfferFromPool(List<ShopMaterialOfferData> pool)
+    private bool AddMaterialOfferFromPool(List<ShopMaterialOfferData> pool, List<ShopOffer> target)
     {
         if (pool.Count == 0)
-            return;
+            return false;
 
         int index = NextRunRandomInt(0, pool.Count);
         ShopMaterialOfferData offerData = pool[index];
         pool.RemoveAt(index);
         MaterialModifierData modifierData = GetMaterialModifierDataById(offerData.modifierId);
-        offers.Add(new ShopOffer { kind = ShopItemKind.Material, price = GetOfferPrice(offerData.price), material = offerData.material, materialModifierData = modifierData });
+        target.Add(new ShopOffer { kind = ShopItemKind.Material, price = GetOfferPrice(offerData.price), material = offerData.material, materialModifierData = modifierData });
+        return true;
     }
 
     private int GetOfferPrice(int price)
@@ -518,10 +787,11 @@ public class ShopPanelUI : MonoBehaviour
             leaveButton.interactable = !purchaseInProgress;
 
         bool blockingSelection = waitingForSelection && selectedOffer != null && selectedOffer.kind != ShopItemKind.Magic;
-        for (int i = 0; i < itemViews.Count; i++)
+        for (int i = 0; i < slotViews.Count; i++)
         {
-            bool visible = i < offers.Count && !offers[i].purchased;
-            itemViews[i].gameObject.SetActive(visible);
+            // 已购商品保留占位（保持 active、显示空），使 HLG 不因隐藏已购格而重排其它商品。
+            bool visible = i < offers.Count;
+            slotViews[i].gameObject.SetActive(visible);
             if (!visible)
                 continue;
 
@@ -529,7 +799,7 @@ public class ShopPanelUI : MonoBehaviour
             bool canAfford = owner.PlayerState != null && owner.PlayerState.Gold >= offer.price;
             bool selected = offer == selectedOffer;
             bool canUse = !purchaseInProgress && (!blockingSelection || selected) && CanUseOffer(offer);
-            itemViews[i].Bind(this, offer, canAfford, canUse, selected, OnOfferClicked);
+            slotViews[i].Bind(this, offer, canAfford, canUse, selected, OnOfferClicked);
         }
     }
 
@@ -568,16 +838,16 @@ public class ShopPanelUI : MonoBehaviour
         PlayOpenAnimation();
         yield return null;
         Refresh();
-        PlayItemPopAnimations();
+        AnimateSlotsAppear();
         showRoutine = null;
     }
 
     private void HideItemViewsForOpeningFrame()
     {
-        for (int i = 0; i < itemViews.Count; i++)
+        for (int i = 0; i < slotViews.Count; i++)
         {
-            if (itemViews[i] != null)
-                itemViews[i].gameObject.SetActive(false);
+            if (slotViews[i] != null)
+                slotViews[i].gameObject.SetActive(false);
         }
     }
 
@@ -591,22 +861,14 @@ public class ShopPanelUI : MonoBehaviour
 
         CacheReferences();
         CapturePanelLayout(panelRect);
-        SetAnimationRectLayout();
-        panelRect.anchoredPosition = panelOpenPosition + panelOpenMoveOffset;
-        ApplyOpenReveal(0f);
+        panelRect.anchoredPosition = panelOpenPosition;
+        panelRect.localScale = Vector3.zero;
 
         float duration = Mathf.Max(0f, panelRevealDuration);
         if (duration > 0f)
-        {
-            Sequence sequence = DOTween.Sequence().SetTarget(this);
-            sequence.Join(panelRect.DOAnchorPos(panelOpenPosition, duration).SetEase(panelRevealEase));
-            sequence.Join(DOVirtual.Float(0f, 1f, duration, ApplyOpenReveal).SetEase(panelRevealEase));
-        }
+            panelRect.DOScale(panelBaseScale, duration).SetEase(panelRevealEase).SetTarget(this);
         else
-        {
-            panelRect.anchoredPosition = panelOpenPosition;
-            ApplyOpenReveal(1f);
-        }
+            panelRect.localScale = panelBaseScale;
     }
 
     private void PlayCloseAnimation()
@@ -622,60 +884,106 @@ public class ShopPanelUI : MonoBehaviour
 
         CacheReferences();
         CapturePanelLayout(panelRect);
-        SetAnimationRectLayout();
         panelRect.anchoredPosition = panelOpenPosition;
-        ApplyOpenReveal(1f);
 
         float duration = Mathf.Max(0f, panelHideDuration);
         if (duration > 0f)
-        {
-            Sequence sequence = DOTween.Sequence().SetTarget(this);
-            sequence.Join(panelRect.DOAnchorPos(panelOpenPosition + panelCloseMoveOffset, duration).SetEase(panelHideEase));
-            sequence.Join(DOVirtual.Float(0f, 1f, duration, ApplyCloseReveal).SetEase(panelHideEase));
-            sequence.OnComplete(FinishCloseAnimation);
-        }
+            panelRect.DOScale(Vector3.zero, duration).SetEase(panelHideEase).SetTarget(this).OnComplete(FinishCloseAnimation);
         else
-        {
-            ApplyCloseReveal(1f);
             FinishCloseAnimation();
+    }
+
+    private void AnimateSlotsAppear()
+    {
+        int viewIndex = 0;
+        for (int l = 0; l < layerOffers.Count; l++)
+        {
+            int count = layerOffers[l].Count;
+            for (int i = 0; i < count; i++, viewIndex++)
+            {
+                if (viewIndex >= slotViews.Count)
+                    break;
+                RectTransform itemRect = slotViews[viewIndex].transform as RectTransform;
+                if (itemRect == null || !itemRect.gameObject.activeSelf)
+                    continue;
+
+                Vector3 targetScale = itemRect.localScale;
+                if (targetScale == Vector3.zero)
+                    targetScale = Vector3.one;
+
+                itemRect.localScale = Vector3.zero;
+                if (slotAppearDuration > 0f)
+                {
+                    Tweener tween = itemRect.DOScale(targetScale, slotAppearDuration);
+                    tween.SetDelay(i * Mathf.Max(0f, slotStaggerDelay)).SetEase(slotAppearEase).SetTarget(this);
+                }
+                else
+                {
+                    itemRect.localScale = targetScale;
+                }
+            }
         }
     }
 
-    private void PlayItemPopAnimations()
+    private System.Collections.IEnumerator AnimateSlotsDisappearRoutine()
     {
-        for (int i = 0; i < itemViews.Count; i++)
+        int viewIndex = 0;
+        int total = 0;
+        for (int l = 0; l < layerOffers.Count; l++)
         {
-            RectTransform itemRect = itemViews[i].transform as RectTransform;
-            if (itemRect == null || !itemRect.gameObject.activeSelf)
-                continue;
-
-            Vector3 targetItemScale = itemRect.localScale;
-            if (targetItemScale == Vector3.zero)
-                targetItemScale = Vector3.one;
-
-            itemRect.localScale = Vector3.zero;
-            if (itemPopDuration > 0f)
+            int count = layerOffers[l].Count;
+            for (int i = 0; i < count; i++, viewIndex++)
             {
-                itemRect.DOScale(targetItemScale, itemPopDuration)
-                    .SetDelay(i * Mathf.Max(0f, itemPopDelayStep))
-                    .SetEase(itemPopEase)
-                    .SetTarget(this);
-            }
-            else
-            {
-                itemRect.localScale = targetItemScale;
+                if (viewIndex >= slotViews.Count)
+                    break;
+                RectTransform itemRect = slotViews[viewIndex].transform as RectTransform;
+                if (itemRect == null || !itemRect.gameObject.activeSelf)
+                    continue;
+                if (slotDisappearDuration > 0f)
+                    total++;
             }
         }
+
+        if (total == 0)
+            yield break;
+
+        viewIndex = 0;
+        int remaining = total;
+        for (int l = 0; l < layerOffers.Count; l++)
+        {
+            int count = layerOffers[l].Count;
+            for (int i = 0; i < count; i++, viewIndex++)
+            {
+                if (viewIndex >= slotViews.Count)
+                    break;
+                RectTransform itemRect = slotViews[viewIndex].transform as RectTransform;
+                if (itemRect == null || !itemRect.gameObject.activeSelf)
+                    continue;
+
+                if (slotDisappearDuration > 0f)
+                {
+                    itemRect.DOScale(Vector3.zero, slotDisappearDuration)
+                        .SetDelay(i * Mathf.Max(0f, slotStaggerDelay))
+                        .SetEase(slotDisappearEase)
+                        .SetTarget(this)
+                        .OnComplete(() => { remaining = remaining - 1; });
+                }
+            }
+        }
+
+        while (remaining > 0)
+            yield return null;
     }
 
     private void FinishCloseAnimation()
     {
-        gameObject.SetActive(false);
-
         RectTransform panelRect = transform as RectTransform;
         if (panelRect != null)
+        {
             panelRect.anchoredPosition = panelOpenPosition;
-        ApplyOpenReveal(1f);
+            panelRect.localScale = panelBaseScale;
+        }
+        gameObject.SetActive(false);
     }
 
     private void CapturePanelLayout(RectTransform panelRect)
@@ -687,65 +995,10 @@ public class ShopPanelUI : MonoBehaviour
         panelSize = panelRect.rect.size;
         if (panelSize.x <= 0f || panelSize.y <= 0f)
             panelSize = panelRect.sizeDelta;
+        panelBaseScale = panelRect.localScale;
         hasPanelLayout = true;
     }
 
-    private void SetAnimationRectLayout()
-    {
-        if (revealMask == null)
-            return;
-
-        Image panelImage = GetComponent<Image>();
-        if (panelImage != null)
-            panelImage.enabled = false;
-
-        revealMask.anchorMin = new Vector2(0f, 1f);
-        revealMask.anchorMax = new Vector2(0f, 1f);
-        revealMask.pivot = new Vector2(0f, 1f);
-        revealMask.localScale = Vector3.one;
-        revealMask.localRotation = Quaternion.identity;
-
-        if (contentRoot == null)
-            return;
-
-        contentRoot.anchorMin = new Vector2(0f, 1f);
-        contentRoot.anchorMax = new Vector2(0f, 1f);
-        contentRoot.pivot = new Vector2(0f, 1f);
-        contentRoot.sizeDelta = panelSize;
-        contentRoot.localScale = Vector3.one;
-        contentRoot.localRotation = Quaternion.identity;
-    }
-
-    private void ApplyOpenReveal(float progress)
-    {
-        progress = Mathf.Clamp01(progress);
-        if (revealMask == null)
-            return;
-
-        revealMask.anchoredPosition = Vector2.zero;
-        revealMask.sizeDelta = new Vector2(panelSize.x * progress, panelSize.y * progress);
-        if (contentRoot != null)
-        {
-            contentRoot.anchoredPosition = Vector2.zero;
-            contentRoot.sizeDelta = panelSize;
-        }
-    }
-
-    private void ApplyCloseReveal(float progress)
-    {
-        progress = Mathf.Clamp01(progress);
-        if (revealMask == null)
-            return;
-
-        Vector2 maskPosition = new Vector2(panelSize.x * progress, -panelSize.y * progress);
-        revealMask.anchoredPosition = maskPosition;
-        revealMask.sizeDelta = new Vector2(panelSize.x * (1f - progress), panelSize.y * (1f - progress));
-        if (contentRoot != null)
-        {
-            contentRoot.anchoredPosition = -maskPosition;
-            contentRoot.sizeDelta = panelSize;
-        }
-    }
 
     private bool HasRemovableMaterial()
     {
@@ -804,10 +1057,24 @@ public class ShopPanelUI : MonoBehaviour
             return;
 
         selectedOffer = offer;
-        waitingForSelection = true;
+        waitingForSelection = false;
         purchaseInProgress = false;
-        owner.SelectPendingShopMagic(offer.magicData, slotIndex => CompleteMagicPurchase(offer, slotIndex));
-        Refresh();
+        owner.ClearPendingShopMagic();
+
+        int targetSlot = GetMagicPlacementSlot();
+        CompleteMagicPurchase(offer, targetSlot);
+    }
+
+    private int GetMagicPlacementSlot()
+    {
+        if (owner == null || owner.PlayerState == null)
+            return 0;
+
+        int count = owner.PlayerState.MagicBook.Count;
+        int capacity = owner.MagicSlotCapacity;
+        if (capacity > 0 && count >= capacity)
+            count = capacity - 1;
+        return Mathf.Max(0, count);
     }
 
     private void CancelMagicPurchaseSelection(bool refresh)
@@ -843,9 +1110,11 @@ public class ShopPanelUI : MonoBehaviour
         }
 
         PlayShopSfx(GameSfxId.Buy);
+        // 先捕获飞行起点（此时商品视觉仍在），再标记已购：进入 tween 时价格/内容立即消失（槽位保留占位，其它商品不重排）。
+        RectTransform sourceRect = GetMagicOfferRect(offer);
+        offer.purchased = true;
         purchaseInProgress = true;
         Refresh();
-        RectTransform sourceRect = GetMagicOfferRect(offer);
         owner.SetShopMagicAtSlotAnimated(offer.magicData, slotIndex, sourceRect, () =>
         {
             purchaseInProgress = false;
@@ -868,9 +1137,11 @@ public class ShopPanelUI : MonoBehaviour
         }
 
         PlayShopSfx(GameSfxId.Buy);
+        // 先捕获飞行起点，再标记已购：进入 tween 时价格/内容立即消失（槽位保留占位，其它商品不重排）。
+        RectTransform sourceRect = GetMaterialOfferRect(offer);
+        offer.purchased = true;
         purchaseInProgress = true;
         Refresh();
-        RectTransform sourceRect = GetMaterialOfferRect(offer);
         owner.AddShopMaterialAnimated(offer.material, offer.materialModifierData, sourceRect, () =>
         {
             purchaseInProgress = false;
@@ -1109,20 +1380,20 @@ public class ShopPanelUI : MonoBehaviour
 
     private RectTransform GetMagicOfferRect(ShopOffer offer)
     {
-        ShopItemView view = GetItemView(offer);
+        ShopSlotView view = GetItemView(offer);
         return view != null ? view.MagicVisualRect : null;
     }
 
     private RectTransform GetMaterialOfferRect(ShopOffer offer)
     {
-        ShopItemView view = GetItemView(offer);
+        ShopSlotView view = GetItemView(offer);
         return view != null ? view.MaterialVisualRect : null;
     }
 
-    private ShopItemView GetItemView(ShopOffer offer)
+    private ShopSlotView GetItemView(ShopOffer offer)
     {
         int index = offers.IndexOf(offer);
-        return index >= 0 && index < itemViews.Count ? itemViews[index] : null;
+        return index >= 0 && index < slotViews.Count ? slotViews[index] : null;
     }
 
     private static void PlayShopSfx(GameSfxId id)

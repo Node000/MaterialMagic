@@ -140,6 +140,21 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
+    /// <summary>
+    /// 由外部布局在完成排布后调用：把悬停/点击动画的基准同步成排布目标值，
+    /// 避免基准仍是排布前捕获的旧角度/旧缩放。
+    /// </summary>
+    public void SetBaseTransform(Vector3 scale, Vector3 localEulerAngles, bool applyImmediately = false)
+    {
+        originalScale = scale;
+        originalLocalEulerAngles = localEulerAngles;
+        if (applyImmediately)
+        {
+            transform.localScale = originalScale;
+            transform.localEulerAngles = originalLocalEulerAngles;
+        }
+    }
+
     public void Play()
     {
         StopMotion();

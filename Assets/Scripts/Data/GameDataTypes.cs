@@ -22,6 +22,7 @@ public class EconomyConfigData : INumericDataRecord
     public int shopSpellPrice = 4;
     public int shopMaterialPrice = 6;
     public int shopRemoveMaterialPrice = 7;
+    public int shopRefreshPrice = 10;
     public int shopProductPoolId = 1;
     public int battleGoldMin = 1;
     public int battleGoldMax = 2;

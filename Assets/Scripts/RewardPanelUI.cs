@@ -758,43 +758,11 @@ public class RewardPanelUI : MonoBehaviour
         rect.sizeDelta = new Vector2(210f, 250f);
 
         RectTransform previewRect = CreateArrowPreview(rect, option, index);
-        TMP_Text enchantText = CreateEnchantLabel(rect);
-        string enchant = BuildEnchantText(option);
-        enchantText.text = enchant;
-        enchantText.gameObject.SetActive(!string.IsNullOrEmpty(enchant));
         Button button = image.GetComponent<Button>();
         button.transition = Selectable.Transition.None;
         button.onClick.RemoveAllListeners();
         RectTransform source = previewRect != null ? previewRect : rect;
         button.onClick.AddListener(() => OnArrowOptionClicked(option, source));
-    }
-
-    private static TMP_Text CreateEnchantLabel(RectTransform parent)
-    {
-        TMP_Text label = new GameObject("EnchantText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-        label.transform.SetParent(parent, false);
-        label.font = UIManager.GetDefaultTMPFont();
-        label.fontSize = 16f;
-        label.fontStyle = FontStyles.Bold;
-        label.alignment = TextAlignmentOptions.Center;
-        label.enableWordWrapping = true;
-        label.color = new Color(1f, 0.9f, 0.55f, 1f);
-        label.raycastTarget = false;
-        RectTransform rect = label.rectTransform;
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(0f, -102f);
-        rect.sizeDelta = new Vector2(196f, 72f);
-        return label;
-    }
-
-    private static string BuildEnchantText(RewardArrowOption option)
-    {
-        if (option == null || !option.HasModifier || option.modifierData == null)
-            return string.Empty;
-
-        return LocalizationSystem.GetText(option.modifierData.nameKey, option.modifierData.id);
     }
 
     private RectTransform CreateArrowPreview(RectTransform parent, RewardArrowOption option, int index)

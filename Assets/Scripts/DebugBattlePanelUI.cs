@@ -11,6 +11,7 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button damageButton;
     [SerializeField] private Button killTargetButton;
     [SerializeField] private Button drawCardButton;
+    [SerializeField] private Button goldButton;
     [SerializeField] private Button startRestButton;
     [SerializeField] private TMP_Dropdown eventDropdown;
     [SerializeField] private Button startEventButton;
@@ -56,6 +57,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         openShopButton?.onClick.RemoveListener(OpenSelectedShop);
         arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
+        goldButton?.onClick.RemoveListener(AddGold);
 
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
         damageButton?.onClick.AddListener(DealDamageToTarget);
@@ -68,6 +70,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         openShopButton?.onClick.AddListener(OpenSelectedShop);
         arrowUpgradeButton?.onClick.AddListener(OpenArrowUpgradePanel);
         closeButton?.onClick.AddListener(Hide);
+        goldButton?.onClick.AddListener(AddGold);
     }
 
     private void OnDestroy()
@@ -83,6 +86,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         openShopButton?.onClick.RemoveListener(OpenSelectedShop);
         arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
+        goldButton?.onClick.RemoveListener(AddGold);
     }
 
     public void Show()
@@ -114,6 +118,8 @@ public class DebugBattlePanelUI : MonoBehaviour
             killTargetButton = transform.Find("KillTargetButton")?.GetComponent<Button>();
         if (drawCardButton == null)
             drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
+        if (goldButton == null)
+            goldButton = transform.Find("GoldButton")?.GetComponent<Button>();
         if (startRestButton == null)
             startRestButton = transform.Find("StartRestButton")?.GetComponent<Button>();
         if (eventDropdown == null)
@@ -313,6 +319,14 @@ public class DebugBattlePanelUI : MonoBehaviour
     private void DrawCard()
     {
         handSystem?.DebugDrawCards(1);
+    }
+
+    private void AddGold()
+    {
+        if (handSystem == null || handSystem.PlayerState == null)
+            return;
+        handSystem.PlayerState.AddGold(10, false);
+        handSystem.GetUIManager()?.GoldDisplay?.SetGold(handSystem.PlayerState.Gold, true);
     }
 
     private void StartSelectedRest()

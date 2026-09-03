@@ -100,9 +100,25 @@ public class MagicBookCurveLayout : MonoBehaviour
             slot.localEulerAngles = new Vector3(0f, 0f, rotationDeg);
             float scale = Mathf.Lerp(edgeScale, 1f, arcFactor);
             slot.localScale = new Vector3(scale, scale, 1f);
+            SyncJuicyMotionBase(slot, scale, rotationDeg);
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(area);
+    }
+
+    public void RefreshLayoutAnimated()
+    {
+        RectTransform area = transform as RectTransform;
+        if (area == null)
+            return;
+
+        DisableLegacyLayout();
+        CollectActiveSlots(area);
+        if (activeSlots.Count == 0)
+            return;
+
+        List<RectTransform> ordered = new List<RectTransform>(activeSlots);
+        ArrangeSlots(ordered);
     }
 
     public void ArrangeSlots(List<RectTransform> ordered)
@@ -139,6 +155,7 @@ public class MagicBookCurveLayout : MonoBehaviour
             slot.anchorMin = new Vector2(0.5f, 0.5f);
             slot.anchorMax = new Vector2(0.5f, 0.5f);
             slot.pivot = new Vector2(0.5f, 0.5f);
+            SyncJuicyMotionBase(slot, scale, rotationDeg);
 
             if (animate)
             {
@@ -155,6 +172,95 @@ public class MagicBookCurveLayout : MonoBehaviour
                 slot.localScale = new Vector3(scale, scale, 1f);
             }
         }
+    }
+
+    public Vector2 ComputeAnchorPosition(int count, int index)
+    {
+        ComputeSlotPose(count, index, out Vector2 pos, out _, out _);
+        return pos;
+    }
+
+    /// <summary>计算第 index 个槽在 count 个槽圆弧上的完整姿态（位置、径向角度、缩放）。</summary>
+    public void ComputeSlotPose(int count, int index, out Vector2 anchoredPosition, out float rotationDeg, out float scale)
+    {
+        float half = (count - 1) * 0.5f;
+        float halfWidth = half * slotStep;
+        RectTransform area = transform as RectTransform;
+        float baseline = area != null ? area.rect.yMin : 0f;
+        float apexY = baseline + arcTopRaise;
+        float radius = Mathf.Max(1f, arcRadius);
+        float centerY = apexY - radius;
+        float x = (index - half) * slotStep;
+        float radial = Mathf.Sqrt(Mathf.Max(0f, radius * radius - x * x));
+        float y = centerY + radial;
+        float arcFactor = 1f - Mathf.Abs(x) / Mathf.Max(0.001f, halfWidth);
+        anchoredPosition = new Vector2(x, y);
+        rotationDeg = Mathf.Atan2(-x, Mathf.Max(0.0001f, radial)) * Mathf.Rad2Deg;
+        scale = Mathf.Lerp(edgeScale, 1f, arcFactor);
+    }
+
+    /// <summary>
+    /// 新道具插入时，让现有占用槽沿 futureCount 个槽的圆弧移动（用于与飞入动画同步让位）。
+    /// 现有槽保持原索引，新增槽位位于最右侧（索引 futureCount-1）。
+    /// </summary>
+    public void ArrangeExistingSlotsForCount(int futureCount, float duration)
+    {
+        RectTransform area = transform as RectTransform;
+        if (area == null)
+            return;
+
+        DisableLegacyLayout();
+        CollectActiveSlots(area);
+        if (activeSlots.Count == 0)
+            return;
+
+        bool animate = Application.isPlaying && duration > 0f;
+        float d = Mathf.Max(0.001f, duration);
+        for (int i = 0; i < activeSlots.Count; i++)
+        {
+            RectTransform slot = activeSlots[i];
+            if (slot == null)
+                continue;
+
+            ComputeSlotPose(futureCount, i, out Vector2 pos, out float rot, out float scale);
+            slot.anchorMin = new Vector2(0.5f, 0.5f);
+            slot.anchorMax = new Vector2(0.5f, 0.5f);
+            slot.pivot = new Vector2(0.5f, 0.5f);
+            SyncJuicyMotionBase(slot, scale, rot);
+
+            if (animate)
+            {
+                slot.DOKill(false);
+                slot.DOAnchorPos(pos, d).SetEase(Ease.OutCubic).SetTarget(slot);
+                slot.DOLocalRotate(new Vector3(0f, 0f, rot), d).SetEase(Ease.OutCubic).SetTarget(slot);
+                slot.DOScale(new Vector3(scale, scale, 1f), d).SetEase(Ease.OutCubic).SetTarget(slot);
+            }
+            else
+            {
+                slot.DOKill(false);
+                slot.anchoredPosition = pos;
+                slot.localEulerAngles = new Vector3(0f, 0f, rot);
+                slot.localScale = new Vector3(scale, scale, 1f);
+            }
+        }
+    }
+
+    /// <summary>根据任意局部 X 计算其在圆弧上的姿态（拖拽时只喂 X，道具沿曲线移动）。</summary>
+    public void ComputeCurvePoseAtX(int count, float x, out Vector2 anchoredPosition, out float rotationDeg, out float scale)
+    {
+        RectTransform area = transform as RectTransform;
+        float half = (count - 1) * 0.5f;
+        float halfWidth = half * slotStep;
+        float baseline = area != null ? area.rect.yMin : 0f;
+        float apexY = baseline + arcTopRaise;
+        float radius = Mathf.Max(1f, arcRadius);
+        float centerY = apexY - radius;
+        float radial = Mathf.Sqrt(Mathf.Max(0f, radius * radius - x * x));
+        float y = centerY + radial;
+        float arcFactor = 1f - Mathf.Abs(x) / Mathf.Max(0.001f, halfWidth);
+        anchoredPosition = new Vector2(x, y);
+        rotationDeg = Mathf.Atan2(-x, Mathf.Max(0.0001f, radial)) * Mathf.Rad2Deg;
+        scale = Mathf.Lerp(edgeScale, 1f, arcFactor);
     }
 
     public int GetSlotAtLocalX(float localX)
@@ -186,6 +292,13 @@ public class MagicBookCurveLayout : MonoBehaviour
         layoutDirty = true;
         if (isActiveAndEnabled)
             RefreshLayout();
+    }
+
+    private static void SyncJuicyMotionBase(RectTransform slot, float scale, float rotationDeg)
+    {
+        JuicyMotion motion = slot != null ? slot.GetComponent<JuicyMotion>() : null;
+        if (motion != null)
+            motion.SetBaseTransform(new Vector3(scale, scale, 1f), new Vector3(0f, 0f, rotationDeg), false);
     }
 
     private void DisableLegacyLayout()

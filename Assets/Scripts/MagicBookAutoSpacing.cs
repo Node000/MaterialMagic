@@ -11,8 +11,6 @@ public class MagicBookAutoSpacing : MonoBehaviour
     private void Awake()
     {
         grid = GetComponent<GridLayoutGroup>();
-        if (Application.isPlaying && GetComponent<MagicBookBackgroundLayer>() == null)
-            gameObject.AddComponent<MagicBookBackgroundLayer>();
     }
 
     private void OnEnable()

@@ -49,38 +49,9 @@ public class MagicBookBackgroundLayer : MonoBehaviour
 
     public void Refresh()
     {
-        if (!Application.isPlaying || isRefreshing)
-            return;
-
-        isRefreshing = true;
-        EnsureBackgroundLayer();
-
-        for (int i = pairs.Count - 1; i >= 0; i--)
-        {
-            if (pairs[i].source != null)
-                continue;
-
-            if (pairs[i].background != null)
-                Destroy(pairs[i].background.gameObject);
-            pairs.RemoveAt(i);
-        }
-
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            Transform child = transform.GetChild(i);
-            if (child == backgroundLayer || child.GetComponent<MagicItemView>() == null || HasPair(child))
-                continue;
-
-            SpringLineHighlightUI source = child.GetComponent<SpringLineHighlightUI>();
-            if (source == null)
-                continue;
-
-            BackgroundPair pair = CreatePair(source);
-            pairs.Add(pair);
-            SyncPair(pair);
-        }
-
-        isRefreshing = false;
+        // 背景层已废弃：纯黑背景由槽位自身的弹簧线框填充承担，不再复制一份背景壳，
+        // 否则在道具飞入重排时其运行时同步会错乱，导致布局后所有道具背景消失。
+        return;
     }
 
     private bool HasPair(Transform sourceTransform)
