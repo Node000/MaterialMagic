@@ -1,11 +1,5 @@
 {
   "dependencies": {
-    "com.farlocus.locus": {
-      "version": "file:com.farlocus.locus",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
     "com.google.external-dependency-manager": {
       "version": "1.2.179",
       "depth": 0,
