@@ -75,7 +75,9 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler, IBegin
             owner.TryApplyPendingMaterialModifierToSelectedHandCard(slotIndex);
         else if (owner != null && owner.HasPendingShopMagic)
             owner.TryPlacePendingShopMagic(slotIndex);
+        else if (owner != null && owner.HasPendingRewardMagic)
+            owner.TryPlacePendingRewardMagic(slotIndex);
         else
-            owner?.TryPlacePendingRewardMagic(slotIndex);
+            owner?.ShowMagicSellPopup(GetComponent<MagicItemView>(), slotIndex);
     }
 }

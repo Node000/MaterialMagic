@@ -770,8 +770,22 @@ public class ShopPanelUI : MonoBehaviour
             return false;
 
         magicPool.Remove(data);
-        target.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetOfferPrice(config.shopSpellPrice + GetMagicRarityPriceOffset(data.rarity)), magicData = data });
+        target.Add(new ShopOffer { kind = ShopItemKind.Magic, price = GetMagicBuyPrice(data), magicData = data });
         return true;
+    }
+
+    public static int GetMagicBuyPrice(MagicData data)
+    {
+        if (data == null)
+            return 0;
+
+        EconomyConfigData economy = GameDataDatabase.GetDefaultEconomyConfig() ?? new EconomyConfigData();
+        return DifficultyUpgradeSystem.ModifyShopPrice(economy.shopSpellPrice + GetMagicRarityPriceOffset(data.rarity));
+    }
+
+    public static int GetMagicSellPrice(MagicData data)
+    {
+        return Mathf.Max(0, GetMagicBuyPrice(data) - 1);
     }
 
     private static int GetMagicRarityPriceOffset(MagicRarity rarity)

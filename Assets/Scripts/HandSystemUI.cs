@@ -418,6 +418,8 @@ public class HandSystemUI : MonoBehaviour
 
     private BuffSlotView pinnedBuffTooltipSlot;
 
+	private MagicItemView sellPopupAnchorView;
+
 		private BattleManager battleManager;
 
     private TMP_Dropdown debugMagicDropdown;
@@ -859,6 +861,41 @@ public class HandSystemUI : MonoBehaviour
         playerState.ClearMagicSlot(slotIndex);
         CreateMagicViews();
         RefreshStaticUI();
+    }
+
+    public void DebugAddRandomEnchantToHand()
+    {
+        if (playerState == null || playerState.Hand == null || playerState.Hand.Count == 0)
+            return;
+
+        List<MaterialModifierData> pool = new List<MaterialModifierData>();
+        IReadOnlyList<MaterialModifierData> all = MaterialModifierDatabase.RuntimeData;
+        for (int i = 0; i < all.Count; i++)
+        {
+            MaterialModifierData data = all[i];
+            if (data == null || !data.inArrowModifierRewardPool)
+                continue;
+            if (!UnlockSystem.IsMaterialModifierUnlocked(data))
+                continue;
+            if (string.IsNullOrEmpty(data.script))
+                continue;
+            if (MaterialModifierFactory.Create(data) == null)
+                continue;
+            pool.Add(data);
+        }
+        if (pool.Count == 0)
+            return;
+
+        for (int i = 0; i < playerState.Hand.Count; i++)
+        {
+            MaterialModel card = playerState.Hand[i];
+            if (card == null)
+                continue;
+            MaterialModifierData data = pool[UnityEngine.Random.Range(0, pool.Count)];
+            card.AddModifier(MaterialModifierFactory.Create(data));
+        }
+
+        RefreshArrowUpgradeVisuals();
     }
 
     public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
@@ -1958,6 +1995,39 @@ public class HandSystemUI : MonoBehaviour
         pinnedBuffTooltipSlot = null;
     }
 
+    private void HideMagicSellPopupOnOutsideClick()
+    {
+        if (!TryGetPrimaryPointerDown(out Vector2 screenPosition))
+            return;
+
+        bool anyVisible = false;
+        for (int i = 0; i < magicViews.Count && !anyVisible; i++)
+        {
+            var view = magicViews[i];
+            if (view != null && view.SellButton != null && view.SellButton.gameObject.activeSelf)
+                anyVisible = true;
+        }
+
+        if (!anyVisible)
+            return;
+
+        // Check if pointer is over the visible sell button
+        foreach (var view in magicViews)
+        {
+            if (view != null && view.SellButton != null && view.SellButton.gameObject.activeSelf)
+            {
+                RectTransform rect = view.SellButton.GetComponent<RectTransform>();
+                if (rect != null && RectTransformUtility.RectangleContainsScreenPoint(rect, screenPosition))
+                    return;
+            }
+        }
+
+        if (IsPointerOverMagicSlot(screenPosition))
+            return;
+
+        HideMagicSellPopup();
+    }
+
     private void HidePinnedBuffTooltipOnOutsideClick()
     {
         if (pinnedBuffTooltipSlot == null || !TryGetPrimaryPointerDown(out Vector2 screenPosition))
@@ -1995,6 +2065,34 @@ public class HandSystemUI : MonoBehaviour
 
         screenPosition = touch.position;
         return true;
+    }
+
+    private bool IsPointerOverMagicSlot(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return false;
+
+        if (playInputPointerEventData == null || playInputEventSystem != eventSystem)
+        {
+            playInputEventSystem = eventSystem;
+            playInputPointerEventData = new PointerEventData(eventSystem);
+        }
+
+        playInputPointerEventData.Reset();
+        playInputPointerEventData.position = screenPosition;
+        playInputPointerEventData.button = PointerEventData.InputButton.Left;
+        playInputRaycastResults.Clear();
+        eventSystem.RaycastAll(playInputPointerEventData, playInputRaycastResults);
+
+        for (int i = 0; i < playInputRaycastResults.Count; i++)
+        {
+            GameObject hitObject = playInputRaycastResults[i].gameObject;
+            if (hitObject != null && hitObject.GetComponentInParent<MagicItemView>() != null)
+                return true;
+        }
+
+        return false;
     }
 
     private bool IsPointerOverBuffSlot(Vector2 screenPosition)
@@ -3199,6 +3297,7 @@ public class HandSystemUI : MonoBehaviour
 		private void Update()
 			{
         HidePinnedBuffTooltipOnOutsideClick();
+		HideMagicSellPopupOnOutsideClick();
 
         bool tutorialClickConsumedThisFrame = TutorialManager != null && TutorialManager.WasTutorialClickConsumedThisFrame();
 
@@ -5267,8 +5366,8 @@ public bool IsCardDragActive => cardDragActive;
                     float drawDelay = 0f;
                     if (!animateFromExistingView)
                     {
-                        // 抽取/入列：从左到右逐张启动，间隔 min(0.2, 1/数量)。
-                        float step = Mathf.Min(0.2f, 1f / Mathf.Max(1, layoutCount));
+                        // 抽取/入列：从左到右逐张启动，间隔 min(0.1, 1/数量)。
+						float step = Mathf.Min(0.1f, 1f / Mathf.Max(1, layoutCount));
                         drawDelay = layoutIndex * step;
                     }
                     AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView, drawDelay, !animateFromExistingView);
@@ -6097,6 +6196,7 @@ public bool IsCardDragActive => cardDragActive;
 			if (clickHandler == null)
 				clickHandler = view.gameObject.AddComponent<MagicSlotClickHandler>();
 			clickHandler.Bind(this, i);
+			view.SetSlotIndex(i);
 			view.Bind(playerState != null ? playerState.GetMagicAtSlot(i) : null);
 			magicViews.Add(view);
 		}
@@ -7658,11 +7758,51 @@ public bool IsCardDragActive => cardDragActive;
         return playerState != null && playerState.GetMagicAtSlot(slotIndex) != null;
     }
 
+    public void ShowMagicSellPopup(MagicItemView view, int slotIndex)
+    {
+        if (view == null || view.Magic == null || playerState == null)
+            return;
+
+        HideMagicSellPopup();
+        sellPopupAnchorView = view;
+        int price = ShopPanelUI.GetMagicSellPrice(view.Magic.Data);
+        view.ShowSellPopup(price);
+    }
+
+    public void HideMagicSellPopup()
+    {
+        for (int i = 0; i < magicViews.Count; i++)
+            magicViews[i]?.HideSellPopup();
+        sellPopupAnchorView = null;
+    }
+
+    public bool TrySellMagicAtSlot(int slotIndex)
+    {
+        if (playerState == null)
+            return false;
+
+        MagicModel magic = playerState.GetMagicAtSlot(slotIndex);
+        if (magic == null)
+            return false;
+
+        int sellPrice = ShopPanelUI.GetMagicSellPrice(magic.Data);
+        playerState.ClearMagicSlot(slotIndex);
+        playerState.NormalizeMagicSlots(MagicSlotCapacity);
+        HideMagicSellPopup();
+        GetUIManager().UnpinUnifiedDetailPopup();
+        playerState.AddGold(sellPrice, false);
+        CreateMagicViews();
+        RefreshStaticUI();
+        SaveRunProgress();
+        return true;
+    }
+
     public bool BeginMagicBookDrag(int fromSlotIndex, RectTransform slotRect, PointerEventData eventData)
     {
         if (!CanBeginMagicBookReorder || slotRect == null || playerState == null || magicDragActive || !IsMagicSlotOccupied(fromSlotIndex))
             return false;
 
+        HideMagicSellPopup();
         magicDragActive = true;
         magicDragFromIndex = fromSlotIndex;
         magicDragPreviewIndex = fromSlotIndex;
@@ -9928,8 +10068,8 @@ public bool IsCardDragActive => cardDragActive;
 			return;
 		}
 		ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
-		// 临时牌溶解：同样从右到左逐张启动，间隔 min(0.2, 1/数量)。
-		float dissolveStep = Mathf.Min(0.2f, 1f / ordered.Count);
+		// 临时牌溶解：同样从右到左逐张启动，间隔 min(0.1, 1/数量)。
+		float dissolveStep = Mathf.Min(0.1f, 1f / ordered.Count);
 		int remaining = 0;
 		TweenCallback val = default(TweenCallback);
 		for (int i = 0; i < ordered.Count; i++)
@@ -10048,8 +10188,8 @@ public bool IsCardDragActive => cardDragActive;
 		}
 
         ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
-        // 弃牌/回收：从右到左逐张启动，间隔 min(0.2, 1/数量)。
-        float discardStep = Mathf.Min(0.2f, 1f / ordered.Count);
+        // 弃牌/回收：从右到左逐张启动，间隔 min(0.1, 1/数量)。
+        float discardStep = Mathf.Min(0.1f, 1f / ordered.Count);
 		int remaining = 0;
 		for (int j = 0; j < ordered.Count; j++)
 		{

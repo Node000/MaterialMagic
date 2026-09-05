@@ -18,6 +18,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private RectOffset recipeIconPadding = new RectOffset();
     [SerializeField] private Image modifierMarkerImage;
     [SerializeField] private SpringLineHighlightUI slotFrame;
+    [SerializeField] private Button sellButton;
+    [SerializeField] private TMP_Text sellButtonText;
+    [SerializeField] private CanvasGroup sellButtonCanvasGroup;
     [SerializeField] private RectTransform tagTooltipRoot;
     [SerializeField] private TMP_Text tagTooltipText;
     [SerializeField] private bool showTagTooltipOnLeft;
@@ -56,11 +59,14 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Sprite modifierMarkerFallbackSprite;
     private Material modifierMarkerFallbackMaterial;
     private Color modifierMarkerFallbackColor;
+    private int slotIndex = -1;
+    private Tween sellButtonTween;
 
     private static readonly Dictionary<string, Sprite> magicIconCache = new Dictionary<string, Sprite>();
     private static Material sharedModifierMarkerFallbackMaterial;
 
     public MagicModel Magic => magic;
+    public Button SellButton => sellButton;
 
     private void Awake()
     {
@@ -77,6 +83,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
         HideLocalDetailTooltip(true);
+        HideSellPopupImmediate();
         UIManager uiManager = GetComponentInParent<UIManager>();
         uiManager?.HideUnifiedDetailPopup(this);
     }
@@ -86,6 +93,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
         localDetailTooltipTween?.Kill(false);
+        sellButtonTween?.Kill(false);
     }
 
     public void Bind(MagicModel magic)
@@ -94,6 +102,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         {
             this.magic = null;
             CacheMissingReferences();
+            HideSellPopupImmediate();
             SetSlotFillVisible(false);
 
             SetIconVisible(false);
@@ -112,6 +121,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         this.magic = magic;
         CacheMissingReferences();
+        HideSellPopupImmediate();
         SetSlotFillVisible(true);
 
         SetIconVisible(true);
@@ -145,6 +155,90 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             magicNameText.text = placeholderText;
 
         SetModifierMarker(null);
+        HideSellPopupImmediate();
+    }
+
+    public void SetSlotIndex(int index)
+    {
+        slotIndex = index;
+    }
+
+    public int GetSlotIndex()
+    {
+        return slotIndex;
+    }
+
+    public void ShowSellPopup(int price)
+    {
+        if (sellButton == null || magic == null)
+            return;
+
+        CacheSellButton();
+        sellButtonTween?.Kill(false);
+        sellButton.gameObject.SetActive(true);
+        sellButton.transform.localScale = tooltipHiddenScale;
+        if (sellButtonText != null)
+            sellButtonText.text = "卖出 " + price + "$";
+        if (sellButtonCanvasGroup != null)
+        {
+            sellButtonCanvasGroup.alpha = 0f;
+            sellButtonCanvasGroup.blocksRaycasts = true;
+            sellButtonCanvasGroup.interactable = true;
+        }
+        sellButton.interactable = true;
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        if (sellButtonCanvasGroup != null)
+            sequence.Join(sellButtonCanvasGroup.DOFade(1f, tooltipFadeDuration));
+        sequence.Join(sellButton.transform.DOScale(Vector3.one, tooltipScaleDuration).SetEase(tooltipEase));
+        sellButtonTween = sequence;
+    }
+
+    public void HideSellPopup()
+    {
+        if (sellButton == null || !sellButton.gameObject.activeSelf)
+            return;
+
+        sellButtonTween?.Kill(false);
+        sellButton.interactable = false;
+        if (sellButtonCanvasGroup != null)
+        {
+            sellButtonCanvasGroup.blocksRaycasts = false;
+            sellButtonCanvasGroup.interactable = false;
+        }
+
+        Sequence sequence = DOTween.Sequence().SetTarget(this);
+        if (sellButtonCanvasGroup != null)
+            sequence.Join(sellButtonCanvasGroup.DOFade(0f, tooltipFadeDuration));
+        sequence.Join(sellButton.transform.DOScale(tooltipHiddenScale, tooltipScaleDuration).SetEase(tooltipEase));
+        sequence.OnComplete(HideSellPopupImmediate);
+        sellButtonTween = sequence;
+    }
+
+    public void HideSellPopupImmediate()
+    {
+        sellButtonTween?.Kill(false);
+        sellButtonTween = null;
+        if (sellButton == null)
+            return;
+
+        sellButton.interactable = false;
+        if (sellButtonCanvasGroup != null)
+        {
+            sellButtonCanvasGroup.alpha = 0f;
+            sellButtonCanvasGroup.blocksRaycasts = false;
+            sellButtonCanvasGroup.interactable = false;
+        }
+        sellButton.transform.localScale = tooltipHiddenScale;
+        sellButton.gameObject.SetActive(false);
+    }
+
+    private void OnSellButtonClicked()
+    {
+        if (slotIndex < 0)
+            return;
+
+        GetComponentInParent<HandSystemUI>()?.TrySellMagicAtSlot(slotIndex);
     }
 
     public void ResetRecipeHighlights()
@@ -267,6 +361,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         EnsureModifierMarker();
         CacheSlotFrame();
+        CacheSellButton();
 
         if (backgroundImage == null && !warnedMissingBackgroundImage)
         {
@@ -303,6 +398,22 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         if (slotFrame == null)
             slotFrame = GetComponent<SpringLineHighlightUI>();
+    }
+
+    private void CacheSellButton()
+    {
+        if (sellButton == null)
+            sellButton = GetComponentInChildren<Button>(true);
+        if (sellButton == null)
+            return;
+
+        if (sellButtonText == null)
+            sellButtonText = sellButton.GetComponentInChildren<TMP_Text>(true);
+        if (sellButtonCanvasGroup == null)
+            sellButtonCanvasGroup = sellButton.GetComponent<CanvasGroup>();
+
+        sellButton.onClick.RemoveListener(OnSellButtonClicked);
+        sellButton.onClick.AddListener(OnSellButtonClicked);
     }
 
     private void SetHoverHighlightEnabled(bool enabled)
