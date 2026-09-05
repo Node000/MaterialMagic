@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 
 using System;
+using System.Globalization;
 using System.Text;
 
 namespace Locus
@@ -19,6 +20,8 @@ namespace Locus
             public bool ok;
             public string message;
             public string error;
+            public int processId;
+            public string processPath;
         }
 
         [Serializable]
@@ -36,6 +39,40 @@ namespace Locus
         }
 
         [Serializable]
+        private class StartAssetDragRequest
+        {
+            public LocusEditorWindow.DroppedAssetRef[] refs;
+        }
+
+        [Serializable]
+        private class CaptureViewportRequest
+        {
+            public string target;
+            public string windowTitle;
+            public int maxLongEdge = 1280;
+        }
+
+        [Serializable]
+        private class CaptureViewportResponse
+        {
+            public string target;
+            public string title;
+            public string path;
+            public int width;
+            public int height;
+            public int originalWidth;
+            public int originalHeight;
+            public int sourceWidth;
+            public int sourceHeight;
+            public int outputWidth;
+            public int outputHeight;
+            public int maxLongEdge;
+            public float pixelsPerPoint;
+            public string captureArea;
+            public string mimeType;
+        }
+
+        [Serializable]
         private class ExecuteCodeProgressSnapshot
         {
             public bool active;
@@ -44,6 +81,12 @@ namespace Locus
             public float progress;
             public int revision;
             public string source;
+            public string waitKind;
+            public string waitTarget;
+            public string waitCondition;
+            public int sourceLine;
+            public string sourceText;
+            public int waitedMs;
         }
 
         public sealed class ScriptGlobals
@@ -86,7 +129,8 @@ namespace Locus
             /// <summary>
             /// Serialize a Unity object (or any object) to JSON and append it to the result buffer.
             /// Uses EditorJsonUtility for UnityEngine.Object types (preserves serialized fields,
-            /// references, etc.), falls back to JsonUtility for plain C# objects.
+            /// references, etc.), and LocusJson for plain C# objects, anonymous types,
+            /// properties, dictionaries, and other general-purpose JSON values.
             /// This is the preferred way to return structured data to the agent.
             /// </summary>
             public void printJson(object obj)
@@ -102,16 +146,18 @@ namespace Locus
                 {
                     string json;
                     if (obj is UnityEngine.Object uObj)
-                        json = EditorJsonUtility.ToJson(uObj, true);
+                        json = EditorJsonUtility.ToJson(uObj, false);
                     else
-                        json = JsonUtility.ToJson(obj, true);
+                        json = Locus.Json.LocusJson.Serialize(obj);
 
                     _output.AppendLine(json);
                 }
                 catch (Exception ex)
                 {
-                    _output.Append("[printJson error: ").Append(ex.Message).Append("] ")
-                           .AppendLine(obj.ToString());
+                    Type errorType = ex.GetType();
+                    _output.Append("[printJson error: ")
+                           .Append(errorType.FullName ?? errorType.Name)
+                           .AppendLine("]");
                 }
             }
 
@@ -219,6 +265,11 @@ namespace Locus
 
     internal static class LocusSceneObjectUtility
     {
+        public static void ValidateSceneObject(string scenePath, string objectPath)
+        {
+            ResolveSceneObject(scenePath, objectPath);
+        }
+
         public static void SelectSceneObject(string scenePath, string objectPath)
         {
             GameObject target = ResolveSceneObject(scenePath, objectPath);
@@ -234,7 +285,7 @@ namespace Locus
             EditorGUIUtility.PingObject(target);
         }
 
-        private static GameObject ResolveSceneObject(string scenePath, string objectPath)
+        public static GameObject ResolveSceneObject(string scenePath, string objectPath)
         {
             string normalizedScenePath = NormalizePath(scenePath);
             string normalizedObjectPath = NormalizeObjectPath(objectPath);
@@ -275,13 +326,19 @@ namespace Locus
             if (parts.Length == 0)
                 return null;
 
+            SceneObjectPathSegment rootSegment = ParseSceneObjectPathSegment(parts[0]);
             GameObject current = null;
+            int rootMatchIndex = 0;
             foreach (GameObject root in roots)
             {
-                if (root != null && root.name == parts[0])
+                if (root != null && root.name == rootSegment.name)
                 {
-                    current = root;
-                    break;
+                    if (rootMatchIndex == rootSegment.zeroBasedIndex)
+                    {
+                        current = root;
+                        break;
+                    }
+                    rootMatchIndex++;
                 }
             }
 
@@ -290,13 +347,63 @@ namespace Locus
 
             for (int i = 1; i < parts.Length; i++)
             {
-                Transform child = current.transform.Find(parts[i]);
+                SceneObjectPathSegment segment = ParseSceneObjectPathSegment(parts[i]);
+                Transform child = FindChildByPathSegment(current.transform, segment);
                 if (child == null)
                     return null;
                 current = child.gameObject;
             }
 
             return current;
+        }
+
+        private struct SceneObjectPathSegment
+        {
+            public string name;
+            public int zeroBasedIndex;
+        }
+
+        private static SceneObjectPathSegment ParseSceneObjectPathSegment(string segment)
+        {
+            string source = segment ?? "";
+            int ordinal = source.LastIndexOf('[');
+            if (ordinal > 0 && source.EndsWith("]", StringComparison.Ordinal))
+            {
+                string indexText = source.Substring(ordinal + 1, source.Length - ordinal - 2);
+                int index;
+                if (int.TryParse(indexText, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                {
+                    if (index <= 0)
+                        throw new InvalidOperationException("Scene object path ordinal must be 1 or greater: " + segment);
+                    return new SceneObjectPathSegment
+                    {
+                        name = source.Substring(0, ordinal),
+                        zeroBasedIndex = index - 1
+                    };
+                }
+            }
+
+            return new SceneObjectPathSegment
+            {
+                name = source,
+                zeroBasedIndex = 0
+            };
+        }
+
+        private static Transform FindChildByPathSegment(Transform parent, SceneObjectPathSegment segment)
+        {
+            int matchIndex = 0;
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform candidate = parent.GetChild(i);
+                if (candidate != null && candidate.name == segment.name)
+                {
+                    if (matchIndex == segment.zeroBasedIndex)
+                        return candidate;
+                    matchIndex++;
+                }
+            }
+            return null;
         }
 
         private static string NormalizePath(string path)

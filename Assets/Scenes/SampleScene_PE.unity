@@ -25886,9 +25886,9 @@ MonoBehaviour:
   levelSelectAfterMapHideFallbackDelay: 0.28
   battleStartMapHideProgress: 0.5
   uiManager: {fileID: 0}
-  playInputScreenHeightThreshold: 0.28
   simulateMobileInteractionInEditor: 0
   rewardMagicConfirmCellSize: {x: 230, y: 92}
+  baseMagicSlotCount: 8
   playerBuffPopupEffect: {fileID: 0}
   rewardMagicConfirmPanel: {fileID: 910586154}
   rewardMagicConfirmExistingRoot: {fileID: 2020727822}
@@ -49182,21 +49182,54 @@ MonoBehaviour:
   itemRoot: {fileID: 1386778749}
   magicViewPrefab: {fileID: 9157996333688980366, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
   materialCardPrefab: {fileID: 8528870140035376209, guid: 5a245cf3e163b134eadf8b70b0407a36, type: 3}
+  shopItemSlotPrefab: {fileID: 0}
+  shopArrowSlotPrefab: {fileID: 0}
+  shopLayerSeparatorPrefab: {fileID: 0}
   titleText: {fileID: 0}
   hintText: {fileID: 0}
   goldText: {fileID: 2090616535}
   leaveButton: {fileID: 1662168868}
+  refreshButton: {fileID: 0}
+  removeArrowButton: {fileID: 0}
   revealMask: {fileID: 740457791}
   contentRoot: {fileID: 1134800178}
-  panelRevealDuration: 0.22
-  panelRevealEase: 9
-  panelHideDuration: 0.18
-  panelHideEase: 8
-  panelOpenMoveOffset: {x: -36, y: 36}
-  panelCloseMoveOffset: {x: 36, y: -36}
-  itemPopDelayStep: 0.045
-  itemPopDuration: 0.28
-  itemPopEase: 27
+  crtScanLineImage: {fileID: 0}
+  crtCollapseDuration: 0.32
+  crtCollapseEase: 8
+  crtLineHoldDuration: 0.12
+  crtShrinkDuration: 0.18
+  crtShrinkEase: 8
+  crtLineYRatio: 0.02
+  slotAppearDuration: 0.28
+  slotDisappearDuration: 0.2
+  slotStaggerDelay: 0.1
+  slotAppearEase: 27
+  slotDisappearEase: 26
+  slotScaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  slotUseCurve: 0
 --- !u!114 &1466082292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52577,6 +52610,7 @@ MonoBehaviour:
   damageButton: {fileID: 0}
   killTargetButton: {fileID: 0}
   drawCardButton: {fileID: 0}
+  goldButton: {fileID: 0}
   startRestButton: {fileID: 0}
   eventDropdown: {fileID: 1771543158}
   startEventButton: {fileID: 737992050}
@@ -52585,6 +52619,8 @@ MonoBehaviour:
   removeLastMagicButton: {fileID: 0}
   shopDropdown: {fileID: 463200532}
   openShopButton: {fileID: 930660071}
+  arrowUpgradeButton: {fileID: 0}
+  arrowUpgradePanel: {fileID: 0}
   closeButton: {fileID: 1534417013}
 --- !u!114 &1580853702
 MonoBehaviour:
@@ -61667,9 +61703,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14d33fd6ebfd12f43a9900cd82e4fc38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  battleGoldReward: 20
+  battleGoldReward: 2
   magicChoiceCellSize: {x: 230, y: 92}
   magicChoiceSpacing: 260
+  materialCardPrefab: {fileID: 0}
 --- !u!114 &1824420156
 MonoBehaviour:
   m_ObjectHideFlags: 0

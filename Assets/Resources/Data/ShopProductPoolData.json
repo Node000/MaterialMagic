@@ -62,177 +62,177 @@
         {
           "material": 1,
           "modifierId": "charge",
-          "price": 7
+          "price": 2
         },
         {
           "material": 2,
           "modifierId": "vortex",
-          "price": 7
+          "price": 2
         },
         {
           "material": 3,
           "modifierId": "kindling",
-          "price": 7
+          "price": 2
         },
         {
           "material": 4,
           "modifierId": "flow",
-          "price": 7
+          "price": 2
         },
         {
           "material": 1,
           "modifierId": "liquefy",
-          "price": 7
+          "price": 2
         },
         {
           "material": 2,
           "modifierId": "sturdy",
-          "price": 7
+          "price": 2
         },
         {
           "material": 3,
           "modifierId": "big_arrow_2",
-          "price": 7
+          "price": 2
         },
         {
           "material": 4,
           "modifierId": "big_arrow_3",
-          "price": 7
+          "price": 3
         },
         {
           "material": 1,
           "modifierId": "big_arrow_4",
-          "price": 7
+          "price": 4
         },
         {
           "material": 2,
           "modifierId": "proliferating_arrow",
-          "price": 7
+          "price": 2
         },
         {
           "material": 3,
           "modifierId": "retained_arrow",
-          "price": 7
+          "price": 2
         }
       ],
       "normalMaterialOffers": [
         {
           "material": 1,
-          "price": 6
+          "price": 1
         },
         {
           "material": 2,
-          "price": 6
+          "price": 1
         },
         {
           "material": 3,
-          "price": 6
+          "price": 1
         },
         {
           "material": 4,
-          "price": 6
+          "price": 1
         }
       ],
       "weakMaterialOffers": [
         {
           "material": 1,
           "modifierId": "half_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 2,
           "modifierId": "half_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 3,
           "modifierId": "half_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 4,
           "modifierId": "half_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 1,
           "modifierId": "temporary",
-          "price": 3
+          "price": 0
         },
         {
           "material": 2,
           "modifierId": "temporary",
-          "price": 3
+          "price": 0
         },
         {
           "material": 3,
           "modifierId": "temporary",
-          "price": 3
+          "price": 0
         },
         {
           "material": 4,
           "modifierId": "temporary",
-          "price": 3
+          "price": 0
         },
         {
           "material": 1,
           "modifierId": "doom",
-          "price": 3
+          "price": 0
         },
         {
           "material": 2,
           "modifierId": "doom",
-          "price": 3
+          "price": 0
         },
         {
           "material": 3,
           "modifierId": "doom",
-          "price": 3
+          "price": 0
         },
         {
           "material": 4,
           "modifierId": "doom",
-          "price": 3
+          "price": 0
         },
         {
           "material": 1,
           "modifierId": "lazy",
-          "price": 3
+          "price": 0
         },
         {
           "material": 2,
           "modifierId": "lazy",
-          "price": 3
+          "price": 0
         },
         {
           "material": 3,
           "modifierId": "lazy",
-          "price": 3
+          "price": 0
         },
         {
           "material": 4,
           "modifierId": "lazy",
-          "price": 3
+          "price": 0
         },
         {
           "material": 1,
           "modifierId": "fragile_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 2,
           "modifierId": "fragile_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 3,
           "modifierId": "fragile_arrow",
-          "price": 3
+          "price": 0
         },
         {
           "material": 4,
           "modifierId": "fragile_arrow",
-          "price": 3
+          "price": 0
         }
       ]
     }

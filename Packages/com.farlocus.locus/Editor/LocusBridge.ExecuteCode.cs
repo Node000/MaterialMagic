@@ -38,7 +38,7 @@ namespace Locus
                 }
             }
 
-            var tcs = new TaskCompletionSource<string>();
+            var tcs = LocusAsync.CreateTcs<string>();
 
             // Build Unity-dependent metadata references on the main thread the first time execute_code runs.
             ReportExecuteCodeCompilerStage(reportStage, "Waiting for Unity main thread");
@@ -135,6 +135,45 @@ namespace Locus
             bodyCode = bodySb.ToString().TrimEnd();
         }
 
+        /// <summary>
+        /// Keep common IO names convenient without importing the whole System.IO
+        /// namespace. Unity's Mono mscorlib contains the internal extension method
+        /// System.IO.MonoLinqHelper.ToArray; importing System.IO while snippet
+        /// accessibility checks are relaxed makes it ambiguous with LINQ ToArray.
+        /// </summary>
+        private static void AppendCommonIoAliases(StringBuilder sb)
+        {
+            sb.AppendLine("using BinaryReader = global::System.IO.BinaryReader;");
+            sb.AppendLine("using BinaryWriter = global::System.IO.BinaryWriter;");
+            sb.AppendLine("using BufferedStream = global::System.IO.BufferedStream;");
+            sb.AppendLine("using Directory = global::System.IO.Directory;");
+            sb.AppendLine("using DirectoryInfo = global::System.IO.DirectoryInfo;");
+            sb.AppendLine("using DirectoryNotFoundException = global::System.IO.DirectoryNotFoundException;");
+            sb.AppendLine("using EndOfStreamException = global::System.IO.EndOfStreamException;");
+            sb.AppendLine("using File = global::System.IO.File;");
+            sb.AppendLine("using FileAccess = global::System.IO.FileAccess;");
+            sb.AppendLine("using FileAttributes = global::System.IO.FileAttributes;");
+            sb.AppendLine("using FileInfo = global::System.IO.FileInfo;");
+            sb.AppendLine("using FileMode = global::System.IO.FileMode;");
+            sb.AppendLine("using FileNotFoundException = global::System.IO.FileNotFoundException;");
+            sb.AppendLine("using FileOptions = global::System.IO.FileOptions;");
+            sb.AppendLine("using FileShare = global::System.IO.FileShare;");
+            sb.AppendLine("using FileStream = global::System.IO.FileStream;");
+            sb.AppendLine("using FileSystemInfo = global::System.IO.FileSystemInfo;");
+            sb.AppendLine("using IOException = global::System.IO.IOException;");
+            sb.AppendLine("using MemoryStream = global::System.IO.MemoryStream;");
+            sb.AppendLine("using Path = global::System.IO.Path;");
+            sb.AppendLine("using SearchOption = global::System.IO.SearchOption;");
+            sb.AppendLine("using SeekOrigin = global::System.IO.SeekOrigin;");
+            sb.AppendLine("using Stream = global::System.IO.Stream;");
+            sb.AppendLine("using StreamReader = global::System.IO.StreamReader;");
+            sb.AppendLine("using StreamWriter = global::System.IO.StreamWriter;");
+            sb.AppendLine("using StringReader = global::System.IO.StringReader;");
+            sb.AppendLine("using StringWriter = global::System.IO.StringWriter;");
+            sb.AppendLine("using TextReader = global::System.IO.TextReader;");
+            sb.AppendLine("using TextWriter = global::System.IO.TextWriter;");
+        }
+
         // ───────────────── Diagnostic formatting ─────────────────
 
         private static string BuildDiagnosticErrorText(IEnumerable<Diagnostic> diagnostics)
@@ -194,6 +233,41 @@ namespace Locus
                 throw new OperationCanceledException(cancellationToken);
         }
 
+        /// <summary>
+        /// Cached reference paths without building them — null when the
+        /// cache is cold. Safe to call from any thread; building the cache
+        /// (EnsureCompileReferencePaths) requires the main thread.
+        /// </summary>
+        private static List<string> TryGetCachedCompileReferencePaths()
+        {
+            lock (_compileCacheLock)
+            {
+                return _compileReferencePathsReady ? _cachedCompileReferencePaths : null;
+            }
+        }
+
+        /// <summary>
+        /// Path-collection layer: the reference set as absolute file paths.
+        /// Shared by the in-Unity compiler (materialized below) and the
+        /// `get_compile_params` provider for the compile-server sidecar.
+        /// </summary>
+        private static List<string> EnsureCompileReferencePaths(
+            Action<string> reportStage = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            ThrowIfExecuteCodeCanceled(cancellationToken);
+            lock (_compileCacheLock)
+            {
+                ThrowIfExecuteCodeCanceled(cancellationToken);
+                if (_compileReferencePathsReady && _cachedCompileReferencePaths != null)
+                    return _cachedCompileReferencePaths;
+
+                _cachedCompileReferencePaths = BuildCompileReferencePaths(reportStage, cancellationToken);
+                _compileReferencePathsReady = true;
+                return _cachedCompileReferencePaths;
+            }
+        }
+
         private static List<MetadataReference> EnsureMetadataReferences(
             Action<string> reportStage = null,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -209,27 +283,58 @@ namespace Locus
                     return _cachedMetadataReferences;
                 }
 
-                _cachedMetadataReferences = BuildMetadataReferences(reportStage, cancellationToken);
+                // Monitor locks are reentrant: collecting paths under the
+                // same cache lock keeps both layers consistent.
+                List<string> referencePaths =
+                    EnsureCompileReferencePaths(reportStage, cancellationToken);
+                ReportExecuteCodeCompilerStage(reportStage, "Materializing compiler references");
+                _cachedMetadataReferences =
+                    MaterializeMetadataReferences(referencePaths, cancellationToken);
                 _metadataReferencesReady = true;
                 ReportExecuteCodeCompilerStage(reportStage, "Compiler reference cache ready");
                 return _cachedMetadataReferences;
             }
         }
 
-        private static List<MetadataReference> BuildMetadataReferences(
+        /// <summary>
+        /// Materialization layer for the legacy in-Unity compile path.
+        /// Invalid/missing files are skipped silently, matching the old
+        /// combined collection behavior.
+        /// </summary>
+        private static List<MetadataReference> MaterializeMetadataReferences(
+            List<string> referencePaths,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var references = new List<MetadataReference>(referencePaths.Count);
+            for (int i = 0; i < referencePaths.Count; i++)
+            {
+                ThrowIfExecuteCodeCanceled(cancellationToken);
+                try
+                {
+                    references.Add(MetadataReference.CreateFromFile(referencePaths[i]));
+                }
+                catch
+                {
+                }
+            }
+
+            return references;
+        }
+
+        private static List<string> BuildCompileReferencePaths(
             Action<string> reportStage = null,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            List<MetadataReference> references = new List<MetadataReference>(384);
+            List<string> references = new List<string>(384);
             HashSet<string> referencedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             ThrowIfExecuteCodeCanceled(cancellationToken);
             ReportExecuteCodeCompilerStage(reportStage, "Adding core compiler references");
-            TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(typeof(object).Assembly));
-            TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(typeof(Enumerable).Assembly));
-            TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(typeof(UnityEngine.Debug).Assembly));
-            TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(typeof(UnityEditor.Editor).Assembly));
-            TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(typeof(LocusBridge).Assembly));
+            TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(typeof(object).Assembly));
+            TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(typeof(Enumerable).Assembly));
+            TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(typeof(UnityEngine.Debug).Assembly));
+            TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(typeof(UnityEditor.Editor).Assembly));
+            TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(typeof(LocusBridge).Assembly));
 
             AddSystemAssemblyDirectories(references, referencedPaths, reportStage, cancellationToken);
 
@@ -237,6 +342,8 @@ namespace Locus
 
             AddCompilationAssemblies(references, referencedPaths, AssembliesType.Editor, reportStage, cancellationToken);
             AddCompilationAssemblies(references, referencedPaths, AssembliesType.PlayerWithoutTestAssemblies, reportStage, cancellationToken);
+
+            _cachedCompileAllowUnsafe = ComputeCompileAllowUnsafe();
 
             ReportExecuteCodeCompilerStage(reportStage, "Adding loaded AppDomain assemblies");
             foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -247,7 +354,11 @@ namespace Locus
                     if (asm == null || asm.IsDynamic)
                         continue;
 
-                    TryAddMetadataReference(references, referencedPaths, SafeGetAssemblyLocation(asm));
+                    string assemblyName = SafeAssemblyName(asm);
+                    if (IsInactiveSkillPackageAssemblyName(assemblyName))
+                        continue;
+
+                    TryAddCompileReferencePath(references, referencedPaths, SafeGetAssemblyLocation(asm));
                 }
                 catch (OperationCanceledException)
                 {
@@ -264,7 +375,7 @@ namespace Locus
         }
 
         private static void AddSystemAssemblyDirectories(
-            List<MetadataReference> references,
+            List<string> references,
             HashSet<string> referencedPaths,
             Action<string> reportStage = null,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -300,7 +411,7 @@ namespace Locus
                     for (int j = 0; j < dlls.Length; j++)
                     {
                         ThrowIfExecuteCodeCanceled(cancellationToken);
-                        TryAddMetadataReference(references, referencedPaths, dlls[j]);
+                        TryAddCompileReferencePath(references, referencedPaths, dlls[j]);
                     }
                 }
             }
@@ -319,8 +430,15 @@ namespace Locus
 
             try
             {
+#if UNITY_2021_2_OR_NEWER
+                apiCompatibilityLevel =
+                    PlayerSettings.GetApiCompatibilityLevel(
+                        UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(
+                            EditorUserBuildSettings.selectedBuildTargetGroup));
+#else
                 apiCompatibilityLevel =
                     PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
+#endif
                 return true;
             }
             catch
@@ -330,7 +448,7 @@ namespace Locus
         }
 
         private static void AddPrecompiledAssemblies(
-            List<MetadataReference> references,
+            List<string> references,
             HashSet<string> referencedPaths,
             Action<string> reportStage = null,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -349,7 +467,7 @@ namespace Locus
                 for (int i = 0; i < precompiledPaths.Length; i++)
                 {
                     ThrowIfExecuteCodeCanceled(cancellationToken);
-                    TryAddMetadataReference(references, referencedPaths, precompiledPaths[i]);
+                    TryAddCompileReferencePath(references, referencedPaths, precompiledPaths[i]);
                 }
             }
             catch (OperationCanceledException)
@@ -361,8 +479,55 @@ namespace Locus
             }
         }
 
+        /// <summary>True when ANY project script assembly compiles with
+        /// "Allow unsafe code" (player setting or an asmdef flag): the
+        /// hot-patch compiler follows the superset so unsafe bodies in those
+        /// assemblies stay patchable (B4). Main thread (CompilationPipeline).</summary>
+        private static bool ComputeCompileAllowUnsafe()
+        {
+            AssembliesType[] assemblyTypes =
+            {
+                AssembliesType.Editor,
+                AssembliesType.PlayerWithoutTestAssemblies,
+            };
+            foreach (AssembliesType assembliesType in assemblyTypes)
+            {
+                UnityEditor.Compilation.Assembly[] assemblies;
+                try
+                {
+                    assemblies = CompilationPipeline.GetAssemblies(assembliesType);
+                }
+                catch
+                {
+                    continue;
+                }
+                if (assemblies == null)
+                    continue;
+                foreach (UnityEditor.Compilation.Assembly assembly in assemblies)
+                {
+                    if (assembly != null &&
+                        assembly.compilerOptions != null &&
+                        assembly.compilerOptions.AllowUnsafeCode)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Cached allow-unsafe flag; only meaningful once the
+        /// reference paths are built (same cache lifetime). Any thread.</summary>
+        private static bool GetCachedCompileAllowUnsafe()
+        {
+            lock (_compileCacheLock)
+            {
+                return _compileReferencePathsReady && _cachedCompileAllowUnsafe;
+            }
+        }
+
         private static void AddCompilationAssemblies(
-            List<MetadataReference> references,
+            List<string> references,
             HashSet<string> referencedPaths,
             AssembliesType assembliesType,
             Action<string> reportStage = null,
@@ -400,7 +565,7 @@ namespace Locus
                 if (asm == null)
                     continue;
 
-                TryAddMetadataReference(references, referencedPaths, asm.outputPath);
+                TryAddCompileReferencePath(references, referencedPaths, asm.outputPath);
 
                 string[] allRefs = asm.allReferences;
                 if (allRefs == null)
@@ -409,13 +574,13 @@ namespace Locus
                 for (int j = 0; j < allRefs.Length; j++)
                 {
                     ThrowIfExecuteCodeCanceled(cancellationToken);
-                    TryAddMetadataReference(references, referencedPaths, allRefs[j]);
+                    TryAddCompileReferencePath(references, referencedPaths, allRefs[j]);
                 }
             }
         }
 
         private static void AddScriptAssembliesDirectory(
-            List<MetadataReference> references,
+            List<string> references,
             HashSet<string> referencedPaths,
             Action<string> reportStage = null,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -443,7 +608,7 @@ namespace Locus
                 for (int i = 0; i < dlls.Length; i++)
                 {
                     ThrowIfExecuteCodeCanceled(cancellationToken);
-                    TryAddMetadataReference(references, referencedPaths, dlls[i]);
+                    TryAddCompileReferencePath(references, referencedPaths, dlls[i]);
                 }
             }
             catch (OperationCanceledException)
@@ -471,8 +636,8 @@ namespace Locus
             }
         }
 
-        private static void TryAddMetadataReference(
-            List<MetadataReference> references,
+        private static void TryAddCompileReferencePath(
+            List<string> references,
             HashSet<string> referencedPaths,
             string path)
         {
@@ -517,13 +682,7 @@ namespace Locus
                     return;
             }
 
-            try
-            {
-                references.Add(MetadataReference.CreateFromFile(path));
-            }
-            catch
-            {
-            }
+            references.Add(path);
         }
     }
 }

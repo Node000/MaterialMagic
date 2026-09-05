@@ -43,6 +43,7 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private RectTransform materialCardPrefab;
     [SerializeField] private RectTransform shopItemSlotPrefab;
     [SerializeField] private RectTransform shopArrowSlotPrefab;
+    [SerializeField] private RectTransform shopLayerSeparatorPrefab;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private TMP_Text goldText;
@@ -51,13 +52,14 @@ public class ShopPanelUI : MonoBehaviour
     [SerializeField] private Button removeArrowButton;
     [SerializeField] private RectTransform revealMask;
     [SerializeField] private RectTransform contentRoot;
-    [Header("开关动画")]
-    [SerializeField] private float panelRevealDuration = 0.22f;
-    [SerializeField] private Ease panelRevealEase = Ease.OutCubic;
-    [SerializeField] private float panelHideDuration = 0.18f;
-    [SerializeField] private Ease panelHideEase = Ease.InCubic;
-    [SerializeField] private Vector2 panelOpenMoveOffset = new Vector2(-36f, 36f);
-    [SerializeField] private Vector2 panelCloseMoveOffset = new Vector2(36f, -36f);
+    [Header("CRT 开关动画")]
+    [SerializeField] private Image crtScanLineImage;
+    [SerializeField] private float crtCollapseDuration = 0.32f;
+    [SerializeField] private Ease crtCollapseEase = Ease.InCubic;
+    [SerializeField] private float crtLineHoldDuration = 0.12f;
+    [SerializeField] private float crtShrinkDuration = 0.18f;
+    [SerializeField] private Ease crtShrinkEase = Ease.InCubic;
+    [SerializeField, Range(0.005f, 0.2f)] private float crtLineYRatio = 0.02f;
     [Header("商品槽出现/消失")]
     [SerializeField] private float slotAppearDuration = 0.28f;
     [SerializeField] private float slotDisappearDuration = 0.2f;
@@ -71,6 +73,7 @@ public class ShopPanelUI : MonoBehaviour
     private readonly List<ShopOffer> offers = new List<ShopOffer>();
     private readonly List<ShopLayer> shopLayers = new List<ShopLayer>();
     private readonly List<List<ShopOffer>> layerOffers = new List<List<ShopOffer>>();
+    private readonly List<GameObject> createdSeparators = new List<GameObject>();
     private readonly List<MagicData> magicPool = new List<MagicData>();
     private readonly List<ShopMaterialOfferData> strongMaterialOfferPool = new List<ShopMaterialOfferData>();
     private readonly List<ShopMaterialOfferData> normalMaterialOfferPool = new List<ShopMaterialOfferData>();
@@ -89,7 +92,6 @@ public class ShopPanelUI : MonoBehaviour
     private MaterialModel undoRemovedMaterial;
     private bool undoAvailable;
     private Vector2 panelOpenPosition;
-    private Vector2 panelSize;
     private Vector3 panelBaseScale;
     private bool hasPanelLayout;
     private Coroutine showRoutine;
@@ -119,7 +121,7 @@ public class ShopPanelUI : MonoBehaviour
     private int GetRefreshCost()
     {
         int basePrice = config != null ? config.shopRefreshPrice : 0;
-        return basePrice + refreshCount;
+        return Mathf.Max(0, basePrice) + refreshCount;
     }
 
     public void RefreshShop()
@@ -172,6 +174,14 @@ public class ShopPanelUI : MonoBehaviour
         {
             PlayShopSfx(GameSfxId.NotEnoughMoney);
             return;
+        }
+        // 标记为已使用：按钮变暗、隐藏价格文本
+        removeArrowButton.interactable = false;
+        if (removeArrowButton != null)
+        {
+            TMP_Text costText = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
+            if (costText != null)
+                costText.gameObject.SetActive(false);
         }
         BeginRemoveArrowSelection();
     }
@@ -303,6 +313,8 @@ public class ShopPanelUI : MonoBehaviour
             if (library != null)
                 materialCardPrefab = library.MaterialCardPrefab;
         }
+        if (crtScanLineImage == null)
+            crtScanLineImage = FindChildComponentRecursive<Image>(transform, "CRTScanLine");
     }
 
     private void BuildLayerViews()
@@ -332,6 +344,15 @@ public class ShopPanelUI : MonoBehaviour
     {
         if (itemRoot == null)
             return;
+
+        // 隐藏场景中旧的手动分隔线，统一改用预制体实例（美术调整预制体颜色才能生效）。
+        for (int i = itemRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = itemRoot.GetChild(i);
+            if (child.name.StartsWith("LayerSep") && !IsCreatedSeparator(child.gameObject))
+                child.gameObject.SetActive(false);
+        }
+
         int layerCount = layerOffers.Count;
         const float layerGap = 6f;
         const float sepHeight = 1f;
@@ -342,7 +363,9 @@ public class ShopPanelUI : MonoBehaviour
         {
             int n = layerOffers[l].Count;
             ShopOffer first = n > 0 ? layerOffers[l][0] : null;
-            rowHeight[l] = n > 0 ? (first != null && first.kind == ShopItemKind.Magic ? 160f : 120f) : 0f;
+            bool isArrowLayer = first != null && first.kind == ShopItemKind.Material;
+            float baseHeight = isArrowLayer ? 144f : (first != null && first.kind == ShopItemKind.Magic ? 160f : 120f);
+            rowHeight[l] = n > 0 ? baseHeight : 0f;
             totalHeight += rowHeight[l];
             if (l < layerCount - 1)
                 totalHeight += layerGap + sepHeight;
@@ -365,17 +388,52 @@ public class ShopPanelUI : MonoBehaviour
                 row.anchoredPosition = new Vector2(0f, y - rowHeight[l] * 0.5f);
             }
             y -= rowHeight[l] + layerGap + sepHeight;
-            RectTransform sep = FindChildRectRecursive(itemRoot, "LayerSep" + l);
-            if (sep != null)
+            // 使用预制体实例化分隔线（如果已创建则只更新位置），避免场景手动放置的分隔线不生效。
+            GameObject existingSep = null;
+            for (int s = 0; s < createdSeparators.Count; s++)
             {
-                sep.anchorMin = new Vector2(0.5f, 0.5f);
-                sep.anchorMax = new Vector2(0.5f, 0.5f);
-                sep.pivot = new Vector2(0.5f, 0.5f);
-                sep.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
-                sep.sizeDelta = new Vector2(754f, sepHeight);
+                if (createdSeparators[s] != null && createdSeparators[s].name == "LayerSep" + l)
+                {
+                    existingSep = createdSeparators[s];
+                    break;
+                }
+            }
+            if (existingSep != null)
+            {
+                RectTransform sep = existingSep.GetComponent<RectTransform>();
+                if (sep != null)
+                {
+                    sep.anchorMin = new Vector2(0.5f, 0.5f);
+                    sep.anchorMax = new Vector2(0.5f, 0.5f);
+                    sep.pivot = new Vector2(0.5f, 0.5f);
+                    sep.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
+                    sep.sizeDelta = new Vector2(754f, sepHeight);
+                }
+            }
+            else if (shopLayerSeparatorPrefab != null)
+            {
+                RectTransform sepRect = Instantiate(shopLayerSeparatorPrefab, itemRoot);
+                GameObject sepObj = sepRect.gameObject;
+                sepObj.name = "LayerSep" + l;
+                sepRect.anchorMin = new Vector2(0.5f, 0.5f);
+                sepRect.anchorMax = new Vector2(0.5f, 0.5f);
+                sepRect.pivot = new Vector2(0.5f, 0.5f);
+                sepRect.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
+                sepRect.sizeDelta = new Vector2(754f, sepHeight);
+                createdSeparators.Add(sepObj);
             }
             y -= sepHeight;
         }
+    }
+
+    private bool IsCreatedSeparator(GameObject go)
+    {
+        for (int i = 0; i < createdSeparators.Count; i++)
+        {
+            if (createdSeparators[i] == go)
+                return true;
+        }
+        return false;
     }
 
     private static string GetLayerRowName(ShopLayer layer)
@@ -767,7 +825,8 @@ public class ShopPanelUI : MonoBehaviour
 
     private int GetOfferPrice(int price)
     {
-        int basePrice = price > 0 ? price : config.shopMaterialPrice;
+        // 显式价格（含免费 0）直接生效；仅无效负价回落到箭头默认价。
+        int basePrice = price >= 0 ? price : config.shopMaterialPrice;
         return DifficultyUpgradeSystem.ModifyShopPrice(basePrice);
     }
 
@@ -862,13 +921,25 @@ public class ShopPanelUI : MonoBehaviour
         CacheReferences();
         CapturePanelLayout(panelRect);
         panelRect.anchoredPosition = panelOpenPosition;
-        panelRect.localScale = Vector3.zero;
 
-        float duration = Mathf.Max(0f, panelRevealDuration);
+        // CRT 开机：从一条中心水平亮线开始，竖向展开还原整幅画面。
+        panelRect.localScale = GetLineScale();
+        SetScanLineAlpha(1f);
+
+        Vector3 baseScale = panelBaseScale;
+        float duration = Mathf.Max(0f, crtCollapseDuration);
         if (duration > 0f)
-            panelRect.DOScale(panelBaseScale, duration).SetEase(panelRevealEase).SetTarget(this);
+        {
+            Sequence seq = DOTween.Sequence().SetTarget(this);
+            seq.Join(panelRect.DOScale(baseScale, duration).SetEase(crtCollapseEase));
+            if (crtScanLineImage != null)
+                seq.Join(crtScanLineImage.DOFade(0f, duration));
+        }
         else
-            panelRect.localScale = panelBaseScale;
+        {
+            panelRect.localScale = baseScale;
+            SetScanLineAlpha(0f);
+        }
     }
 
     private void PlayCloseAnimation()
@@ -886,11 +957,38 @@ public class ShopPanelUI : MonoBehaviour
         CapturePanelLayout(panelRect);
         panelRect.anchoredPosition = panelOpenPosition;
 
-        float duration = Mathf.Max(0f, panelHideDuration);
-        if (duration > 0f)
-            panelRect.DOScale(Vector3.zero, duration).SetEase(panelHideEase).SetTarget(this).OnComplete(FinishCloseAnimation);
+        Vector3 baseScale = panelBaseScale;
+        Vector3 lineScale = GetLineScale();
+        Sequence seq = DOTween.Sequence().SetTarget(this);
+
+        // 1) 上下合成一条水平线：亮线随画面压缩叠亮。
+        float collapse = Mathf.Max(0f, crtCollapseDuration);
+        if (collapse > 0f)
+        {
+            seq.Append(panelRect.DOScale(lineScale, collapse).SetEase(crtCollapseEase));
+            if (crtScanLineImage != null)
+                seq.Join(crtScanLineImage.DOFade(1f, collapse));
+        }
         else
-            FinishCloseAnimation();
+        {
+            panelRect.localScale = lineScale;
+            SetScanLineAlpha(1f);
+        }
+
+        // 2) 亮线短暂停留。
+        if (crtLineHoldDuration > 0f)
+            seq.AppendInterval(crtLineHoldDuration);
+
+        // 3) 横向向中心收缩消失。
+        float shrink = Mathf.Max(0f, crtShrinkDuration);
+        if (shrink > 0f)
+        {
+            seq.Append(panelRect.DOScale(new Vector3(baseScale.x * 0.001f, lineScale.y, baseScale.z), shrink).SetEase(crtShrinkEase));
+            if (crtScanLineImage != null)
+                seq.Join(crtScanLineImage.DOFade(0f, shrink));
+        }
+
+        seq.OnComplete(FinishCloseAnimation);
     }
 
     private void AnimateSlotsAppear()
@@ -983,6 +1081,7 @@ public class ShopPanelUI : MonoBehaviour
             panelRect.anchoredPosition = panelOpenPosition;
             panelRect.localScale = panelBaseScale;
         }
+        SetScanLineAlpha(0f);
         gameObject.SetActive(false);
     }
 
@@ -992,11 +1091,22 @@ public class ShopPanelUI : MonoBehaviour
             return;
 
         panelOpenPosition = panelRect.anchoredPosition;
-        panelSize = panelRect.rect.size;
-        if (panelSize.x <= 0f || panelSize.y <= 0f)
-            panelSize = panelRect.sizeDelta;
         panelBaseScale = panelRect.localScale;
         hasPanelLayout = true;
+    }
+
+    private Vector3 GetLineScale()
+    {
+        return new Vector3(panelBaseScale.x, panelBaseScale.y * crtLineYRatio, panelBaseScale.z);
+    }
+
+    private void SetScanLineAlpha(float alpha)
+    {
+        if (crtScanLineImage == null)
+            return;
+        Color c = crtScanLineImage.color;
+        c.a = alpha;
+        crtScanLineImage.color = c;
     }
 
 

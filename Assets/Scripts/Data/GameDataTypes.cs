@@ -19,15 +19,17 @@ public class EconomyConfigData : INumericDataRecord
 {
     public int numericId;
     public string id;
-    public int shopSpellPrice = 4;
-    public int shopMaterialPrice = 6;
-    public int shopRemoveMaterialPrice = 7;
-    public int shopRefreshPrice = 10;
+    public int shopSpellPrice = 5;
+    public int shopMaterialPrice = 1;
+    public int shopRemoveMaterialPrice = 2;
+    public int shopRefreshPrice = 1;
     public int shopProductPoolId = 1;
-    public int battleGoldMin = 1;
+    public int battleGoldMin = 2;
     public int battleGoldMax = 2;
-    public int eliteBattleGoldMin = 4;
-    public int eliteBattleGoldMax = 5;
+    public int eliteBattleGoldMin = 6;
+    public int eliteBattleGoldMax = 6;
+    public int weakBattleGold = 1;
+    public int strongBattleGold = 4;
     public float battleArrowRewardEnchantChance = 0.1f;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();

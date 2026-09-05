@@ -1,12 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using UnityEngine.UIElements;
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -17,44 +15,86 @@ using Microsoft.Win32;
 
 namespace Locus
 {
+    public enum SendToLocusMode
+    {
+        FocusedSession,
+        NewSession
+    }
+
+    public sealed class LocusFileAttachment
+    {
+        public string Path { get; }
+        public string Name { get; }
+        public string TypeLabel { get; }
+        public string Source { get; }
+
+        public LocusFileAttachment(
+            string path,
+            string name = "",
+            string typeLabel = "",
+            string source = "")
+        {
+            Path = path ?? "";
+            Name = name ?? "";
+            TypeLabel = typeLabel ?? "";
+            Source = source ?? "";
+        }
+    }
+
     public sealed class LocusEditorWindow : EditorWindow
     {
         private const bool OverlaySyncEnabled = true;
         private const string PipeNamePrefix = "locus_tauri_unity_embed_";
         private const string FullPipeNamePrefix = @"\\.\pipe\";
         private const double SyncIntervalSeconds = 0.12d;
+        private const double InactiveSyncIntervalSeconds = 0.5d;
         private const double ResizeSyncIntervalSeconds = 1d / 60d;
         private const double ResizeBoostDurationSeconds = 0.35d;
         private const double AssetDragStateRefreshSeconds = 0.35d;
         private const double HeartbeatIntervalSeconds = 2d;
         private const double DesktopProbeIntervalSeconds = 2d;
-        private const int PipeConnectTimeoutMs = 500;
-        private const double ConsoleToolbarProbeIntervalSeconds = 0.5d;
-        private const int MaxConsoleEntriesToSend = 200;
-        private const int MaxConsoleCharsToSend = 60000;
-        private const string ConsoleSendButtonName = "locus-console-send-button";
+        private const double EmbedFeatureProbeIntervalSeconds = 1d;
+        private const double HostWindowProbeIntervalSeconds = 2d;
+        private const string EmbedDisabledMarkerName = "UnityEmbed.disabled";
         private const string CloseReasonWindowClosed = "windowClosed";
+        private const string CloseReasonWindowDisabled = "windowDisabled";
         private const string CloseReasonEditorQuit = "editorQuit";
         private const string CloseReasonDomainReload = "domainReload";
+        private const string CloseReasonFeatureDisabled = "featureDisabled";
+        private const string DefaultWindowId = "session";
+        private const string DefaultTargetKind = "session";
+        private const string TargetKindSession = "session";
+        private const string TargetKindView = "view";
 
-        private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
         private static Texture2D _titleIcon;
         private static bool _lifecycleHooksRegistered;
         private static bool _assemblyReloadInProgress;
         private static bool _editorQuitting;
-        private static double _nextConsoleToolbarProbeAt;
-        private static Type _consoleWindowType;
-        private static string _consoleSendButtonToken = "";
-
+        private static bool _creatingFrontendWindow;
+        private static volatile bool _globalAssetDragStateSendInFlight;
+        private static double _nextGlobalAssetDragStateAt;
+        private static string _lastGlobalAssetDragSignature = "";
+        private static readonly DroppedAssetRef[] EmptyDroppedAssetRefs = new DroppedAssetRef[0];
+        private static readonly DroppedAssetRefKeyComparer DroppedAssetRefKeys =
+            new DroppedAssetRefKeyComparer();
+        private static readonly List<DroppedAssetRef> DroppedAssetRefsScratch =
+            new List<DroppedAssetRef>(16);
+        private static readonly HashSet<DroppedAssetRefKey> DroppedAssetRefsSeenScratch =
+            new HashSet<DroppedAssetRefKey>(DroppedAssetRefKeys);
+        private static readonly List<DroppedAssetRef> SelectedAssetRefsScratch =
+            new List<DroppedAssetRef>(16);
+        private static readonly HashSet<DroppedAssetRefKey> SelectedAssetRefsSeenScratch =
+            new HashSet<DroppedAssetRefKey>(DroppedAssetRefKeys);
+        private static readonly List<DroppedAssetRef> SanitizedAssetRefsScratch =
+            new List<DroppedAssetRef>(16);
+        private static readonly HashSet<DroppedAssetRefKey> SanitizedAssetRefsSeenScratch =
+            new HashSet<DroppedAssetRefKey>(DroppedAssetRefKeys);
         private double _nextSyncAt;
         private double _resizeBoostUntil;
         private volatile bool _sendInFlight;
         private volatile bool _sentOpen;
         private volatile int _failedSends;
         private string _statusMessage = "Waiting for Locus desktop.";
-        private readonly object _pipeLock = new object();
-        private NamedPipeClientStream _pipeClient;
-        private StreamWriter _pipeWriter;
         private bool _hasScreenRect;
         private int _screenX;
         private int _screenY;
@@ -70,17 +110,34 @@ namespace Locus
         private int _lastSentHeight;
         private bool _lastSentVisible;
         private long _lastSentParentHwnd;
+        private long _controlRevision;
         private double _nextDesktopProbeAt;
-        private LocusDesktopInstall _desktopInstall = LocusDesktopInstall.NotFound;
-        private bool _desktopProcessRunning;
+        private double _nextEmbedFeatureProbeAt;
+        private double _nextHostWindowProbeAt;
+        private bool _embedFeatureInitialized;
+        private bool _embedFeatureEnabled = true;
+        private volatile LocusDesktopInstall _desktopInstall = LocusDesktopInstall.NotFound;
+        private volatile bool _desktopProcessRunning;
+        private volatile bool _desktopProbeInFlight;
         private volatile bool _desktopLaunchInFlight;
         private volatile bool _assetDragStateSendInFlight;
-        private string _connectedPipeName = "";
+        [SerializeField] private string _windowId = DefaultWindowId;
+        [SerializeField] private string _targetKind = DefaultTargetKind;
+        [SerializeField] private string _targetId = "";
+        [SerializeField] private string _windowTitle = "Locus";
+        [SerializeField] private bool _frontendWindowConfigured = true;
+        private string _instanceId = "";
 
         [Serializable]
         private sealed class EmbedControlMessage
         {
             public string type;
+            public string windowId;
+            public string targetKind;
+            public string targetId;
+            public string title;
+            public string instanceId;
+            public long revision;
             public int x;
             public int y;
             public int width;
@@ -89,23 +146,26 @@ namespace Locus
             public long parentHwnd;
             public string reason;
             public DroppedAssetRef[] assetRefs;
-            public string text;
-            public ConsoleTextEntry[] textEntries;
-            public string title;
-            public string source;
+            public LocusFileDropRef[] files;
+            public string sendMode;
+            // Set to "reloading" while the managed domain reloads so the Tauri
+            // server retains the overlay (the native client keeps the pipe up).
+            public string managedOverlayState;
         }
 
         [Serializable]
-        private sealed class ConsoleTextEntry
+        internal sealed class OpenFrontendWindowRequest
         {
+            public string windowId;
+            public string targetKind;
+            public string targetId;
             public string title;
-            public string text;
-            public string source;
-            public string level;
+            public string windowLabel;
+            public string hostUrl;
         }
 
         [Serializable]
-        private sealed class DroppedAssetRef
+        internal sealed class DroppedAssetRef
         {
             public string path;
             public string kind;
@@ -114,12 +174,45 @@ namespace Locus
             public string source;
         }
 
-        [InitializeOnLoadMethod]
-        private static void InitializeConsoleIntegration()
+        [Serializable]
+        private sealed class LocusFileDropRef
         {
-            _consoleSendButtonToken = Guid.NewGuid().ToString("N");
-            EditorApplication.update -= EnsureConsoleToolbarButtons;
-            EditorApplication.update += EnsureConsoleToolbarButtons;
+            public string path;
+            public string name;
+            public string typeLabel;
+            public bool isDir;
+            public string source;
+        }
+
+        private struct DroppedAssetRefKey
+        {
+            public readonly string Kind;
+            public readonly string Path;
+
+            public DroppedAssetRefKey(string kind, string path)
+            {
+                Kind = kind ?? "";
+                Path = path ?? "";
+            }
+        }
+
+        private sealed class DroppedAssetRefKeyComparer : IEqualityComparer<DroppedAssetRefKey>
+        {
+            public bool Equals(DroppedAssetRefKey left, DroppedAssetRefKey right)
+            {
+                return string.Equals(left.Kind, right.Kind, StringComparison.Ordinal)
+                    && string.Equals(left.Path, right.Path, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(DroppedAssetRefKey key)
+            {
+                unchecked
+                {
+                    int kindHash = StringComparer.Ordinal.GetHashCode(key.Kind ?? "");
+                    int pathHash = StringComparer.OrdinalIgnoreCase.GetHashCode(key.Path ?? "");
+                    return (kindHash * 397) ^ pathHash;
+                }
+            }
         }
 
         private sealed class LocusDesktopInstall
@@ -140,9 +233,99 @@ namespace Locus
         public static void OpenWindow()
         {
             LocusEditorWindow window = GetWindow<LocusEditorWindow>();
-            window.titleContent = CreateTitleContent();
+            window.ConfigureFrontendWindow(DefaultWindowId, TargetKindSession, "", "Locus");
             window.minSize = new Vector2(360f, 420f);
             window.Show();
+            if (OverlaySyncEnabled)
+                window.SendOpenOrUpdate(true);
+        }
+
+        internal static string OpenFrontendWindowFromJson(string json)
+        {
+            OpenFrontendWindowRequest request = ParseOpenFrontendWindowRequest(json);
+            LocusEditorWindow window = OpenFrontendWindow(
+                request.windowId,
+                request.targetKind,
+                request.targetId,
+                request.title);
+            return window != null ? "ok" : "failed";
+        }
+
+        internal static LocusEditorWindow OpenFrontendWindow(
+            string windowId,
+            string targetKind,
+            string targetId,
+            string title)
+        {
+            EnsureLifecycleHooks();
+            string normalizedWindowId = NormalizeWindowId(windowId);
+            string normalizedTargetKind = NormalizeTargetKind(targetKind);
+            string normalizedTargetId = (targetId ?? "").Trim();
+            string normalizedTitle = NormalizeWindowTitle(title, normalizedTargetKind, normalizedTargetId);
+
+            LocusEditorWindow window = FindFrontendWindow(normalizedWindowId);
+            bool reused = window != null;
+            if (!reused)
+            {
+                _creatingFrontendWindow = true;
+                try
+                {
+                    window = CreateInstance<LocusEditorWindow>();
+                }
+                finally
+                {
+                    _creatingFrontendWindow = false;
+                }
+            }
+
+            window.ConfigureFrontendWindow(
+                normalizedWindowId,
+                normalizedTargetKind,
+                normalizedTargetId,
+                normalizedTitle);
+            window.minSize = new Vector2(360f, 420f);
+            window.Show();
+            window.Focus();
+            if (OverlaySyncEnabled)
+                window.SendOpenOrUpdate(true);
+            return window;
+        }
+
+        internal static bool QueueOutboundAssetDrag(
+            DroppedAssetRef[] assetRefs,
+            out string message)
+        {
+            DroppedAssetRef[] sanitized = SanitizeOutboundAssetDragRefs(assetRefs);
+            if (sanitized.Length == 0)
+            {
+                message = "No supported Unity references were provided.";
+                return false;
+            }
+
+            bool queued = LocusExternalAssetDragBridge.QueueAssetDrag(sanitized, out message);
+            if (queued)
+            {
+                foreach (LocusEditorWindow window in Resources.FindObjectsOfTypeAll<LocusEditorWindow>())
+                {
+                    if (window == null)
+                        continue;
+                    window._statusMessage = "Unity drag reference armed.";
+                    window.Repaint();
+                }
+            }
+            return queued;
+        }
+
+        internal static void CancelOutboundAssetDrag()
+        {
+            LocusExternalAssetDragBridge.CancelAssetDrag();
+            foreach (LocusEditorWindow window in Resources.FindObjectsOfTypeAll<LocusEditorWindow>())
+            {
+                if (window == null)
+                    continue;
+                window._statusMessage = "Unity drag reference cleared.";
+                window.Repaint();
+            }
         }
 
         [MenuItem("Assets/Send to Locus", false, 0)]
@@ -171,555 +354,83 @@ namespace Locus
 
         private static void SendSelectedRefsToLocus()
         {
+            SendToLocus(SendToLocusMode.FocusedSession);
+        }
+
+        /// <summary>
+        /// Sends the current Unity selection to Locus as asset or scene-object
+        /// references. FocusedSession appends to the active composer;
+        /// NewSession opens a fresh session draft before attaching the refs.
+        /// </summary>
+        public static bool SendToLocus(
+            SendToLocusMode mode = SendToLocusMode.FocusedSession)
+        {
+            string sendMode = SerializeSendToLocusMode(mode);
             DroppedAssetRef[] assetRefs = BuildSelectedAssetRefs();
             if (assetRefs.Length == 0)
-                return;
-
-            string json = JsonUtility.ToJson(new EmbedControlMessage
-            {
-                type = "assetDrop",
-                assetRefs = assetRefs
-            });
-            string pipeName = GetControlPipeName();
-
-            Task.Run(() =>
-            {
-                try
-                {
-                    WritePipeLineOnce(pipeName, json);
-                }
-                catch
-                {
-                }
-            });
-        }
-
-        private static void SendConsoleToLocus()
-        {
-            ConsoleTextEntry[] consoleEntries = BuildConsoleTextEntries();
-            if (consoleEntries.Length == 0)
-            {
-                return;
-            }
-            string consoleText = JoinConsoleTextEntries(consoleEntries);
-
-            string json = JsonUtility.ToJson(new EmbedControlMessage
-            {
-                type = "consoleText",
-                text = consoleText,
-                textEntries = consoleEntries,
-                title = "Unity Console",
-                source = "unity-console"
-            });
-            string pipeName = GetControlPipeName();
-
-            Task.Run(() =>
-            {
-                try
-                {
-                    WritePipeLineOnce(pipeName, json);
-                }
-                catch
-                {
-                }
-            });
-        }
-
-        private static void EnsureConsoleToolbarButtons()
-        {
-            double now = EditorApplication.timeSinceStartup;
-            if (now < _nextConsoleToolbarProbeAt)
-                return;
-
-            _nextConsoleToolbarProbeAt = now + ConsoleToolbarProbeIntervalSeconds;
-            Type consoleWindowType = GetConsoleWindowType();
-            if (consoleWindowType == null)
-                return;
-
-            UnityEngine.Object[] windows = Resources.FindObjectsOfTypeAll(consoleWindowType);
-            if (windows == null || windows.Length == 0)
-                return;
-
-            foreach (UnityEngine.Object obj in windows)
-            {
-                EditorWindow window = obj as EditorWindow;
-                if (window == null || window.rootVisualElement == null)
-                    continue;
-
-                AddConsoleSendButton(window.rootVisualElement);
-            }
-        }
-
-        private static Type GetConsoleWindowType()
-        {
-            if (_consoleWindowType != null)
-                return _consoleWindowType;
-
-            _consoleWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ConsoleWindow");
-            return _consoleWindowType;
-        }
-
-        private static void AddConsoleSendButton(VisualElement root)
-        {
-            Button existing = root.Q<Button>(ConsoleSendButtonName);
-            if (existing != null)
-            {
-                if (string.Equals(Convert.ToString(existing.userData), _consoleSendButtonToken, StringComparison.Ordinal))
-                {
-                    existing.BringToFront();
-                    return;
-                }
-
-                existing.RemoveFromHierarchy();
-            }
-
-            Button button = new Button()
-            {
-                name = ConsoleSendButtonName,
-                text = "Send to Locus",
-                tooltip = "Send Unity Console contents to Locus",
-                userData = _consoleSendButtonToken
-            };
-            button.pickingMode = PickingMode.Position;
-            button.style.position = Position.Absolute;
-            button.style.left = 248;
-            button.style.top = 1;
-            button.style.width = 92;
-            button.style.height = 18;
-            button.style.fontSize = 11;
-            button.style.paddingLeft = 4;
-            button.style.paddingRight = 4;
-            button.style.paddingTop = 0;
-            button.style.paddingBottom = 0;
-            button.style.marginLeft = 0;
-            button.style.marginRight = 0;
-            button.style.marginTop = 0;
-            button.style.marginBottom = 0;
-            button.style.borderTopLeftRadius = 0;
-            button.style.borderTopRightRadius = 0;
-            button.style.borderBottomLeftRadius = 0;
-            button.style.borderBottomRightRadius = 0;
-            button.style.borderLeftWidth = 1;
-            button.style.borderRightWidth = 1;
-            button.style.borderTopWidth = 1;
-            button.style.borderBottomWidth = 1;
-            button.style.unityTextAlign = TextAnchor.MiddleCenter;
-            StyleConsoleToolbarButtonColors(button);
-            button.RegisterCallback<MouseDownEvent>(HandleConsoleSendButtonMouseDown, TrickleDown.TrickleDown);
-            root.Add(button);
-            button.BringToFront();
-        }
-
-        private static void HandleConsoleSendButtonMouseDown(MouseDownEvent evt)
-        {
-            if (evt.button != 0)
-                return;
-
-            evt.StopImmediatePropagation();
-            evt.PreventDefault();
-            SendConsoleToLocus();
-        }
-
-        private static void StyleConsoleToolbarButtonColors(Button button)
-        {
-            Color background = EditorGUIUtility.isProSkin
-                ? new Color(0.22f, 0.22f, 0.22f, 1f)
-                : new Color(0.76f, 0.76f, 0.76f, 1f);
-            Color border = EditorGUIUtility.isProSkin
-                ? new Color(0.13f, 0.13f, 0.13f, 1f)
-                : new Color(0.54f, 0.54f, 0.54f, 1f);
-            Color text = EditorGUIUtility.isProSkin
-                ? new Color(0.78f, 0.78f, 0.78f, 1f)
-                : new Color(0.13f, 0.13f, 0.13f, 1f);
-
-            button.style.backgroundColor = background;
-            button.style.borderLeftColor = border;
-            button.style.borderRightColor = border;
-            button.style.borderTopColor = border;
-            button.style.borderBottomColor = border;
-            button.style.color = text;
-        }
-
-        private static ConsoleTextEntry[] BuildConsoleTextEntries()
-        {
-            ConsoleTextEntry[] entries = TryBuildConsoleTextEntriesFromLogEntries();
-            if (entries == null || entries.Length == 0)
-                return new ConsoleTextEntry[0];
-
-            return entries;
-        }
-
-        private static string JoinConsoleTextEntries(ConsoleTextEntry[] entries)
-        {
-            if (entries == null || entries.Length == 0)
-                return "";
-
-            StringBuilder sb = new StringBuilder(Math.Min(MaxConsoleCharsToSend, entries.Length * 256));
-            sb.AppendLine("Unity Console");
-            bool hasEntry = false;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                ConsoleTextEntry entry = entries[i];
-                if (entry == null || string.IsNullOrWhiteSpace(entry.text))
-                    continue;
-                if (hasEntry)
-                    sb.AppendLine();
-                sb.AppendLine(entry.text.TrimEnd());
-                hasEntry = true;
-                TrimStringBuilderStart(sb);
-            }
-
-            return TrimConsoleText(sb.ToString());
-        }
-
-        private static ConsoleTextEntry[] TryBuildConsoleTextEntriesFromLogEntries()
-        {
-            try
-            {
-                Type logEntriesType = FindEditorType("UnityEditor.LogEntries", "UnityEditorInternal.LogEntries");
-                Type logEntryType = FindEditorType("UnityEditor.LogEntry", "UnityEditorInternal.LogEntry");
-                if (logEntriesType == null)
-                    return new ConsoleTextEntry[0];
-
-                MethodInfo getCount = FindStaticMethod(logEntriesType, "GetCount", 0);
-                if (getCount == null)
-                    return new ConsoleTextEntry[0];
-
-                int count = Convert.ToInt32(getCount.Invoke(null, null));
-                if (count <= 0)
-                    return new ConsoleTextEntry[0];
-
-                MethodInfo startGettingEntries = FindStaticMethod(logEntriesType, "StartGettingEntries", 0);
-                MethodInfo endGettingEntries = FindStaticMethod(logEntriesType, "EndGettingEntries", 0);
-                MethodInfo getEntryInternal = FindStaticMethod(logEntriesType, "GetEntryInternal", 2);
-                if (logEntryType != null && getEntryInternal != null)
-                {
-                    return BuildConsoleTextFromLogEntryObjects(
-                        count,
-                        logEntryType,
-                        getEntryInternal,
-                        startGettingEntries,
-                        endGettingEntries);
-                }
-
-                MethodInfo getLinesAndMode = FindStaticMethod(logEntriesType, "GetLinesAndModeFromEntryInternal", 4);
-                if (getLinesAndMode != null)
-                    return BuildConsoleTextFromLinesAndMode(count, getLinesAndMode);
-            }
-            catch
-            {
-            }
-
-            return new ConsoleTextEntry[0];
-        }
-
-        private static ConsoleTextEntry[] BuildConsoleTextFromLogEntryObjects(
-            int count,
-            Type logEntryType,
-            MethodInfo getEntryInternal,
-            MethodInfo startGettingEntries,
-            MethodInfo endGettingEntries)
-        {
-            List<ConsoleTextEntry> entries = new List<ConsoleTextEntry>();
-            int startIndex = Math.Max(0, count - MaxConsoleEntriesToSend);
-            object logEntry = Activator.CreateInstance(logEntryType);
-
-            try
-            {
-                if (startGettingEntries != null)
-                    startGettingEntries.Invoke(null, null);
-
-                for (int i = startIndex; i < count; i++)
-                {
-                    object result = getEntryInternal.Invoke(null, new[] { (object)i, logEntry });
-                    if (result is bool && !(bool)result)
-                        continue;
-
-                    string condition = ReadStringMember(logEntry, "message", "condition");
-                    string stackTrace = ReadStringMember(logEntry, "stacktrace", "stackTrace");
-                    int mode = ReadIntMember(logEntry, "mode");
-                    AddConsoleEntry(entries, LogModeLabel(mode), condition, stackTrace);
-                    TrimConsoleEntries(entries);
-                }
-            }
-            finally
-            {
-                if (endGettingEntries != null)
-                    endGettingEntries.Invoke(null, null);
-            }
-
-            return entries.ToArray();
-        }
-
-        private static ConsoleTextEntry[] BuildConsoleTextFromLinesAndMode(int count, MethodInfo getLinesAndMode)
-        {
-            List<ConsoleTextEntry> entries = new List<ConsoleTextEntry>();
-            int startIndex = Math.Max(0, count - MaxConsoleEntriesToSend);
-            for (int i = startIndex; i < count; i++)
-            {
-                string lines;
-                int mode;
-                if (!TryGetLinesAndMode(getLinesAndMode, i, out lines, out mode))
-                    continue;
-                AddConsoleEntry(entries, LogModeLabel(mode), lines, "");
-                TrimConsoleEntries(entries);
-            }
-            return entries.ToArray();
-        }
-
-        private static Type FindEditorType(params string[] names)
-        {
-            Assembly editorAssembly = typeof(EditorWindow).Assembly;
-            foreach (string name in names)
-            {
-                Type type = editorAssembly.GetType(name);
-                if (type != null)
-                    return type;
-            }
-            return null;
-        }
-
-        private static bool TryGetLinesAndMode(MethodInfo method, int row, out string lines, out int mode)
-        {
-            lines = "";
-            mode = 0;
-            ParameterInfo[] parameters = method.GetParameters();
-            if (parameters.Length != 4)
                 return false;
 
-            object[] args = new object[4];
-            args[0] = row;
-            args[1] = 1000;
-            int modeIndex = -1;
-            int textIndex = -1;
-
-            for (int i = 2; i < parameters.Length; i++)
+            return QueueSendToLocusMessage(new EmbedControlMessage
             {
-                Type parameterType = parameters[i].ParameterType;
-                Type valueType = parameterType.IsByRef ? parameterType.GetElementType() : parameterType;
-                if (valueType == typeof(int) || (valueType != null && valueType.IsEnum))
-                {
-                    args[i] = valueType != null && valueType.IsEnum ? Enum.ToObject(valueType, 0) : (object)0;
-                    modeIndex = i;
-                }
-                else if (valueType == typeof(string))
-                {
-                    args[i] = "";
-                    textIndex = i;
-                }
-                else
-                {
-                    args[i] = null;
-                }
-            }
-
-            method.Invoke(null, args);
-            if (modeIndex >= 0)
-                mode = Convert.ToInt32(args[modeIndex]);
-            if (textIndex >= 0)
-                lines = Convert.ToString(args[textIndex]) ?? "";
-            return !string.IsNullOrWhiteSpace(lines);
-        }
-
-        private static MethodInfo FindStaticMethod(Type type, string name, int parameterCount)
-        {
-            MethodInfo[] methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (MethodInfo method in methods)
-            {
-                if (!string.Equals(method.Name, name, StringComparison.Ordinal))
-                    continue;
-                if (method.GetParameters().Length == parameterCount)
-                    return method;
-            }
-            return null;
-        }
-
-        private static string ReadStringMember(object target, params string[] names)
-        {
-            if (target == null || names == null)
-                return "";
-
-            Type type = target.GetType();
-            foreach (string name in names)
-            {
-                FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (field != null)
-                    return Convert.ToString(field.GetValue(target)) ?? "";
-
-                PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (property != null)
-                    return Convert.ToString(property.GetValue(target, null)) ?? "";
-            }
-            return "";
-        }
-
-        private static int ReadIntMember(object target, params string[] names)
-        {
-            if (target == null || names == null)
-                return 0;
-
-            Type type = target.GetType();
-            foreach (string name in names)
-            {
-                FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (field != null)
-                    return ConvertMemberToInt(field.GetValue(target));
-
-                PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (property != null)
-                    return ConvertMemberToInt(property.GetValue(target, null));
-            }
-            return 0;
-        }
-
-        private static int ConvertMemberToInt(object value)
-        {
-            if (value == null)
-                return 0;
-            try
-            {
-                return Convert.ToInt32(value);
-            }
-            catch
-            {
-                int parsed;
-                return int.TryParse(Convert.ToString(value), out parsed) ? parsed : 0;
-            }
-        }
-
-        private static void AddConsoleEntry(List<ConsoleTextEntry> entries, string type, string condition, string stackTrace)
-        {
-            condition = (condition ?? "").TrimEnd();
-            stackTrace = (stackTrace ?? "").TrimEnd();
-            if (string.IsNullOrEmpty(condition) && string.IsNullOrEmpty(stackTrace))
-                return;
-
-            string level = string.IsNullOrEmpty(type) ? "Log" : type;
-            StringBuilder sb = new StringBuilder(condition.Length + stackTrace.Length + level.Length + 8);
-            sb.Append("[").Append(level).Append("] ");
-            sb.AppendLine(condition);
-            if (!string.IsNullOrEmpty(stackTrace))
-                sb.AppendLine(stackTrace);
-
-            entries.Add(new ConsoleTextEntry
-            {
-                title = ConsoleEntryTitle(level, condition),
-                text = sb.ToString().TrimEnd(),
-                source = "unity-console",
-                level = level
+                type = "assetDrop",
+                assetRefs = assetRefs,
+                sendMode = sendMode
             });
         }
 
-        private static string ConsoleEntryTitle(string level, string condition)
+        /// <summary>
+        /// Sends explicit local files or folders to Locus. Invalid or missing
+        /// paths are ignored; returns false when no attachment can be sent.
+        /// </summary>
+        public static bool SendToLocus(
+            IReadOnlyList<LocusFileAttachment> attachments,
+            SendToLocusMode mode = SendToLocusMode.FocusedSession)
         {
-            string summary = FirstNonEmptyLine(condition);
-            if (string.IsNullOrEmpty(summary))
-                summary = "Unity Console";
-            if (summary.Length > 96)
-                summary = summary.Substring(0, 93) + "...";
-            return "[" + (string.IsNullOrEmpty(level) ? "Log" : level) + "] " + summary;
-        }
+            if (attachments == null)
+                throw new ArgumentNullException(nameof(attachments));
 
-        private static string FirstNonEmptyLine(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return "";
+            string sendMode = SerializeSendToLocusMode(mode);
+            LocusFileDropRef[] files = BuildLocalFileDropRefs(attachments);
+            if (files.Length == 0)
+                return false;
 
-            string[] lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            foreach (string line in lines)
+            return QueueSendToLocusMessage(new EmbedControlMessage
             {
-                string trimmed = line.Trim();
-                if (!string.IsNullOrEmpty(trimmed))
-                    return trimmed;
-            }
-            return "";
+                type = "fileDrop",
+                files = files,
+                sendMode = sendMode
+            });
         }
 
-        private static void TrimConsoleEntries(List<ConsoleTextEntry> entries)
+        private static bool QueueSendToLocusMessage(EmbedControlMessage message)
         {
-            int total = 0;
-            for (int i = 0; i < entries.Count; i++)
+            string json = JsonUtility.ToJson(message);
+            string pipeName = GetControlPipeName();
+
+            Task.Run(() =>
             {
-                ConsoleTextEntry entry = entries[i];
-                total += entry == null || entry.text == null ? 0 : entry.text.Length;
-            }
+                try
+                {
+                    WritePipeLineOnce(pipeName, json);
+                }
+                catch
+                {
+                }
+            });
+            return true;
+        }
 
-            while (total > MaxConsoleCharsToSend && entries.Count > 1)
+        private static string SerializeSendToLocusMode(SendToLocusMode mode)
+        {
+            switch (mode)
             {
-                ConsoleTextEntry removed = entries[0];
-                total -= removed == null || removed.text == null ? 0 : removed.text.Length;
-                entries.RemoveAt(0);
+                case SendToLocusMode.FocusedSession:
+                    return "focusedSession";
+                case SendToLocusMode.NewSession:
+                    return "newSession";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unsupported Send to Locus mode.");
             }
-
-            if (total <= MaxConsoleCharsToSend || entries.Count == 0)
-                return;
-
-            ConsoleTextEntry first = entries[0];
-            if (first == null || string.IsNullOrEmpty(first.text))
-                return;
-
-            int overflow = total - MaxConsoleCharsToSend;
-            if (overflow <= 0 || overflow >= first.text.Length)
-                return;
-
-            first.text = first.text.Substring(overflow).TrimStart();
-        }
-
-        private static string LogModeLabel(int mode)
-        {
-            const int Error = 1 << 0;
-            const int Assert = 1 << 1;
-            const int Log = 1 << 2;
-            const int Fatal = 1 << 4;
-            const int AssetImportError = 1 << 6;
-            const int AssetImportWarning = 1 << 7;
-            const int ScriptingError = 1 << 8;
-            const int ScriptingWarning = 1 << 9;
-            const int ScriptingLog = 1 << 10;
-            const int ScriptCompileError = 1 << 11;
-            const int ScriptCompileWarning = 1 << 12;
-            const int ScriptingException = 1 << 17;
-            const int GraphCompileError = 1 << 20;
-            const int ScriptingAssertion = 1 << 21;
-            const int VisualScriptingError = 1 << 22;
-
-            const int ErrorMask =
-                Error
-                | Assert
-                | Fatal
-                | AssetImportError
-                | ScriptingError
-                | ScriptCompileError
-                | ScriptingException
-                | GraphCompileError
-                | ScriptingAssertion
-                | VisualScriptingError;
-            const int WarningMask = AssetImportWarning | ScriptingWarning | ScriptCompileWarning;
-            const int LogMask = Log | ScriptingLog;
-
-            if ((mode & ErrorMask) != 0)
-                return "Error";
-            if ((mode & WarningMask) != 0)
-                return "Warning";
-            if ((mode & LogMask) != 0)
-                return "Log";
-            return "Log";
-        }
-
-        private static string TrimConsoleText(string text)
-        {
-            if (string.IsNullOrEmpty(text) || text.Length <= MaxConsoleCharsToSend)
-                return text ?? "";
-
-            return "[older console output truncated]\n" + text.Substring(text.Length - MaxConsoleCharsToSend);
-        }
-
-        private static void TrimStringBuilderStart(StringBuilder sb)
-        {
-            if (sb.Length <= MaxConsoleCharsToSend)
-                return;
-
-            sb.Remove(0, sb.Length - MaxConsoleCharsToSend);
         }
 
         private static void EnsureLifecycleHooks()
@@ -731,6 +442,155 @@ namespace Locus
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
             EditorApplication.quitting += OnEditorQuitting;
+        }
+
+        private static OpenFrontendWindowRequest ParseOpenFrontendWindowRequest(string json)
+        {
+            string payload = (json ?? "").Trim();
+            if (payload.StartsWith("{", StringComparison.Ordinal))
+            {
+                try
+                {
+                    OpenFrontendWindowRequest request =
+                        JsonUtility.FromJson<OpenFrontendWindowRequest>(payload);
+                    if (request != null)
+                        return request;
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogWarning("[Locus] Failed to parse open_frontend_window payload: " + ex.Message);
+                }
+            }
+            return new OpenFrontendWindowRequest();
+        }
+
+        private static LocusEditorWindow FindFrontendWindow(string windowId)
+        {
+            foreach (LocusEditorWindow window in Resources.FindObjectsOfTypeAll<LocusEditorWindow>())
+            {
+                if (window == null)
+                    continue;
+                window.EnsureWindowIdentity();
+                if (string.Equals(window._windowId, windowId, StringComparison.Ordinal))
+                    return window;
+            }
+            return null;
+        }
+
+        private static string NormalizeWindowId(string windowId)
+        {
+            string value = (windowId ?? "").Trim();
+            return string.IsNullOrEmpty(value) ? DefaultWindowId : value;
+        }
+
+        private static string NormalizeTargetKind(string targetKind)
+        {
+            return string.Equals((targetKind ?? "").Trim(), TargetKindView, StringComparison.Ordinal)
+                ? TargetKindView
+                : TargetKindSession;
+        }
+
+        private static string NormalizeWindowTitle(
+            string title,
+            string targetKind,
+            string targetId)
+        {
+            string value = (title ?? "").Trim();
+            if (!string.IsNullOrEmpty(value))
+                return value;
+
+            if (string.Equals(targetKind, TargetKindView, StringComparison.Ordinal))
+                return string.IsNullOrEmpty(targetId) ? "View" : targetId;
+
+            return string.IsNullOrEmpty(targetId) ? "Locus" : "Locus Session (" + targetId + ")";
+        }
+
+        private void ConfigureFrontendWindow(
+            string windowId,
+            string targetKind,
+            string targetId,
+            string title)
+        {
+            _windowId = NormalizeWindowId(windowId);
+            _targetKind = NormalizeTargetKind(targetKind);
+            _targetId = (targetId ?? "").Trim();
+            _windowTitle = NormalizeWindowTitle(title, _targetKind, _targetId);
+            _frontendWindowConfigured = true;
+            EnsureInstanceId();
+            titleContent = CreateTitleContent(_windowTitle);
+        }
+
+        private void EnsureWindowIdentity()
+        {
+            _windowId = NormalizeWindowId(_windowId);
+            _targetKind = NormalizeTargetKind(_targetKind);
+            _targetId = (_targetId ?? "").Trim();
+            _windowTitle = NormalizeWindowTitle(_windowTitle, _targetKind, _targetId);
+            EnsureInstanceId();
+            titleContent = CreateTitleContent(_windowTitle);
+        }
+
+        private void EnsureInstanceId()
+        {
+            if (string.IsNullOrEmpty(_instanceId))
+                _instanceId = Guid.NewGuid().ToString("N");
+        }
+
+        private void BeginControlEpoch()
+        {
+            _instanceId = Guid.NewGuid().ToString("N");
+            _controlRevision = 0;
+            _sentOpen = false;
+            _hasLastSent = false;
+            _nextHeartbeatAt = 0d;
+        }
+
+        private bool RefreshEmbedFeatureState(bool force)
+        {
+            double now = EditorApplication.timeSinceStartup;
+            if (!force && _embedFeatureInitialized && now < _nextEmbedFeatureProbeAt)
+                return _embedFeatureEnabled;
+
+            _nextEmbedFeatureProbeAt = now + EmbedFeatureProbeIntervalSeconds;
+            bool enabled = !File.Exists(GetEmbedDisabledMarkerPath());
+            if (!_embedFeatureInitialized)
+            {
+                _embedFeatureInitialized = true;
+                _embedFeatureEnabled = enabled;
+                return enabled;
+            }
+            if (_embedFeatureEnabled == enabled)
+                return enabled;
+
+            if (!enabled && _sentOpen && _frontendWindowConfigured)
+                SendClose(CloseReasonFeatureDisabled);
+
+            _embedFeatureEnabled = enabled;
+            if (enabled)
+            {
+                BeginControlEpoch();
+                _nextSyncAt = 0d;
+            }
+            return enabled;
+        }
+
+        private static string GetEmbedDisabledMarkerPath()
+        {
+            try
+            {
+                DirectoryInfo projectRoot = Directory.GetParent(Application.dataPath);
+                if (projectRoot == null)
+                    return "";
+                return Path.Combine(
+                    projectRoot.FullName,
+                    "Library",
+                    "Locus",
+                    EmbedDisabledMarkerName);
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         private static void OnBeforeAssemblyReload()
@@ -751,13 +611,20 @@ namespace Locus
         private void OnEnable()
         {
             EnsureLifecycleHooks();
-            titleContent = CreateTitleContent();
+            if (_creatingFrontendWindow)
+                _frontendWindowConfigured = false;
+            else if (!_frontendWindowConfigured)
+                _frontendWindowConfigured = true;
+            EnsureWindowIdentity();
+            BeginControlEpoch();
             minSize = new Vector2(360f, 420f);
-            RefreshDesktopState(true);
+            RefreshDesktopState(false);
+            RefreshEmbedFeatureState(true);
             if (OverlaySyncEnabled)
             {
                 EditorApplication.update += SyncOverlay;
-                SendOpenOrUpdate(true);
+                if (_frontendWindowConfigured && _embedFeatureEnabled)
+                    SendOpenOrUpdate(true);
             }
         }
 
@@ -766,14 +633,53 @@ namespace Locus
             if (OverlaySyncEnabled)
             {
                 EditorApplication.update -= SyncOverlay;
-                SendClose(GetCloseReason());
+                if (_frontendWindowConfigured && _embedFeatureEnabled)
+                {
+                    // During a domain reload the native overlay client keeps the
+                    // connection alive, so signal "reloading" (the Tauri server
+                    // retains the overlay) instead of closing it and flickering.
+                    if (_assemblyReloadInProgress && LocusBridge.IsNativeBridgeActive)
+                        SendOverlayReloading();
+                    else
+                        SendClose(GetDisableCloseReason());
+                }
             }
             DisconnectPipe();
         }
 
+        private void SendOverlayReloading()
+        {
+            try
+            {
+                EmbedControlMessage message = BuildMessage("update", true);
+                message.managedOverlayState = "reloading";
+                string json = JsonUtility.ToJson(message);
+                string pipeName = GetControlPipeName();
+                // Push synchronously through the native client — a Task.Run send
+                // may not finish before the domain unloads.
+                if (LocusBridge.NativeOverlayConnect(pipeName))
+                    LocusBridge.NativeOverlayPush(json);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning("[Locus] Overlay reloading signal failed: " + ex.Message);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (!OverlaySyncEnabled || !_frontendWindowConfigured || !_embedFeatureEnabled)
+                return;
+            if (_editorQuitting || _assemblyReloadInProgress)
+                return;
+
+            SendClose(CloseReasonWindowClosed);
+        }
+
         private void OnFocus()
         {
-            if (OverlaySyncEnabled)
+            _nextHostWindowProbeAt = 0d;
+            if (OverlaySyncEnabled && _embedFeatureEnabled)
                 SendOpenOrUpdate(true);
         }
 
@@ -784,18 +690,26 @@ namespace Locus
             RefreshDesktopState(false);
             DrawPlaceholder();
 
-            if (OverlaySyncEnabled && Event.current.type == EventType.Repaint)
+            if (OverlaySyncEnabled && _embedFeatureEnabled && Event.current.type == EventType.Repaint)
                 SendOpenOrUpdate(false);
         }
 
         private void SyncOverlay()
         {
             double now = EditorApplication.timeSinceStartup;
+            if (!RefreshEmbedFeatureState(false))
+            {
+                _nextSyncAt = now + EmbedFeatureProbeIntervalSeconds;
+                return;
+            }
             if (now < _nextSyncAt)
                 return;
 
             bool resizeBoostActive = IsResizeSyncBoostActive(now);
-            _nextSyncAt = now + (resizeBoostActive ? ResizeSyncIntervalSeconds : SyncIntervalSeconds);
+            bool inactive = _hasLastSent && !_lastSentVisible && !resizeBoostActive;
+            _nextSyncAt = now + (resizeBoostActive
+                ? ResizeSyncIntervalSeconds
+                : inactive ? InactiveSyncIntervalSeconds : SyncIntervalSeconds);
             RefreshDesktopState(false);
             SendOpenOrUpdate(false);
             SendAssetDragState(false);
@@ -806,6 +720,8 @@ namespace Locus
 
         private void SendOpenOrUpdate(bool force)
         {
+            if (!_frontendWindowConfigured || !_embedFeatureEnabled)
+                return;
             if (_sendInFlight && !force)
                 return;
 
@@ -819,7 +735,8 @@ namespace Locus
 
         private void SendClose(string reason)
         {
-            SendControlMessage(BuildMessage("close", false, reason), true);
+            EmbedControlMessage message = BuildMessage("close", false, reason);
+            SendControlMessage(message, true);
             _sentOpen = false;
         }
 
@@ -831,6 +748,11 @@ namespace Locus
             SendControlMessage(new EmbedControlMessage
             {
                 type = "assetDrop",
+                windowId = _windowId,
+                targetKind = _targetKind,
+                targetId = _targetId,
+                title = _windowTitle,
+                instanceId = _instanceId,
                 assetRefs = assetRefs
             }, true);
         }
@@ -868,6 +790,11 @@ namespace Locus
             string json = JsonUtility.ToJson(new EmbedControlMessage
             {
                 type = "assetDrag",
+                windowId = _windowId,
+                targetKind = _targetKind,
+                targetId = _targetId,
+                title = _windowTitle,
+                instanceId = _instanceId,
                 assetRefs = assetRefs
             });
             string pipeName = GetControlPipeName();
@@ -890,13 +817,91 @@ namespace Locus
             });
         }
 
-        private string GetCloseReason()
+        internal static void PublishCurrentUnityAssetDragState(bool force)
+        {
+            DroppedAssetRef[] assetRefs = BuildDroppedAssetRefs();
+            if (assetRefs.Length == 0)
+            {
+                ClearPublishedUnityAssetDragState();
+                return;
+            }
+
+            double now = EditorApplication.timeSinceStartup;
+            string signature = BuildAssetRefsSignature(assetRefs);
+            if (!force
+                && string.Equals(signature, _lastGlobalAssetDragSignature, StringComparison.Ordinal)
+                && now < _nextGlobalAssetDragStateAt)
+                return;
+
+            _lastGlobalAssetDragSignature = signature;
+            _nextGlobalAssetDragStateAt = now + AssetDragStateRefreshSeconds;
+            SendAssetDragStateMessageOnce(assetRefs);
+        }
+
+        internal static bool HasCurrentUnityDragAndDropRefs()
+        {
+            return HasAnyDragAndDropObjectReferences()
+                || HasAnyDragAndDropPaths();
+        }
+
+        internal static void ClearPublishedUnityAssetDragState()
+        {
+            if (_lastGlobalAssetDragSignature.Length == 0)
+                return;
+
+            _lastGlobalAssetDragSignature = "";
+            _nextGlobalAssetDragStateAt = 0d;
+            SendAssetDragStateMessageOnce(EmptyDroppedAssetRefs);
+        }
+
+        private static bool HasAnyDragAndDropObjectReferences()
+        {
+            UnityEngine.Object[] objects = DragAndDrop.objectReferences;
+            return objects != null && objects.Length > 0;
+        }
+
+        private static bool HasAnyDragAndDropPaths()
+        {
+            string[] paths = DragAndDrop.paths;
+            return paths != null && paths.Length > 0;
+        }
+
+        private static void SendAssetDragStateMessageOnce(DroppedAssetRef[] assetRefs)
+        {
+            if (assetRefs == null || _globalAssetDragStateSendInFlight)
+                return;
+
+            string json = JsonUtility.ToJson(new EmbedControlMessage
+            {
+                type = "assetDrag",
+                assetRefs = assetRefs
+            });
+            string pipeName = GetControlPipeName();
+            _globalAssetDragStateSendInFlight = true;
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    WritePipeLineOnce(pipeName, json);
+                }
+                catch
+                {
+                }
+                finally
+                {
+                    _globalAssetDragStateSendInFlight = false;
+                }
+            });
+        }
+
+        private string GetDisableCloseReason()
         {
             if (_editorQuitting)
                 return CloseReasonEditorQuit;
             if (_assemblyReloadInProgress)
                 return CloseReasonDomainReload;
-            return CloseReasonWindowClosed;
+            return CloseReasonWindowDisabled;
         }
 
         private EmbedControlMessage BuildMessage(string type, bool visible, string reason = "")
@@ -904,15 +909,45 @@ namespace Locus
             if (!_hasScreenRect)
                 UpdateScreenRectFromPosition();
 
+            bool selectedDockTab = IsSelectedDockTab();
+            bool messageVisible = visible
+                && _screenWidth > 12
+                && _screenHeight > 12
+                && selectedDockTab;
+            long parentHwnd = _lastSentParentHwnd;
+            double now = EditorApplication.timeSinceStartup;
+            bool forceHostProbe = !_hasLastSent
+                || (selectedDockTab
+                    && IsUnityProcessForeground()
+                    && now >= _nextHostWindowProbeAt);
+            if (!_hasLastSent || selectedDockTab)
+            {
+                parentHwnd = GetUnityHostHwnd(
+                    _screenX,
+                    _screenY,
+                    _screenWidth,
+                    _screenHeight,
+                    _lastSentParentHwnd,
+                    forceHostProbe);
+                if (forceHostProbe)
+                    _nextHostWindowProbeAt = now + HostWindowProbeIntervalSeconds;
+            }
+
             return new EmbedControlMessage
             {
                 type = type,
+                windowId = _windowId,
+                targetKind = _targetKind,
+                targetId = _targetId,
+                title = _windowTitle,
+                instanceId = _instanceId,
+                revision = ++_controlRevision,
                 x = _screenX,
                 y = _screenY,
                 width = _screenWidth,
                 height = _screenHeight,
-                visible = visible && _screenWidth > 12 && _screenHeight > 12 && IsSelectedDockTab(),
-                parentHwnd = GetUnityHostHwnd(_screenX, _screenY, _screenWidth, _screenHeight),
+                visible = messageVisible,
+                parentHwnd = parentHwnd,
                 reason = reason ?? ""
             };
         }
@@ -940,78 +975,94 @@ namespace Locus
 
         private static DroppedAssetRef[] BuildDroppedAssetRefs()
         {
-            List<DroppedAssetRef> refs = new List<DroppedAssetRef>();
-            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<DroppedAssetRef> refs = DroppedAssetRefsScratch;
+            HashSet<DroppedAssetRefKey> seen = DroppedAssetRefsSeenScratch;
 
-            UnityEngine.Object[] objects = DragAndDrop.objectReferences;
-            if (objects != null)
+            try
             {
-                foreach (UnityEngine.Object obj in objects)
+                UnityEngine.Object[] objects = DragAndDrop.objectReferences;
+                if (objects != null)
                 {
-                    DroppedAssetRef assetRef = BuildDroppedObjectRef(obj);
-                    AddDroppedAssetRef(refs, seen, assetRef);
-                }
-            }
-
-            string[] paths = DragAndDrop.paths;
-            if (paths != null)
-            {
-                foreach (string path in paths)
-                {
-                    string normalizedPath = NormalizeProjectRelativePath(path);
-                    if (!IsSupportedUnityRefPath(normalizedPath))
-                        continue;
-                    AddDroppedAssetRef(refs, seen, new DroppedAssetRef
+                    foreach (UnityEngine.Object obj in objects)
                     {
-                        path = normalizedPath,
-                        kind = "asset",
-                        name = Path.GetFileNameWithoutExtension(normalizedPath),
-                        typeLabel = "",
-                        source = "unity"
-                    });
+                        DroppedAssetRef assetRef = BuildDroppedObjectRef(obj);
+                        AddDroppedAssetRef(refs, seen, assetRef);
+                    }
                 }
-            }
 
-            return refs.ToArray();
+                string[] paths = DragAndDrop.paths;
+                if (paths != null)
+                {
+                    foreach (string path in paths)
+                    {
+                        string normalizedPath = NormalizeProjectRelativePath(path);
+                        if (!IsSupportedUnityRefPath(normalizedPath))
+                            continue;
+                        AddDroppedAssetRef(refs, seen, new DroppedAssetRef
+                        {
+                            path = normalizedPath,
+                            kind = "asset",
+                            name = Path.GetFileNameWithoutExtension(normalizedPath),
+                            typeLabel = "",
+                            source = "unity"
+                        });
+                    }
+                }
+
+                return refs.Count == 0 ? EmptyDroppedAssetRefs : refs.ToArray();
+            }
+            finally
+            {
+                refs.Clear();
+                seen.Clear();
+            }
         }
 
         private static DroppedAssetRef[] BuildSelectedAssetRefs()
         {
-            List<DroppedAssetRef> refs = new List<DroppedAssetRef>();
-            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<DroppedAssetRef> refs = SelectedAssetRefsScratch;
+            HashSet<DroppedAssetRefKey> seen = SelectedAssetRefsSeenScratch;
 
-            UnityEngine.Object[] objects = Selection.objects;
-            if (objects != null)
+            try
             {
-                foreach (UnityEngine.Object obj in objects)
+                UnityEngine.Object[] objects = Selection.objects;
+                if (objects != null)
                 {
-                    DroppedAssetRef assetRef = BuildDroppedObjectRef(obj);
-                    AddDroppedAssetRef(refs, seen, assetRef);
-                }
-            }
-
-            string[] assetGuids = Selection.assetGUIDs;
-            if (assetGuids != null)
-            {
-                foreach (string guid in assetGuids)
-                {
-                    string path = NormalizeUnityPath(AssetDatabase.GUIDToAssetPath(guid));
-                    if (!IsSupportedUnityRefPath(path))
-                        continue;
-
-                    UnityEngine.Object obj = AssetDatabase.LoadMainAssetAtPath(path);
-                    AddDroppedAssetRef(refs, seen, new DroppedAssetRef
+                    foreach (UnityEngine.Object obj in objects)
                     {
-                        path = path,
-                        kind = "asset",
-                        name = obj != null ? obj.name : Path.GetFileNameWithoutExtension(path),
-                        typeLabel = obj != null ? obj.GetType().Name : "",
-                        source = "unity"
-                    });
+                        DroppedAssetRef assetRef = BuildDroppedObjectRef(obj);
+                        AddDroppedAssetRef(refs, seen, assetRef);
+                    }
                 }
-            }
 
-            return refs.ToArray();
+                string[] assetGuids = Selection.assetGUIDs;
+                if (assetGuids != null)
+                {
+                    foreach (string guid in assetGuids)
+                    {
+                        string path = NormalizeUnityPath(AssetDatabase.GUIDToAssetPath(guid));
+                        if (!IsSupportedUnityRefPath(path))
+                            continue;
+
+                        UnityEngine.Object obj = AssetDatabase.LoadMainAssetAtPath(path);
+                        AddDroppedAssetRef(refs, seen, new DroppedAssetRef
+                        {
+                            path = path,
+                            kind = "asset",
+                            name = obj != null ? obj.name : Path.GetFileNameWithoutExtension(path),
+                            typeLabel = obj != null ? obj.GetType().Name : "",
+                            source = "unity"
+                        });
+                    }
+                }
+
+                return refs.Count == 0 ? EmptyDroppedAssetRefs : refs.ToArray();
+            }
+            finally
+            {
+                refs.Clear();
+                seen.Clear();
+            }
         }
 
         private static string BuildAssetRefsSignature(DroppedAssetRef[] assetRefs)
@@ -1027,6 +1078,48 @@ namespace Locus
                 sb.Append(assetRef.kind).Append('\n').Append(assetRef.path).Append('\n');
             }
             return sb.ToString();
+        }
+
+        private static DroppedAssetRef[] SanitizeOutboundAssetDragRefs(DroppedAssetRef[] assetRefs)
+        {
+            if (assetRefs == null || assetRefs.Length == 0)
+                return EmptyDroppedAssetRefs;
+
+            List<DroppedAssetRef> sanitized = SanitizedAssetRefsScratch;
+            HashSet<DroppedAssetRefKey> seen = SanitizedAssetRefsSeenScratch;
+
+            try
+            {
+                foreach (DroppedAssetRef assetRef in assetRefs)
+                {
+                    if (assetRef == null)
+                        continue;
+
+                    string path = NormalizeUnityPath(assetRef.path);
+                    string kind = (assetRef.kind ?? "").Trim();
+                    if (string.IsNullOrEmpty(path) || (kind != "asset" && kind != "sceneObject"))
+                        continue;
+
+                    if (!seen.Add(new DroppedAssetRefKey(kind, path)))
+                        continue;
+
+                    sanitized.Add(new DroppedAssetRef
+                    {
+                        path = path,
+                        kind = kind,
+                        name = (assetRef.name ?? "").Trim(),
+                        typeLabel = (assetRef.typeLabel ?? "").Trim(),
+                        source = (assetRef.source ?? "").Trim()
+                    });
+                }
+
+                return sanitized.Count == 0 ? EmptyDroppedAssetRefs : sanitized.ToArray();
+            }
+            finally
+            {
+                sanitized.Clear();
+                seen.Clear();
+            }
         }
 
         private static DroppedAssetRef BuildDroppedObjectRef(UnityEngine.Object obj)
@@ -1078,18 +1171,14 @@ namespace Locus
 
         private static void AddDroppedAssetRef(
             List<DroppedAssetRef> refs,
-            HashSet<string> seen,
+            HashSet<DroppedAssetRefKey> seen,
             DroppedAssetRef assetRef)
         {
             if (assetRef == null || string.IsNullOrEmpty(assetRef.path))
                 return;
 
-            string key = assetRef.kind + "\n" + assetRef.path;
-            if (seen.Contains(key))
-                return;
-
-            seen.Add(key);
-            refs.Add(assetRef);
+            if (seen.Add(new DroppedAssetRefKey(assetRef.kind, assetRef.path)))
+                refs.Add(assetRef);
         }
 
         private static string BuildHierarchyPath(Transform transform)
@@ -1269,66 +1358,71 @@ namespace Locus
 
         private void WritePipeLine(string pipeName, string json)
         {
-            lock (_pipeLock)
+            if (LocusBridge.NativeOverlayConnect(pipeName) && LocusBridge.NativeOverlayPush(json))
+                return;
+
+            throw new IOException("Native overlay client is unavailable.");
+        }
+
+        private static LocusFileDropRef[] BuildLocalFileDropRefs(
+            IReadOnlyList<LocusFileAttachment> attachments)
+        {
+            List<LocusFileDropRef> files = new List<LocusFileDropRef>(attachments.Count);
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int index = 0; index < attachments.Count; index++)
             {
-                EnsurePipeConnected(pipeName);
-                _pipeWriter.WriteLine(json);
-                _pipeWriter.Flush();
+                LocusFileAttachment attachment = attachments[index];
+                string rawPath = attachment == null ? "" : attachment.Path.Trim();
+                if (string.IsNullOrEmpty(rawPath))
+                    continue;
+
+                string fullPath;
+                try
+                {
+                    fullPath = Path.GetFullPath(rawPath);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                bool isDir = Directory.Exists(fullPath);
+                if (!isDir && !File.Exists(fullPath))
+                    continue;
+                if (!seen.Add(fullPath))
+                    continue;
+
+                string trimmedPath = fullPath.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar);
+                string name = attachment.Name.Trim();
+                if (string.IsNullOrEmpty(name))
+                    name = Path.GetFileName(trimmedPath);
+
+                files.Add(new LocusFileDropRef
+                {
+                    path = fullPath,
+                    name = name,
+                    typeLabel = attachment.TypeLabel.Trim(),
+                    isDir = isDir,
+                    source = string.IsNullOrWhiteSpace(attachment.Source)
+                        ? "unity"
+                        : attachment.Source.Trim()
+                });
             }
+            return files.ToArray();
         }
 
         private static void WritePipeLineOnce(string pipeName, string json)
         {
-            using (NamedPipeClientStream client = new NamedPipeClientStream(
-                ".",
-                pipeName,
-                PipeDirection.Out,
-                PipeOptions.Asynchronous))
-            {
-                client.Connect(PipeConnectTimeoutMs);
-                using (StreamWriter writer = new StreamWriter(client, Utf8NoBom, 4096))
-                {
-                    writer.NewLine = "\n";
-                    writer.AutoFlush = true;
-                    writer.WriteLine(json);
-                    writer.Flush();
-                }
-            }
-        }
-
-        private void EnsurePipeConnected(string pipeName)
-        {
-            if (_pipeClient != null
-                && _pipeClient.IsConnected
-                && _pipeWriter != null
-                && string.Equals(_connectedPipeName, pipeName, StringComparison.Ordinal))
+            if (LocusBridge.NativeOverlayConnect(pipeName) && LocusBridge.NativeOverlayPush(json))
                 return;
 
-            DisconnectPipe();
-            _pipeClient = new NamedPipeClientStream(
-                ".",
-                pipeName,
-                PipeDirection.Out,
-                PipeOptions.Asynchronous);
-            _pipeClient.Connect(PipeConnectTimeoutMs);
-            _connectedPipeName = pipeName;
-            _pipeWriter = new StreamWriter(_pipeClient, Utf8NoBom, 4096)
-            {
-                NewLine = "\n",
-                AutoFlush = true
-            };
+            throw new IOException("Native overlay client is unavailable.");
         }
 
         private void DisconnectPipe()
         {
-            lock (_pipeLock)
-            {
-                try { if (_pipeWriter != null) _pipeWriter.Dispose(); } catch { }
-                try { if (_pipeClient != null) _pipeClient.Dispose(); } catch { }
-                _pipeWriter = null;
-                _pipeClient = null;
-                _connectedPipeName = "";
-            }
         }
 
         private void DrawPlaceholder()
@@ -1372,7 +1466,7 @@ namespace Locus
                 Mathf.Min(116f, inner.width),
                 24f);
 
-            GUI.Label(titleRect, "Locus", EditorStyles.boldLabel);
+            GUI.Label(titleRect, _windowTitle, EditorStyles.boldLabel);
             GUI.Label(statusRect, _statusMessage, EditorStyles.wordWrappedLabel);
             EditorGUI.SelectableLabel(pipeRect, GetFullControlPipeName(), EditorStyles.miniLabel);
             if (!string.IsNullOrEmpty(executablePathText))
@@ -1395,8 +1489,55 @@ namespace Locus
                 return;
 
             _nextDesktopProbeAt = now + DesktopProbeIntervalSeconds;
-            _desktopInstall = FindLocusDesktopInstall();
-            _desktopProcessRunning = IsLocusDesktopProcessRunning(_desktopInstall.ExecutablePath);
+
+            if (force)
+            {
+                _desktopInstall = ResolveDesktopInstall(_desktopInstall);
+                _desktopProcessRunning = IsLocusDesktopProcessRunning(_desktopInstall.ExecutablePath);
+                return;
+            }
+
+            // While the overlay pipe link is healthy, Locus desktop must be the
+            // connected pipe server, so the registry and process probes can be skipped.
+            if (_sentOpen && _failedSends == 0)
+            {
+                _desktopProcessRunning = true;
+                return;
+            }
+
+            if (_desktopProbeInFlight)
+                return;
+
+            _desktopProbeInFlight = true;
+            LocusDesktopInstall knownInstall = _desktopInstall;
+            Task.Run(() =>
+            {
+                try
+                {
+                    LocusDesktopInstall install = ResolveDesktopInstall(knownInstall);
+                    bool running = IsLocusDesktopProcessRunning(install.ExecutablePath);
+                    _desktopInstall = install;
+                    _desktopProcessRunning = running;
+                }
+                catch
+                {
+                }
+                finally
+                {
+                    _desktopProbeInFlight = false;
+                }
+            });
+        }
+
+        private static LocusDesktopInstall ResolveDesktopInstall(LocusDesktopInstall known)
+        {
+            if (known != null
+                && known.IsInstalled
+                && !string.IsNullOrEmpty(known.ExecutablePath)
+                && File.Exists(known.ExecutablePath))
+                return known;
+
+            return FindLocusDesktopInstall();
         }
 
         private bool ShouldShowStartButton()
@@ -1717,15 +1858,39 @@ namespace Locus
         }
 #endif
 
-        private static long GetUnityHostHwnd(int screenX, int screenY, int width, int height)
+        private static long GetUnityHostHwnd(
+            int screenX,
+            int screenY,
+            int width,
+            int height,
+            long cachedHwnd,
+            bool forceProbe)
         {
 #if UNITY_EDITOR_WIN
+            IntPtr cached = new IntPtr(cachedHwnd);
+            if (!forceProbe && IsUnityHostWindowForRect(cached, screenX, screenY, width, height))
+                return cachedHwnd;
+
             IntPtr host = FindUnityHostWindowForRect(screenX, screenY, width, height);
             if (host != IntPtr.Zero)
                 return host.ToInt64();
 #endif
 
             return GetUnityMainHwnd();
+        }
+
+        private static bool IsUnityProcessForeground()
+        {
+#if UNITY_EDITOR_WIN
+            IntPtr foreground = GetForegroundWindow();
+            if (foreground == IntPtr.Zero)
+                return false;
+            uint processId;
+            GetWindowThreadProcessId(foreground, out processId);
+            return processId == (uint)Process.GetCurrentProcess().Id;
+#else
+            return true;
+#endif
         }
 
         private static long GetUnityMainHwnd()
@@ -1804,6 +1969,34 @@ namespace Locus
             return bestHwnd;
         }
 
+        private static bool IsUnityHostWindowForRect(
+            IntPtr hwnd,
+            int screenX,
+            int screenY,
+            int width,
+            int height)
+        {
+            if (hwnd == IntPtr.Zero || width <= 0 || height <= 0 || !IsWindowVisible(hwnd))
+                return false;
+
+            uint processId;
+            GetWindowThreadProcessId(hwnd, out processId);
+            if (processId != (uint)Process.GetCurrentProcess().Id)
+                return false;
+
+            NativeRect rect;
+            if (!GetWindowRect(hwnd, out rect))
+                return false;
+            NativeRect target = new NativeRect
+            {
+                left = screenX,
+                top = screenY,
+                right = screenX + width,
+                bottom = screenY + height
+            };
+            return IntersectionArea(target, rect) > 0;
+        }
+
         private static long IntersectionArea(NativeRect a, NativeRect b)
         {
             int left = Math.Max(a.left, b.left);
@@ -1856,9 +2049,9 @@ namespace Locus
             return FullPipeNamePrefix + GetControlPipeName();
         }
 
-        private static GUIContent CreateTitleContent()
+        private static GUIContent CreateTitleContent(string title)
         {
-            return new GUIContent("Locus", GetTitleIcon());
+            return new GUIContent(string.IsNullOrEmpty(title) ? "Locus" : title, GetTitleIcon());
         }
 
         private static Texture2D GetTitleIcon()
@@ -1977,6 +2170,9 @@ namespace Locus
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetActiveWindow();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);

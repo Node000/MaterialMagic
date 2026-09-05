@@ -3122,8 +3122,6 @@ public class HandSystemUI : MonoBehaviour
             DifficultyUpgradeSystem.InitializeNewRun(startingTutorialRun);
 
         PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
-        if (startingTutorialRun && playerStatus.Gold < 10)
-            playerStatus.AddGold(10 - playerStatus.Gold);
         if (saveData == null)
             DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
 			playerState = playerStatus;
@@ -5093,20 +5091,18 @@ public bool IsCardDragActive => cardDragActive;
 		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
 		//IL_009f: Expected O, but got Unknown
         ClearMapDirectionCardsFromHandArea();
+        List<HandCardView> obsoleteViews = new List<HandCardView>();
 		for (int num = cardViews.Count - 1; num >= 0; num--)
 		{
 			HandCardView view = cardViews[num];
 			if (!playerState.Hand.Contains(view.Card) && !playerState.PlayZone.Contains(view.Card))
 			{
 				cardViews.RemoveAt(num);
-				AnimateCardToArea(view, GetDiscardPileArea(), GetAreaCenterWorldPosition(GetDiscardPileArea()), 90f, (TweenCallback)delegate
-				{
-					//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-					//IL_0015: Expected O, but got Unknown
-					Object.Destroy((Object)((Component)view).gameObject);
-				});
+                obsoleteViews.Add(view);
 			}
 		}
+        if (obsoleteViews.Count > 0)
+            AnimateViewsToArea(obsoleteViews, GetDiscardPileArea(), null);
 		for (int num2 = 0; num2 < playerState.Hand.Count; num2++)
 		{
 			EnsureCardView(playerState.Hand[num2], inPlayZone: false, animateFromCurrent);
@@ -5161,8 +5157,6 @@ public bool IsCardDragActive => cardDragActive;
 
         private void SynchronizeCardSelectionState(bool instant)
         {
-            if (playerState != null)
-                UpdateLayout(instant);
             RefreshEndTurnButtonText();
             RefreshPlayerAnimationState();
         }
@@ -5267,18 +5261,18 @@ public bool IsCardDragActive => cardDragActive;
                     SetCardLayoutPosition(handCardView.RectTransform, position, playZone);
 					handCardView.SetBaseRotation(0f, instant: true);
 				}
-				else
-				{
-					bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
-					float drawDelay = 0f;
-					if (!animateFromExistingView)
-					{
-						int n = Mathf.Max(1, layoutCount);
-						float stagger = Mathf.Min(1f / n, 0.1f);
-						drawDelay = Mathf.Max(0f, (layoutCount - 1 - layoutIndex) * stagger);
-					}
-					AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView, drawDelay, !animateFromExistingView);
-				}
+                else
+                {
+                    bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
+                    float drawDelay = 0f;
+                    if (!animateFromExistingView)
+                    {
+                        // 抽取/入列：从左到右逐张启动，间隔 min(0.2, 1/数量)。
+                        float step = Mathf.Min(0.2f, 1f / Mathf.Max(1, layoutCount));
+                        drawDelay = layoutIndex * step;
+                    }
+                    AnimateCardToLayoutTarget(handCardView, area, position, playZone, animateFromExistingView, drawDelay, !animateFromExistingView);
+                }
 			}
 		}
 		}
@@ -5396,16 +5390,21 @@ public bool IsCardDragActive => cardDragActive;
 
         Vector3 targetLocalPosition = GetCardLayoutLocalPosition(view.RectTransform, targetAnchoredPosition, playZone);
         Vector3 baseScale = ((Transform)view.RectTransform).localScale;
-        if (createFromZero)
+        // 入场缩放动画若在首帧前被后续布局刷新打断，会永远停在 0 缩放；
+        // 此时补一个从 0 到完整缩放的收敛，避免新牌抽到手上但看不到。
+        bool restoreFromZero = createFromZero || baseScale.sqrMagnitude < 0.0001f;
+        if (restoreFromZero)
+            baseScale = Vector3.one;
+        if (restoreFromZero)
             ((Transform)view.RectTransform).localScale = Vector3.zero;
 
         Sequence sequence = DOTween.Sequence();
         if (delay > 0f)
-            TweenSettingsExtensions.SetDelay<Sequence>(sequence, delay);
-        TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, layoutDuration, false), layoutEase));
-        TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0), layoutEase));
-        if (createFromZero)
-            TweenSettingsExtensions.Join(sequence, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOScale((Transform)view.RectTransform, baseScale, layoutDuration), layoutEase));
+            sequence.AppendInterval(delay);
+        sequence.Append(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, layoutDuration, false).SetEase(layoutEase));
+        sequence.Join(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0).SetEase(layoutEase));
+        if (restoreFromZero)
+            sequence.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, baseScale, layoutDuration).SetEase(layoutEase));
         TweenSettingsExtensions.SetTarget<Sequence>(sequence, (object)view.RectTransform);
 	}
 
@@ -9913,11 +9912,29 @@ public bool IsCardDragActive => cardDragActive;
 			}
 			return;
 		}
-		int remaining = 0;
-		TweenCallback val = default(TweenCallback);
+
+		List<HandCardView> ordered = new List<HandCardView>(views.Count);
 		for (int i = 0; i < views.Count; i++)
 		{
-			HandCardView handCardView = views[i];
+			HandCardView v = views[i];
+			if ((Object)v != (Object)null)
+				ordered.Add(v);
+		}
+		if (ordered.Count == 0)
+		{
+			TweenCallback obj0 = onComplete;
+			if (obj0 != null)
+				obj0.Invoke();
+			return;
+		}
+		ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
+		// 临时牌溶解：同样从右到左逐张启动，间隔 min(0.2, 1/数量)。
+		float dissolveStep = Mathf.Min(0.2f, 1f / ordered.Count);
+		int remaining = 0;
+		TweenCallback val = default(TweenCallback);
+		for (int i = 0; i < ordered.Count; i++)
+		{
+			HandCardView handCardView = ordered[i];
 			if ((Object)handCardView == (Object)null)
 			{
 				continue;
@@ -9943,7 +9960,7 @@ public bool IsCardDragActive => cardDragActive;
 				val = val2;
 				obj2 = val3;
 			}
-			((MonoBehaviour)this).StartCoroutine(PlayTemporaryCardDissolve(handCardView, obj2));
+			((MonoBehaviour)this).StartCoroutine(PlayTemporaryCardDissolve(handCardView, obj2, i * dissolveStep));
 		}
 		if (remaining == 0)
 		{
@@ -9955,8 +9972,11 @@ public bool IsCardDragActive => cardDragActive;
 		}
 	}
 
-	private IEnumerator PlayTemporaryCardDissolve(HandCardView view, TweenCallback onComplete)
+	private IEnumerator PlayTemporaryCardDissolve(HandCardView view, TweenCallback onComplete, float delay = 0f)
 	{
+		if (delay > 0f)
+			yield return new WaitForSeconds(delay);
+
 		EnsureTemporaryCardDissolveMaterial();
 		Image[] componentsInChildren = ((Component)view).GetComponentsInChildren<Image>(true);
 		Material material = (((Object)(object)temporaryCardDissolveMaterialTemplate == (Object)null) ? ((Material)null) : new Material(temporaryCardDissolveMaterialTemplate));
@@ -10027,8 +10047,9 @@ public bool IsCardDragActive => cardDragActive;
 			return;
 		}
 
-		ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
-		float stagger = Mathf.Min(1f / ordered.Count, 0.1f);
+        ordered.Sort((HandCardView a, HandCardView b) => ((Transform)b.RectTransform).position.x.CompareTo(((Transform)a.RectTransform).position.x));
+        // 弃牌/回收：从右到左逐张启动，间隔 min(0.2, 1/数量)。
+        float discardStep = Mathf.Min(0.2f, 1f / ordered.Count);
 		int remaining = 0;
 		for (int j = 0; j < ordered.Count; j++)
 		{
@@ -10045,7 +10066,7 @@ public bool IsCardDragActive => cardDragActive;
 				{
 					if (onComplete != null) onComplete.Invoke();
 				}
-			}, j * stagger, true);
+				}, j * discardStep, true);
 		}
 		if (remaining == 0)
 		{
@@ -10087,11 +10108,11 @@ public bool IsCardDragActive => cardDragActive;
 		((Transform)view.RectTransform).rotation = rotation;
 		Sequence obj = DOTween.Sequence();
 		if (delay > 0f)
-			TweenSettingsExtensions.SetDelay<Sequence>(obj, delay);
-		TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOMove((Transform)view.RectTransform, targetWorldPosition, layoutDuration, false), layoutEase));
-		TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Quaternion, Vector3, QuaternionOptions>>(ShortcutExtensions.DORotate((Transform)view.RectTransform, new Vector3(0f, 0f, targetZRotation), layoutDuration, (RotateMode)0), layoutEase));
+			obj.AppendInterval(delay);
+		obj.Append(ShortcutExtensions.DOMove((Transform)view.RectTransform, targetWorldPosition, layoutDuration, false).SetEase(layoutEase));
+		obj.Join(ShortcutExtensions.DORotate((Transform)view.RectTransform, new Vector3(0f, 0f, targetZRotation), layoutDuration, (RotateMode)0).SetEase(layoutEase));
 		if (shrinkToZero)
-			TweenSettingsExtensions.Join(obj, (Tween)TweenSettingsExtensions.SetEase<TweenerCore<Vector3, Vector3, VectorOptions>>(ShortcutExtensions.DOScale((Transform)view.RectTransform, Vector3.zero, layoutDuration), layoutEase));
+			obj.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, Vector3.zero, layoutDuration).SetEase(layoutEase));
 		TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
 		TweenSettingsExtensions.OnComplete<Sequence>(obj, onComplete);
 	}

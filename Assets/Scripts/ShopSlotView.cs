@@ -18,6 +18,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private MagicItemView magicView;
     private MaterialCardView materialView;
     private JuicyMotion motion;
+    private SpringLineHighlightUI hoverStroke;
     private bool pointerInside;
 
     public RectTransform MagicVisualRect => magicView != null ? magicView.transform as RectTransform : null;
@@ -34,7 +35,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         ClearVisual();
 
         if (priceText != null)
-            priceText.text = offer != null && !offer.purchased ? offer.price + "$" : string.Empty;
+            priceText.text = offer != null && !offer.purchased ? FormatShopPrice(offer.price) : string.Empty;
         if (backgroundImage != null)
             backgroundImage.color = Color.clear;
         ApplyBaseScale(selected);
@@ -64,9 +65,15 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             motion = GetComponent<JuicyMotion>();
     }
 
+    public static string FormatShopPrice(int price)
+    {
+        return price > 0 ? price + "$" : LocalizationSystem.GetText("ui.shop.free", "免费");
+    }
+
     private void OnDisable()
     {
         pointerInside = false;
+        SetHoverOutline(false);
         ResetMotionState();
         if (offer != null && offer.kind == ShopItemKind.Material)
             owner?.HideMaterialTooltip(TooltipAnchor);
@@ -78,6 +85,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (offer != null && offer.kind == ShopItemKind.Material)
             owner?.ShowMaterialTooltip(TooltipAnchor, offer);
         transform.DOScale(Vector3.one * 1.1f, 0.12f).SetEase(Ease.OutBack).SetTarget(this);
+        SetHoverOutline(true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -86,6 +94,49 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (offer != null && offer.kind == ShopItemKind.Material)
             owner?.HideMaterialTooltip(TooltipAnchor);
         transform.DOScale(Vector3.one, 0.12f).SetEase(Ease.OutQuad).SetTarget(this);
+        SetHoverOutline(false);
+    }
+
+    private void EnsureHoverStroke()
+    {
+        if (hoverStroke != null)
+            return;
+
+        GameObject obj = new GameObject("HoverStroke", typeof(RectTransform), typeof(CanvasRenderer), typeof(SpringLineHighlightUI));
+        obj.transform.SetParent(transform, false);
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.SetAsLastSibling();
+
+        hoverStroke = obj.GetComponent<SpringLineHighlightUI>();
+        hoverStroke.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
+        hoverStroke.SetLineCount(2);
+        hoverStroke.SetLineWidth(2f);
+        hoverStroke.SetOutset(1.4f);
+        hoverStroke.SetFillEnabled(false);
+        hoverStroke.SetBindHoverTarget(false);
+        hoverStroke.color = Color.white;
+        hoverStroke.raycastTarget = false;
+        hoverStroke.gameObject.SetActive(false);
+    }
+
+    private void SetHoverOutline(bool visible)
+    {
+        if (!visible)
+        {
+            // 仅隐藏已存在的描边；不在 OnDisable/Awake（父物体激活/反激活）期间新建子物体。
+            if (hoverStroke != null)
+                hoverStroke.gameObject.SetActive(false);
+            return;
+        }
+
+        EnsureHoverStroke();
+        if (hoverStroke != null)
+            hoverStroke.gameObject.SetActive(true);
     }
 
     private void ApplyBaseScale(bool selected)

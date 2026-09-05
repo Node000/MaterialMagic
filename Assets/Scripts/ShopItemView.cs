@@ -38,7 +38,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (titleText != null)
             titleText.text = GetTitle(offer);
         if (priceText != null)
-            priceText.text = offer.price + "$";
+            priceText.text = ShopSlotView.FormatShopPrice(offer != null ? offer.price : 0);
         if (stateText != null)
             stateText.text = GetStateText(offer, canAfford, canUse, selected);
         if (backgroundImage != null)

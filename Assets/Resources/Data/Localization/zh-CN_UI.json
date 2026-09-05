@@ -1871,6 +1871,10 @@
     {
       "key": "arrow_upgrade.body_draw_2.description",
       "text": "每回合抽牌数+{0}。"
+    },
+    {
+      "key": "ui.shop.free",
+      "text": "免费"
     }
   ]
 }
