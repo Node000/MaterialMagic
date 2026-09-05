@@ -50004,7 +50004,7 @@ MonoBehaviour:
   materialCardPrefab: {fileID: 8528870140035376209, guid: 5a245cf3e163b134eadf8b70b0407a36, type: 3}
   shopItemSlotPrefab: {fileID: 0}
   shopArrowSlotPrefab: {fileID: 0}
-  shopLayerSeparatorPrefab: {fileID: 0}
+  shopLayerSeparatorPrefab: {fileID: 5274252077952852070, guid: 82b88d6b02ccd734789ae2248780425a, type: 3}
   titleText: {fileID: 0}
   hintText: {fileID: 0}
   goldText: {fileID: 2090616535}
@@ -53665,6 +53665,7 @@ MonoBehaviour:
   killTargetButton: {fileID: 1885103266}
   drawCardButton: {fileID: 223453488}
   goldButton: {fileID: 0}
+  randomEnchantButton: {fileID: 0}
   startRestButton: {fileID: 937075432}
   eventDropdown: {fileID: 393776267}
   startEventButton: {fileID: 1562346201}

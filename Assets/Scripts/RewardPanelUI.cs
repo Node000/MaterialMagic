@@ -36,6 +36,34 @@ public class RewardArrowOption
     public bool HasModifier => modifierData != null;
 }
 
+public sealed class RewardArrowChoiceHoverRelay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    private RewardPanelUI owner;
+    private RectTransform choiceRect;
+    private MaterialModel preview;
+    private SpringLineHighlightUI hoverFrame;
+
+    public void Initialize(RewardPanelUI owner, RectTransform choiceRect, MaterialModel preview, SpringLineHighlightUI hoverFrame)
+    {
+        this.owner = owner;
+        this.choiceRect = choiceRect;
+        this.preview = preview;
+        this.hoverFrame = hoverFrame;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (owner != null)
+            owner.SetArrowChoiceHover(choiceRect, preview, hoverFrame, true);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (owner != null)
+            owner.SetArrowChoiceHover(choiceRect, preview, hoverFrame, false);
+    }
+}
+
 public class RewardOptionView : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
@@ -100,6 +128,8 @@ public class RewardPanelUI : MonoBehaviour
     private RectTransform arrowChoiceContent;
     private Button arrowChoiceBackButton;
     private RectTransform cachedMaterialCardPrefab;
+    private RectTransform hoveredArrowChoice;
+    private SpringLineHighlightUI hoveredArrowHighlight;
     private RewardOptionsModel currentRewardOptions;
     private RewardOptionKind eliteExtraRewardKind;
     private Coroutine magicChoicePrewarmRoutine;
@@ -670,6 +700,7 @@ public class RewardPanelUI : MonoBehaviour
 
     private void HideArrowChoices()
     {
+        ClearArrowChoiceHover(false);
         if (arrowChoicePanel != null)
             arrowChoicePanel.gameObject.SetActive(false);
     }
@@ -764,6 +795,7 @@ public class RewardPanelUI : MonoBehaviour
         if (arrowChoiceContent == null)
             return;
 
+        ClearArrowChoiceHover(false);
         for (int i = arrowChoiceContent.childCount - 1; i >= 0; i--)
         {
             Transform child = arrowChoiceContent.GetChild(i);
@@ -772,7 +804,7 @@ public class RewardPanelUI : MonoBehaviour
         }
 
         int visibleChoiceCount = Mathf.Min(currentArrowOptions.Count, 3);
-        float spacing = 250f;
+        float spacing = 150f;
         float startX = visibleChoiceCount > 1 ? -spacing * (visibleChoiceCount - 1) * 0.5f : 0f;
         for (int i = 0; i < visibleChoiceCount; i++)
             CreateArrowChoiceView(i, startX + spacing * i);
@@ -786,16 +818,21 @@ public class RewardPanelUI : MonoBehaviour
 
         Image image = new GameObject("RewardArrow" + index, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Image>();
         image.transform.SetParent(arrowChoiceContent, false);
-        image.color = new Color(0.08f, 0.08f, 0.12f, 1f);
+        image.color = Color.clear;
         image.raycastTarget = true;
         RectTransform rect = image.rectTransform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(centerX, -6f);
-        rect.sizeDelta = new Vector2(210f, 250f);
+        rect.anchoredPosition = new Vector2(centerX, 0f);
+        rect.sizeDelta = new Vector2(100f, 130f);
 
-        RectTransform previewRect = CreateArrowPreview(rect, option, index);
+        MaterialModel preview;
+        RectTransform previewRect = CreateArrowPreview(rect, option, index, out preview);
+        SpringLineHighlightUI hoverFrame = CreateArrowChoiceHoverFrame(rect, previewRect);
+        RewardArrowChoiceHoverRelay hoverRelay = image.gameObject.AddComponent<RewardArrowChoiceHoverRelay>();
+        hoverRelay.Initialize(this, rect, preview, hoverFrame);
+
         Button button = image.GetComponent<Button>();
         button.transition = Selectable.Transition.None;
         button.onClick.RemoveAllListeners();
@@ -803,8 +840,16 @@ public class RewardPanelUI : MonoBehaviour
         button.onClick.AddListener(() => OnArrowOptionClicked(option, source));
     }
 
-    private RectTransform CreateArrowPreview(RectTransform parent, RewardArrowOption option, int index)
+    private RectTransform CreateArrowPreview(RectTransform parent, RewardArrowOption option, int index, out MaterialModel preview)
     {
+        preview = new MaterialModel("reward_arrow_" + index + "_" + option.material, option.material);
+        if (option.HasModifier)
+        {
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(option.modifierData);
+            if (modifier != null)
+                preview.AddModifier(modifier);
+        }
+
         RectTransform prefab = GetMaterialCardPrefab();
         if (prefab == null)
         {
@@ -819,24 +864,106 @@ public class RewardPanelUI : MonoBehaviour
         previewRect.anchorMin = new Vector2(0.5f, 0.5f);
         previewRect.anchorMax = new Vector2(0.5f, 0.5f);
         previewRect.pivot = new Vector2(0.5f, 0.5f);
-        previewRect.anchoredPosition = new Vector2(0f, 22f);
-        previewRect.sizeDelta = new Vector2(150f, 190f);
+        previewRect.anchoredPosition = new Vector2(0f, 0f);
+        previewRect.sizeDelta = new Vector2(82f, 118f);
         previewRect.localScale = Vector3.one;
 
         MaterialCardView cardView = previewRect.GetComponent<MaterialCardView>();
-        MaterialModel preview = new MaterialModel("reward_arrow_" + index + "_" + option.material, option.material);
-        if (option.HasModifier)
-        {
-            MaterialModifierModel modifier = MaterialModifierFactory.Create(option.modifierData);
-            if (modifier != null)
-                preview.AddModifier(modifier);
-        }
         if (cardView != null)
         {
             cardView.Bind(preview);
             DisableChildRaycasts(previewRect);
         }
         return previewRect;
+    }
+
+    private SpringLineHighlightUI CreateArrowChoiceHoverFrame(RectTransform parent, RectTransform previewRect)
+    {
+        GameObject frameObject = new GameObject("HoverFrame", typeof(RectTransform), typeof(CanvasRenderer), typeof(SpringLineHighlightUI));
+        frameObject.transform.SetParent(parent, false);
+        RectTransform frameRect = frameObject.GetComponent<RectTransform>();
+        frameRect.anchorMin = new Vector2(0.5f, 0.5f);
+        frameRect.anchorMax = new Vector2(0.5f, 0.5f);
+        frameRect.pivot = new Vector2(0.5f, 0.5f);
+        frameRect.anchoredPosition = previewRect != null ? previewRect.anchoredPosition : new Vector2(0f, -20f);
+        frameRect.sizeDelta = previewRect != null ? previewRect.sizeDelta : new Vector2(180f, 80f);
+
+        SpringLineHighlightUI frame = frameObject.GetComponent<SpringLineHighlightUI>();
+        frame.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
+        frame.SetLineCount(2);
+        frame.SetLineWidth(2.5f);
+        frame.SetOutset(2.7f);
+        frame.SetFillEnabled(false);
+        frame.SetBindHoverTarget(false);
+        frame.SetHideOnAwake(false);
+        frame.color = Color.white;
+        frame.raycastTarget = false;
+        frameRect.SetAsLastSibling();
+        frameObject.SetActive(false);
+        return frame;
+    }
+
+    internal void SetArrowChoiceHover(RectTransform choiceRect, MaterialModel preview, SpringLineHighlightUI hoverFrame, bool hovering)
+    {
+        if (choiceRect == null)
+            return;
+
+        if (!hovering)
+        {
+            if (hoveredArrowChoice == choiceRect)
+                ClearArrowChoiceHover(true);
+            return;
+        }
+
+        if (hoveredArrowChoice == choiceRect)
+            return;
+
+        ClearArrowChoiceHover(true);
+        hoveredArrowChoice = choiceRect;
+        hoveredArrowHighlight = hoverFrame;
+        if (hoverFrame != null)
+            hoverFrame.gameObject.SetActive(true);
+
+        choiceRect.DOKill(false);
+        choiceRect.DOScale(Vector3.one * 1.08f, 0.16f).SetEase(Ease.OutBack);
+        choiceRect.DOLocalRotate(new Vector3(0f, 0f, 2f), 0.16f).SetEase(Ease.OutBack);
+        if (owner != null && preview != null)
+        {
+            UIManager uiManager = owner.GetUIManager();
+            if (uiManager != null)
+                uiManager.ShowUnifiedDetailPopup(choiceRect, UnifiedDetailContentBuilder.Build(preview));
+        }
+    }
+
+    private void ClearArrowChoiceHover(bool animate)
+    {
+        RectTransform choiceRect = hoveredArrowChoice;
+        SpringLineHighlightUI hoverFrame = hoveredArrowHighlight;
+        hoveredArrowChoice = null;
+        hoveredArrowHighlight = null;
+        if (hoverFrame != null)
+            hoverFrame.gameObject.SetActive(false);
+        if (choiceRect == null)
+            return;
+
+        choiceRect.DOKill(false);
+        if (animate)
+        {
+            choiceRect.DOScale(Vector3.one, 0.12f).SetEase(Ease.OutQuad);
+            choiceRect.DOLocalRotate(Vector3.zero, 0.12f).SetEase(Ease.OutQuad);
+        }
+        else
+        {
+            choiceRect.localScale = Vector3.one;
+            choiceRect.localEulerAngles = Vector3.zero;
+        }
+
+        if (owner != null)
+        {
+            UIManager uiManager = owner.GetUIManager();
+            if (uiManager != null)
+                uiManager.HideUnifiedDetailPopup(choiceRect);
+        }
     }
 
     private RectTransform GetMaterialCardPrefab()

@@ -32,6 +32,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         this.clicked = clicked;
         CacheReferences();
         ResetMotionState();
+        SetHoverOutline(pointerInside && offer != null && offer.kind == ShopItemKind.Material);
         ClearVisual();
 
         if (priceText != null)
@@ -85,7 +86,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         if (offer != null && offer.kind == ShopItemKind.Material)
             owner?.ShowMaterialTooltip(TooltipAnchor, offer);
         transform.DOScale(Vector3.one * 1.1f, 0.12f).SetEase(Ease.OutBack).SetTarget(this);
-        SetHoverOutline(true);
+        SetHoverOutline(offer != null && offer.kind == ShopItemKind.Material);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -126,7 +127,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private void SetHoverOutline(bool visible)
     {
-        if (!visible)
+        if (!visible || offer == null || offer.kind != ShopItemKind.Material)
         {
             // 仅隐藏已存在的描边；不在 OnDisable/Awake（父物体激活/反激活）期间新建子物体。
             if (hoverStroke != null)
@@ -209,7 +210,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     rect.anchorMin = new Vector2(0.5f, 0.5f);
                     rect.anchorMax = new Vector2(0.5f, 0.5f);
                     rect.pivot = new Vector2(0.5f, 0.5f);
-                    rect.anchoredPosition = Vector2.zero;
+                    rect.anchoredPosition = new Vector2(0f, -16f);
                     rect.sizeDelta = new Vector2(196f, 92f);
                     rect.localScale = Vector3.one * 0.8f;
                     magicView?.Bind(MagicFactory.Create(offer.magicData));

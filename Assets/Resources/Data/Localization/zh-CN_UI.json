@@ -733,6 +733,22 @@
       "text": "选择要删的牌"
     },
     {
+      "key": "ui.shop.refresh.title",
+      "text": "刷新商品"
+    },
+    {
+      "key": "ui.shop.refresh.body",
+      "text": "消耗金币以刷新商店内所有商品"
+    },
+    {
+      "key": "ui.shop.remove.title",
+      "text": "删除箭头"
+    },
+    {
+      "key": "ui.shop.remove.body",
+      "text": "消耗金币以从牌组中删除一个箭头"
+    },
+    {
       "key": "ui.level_select.title",
       "text": "选择下一关"
     },

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 public enum ShopItemKind
@@ -263,6 +264,15 @@ public class ShopPanelUI : MonoBehaviour
             return;
         }
 
+        UIManager uiManager = owner?.GetUIManager();
+        if (uiManager != null)
+        {
+            if (refreshButton != null)
+                uiManager.HideUnifiedDetailPopup(refreshButton);
+            if (removeArrowButton != null)
+                uiManager.HideUnifiedDetailPopup(removeArrowButton);
+        }
+
         PlayCloseAnimation();
     }
 
@@ -510,7 +520,60 @@ public class ShopPanelUI : MonoBehaviour
             removeArrowButton.onClick.RemoveAllListeners();
             removeArrowButton.onClick.AddListener(BeginRemoveArrowPurchase);
         }
+        BindHoverDetail(refreshButton, BuildRefreshDetail);
+        BindHoverDetail(removeArrowButton, BuildRemoveArrowDetail);
         UpdateButtonCosts();
+    }
+
+    private void BindHoverDetail(Button button, Func<UnifiedDetailContent> contentProvider)
+    {
+        if (button == null)
+            return;
+
+        EventTrigger trigger = button.GetComponent<EventTrigger>();
+        if (trigger == null)
+            trigger = button.gameObject.AddComponent<EventTrigger>();
+
+        trigger.triggers.Clear();
+        EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => { UIManager ui = owner?.GetUIManager(); if (ui != null) ui.ShowUnifiedDetailPopup(button, contentProvider()); });
+        trigger.triggers.Add(enter);
+
+        EventTrigger.Entry exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => { UIManager ui = owner?.GetUIManager(); if (ui != null) ui.HideUnifiedDetailPopup(button); });
+        trigger.triggers.Add(exit);
+    }
+
+    private UnifiedDetailContent BuildRefreshDetail()
+    {
+        return new UnifiedDetailContent
+        {
+            SourceType = UnifiedDetailSourceType.None,
+            Title = LocalizationSystem.GetText("ui.shop.refresh.title", "刷新商品"),
+            Body = LocalizationSystem.GetText("ui.shop.refresh.body", "消耗金币以刷新商店内所有商品"),
+            Icon = GetButtonIcon(refreshButton),
+            AccentColor = new Color(0.94f, 0.76f, 0.34f, 1f)
+        };
+    }
+
+    private UnifiedDetailContent BuildRemoveArrowDetail()
+    {
+        return new UnifiedDetailContent
+        {
+            SourceType = UnifiedDetailSourceType.None,
+            Title = LocalizationSystem.GetText("ui.shop.remove.title", "删除箭头"),
+            Body = LocalizationSystem.GetText("ui.shop.remove.body", "消耗金币以从牌组中删除一个箭头"),
+            Icon = GetButtonIcon(removeArrowButton),
+            AccentColor = new Color(1f, 0.62f, 0.46f, 1f)
+        };
+    }
+
+    private static Sprite GetButtonIcon(Button button)
+    {
+        if (button == null)
+            return null;
+        Image image = button.GetComponent<Image>();
+        return image != null ? image.sprite : null;
     }
 
     private void UpdateButtonCosts()

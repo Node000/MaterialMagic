@@ -163,7 +163,7 @@ public class ShopItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     rect.anchorMin = new Vector2(0.5f, 0.5f);
                     rect.anchorMax = new Vector2(0.5f, 0.5f);
                     rect.pivot = new Vector2(0.5f, 0.5f);
-                    rect.anchoredPosition = Vector2.zero;
+                    rect.anchoredPosition = new Vector2(0f, -16f);
                     rect.sizeDelta = new Vector2(196f, 92f);
                     rect.localScale = Vector3.one * 0.8f;
                     magicView?.Bind(MagicFactory.Create(offer.magicData));

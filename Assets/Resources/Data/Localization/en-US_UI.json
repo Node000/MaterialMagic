@@ -733,6 +733,22 @@
       "text": "Choose a Card to Remove"
     },
     {
+      "key": "ui.shop.refresh.title",
+      "text": "Refresh Goods"
+    },
+    {
+      "key": "ui.shop.refresh.body",
+      "text": "Spend gold to refresh all goods in the shop"
+    },
+    {
+      "key": "ui.shop.remove.title",
+      "text": "Remove Arrow"
+    },
+    {
+      "key": "ui.shop.remove.body",
+      "text": "Spend gold to remove an arrow from your deck"
+    },
+    {
       "key": "ui.level_select.title",
       "text": "Choose the Next Level"
     },

@@ -280,6 +280,7 @@ public class MaterialModifierRTChain : MonoBehaviour
         RenderTexture rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32)
         {
             name = "ModifierRTStage",
+            filterMode = FilterMode.Point,
             hideFlags = HideFlags.DontSave
         };
         rt.Create();
@@ -295,6 +296,7 @@ public class MaterialModifierRTChain : MonoBehaviour
         resultRT = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32)
         {
             name = "ModifierRTResult",
+            filterMode = FilterMode.Point,
             hideFlags = HideFlags.DontSave
         };
         resultRT.Create();
