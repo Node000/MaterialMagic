@@ -393,11 +393,44 @@ public class RewardPanelUI : MonoBehaviour
         if (economy == null)
             return battleGoldReward;
 
-        bool eliteReward = owner != null && owner.RunManager != null && owner.RunManager.CurrentLevel != null && owner.RunManager.CurrentLevel.levelType == LevelType.Elite;
-        int min = eliteReward ? Mathf.Min(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Min(economy.battleGoldMin, economy.battleGoldMax);
-        int max = eliteReward ? Mathf.Max(economy.eliteBattleGoldMin, economy.eliteBattleGoldMax) : Mathf.Max(economy.battleGoldMin, economy.battleGoldMax);
-        int reward = owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(min, max + 1) : UnityEngine.Random.Range(min, max + 1);
+        RunManager runManager = owner != null ? owner.RunManager : null;
+        ChapterData chapter = runManager != null ? runManager.ActiveChapter : null;
+        LevelData level = runManager != null ? runManager.CurrentLevel : null;
+        bool bossFlag = runManager != null && runManager.CurrentBattle != null && runManager.CurrentBattle.CurrentLevelIsBoss;
+
+        int reward = ResolveBattleGold(economy, chapter, level, bossFlag);
         return DifficultyUpgradeSystem.ModifyGoldGain(reward);
+    }
+
+    private static int ResolveBattleGold(EconomyConfigData economy, ChapterData chapter, LevelData level, bool bossFlag)
+    {
+        if (level == null)
+            return economy.battleGoldMin;
+
+        bool bossLevel = bossFlag || ContainsId(chapter != null ? chapter.BossPool : null, level.numericId);
+        bool eliteLevel = level.levelType == LevelType.Elite || ContainsId(chapter != null ? chapter.ElitePool : null, level.numericId);
+        if (bossLevel || eliteLevel)
+            return economy.eliteBattleGoldMin;
+
+        if (ContainsId(chapter != null ? chapter.BeginPool : null, level.numericId))
+            return economy.weakBattleGold > 0 ? economy.weakBattleGold : economy.battleGoldMin;
+        if (ContainsId(chapter != null ? chapter.MidPool : null, level.numericId))
+            return economy.battleGoldMin;
+        if (ContainsId(chapter != null ? chapter.NormalPool : null, level.numericId))
+            return economy.strongBattleGold > 0 ? economy.strongBattleGold : economy.battleGoldMin;
+        return economy.battleGoldMin;
+    }
+
+    private static bool ContainsId(int[] pool, int numericId)
+    {
+        if (pool == null)
+            return false;
+        for (int i = 0; i < pool.Length; i++)
+        {
+            if (pool[i] == numericId)
+                return true;
+        }
+        return false;
     }
 
     private void ShowMagicChoices()
@@ -702,6 +735,11 @@ public class RewardPanelUI : MonoBehaviour
             hint.text = LocalizationSystem.GetText("ui.reward_panel.arrow_choice.hint", "获得后会加入你的箭头牌组；小概率带附魔。");
 
         arrowChoiceBackButton = UIManager.FindChildComponent<Button>(arrowChoicePanel, "BackButton");
+        if (arrowChoiceBackButton == null)
+        {
+            Transform styled = arrowChoicePanel.Find("PopupDragonWindowBackground/BackButton");
+            arrowChoiceBackButton = styled != null ? styled.GetComponent<Button>() : null;
+        }
         if (arrowChoiceBackButton != null)
         {
             arrowChoiceBackButton.onClick.RemoveAllListeners();
