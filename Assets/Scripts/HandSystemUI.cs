@@ -6946,7 +6946,9 @@ public bool IsCardDragActive => cardDragActive;
         int lastChapterNumericId = 0;
         foreach (ChapterData data in GameDataDatabase.ChapterData.Values)
         {
-            if (data != null && data.numericId > lastChapterNumericId)
+            // The tutorial chapter (numericId 100) is not a playable run chapter;
+            // exclude it so a single-chapter run (e.g. chapter_001) is treated as final.
+            if (data != null && data.numericId != TutorialManagerUI.TutorialChapterNumericId && data.numericId > lastChapterNumericId)
                 lastChapterNumericId = data.numericId;
         }
         return chapter.numericId >= lastChapterNumericId;
