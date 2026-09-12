@@ -13565,7 +13565,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   closeButton: {fileID: 2083979202}
   itemRoot: {fileID: 209327358}
-  magicViewPrefab: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+  magicViewPrefab: {fileID: 2083025969316825768, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
   countText: {fileID: 437363811}
   detailNameText: {fileID: 1160579990}
   detailRarityText: {fileID: 1818737045}
@@ -18243,7 +18243,7 @@ MonoBehaviour:
   buildListText: {fileID: 1834810678}
   arrowDetailText: {fileID: 1948635518}
   magicRoot: {fileID: 1924682937}
-  magicViewPrefab: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+  magicViewPrefab: {fileID: 2083025969316825768, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
   arrowRowUI: {fileID: 886622678}
   defaultMagicSlotCount: 8
 --- !u!114 &2077385135

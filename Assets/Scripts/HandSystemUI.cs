@@ -5416,12 +5416,16 @@ public bool IsCardDragActive => cardDragActive;
 
 				position = new Vector2(x, y);
 				handCardView.SetInPlayZone(playZone);
-				if (instant)
-				{
-					((Transform)handCardView.RectTransform).SetParent((Transform)area, false);
+                if (instant)
+                {
+                    ((Transform)handCardView.RectTransform).SetParent((Transform)area, false);
                     SetCardLayoutPosition(handCardView.RectTransform, position, playZone);
 					handCardView.SetBaseRotation(0f, instant: true);
-				}
+                    // 瞬发布局没有补间机会，被打断的中间缩放直接归位。
+                    Vector3 instantScale = ((Transform)handCardView.RectTransform).localScale;
+                    if (instantScale.x < 0.999f || instantScale.y < 0.999f)
+                        ((Transform)handCardView.RectTransform).localScale = Vector3.one;
+                }
                 else
                 {
                     bool animateFromExistingView = (Object)((Transform)handCardView.RectTransform).parent == (Object)area && !newCardViews.Remove(handCardView);
@@ -5551,12 +5555,14 @@ public bool IsCardDragActive => cardDragActive;
 
         Vector3 targetLocalPosition = GetCardLayoutLocalPosition(view.RectTransform, targetAnchoredPosition, playZone);
         Vector3 baseScale = ((Transform)view.RectTransform).localScale;
-        // 入场缩放动画若在首帧前被后续布局刷新打断，会永远停在 0 缩放；
-        // 此时补一个从 0 到完整缩放的收敛，避免新牌抽到手上但看不到。
-        bool restoreFromZero = createFromZero || baseScale.sqrMagnitude < 0.0001f;
+        // 入场缩放动画（0 → 完整缩放）会被后续布局刷新或拖拽的 DOKill 打断，停在中间的小缩放上；
+        // 旧的“仅当缩放≈0 才补”判不到这种中间值，于是牌就永远保持很小，直到 hover 触发 PlayFeedback。
+        // 这里把任何未达到完整缩放的牌也补一次收敛（hover 的放大值 >1 不受影响）。
+        bool incompleteScale = baseScale.x < 0.999f || baseScale.y < 0.999f;
+        bool restoreFromZero = createFromZero || incompleteScale;
         if (restoreFromZero)
             baseScale = Vector3.one;
-        if (restoreFromZero)
+        if (createFromZero)
             ((Transform)view.RectTransform).localScale = Vector3.zero;
 
         Sequence sequence = DOTween.Sequence();

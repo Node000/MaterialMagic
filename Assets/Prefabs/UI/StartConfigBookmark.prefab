@@ -655,11 +655,11 @@ MonoBehaviour:
   rectTransform: {fileID: 1993870111342497454}
   backgroundImage: {fileID: 3715275972567384031}
   textureImage: {fileID: 8848186091525747732}
-  nameText: {fileID: 966777387800038059}
+  deckNameText: {fileID: 966777387800038059}
   healthText: {fileID: 1037492018408723246}
   magicRoot: {fileID: 6614923704011424982}
   materialRoot: {fileID: 4912340120882298935}
-  magicViewPrefab: {fileID: 3584544211444736926, guid: 734dd1792f030f2498ec2d956bdec869, type: 3}
+  magicViewPrefab: {fileID: 2083025969316825768, guid: 8a9a73d9f734da940a365d246a74394b, type: 3}
   materialCardPrefab: {fileID: 2150081298421458138, guid: 5a245cf3e163b134eadf8b70b0407a36, type: 3}
   magicPreviewSlotCount: 4
   magicItemFallbackSize: {x: 196, y: 92}
@@ -675,6 +675,10 @@ MonoBehaviour:
   windowCloseButton: {fileID: 7349904133642345471}
   selectTextKey: ui.start_config.select
   selectedTextKey: ui.start_config.selected
+  lockedTextKey: ui.start_config.locked
+  lockedBackgroundTint: {r: 0.25, g: 0.25, b: 0.25, a: 0.65}
+  lockedButtonColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  lockedTextColor: {r: 0.78, g: 0.78, b: 0.78, a: 1}
   selectButtonUnselectedOutlineColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
   selectButtonUnselectedTextColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
   selectButtonSelectedFillColor: {r: 0.18, g: 0.68, b: 0.28, a: 1}
@@ -682,6 +686,9 @@ MonoBehaviour:
   enterDuration: 0.34
   selectDuration: 0.34
   exitDuration: 0.34
+  enterStartScale: 0
+  exitEndScale: 0
+  selectedScale: 1.035
   enterEase: 9
   selectEase: 9
   exitEase: 9

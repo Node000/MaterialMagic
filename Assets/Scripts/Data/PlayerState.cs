@@ -27,6 +27,9 @@ public class PlayerState
     private int extraRefreshChancesThisTurn;
     private int permanentRefreshChancesUsedThisTurn;
 
+    /// <summary>本回合已占用打出额度的箭头；点回手牌时凭此退还额度，避免退错保留/效果入区的箭头。</summary>
+    private readonly HashSet<MaterialModel> playLimitChargedCards = new HashSet<MaterialModel>();
+
     /// <summary>每回合玩家主动打出箭头的默认上限。</summary>
     public const int DefaultPlayLimitPerTurn = 7;
 
@@ -480,7 +483,10 @@ public class PlayerState
                 AddRandomEnemyDebuff(1);
         }
         if (countPlayLimit && !card.IgnoresPlayLimit())
+        {
+            playLimitChargedCards.Add(card);
             PlayedCardCountThisTurn++;
+        }
         GameLog.Data($"Move card {DescribeMaterial(card)} hand->playZone. hand={Hand.Count} playZone={PlayZone.Count} playedThisTurn={PlayedCardCountThisTurn}");
         return true;
     }
@@ -500,6 +506,17 @@ public class PlayerState
     public void ResetPlayedCardCountThisTurn()
     {
         PlayedCardCountThisTurn = 0;
+        playLimitChargedCards.Clear();
+    }
+
+    /// <summary>把尚未消耗的已打出箭头点回手牌时退还本回合打出额度（保留箭头与效果入区的箭头不在册，不会误退）。</summary>
+    private void RefundPlayLimitForReturnedCard(MaterialModel card)
+    {
+        if (card == null || !playLimitChargedCards.Remove(card))
+            return;
+
+        PlayedCardCountThisTurn = Mathf.Max(0, PlayedCardCountThisTurn - 1);
+        GameLog.Data($"Player cancel play refunds play limit. playedThisTurn={PlayedCardCountThisTurn}");
     }
 
     /// <summary>被附魔禁用的箭头无法从手牌置入出牌区（旧 AttributeDisabled Buff 的直接判定已改为附魔效果）。</summary>
@@ -552,6 +569,7 @@ public class PlayerState
         TriggerAfterDiscard(card);
         Hand.Insert(Mathf.Clamp(handIndex, 0, Hand.Count), card);
         TriggerAfterEnterHand(card);
+        RefundPlayLimitForReturnedCard(card);
         GameLog.Data($"Move card {DescribeMaterial(card)} playZone->hand. hand={Hand.Count} playZone={PlayZone.Count}");
         return true;
     }
@@ -1186,6 +1204,7 @@ public class PlayerState
         Shield = Mathf.Max(0, shield);
         this.extraRefreshChancesThisTurn = Mathf.Max(0, extraRefreshChancesThisTurn);
         PlayedCardCountThisTurn = Mathf.Max(0, playedCardCountThisTurn);
+        playLimitChargedCards.Clear();
         Hand.Clear();
         DrawPile.Clear();
         DiscardPile.Clear();
@@ -1198,6 +1217,14 @@ public class PlayerState
         AddCombatCards(PlayZone, playZone, true);
         AddCombatCards(ConsumedPile, consumedPile, false);
         AddCombatCards(TemporaryMaterialsNextTurn, temporaryMaterialsNextTurn, false);
+
+        // 读档恢战：出牌区里未消耗的箭头按“本回合已打出”重新记账，使其点回手牌时能正常退还额度。
+        for (int i = 0; i < PlayZone.Count; i++)
+        {
+            MaterialModel card = PlayZone[i];
+            if (card != null && !card.IgnoresPlayLimit())
+                playLimitChargedCards.Add(card);
+        }
     }
 
     private static void AddCombatCards(List<MaterialModel> target, IReadOnlyList<MaterialModel> source, bool isPlayed)
@@ -1228,7 +1255,7 @@ public class PlayerState
         extraRefreshChancesThisTurn = 0;
         RefreshLimitReductionThisTurn = 0;
         HandLimitThisTurn = int.MaxValue;
-        PlayedCardCountThisTurn = 0;
+        ResetPlayedCardCountThisTurn();
     }
 
     public void RemoveBattleOnlyArrowState()
