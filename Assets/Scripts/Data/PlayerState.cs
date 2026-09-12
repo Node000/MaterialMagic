@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 public class PlayerState
 {
+    /// <summary>占位符（进阶负担）素材卡的 instanceId 前缀；占位符只用于占用卡组，不可被任何删牌流程移除。</summary>
+    public const string DeckPlaceholderInstanceIdPrefix = "deck_placeholder_";
+
     public static string SelectedStartConfigId { get; set; } = "balanced";
     public static bool ContinueSavedRun { get; set; }
     public static bool GameSceneEntryRequested { get; set; }
@@ -24,12 +27,19 @@ public class PlayerState
     private int extraRefreshChancesThisTurn;
     private int permanentRefreshChancesUsedThisTurn;
 
+    /// <summary>每回合玩家主动打出箭头的默认上限。</summary>
+    public const int DefaultPlayLimitPerTurn = 7;
+
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
     public int Gold { get; private set; }
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
     public int MaxPlayCount { get; set; } = 3;
+    public int PlayLimitPerTurn { get; set; } = DefaultPlayLimitPerTurn;
+    public int PlayedCardCountThisTurn { get; private set; }
+    public int RemainingPlayCount => Mathf.Max(0, PlayLimitPerTurn - PlayedCardCountThisTurn);
+    public bool IsPlayLimitReached => PlayedCardCountThisTurn >= PlayLimitPerTurn;
     public int RefreshLimitReductionThisTurn { get; private set; }
     public int HandLimitThisTurn { get; private set; } = int.MaxValue;
     public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
@@ -142,6 +152,7 @@ public class PlayerState
         DrawPile.RemoveAt(randomIndex);
         Hand.Add(card);
         card.TriggerOnDraw();
+        TriggerAfterEnterHand(card);
         if (triggerAfterDraw)
             TriggerAfterDraw(card);
         GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
@@ -194,6 +205,7 @@ public class PlayerState
             card.isPlayed = false;
             Hand.Add(card);
             card.TriggerOnDraw();
+            TriggerAfterEnterHand(card);
             TriggerAfterDraw(card);
             drawnCount++;
             GameLog.Data($"Draw fixed material {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
@@ -436,6 +448,15 @@ public class PlayerState
 
     public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex, bool allowDisabled)
     {
+        return TryMoveHandCardToPlay(card, playZoneIndex, allowDisabled, false);
+    }
+
+    /// <summary>
+    /// 将手牌箭头置入出牌区。countPlayLimit 为 true 时按本回合打出上限判定并累计额度（仅玩家主动打出使用，
+    /// 事件/奖励等非战斗选择与效果类入区传 false）。带【临时】等豁免附魔的箭头不受上限拦截，也不占用额度。
+    /// </summary>
+    public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex, bool allowDisabled, bool countPlayLimit)
+    {
         if (card == null)
             return false;
 
@@ -444,6 +465,9 @@ public class PlayerState
             return false;
 
         if (!allowDisabled && IsMaterialDisabled(card))
+            return false;
+
+        if (countPlayLimit && !CanPlayCardFromHand(card))
             return false;
 
         Hand.RemoveAt(index);
@@ -455,17 +479,36 @@ public class PlayerState
             if (PlayZone.Count > 4)
                 AddRandomEnemyDebuff(1);
         }
-        GameLog.Data($"Move card {DescribeMaterial(card)} hand->playZone. hand={Hand.Count} playZone={PlayZone.Count}");
+        if (countPlayLimit && !card.IgnoresPlayLimit())
+            PlayedCardCountThisTurn++;
+        GameLog.Data($"Move card {DescribeMaterial(card)} hand->playZone. hand={Hand.Count} playZone={PlayZone.Count} playedThisTurn={PlayedCardCountThisTurn}");
         return true;
     }
 
+    /// <summary>本回合是否还能从手牌打出该箭头；带【临时】等豁免附魔的箭头不受上限限制。</summary>
+    public bool CanPlayCardFromHand(MaterialModel card)
+    {
+        if (card == null)
+            return false;
+
+        if (card.IgnoresPlayLimit())
+            return true;
+
+        return !IsPlayLimitReached;
+    }
+
+    public void ResetPlayedCardCountThisTurn()
+    {
+        PlayedCardCountThisTurn = 0;
+    }
+
+    /// <summary>被附魔禁用的箭头无法从手牌置入出牌区（旧 AttributeDisabled Buff 的直接判定已改为附魔效果）。</summary>
     public bool IsMaterialDisabled(MaterialModel card)
     {
         if (card == null)
             return false;
 
-        int disabledMaterial = GetBuffStack(BuffEnum.AttributeDisabled);
-        return disabledMaterial > 0 && (int)card.material == disabledMaterial;
+        return !card.CanPlay();
     }
 
     private void AddRandomEnemyDebuff(int stack)
@@ -508,6 +551,7 @@ public class PlayerState
         card.TriggerOnDiscard();
         TriggerAfterDiscard(card);
         Hand.Insert(Mathf.Clamp(handIndex, 0, Hand.Count), card);
+        TriggerAfterEnterHand(card);
         GameLog.Data($"Move card {DescribeMaterial(card)} playZone->hand. hand={Hand.Count} playZone={PlayZone.Count}");
         return true;
     }
@@ -627,6 +671,7 @@ public class PlayerState
 
                 replacement.isPlayed = false;
                 Hand.Add(replacement);
+                TriggerAfterEnterHand(replacement);
                 drawnCount++;
             }
         }
@@ -727,6 +772,7 @@ public class PlayerState
             {
                 replacement.isPlayed = false;
                 Hand.Insert(Mathf.Clamp(slots[i].Index, 0, Hand.Count), replacement);
+                TriggerAfterEnterHand(replacement);
             }
         }
 
@@ -1135,10 +1181,11 @@ public class PlayerState
         GameLog.Data("Player clear shield");
     }
 
-    public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn, int extraRefreshChancesThisTurn = 0)
+    public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn, int extraRefreshChancesThisTurn = 0, int playedCardCountThisTurn = 0)
     {
         Shield = Mathf.Max(0, shield);
         this.extraRefreshChancesThisTurn = Mathf.Max(0, extraRefreshChancesThisTurn);
+        PlayedCardCountThisTurn = Mathf.Max(0, playedCardCountThisTurn);
         Hand.Clear();
         DrawPile.Clear();
         DiscardPile.Clear();
@@ -1181,6 +1228,7 @@ public class PlayerState
         extraRefreshChancesThisTurn = 0;
         RefreshLimitReductionThisTurn = 0;
         HandLimitThisTurn = int.MaxValue;
+        PlayedCardCountThisTurn = 0;
     }
 
     public void RemoveBattleOnlyArrowState()
@@ -1258,6 +1306,35 @@ public class PlayerState
         RemoveTurnOnlyModifiers(TemporaryMaterialsNextTurn);
     }
 
+    /// <summary>
+    /// 移除禁用附魔：material 为 None 时清除全部，否则只清该方向。
+    /// 用于属性禁用 Buff 被覆盖或提前移除时，使 Buff 显示与实际情况保持一致。
+    /// </summary>
+    public void ClearDisabledArrowModifiers(MaterialEnum material)
+    {
+        ClearDisabledArrowModifiersIn(Hand, material);
+        ClearDisabledArrowModifiersIn(PlayZone, material);
+        ClearDisabledArrowModifiersIn(DrawPile, material);
+        ClearDisabledArrowModifiersIn(DiscardPile, material);
+        ClearDisabledArrowModifiersIn(ConsumedPile, material);
+        ClearDisabledArrowModifiersIn(Deck, material);
+        ClearDisabledArrowModifiersIn(TemporaryMaterialsNextTurn, material);
+    }
+
+    private static void ClearDisabledArrowModifiersIn(List<MaterialModel> cards, MaterialEnum material)
+    {
+        for (int i = 0; cards != null && i < cards.Count; i++)
+        {
+            MaterialModel card = cards[i];
+            if (card == null)
+                continue;
+            if (material != MaterialEnum.None && card.material != material)
+                continue;
+
+            card.RemoveModifiers<DisabledArrowModifier>();
+        }
+    }
+
     private static void RemoveTurnOnlyModifiers(List<MaterialModel> cards)
     {
         if (cards == null)
@@ -1299,10 +1376,20 @@ public class PlayerState
 
         if (buffType == BuffEnum.AttributeDisabled)
         {
+            int previousMaterial = 0;
             if (buffs.TryGetValue(buffType, out BuffModel existingAttributeBuff))
+            {
+                previousMaterial = existingAttributeBuff.stack;
                 existingAttributeBuff.stack = stack;
+            }
             else
+            {
                 buffs.Add(buffType, BuffModel.Create(buffType, stack));
+            }
+
+            // 方向被改写时，同步解除旧方向的禁用附魔，避免 Buff 显示与实际可打出状态不一致。
+            if (previousMaterial > 0 && previousMaterial != stack)
+                ClearDisabledArrowModifiers((MaterialEnum)previousMaterial);
 
             GameLog.Data($"Player add buff {buffType} material={stack} now={GetBuffStack(buffType)}");
             BuffAdded?.Invoke(buffType, stack);
@@ -1391,6 +1478,12 @@ public class PlayerState
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDraw(self, card));
         ArrowUpgradeSystem.TriggerOnDraw(this, card, BattleManager.Instance);
+    }
+
+    /// <summary>箭头进入手牌的统一切点，用于由 Buff 给新手牌补打附魔。</summary>
+    public void TriggerAfterEnterHand(MaterialModel card)
+    {
+        TriggerBuffs(null, (buff, self, target) => buff.AfterEnterHand(self, card));
     }
 
     public int DrawArrowUpgradeBonusCard(int count = 1)
@@ -1636,6 +1729,7 @@ public class PlayerState
 
             Hand.Add(source);
             source.TriggerOnDraw();
+            TriggerAfterEnterHand(source);
             TriggerAfterDraw(source);
             addedCards.Add(source);
             GameLog.Data($"Add scheduled material to hand {DescribeMaterial(source)}");
@@ -1685,6 +1779,7 @@ public class PlayerState
         card.AddModifier(new TemporaryModifier());
         Hand.Add(card);
         card.TriggerOnDraw();
+        TriggerAfterEnterHand(card);
         TriggerAfterDraw(card);
         GameLog.Data($"Add temporary material to hand {DescribeMaterial(card)}");
         return card;
@@ -1711,16 +1806,28 @@ public class PlayerState
 
     public MaterialModel AddDeckPlaceholderMaterial()
     {
-        MaterialModel card = new MaterialModel("deck_placeholder_" + temporaryMaterialIndex++, MaterialEnum.None);
+        MaterialModel card = new MaterialModel(DeckPlaceholderInstanceIdPrefix + temporaryMaterialIndex++, MaterialEnum.None);
         Deck.Add(card);
         DrawPile.Add(card);
         GameLog.Data($"Add deck placeholder {DescribeMaterial(card)}");
         return card;
     }
 
-    public bool RemoveCardEverywhere(MaterialModel card)
+    /// <summary>占位符卡（无基础效果、由进阶负担生成）不能被永久删除。</summary>
+    public static bool IsDeckPlaceholderMaterial(MaterialModel card)
     {
         if (card == null)
+            return false;
+
+        if (!string.IsNullOrEmpty(card.instanceId) && card.instanceId.StartsWith(DeckPlaceholderInstanceIdPrefix))
+            return true;
+
+        return card.material == MaterialEnum.None;
+    }
+
+    public bool RemoveCardEverywhere(MaterialModel card)
+    {
+        if (card == null || IsDeckPlaceholderMaterial(card))
             return false;
 
         bool removed = false;

@@ -181,8 +181,17 @@ MonoBehaviour:
           displayType: defend
           descriptionKey: 
       intentLoop:
-      - groupId: 0
-        randomGroupIds: 01000000020000000300000004000000
+      - groupId: 1
+        randomGroupIds: 
+        onlyOnce: 0
+      - groupId: 2
+        randomGroupIds: 
+        onlyOnce: 0
+      - groupId: 3
+        randomGroupIds: 
+        onlyOnce: 0
+      - groupId: 4
+        randomGroupIds: 
         onlyOnce: 0
       intentPool: []
     intentGroups: []

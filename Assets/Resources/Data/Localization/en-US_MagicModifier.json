@@ -53,6 +53,54 @@
       "text": "If this item triggered 2 times this turn, draw 1 extra arrow next turn."
     },
     {
+      "key": "magic_modifier.mercury_weak.name",
+      "text": "Mercury"
+    },
+    {
+      "key": "magic_modifier.mercury_weak.desc",
+      "text": "When this item triggers, a random enemy gains 2 【Weak】."
+    },
+    {
+      "key": "magic_modifier.mirror_reverse_recipe.name",
+      "text": "Mirror"
+    },
+    {
+      "key": "magic_modifier.mirror_reverse_recipe.desc",
+      "text": "This item's recipe order is reversed."
+    },
+    {
+      "key": "magic_modifier.rupture_vulnerable.name",
+      "text": "Rupture"
+    },
+    {
+      "key": "magic_modifier.rupture_vulnerable.desc",
+      "text": "When this item triggers, a random enemy gains 2 【Vulnerable】."
+    },
+    {
+      "key": "magic_modifier.midas_gold.name",
+      "text": "Midas"
+    },
+    {
+      "key": "magic_modifier.midas_gold.desc",
+      "text": "The first time this item triggers each battle, gain 1 gold."
+    },
+    {
+      "key": "magic_modifier.regeneration_heal.name",
+      "text": "Regeneration"
+    },
+    {
+      "key": "magic_modifier.regeneration_heal.desc",
+      "text": "The first time this item triggers each battle, restore 3 health."
+    },
+    {
+      "key": "magic_modifier.bulwark_shield.name",
+      "text": "Bulwark"
+    },
+    {
+      "key": "magic_modifier.bulwark_shield.desc",
+      "text": "When this item triggers, gain 2 shield."
+    },
+    {
       "key": "rest.option.rest",
       "text": "Recover Health"
     },

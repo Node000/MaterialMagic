@@ -90,6 +90,11 @@ public class MagicModifierModel
         }
     }
 
+    public virtual MaterialEnum[] ModifyRecipe(MaterialEnum[] recipe)
+    {
+        return recipe;
+    }
+
     protected MagicModifierContext Context => CurrentContext;
 
     public static MagicModifierContext CurrentContext { get; set; }

@@ -105,6 +105,14 @@
       "text": "这张牌本回合无法打出！"
     },
     {
+      "key": "ui.battle.play_limit_reached",
+      "text": "本回合打出数量已达上限！"
+    },
+    {
+      "key": "ui.battle.play_limit_format",
+      "text": "{0}/{1}"
+    },
+    {
       "key": "ui.start_menu.start_tutorial",
       "text": "开始教程"
     },
@@ -670,7 +678,7 @@
     },
     {
       "key": "ui.reward_panel.title",
-      "text": "战斗奖励"
+      "text": "选择一个奖励"
     },
     {
       "key": "ui.reward_panel.hint",
@@ -1222,11 +1230,11 @@
     },
     {
       "key": "difficulty.reward_magic_choices_minus_1.name",
-      "text": "道具奖励选项-1"
+      "text": "结算无额外金币"
     },
     {
       "key": "difficulty.reward_magic_choices_minus_1.desc",
-      "text": "道具奖励少一个可选项。"
+      "text": "战斗结算不再提供“更多金币”选项。"
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
@@ -1566,11 +1574,11 @@
     },
     {
       "key": "difficulty.reward_magic_choices_plus_1.name",
-      "text": "道具奖励选项+1"
+      "text": "结算恢复额外金币"
     },
     {
       "key": "difficulty.reward_magic_choices_plus_1.desc",
-      "text": "道具奖励多一个可选项。"
+      "text": "抵消“结算无额外金币”，恢复结算的“更多金币”选项。"
     },
     {
       "key": "difficulty.starting_magic_slots_plus_1_a7.name",
@@ -1891,6 +1899,10 @@
     {
       "key": "ui.shop.free",
       "text": "免费"
+    },
+    {
+      "key": "ui.reward_panel.choice.gold",
+      "text": "金币x{0}"
     }
   ]
 }

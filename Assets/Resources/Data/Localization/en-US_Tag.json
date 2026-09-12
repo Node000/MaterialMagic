@@ -46,7 +46,7 @@
     },
     {
       "key": "tag.vulnerable.desc",
-      "text": "Each stack increases damage taken by 1. Lose 1 stack after taking damage."
+      "text": "Each stack increases damage taken by 1. Halve the stacks after taking damage."
     },
     {
       "key": "tag.slow.name",

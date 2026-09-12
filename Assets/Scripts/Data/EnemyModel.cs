@@ -129,7 +129,7 @@ public class EnemyModel : UnitModel
 
         CurrentHealth = 0;
         Shield = 0;
-        TriggerOnDie(attacker);
+        QueueOrResolveDeath(attacker);
     }
 
     public void KillAsBattleCleanup()
@@ -280,14 +280,14 @@ public class EnemyModel : UnitModel
         return TakeDamageResult(damage, attacker, BuffEnum.None);
     }
 
-    private CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker, BuffEnum ignoredOnTakeDamageBuff)
+    private CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker, BuffEnum ignoredBuff)
     {
         CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
             return result;
 
         int remainingDamage = damage;
-        TriggerOnTakeDamage(attacker, ref remainingDamage, ignoredOnTakeDamageBuff);
+        TriggerOnTakeDamage(attacker, ref remainingDamage, ignoredBuff);
         if (remainingDamage <= 0)
             return result;
 
@@ -312,9 +312,9 @@ public class EnemyModel : UnitModel
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
 
-        TriggerAfterTakeDamage(attacker, result);
+        TriggerAfterTakeDamage(attacker, result, ignoredBuff);
         if (result.TargetDied)
-            TriggerOnDie(attacker);
+            QueueOrResolveDeath(attacker);
 
         return result;
     }
@@ -334,7 +334,7 @@ public class EnemyModel : UnitModel
             AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
-            TriggerOnDie(null);
+            QueueOrResolveDeath(null);
 
         return healthDamage;
     }
@@ -550,6 +550,36 @@ public class EnemyModel : UnitModel
         if (attackValue < 0)
             attackValue = 0;
         return attackValue;
+    }
+
+    /// <summary>
+    /// 多段攻击的预期总伤害：按实际结算逐段累加，每段使用当时的易损层数，
+    /// 并在该段受击后按易损规则减半（与 VulnerableBuffModel.AfterTakeDamage 一致）。
+    /// </summary>
+    public int GetIntentAttackTotalValue(EnemyIntentData intent, PlayerState playerState)
+    {
+        int perHitValue = GetIntentAttackValue(intent, playerState);
+        if (perHitValue <= 0)
+            return 0;
+
+        int hitCount = GetIntentHitCount(intent);
+        if (hitCount <= 1)
+            return perHitValue;
+
+        int vulnerableStack = playerState != null ? playerState.GetBuffStack(BuffEnum.Vulnerable) : 0;
+        int valueWithoutVulnerable = perHitValue - vulnerableStack;
+        if (valueWithoutVulnerable <= 0)
+            return 0;
+
+        int total = 0;
+        int stack = vulnerableStack;
+        for (int i = 0; i < hitCount; i++)
+        {
+            total += valueWithoutVulnerable + stack;
+            stack /= 2;
+        }
+
+        return total;
     }
 
     public int GetIntentShieldValue(EnemyIntentData intent)
@@ -1026,13 +1056,22 @@ public class EnemyModel : UnitModel
 
     public void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result)
     {
+        TriggerAfterTakeDamage(attacker, result, BuffEnum.None);
+    }
+
+    private void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result, BuffEnum ignoredBuff)
+    {
         if (buffs.Count == 0)
             return;
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
+        {
+            if (snapshot[i].buffType == ignoredBuff)
+                continue;
             snapshot[i].AfterTakeDamage(self, attacker, result);
+        }
     }
 
     public void TriggerOnGainShield(ref int shieldValue)
@@ -1089,6 +1128,22 @@ public class EnemyModel : UnitModel
     {
         HandleDeathEffect(opponent);
         TriggerBuffs(opponent, (buff, self, target) => buff.OnDie(self, target));
+    }
+
+    /// <summary>
+    /// 死亡入口统一走这里：有战斗上下文时登记到 BattleManager 的死亡队列（由死亡管线按顺序结算+演出），
+    /// 没有战斗上下文（单元测试、工具）时保持旧的同步行为。
+    /// </summary>
+    private void QueueOrResolveDeath(CombatantModel attacker)
+    {
+        BattleManager manager = BattleManager.Instance;
+        if (manager != null)
+        {
+            manager.EnqueueEnemyDeath(this, attacker, true);
+            return;
+        }
+
+        TriggerOnDie(attacker);
     }
 
     protected virtual void HandleDeathEffect(CombatantModel opponent)

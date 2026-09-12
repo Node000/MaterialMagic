@@ -15,6 +15,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private SettingsPanelUI settingsPanelUI;
     [SerializeField] private MaterialListPanelUI materialListPanelUI;
     [SerializeField] private MaterialListPanelUI materialSelectionPanelUI;
+    [SerializeField] private PileHoverPanelUI pileHoverPanelUI;
     [SerializeField] private RewardPanelUI rewardPanelUI;
     [SerializeField] private RewardGridPanelUI rewardGridPanelUI;
     [SerializeField] private ShopPanelUI shopPanelUI;
@@ -39,6 +40,7 @@ public class UIManager : MonoBehaviour
     public SettingsPanelUI SettingsPanel => settingsPanelUI;
     public MaterialListPanelUI MaterialListPanel => materialListPanelUI;
     public MaterialListPanelUI MaterialSelectionPanel => materialSelectionPanelUI != null ? materialSelectionPanelUI : materialListPanelUI;
+    public PileHoverPanelUI PileHoverPanel => pileHoverPanelUI;
     public RewardPanelUI RewardPanel => rewardPanelUI;
     public RewardGridPanelUI RewardGridPanel => rewardGridPanelUI;
     public ShopPanelUI ShopPanel => shopPanelUI;
@@ -65,6 +67,7 @@ public class UIManager : MonoBehaviour
         settingsPanelUI = GetOrAddPanel<SettingsPanelUI>(root, "SettingsPanel", settingsPanelUI);
         materialListPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "MaterialListPanel", materialListPanelUI);
         materialSelectionPanelUI = GetOrAddPanelInChildren<MaterialListPanelUI>(root, "SelectionShowPanel", materialSelectionPanelUI);
+        pileHoverPanelUI = GetOrAddPanelInChildren<PileHoverPanelUI>(root, "PileHoverPanel", pileHoverPanelUI);
         rewardPanelUI = GetOrAddPanel<RewardPanelUI>(root, "RewardPanel", rewardPanelUI);
         rewardGridPanelUI = GetOrAddPanel<RewardGridPanelUI>(root, "RewardGridPanel", rewardGridPanelUI);
         shopPanelUI = GetOrAddPanel<ShopPanelUI>(root, "ShopPanel", shopPanelUI);
@@ -88,6 +91,7 @@ public class UIManager : MonoBehaviour
         settingsPanelUI?.Initialize(owner);
         materialListPanelUI?.Initialize(owner);
         materialSelectionPanelUI?.Initialize(owner);
+        pileHoverPanelUI?.Initialize(owner);
         rewardPanelUI?.Initialize(owner);
         rewardGridPanelUI?.Initialize(owner);
         shopPanelUI?.Initialize(owner);
@@ -272,17 +276,68 @@ public class UIManager : MonoBehaviour
 
     public void ToggleMaterialListPanel()
     {
+        pileHoverPanelUI?.HideImmediate();
         materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
     }
 
     public void ToggleDiscardPilePanel()
     {
+        pileHoverPanelUI?.HideImmediate();
         materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
     }
 
     public void ToggleConsumedPilePanel()
     {
+        pileHoverPanelUI?.HideImmediate();
         materialListPanelUI?.Toggle(MaterialListPanelUI.DisplayMode.CombatPiles);
+    }
+
+    /// <summary>hover 牌堆图标时显示单堆预览；整块牌堆面板或选择面板打开时不显示。</summary>
+    public void ShowPileHoverPanel(PileHoverPanelUI.PileKind kind, RectTransform anchor)
+    {
+        if (pileHoverPanelUI == null)
+            return;
+
+        if (!CanShowPileHoverPanel())
+        {
+            pileHoverPanelUI.HideImmediate();
+            return;
+        }
+
+        pileHoverPanelUI.Show(kind, anchor);
+    }
+
+    public void HidePileHoverPanel()
+    {
+        if (!CanShowPileHoverPanel())
+        {
+            pileHoverPanelUI?.HideImmediate();
+            return;
+        }
+
+        pileHoverPanelUI?.Hide();
+    }
+
+    public void HidePileHoverPanel(PileHoverPanelUI.PileKind kind)
+    {
+        if (!CanShowPileHoverPanel())
+        {
+            pileHoverPanelUI?.HideImmediate();
+            return;
+        }
+
+        pileHoverPanelUI?.Hide(kind);
+    }
+
+    private bool CanShowPileHoverPanel()
+    {
+        if (materialListPanelUI != null && materialListPanelUI.gameObject.activeSelf)
+            return false;
+
+        if (materialSelectionPanelUI != null && materialSelectionPanelUI.gameObject.activeSelf)
+            return false;
+
+        return true;
     }
 
     public void RefreshMaterialListPanel()

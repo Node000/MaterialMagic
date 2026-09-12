@@ -6,7 +6,7 @@
     },
     {
       "key": "modifier.temporary.desc",
-      "text": "Disappears at turn end or when leaving your hand, and does not return to the draw pile."
+      "text": "Disappears at turn end or when leaving your hand, and does not return to the draw pile. Not limited by the per-turn play limit."
     },
     {
       "key": "modifier.charge.name",
@@ -22,7 +22,7 @@
     },
     {
       "key": "modifier.vortex.desc",
-      "text": "When this arrow triggers an item, apply 1 random debuff to a random enemy and draw 1 extra arrow into the play area."
+      "text": "When this arrow triggers an item, apply 1 random Weak, Slow, or Vulnerable to a random enemy and draw 1 extra arrow into the play area."
     },
     {
       "key": "modifier.kindling.name",
@@ -191,6 +191,14 @@
     {
       "key": "modifier.half_arrow.desc",
       "text": "Can count as the matching direction for recipes, but does not trigger that direction's base effect when read."
+    },
+    {
+      "key": "modifier.disabled_arrow.name",
+      "text": "Disabled"
+    },
+    {
+      "key": "modifier.disabled_arrow.desc",
+      "text": "This arrow cannot be played this turn; removed at turn end."
     }
   ]
 }

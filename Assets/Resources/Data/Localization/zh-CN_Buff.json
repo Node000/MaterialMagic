@@ -30,7 +30,7 @@
     },
     {
       "key": "buff.vulnerable.desc",
-      "text": "每层使受到伤害+1，受到伤害后减少1层。"
+      "text": "每层使受到伤害+1，受到伤害后层数减半。"
     },
     {
       "key": "buff.slow.name",
@@ -206,7 +206,7 @@
     },
     {
       "key": "buff.attributedisabled.desc",
-      "text": "本回合无法选中指定属性素材。"
+      "text": "本回合你抽到或进入手牌的对应方向箭头获得【禁用】，无法打出。"
     },
     {
       "key": "buff.curse.name",
@@ -378,7 +378,7 @@
     },
     {
       "key": "buff.attributedisabled.desc_with_material",
-      "text": "本回合无法选中{0}属性素材。"
+      "text": "本回合你抽到或进入手牌的{0}箭头获得【禁用】，无法打出。"
     },
     {
       "key": "buff.extra_enemy_debuff.name",

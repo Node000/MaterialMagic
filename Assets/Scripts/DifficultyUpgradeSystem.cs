@@ -19,7 +19,7 @@ public enum DifficultyUpgradeEffectType
     PlayerMaxHealthDelta = 10,
     StartingDeckAddBasicDirections = 11,
     GoldGainMultiplier = 12,
-    RewardMagicChoiceDelta = 13,
+    RewardGoldChoiceDelta = 13,
     ShopPriceMultiplier = 14,
     MapWidthDelta = 15,
     MapHeightDelta = 16,
@@ -114,11 +114,6 @@ public abstract class DifficultyUpgrade
         return amount;
     }
 
-    public virtual int ModifyRewardMagicChoiceCount(int choiceCount)
-    {
-        return choiceCount;
-    }
-
     public virtual int ModifyShopPrice(int price)
     {
         return price;
@@ -206,21 +201,6 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
                 result = Mathf.Max(0, Mathf.RoundToInt(result * Mathf.Max(0f, effect.value)));
         }
         return result;
-    }
-
-    public override int ModifyRewardMagicChoiceCount(int choiceCount)
-    {
-        if (Data == null)
-            return choiceCount;
-
-        int result = choiceCount;
-        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
-        {
-            DifficultyUpgradeEffectData effect = Data.effects[i];
-            if (effect != null && effect.type == DifficultyUpgradeEffectType.RewardMagicChoiceDelta)
-                result += GetEffectInt(effect);
-        }
-        return Mathf.Max(1, result);
     }
 
     public override int ModifyShopPrice(int price)
@@ -643,12 +623,10 @@ public static class DifficultyUpgradeSystem
         return result;
     }
 
-    public static int ModifyRewardMagicChoiceCount(int choiceCount)
+    public static int ModifyBattleRewardGoldChoiceCount(int choiceCount)
     {
-        int result = choiceCount;
-        for (int i = 0; i < activeUpgrades.Count; i++)
-            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyRewardMagicChoiceCount(result) : result;
-        return Mathf.Max(1, result);
+        // 效果 13：结算“更多金币”选项数量修正（<=0 表示结算不提供该选项）。
+        return Mathf.Max(0, choiceCount + GetActiveEffectIntTotal(DifficultyUpgradeEffectType.RewardGoldChoiceDelta));
     }
 
     public static int ModifyShopPrice(int price)

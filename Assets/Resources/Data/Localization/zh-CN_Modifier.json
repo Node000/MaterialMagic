@@ -6,7 +6,7 @@
     },
     {
       "key": "modifier.temporary.desc",
-      "text": "回合结束或离开手牌时消失，不会回到抽牌堆。"
+      "text": "回合结束或离开手牌时消失，不会回到抽牌堆。不受打出数量限制。"
     },
     {
       "key": "modifier.charge.name",
@@ -22,7 +22,7 @@
     },
     {
       "key": "modifier.vortex.desc",
-      "text": "以此素材触发道具时，对随机敌人施加1层随机负面状态，并额外抽1张素材到出牌区。"
+      "text": "以此素材触发道具时，对随机一名敌人随机施加1层虚弱、迟缓或易损，并额外抽1张素材到出牌区。"
     },
     {
       "key": "modifier.kindling.name",
@@ -191,6 +191,14 @@
     {
       "key": "modifier.half_arrow.desc",
       "text": "可以作为对应方向参与配方匹配，但读取时不触发该方向的基础效果。"
+    },
+    {
+      "key": "modifier.disabled_arrow.name",
+      "text": "禁用"
+    },
+    {
+      "key": "modifier.disabled_arrow.desc",
+      "text": "本回合此箭头无法打出；回合结束时解除。"
     }
   ]
 }

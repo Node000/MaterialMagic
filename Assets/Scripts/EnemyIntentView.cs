@@ -133,7 +133,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
             Color textColor = valueText.color;
             textColor.a = 1f;
             valueText.color = textColor;
-            string displayValue = GetIntentDisplayValue(intent, attackValue, displayValueOverride);
+            string displayValue = GetIntentDisplayValue(intent, attackValue, displayValueOverride, GetIntentTotalDamageValue(intent, attackValue));
             valueText.text = displayValue;
             valueText.raycastTarget = false;
             valueText.canvasRenderer.SetAlpha(1f);
@@ -347,6 +347,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
             valueText.gameObject.SetActive(hasValue);
             if (hasValue)
             {
+                valueText.enableWordWrapping = false;
                 valueText.ForceMeshUpdate();
                 textWidth = Mathf.Ceil(valueText.preferredWidth);
                 RectTransform textRect = valueText.rectTransform;
@@ -368,7 +369,22 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         iconRect.anchoredPosition = new Vector2(horizontalPadding + iconWidth * 0.5f, iconRect.anchoredPosition.y);
     }
 
-    private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue, string displayValueOverride = null)
+    // 多段攻击时返回逐段易损衰减后的总伤害，用于在主数值后追加 (XX)；单次结算返回 0 表示不显示。
+    private int GetIntentTotalDamageValue(EnemyIntentData intent, int attackValue)
+    {
+        if (boundEnemy == null || intent == null || attackValue <= 0)
+            return 0;
+        if (intent.actionType != EnemyActionType.Attack && intent.actionType != EnemyActionType.AttackAll)
+            return 0;
+
+        int times = intent.times > 0 ? intent.times : 1;
+        if (times <= 1)
+            return 0;
+
+        return boundEnemy.GetIntentAttackTotalValue(intent, boundPlayerState);
+    }
+
+    private static string GetIntentDisplayValue(EnemyIntentData intent, int attackValue, string displayValueOverride = null, int totalDamage = 0)
     {
         if (!string.IsNullOrEmpty(displayValueOverride))
             return displayValueOverride;
@@ -377,7 +393,11 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         if (intent.actionType == EnemyActionType.Attack || intent.actionType == EnemyActionType.AttackAll)
         {
             int times = intent.times > 0 ? intent.times : 1;
-            return times > 1 ? attackValue + "x" + times : attackValue.ToString();
+            if (times <= 1)
+                return attackValue.ToString();
+
+            string value = attackValue + "x" + times;
+            return totalDamage > 0 ? value + " (" + totalDamage + ")" : value;
         }
         if (intent.actionType == EnemyActionType.GainShield)
             return attackValue.ToString();

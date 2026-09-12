@@ -540,7 +540,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         recipeLayout.padding = recipeIconPadding;
 
         recipeBlocks.Clear();
-        int recipeCount = magic != null && magic.Data.recipe != null ? magic.Data.recipe.Length : 0;
+        MaterialEnum[] recipe = magic != null ? magic.GetEffectiveRecipe() : null;
+        int recipeCount = recipe != null ? recipe.Length : 0;
         for (int i = 0; i < recipeRoot.childCount; i++)
             recipeRoot.GetChild(i).gameObject.SetActive(i < recipeCount);
 
@@ -556,10 +557,10 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             if (block == null)
                 block = recipeRoot.GetChild(i).gameObject.AddComponent<Image>();
             block.gameObject.SetActive(true);
-            Sprite materialSprite = GetRecipeIcon(magic.Data.recipe[i]);
+            Sprite materialSprite = GetRecipeIcon(recipe[i]);
             block.sprite = materialSprite;
             block.preserveAspect = true;
-            block.color = GetRecipeIconColor(magic.Data.recipe[i]);
+            block.color = GetRecipeIconColor(recipe[i]);
             SetBlockOpaque(block);
             recipeBlocks.Add(block);
 

@@ -10,6 +10,7 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button startBattleButton;
     [SerializeField] private Button damageButton;
     [SerializeField] private Button killTargetButton;
+    [SerializeField] private Button killAllButton;
     [SerializeField] private Button drawCardButton;
     [SerializeField] private Button goldButton;
     [SerializeField] private Button randomEnchantButton;
@@ -50,6 +51,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
         damageButton?.onClick.RemoveListener(DealDamageToTarget);
         killTargetButton?.onClick.RemoveListener(KillTargetEnemy);
+        killAllButton?.onClick.RemoveListener(KillAllEnemies);
         drawCardButton?.onClick.RemoveListener(DrawCard);
         startRestButton?.onClick.RemoveListener(StartSelectedRest);
         startEventButton?.onClick.RemoveListener(StartSelectedEvent);
@@ -64,6 +66,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
         damageButton?.onClick.AddListener(DealDamageToTarget);
         killTargetButton?.onClick.AddListener(KillTargetEnemy);
+        killAllButton?.onClick.AddListener(KillAllEnemies);
         drawCardButton?.onClick.AddListener(DrawCard);
         startRestButton?.onClick.AddListener(StartSelectedRest);
         startEventButton?.onClick.AddListener(StartSelectedEvent);
@@ -81,6 +84,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         startBattleButton?.onClick.RemoveListener(StartSelectedBattle);
         damageButton?.onClick.RemoveListener(DealDamageToTarget);
         killTargetButton?.onClick.RemoveListener(KillTargetEnemy);
+        killAllButton?.onClick.RemoveListener(KillAllEnemies);
         drawCardButton?.onClick.RemoveListener(DrawCard);
         startRestButton?.onClick.RemoveListener(StartSelectedRest);
         startEventButton?.onClick.RemoveListener(StartSelectedEvent);
@@ -120,6 +124,8 @@ public class DebugBattlePanelUI : MonoBehaviour
             damageButton = transform.Find("DamageButton")?.GetComponent<Button>();
         if (killTargetButton == null)
             killTargetButton = transform.Find("KillTargetButton")?.GetComponent<Button>();
+        if (killAllButton == null)
+            killAllButton = transform.Find("KillAllButton")?.GetComponent<Button>();
         if (drawCardButton == null)
             drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
         if (goldButton == null)
@@ -320,6 +326,11 @@ public class DebugBattlePanelUI : MonoBehaviour
     private void KillTargetEnemy()
     {
         handSystem?.DebugKillTargetEnemy();
+    }
+
+    private void KillAllEnemies()
+    {
+        handSystem?.DebugKillAllEnemies();
     }
 
     private void DrawCard()

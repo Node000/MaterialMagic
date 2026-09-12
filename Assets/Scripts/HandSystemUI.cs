@@ -199,6 +199,16 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float enemyIntentFadeOutDuration = 0.18f;
 
+	[Header("敌人回合伪同时（重叠）演出")]
+	/// <summary>
+	/// 敌人行动的演出由“上一个敌人开始出结果”驱动（行动严格串行，演出尾部重叠）：
+	/// 第 N 个敌人在第 N-1 个敌人开始最后一个命中动作时才开始自己的波纹/出手，
+	/// 因此它的出手动画落在上一个敌人结果之后，只与上一个敌人的淡出/死亡演出重叠。
+	/// 本参数是在解禁后再额外等待的时间（秒），越大越接近严格串行。
+	/// </summary>
+	[SerializeField]
+	private float enemyActionOverlapDelay = 0f;
+
 	[SerializeField]
 	private float enemyBetweenDelay = 0.16f;
 
@@ -256,6 +266,23 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	[FormerlySerializedAs("enemyDissolveDuration")]
 	private float enemyDeathExplosionDuration = 0.7f;
+
+	[Header("死亡管线（伪同时演出）")]
+	/// <summary>相邻死亡项的“启动”间隔（秒）：第 i 项在 i*stagger 时启动，彼此重叠。</summary>
+	[SerializeField]
+	private float enemyDeathStagger = 0.15f;
+
+	/// <summary>同一死亡结算内，多个敌人伤害飘字的最小间隔。0 = 同帧全部弹出。</summary>
+	[SerializeField]
+	private float enemyDamageFeedbackStagger = 0.05f;
+
+	/// <summary>关闭则回到全串行死亡演出（每项动画播完才播下一项），便于对比手感。</summary>
+	[SerializeField]
+	private bool enemyDeathOverlap = true;
+
+	/// <summary>同一 damageStep 内多目标伤害飘字的间隔（多敌人 AoE/电弧防重叠）。</summary>
+	[SerializeField]
+	private float magicDamageSameStepInterval = 0.08f;
 
 	[SerializeField]
 	private int enemyDeathShardColumns = 5;
@@ -321,6 +348,8 @@ public class HandSystemUI : MonoBehaviour
     private CanvasGroup disabledCardPopupCanvasGroup;
 
     private Tween disabledCardPopupTween;
+
+    private PlayLimitDisplayUI playLimitDisplay;
 
 	[Header("敌人血条动画参数")]
 	[SerializeField]
@@ -575,8 +604,22 @@ public class HandSystemUI : MonoBehaviour
 		private bool busy;
 
         private int resolveTransitionLockCount;
-        private int enemyResolveLockCount;
         private int nextEnemyRuleResolveIndex;
+
+        /// <summary>下一个允许开始演出的敌人序号（行动严格串行的“演出闸门”）。</summary>
+        private int nextEnemyPresentationIndex;
+
+        private StaggeredPresentationRunner deathPresentationRunner;
+        private bool deathPipelineRunning;
+        private StaggeredPresentationRunner enemyActionPresentationRunner;
+
+        /// <summary>死亡管线的“启动间隔 + 结尾统一等待”执行器。</summary>
+        private StaggeredPresentationRunner DeathPresentationRunner =>
+            deathPresentationRunner ??= new StaggeredPresentationRunner(this);
+
+        /// <summary>敌人回合演出的“启动间隔 + 结尾统一等待”执行器（伪同时、彼此重叠）。</summary>
+        private StaggeredPresentationRunner EnemyActionPresentationRunner =>
+            enemyActionPresentationRunner ??= new StaggeredPresentationRunner(this);
 
 			private bool choosingEventCard;
 
@@ -590,9 +633,7 @@ public class HandSystemUI : MonoBehaviour
 
         private string lastRunCheckpointKey;
 	
-	    private bool eliteMagicModifierRewardResolved;
-
-    private float loadedRunPlaySeconds;
+	    private float loadedRunPlaySeconds;
 
     private float runStartRealtime;
 
@@ -667,6 +708,26 @@ public class HandSystemUI : MonoBehaviour
             return;
 
         target.TakeDamage(Mathf.Max(1, target.CurrentHealth + target.Shield), playerState != null ? new CombatantModel(playerState) : null);
+        RefreshEnemyUI((RectTransform)null, false);
+        StartCoroutine(DebugHandleBattleResult());
+    }
+
+    /// <summary>击杀场上所有存活敌人（含爪牙）；死亡会走死亡管线按序演出，全灭后走正常的战斗结束判定。</summary>
+    public void DebugKillAllEnemies()
+    {
+        if (battleManager == null)
+            return;
+
+        CombatantModel attacker = playerState != null ? new CombatantModel(playerState) : null;
+        IReadOnlyList<EnemyModel> enemies = battleManager.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                enemy.TakeDamage(Mathf.Max(1, enemy.CurrentHealth + enemy.Shield), attacker);
+        }
+
+        GameLog.Data("Debug kill all enemies");
         RefreshEnemyUI((RectTransform)null, false);
         StartCoroutine(DebugHandleBattleResult());
     }
@@ -764,6 +825,7 @@ public class HandSystemUI : MonoBehaviour
         battleManager.BeginBattleRules();
 					BeginPlayerTurn(playerState.DrawCount);
 	                SaveRunProgress();
+					SetPlayLimitDisplayShown(true);
 					ResetMagicHighlights();
 
         busy = false;
@@ -1477,9 +1539,10 @@ public class HandSystemUI : MonoBehaviour
 	            yield return PrewarmBattleEnemyAssetsRoutine();
 	            yield return CreateDeferredEnemyViewsRoutine();
 	            yield return WaitForTweenCompletion(mapHideTween);
-	            yield return WaitForCondition(isLevelSelectHidden);
-	            yield return null;
-	            RefreshStaticUI();
+            yield return WaitForCondition(isLevelSelectHidden);
+            yield return null;
+            SetPlayLimitDisplayShown(true, true);
+            RefreshStaticUI();
 	            RefreshMaterialListPanel();
 	            RebuildCards(true);
 	            RefreshEnemyUI((RectTransform)null, true);
@@ -1508,6 +1571,7 @@ public class HandSystemUI : MonoBehaviour
 			{
 	            battleManager.BeginBattleRules();
 					yield return null;
+					SetPlayLimitDisplayShown(true);
 					BeginPlayerTurn(playerState.DrawCount);
 			        SaveRunProgress();
 					ResetMagicHighlights();
@@ -3389,34 +3453,7 @@ public class HandSystemUI : MonoBehaviour
             RunManager.ClearCurrent(runManager);
 		((UnityEvent)refreshButton.onClick).RemoveListener(new UnityAction(RefreshPlayZoneCards));
 		((UnityEvent)endTurnButton.onClick).RemoveListener(new UnityAction(EndTurn));
-		if ((Object)(object)deckPileArea != (Object)null)
-		{
-			Button component = ((Component)deckPileArea).GetComponent<Button>();
-			if ((Object)(object)component != (Object)null)
-			{
-				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
-			}
-            RectTransform drawPileArea = FindPileChildArea("DrawPileIcon");
-            Button drawButton = drawPileArea != null ? drawPileArea.GetComponent<Button>() : null;
-            if ((Object)drawButton != (Object)null)
-                ((UnityEvent)drawButton.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
-		}
-		if ((Object)(object)discardPileArea != (Object)null)
-		{
-			Button component = ((Component)discardPileArea).GetComponent<Button>();
-			if ((Object)(object)component != (Object)null)
-			{
-				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
-			}
-		}
-		if ((Object)(object)consumedPileArea != (Object)null)
-		{
-			Button component = ((Component)consumedPileArea).GetComponent<Button>();
-			if ((Object)(object)component != (Object)null)
-			{
-				((UnityEvent)component.onClick).RemoveListener(new UnityAction(ToggleMaterialListPanel));
-			}
-		}
+		UnbindPileButtons();
         disabledCardPopupTween?.Kill(false);
         disabledCardPopupTween = null;
 		DOTween.Kill((object)this, false);
@@ -3833,6 +3870,14 @@ public bool IsCardDragActive => cardDragActive;
             return false;
         }
 
+        // 只有战斗玩家回合的主动出牌才计入每回合打出上限；事件/休息/奖励等选牌流程不受限制。
+        bool countPlayLimit = IsTurnPlayLimitActive();
+        if (countPlayLimit && !playerState.CanPlayCardFromHand(card))
+        {
+            ShowPlayLimitPopup();
+            return false;
+        }
+
         if (TutorialManager != null && !TutorialManager.CanMoveCardToPlay(card, playerState.PlayZone))
             return false;
 
@@ -3842,7 +3887,7 @@ public bool IsCardDragActive => cardDragActive;
         bool moved;
         try
         {
-            moved = playerState.TryMoveHandCardToPlay(card, targetIndex, allowDisabled);
+            moved = playerState.TryMoveHandCardToPlay(card, targetIndex, allowDisabled, countPlayLimit);
         }
         finally
         {
@@ -3884,13 +3929,29 @@ public bool IsCardDragActive => cardDragActive;
     }
 
 
+    /// <summary>当前是否处于需要计入每回合打出上限的战斗玩家回合（调试战斗同样适用）。</summary>
+    private bool IsTurnPlayLimitActive()
+    {
+        return battleManager != null && battleManager.CurrentPhase == BattlePhase.PlayerTurn;
+    }
+
     private void ShowDisabledCardPopup()
+    {
+        ShowCardRejectPopup("ui.battle.card_disabled", "这张牌本回合无法打出！");
+    }
+
+    private void ShowPlayLimitPopup()
+    {
+        ShowCardRejectPopup("ui.battle.play_limit_reached", "本回合打出数量已达上限！");
+    }
+
+    private void ShowCardRejectPopup(string textKey, string fallbackText)
     {
         CacheDisabledCardPopupReferences();
         if ((Object)disabledCardPopupRoot == (Object)null || disabledCardPopupCanvasGroup == null || disabledCardPopupText == null)
             return;
 
-        disabledCardPopupText.text = LocalizationSystem.GetText("ui.battle.card_disabled", "这张牌本回合无法打出！");
+        disabledCardPopupText.text = LocalizationSystem.GetText(textKey, fallbackText);
         disabledCardPopupTween?.Kill(false);
         ((Component)disabledCardPopupRoot).gameObject.SetActive(true);
         disabledCardPopupRoot.SetAsLastSibling();
@@ -4197,8 +4258,9 @@ public bool IsCardDragActive => cardDragActive;
             yield break;
         }
 		battleManager?.BeginEnemyTurn();
-        enemyResolveLockCount = 0;
         nextEnemyRuleResolveIndex = 0;
+        nextEnemyPresentationIndex = 0;
+        StaggeredPresentationRunner enemyActionRunner = EnemyActionPresentationRunner;
         int enemyRuleResolveIndex = 0;
 		for (int num = 0; num < enemyModels.Count; num++)
 		{
@@ -4212,12 +4274,12 @@ public bool IsCardDragActive => cardDragActive;
 				GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.enemy", "敌方回合"));
 			}
 
-            enemyResolveLockCount++;
-            StartCoroutine(ResolveEnemyIntentsRoutine(enemy, enemyRuleResolveIndex));
+            // 行动严格串行：每个敌人的演出由 ResolveEnemyIntentsRoutine 内部等“上一个敌人出结果”后才开始，
+            // 这里只负责同时启动并把它们一起等完（重叠由演出闸门控制）。
+            enemyActionRunner.Start(ResolveEnemyIntentsRoutine(enemy, enemyRuleResolveIndex));
             enemyRuleResolveIndex++;
 		}
-        while (enemyResolveLockCount > 0)
-            yield return null;
+        yield return enemyActionRunner.WaitForAll();
         battleManager?.EndEnemyTurn();
 		RefreshStaticUI();
 		if (CheckPlayerDefeated())
@@ -4701,7 +4763,7 @@ public bool IsCardDragActive => cardDragActive;
 		int selectableCount = 0;
 		for (int i = 0; i < playerState.Deck.Count; i++)
 		{
-			if (playerState.Deck[i] != null)
+			if (IsEventRemoveMaterialSelectable(playerState.Deck[i]))
 				selectableCount++;
 		}
 		if (selectableCount == 0)
@@ -4734,7 +4796,7 @@ public bool IsCardDragActive => cardDragActive;
 
 	private bool IsEventRemoveMaterialSelectable(MaterialModel materialModel)
 	{
-		return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel);
+		return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && !PlayerState.IsDeckPlaceholderMaterial(materialModel);
 	}
 
 	private IEnumerator ShowEventMagicRewardRoutine()
@@ -5546,6 +5608,7 @@ public bool IsCardDragActive => cardDragActive;
         GetUIManager().GoldDisplay?.SetGold(playerState.Gold, true);
 			RefreshBuffRoot(playerBuffRoot, playerState.Buffs, null);
             RefreshPileCountTexts();
+            RefreshPlayLimitDisplay();
 
 	        RefreshEndTurnButtonText();
 	        RefreshRefreshChanceUI();
@@ -5565,18 +5628,70 @@ public bool IsCardDragActive => cardDragActive;
                 consumedCountText.text = playerState != null ? playerState.ConsumedPile.Count.ToString() : "0";
         }
 
-        private void CachePileCountTexts()
+        /// <summary>刷新出牌区与道具栏之间的“本回合已打出/上限”显示（配色由 PlayLimitDisplayUI 自己配置）。</summary>
+        private void RefreshPlayLimitDisplay()
         {
-            Transform root = deckPileArea != null ? deckPileArea : null;
-            if (root == null)
+            PlayLimitDisplayUI display = ResolvePlayLimitDisplay();
+            if (display == null)
                 return;
 
-            if ((Object)deckCountText == (Object)null)
-                deckCountText = FindPileText(root, "DrawPileIcon/DrawPileCountText", "DrawPileCountText");
-            if ((Object)discardCountText == (Object)null)
-                discardCountText = FindPileText(root, "DiscardPileIcon/DiscardPileCountText", "DiscardPileCountText");
-            if ((Object)consumedCountText == (Object)null)
-                consumedCountText = FindPileText(root, "ExhaustPileIcon/ExhaustPileCountText", "ConsumedPileIcon/ConsumedPileCountText", "ExhaustPileCountText", "ConsumedPileCountText");
+            // 兜底：任何没被战斗流程覆盖到的地图/菜单状态下不残留显示。
+            if (display.IsShown && !IsPlayLimitDisplayContextActive())
+                display.HideForBattle(true);
+
+            int played = playerState != null ? playerState.PlayedCardCountThisTurn : 0;
+            int limit = playerState != null ? playerState.PlayLimitPerTurn : 0;
+            display.Refresh(played, limit);
+        }
+
+        /// <summary>战斗进出时开关“打出上限”显示；instant 用于读档直接进战等无需动画的场景。</summary>
+        private void SetPlayLimitDisplayShown(bool shown, bool instant = false)
+        {
+            PlayLimitDisplayUI display = ResolvePlayLimitDisplay();
+            if (display == null)
+                return;
+
+            if (shown)
+                display.ShowForBattle(instant);
+            else
+                display.HideForBattle(instant);
+        }
+
+        private bool IsPlayLimitDisplayContextActive()
+        {
+            if (battleManager != null && battleManager.CurrentPhase != BattlePhase.None)
+                return true;
+
+            return runManager != null && runManager.State == RunFlowState.Battle;
+        }
+
+        private PlayLimitDisplayUI ResolvePlayLimitDisplay()
+        {
+            if ((Object)playLimitDisplay == (Object)null)
+                CachePlayLimitDisplay();
+
+            return playLimitDisplay;
+        }
+
+        private void CachePlayLimitDisplay()
+        {
+            Transform found = UIManager.FindChildRecursive(((Component)this).transform, "PlayLimitDisplay");
+            if (found != null)
+                playLimitDisplay = found.GetComponent<PlayLimitDisplayUI>();
+        }
+
+        private void CachePileCountTexts()
+        {
+            RectTransform drawPileIcon = ResolvePileIcon(deckPileArea, "DrawPileIcon");
+            RectTransform discardPileIcon = ResolvePileIcon(discardPileArea, "DiscardPileIcon");
+            RectTransform consumedPileIcon = ResolvePileIcon(consumedPileArea, "ExhaustPileIcon");
+
+            if ((Object)deckCountText == (Object)null && (Object)drawPileIcon != (Object)null)
+                deckCountText = FindPileText(drawPileIcon, "DrawPileIcon/DrawPileCountText", "DrawPileCountText");
+            if ((Object)discardCountText == (Object)null && (Object)discardPileIcon != (Object)null)
+                discardCountText = FindPileText(discardPileIcon, "DiscardPileIcon/DiscardPileCountText", "DiscardPileCountText");
+            if ((Object)consumedCountText == (Object)null && (Object)consumedPileIcon != (Object)null)
+                consumedCountText = FindPileText(consumedPileIcon, "ExhaustPileIcon/ExhaustPileCountText", "ConsumedPileIcon/ConsumedPileCountText", "ExhaustPileCountText", "ConsumedPileCountText");
         }
 
         private TMP_Text FindPileText(Transform root, params string[] paths)
@@ -5702,15 +5817,48 @@ public bool IsCardDragActive => cardDragActive;
 
 		private void EnsurePileButtons()
 		{
-			BindPileButton(deckPileArea, ToggleMaterialListPanel);
-            RectTransform drawPileArea = FindPileChildArea("DrawPileIcon");
-            BindPileButton(drawPileArea, ToggleMaterialListPanel);
-			BindPileButton(discardPileArea, ToggleMaterialListPanel);
-			BindPileButton(consumedPileArea, ToggleMaterialListPanel);
+			RectTransform drawPileIcon = ResolvePileIcon(deckPileArea, "DrawPileIcon");
+			RectTransform discardPileIcon = ResolvePileIcon(discardPileArea, "DiscardPileIcon");
+			RectTransform consumedPileIcon = ResolvePileIcon(consumedPileArea, "ExhaustPileIcon");
 
-            ConfigurePileTooltip(drawPileArea, "ui.battle.pile.draw.title", "ui.battle.pile.draw.body", "抽牌堆", "从这里抽取箭头。抽牌堆耗尽时，弃牌堆会洗回这里。");
-            ConfigurePileTooltip(discardPileArea, "ui.battle.pile.discard.title", "ui.battle.pile.discard.body", "弃牌堆", "本回合已使用的箭头会进入这里。抽牌堆耗尽时，它们会洗回抽牌堆。");
-            ConfigurePileTooltip(consumedPileArea, "ui.battle.pile.consumed.title", "ui.battle.pile.consumed.body", "已消耗", "已消耗的箭头会留在这里，本场战斗不会再回到抽牌堆。");
+			BindPileButton(deckPileArea, ToggleMaterialListPanel);
+			if ((Object)(object)drawPileIcon != (Object)(object)deckPileArea)
+				BindPileButton(drawPileIcon, ToggleMaterialListPanel);
+			BindPileButton(discardPileArea, ToggleMaterialListPanel);
+			if ((Object)(object)discardPileIcon != (Object)(object)discardPileArea)
+				BindPileButton(discardPileIcon, ToggleMaterialListPanel);
+			BindPileButton(consumedPileArea, ToggleMaterialListPanel);
+			if ((Object)(object)consumedPileIcon != (Object)(object)consumedPileArea)
+				BindPileButton(consumedPileIcon, ToggleMaterialListPanel);
+
+            ConfigurePileTooltip(drawPileIcon, "ui.battle.pile.draw.title", "ui.battle.pile.draw.body", "抽牌堆", "从这里抽取箭头。抽牌堆耗尽时，弃牌堆会洗回这里。");
+            ConfigurePileTooltip(discardPileIcon, "ui.battle.pile.discard.title", "ui.battle.pile.discard.body", "弃牌堆", "本回合已使用的箭头会进入这里。抽牌堆耗尽时，它们会洗回抽牌堆。");
+            ConfigurePileTooltip(consumedPileIcon, "ui.battle.pile.consumed.title", "ui.battle.pile.consumed.body", "已消耗", "已消耗的箭头会留在这里，本场战斗不会再回到抽牌堆。");
+
+            ConfigurePileHoverTrigger(drawPileIcon, PileHoverPanelUI.PileKind.Draw);
+            ConfigurePileHoverTrigger(discardPileIcon, PileHoverPanelUI.PileKind.Discard);
+            ConfigurePileHoverTrigger(consumedPileIcon, PileHoverPanelUI.PileKind.Consumed);
+		}
+
+        private void ConfigurePileHoverTrigger(RectTransform pileIcon, PileHoverPanelUI.PileKind kind)
+        {
+            if (pileIcon == null)
+                return;
+
+            PileHoverTriggerUI trigger = pileIcon.GetComponent<PileHoverTriggerUI>();
+            if (trigger == null)
+                trigger = pileIcon.gameObject.AddComponent<PileHoverTriggerUI>();
+            trigger.Configure(this, kind);
+        }
+
+		private void UnbindPileButtons()
+		{
+			UnbindPileButton(deckPileArea, ToggleMaterialListPanel);
+			UnbindPileButton(ResolvePileIcon(deckPileArea, "DrawPileIcon"), ToggleMaterialListPanel);
+			UnbindPileButton(discardPileArea, ToggleMaterialListPanel);
+			UnbindPileButton(ResolvePileIcon(discardPileArea, "DiscardPileIcon"), ToggleMaterialListPanel);
+			UnbindPileButton(consumedPileArea, ToggleMaterialListPanel);
+			UnbindPileButton(ResolvePileIcon(consumedPileArea, "ExhaustPileIcon"), ToggleMaterialListPanel);
 		}
 
         private void ConfigurePileTooltip(RectTransform pileArea, string titleKey, string bodyKey, string titleFallback, string bodyFallback)
@@ -5724,13 +5872,20 @@ public bool IsCardDragActive => cardDragActive;
             tooltip.Configure(GetUIManager(), titleKey, bodyKey, titleFallback, bodyFallback);
         }
 
-        private RectTransform FindPileChildArea(string childName)
+        /// <summary>兼容不同战斗场景的 ActionBar 结构：引用对象本身可能是图标，也可能只是包含图标的透明按钮。</summary>
+        private RectTransform ResolvePileIcon(RectTransform pileArea, string iconName)
         {
-            if (deckPileArea == null)
+            if (pileArea == null)
                 return null;
 
-            Transform child = deckPileArea.Find(childName);
-            return child as RectTransform;
+            if (pileArea.name == iconName)
+                return pileArea;
+
+            Transform child = UIManager.FindChildRecursive(pileArea, iconName);
+            if (child == null)
+                child = UIManager.FindChildRecursive(transform, iconName);
+
+            return child as RectTransform != null ? (RectTransform)child : pileArea;
         }
 
 	private void BindPileButton(RectTransform pileArea, UnityAction action)
@@ -5761,14 +5916,24 @@ public bool IsCardDragActive => cardDragActive;
 		GetUIManager().ToggleMaterialListPanel();
 	}
 
-	private void ToggleDiscardPilePanel()
+	/// <summary>牌堆图标 hover 时显示单堆预览（移动端不启用）。</summary>
+	public void ShowPileHover(PileHoverPanelUI.PileKind kind, RectTransform anchor)
 	{
-		GetUIManager().ToggleDiscardPilePanel();
+		if (playerState == null)
+			return;
+
+		if (ShouldUseMobileInteraction())
+		{
+			GetUIManager().HidePileHoverPanel();
+			return;
+		}
+
+		GetUIManager().ShowPileHoverPanel(kind, anchor);
 	}
 
-	private void ToggleConsumedPilePanel()
+	public void HidePileHover(PileHoverPanelUI.PileKind kind)
 	{
-		GetUIManager().ToggleConsumedPilePanel();
+		GetUIManager().HidePileHoverPanel(kind);
 	}
 
 	private void RefreshMaterialListPanel()
@@ -6881,6 +7046,7 @@ public bool IsCardDragActive => cardDragActive;
 	private IEnumerator FinishBattleRoutine()
 	{
 		HideContinuousCastCounterUI();
+		SetPlayLimitDisplayShown(false);
 		yield return PlayPendingEnemyDeaths();
         if (battleManager != null && battleManager.KillAliveMinionsForVictory())
         {
@@ -6956,11 +7122,28 @@ public bool IsCardDragActive => cardDragActive;
 
 	private void ShowRewardPanel()
 	{
+		StartCoroutine(ShowRewardPanelRoutine());
+	}
+
+	private IEnumerator ShowRewardPanelRoutine()
+	{
 		busy = true;
 		currentEvent = null;
 		SetButtonsInteractable(interactable: false);
         pendingBattleRewardShop = true;
         SaveRunProgress();
+
+        // 结算基础金币改为战斗结束后自动获取，不再由玩家点击领取。
+        PendingBattleGoldReward = RollBattleGoldReward();
+        if (PendingBattleGoldReward > 0)
+        {
+            yield return GainGoldAnimated(PendingBattleGoldReward, GetBattleRewardGoldSourceRect(), false);
+            SaveRunProgressForce();
+        }
+
+        if (runEnded)
+            yield break;
+
 		GetUIManager().ShowRewardPanel();
 	}
 
@@ -7140,28 +7323,11 @@ public bool IsCardDragActive => cardDragActive;
 			if (TutorialManager != null && TutorialManager.MainTutorialRunning)
 				return GetTutorialRewardMagicChoices(choiceCount);
 
-            choiceCount = DifficultyUpgradeSystem.ModifyRewardMagicChoiceCount(choiceCount);
-			List<MagicData> list = new List<MagicData>();
 		RewardPoolData rewardPool = null;
 		if (currentLevel != null && currentLevel.rewardPoolId > 0)
 			GameDataDatabase.TryGetRewardPoolData(currentLevel.rewardPoolId, out rewardPool);
 
-			if (rewardPool != null && rewardPool.magicIds != null)
-			{
-				for (int i = 0; i < rewardPool.magicIds.Length; i++)
-				{
-					if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data) && IsRewardMagicAllowed(data, rewardPool))
-						list.Add(data);
-				}
-			}
-			if (list.Count == 0 && (rewardPool == null || rewardPool.allowedRarities == null || rewardPool.allowedRarities.Length == 0))
-			{
-				foreach (MagicData data in GameDataDatabase.MagicData.Values)
-				{
-					if (data != null && UnlockSystem.IsMagicUnlocked(data))
-						list.Add(data);
-				}
-			}
+			List<MagicData> list = BuildRewardMagicPool(rewardPool);
 			if (list.Count < choiceCount && rewardPool != null && rewardPool.allowedRarities != null && rewardPool.allowedRarities.Length > 0)
 				Debug.LogError($"Reward pool '{rewardPool.id}' has only {list.Count} eligible magic rewards for {choiceCount} choices.");
 			List<MagicData> list2 = new List<MagicData>();
@@ -7225,6 +7391,29 @@ public bool IsCardDragActive => cardDragActive;
 				return list2;
 			}
 
+		// 结算奖励（事件道具/结算道具）共用的候选池：关卡奖励池 + 解锁/稀有度过滤，空池时回退全部已解锁道具。
+		private List<MagicData> BuildRewardMagicPool(RewardPoolData rewardPool)
+		{
+			List<MagicData> list = new List<MagicData>();
+			if (rewardPool != null && rewardPool.magicIds != null)
+			{
+				for (int i = 0; i < rewardPool.magicIds.Length; i++)
+				{
+					if (GameDataDatabase.TryGetMagicData(rewardPool.magicIds[i], out var data) && IsRewardMagicAllowed(data, rewardPool))
+						list.Add(data);
+				}
+			}
+			if (list.Count == 0 && (rewardPool == null || rewardPool.allowedRarities == null || rewardPool.allowedRarities.Length == 0))
+			{
+				foreach (MagicData data in GameDataDatabase.MagicData.Values)
+				{
+					if (data != null && UnlockSystem.IsMagicUnlocked(data))
+						list.Add(data);
+				}
+			}
+			return list;
+		}
+
 		private static bool IsRewardMagicAllowed(MagicData data, RewardPoolData rewardPool)
 		{
 			if (data == null || !UnlockSystem.IsMagicUnlocked(data))
@@ -7264,6 +7453,124 @@ public bool IsCardDragActive => cardDragActive;
             options.Add(new RewardArrowOption { material = material, modifierData = modifier });
         }
         return options;
+    }
+
+    /// <summary>结算面板展示的“自动获取”金币量（与面板上“更多金币”追加量一致）。</summary>
+    public int PendingBattleGoldReward { get; private set; }
+
+    private const int FallbackBattleGoldReward = 2;
+
+    public int RollBattleGoldReward()
+    {
+        EconomyConfigData economy = GameDataDatabase.GetDefaultEconomyConfig();
+        if (economy == null)
+            return Mathf.Max(0, FallbackBattleGoldReward);
+
+        ChapterData chapter = runManager != null ? runManager.ActiveChapter : GetActiveChapter();
+        LevelData level = runManager != null ? runManager.CurrentLevel : currentLevel;
+        if (level == null)
+            level = currentLevel;
+        bool bossFlag = currentChapterMapBossLevel
+            || (runManager != null && runManager.CurrentBattle != null && runManager.CurrentBattle.CurrentLevelIsBoss);
+
+        int reward = ResolveBattleGold(economy, chapter, level, bossFlag);
+        return DifficultyUpgradeSystem.ModifyGoldGain(reward);
+    }
+
+    private static int ResolveBattleGold(EconomyConfigData economy, ChapterData chapter, LevelData level, bool bossFlag)
+    {
+        if (level == null)
+            return economy.battleGoldMin;
+
+        bool bossLevel = bossFlag || ContainsId(chapter != null ? chapter.BossPool : null, level.numericId);
+        bool eliteLevel = level.levelType == LevelType.Elite || ContainsId(chapter != null ? chapter.ElitePool : null, level.numericId);
+        if (bossLevel || eliteLevel)
+            return economy.eliteBattleGoldMin;
+
+        if (ContainsId(chapter != null ? chapter.BeginPool : null, level.numericId))
+            return economy.weakBattleGold > 0 ? economy.weakBattleGold : economy.battleGoldMin;
+        if (ContainsId(chapter != null ? chapter.MidPool : null, level.numericId))
+            return economy.battleGoldMin;
+        if (ContainsId(chapter != null ? chapter.NormalPool : null, level.numericId))
+            return economy.strongBattleGold > 0 ? economy.strongBattleGold : economy.battleGoldMin;
+        return economy.battleGoldMin;
+    }
+
+    private static bool ContainsId(int[] pool, int numericId)
+    {
+        if (pool == null)
+            return false;
+        for (int i = 0; i < pool.Length; i++)
+        {
+            if (pool[i] == numericId)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>结算面板上的“一个特定道具”：单件道具，精英战（且带上传说保底进阶）时必为传说品质。</summary>
+    public MagicData RollBattleRewardMagic()
+    {
+        if (TutorialManager != null && TutorialManager.MainTutorialRunning)
+        {
+            List<MagicData> tutorialChoices = GetTutorialRewardMagicChoices(1);
+            return tutorialChoices != null && tutorialChoices.Count > 0 ? tutorialChoices[0] : null;
+        }
+
+        RewardPoolData rewardPool = null;
+        if (currentLevel != null && currentLevel.rewardPoolId > 0)
+            GameDataDatabase.TryGetRewardPoolData(currentLevel.rewardPoolId, out rewardPool);
+
+        List<MagicData> pool = BuildRewardMagicPool(rewardPool);
+        if (pool.Count == 0)
+            return null;
+
+        if (currentLevel != null && currentLevel.levelType == LevelType.Elite && DifficultyUpgradeSystem.HasEliteGuaranteedLegendaryReward())
+        {
+            MagicData legendary = SelectRewardMagicOfRarity(pool, MagicRarity.Legendary);
+            if (legendary != null)
+                return legendary;
+        }
+
+        return MagicRaritySystem.SelectWeightedMagic(pool, NextRunRandomInt);
+    }
+
+    private MagicData SelectRewardMagicOfRarity(List<MagicData> pool, MagicRarity rarity)
+    {
+        List<MagicData> candidates = new List<MagicData>();
+        for (int i = 0; i < pool.Count; i++)
+        {
+            if (pool[i] != null && pool[i].rarity == rarity)
+                candidates.Add(pool[i]);
+        }
+        if (candidates.Count == 0)
+            return null;
+        return candidates[NextRunRandomInt(0, candidates.Count)];
+    }
+
+    /// <summary>结算面板上的“一个特定箭头”：四元素随机，按经济配置概率带附魔。</summary>
+    public RewardArrowOption RollBattleRewardArrow()
+    {
+        List<RewardArrowOption> options = GetRewardArrowOptions(1);
+        return options != null && options.Count > 0 ? options[0] : null;
+    }
+
+    private RectTransform GetBattleRewardGoldSourceRect()
+    {
+        if (enemyArea != null)
+            return enemyArea;
+        return transform as RectTransform;
+    }
+
+    /// <summary>绕过 checkpoint 去重的强制存档：结算自动金币一旦到手就必须落盘。</summary>
+    private void SaveRunProgressForce()
+    {
+        if (directSampleDebugRun || runEnded || playerState == null)
+            return;
+
+        RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel, GetCurrentRunPlaySeconds(), battleManager, currentEvent);
+        if (TryBuildRunCheckpointKey(out string checkpointKey))
+            lastRunCheckpointKey = checkpointKey;
     }
 
     public IEnumerator GainRewardArrow(RewardArrowOption option, RectTransform sourceRect)
@@ -8276,8 +8583,7 @@ public bool IsCardDragActive => cardDragActive;
 
 		currentEvent = null;
 		currentLevel = null;
-		currentChapterMapBossLevel = false;
-        eliteMagicModifierRewardResolved = false;
+			currentChapterMapBossLevel = false;
 		runManager?.ClearCurrentLevel();
         if (debugLevel)
         {
@@ -8344,83 +8650,6 @@ public bool IsCardDragActive => cardDragActive;
         StartShopLevel(shopLevel);
     }
 
-    public RewardOptionKind RollEliteExtraRewardKind()
-    {
-        if (!ShouldShowEliteExtraReward())
-            return RewardOptionKind.None;
-
-        bool canClaimMagicModifier = HasAnyMagicModifierChoice();
-        bool canClaimArrowModifier = HasAnyArrowModifierChoice();
-        if (canClaimMagicModifier && canClaimArrowModifier)
-            return NextRunRandomInt(0, 2) == 0 ? RewardOptionKind.MagicModifier : RewardOptionKind.ArrowModifier;
-        if (canClaimArrowModifier)
-            return RewardOptionKind.ArrowModifier;
-        return canClaimMagicModifier ? RewardOptionKind.MagicModifier : RewardOptionKind.None;
-    }
-
-    public bool CanClaimEliteMagicModifierReward()
-    {
-        return ShouldShowEliteExtraReward() && HasAnyMagicModifierChoice();
-    }
-
-    private void CancelEliteModifierRewardSelection()
-    {
-        pendingMagicModifier = null;
-        pendingMaterialModifier = null;
-        RefreshPlayerAnimationState();
-        busy = false;
-        SetButtonsInteractable(true);
-        GetUIManager().RewardPanel?.RefreshCurrentOptions();
-    }
-
-    public void ClaimEliteMagicModifierReward(Action completed)
-    {
-        if (!ShouldShowEliteExtraReward())
-        {
-            completed?.Invoke();
-            return;
-        }
-
-        List<MagicModifierData> choices = GetMagicModifierChoices(1);
-        if (choices.Count == 0)
-        {
-            CancelEliteModifierRewardSelection();
-            return;
-        }
-
-        ShowMagicModifierSelection(choices, delegate
-        {
-            eliteMagicModifierRewardResolved = true;
-            RefreshStaticUI();
-            SaveRunProgress();
-            completed?.Invoke();
-        }, CancelEliteModifierRewardSelection);
-    }
-
-    public void ClaimEliteArrowModifierReward(Action completed)
-    {
-        if (!ShouldShowEliteExtraReward())
-        {
-            completed?.Invoke();
-            return;
-        }
-
-        List<MaterialModifierData> choices = GetArrowModifierChoices(3);
-        if (choices.Count == 0)
-        {
-            CancelEliteModifierRewardSelection();
-            return;
-        }
-
-        ShowArrowModifierRewardSelection(choices, delegate
-        {
-            eliteMagicModifierRewardResolved = true;
-            RefreshStaticUI();
-            SaveRunProgress();
-            completed?.Invoke();
-        }, CancelEliteModifierRewardSelection);
-    }
-
     private IEnumerator ShowEventMaterialModifierRoutine(string modifierId)
     {
         MaterialModifierData data = GetMaterialModifierDataById(modifierId);
@@ -8446,40 +8675,6 @@ public bool IsCardDragActive => cardDragActive;
                 return data;
         }
         return null;
-    }
-
-    private bool ShouldShowEliteExtraReward()
-    {
-        return !eliteMagicModifierRewardResolved && currentLevel != null && currentLevel.levelType == LevelType.Elite && (HasAnyMagicModifierChoice() || HasAnyArrowModifierChoice());
-    }
-
-    private bool ShouldShowEliteMagicModifierReward()
-    {
-        return ShouldShowEliteExtraReward() && HasAnyMagicModifierChoice();
-    }
-
-    private bool HasAnyMagicModifierChoice()
-    {
-        foreach (MagicModifierData data in GameDataDatabase.MagicModifierData.Values)
-        {
-            if (data != null && data.weight != 0 && UnlockSystem.IsMagicModifierUnlocked(data) && CanAnyMagicAcceptModifier(data))
-                return true;
-        }
-        return false;
-    }
-
-    private bool HasAnyArrowModifierChoice()
-    {
-        if (playerState == null || CountSelectableArrowModifierTargets() == 0)
-            return false;
-
-        DataTable<MaterialModifierData> table = GameDataReader.LoadTable<MaterialModifierData>("MaterialModifierData");
-        for (int i = 0; table != null && table.items != null && i < table.items.Count; i++)
-        {
-            if (IsEliteArrowModifierRewardData(table.items[i]))
-                return true;
-        }
-        return false;
     }
 
     private List<MaterialModifierData> GetArrowModifierChoices(int count)
@@ -8638,13 +8833,27 @@ public bool IsCardDragActive => cardDragActive;
 
 	private IEnumerator ResolveEnemyIntentsRoutine(EnemyModel enemy, int ruleResolveIndex)
 	{
+		// 演出闸门：行动严格串行（第 N 个敌人在第 N-1 个敌人开始出结果后才开始演出）。
+		while (nextEnemyPresentationIndex != ruleResolveIndex)
+			yield return null;
+		if (enemyActionOverlapDelay > 0f)
+			yield return new WaitForSeconds(enemyActionOverlapDelay);
+
+		if (enemy == null || enemy.IsDead || !enemy.CanActThisEnemyTurn)
+		{
+			ReleaseEnemyPresentation(ruleResolveIndex);
+			yield break;
+		}
+
 		EnemyViewState state = FindEnemyViewState(enemy);
 		suppressEnemyIntentRefresh = true;
         bool ruleResolveStarted = false;
+        bool presentationReleased = false;
 
 		for (int i = 0; i < enemy.CurrentIntents.Count; i++)
 		{
 			EnemyIntentData intent = enemy.CurrentIntents[i];
+			bool lastIntent = i >= enemy.CurrentIntents.Count - 1;
 			EnemyIntentView intentView = state != null && i < state.intentViews.Count ? state.intentViews[i] : null;
 			if (intentView != null)
 			{
@@ -8663,6 +8872,12 @@ public bool IsCardDragActive => cardDragActive;
 			int hitCount = enemy.GetIntentHitCount(intent);
 			for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
 				{
+					if (!presentationReleased && lastIntent && hitIndex + 1 >= hitCount)
+					{
+						// 自己的最后一个命中动作开始 -> 放行下一个敌人开始演出（与本敌人结果/收尾重叠）。
+						ReleaseEnemyPresentation(ruleResolveIndex);
+						presentationReleased = true;
+					}
 					yield return PlayEnemyIntentPerformance(state, intent);
                     if (!ruleResolveStarted)
                     {
@@ -8671,7 +8886,7 @@ public bool IsCardDragActive => cardDragActive;
                         if (enemy.IsDead)
                         {
                             nextEnemyRuleResolveIndex++;
-                            enemyResolveLockCount--;
+                            ReleaseEnemyPresentation(ruleResolveIndex);
                             yield break;
                         }
                         battleManager?.BeginEnemyAction(enemy);
@@ -8694,6 +8909,9 @@ public bool IsCardDragActive => cardDragActive;
 			yield return new WaitForSeconds(enemyIntentBetweenDelay);
 		}
 
+		if (!presentationReleased)
+			ReleaseEnemyPresentation(ruleResolveIndex);
+
         if (!ruleResolveStarted)
         {
             while (nextEnemyRuleResolveIndex != ruleResolveIndex)
@@ -8705,7 +8923,13 @@ public bool IsCardDragActive => cardDragActive;
 		RefreshEnemyUI(state, false);
 		yield return PlayPendingEnemyDeaths();
         nextEnemyRuleResolveIndex++;
-        enemyResolveLockCount--;
+	}
+
+	/// <summary>放行下一个敌人的演出（行动严格串行的演出闸门）。</summary>
+	private void ReleaseEnemyPresentation(int ruleResolveIndex)
+	{
+		if (nextEnemyPresentationIndex == ruleResolveIndex)
+			nextEnemyPresentationIndex = ruleResolveIndex + 1;
 	}
 
 	private void PlayPlayerDamageFeedbackIfNeeded(int healthBefore, int shieldBefore)
@@ -8851,6 +9075,8 @@ public bool IsCardDragActive => cardDragActive;
 		if (playerState == null || playerState.CurrentHealth > 0)
 			return false;
 
+		SetPlayLimitDisplayShown(false);
+
 		if (debugBattleActive)
 		{
 			debugBattleActive = false;
@@ -8959,6 +9185,182 @@ public bool IsCardDragActive => cardDragActive;
 		if (debugBattleActive && AllEnemiesDead())
 			GetUIManager().PvOnlyBossEndCinematic?.ShowCrashImpact();
 
+		if (battleManager == null)
+		{
+			// 无战斗上下文（工具/异常态）：保持旧行为，只播碎裂，不做亡语结算。
+			yield return PlayPendingEnemyDeathsWithoutQueue();
+			yield break;
+		}
+
+		if (deathPipelineRunning)
+		{
+			// 已有管线在跑：等它把队列（含期间新入队的项）排空即可。
+			while (deathPipelineRunning)
+				yield return null;
+			yield break;
+		}
+
+		yield return RunEnemyDeathPipeline();
+	}
+
+	/// <summary>
+	/// 死亡管线：按入队顺序逐个处理死亡。相邻死亡项的“启动”间隔 = enemyDeathStagger，
+	/// 各项演出彼此重叠（enemyDeathOverlap），结尾统一等待全部演出结束。
+	/// 每一项内部顺序：启动死亡动画 -> 亡语结算（玩家/敌人数据此刻变更）-> 反馈飘字。
+	/// </summary>
+	private IEnumerator RunEnemyDeathPipeline()
+	{
+		deathPipelineRunning = true;
+		StaggeredPresentationRunner runner = DeathPresentationRunner;
+		runner.StartInterval = Mathf.Max(0f, enemyDeathStagger);
+		bool overlap = enemyDeathOverlap;
+		bool firstItem = true;
+
+		while (true)
+		{
+			EnqueueFallbackDeaths();
+			if (!battleManager.TryDequeueEnemyDeath(out EnemyDeathEntry entry))
+				break;
+
+			if (!firstItem && overlap && enemyDeathStagger > 0f)
+				yield return new WaitForSeconds(enemyDeathStagger);
+			firstItem = false;
+
+			yield return PlayEnemyDeathItem(entry, overlap);
+		}
+
+		yield return runner.WaitForAll();
+		deathPipelineRunning = false;
+	}
+
+	/// <summary>兜底：把“已死亡但从未入队”的敌人补入队（只播表现），避免读档/异常态漏掉死亡演出。</summary>
+	private void EnqueueFallbackDeaths()
+	{
+		if (battleManager == null)
+			return;
+
+		battleManager.EnqueueUnhandledDeadEnemies();
+		for (int i = 0; i < enemyModels.Count; i++)
+		{
+			EnemyModel model = enemyModels[i];
+			if (model != null && model.IsDead && !model.DeathHandled)
+				battleManager.EnqueueEnemyDeath(model, null, false);
+		}
+	}
+
+	private IEnumerator PlayEnemyDeathItem(EnemyDeathEntry entry, bool overlap)
+	{
+		EnemyModel enemy = entry.Enemy;
+		if (enemy == null)
+		{
+			yield break;
+		}
+
+		int playerHealthBefore = playerState != null ? playerState.CurrentHealth : 0;
+		int playerShieldBefore = playerState != null ? playerState.Shield : 0;
+		List<EnemyFeedbackSnapshot> enemyBefore = CaptureEnemyFeedbackSnapshot();
+
+		// 1) 启动死亡动画（不等待，由交错队列统一等待）。
+		EnemyViewState state = FindEnemyViewState(enemy);
+		Coroutine visual = state != null ? DeathPresentationRunner.Start(PlayEnemyExplosion(state)) : null;
+
+		// 2) 亡语结算：与动画同一时间片，数据变更此刻发生。
+		battleManager?.ResolveEnemyDeath(entry);
+
+		// 3) 反馈：玩家优先，其次各敌人按顺序。
+		PlayPlayerDamageFeedbackIfNeeded(playerHealthBefore, playerShieldBefore);
+		RefreshStaticUI();
+		List<EnemyDamageFeedbackItem> enemyDamages = BuildEnemyDamageFeedback(enemyBefore);
+		Coroutine feedback = enemyDamages.Count > 0
+			? DeathPresentationRunner.Start(PlayEnemyDamageFeedbackSequence(enemyDamages))
+			: null;
+
+		if (!overlap)
+		{
+			if (visual != null)
+				yield return visual;
+			if (feedback != null)
+				yield return feedback;
+		}
+	}
+
+	private List<EnemyFeedbackSnapshot> CaptureEnemyFeedbackSnapshot()
+	{
+		List<EnemyFeedbackSnapshot> snapshots = new List<EnemyFeedbackSnapshot>();
+		for (int i = 0; i < enemyViewStates.Count; i++)
+		{
+			EnemyViewState state = enemyViewStates[i];
+			if (state == null || state.model == null)
+				continue;
+
+			snapshots.Add(new EnemyFeedbackSnapshot
+			{
+				model = state.model,
+				health = state.model.CurrentHealth,
+				shield = state.model.Shield
+			});
+		}
+		return snapshots;
+	}
+
+	private List<EnemyDamageFeedbackItem> BuildEnemyDamageFeedback(List<EnemyFeedbackSnapshot> before)
+	{
+		List<EnemyDamageFeedbackItem> items = new List<EnemyDamageFeedbackItem>();
+		for (int i = 0; before != null && i < before.Count; i++)
+		{
+			EnemyFeedbackSnapshot snapshot = before[i];
+			EnemyModel model = snapshot != null ? snapshot.model : null;
+			if (model == null)
+				continue;
+
+			int healthDelta = model.CurrentHealth - snapshot.health;
+			int shieldDelta = model.Shield - snapshot.shield;
+			if (healthDelta >= 0 && shieldDelta >= 0)
+				continue;
+
+			EnemyViewState state = FindEnemyViewState(model);
+			if (state == null || (Object)state.viewRect == (Object)null)
+				continue;
+
+			items.Add(new EnemyDamageFeedbackItem
+			{
+				state = state,
+				healthDelta = healthDelta,
+				shieldDelta = shieldDelta
+			});
+		}
+		return items;
+	}
+
+	/// <summary>同一死亡结算内，多个敌人的伤害飘字按 enemyDamageFeedbackStagger 依次弹出。</summary>
+	private IEnumerator PlayEnemyDamageFeedbackSequence(List<EnemyDamageFeedbackItem> items)
+	{
+		bool shownAny = false;
+		for (int i = 0; items != null && i < items.Count; i++)
+		{
+			EnemyDamageFeedbackItem item = items[i];
+			if (item == null || item.state == null || (Object)item.state.viewRect == (Object)null)
+				continue;
+
+			if (shownAny && enemyDamageFeedbackStagger > 0f)
+				yield return new WaitForSeconds(enemyDamageFeedbackStagger);
+			shownAny = true;
+
+			if (item.healthDelta < 0)
+			{
+				PlayEnemyHitFeedback(item.state);
+				ShowFloatingText(item.state.viewRect, item.healthDelta.ToString(), FloatingTextType.Damage);
+			}
+			else if (item.shieldDelta < 0)
+			{
+				ShowFloatingText(item.state.viewRect, "BLOCK", FloatingTextType.Damage, true);
+			}
+			RefreshEnemyUI(item.state, false);
+		}
+	}
+
+	private IEnumerator PlayPendingEnemyDeathsWithoutQueue()
+	{
 		for (int i = 0; i < enemyModels.Count; i++)
 		{
 			EnemyModel enemyModel = enemyModels[i];
@@ -8972,6 +9374,20 @@ public bool IsCardDragActive => cardDragActive;
 				}
 			}
 		}
+	}
+
+	private sealed class EnemyFeedbackSnapshot
+	{
+		public EnemyModel model;
+		public int health;
+		public int shield;
+	}
+
+	private sealed class EnemyDamageFeedbackItem
+	{
+		public EnemyViewState state;
+		public int healthDelta;
+		public int shieldDelta;
 	}
 
 	private IEnumerator PlayEnemyExplosion(EnemyViewState state)
@@ -9220,23 +9636,31 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				RefreshEnemyUI();
 			}
+			if (result.playerGoldGain > 0)
+				RefreshStaticUI();
 		}
 	}
 
 	private IEnumerator PlayMagicDamageFeedbackRoutine(IReadOnlyList<MagicDamageHitResult> hits)
 	{
 		int lastStepIndex = -1;
+		bool shownAny = false;
 		for (int i = 0; hits != null && i < hits.Count; i++)
 		{
 			MagicDamageHitResult hit = hits[i];
 			if (hit == null)
 				continue;
 
-			if (lastStepIndex >= 0 && hit.stepIndex != lastStepIndex)
-				yield return new WaitForSeconds(magicDamageHitInterval);
+			// 同一 damageStep 内的多目标也要错开：否则多敌人 AoE / 电弧的飘字全部同帧弹出、互相遮盖。
+			float wait = !shownAny
+				? 0f
+				: hit.stepIndex != lastStepIndex ? magicDamageHitInterval : magicDamageSameStepInterval;
+			if (wait > 0f)
+				yield return new WaitForSeconds(wait);
 
 			PlayEnemyDamageFeedback(hit);
 			lastStepIndex = hit.stepIndex;
+			shownAny = true;
 		}
 	}
 
@@ -9258,12 +9682,13 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			PlayEnemyHitFeedback(enemyViewState);
 			ShowFloatingText(enemyViewState.viewRect, "-" + hit.healthDamage, FloatingTextType.Damage);
-			RefreshEnemyUI();
+			// 只刷新该敌人：多目标时刷新全体会造成血条跳动与额外开销。
+			RefreshEnemyUI(enemyViewState, false);
 		}
 		else if (hit.FullyBlocked)
 		{
 			ShowFloatingText(enemyViewState.viewRect, "BLOCK", FloatingTextType.Damage, true);
-			RefreshEnemyUI();
+			RefreshEnemyUI(enemyViewState, false);
 		}
 	}
 

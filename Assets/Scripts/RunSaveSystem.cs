@@ -163,6 +163,7 @@ public class PlayerCombatSaveData
 {
     public int shield;
     public int extraRefreshChancesThisTurn;
+    public int playedCardCountThisTurn;
     public MaterialCardSaveData[] hand = Array.Empty<MaterialCardSaveData>();
     public MaterialCardSaveData[] drawPile = Array.Empty<MaterialCardSaveData>();
     public MaterialCardSaveData[] discardPile = Array.Empty<MaterialCardSaveData>();
@@ -734,7 +735,8 @@ public static class RunSaveSystem
             RestoreCards(data.playZone, deckLookup),
             RestoreCards(data.consumedPile, deckLookup),
             RestoreCards(data.temporaryMaterialsNextTurn, deckLookup),
-            data.extraRefreshChancesThisTurn);
+            data.extraRefreshChancesThisTurn,
+            data.playedCardCountThisTurn);
     }
 
     private static Dictionary<string, MaterialModel> BuildDeckLookup(PlayerState player)
@@ -980,6 +982,7 @@ public static class RunSaveSystem
         {
             shield = player.Shield,
             extraRefreshChancesThisTurn = player.ExtraRefreshChancesThisTurn,
+            playedCardCountThisTurn = player.PlayedCardCountThisTurn,
             hand = ExportDeck(player.Hand),
             drawPile = ExportDeck(player.DrawPile),
             discardPile = ExportDeck(player.DiscardPile),
@@ -1190,10 +1193,19 @@ public static class RunSaveSystem
         for (int i = 0; data.modifierIds != null && i < data.modifierIds.Length; i++)
         {
             MaterialModifierModel modifier = CreateMaterialModifier(data.modifierIds[i]);
-            if (modifier != null)
-                card.AddModifier(modifier);
+            if (modifier == null)
+                continue;
+
+            // 回合临时标记不进存档，读档后按类型补回，避免禁用附魔变成永久附魔。
+            if (modifier is DisabledArrowModifier disabledArrow)
+            {
+                disabledArrow.MarkRemoveAfterTurn();
+                disabledArrow.MarkRemoveAfterBattle();
+            }
+
+            card.AddModifier(modifier);
         }
-        bool isDeckPlaceholder = !string.IsNullOrEmpty(card.instanceId) && card.instanceId.StartsWith("deck_placeholder_");
+        bool isDeckPlaceholder = PlayerState.IsDeckPlaceholderMaterial(card);
         if (isDeckPlaceholder)
             card.RemoveModifiers<TemporaryModifier>();
         else if (data.isTemporary && !card.isTemporary)

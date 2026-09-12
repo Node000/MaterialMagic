@@ -132,12 +132,16 @@
       ],
       "intentLoop": [
         {
-          "randomGroupIds": [
-            1,
-            2,
-            3,
-            4
-          ]
+          "groupId": 1
+        },
+        {
+          "groupId": 2
+        },
+        {
+          "groupId": 3
+        },
+        {
+          "groupId": 4
         }
       ]
     }

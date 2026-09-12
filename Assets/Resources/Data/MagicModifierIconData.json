@@ -11,6 +11,30 @@
     {
       "modifierId": "pioneer_extra_draw",
       "iconName": "先驱α"
+    },
+    {
+      "modifierId": "mercury_weak",
+      "iconName": "yellowStar"
+    },
+    {
+      "modifierId": "mirror_reverse_recipe",
+      "iconName": "yellowStar"
+    },
+    {
+      "modifierId": "rupture_vulnerable",
+      "iconName": "yellowStar"
+    },
+    {
+      "modifierId": "midas_gold",
+      "iconName": "yellowStar"
+    },
+    {
+      "modifierId": "regeneration_heal",
+      "iconName": "yellowStar"
+    },
+    {
+      "modifierId": "bulwark_shield",
+      "iconName": "yellowStar"
     }
   ]
 }

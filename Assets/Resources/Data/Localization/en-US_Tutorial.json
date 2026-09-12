@@ -102,7 +102,7 @@
     },
     {
       "key": "tutorial.reward.claim.body",
-      "text": "After winning a battle, the reward panel appears. Click to claim a reward."
+      "text": "Winning a battle grants its gold automatically; then pick one of three rewards (you can also skip)."
     },
     {
       "key": "tutorial.reward.equip_magic.title",

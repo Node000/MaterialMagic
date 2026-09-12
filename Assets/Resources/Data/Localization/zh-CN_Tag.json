@@ -46,7 +46,7 @@
     },
     {
       "key": "tag.vulnerable.desc",
-      "text": "每层使受到伤害+1，受到伤害后减少1层。"
+      "text": "每层使受到伤害+1，受到伤害后层数减半。"
     },
     {
       "key": "tag.slow.name",

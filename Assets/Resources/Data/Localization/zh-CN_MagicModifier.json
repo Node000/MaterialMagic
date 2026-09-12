@@ -53,6 +53,54 @@
       "text": "若此道具在本回合中触发了2次，下回合额外抽取1张素材"
     },
     {
+      "key": "magic_modifier.mercury_weak.name",
+      "text": "水银"
+    },
+    {
+      "key": "magic_modifier.mercury_weak.desc",
+      "text": "此道具触发时，随机1个敌人获得2层【虚弱】"
+    },
+    {
+      "key": "magic_modifier.mirror_reverse_recipe.name",
+      "text": "镜像"
+    },
+    {
+      "key": "magic_modifier.mirror_reverse_recipe.desc",
+      "text": "此道具的配方顺序被倒置"
+    },
+    {
+      "key": "magic_modifier.rupture_vulnerable.name",
+      "text": "破裂"
+    },
+    {
+      "key": "magic_modifier.rupture_vulnerable.desc",
+      "text": "此道具触发时，随机1个敌人获得2层【易损】"
+    },
+    {
+      "key": "magic_modifier.midas_gold.name",
+      "text": "点金"
+    },
+    {
+      "key": "magic_modifier.midas_gold.desc",
+      "text": "此道具每场战斗第一次触发时，获得1金币"
+    },
+    {
+      "key": "magic_modifier.regeneration_heal.name",
+      "text": "再生"
+    },
+    {
+      "key": "magic_modifier.regeneration_heal.desc",
+      "text": "此道具每场战斗第一次触发时，回复3点生命"
+    },
+    {
+      "key": "magic_modifier.bulwark_shield.name",
+      "text": "坚盾"
+    },
+    {
+      "key": "magic_modifier.bulwark_shield.desc",
+      "text": "此道具触发时，获得2点护盾"
+    },
+    {
       "key": "rest.option.rest",
       "text": "回复血量"
     },

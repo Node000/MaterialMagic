@@ -14,6 +14,7 @@ public class MagicModel
     public string Description => LocalizationSystem.GetText(Data.descriptionKey, string.Empty);
     public bool HasModifier => Modifiers.Count > 0;
     public MagicModifierModel PrimaryModifier => Modifiers.Count > 0 ? Modifiers[0] : null;
+    private MaterialEnum[] effectiveRecipe;
     public virtual MagicEffectType EffectType => MagicEffectType.None;
     public virtual bool CastParticleTargetsAllEnemies => false;
     public virtual bool CastParticleTargetsPlayer => false;
@@ -37,8 +38,21 @@ public class MagicModel
         modifier.model = this;
         Modifiers.Clear();
         Modifiers.Add(modifier);
+        effectiveRecipe = null;
         GameLog.Data($"Add magic modifier magic={Id} modifier={modifier.Id}");
         return true;
+    }
+
+    public MaterialEnum[] GetEffectiveRecipe()
+    {
+        if (effectiveRecipe == null)
+        {
+            MaterialEnum[] recipe = Data != null ? Data.recipe : null;
+            for (int i = 0; i < Modifiers.Count; i++)
+                recipe = Modifiers[i].ModifyRecipe(recipe);
+            effectiveRecipe = recipe;
+        }
+        return effectiveRecipe;
     }
 
     public MagicCastResult Cast(PlayerState playerState, EnemyModel enemyModel)
@@ -234,7 +248,7 @@ public class MagicModel
         if (Data.matchRule == MagicMatchRule.AnyTwoDifferentElements)
             return IsAnyTwoDifferentElements(sequence, startIndex);
 
-        MaterialEnum[] recipe = Data.recipe;
+        MaterialEnum[] recipe = GetEffectiveRecipe();
         if (sequence == null || recipe == null || startIndex < 0 || startIndex + recipe.Length > sequence.Count)
             return false;
 
@@ -253,7 +267,7 @@ public class MagicModel
         if (Data.matchRule == MagicMatchRule.AnyTwoDifferentElements)
             return IsAnyTwoDifferentElements(sequence, startIndex);
 
-        MaterialEnum[] recipe = Data.recipe;
+        MaterialEnum[] recipe = GetEffectiveRecipe();
         if (sequence == null || recipe == null || startIndex < 0 || startIndex + recipe.Length > sequence.Count)
             return false;
 
@@ -543,6 +557,7 @@ public class MagicCastResult
     public readonly List<MagicDamageHitResult> enemyDamageHits = new List<MagicDamageHitResult>();
     public int playerHeal;
     public int playerShield;
+    public int playerGoldGain;
     public bool enemyBuffApplied;
 
     private int currentDamageStep;

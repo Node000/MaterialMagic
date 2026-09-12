@@ -13,6 +13,9 @@ public class ShopLayer
     public int slotLimit;
     public bool isLastLayer;
 
+    /// <summary>箭头层保底出现在最后一格的强附魔箭头数量（其它格子按普通/弱附魔池生成）。</summary>
+    public int guaranteedEnchantedArrowCount;
+
     private const int DefaultSlotLimit = 6;
 
     public ShopLayer()
@@ -39,7 +42,8 @@ public class ShopLayer
             case ShopSlotEnum.Item:
                 return 2f;
             case ShopSlotEnum.Arrow:
-                return 1f;
+                // 1.5：标准 6 格预算下恰好放 4 个箭头（9.7 改版：商店箭头 6 → 4）。
+                return 1.5f;
             case ShopSlotEnum.Relic:
                 return 1.5f;
             default:
@@ -54,7 +58,9 @@ public class ShopLayer
 
     public static ShopLayer CreateArrowLayer()
     {
-        return new ShopLayer(new Dictionary<ShopSlotEnum, float> { { ShopSlotEnum.Arrow, 1f } });
+        ShopLayer layer = new ShopLayer(new Dictionary<ShopSlotEnum, float> { { ShopSlotEnum.Arrow, 1f } });
+        layer.guaranteedEnchantedArrowCount = 1;
+        return layer;
     }
 
     public static ShopLayer CreateRelicLayer()

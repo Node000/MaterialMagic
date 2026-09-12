@@ -56,11 +56,33 @@ public class BattleActionResult
     }
 }
 
+/// <summary>
+/// 一次待处理的敌人死亡。死亡管线（HandSystemUI）按入队顺序取出，
+/// 在同一“时间片”内完成：启动死亡动画 -> 结算亡语 -> 播放反馈。
+/// </summary>
+public readonly struct EnemyDeathEntry
+{
+    public EnemyDeathEntry(EnemyModel enemy, CombatantModel attacker, bool resolveOnDie)
+    {
+        Enemy = enemy;
+        Attacker = attacker;
+        ResolveOnDie = resolveOnDie;
+    }
+
+    public EnemyModel Enemy { get; }
+    public CombatantModel Attacker { get; }
+
+    /// <summary>是否执行 TriggerOnDie（亡语）。收尾清场等“纯表现死亡”传 false。</summary>
+    public bool ResolveOnDie { get; }
+}
+
 public class BattleManager
 {
     private const string EnemySummonLayoutConfigPath = "Config/EnemySummonLayoutConfig";
 
     private readonly List<EnemyModel> enemies = new List<EnemyModel>();
+    private readonly Queue<EnemyDeathEntry> pendingDeaths = new Queue<EnemyDeathEntry>();
+    private readonly HashSet<EnemyModel> queuedDeaths = new HashSet<EnemyModel>();
     private static EnemySummonLayoutConfig summonLayoutConfig;
 
     public static BattleManager Instance { get; private set; }
@@ -70,6 +92,71 @@ public class BattleManager
     public PlayerState PlayerState { get; private set; }
     public PlayerModel Player { get; private set; }
     public IReadOnlyList<EnemyModel> Enemies => enemies;
+
+    /// <summary>是否还有未结算的死亡等待死亡管线处理。</summary>
+    public bool HasPendingDeaths => pendingDeaths.Count > 0;
+
+    /// <summary>
+    /// 登记一次敌人死亡。IsDead（HP &lt;= 0）仍然即时生效，只把亡语结算与演出推迟到管线排空时，
+    /// 以保证“同时死亡”时每一份结算/动画都有确定顺序，避免同帧竞态。
+    /// </summary>
+    public bool EnqueueEnemyDeath(EnemyModel enemy, CombatantModel attacker, bool resolveOnDie)
+    {
+        if (enemy == null || enemy.DeathHandled || queuedDeaths.Contains(enemy))
+            return false;
+
+        queuedDeaths.Add(enemy);
+        pendingDeaths.Enqueue(new EnemyDeathEntry(enemy, attacker, resolveOnDie));
+        return true;
+    }
+
+    public bool TryDequeueEnemyDeath(out EnemyDeathEntry entry)
+    {
+        if (pendingDeaths.Count == 0)
+        {
+            entry = default;
+            return false;
+        }
+
+        entry = pendingDeaths.Dequeue();
+        if (entry.Enemy != null)
+            queuedDeaths.Remove(entry.Enemy);
+        return true;
+    }
+
+    /// <summary>结算一项死亡：先执行亡语，再标记为已处理。</summary>
+    public void ResolveEnemyDeath(EnemyDeathEntry entry)
+    {
+        EnemyModel enemy = entry.Enemy;
+        if (enemy == null)
+            return;
+
+        if (entry.ResolveOnDie)
+            enemy.TriggerOnDie(entry.Attacker);
+        enemy.Die();
+    }
+
+    /// <summary>
+    /// 兜底：把“血量已归零但从未走过入队路径”的敌人（读档恢复、外部直接改血量等）补入队，
+    /// 只播表现不结算亡语，避免丢死亡演出。
+    /// </summary>
+    public int EnqueueUnhandledDeadEnemies()
+    {
+        int count = 0;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && enemy.IsDead && EnqueueEnemyDeath(enemy, null, false))
+                count++;
+        }
+        return count;
+    }
+
+    public void ClearPendingDeaths()
+    {
+        pendingDeaths.Clear();
+        queuedDeaths.Clear();
+    }
     public EnemyModel FocusTarget { get; private set; }
     public EnemyModel CurrentCastTarget { get; private set; }
     public int ContinuousCastCount { get; private set; }
@@ -287,6 +374,7 @@ public class BattleManager
     public void ClearEnemies()
     {
         enemies.Clear();
+        ClearPendingDeaths();
         FocusTarget = null;
         CurrentCastTarget = null;
         ContinuousCastCount = 0;
@@ -530,6 +618,7 @@ public class BattleManager
         GameLog.Data($"Begin player turn extra={PlayerState.GetBuffStack(BuffEnum.ExtraDraw)}");
         BeginPlayerTurn();
         PlayerState.ResetExtraRefreshChancesThisTurn();
+        PlayerState.ResetPlayedCardCountThisTurn();
         result.CapturePlayerBefore(PlayerState);
         CombatantModel opponent = new CombatantModel(GetFirstAliveEnemy());
         int keepShield = PlayerState.GetBuffStack(BuffEnum.KeepShieldNextTurn);
@@ -738,6 +827,8 @@ public class BattleManager
             if (enemy != null && enemy.IsMinion && !enemy.IsDead)
             {
                 enemy.KillAsBattleCleanup();
+                // 收尾清场属于“纯表现死亡”：入队但不再结算亡语（否则生命亡语会反向炸玩家）。
+                EnqueueEnemyDeath(enemy, null, false);
                 killedAny = true;
             }
         }

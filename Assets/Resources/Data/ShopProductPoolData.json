@@ -118,121 +118,121 @@
       "normalMaterialOffers": [
         {
           "material": 1,
-          "price": 1
+          "price": 2
         },
         {
           "material": 2,
-          "price": 1
+          "price": 2
         },
         {
           "material": 3,
-          "price": 1
+          "price": 2
         },
         {
           "material": 4,
-          "price": 1
+          "price": 2
         }
       ],
       "weakMaterialOffers": [
         {
           "material": 1,
           "modifierId": "half_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 2,
           "modifierId": "half_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 3,
           "modifierId": "half_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 4,
           "modifierId": "half_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 1,
           "modifierId": "temporary",
-          "price": 0
+          "price": 1
         },
         {
           "material": 2,
           "modifierId": "temporary",
-          "price": 0
+          "price": 1
         },
         {
           "material": 3,
           "modifierId": "temporary",
-          "price": 0
+          "price": 1
         },
         {
           "material": 4,
           "modifierId": "temporary",
-          "price": 0
+          "price": 1
         },
         {
           "material": 1,
           "modifierId": "doom",
-          "price": 0
+          "price": 1
         },
         {
           "material": 2,
           "modifierId": "doom",
-          "price": 0
+          "price": 1
         },
         {
           "material": 3,
           "modifierId": "doom",
-          "price": 0
+          "price": 1
         },
         {
           "material": 4,
           "modifierId": "doom",
-          "price": 0
+          "price": 1
         },
         {
           "material": 1,
           "modifierId": "lazy",
-          "price": 0
+          "price": 1
         },
         {
           "material": 2,
           "modifierId": "lazy",
-          "price": 0
+          "price": 1
         },
         {
           "material": 3,
           "modifierId": "lazy",
-          "price": 0
+          "price": 1
         },
         {
           "material": 4,
           "modifierId": "lazy",
-          "price": 0
+          "price": 1
         },
         {
           "material": 1,
           "modifierId": "fragile_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 2,
           "modifierId": "fragile_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 3,
           "modifierId": "fragile_arrow",
-          "price": 0
+          "price": 1
         },
         {
           "material": 4,
           "modifierId": "fragile_arrow",
-          "price": 0
+          "price": 1
         }
       ]
     }

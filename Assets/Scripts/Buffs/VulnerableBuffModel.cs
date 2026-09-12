@@ -12,6 +12,6 @@ public class VulnerableBuffModel : BuffModel
     public override void AfterTakeDamage(CombatantModel self, CombatantModel attacker, CombatDamageResult result)
     {
         if (result != null && result.FinalDamage > 0)
-            ConsumeStack(1);
+            HalveStack();
     }
 }

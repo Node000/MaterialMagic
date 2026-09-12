@@ -34,6 +34,11 @@ public class BuffModel
     {
     }
 
+    /// <summary>箭头进入手牌时触发（抽牌、换牌替换、下回合临时素材、出牌区退回手牌等）。</summary>
+    public virtual void AfterEnterHand(CombatantModel self, MaterialModel card)
+    {
+    }
+
     public virtual void AfterDiscard(CombatantModel self, MaterialModel card)
     {
     }

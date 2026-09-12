@@ -30,7 +30,7 @@
     },
     {
       "key": "buff.vulnerable.desc",
-      "text": "Each stack increases damage taken by 1. Lose 1 stack after taking damage."
+      "text": "Each stack increases damage taken by 1. Halve the stacks after taking damage."
     },
     {
       "key": "buff.slow.name",
@@ -198,11 +198,11 @@
     },
     {
       "key": "buff.attributedisabled.desc",
-      "text": "The specified attribute arrows cannot be selected this turn."
+      "text": "Arrows of the specified direction you draw this turn gain [Disabled] and cannot be played."
     },
     {
       "key": "buff.attributedisabled.desc_with_material",
-      "text": "{0} arrows cannot be selected this turn."
+      "text": "{0} arrows you draw this turn gain [Disabled] and cannot be played."
     },
     {
       "key": "buff.curse.name",

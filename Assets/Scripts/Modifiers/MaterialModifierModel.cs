@@ -107,6 +107,18 @@ public class MaterialModifierModel
         return readable;
     }
 
+    /// <summary>默认可打出；返回 false 的附魔会阻止该箭头从手牌置入出牌区。</summary>
+    public virtual bool CanPlay()
+    {
+        return true;
+    }
+
+    /// <summary>默认可参与每回合打出数量限制；返回 true 的附魔使该箭头不受上限拦截，也不占用额度。</summary>
+    public virtual bool IgnoresPlayLimit()
+    {
+        return false;
+    }
+
     public virtual MaterialEnum GetArrowDisplayMaterial(MaterialEnum material)
     {
         return material;

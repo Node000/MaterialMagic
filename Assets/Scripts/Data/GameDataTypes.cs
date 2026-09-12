@@ -638,6 +638,28 @@ public class MaterialModel
         return readable;
     }
 
+    /// <summary>汇总所有附魔的 CanPlay：任一附魔否决则不可从手牌打出。</summary>
+    public bool CanPlay()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && !modifiers[i].CanPlay())
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>汇总所有附魔的 IgnoresPlayLimit：任一附魔声明豁免则不受每回合打出数量限制。</summary>
+    public bool IgnoresPlayLimit()
+    {
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i] != null && modifiers[i].IgnoresPlayLimit())
+                return true;
+        }
+        return false;
+    }
+
     public MaterialEnum GetArrowDisplayMaterial()
     {
         MaterialEnum displayMaterial = material;

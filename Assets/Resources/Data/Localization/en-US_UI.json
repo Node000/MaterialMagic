@@ -365,6 +365,14 @@
       "text": "This card cannot be played this turn!"
     },
     {
+      "key": "ui.battle.play_limit_reached",
+      "text": "This turn's arrow play limit has been reached!"
+    },
+    {
+      "key": "ui.battle.play_limit_format",
+      "text": "{0}/{1}"
+    },
+    {
       "key": "ui.battle.end_turn.prepare",
       "text": "Prepare"
     },
@@ -670,7 +678,7 @@
     },
     {
       "key": "ui.reward_panel.title",
-      "text": "Battle Rewards"
+      "text": "Choose a Reward"
     },
     {
       "key": "ui.reward_panel.hint",
@@ -1222,11 +1230,11 @@
     },
     {
       "key": "difficulty.reward_magic_choices_minus_1.name",
-      "text": "Item Reward Choices -1"
+      "text": "No Extra Gold Reward"
     },
     {
       "key": "difficulty.reward_magic_choices_minus_1.desc",
-      "text": "Item rewards offer one fewer choice."
+      "text": "Battle settlement no longer offers the extra gold option."
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
@@ -1566,11 +1574,11 @@
     },
     {
       "key": "difficulty.reward_magic_choices_plus_1.name",
-      "text": "Item Reward Choices +1"
+      "text": "Extra Gold Reward Restored"
     },
     {
       "key": "difficulty.reward_magic_choices_plus_1.desc",
-      "text": "Item rewards offer 1 additional choice."
+      "text": "Cancels \"No Extra Gold Reward\" and restores the extra gold option in battle settlement."
     },
     {
       "key": "difficulty.starting_magic_slots_plus_1_a7.name",
@@ -1891,6 +1899,10 @@
     {
       "key": "ui.shop.free",
       "text": "Free"
+    },
+    {
+      "key": "ui.reward_panel.choice.gold",
+      "text": "Gold x{0}"
     }
   ]
 }

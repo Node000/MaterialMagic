@@ -176,6 +176,8 @@ public static class LocalizationKeys
             return "retained_arrow";
         if (modifier is HalfArrowModifier)
             return "half_arrow";
+        if (modifier is DisabledArrowModifier)
+            return "disabled_arrow";
 
         return modifier != null ? modifier.GetType().Name.ToLowerInvariant() : string.Empty;
     }

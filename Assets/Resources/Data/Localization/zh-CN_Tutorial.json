@@ -102,7 +102,7 @@
     },
     {
       "key": "tutorial.reward.claim.body",
-      "text": "战斗胜利后会出现结算奖励，点击领取。"
+      "text": "战斗胜利后金币会自动到手，接着在三个奖励中选一个（也可以跳过）。"
     },
     {
       "key": "tutorial.reward.equip_magic.title",

@@ -16,9 +16,6 @@ Shader "UI/MaterialModifiers/StaticElectricVortexDisplace"
         _ParticleSize ("Noise Particle Size", Range(0.01, 0.5)) = 0.08
         _NoiseIntensity ("Noise Jitter Intensity", Range(0, 0.1)) = 0.02
 
-        [Header(Transparency Option)]
-        [Enum(Fade Out, 0, Keep Solid, 1)] _AlphaMode ("Alpha Mode", Float) = 0
-
         // UI 遮罩相关参数保留以兼容 UGUI 机制
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -97,7 +94,6 @@ Shader "UI/MaterialModifiers/StaticElectricVortexDisplace"
             float _VortexDensity;
             float _ParticleSize;
             float _NoiseIntensity;
-            float _AlphaMode;
 
             // --- 程序化高频噪声（用于给漩涡边缘增加破碎静电感） ---
             float2 hash2(float2 p)
@@ -178,18 +174,7 @@ Shader "UI/MaterialModifiers/StaticElectricVortexDisplace"
                 // 6. 采样
                 fixed4 finalColor = SampleMain(distortedUV, IN.color);
 
-                // --- 后续代码保持不变 ---
-                if (finalColor.a > 0.01)
-                {
-                    if (_AlphaMode == 0.0)
-                    {
-                        finalColor.a *= saturate(1.0 - (influence * 0.3));
-                    }
-                    else
-                    {
-                        finalColor.a = step(0.01, finalColor.a);
-                    }
-                }
+                // 不修改采样 alpha：保留贴图原有透明度（透明/淡出效果已移除）。
 
                 finalColor.a *= IN.color.a;
                 #ifdef UNITY_UI_CLIP_RECT

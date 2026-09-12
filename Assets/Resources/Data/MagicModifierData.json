@@ -23,6 +23,54 @@
       "targetRule": 1,
       "value": 1,
       "weight": 1
+    },
+    {
+      "id": "mercury_weak",
+      "nameKey": "magic_modifier.mercury_weak.name",
+      "descriptionKey": "magic_modifier.mercury_weak.desc",
+      "targetRule": 1,
+      "value": 2,
+      "weight": 1
+    },
+    {
+      "id": "mirror_reverse_recipe",
+      "nameKey": "magic_modifier.mirror_reverse_recipe.name",
+      "descriptionKey": "magic_modifier.mirror_reverse_recipe.desc",
+      "targetRule": 1,
+      "value": 1,
+      "weight": 1
+    },
+    {
+      "id": "rupture_vulnerable",
+      "nameKey": "magic_modifier.rupture_vulnerable.name",
+      "descriptionKey": "magic_modifier.rupture_vulnerable.desc",
+      "targetRule": 1,
+      "value": 2,
+      "weight": 1
+    },
+    {
+      "id": "midas_gold",
+      "nameKey": "magic_modifier.midas_gold.name",
+      "descriptionKey": "magic_modifier.midas_gold.desc",
+      "targetRule": 1,
+      "value": 1,
+      "weight": 1
+    },
+    {
+      "id": "regeneration_heal",
+      "nameKey": "magic_modifier.regeneration_heal.name",
+      "descriptionKey": "magic_modifier.regeneration_heal.desc",
+      "targetRule": 1,
+      "value": 3,
+      "weight": 1
+    },
+    {
+      "id": "bulwark_shield",
+      "nameKey": "magic_modifier.bulwark_shield.name",
+      "descriptionKey": "magic_modifier.bulwark_shield.desc",
+      "targetRule": 1,
+      "value": 2,
+      "weight": 1
     }
   ]
 }

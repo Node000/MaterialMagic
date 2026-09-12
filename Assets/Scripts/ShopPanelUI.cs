@@ -625,6 +625,10 @@ public class ShopPanelUI : MonoBehaviour
         if (layer == null || layer.weights == null)
             return;
 
+        // 箭头层：先按普通/弱附魔池销满保底格之外的槽位，再补上保底强附魔箭头（排在最后 = 最后一个格子）。
+        int guaranteedArrows = layer.HasType(ShopSlotEnum.Arrow) ? Mathf.Max(0, layer.guaranteedEnchantedArrowCount) : 0;
+        float budget = layer.slotLimit - guaranteedArrows * ShopLayer.GetSlotCost(ShopSlotEnum.Arrow);
+
         float used = 0f;
         bool progressed = true;
         int safety = 0;
@@ -635,7 +639,7 @@ public class ShopPanelUI : MonoBehaviour
             foreach (KeyValuePair<ShopSlotEnum, float> kvp in layer.weights)
             {
                 float cost = ShopLayer.GetSlotCost(kvp.Key);
-                if (!layer.isLastLayer && used + cost > layer.slotLimit)
+                if (!layer.isLastLayer && used + cost > budget)
                     continue;
                 if (!TryGenerateLayerOffer(kvp.Key, target))
                     continue;
@@ -643,6 +647,9 @@ public class ShopPanelUI : MonoBehaviour
                 progressed = true;
             }
         }
+
+        for (int i = 0; i < guaranteedArrows; i++)
+            AddGuaranteedEnchantedArrow(target);
     }
 
     private bool TryGenerateLayerOffer(ShopSlotEnum type, List<ShopOffer> target)
@@ -652,10 +659,27 @@ public class ShopPanelUI : MonoBehaviour
             case ShopSlotEnum.Item:
                 return TryAddMagicOffer(target);
             case ShopSlotEnum.Arrow:
-                return TryAddMaterialOffer(target);
+                return TryAddMaterialOffer(target, preferEnchanted: false);
             default:
                 return false;
         }
+    }
+
+    /// <summary>保底格：必带强附魔；强附魔池无可用项时退回普通/弱附魔，保证格子数量不变。</summary>
+    private void AddGuaranteedEnchantedArrow(List<ShopOffer> target)
+    {
+        if (strongMaterialOfferPool.Count > 0)
+        {
+            AddMaterialOfferFromPool(strongMaterialOfferPool, target);
+            return;
+        }
+        if (normalMaterialOfferPool.Count > 0)
+        {
+            AddMaterialOfferFromPool(normalMaterialOfferPool, target);
+            return;
+        }
+        if (weakMaterialOfferPool.Count > 0)
+            AddMaterialOfferFromPool(weakMaterialOfferPool, target);
     }
 
     private ShopProductPoolData GetShopProductPool()
@@ -866,13 +890,22 @@ public class ShopPanelUI : MonoBehaviour
         }
     }
 
-    private bool TryAddMaterialOffer(List<ShopOffer> target)
+    private bool TryAddMaterialOffer(List<ShopOffer> target, bool preferEnchanted)
     {
-        if (strongMaterialOfferPool.Count > 0)
+        if (preferEnchanted && strongMaterialOfferPool.Count > 0)
             return AddMaterialOfferFromPool(strongMaterialOfferPool, target);
 
-        List<ShopMaterialOfferData> pool = ShouldUseWeakMaterialOffer() && weakMaterialOfferPool.Count > 0 ? weakMaterialOfferPool : normalMaterialOfferPool;
-        return AddMaterialOfferFromPool(pool, target);
+        // 普通格：默认普通箭头，按 weakMaterialChance 概率出弱附魔箭头；所选池子取完后回退其它池子。
+        bool useWeak = ShouldUseWeakMaterialOffer();
+        if (useWeak && weakMaterialOfferPool.Count > 0 && AddMaterialOfferFromPool(weakMaterialOfferPool, target))
+            return true;
+        if (normalMaterialOfferPool.Count > 0 && AddMaterialOfferFromPool(normalMaterialOfferPool, target))
+            return true;
+        if (!useWeak && weakMaterialOfferPool.Count > 0 && AddMaterialOfferFromPool(weakMaterialOfferPool, target))
+            return true;
+        if (strongMaterialOfferPool.Count > 0)
+            return AddMaterialOfferFromPool(strongMaterialOfferPool, target);
+        return false;
     }
 
     private bool ShouldUseWeakMaterialOffer()
@@ -1367,7 +1400,7 @@ public class ShopPanelUI : MonoBehaviour
 
     private bool IsRemovableMaterial(MaterialModel material)
     {
-        return material != null && owner != null && owner.PlayerState != null && owner.PlayerState.Deck.Contains(material);
+        return material != null && owner != null && owner.PlayerState != null && owner.PlayerState.Deck.Contains(material) && !PlayerState.IsDeckPlaceholderMaterial(material);
     }
 
     private void CompleteRemoveMaterialPurchase(ShopOffer offer, IReadOnlyList<MaterialModel> selected)
