@@ -1,33 +1,17 @@
 ---
 id: kd_80101230-4fa5-476b-99d3-8ddd587540e8
-type: memory
-path: unity-project-understanding/code-structure.md
-title: code-structure
-inheritInjectMode: true
-summaryEnabled: true
-commandEnabled: false
-readOnly: false
-aiMaintained: true
-explicitMaintenanceRules: true
-createdAt: 1779519783691
-updatedAt: 1779874533830
+injectMode: inherit
+summary: Unity 项目结构与系统缓存：自定义脚本主要在 `Assets/Scripts/`，DOTween 可用；数据系统用 `Resources/Data/*.json` + `JsonUtility`，本地化按 `zh-CN*.json` 分表；战斗、Buff/Modifier、法术、事件、奖励、地图和 UI 主要入口与注意事项记录在正文。弹窗/提示框最高渲染层级由 `PopupLayerUtility` 统一设置独立 Canvas sortingOrder=9000。
+aiEditMode: auto
+maintenanceRules: |-
+  - Record only Unity project structure knowledge and lookup info that reduce repeated exploration
+  - Maintain only project-derived engineering understanding, including directory responsibilities, system entry points, asset relationships, runtime entry points, and config mappings
+  - Write user-supplied design goals, gameplay intent, product direction, and solution decisions into Design
+  - Prioritize directory responsibilities, core system entry points, key scenes, prefabs, ScriptableObjects, assemblies, and config mappings
+  - Record verified asset relationships, runtime entry points, key dependencies, and common lookup paths
+  - Remove temporary investigation traces, one-off task residue, unverified guesses, and expired cache
 ---
 
-# code-structure
-
-## Summary
-Unity 项目结构与系统缓存：自定义脚本主要在 `Assets/Scripts/`，DOTween 可用；数据系统用 `Resources/Data/*.json` + `JsonUtility`，本地化按 `zh-CN*.json` 分表；战斗、Buff/Modifier、法术、事件、奖励、地图和 UI 主要入口与注意事项记录在正文。弹窗/提示框最高渲染层级由 `PopupLayerUtility` 统一设置独立 Canvas sortingOrder=9000。
-
-<!-- locus:maintain-rules:start -->
-- Record only Unity project structure knowledge and lookup info that reduce repeated exploration
-- Maintain only project-derived engineering understanding, including directory responsibilities, system entry points, asset relationships, runtime entry points, and config mappings
-- Write user-supplied design goals, gameplay intent, product direction, and solution decisions into Design
-- Prioritize directory responsibilities, core system entry points, key scenes, prefabs, ScriptableObjects, assemblies, and config mappings
-- Record verified asset relationships, runtime entry points, key dependencies, and common lookup paths
-- Remove temporary investigation traces, one-off task residue, unverified guesses, and expired cache
-<!-- locus:maintain-rules:end -->
-
-<!-- locus:body:start -->
 - 项目自定义运行时代码主要放在 `Assets/Scripts/`。
 - 项目已导入 DOTween，运行时代码可引用 `DG.Tweening`；DOTween 文件位于 `Assets/DOTween/`。
 - `JuicyMotion` 是通用 UI/物体交互动效脚本，路径为 `Assets/Scripts/JuicyMotion.cs`，实现 `IPointerEnterHandler`、`IPointerExitHandler` 和 `IPointerClickHandler`；Inspector 提供悬停/点击触发、缩放幅度、抖动幅度、悬停倾斜、弹性、Motion 时间参数。当前悬停会同时轻微倾斜和缩放。
@@ -50,4 +34,3 @@ Unity 项目结构与系统缓存：自定义脚本主要在 `Assets/Scripts/`�
 - `Assets/Scenes/SampleScene.unity/DebugBattleUI/SettingsPanel` 由 `SettingsPanelUI` 管理，包含 `MusicSlider`、`SfxSlider`、`ReturnStartButton`、`CloseButton`；音量滑条接入 `AudioManager`，返回按钮通过 `SceneTransitionManager` 或 `SceneManager` 回到 `StartScene`。
 - `Assets/Resources/Data/RewardPoolData.json` 当前有一个 `numericId=1` 的全法术奖励池；`LevelData.rewardPoolId` 指向奖励池，胜利奖励从奖励池的数字法术 ID 中抽取。
 - `PlayerState` 管理 `Deck`（完整素材列表/玩家牌组）、`DrawPile`（本场战斗可抽牌堆）、`Hand`、`PlayZone`，已没有弃牌堆；进入战斗/事件时 `HandSystemUI.ResetBattleDeckState` 会用 `Deck` 重建 `DrawPile`，战斗胜利时 `RestoreBattleDeckState` 清空手牌/出牌区并再次恢复 `DrawPile`，保证素材列表回到正常状态。
-<!-- locus:body:end -->
