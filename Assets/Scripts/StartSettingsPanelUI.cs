@@ -98,8 +98,7 @@ public class StartSettingsPanelUI : MonoBehaviour, IBeginDragHandler, IDragHandl
             panelRect = transform as RectTransform;
         if (closeButton == null)
             closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
-        if (windowCloseButton == null)
-            windowCloseButton = transform.Find("PopupDragonWindowBackground/Frame/TitleBar/Close")?.GetComponent<Button>();
+        // windowCloseButton 走 Inspector 绑定：美术已统一停用窗口标题栏按钮，不再按路径/名字查找。
         if (musicSlider == null)
             musicSlider = transform.Find("MusicSlider")?.GetComponent<Slider>();
         if (sfxSlider == null)

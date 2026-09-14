@@ -30,7 +30,7 @@ public class PlayerState
     /// <summary>本回合已占用打出额度的箭头；点回手牌时凭此退还额度，避免退错保留/效果入区的箭头。</summary>
     private readonly HashSet<MaterialModel> playLimitChargedCards = new HashSet<MaterialModel>();
 
-    /// <summary>每回合玩家主动打出箭头的默认上限。</summary>
+    /// <summary>每回合玩家主动打出箭头的默认上限；开局配置 maxPlayCount 缺省/非法时使用。</summary>
     public const int DefaultPlayLimitPerTurn = 7;
 
     public int MaxHealth { get; private set; }
@@ -38,8 +38,10 @@ public class PlayerState
     public int Gold { get; private set; }
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
-    public int MaxPlayCount { get; set; } = 3;
-    public int PlayLimitPerTurn { get; set; } = DefaultPlayLimitPerTurn;
+    /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 7。</summary>
+    public int MaxPlayCount { get; set; } = DefaultPlayLimitPerTurn;
+    /// <summary>实际生效的每回合打出上限；配置值小于等于 0 时回落到默认值。</summary>
+    public int PlayLimitPerTurn => MaxPlayCount > 0 ? MaxPlayCount : DefaultPlayLimitPerTurn;
     public int PlayedCardCountThisTurn { get; private set; }
     public int RemainingPlayCount => Mathf.Max(0, PlayLimitPerTurn - PlayedCardCountThisTurn);
     public bool IsPlayLimitReached => PlayedCardCountThisTurn >= PlayLimitPerTurn;
@@ -99,7 +101,7 @@ public class PlayerState
         }
 
         state.DrawCount = config.drawCount;
-        state.MaxPlayCount = config.maxPlayCount;
+        state.MaxPlayCount = ResolveMaxPlayCount(config);
 
         for (int i = 0; i < config.initialMaterials.Length; i++)
         {
@@ -117,6 +119,12 @@ public class PlayerState
 
         state.DrawPile.AddRange(state.Deck);
         return state;
+    }
+
+    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（7）。</summary>
+    public static int ResolveMaxPlayCount(PlayerStartConfigData config)
+    {
+        return config != null && config.maxPlayCount > 0 ? config.maxPlayCount : DefaultPlayLimitPerTurn;
     }
 
     public int DrawCards(int count)

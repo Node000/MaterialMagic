@@ -604,6 +604,94 @@
       "eventPoolId": 112
     },
     {
+      "id": "level_event_neon_wayfinding",
+      "titleKey": "event.neon_wayfinding.title",
+      "levelType": 1,
+      "numericId": 113,
+      "enemyIds": [],
+      "eventPoolId": 113
+    },
+    {
+      "id": "level_event_suspected_trojan",
+      "titleKey": "event.suspected_trojan.title",
+      "levelType": 1,
+      "numericId": 114,
+      "enemyIds": [],
+      "eventPoolId": 114
+    },
+    {
+      "id": "level_event_missing_fonts",
+      "titleKey": "event.missing_fonts.title",
+      "levelType": 1,
+      "numericId": 115,
+      "enemyIds": [],
+      "eventPoolId": 115
+    },
+    {
+      "id": "level_event_idle_trade_platform",
+      "titleKey": "event.idle_trade_platform.title",
+      "levelType": 1,
+      "numericId": 116,
+      "enemyIds": [],
+      "eventPoolId": 116
+    },
+    {
+      "id": "level_event_data_backup",
+      "titleKey": "event.data_backup.title",
+      "levelType": 1,
+      "numericId": 117,
+      "enemyIds": [],
+      "eventPoolId": 117
+    },
+    {
+      "id": "level_event_what_day_is_it",
+      "titleKey": "event.what_day_is_it.title",
+      "levelType": 1,
+      "numericId": 118,
+      "enemyIds": [],
+      "eventPoolId": 118
+    },
+    {
+      "id": "level_event_old_hard_drive",
+      "titleKey": "event.old_hard_drive.title",
+      "levelType": 1,
+      "numericId": 119,
+      "enemyIds": [],
+      "eventPoolId": 119
+    },
+    {
+      "id": "level_event_membership_expired",
+      "titleKey": "event.membership_expired.title",
+      "levelType": 1,
+      "numericId": 120,
+      "enemyIds": [],
+      "eventPoolId": 120
+    },
+    {
+      "id": "level_event_unreliable_helper",
+      "titleKey": "event.unreliable_helper.title",
+      "levelType": 1,
+      "numericId": 121,
+      "enemyIds": [],
+      "eventPoolId": 121
+    },
+    {
+      "id": "level_event_smart_ime",
+      "titleKey": "event.smart_ime.title",
+      "levelType": 1,
+      "numericId": 122,
+      "enemyIds": [],
+      "eventPoolId": 122
+    },
+    {
+      "id": "level_event_input_setup",
+      "titleKey": "event.input_setup.title",
+      "levelType": 1,
+      "numericId": 123,
+      "enemyIds": [],
+      "eventPoolId": 123
+    },
+    {
       "id": "level_rest_001",
       "titleKey": "level.rest_001.title",
       "levelType": 3,

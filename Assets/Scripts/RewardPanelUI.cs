@@ -93,13 +93,23 @@ public class RewardPanelUI : MonoBehaviour
     [SerializeField] private Vector2 magicChoiceCellSize = new Vector2(196f, 92f);
     [SerializeField] private float magicChoiceSpacing = 230f;
     [SerializeField] private RectTransform materialCardPrefab;
+    [Tooltip("结算“一个特定道具”用的独立奖励卡预制体（RewardItemCard，与道具栏的 MagicSlot_PC 分开）；留空时回退为克隆事件三选一的卡面。")]
+    [SerializeField] private RectTransform rewardItemCardPrefab;
 
     private readonly List<MagicItemView> rewardMagicViews = new List<MagicItemView>();
     private HandSystemUI owner;
     private Button endButton;
-    private RectTransform magicChoicePanel;
+
+    // 美术统一把面板按钮改成图标后，按钮文案由美术控制；代码只负责点击行为。
+    [Header("场景绑定（优先于按名字查找）")]
+    [Tooltip("事件道具奖励面板；留空时先按名字找父物体下的 RewardMagicChoicePanel，找不到再运行时创建（PE / PvOnly 旧场景）。")]
+    [SerializeField] private RectTransform magicChoicePanel;
+    [Tooltip("事件道具奖励面板的返回按钮；留空时按名字在面板内查找。")]
+    [SerializeField] private Button magicChoiceBackButton;
+    [Tooltip("结算箭头槽下方的名称文案；留空时按名字查找，再找不到才运行时创建（旧场景）。")]
+    [SerializeField] private TMP_Text arrowChoiceLabel;
+
     private RectTransform magicChoiceContent;
-    private Button magicChoiceBackButton;
     private bool magicClaimed;
     private MagicItemView selectedMagicView;
     private MagicItemView hoveredMagicView;
@@ -304,11 +314,7 @@ public class RewardPanelUI : MonoBehaviour
         else
             endButton.onClick.AddListener(OnLeaveClicked);
         endButton.interactable = !claimInProgress;
-        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(endButton.transform, "Text");
-        if (text != null)
-            text.text = magicOnlyMode
-                ? LocalizationSystem.GetText("ui.common.skip", "跳过")
-                : LocalizationSystem.GetText("ui.common.leave", "离开");
+        // 按钮文案已由美术统一改为图标（X）：不再在运行时写文字，仅保留点击行为。
     }
 
     private void OnLeaveClicked()
@@ -410,8 +416,21 @@ public class RewardPanelUI : MonoBehaviour
         }
 
         BindSlotButton(arrowChoiceSlot, ClaimArrowChoice, interactive);
+        BindArrowChoiceLabel(option);
         if (arrowChoicePreview != null)
             EnsureSlotHover(arrowChoiceSlot, UnifiedDetailContentBuilder.Build(arrowChoicePreview));
+    }
+
+    /// <summary>箭头槽下方的名称文案（含附魔名），与金币槽的 AmountText 同位置同字号。</summary>
+    private void BindArrowChoiceLabel(RewardArrowOption option)
+    {
+        if (arrowChoiceSlot == null)
+            return;
+
+        if (arrowChoiceLabel == null)
+            arrowChoiceLabel = ResolveOrCreateSlotText(arrowChoiceSlot, "ArrowNameText", new Vector2(0f, -44f), 22);
+        if (arrowChoiceLabel != null)
+            arrowChoiceLabel.text = GetArrowOptionLabel(option);
     }
 
     private static void BindSlotButton(RectTransform slot, UnityEngine.Events.UnityAction action, bool interactive)
@@ -688,6 +707,20 @@ public class RewardPanelUI : MonoBehaviour
         MagicItemView existing = content.GetComponentInChildren<MagicItemView>(true);
         if (existing != null)
             return existing;
+
+        // 优先用结算专用的奖励卡预制体（版式与道具栏槽位不同）；未绑定才回退克隆事件三选一卡面。
+        if (rewardItemCardPrefab != null)
+        {
+            RectTransform card = Instantiate(rewardItemCardPrefab, content);
+            card.name = "ItemCard";
+            card.gameObject.SetActive(true);
+            card.anchorMin = new Vector2(0.5f, 0.5f);
+            card.anchorMax = new Vector2(0.5f, 0.5f);
+            card.pivot = new Vector2(0.5f, 0.5f);
+            card.anchoredPosition = Vector2.zero;
+            card.localScale = Vector3.one;
+            return card.GetComponent<MagicItemView>();
+        }
 
         MagicItemView template = rewardMagicViews.Count > 0 ? rewardMagicViews[0] : null;
         if (template == null)
@@ -1226,7 +1259,8 @@ public class RewardPanelUI : MonoBehaviour
         if (hint != null)
             hint.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。");
 
-        magicChoiceBackButton = FindMagicChoiceBackButton();
+        if (magicChoiceBackButton == null)
+            magicChoiceBackButton = FindMagicChoiceBackButton();
         BindMagicChoiceBackButton();
 
         magicChoiceContent = UIManager.FindChildRect(magicChoicePanel, "MagicChoices");
@@ -1242,18 +1276,31 @@ public class RewardPanelUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 未在 Inspector 绑定时才走名字查找。美术把返回按钮放到窗口底框下、且底框可能改名，
+    /// 所以先找面板直接子物体，再按名字递归找，不依赖底框的具体名字。
+    /// </summary>
     private Button FindMagicChoiceBackButton()
     {
         if (magicChoicePanel == null)
             return null;
 
         Transform direct = magicChoicePanel.Find("BackButton");
-        Button button = direct != null ? direct.GetComponent<Button>() : null;
-        if (button != null)
-            return button;
+        if (direct != null)
+        {
+            Button directButton = direct.GetComponent<Button>();
+            if (directButton != null)
+                return directButton;
+        }
 
-        Transform styled = magicChoicePanel.Find("PopupDragonWindowBackground/BackButton");
-        return styled != null ? styled.GetComponent<Button>() : null;
+        Button[] buttons = magicChoicePanel.GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] != null && buttons[i].name == "BackButton")
+                return buttons[i];
+        }
+
+        return null;
     }
 
     private void BindMagicChoiceBackButton()
@@ -1263,9 +1310,7 @@ public class RewardPanelUI : MonoBehaviour
 
         magicChoiceBackButton.onClick.RemoveAllListeners();
         magicChoiceBackButton.onClick.AddListener(ReturnFromMagicChoices);
-        TMP_Text text = UIManager.FindChildComponent<TMP_Text>(magicChoiceBackButton.transform, "Text");
-        if (text != null)
-            text.text = LocalizationSystem.GetText("ui.common.back", "返回");
+        // 按钮文案已由美术统一改为图标（X）：不再在运行时写文字。
     }
 
     private TMP_Text CreatePanelText(RectTransform parent, string name, string text, int fontSize, FontStyles fontStyle, Vector2 anchoredPosition, Vector2 size)

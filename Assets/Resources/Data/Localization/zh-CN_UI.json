@@ -218,11 +218,11 @@
     },
     {
       "key": "ui.unified_detail.reward.gold",
-      "text": "获得金币 ×{0}"
+      "text": "获得金币 x{0}"
     },
     {
       "key": "ui.unified_detail.reward.heal",
-      "text": "恢复生命 ×{0}"
+      "text": "恢复生命 x{0}"
     },
     {
       "key": "ui.magic.empty_slot.label",
@@ -937,6 +937,42 @@
       "text": "获得{0}张随机语法箭头"
     },
     {
+      "key": "ui.event.effect.gain_material_with_modifier",
+      "text": "获得{0}张带有{1}的箭头"
+    },
+    {
+      "key": "ui.event.effect.gain_magic_modifier_specified",
+      "text": "指定一件道具获得{0}"
+    },
+    {
+      "key": "ui.event.effect.increase_play_limit",
+      "text": "每回合出牌数+{0}"
+    },
+    {
+      "key": "ui.event.effect.decrease_max_health",
+      "text": "生命上限-{0}"
+    },
+    {
+      "key": "ui.event.effect.lose_gold",
+      "text": "失去{0}金币"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_all",
+      "text": "牌组中所有箭头获得{0}"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_count",
+      "text": "牌组中随机{0}张箭头获得{1}"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_percent",
+      "text": "牌组中随机{0}%的箭头获得{1}"
+    },
+    {
+      "key": "ui.event.effect.randomize_random_materials",
+      "text": "随机变化{0}张箭头"
+    },
+    {
       "key": "ui.event.effect.arrow_modifier",
       "text": "箭头附魔"
     },
@@ -947,6 +983,10 @@
     {
       "key": "ui.battle.floating.max_health_up",
       "text": "+{0}上限"
+    },
+    {
+      "key": "ui.battle.floating.max_health_down",
+      "text": "-{0}上限"
     },
     {
       "key": "ui.reward_magic_confirm.title",

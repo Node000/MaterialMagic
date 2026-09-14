@@ -1226,6 +1226,649 @@
         }
       ],
       "numericId": 1001
+    },
+    {
+      "id": "event_idle_trade_platform",
+      "titleKey": "event.idle_trade_platform.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.idle_trade_platform.start.1",
+            "event.idle_trade_platform.start.2"
+          ],
+          "options": [
+            {
+              "id": "cut_to_last",
+              "titleKey": "event.idle_trade_platform.option.cut_to_last",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "cut_to_last"
+            },
+            {
+              "id": "buyout",
+              "titleKey": "event.idle_trade_platform.option.buyout",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 24,
+                  "amount": 3
+                },
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "buyout"
+            },
+            {
+              "id": "check_in",
+              "titleKey": "event.idle_trade_platform.option.check_in",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "check_in"
+            }
+          ]
+        },
+        {
+          "id": "cut_to_last",
+          "textKeys": [
+            "event.idle_trade_platform.cut_to_last.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "buyout",
+          "textKeys": [
+            "event.idle_trade_platform.buyout.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "check_in",
+          "textKeys": [
+            "event.idle_trade_platform.check_in.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 116
+    },
+    {
+      "id": "event_data_backup",
+      "titleKey": "event.data_backup.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.data_backup.start.1",
+            "event.data_backup.start.2"
+          ],
+          "options": [
+            {
+              "id": "full_backup",
+              "titleKey": "event.data_backup.option.full_backup",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 3,
+                  "modifierId": "temporary"
+                }
+              ],
+              "nextNodeId": "full_backup"
+            },
+            {
+              "id": "key_backup",
+              "titleKey": "event.data_backup.option.key_backup",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "modifierId": "temporary"
+                }
+              ],
+              "nextNodeId": "key_backup"
+            },
+            {
+              "id": "shortcut_only",
+              "titleKey": "event.data_backup.option.shortcut_only",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 21,
+                  "modifierId": "temporary",
+                  "percent": 50
+                }
+              ],
+              "nextNodeId": "shortcut_only"
+            }
+          ]
+        },
+        {
+          "id": "full_backup",
+          "textKeys": [
+            "event.data_backup.full_backup.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "key_backup",
+          "textKeys": [
+            "event.data_backup.key_backup.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "shortcut_only",
+          "textKeys": [
+            "event.data_backup.shortcut_only.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 117
+    },
+    {
+      "id": "event_what_day_is_it",
+      "titleKey": "event.what_day_is_it.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.what_day_is_it.start.1",
+            "event.what_day_is_it.start.2"
+          ],
+          "options": [
+            {
+              "id": "holiday",
+              "titleKey": "event.what_day_is_it.option.holiday",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 8,
+                  "modifierId": "regeneration_heal"
+                }
+              ],
+              "nextNodeId": "holiday"
+            },
+            {
+              "id": "rest_day",
+              "titleKey": "event.what_day_is_it.option.rest_day",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 9,
+                  "amount": 4
+                }
+              ],
+              "nextNodeId": "rest_day"
+            },
+            {
+              "id": "workday",
+              "titleKey": "event.what_day_is_it.option.workday",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 23,
+                  "amount": 2
+                },
+                {
+                  "rewardType": 3,
+                  "amount": 6
+                }
+              ],
+              "nextNodeId": "workday"
+            }
+          ]
+        },
+        {
+          "id": "holiday",
+          "textKeys": [
+            "event.what_day_is_it.holiday.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "rest_day",
+          "textKeys": [
+            "event.what_day_is_it.rest_day.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "workday",
+          "textKeys": [
+            "event.what_day_is_it.workday.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 118
+    },
+    {
+      "id": "event_old_hard_drive",
+      "titleKey": "event.old_hard_drive.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.old_hard_drive.start.1",
+            "event.old_hard_drive.start.2"
+          ],
+          "options": [
+            {
+              "id": "peek",
+              "titleKey": "event.old_hard_drive.option.peek",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 4
+                },
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "modifierId": "big_arrow_3"
+                }
+              ],
+              "nextNodeId": "peek"
+            },
+            {
+              "id": "wipe_spare",
+              "titleKey": "event.old_hard_drive.option.wipe_spare",
+              "randomRecipeLength": 3,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 14,
+                  "choiceCount": 3
+                }
+              ],
+              "nextNodeId": "wipe_spare"
+            },
+            {
+              "id": "buy_new",
+              "titleKey": "event.old_hard_drive.option.buy_new",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 2,
+                  "amount": 5
+                },
+                {
+                  "rewardType": 9,
+                  "amount": 4
+                }
+              ],
+              "nextNodeId": "buy_new"
+            }
+          ]
+        },
+        {
+          "id": "peek",
+          "textKeys": [
+            "event.old_hard_drive.peek.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "wipe_spare",
+          "textKeys": [
+            "event.old_hard_drive.wipe_spare.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "buy_new",
+          "textKeys": [
+            "event.old_hard_drive.buy_new.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 119
+    },
+    {
+      "id": "event_membership_expired",
+      "titleKey": "event.membership_expired.title",
+      "startNodeId": "start",
+      "drawCount": 3,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.membership_expired.start.1",
+            "event.membership_expired.start.2"
+          ],
+          "options": [
+            {
+              "id": "gold_plan",
+              "titleKey": "event.membership_expired.option.gold_plan",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 20,
+                  "amount": 1
+                }
+              ],
+              "nextNodeId": "gold_plan"
+            },
+            {
+              "id": "budget_plan",
+              "titleKey": "event.membership_expired.option.budget_plan",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 13,
+                  "amount": 1
+                }
+              ],
+              "nextNodeId": "budget_plan"
+            },
+            {
+              "id": "cancel",
+              "titleKey": "event.membership_expired.option.cancel",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 3,
+                  "amount": 3
+                }
+              ],
+              "nextNodeId": "cancel"
+            }
+          ]
+        },
+        {
+          "id": "gold_plan",
+          "textKeys": [
+            "event.membership_expired.gold_plan.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "budget_plan",
+          "textKeys": [
+            "event.membership_expired.budget_plan.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "cancel",
+          "textKeys": [
+            "event.membership_expired.cancel.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 120
+    },
+    {
+      "id": "event_unreliable_helper",
+      "titleKey": "event.unreliable_helper.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.unreliable_helper.start.1",
+            "event.unreliable_helper.start.2"
+          ],
+          "options": [
+            {
+              "id": "loose_auth",
+              "titleKey": "event.unreliable_helper.option.loose_auth",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 3,
+                  "modifierId": "proliferating_arrow"
+                }
+              ],
+              "nextNodeId": "loose_auth"
+            },
+            {
+              "id": "strict_auth",
+              "titleKey": "event.unreliable_helper.option.strict_auth",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 10,
+                  "count": 1,
+                  "modifierId": "proliferating_arrow"
+                }
+              ],
+              "nextNodeId": "strict_auth"
+            },
+            {
+              "id": "full_auth",
+              "titleKey": "event.unreliable_helper.option.full_auth",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 21,
+                  "modifierId": "proliferating_arrow"
+                }
+              ],
+              "nextNodeId": "full_auth"
+            }
+          ]
+        },
+        {
+          "id": "loose_auth",
+          "textKeys": [
+            "event.unreliable_helper.loose_auth.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "strict_auth",
+          "textKeys": [
+            "event.unreliable_helper.strict_auth.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "full_auth",
+          "textKeys": [
+            "event.unreliable_helper.full_auth.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 121
+    },
+    {
+      "id": "event_smart_ime",
+      "titleKey": "event.smart_ime.title",
+      "startNodeId": "start",
+      "drawCount": 4,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.smart_ime.start.1",
+            "event.smart_ime.start.2"
+          ],
+          "options": [
+            {
+              "id": "llm",
+              "titleKey": "event.smart_ime.option.llm",
+              "randomRecipeLength": 3,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 13,
+                  "amount": 1
+                },
+                {
+                  "rewardType": 18
+                }
+              ],
+              "nextNodeId": "llm"
+            },
+            {
+              "id": "update_dict",
+              "titleKey": "event.smart_ime.option.update_dict",
+              "randomRecipeLength": 2,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 22,
+                  "count": 2
+                }
+              ],
+              "nextNodeId": "update_dict"
+            },
+            {
+              "id": "no_space",
+              "titleKey": "event.smart_ime.option.no_space",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 1,
+                  "amount": 4
+                }
+              ],
+              "nextNodeId": "no_space"
+            }
+          ]
+        },
+        {
+          "id": "llm",
+          "textKeys": [
+            "event.smart_ime.llm.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "update_dict",
+          "textKeys": [
+            "event.smart_ime.update_dict.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "no_space",
+          "textKeys": [
+            "event.smart_ime.no_space.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 122
+    },
+    {
+      "id": "event_input_setup",
+      "titleKey": "event.input_setup.title",
+      "startNodeId": "start",
+      "drawCount": 2,
+      "nodes": [
+        {
+          "id": "start",
+          "textKeys": [
+            "event.input_setup.start.1",
+            "event.input_setup.start.2"
+          ],
+          "options": [
+            {
+              "id": "gamepad",
+              "titleKey": "event.input_setup.option.gamepad",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 17
+                },
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "gamepad"
+            },
+            {
+              "id": "keyboard_mouse",
+              "titleKey": "event.input_setup.option.keyboard_mouse",
+              "randomRecipeLength": 1,
+              "ignoreOrder": true,
+              "effects": [
+                {
+                  "rewardType": 17
+                },
+                {
+                  "rewardType": 4
+                }
+              ],
+              "nextNodeId": "keyboard_mouse"
+            },
+            {
+              "id": "not_now",
+              "titleKey": "event.input_setup.option.not_now",
+              "isExitOption": true,
+              "effects": [
+                {
+                  "rewardType": 24,
+                  "amount": 2
+                }
+              ],
+              "nextNodeId": "not_now"
+            }
+          ]
+        },
+        {
+          "id": "gamepad",
+          "textKeys": [
+            "event.input_setup.gamepad.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "keyboard_mouse",
+          "textKeys": [
+            "event.input_setup.keyboard_mouse.1"
+          ],
+          "options": []
+        },
+        {
+          "id": "not_now",
+          "textKeys": [
+            "event.input_setup.not_now.1"
+          ],
+          "options": []
+        }
+      ],
+      "numericId": 123
     }
   ]
 }

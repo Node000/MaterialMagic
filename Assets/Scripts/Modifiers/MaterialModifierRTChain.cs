@@ -16,6 +16,7 @@ public class MaterialModifierRTChain : MonoBehaviour
 {
     [SerializeField, Min(1)] private float refreshFps = 30f;
     [SerializeField, Min(8)] private int maxResolution = 512;
+    [SerializeField, Min(0f)] private float randomLockSettleDuration = 0.25f;
 
     private Image image;
     private RectTransform rectTransform;
@@ -23,6 +24,8 @@ public class MaterialModifierRTChain : MonoBehaviour
 
     private readonly List<RenderTexture> stageRTs = new List<RenderTexture>();
     private readonly List<Material> stageMaterials = new List<Material>();
+    // 与 stageMaterials 同序：每个阶段对应的附魔，用于向 shader 传「已确定方向」等运行期状态。
+    private readonly List<MaterialModifierModel> stageModifiers = new List<MaterialModifierModel>();
     private RenderTexture resultRT;
     private Sprite originalSprite;
     private RawImage resultDisplay;
@@ -30,6 +33,11 @@ public class MaterialModifierRTChain : MonoBehaviour
     private Material originalMaterial;
     private bool hasOriginalState;
     private bool imageHidden;
+
+    private bool randomLockActive;
+    private bool randomLockImmediate;
+    private float randomLockStartTime;
+    private float randomPhaseOffset = -1f;
 
     private float refreshInterval;
     private float timer;
@@ -108,6 +116,13 @@ public class MaterialModifierRTChain : MonoBehaviour
             hasOriginalState = true;
         }
         originalSprite = image.sprite;
+        // 换了素材卡才重置随机定格状态，避免同卡重复 Setup（如悬停刷新）时重播定格过渡。
+        if (!ReferenceEquals(card, materialCard))
+        {
+            ResetRandomDisplayState();
+            // 已经揭晓过方向的箭头在新视图里直接定格，不再重播过渡。
+            randomLockImmediate = IsArrowDirectionRevealed(materialCard);
+        }
         card = materialCard;
 
         if (!initialized)
@@ -149,6 +164,7 @@ public class MaterialModifierRTChain : MonoBehaviour
     {
         int effectCount = card.modifiers.Count;
         List<Material> wanted = new List<Material>(effectCount);
+        List<MaterialModifierModel> wantedModifiers = new List<MaterialModifierModel>(effectCount);
         for (int i = 0; i < effectCount; i++)
         {
             MaterialModifierModel modifier = card.modifiers[i];
@@ -156,7 +172,10 @@ public class MaterialModifierRTChain : MonoBehaviour
                 continue;
             Material mat = CreateStageMaterial(modifier);
             if (mat != null)
+            {
                 wanted.Add(mat);
+                wantedModifiers.Add(modifier);
+            }
         }
 
         if (wanted.Count == 0)
@@ -199,6 +218,8 @@ public class MaterialModifierRTChain : MonoBehaviour
             // 仅更新材质属性（参数可能随时间/状态变），不重分配
             for (int i = 0; i < wanted.Count; i++)
                 CopyMaterialProps(stageMaterials[i], wanted[i]);
+            for (int i = 0; i < stageModifiers.Count && i < wantedModifiers.Count; i++)
+                stageModifiers[i] = wantedModifiers[i];
             for (int i = 0; i < stageMaterials.Count; i++)
                 DestroyObject(wanted[i]);
         }
@@ -206,7 +227,10 @@ public class MaterialModifierRTChain : MonoBehaviour
         {
             ReleaseStages();
             for (int i = 0; i < wanted.Count; i++)
+            {
                 stageMaterials.Add(wanted[i]);
+                stageModifiers.Add(wantedModifiers[i]);
+            }
             for (int i = 0; i < intermediateCount; i++)
                 stageRTs.Add(AllocateRT());
         }
@@ -333,7 +357,7 @@ public class MaterialModifierRTChain : MonoBehaviour
             Material mat = stageMaterials[i];
             // 每阶段将上级输出设为 _MainTex，并用 _MainTex 的 alpha/rect 语义离屏绘制
             mat.SetTexture("_MainTex", stageInput);
-            ApplyDynamicPerStage(mat);
+            ApplyDynamicPerStage(i, mat);
             ClearRenderTexture(targetRT);
             Graphics.Blit(stageInput, targetRT, mat);
         }
@@ -341,12 +365,107 @@ public class MaterialModifierRTChain : MonoBehaviour
         UpdateDisplayTexture();
     }
 
-    private void ApplyDynamicPerStage(Material mat)
+    private void ApplyDynamicPerStage(int stageIndex, Material mat)
     {
+        if (mat == null)
+            return;
+
         // 各附魔 shader 依赖 _Time 自行动画，此处无需额外传参。
         // 需要把卡方向传给会读取 _ArrowDirection 的附魔（Half/Fragile 按方向选切线角度）。
         if (mat.HasProperty("_ArrowDirection"))
             mat.SetFloat("_ArrowDirection", GetArrowDirection(card));
+
+        ApplyLockedArrowState(stageIndex, mat);
+    }
+
+    /// <summary>
+    /// 【随机】类附魔在方向确定后把“四种箭头循环”定格到实际方向：方向由附魔自己给出
+    /// （<see cref="MaterialModifierModel.GetLockedArrowDisplayMaterial"/>），渲染链只负责传参，
+    /// 不依赖具体附魔类型。未确定时 _RandomLocked 保持 0，表现维持原样。
+    /// </summary>
+    private void ApplyLockedArrowState(int stageIndex, Material mat)
+    {
+        if (!mat.HasProperty("_RandomLocked"))
+            return;
+
+        MaterialEnum lockedMaterial = stageIndex >= 0 && stageIndex < stageModifiers.Count && stageModifiers[stageIndex] != null
+            ? stageModifiers[stageIndex].GetLockedArrowDisplayMaterial()
+            : MaterialEnum.None;
+        bool locked = lockedMaterial != MaterialEnum.None;
+        float lockAmount = 0f;
+        if (locked)
+        {
+            if (!randomLockActive)
+            {
+                randomLockActive = true;
+                if (!randomLockImmediate)
+                    randomLockStartTime = Time.unscaledTime;
+            }
+
+            // 定格过渡：短时间内从循环混合到定格，避免硬切；已揭晓的重建卡直接定格。
+            lockAmount = randomLockImmediate || randomLockSettleDuration <= 0f
+                ? 1f
+                : Mathf.Clamp01((Time.unscaledTime - randomLockStartTime) / randomLockSettleDuration);
+        }
+        else
+        {
+            randomLockActive = false;
+            randomLockImmediate = false;
+        }
+
+        mat.SetFloat("_RandomLocked", lockAmount);
+        if (mat.HasProperty("_RandomIndex"))
+            mat.SetFloat("_RandomIndex", GetDirectionValue(lockedMaterial));
+        // 未揭晓时，每张卡用稳定错相播放循环，避免所有随机箭头同步同向。
+        if (mat.HasProperty("_RandomPhaseOffset"))
+            mat.SetFloat("_RandomPhaseOffset", GetRandomPhaseOffset());
+    }
+
+    /// <summary>按卡的实例 id 生成稳定错相（同一张卡在多个视图上保持一致）。</summary>
+    private float GetRandomPhaseOffset()
+    {
+        if (randomPhaseOffset < 0f)
+        {
+            string key = card != null && !string.IsNullOrEmpty(card.instanceId) ? card.instanceId : "default";
+            // 字符串 hash 对连号实例 id（card_1 / card_2）几乎只有低位差异，直接取模会让相邻卡片的
+            // 循环相位几乎重合，因此先做一次雪崩混合再取样。
+            unchecked
+            {
+                uint h = (uint)key.GetHashCode();
+                h ^= h >> 16;
+                h *= 0x7FEB352Du;
+                h ^= h >> 15;
+                h *= 0x846CA68Bu;
+                h ^= h >> 16;
+                randomPhaseOffset = (h % 1024) / 1024f;
+            }
+        }
+
+        return randomPhaseOffset;
+    }
+
+    private void ResetRandomDisplayState()
+    {
+        randomLockActive = false;
+        randomLockImmediate = false;
+        randomLockStartTime = 0f;
+        randomPhaseOffset = -1f;
+    }
+
+    /// <summary>该卡是否已有附魔自行确定了方向（用于已揭晓的卡在新视图里直接定格）。</summary>
+    private static bool IsArrowDirectionRevealed(MaterialModel materialCard)
+    {
+        if (materialCard == null || materialCard.modifiers == null)
+            return false;
+
+        for (int i = 0; i < materialCard.modifiers.Count; i++)
+        {
+            MaterialModifierModel modifier = materialCard.modifiers[i];
+            if (modifier != null && modifier.GetLockedArrowDisplayMaterial() != MaterialEnum.None)
+                return true;
+        }
+
+        return false;
     }
 
     private void ClearRenderTexture(RenderTexture target)
@@ -397,9 +516,14 @@ public class MaterialModifierRTChain : MonoBehaviour
         MaterialEnum m = materialCard.GetArrowDisplayMaterial();
         if (m == MaterialEnum.None)
             m = materialCard.material;
-        switch (m)
+        return GetDirectionValue(m);
+    }
+
+    /// <summary>附魔 shader 的统一方向取值约定：火=0、水=1、风=2、土=3。</summary>
+    private static float GetDirectionValue(MaterialEnum material)
+    {
+        switch (material)
         {
-            case MaterialEnum.Fire: return 0f;
             case MaterialEnum.Water: return 1f;
             case MaterialEnum.Wind: return 2f;
             case MaterialEnum.Earth: return 3f;
@@ -448,6 +572,7 @@ public class MaterialModifierRTChain : MonoBehaviour
             DestroyObject(stageRTs[i]);
         }
         stageMaterials.Clear();
+        stageModifiers.Clear();
         stageRTs.Clear();
     }
 

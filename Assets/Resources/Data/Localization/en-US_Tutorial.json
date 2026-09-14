@@ -14,7 +14,7 @@
     },
     {
       "key": "tutorial.battle.info.body",
-      "text": "The left side shows your HP, buffs, and Gold.\n\nYour hand and play area are shown at the bottom.\n\nThe right side contains your redraw and play buttons, plus the card piles."
+      "text": "The battle UI has three layers: top-left shows your HP, buffs and Gold; top-center shows the enemies and their intent for the next turn.\n\nBelow that are the item slots, the play area and your hand; bottom-left holds the card piles and the redraw button, bottom-right is the Act button."
     },
     {
       "key": "tutorial.battle.magic_book.title",
@@ -38,7 +38,7 @@
     },
     {
       "key": "tutorial.battle.arrow_base.body",
-      "text": "Basic arrow directions are Up, Down, Left, and Right. First, place arrows into the play area in order."
+      "text": "Arrows only have four directions: Up, Down, Left and Right.\n\nEach direction triggers its own base effect when read: Fire (Up) deals damage, Water (Down) applies a debuff, Wind (Left) draws you an extra card next turn, Earth (Right) gives you Shield."
     },
     {
       "key": "tutorial.battle.magic_combo.title",
@@ -46,7 +46,7 @@
     },
     {
       "key": "tutorial.battle.magic_combo.body",
-      "text": "Arrows in the play area are combined from left to right. When a combination matches a recipe on the right, the matching item triggers automatically."
+      "text": "Arrows in the play area are read from left to right. Whenever a position matches an item recipe, that item triggers automatically.\n\nOne start position can trigger several items; longer recipes are checked first."
     },
     {
       "key": "tutorial.battle.play.title",
@@ -54,15 +54,7 @@
     },
     {
       "key": "tutorial.battle.play.body",
-      "text": "Click an arrow in your hand to select it, then click the upper area to play it. You can also drag arrows to play and reorder them.\n\nClick an arrow in the play area to return it to your hand.\n\nTry playing all arrows, then press the Act button at the lower right to confirm."
-    },
-    {
-      "key": "tutorial.battle.play_confirm.title",
-      "text": "Play Arrows"
-    },
-    {
-      "key": "tutorial.battle.play_confirm.body",
-      "text": "Good. Now click the upper play area, or press right mouse button, to play all selected arrows."
+      "text": "Click an arrow in your hand to select it, then click the upper area to play it; you can also drag arrows to reorder them.\n\nAfter placing arrows in the play area, click the Act button at the lower right to end the turn."
     },
     {
       "key": "tutorial.battle.cancel.title",
@@ -70,15 +62,15 @@
     },
     {
       "key": "tutorial.battle.cancel.body",
-      "text": "If an arrow is placed incorrectly, click it in the play area to return it to your hand. Cancel one played arrow first, then play the two Up arrows again."
+      "text": "If an arrow is placed incorrectly, click it in the play area to return it to your hand (this refunds your play limit).\n\nPlace one arrow first, then click it back."
     },
     {
-      "key": "tutorial.battle.end_turn.title",
-      "text": "End Turn"
+      "key": "tutorial.battle.play_limit.title",
+      "text": "Play Limit"
     },
     {
-      "key": "tutorial.battle.end_turn.body",
-      "text": "After confirming arrow order, click Act to end the turn."
+      "key": "tutorial.battle.play_limit.body",
+      "text": "The number between the play area and the item slots shows [played this turn / play limit].\n\nPlacing an arrow spends limit; clicking it back to your hand refunds it. When the limit is used up you cannot play more arrows this turn (arrows with exemptions are not limited)."
     },
     {
       "key": "tutorial.battle.refresh.title",
@@ -86,15 +78,7 @@
     },
     {
       "key": "tutorial.battle.refresh.body",
-      "text": "When you draw arrows you do not want, select them and press the redraw button on the right to draw again.\n\nYour redraw count resets to 1 at the start of your turn. Some effects can increase it temporarily or permanently.\n\nNow, try redrawing your whole hand."
-    },
-    {
-      "key": "tutorial.battle.refresh_confirm.title",
-      "text": "Redraw"
-    },
-    {
-      "key": "tutorial.battle.refresh_confirm.body",
-      "text": "All three Right arrows are selected. Click the redraw button now; afterward you will get Up, Up, and Down."
+      "text": "When you draw arrows you do not want, select them and click the redraw button at the lower left to draw again.\n\nYour redraw count resets to 1 at the start of your turn. Some effects can increase it temporarily or permanently.\n\nNow, try redrawing your whole hand."
     },
     {
       "key": "tutorial.reward.claim.title",
@@ -103,14 +87,6 @@
     {
       "key": "tutorial.reward.claim.body",
       "text": "Winning a battle grants its gold automatically; then pick one of three rewards (you can also skip)."
-    },
-    {
-      "key": "tutorial.reward.equip_magic.title",
-      "text": "Replace Item"
-    },
-    {
-      "key": "tutorial.reward.equip_magic.body",
-      "text": "After choosing an item reward, click a slot on the right item bar to replace it."
     },
     {
       "key": "tutorial.reward.undo_hint.title",
@@ -126,7 +102,15 @@
     },
     {
       "key": "tutorial.shop.buy_hint.body",
-      "text": "In shops, you can buy items and arrows, or remove extra arrows.\n\nAfter buying an item, click the item slot on the right to confirm the purchase."
+      "text": "In shops you can buy items and arrows, or remove extra arrows.\n\nA purchased item goes straight into your item bar, no slot picking; arrows and removals also apply on click."
+    },
+    {
+      "key": "tutorial.shop.order.title",
+      "text": "Item Order"
+    },
+    {
+      "key": "tutorial.shop.order.body",
+      "text": "You can drag items in the item bar to reorder them.\n\nThe order decides the trigger order: one position can trigger several items in a row, and longer recipes are checked first."
     },
     {
       "key": "tutorial.shop.undo_hint.title",
@@ -134,7 +118,7 @@
     },
     {
       "key": "tutorial.shop.undo_hint.body",
-      "text": "If you bought the wrong item, press R to undo this purchase.\n\nNote: arrow purchases cannot be undone."
+      "text": "If you bought the wrong thing, press R to undo this purchase.\n\nNote: once you leave the shop it can no longer be undone."
     },
     {
       "key": "tutorial.event.options.title",
@@ -142,7 +126,7 @@
     },
     {
       "key": "tutorial.event.options.body",
-      "text": "Each event has multiple options. Play the matching arrow combination to choose an option.\n\nMost option requirements are random, so removing cards will not necessarily make an option impossible."
+      "text": "Each event has multiple options. Play the matching arrow combination to choose an option.\n\nMost requirements are random; if your hand cannot match any option, ending the turn without playing is how you leave."
     },
     {
       "key": "tutorial.event.refresh.title",
@@ -150,7 +134,15 @@
     },
     {
       "key": "tutorial.event.refresh.body",
-      "text": "Each event has its own draw count.\n\nYou can still redraw any number of selected arrows once during an event."
+      "text": "Each event has its own draw count.\n\nYou can still redraw in an event - whether and how many to redraw is up to you."
+    },
+    {
+      "key": "tutorial.rest.title",
+      "text": "Rest"
+    },
+    {
+      "key": "tutorial.rest.body",
+      "text": "A rest node offers two options: recover health, or enchant one arrow.\n\nEnchanting uses one draw to pick the target arrow."
     },
     {
       "key": "tutorial.map.panel.title",

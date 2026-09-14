@@ -127,6 +127,7 @@
 | `choiceCount` | int | 选择数量。用于删除素材/法术强化选择；优先级高于 option 的 `choiceCount`。 |
 | `escalatePerUse` | int | 每次重复选择同一 option 后，额外增加的失血数值。当前只在 `LoseHealth` 中使用。 |
 | `material` | int | 指定素材类型。当前用于 `GainMaterial`；为 0 时随机基础素材。 |
+| `percent` | int | 比例（0-100）。当前只在 `ApplyMaterialModifierToDeck` 中使用，如 `50` 表示牌组中随机一半箭头；大于 0 时优先于 `count`。 |
 
 ## EventRewardType
 
@@ -136,13 +137,23 @@
 | `2` | `LoseHealth` | `amount`，默认 1；可选 `escalatePerUse` | 失去生命，直接扣血。 |
 | `3` | `GainGold` | `amount`，默认 1 | 获得金币并播放金币动画。 |
 | `4` | `GainMagic` | 无 | 打开一次法术奖励选择。该效果会延后到回合回收后执行。 |
-| `8` | `GainMagicModifier` | `choiceCount`，默认 2 | 打开法术强化选择。该效果会延后到回合回收后执行。 |
+| `8` | `GainMagicModifier` | `choiceCount`，默认 2；可选 `modifierId` | 打开法术强化选择；填写 `modifierId` 时只提供该强化（“指定道具强化”）。该效果会延后到回合回收后执行。 |
 | `9` | `IncreaseMaxHealth` | `amount`，默认 5 | 提高生命上限。 |
-| `10` | `GainMaterial` | `material`，`count` 默认 1 | 获得指定素材；`material=0` 时随机基础素材。 |
+| `10` | `GainMaterial` | `material`，`count` 默认 1；可选 `modifierId` | 获得指定素材；`material=0` 时随机基础素材；`modifierId` 可为新箭头带上附魔。 |
 | `11` | `GainRandomMaterial` | `count`，默认 1 | 获得若干张随机基础素材，每张独立随机。 |
 | `12` | `GainSameRandomMaterials` | `count`，默认 1 | 随机一种基础素材，获得多张同种素材。 |
 | `13` | `IncreaseDrawCount` | `amount`，默认 1 | 玩家每回合抽牌数增加。 |
 | `14` | `RemoveMaterial` | `choiceCount`，默认 1 | 打开素材列表，选择并删除牌组中的素材。 |
+| `15` | `GainNextBattleStartShield` | `amount`，默认 1 | 获得下回合开始的【预备护盾】。 |
+| `16` | `GainMaterialModifier` | `modifierId`，`choiceCount` 默认 1 | 打开箭头附魔选择，选 `choiceCount` 张箭头获得 `modifierId`。该效果会延后到回合回收后执行。 |
+| `17` | `SpendAllGold` | 无 | 清空当前金币（常用于代价）。 |
+| `18` | `RandomizeDeckBasicMaterials` | 无 | 随机重置牌组中所有基础箭头的方向（保留附魔）。 |
+| `19` | `GainRandomSyntaxMaterial` | 无 | 获得一张随机语法箭头（句点/返回/打包符号）。 |
+| `20` | `IncreasePlayLimit` | `amount`，默认 1 | 每回合出牌数（打出上限）增加。 |
+| `21` | `ApplyMaterialModifierToDeck` | `modifierId`；`percent` 或 `count` | 给牌组中已有箭头附加附魔：`percent=50` 为随机一半，`count=N` 为随机 N 张，都为 0 时作用于全部可附魔箭头。已带有同类型附魔的箭头会被跳过（不浪费名额）。 |
+| `22` | `RandomizeRandomMaterials` | `count`，默认 1 | 随机改变牌组中 `count` 张基础箭头的方向。 |
+| `23` | `DecreaseMaxHealth` | `amount`，默认 1 | 降低生命上限（最低 1），当前生命随之夹取。 |
+| `24` | `LoseGold` | `amount`，默认 1 | 失去金币（最低 0）。 |
 
 枚举里还有旧值 `0 None`、`5 UpgradeMaterial`、`6 RemovePollution`、`7 GainRelic`，当前事件执行代码没有处理这些效果，新事件不要使用。
 

@@ -222,7 +222,7 @@
     },
     {
       "key": "enemy.intent.desc.summon.multi",
-      "text": "This enemy will summon {0} ×{1}."
+      "text": "This enemy will summon {0} x{1}."
     },
     {
       "key": "enemy.intent.fallback_enemy",

@@ -12,7 +12,8 @@
 - `_LineAngle`：Half/Fragile 的兜底切线角度。
 - `_FireLineAngle` / `_WaterLineAngle` / `_WindLineAngle` / `_EarthLineAngle`：Half/Fragile 每种箭头方向的切线角度，运行时按当前素材方向自动选择。
 - `_CopyCount`：仅 BigArrow2/3/4 使用，对应 2/3/4。
-- `_AltTex1..4`：仅 RandomArrow 使用，四张基础箭头循环贴图。
+- `_AltTex1..4`：仅 RandomArrow 使用，四张基础箭头循环贴图（分别对应火/水/风/土，即 `Images/UI/1..4`）。
+- `_RandomLocked` / `_RandomIndex` / `_RandomPhaseOffset`：仅 RandomArrow 使用，运行期由 `MaterialModifierRTChain` 按附魔状态写入（禁止手工调）；`_RandomLocked` 0→1 表示随机方向已确定，`_RandomIndex` 为锁定方向（火=0、水=1、风=2、土=3），`_RandomPhaseOffset` 为未确定时的每卡错相。
 - `_Stencil*`、`_ColorMask`、`_UseUIAlphaClip`：UGUI Mask/裁剪兼容参数，不建议修改。
 ## HalfArrowModifier
 
@@ -74,8 +75,10 @@
 
 - Shader：`UI/MaterialModifiers/RandomArrowModifier`
 - 文件：`Assets/Shaders/UI/MaterialModifiers/RandomArrowModifier.shader`
-- 用途：随机箭头：在四种基础箭头贴图间循环渐变；切换时使用 alpha 加权混合，避免透明区插值出色块。
+- 用途：随机箭头：方向未确定时在四种基础箭头贴图间循环渐变，切换时使用 alpha 加权混合，避免透明区插值出色块；
+  `RandomArrowModifier` 在读取前掷出方向后，渲染链把 `_RandomLocked` 由 0 过渡到 1（默认 0.25s），表现定格到该方向。
 - 美术参数：主要调 `_AuraColor`、`_EffectSpeed`、`_EffectStrength`。
+- 运行期参数（由渲染链写入，勿手工修改）：`_RandomLocked`（定格进度）、`_RandomIndex`（定格方向）、`_RandomPhaseOffset`（未定格时的错相）。
 
 ## RetainedArrowModifier
 

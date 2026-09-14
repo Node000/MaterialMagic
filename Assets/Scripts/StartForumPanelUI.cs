@@ -44,8 +44,7 @@ public class StartForumPanelUI : MonoBehaviour
 
     private void ResolveReferences()
     {
-        if (closeButton == null)
-            closeButton = transform.Find("PopupDragonWindowBackground/Frame/TitleBar/Close")?.GetComponent<Button>();
+        // closeButton 走 Inspector 绑定：美术已统一停用窗口标题栏按钮，不再按路径/名字查找。
         if (closeButton == null)
             closeButton = GetComponentInChildren<Button>(true);
     }

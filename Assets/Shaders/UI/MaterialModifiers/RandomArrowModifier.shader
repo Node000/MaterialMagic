@@ -15,6 +15,11 @@ Shader "UI/MaterialModifiers/RandomArrowModifier"
         _CopyCount ("Copy Count", Float) = 2
         _EffectSpeed ("Effect Speed", Float) = 1
         _EffectStrength ("Effect Strength", Range(0,1)) = 0.3
+        // 运行期由 MaterialModifierRTChain 写入：_RandomLocked 0→1 表示随机方向已确定并定格，
+        // _RandomIndex 为锁定方向（火=0、水=1、风=2、土=3），_RandomPhaseOffset 为未确定时的错相。
+        _RandomLocked ("Random Locked", Range(0,1)) = 0
+        _RandomIndex ("Random Index", Float) = 0
+        _RandomPhaseOffset ("Random Phase Offset", Range(0,1)) = 0
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -93,6 +98,9 @@ Shader "UI/MaterialModifiers/RandomArrowModifier"
             float _CopyCount;
             float _EffectSpeed;
             float _EffectStrength;
+            float _RandomLocked;
+            float _RandomIndex;
+            float _RandomPhaseOffset;
 
             float InsideUv(float2 uv)
             {
@@ -151,7 +159,7 @@ Shader "UI/MaterialModifiers/RandomArrowModifier"
 
             fixed4 SampleRandomCycle(float2 uv, fixed4 vertexColor)
             {
-                float phase = frac(_Time.y * _EffectSpeed * 0.55) * 4.0;
+                float phase = frac((_Time.y + _RandomPhaseOffset) * _EffectSpeed * 0.55) * 4.0;
                 fixed4 a = SampleTexture(_AltTex1, uv, vertexColor);
                 fixed4 b = SampleTexture(_AltTex2, uv, vertexColor);
                 fixed4 c = SampleTexture(_AltTex3, uv, vertexColor);
@@ -175,6 +183,23 @@ Shader "UI/MaterialModifiers/RandomArrowModifier"
                 }
                 float blendAmount = smoothstep(0.15, 0.85, frac(phase));
                 return BlendSamples(from, to, blendAmount);
+            }
+
+            /// 方向已确定后只需显示掷出的那一种基础箭头（_AltTex1..4 对应 火/水/风/土）。
+            fixed4 SampleLockedArrow(float2 uv, fixed4 vertexColor)
+            {
+                fixed4 fire = SampleTexture(_AltTex1, uv, vertexColor);
+                fixed4 water = SampleTexture(_AltTex2, uv, vertexColor);
+                fixed4 wind = SampleTexture(_AltTex3, uv, vertexColor);
+                fixed4 earth = SampleTexture(_AltTex4, uv, vertexColor);
+                fixed4 result = fire;
+                if (_RandomIndex > 0.5 && _RandomIndex < 1.5)
+                    result = water;
+                else if (_RandomIndex > 1.5 && _RandomIndex < 2.5)
+                    result = wind;
+                else if (_RandomIndex > 2.5)
+                    result = earth;
+                return result;
             }
 
             float SegmentDistance(float2 p, float2 a, float2 b)
@@ -296,7 +321,11 @@ Shader "UI/MaterialModifiers/RandomArrowModifier"
                 }
                 else
                 {
-                    color = SampleRandomCycle(uv, IN.color);
+                    // 未确定方向：在四种基础箭头间循环（并带每张卡的错相）；
+                    // 方向已确定：混合到掷出的那一种箭头并逐帧定格。
+                    fixed4 cycle = SampleRandomCycle(uv, IN.color);
+                    fixed4 lockedArrow = SampleLockedArrow(uv, IN.color);
+                    color = BlendSamples(cycle, lockedArrow, saturate(_RandomLocked));
                 }
 
                 #ifdef UNITY_UI_CLIP_RECT

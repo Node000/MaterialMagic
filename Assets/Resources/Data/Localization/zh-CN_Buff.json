@@ -410,7 +410,7 @@
     },
     {
       "key": "buff.burning_damage_shield_next_turn.desc",
-      "text": "本回合敌人受到燃烧伤害时，下回合获得伤害×{0}的预备护盾。"
+      "text": "本回合敌人受到燃烧伤害时，下回合获得伤害x{0}的预备护盾。"
     },
     {
       "key": "buff.spell_power_on_extra_draw.name",

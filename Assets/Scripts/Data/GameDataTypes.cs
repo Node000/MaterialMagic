@@ -217,7 +217,17 @@ public enum EventRewardType
     GainMaterialModifier = 16,
     SpendAllGold = 17,
     RandomizeDeckBasicMaterials = 18,
-    GainRandomSyntaxMaterial = 19
+    GainRandomSyntaxMaterial = 19,
+    /// <summary>每回合出牌数（打出上限）增加 amount，默认 1。</summary>
+    IncreasePlayLimit = 20,
+    /// <summary>给牌组中已有箭头附加 modifierId：percent &gt; 0 按比例随机（如 50 表示随机一半），count &gt; 0 按数量随机，都为 0 时作用于全部可附魔箭头。</summary>
+    ApplyMaterialModifierToDeck = 21,
+    /// <summary>随机改变牌组中 count 张基础箭头的方向（默认 1 张）。</summary>
+    RandomizeRandomMaterials = 22,
+    /// <summary>生命上限降低 amount（默认 1），当前生命随之夹取。</summary>
+    DecreaseMaxHealth = 23,
+    /// <summary>失去 amount 金币（默认 1），最低降到 0。</summary>
+    LoseGold = 24
 }
 
 public enum BonusRewardType
@@ -261,7 +271,8 @@ public class PlayerStartConfigData : IDataRecord
     public int maxHealth = 50;
     public int gold;
     public int drawCount = 4;
-    public int maxPlayCount = 3;
+    /// <summary>每回合玩家主动打出箭头的上限；未配置或 &lt;= 0 时用 PlayerState.DefaultPlayLimitPerTurn（7）。</summary>
+    public int maxPlayCount = 7;
     public PlayerStartMaterialData[] initialMaterials = Array.Empty<PlayerStartMaterialData>();
     public PlayerStartMagicData[] initialMagics = Array.Empty<PlayerStartMagicData>();
 
@@ -413,6 +424,8 @@ public class EventEffectData
     public int escalatePerUse;
     public MaterialEnum material;
     public string modifierId;
+    /// <summary>ApplyMaterialModifierToDeck 专用比例（0-100，向上取整），大于 0 时优先于 count。</summary>
+    public int percent;
 }
 
 [Serializable]

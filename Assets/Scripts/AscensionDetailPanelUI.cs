@@ -6,7 +6,6 @@ public class AscensionDetailPanelUI : MonoBehaviour
 {
     [SerializeField] private RectTransform root;
     [SerializeField] private Button closeButton;
-    [SerializeField] private TMP_Text closeButtonText;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text levelText;
@@ -60,8 +59,7 @@ public class AscensionDetailPanelUI : MonoBehaviour
             iconImage.sprite = iconSprite;
             iconImage.enabled = iconImage.sprite != null;
         }
-        if (closeButtonText != null)
-            closeButtonText.text = LocalizationSystem.GetText("ui.common.close", "关闭");
+        // 关闭按钮文案已由美术统一改为图标（X）：不再在运行时写文字，只保留点击行为。
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText("ui.ascension.detail_title", "进阶详情");
         if (levelText != null)

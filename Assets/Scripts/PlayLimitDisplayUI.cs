@@ -53,6 +53,13 @@ public class PlayLimitDisplayUI : MonoBehaviour
     [Tooltip("亮线高度占整体高度的比例。")]
     [SerializeField, Range(0.005f, 0.2f)] private float crtLineYRatio = 0.02f;
 
+    [Header("目标")]
+    [Tooltip("参与开合缩放的目标；留空时用本物体。")]
+    [SerializeField] private RectTransform scaleTarget;
+
+    [Tooltip("显隐作用的物体；留空时用本物体。当“底”是父物体、脚本留在文字子物体上时，指定“底”即可连同底一起开关。")]
+    [SerializeField] private GameObject visibilityTarget;
+
     private RectTransform rect;
     private Vector3 baseScale = Vector3.one;
     private Vector2 baseAnchoredPosition;
@@ -62,10 +69,19 @@ public class PlayLimitDisplayUI : MonoBehaviour
     /// <summary>当前是否处于“已展开显示”状态。</summary>
     public bool IsShown { get; private set; }
 
+    /// <summary>开合缩放作用的物体（默认本物体）。</summary>
+    public RectTransform ScaleTarget => Rect;
+
+    /// <summary>显隐作用的物体（默认本物体）。</summary>
+    public GameObject VisibilityRoot => visibilityTarget != null ? visibilityTarget : gameObject;
+
     private RectTransform Rect
     {
         get
         {
+            if (scaleTarget != null)
+                return scaleTarget;
+
             if (rect == null)
                 rect = transform as RectTransform;
             return rect;
@@ -89,7 +105,10 @@ public class PlayLimitDisplayUI : MonoBehaviour
     {
         CaptureLayout();
         KillStateTween();
-        gameObject.SetActive(true);
+        VisibilityRoot.SetActive(true);
+        // 显隐目标可能是外层父物体；本物体与显示文本也一并确保激活。
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
         IsShown = true;
 
         RectTransform target = Rect;
@@ -160,7 +179,7 @@ public class PlayLimitDisplayUI : MonoBehaviour
 
         stateTween = null;
         IsShown = false;
-        gameObject.SetActive(false);
+        VisibilityRoot.SetActive(false);
     }
 
     private void CaptureLayout()

@@ -763,6 +763,294 @@
     {
       "key": "event.tutorial_signpost.straight.1",
       "text": "你拒绝转弯，于是获得了一次道具奖励。"
+    },
+    {
+      "key": "event.idle_trade_platform.title",
+      "text": "闲置交易平台"
+    },
+    {
+      "key": "event.idle_trade_platform.start.1",
+      "text": "二手平台的界面泛着旧主机的荧光，卖家头像全是默认的灰色小人。"
+    },
+    {
+      "key": "event.idle_trade_platform.start.2",
+      "text": "三个挂着“闲置”标签的箭头排成一列，备注写着：一口价，砍价免谈。"
+    },
+    {
+      "key": "event.idle_trade_platform.option.cut_to_last",
+      "text": "砍到最后"
+    },
+    {
+      "key": "event.idle_trade_platform.option.buyout",
+      "text": "一口价拍下"
+    },
+    {
+      "key": "event.idle_trade_platform.option.check_in",
+      "text": "只是来签到"
+    },
+    {
+      "key": "event.idle_trade_platform.cut_to_last.1",
+      "text": "你把价格砍到卖家放弃回复。屏幕一暗，一件商品直接落进你的道具栏。"
+    },
+    {
+      "key": "event.idle_trade_platform.buyout.1",
+      "text": "你按下“立即购买”，金币少了3枚。卖家秒发货，一句谢谢都没有。"
+    },
+    {
+      "key": "event.idle_trade_platform.check_in.1",
+      "text": "你只点了签到。平台照例给了2金币，然后开始给你推广告。"
+    },
+    {
+      "key": "event.data_backup.title",
+      "text": "数据安全"
+    },
+    {
+      "key": "event.data_backup.start.1",
+      "text": "维护前的备份提醒弹了出来，磁盘进度条卡在0.3%已经很久。"
+    },
+    {
+      "key": "event.data_backup.start.2",
+      "text": "提示写得很客气：全量备份耗时较长，请注意剩余空间。"
+    },
+    {
+      "key": "event.data_backup.option.full_backup",
+      "text": "全量备份"
+    },
+    {
+      "key": "event.data_backup.option.key_backup",
+      "text": "重点备份"
+    },
+    {
+      "key": "event.data_backup.option.shortcut_only",
+      "text": "只复制快捷方式？"
+    },
+    {
+      "key": "event.data_backup.full_backup.1",
+      "text": "进度条走到100%。三枚半透明的箭头被完整复制出来——它们不占打出次数，离开手牌就会消失。"
+    },
+    {
+      "key": "event.data_backup.key_backup.1",
+      "text": "你只备份了最关键的那一份。一枚【临时】箭头落进牌组，轻得几乎没有重量。"
+    },
+    {
+      "key": "event.data_backup.shortcut_only.1",
+      "text": "备份变成了快捷方式：牌组里一半的箭头被随手贴上【临时】标签，指向原件的影子。"
+    },
+    {
+      "key": "event.what_day_is_it.title",
+      "text": "今天是什么日子？"
+    },
+    {
+      "key": "event.what_day_is_it.start.1",
+      "text": "日历插件崩了，日期位置只剩“节假日 / 休息日 / 工作日”三个词在闪。"
+    },
+    {
+      "key": "event.what_day_is_it.start.2",
+      "text": "屏幕角落的像素小人举着牌子：今天到底算哪一种？"
+    },
+    {
+      "key": "event.what_day_is_it.option.holiday",
+      "text": "节假日！"
+    },
+    {
+      "key": "event.what_day_is_it.option.rest_day",
+      "text": "休息日！"
+    },
+    {
+      "key": "event.what_day_is_it.option.workday",
+      "text": "工作日！"
+    },
+    {
+      "key": "event.what_day_is_it.holiday.1",
+      "text": "你把今天定成节假日。系统放起像素烟花，并允许你指定一件道具获得【再生】。"
+    },
+    {
+      "key": "event.what_day_is_it.rest_day.1",
+      "text": "你把今天定成休息日。绷紧的东西松开了一些，生命上限提高4点。"
+    },
+    {
+      "key": "event.what_day_is_it.workday.1",
+      "text": "你把今天定成工作日。加班扣掉2点生命上限，工资到账6金币。"
+    },
+    {
+      "key": "event.old_hard_drive.title",
+      "text": "老硬盘"
+    },
+    {
+      "key": "event.old_hard_drive.start.1",
+      "text": "抽屉深处翻出一块老硬盘，标签被人用力写过：“备用，勿动”。"
+    },
+    {
+      "key": "event.old_hard_drive.start.2",
+      "text": "它转起来的声音，像有人在很远的地方咳嗽。"
+    },
+    {
+      "key": "event.old_hard_drive.option.peek",
+      "text": "看看有什么"
+    },
+    {
+      "key": "event.old_hard_drive.option.wipe_spare",
+      "text": "清空备用"
+    },
+    {
+      "key": "event.old_hard_drive.option.buy_new",
+      "text": "换个新的"
+    },
+    {
+      "key": "event.old_hard_drive.peek.1",
+      "text": "你强行读取坏道，手指被划出一道血口。硬盘吐出一枚随机方向的【三重箭头】。"
+    },
+    {
+      "key": "event.old_hard_drive.wipe_spare.1",
+      "text": "格式化干净得让人愉快。你顺手丢掉3张不再需要的箭头。"
+    },
+    {
+      "key": "event.old_hard_drive.buy_new.1",
+      "text": "拆卸时你流了5点血，但新硬盘的空位让你的生命上限提高了4点。"
+    },
+    {
+      "key": "event.membership_expired.title",
+      "text": "会员到期"
+    },
+    {
+      "key": "event.membership_expired.start.1",
+      "text": "续费提醒在屏幕上原地弹跳，右上角的红点越积越多。"
+    },
+    {
+      "key": "event.membership_expired.start.2",
+      "text": "套餐说明用小字写着：本会员可能不包含你真正想要的东西。"
+    },
+    {
+      "key": "event.membership_expired.option.gold_plan",
+      "text": "金牌套餐"
+    },
+    {
+      "key": "event.membership_expired.option.budget_plan",
+      "text": "平价套餐"
+    },
+    {
+      "key": "event.membership_expired.option.cancel",
+      "text": "停止续费"
+    },
+    {
+      "key": "event.membership_expired.gold_plan.1",
+      "text": "金牌套餐生效。每回合你能多打出一张箭头，限制被一行小字悄悄松开了。"
+    },
+    {
+      "key": "event.membership_expired.budget_plan.1",
+      "text": "平价套餐只保留了抽牌速度：之后每回合抽牌数+1。"
+    },
+    {
+      "key": "event.membership_expired.cancel.1",
+      "text": "你点下停止续费。系统把余额折成3金币退给你，顺手清空了所有红点。"
+    },
+    {
+      "key": "event.unreliable_helper.title",
+      "text": "不可靠的小帮手"
+    },
+    {
+      "key": "event.unreliable_helper.start.1",
+      "text": "一个自称“小帮手”的脚本请求读取你的牌组权限。"
+    },
+    {
+      "key": "event.unreliable_helper.start.2",
+      "text": "授权范围有三档，每一档都写着“不会出事”。"
+    },
+    {
+      "key": "event.unreliable_helper.option.loose_auth",
+      "text": "宽松鉴权"
+    },
+    {
+      "key": "event.unreliable_helper.option.strict_auth",
+      "text": "严格鉴权"
+    },
+    {
+      "key": "event.unreliable_helper.option.full_auth",
+      "text": "完全授权"
+    },
+    {
+      "key": "event.unreliable_helper.loose_auth.1",
+      "text": "小帮手复制出3枚带【增殖】的箭头，然后自顾自地跑掉了。"
+    },
+    {
+      "key": "event.unreliable_helper.strict_auth.1",
+      "text": "严格鉴权下，它只复制了1枚带【增殖】的箭头，看起来有点委屈。"
+    },
+    {
+      "key": "event.unreliable_helper.full_auth.1",
+      "text": "你把权限全给了它。牌组里每一枚箭头都获得了【增殖】。"
+    },
+    {
+      "key": "event.smart_ime.title",
+      "text": "智能输入法"
+    },
+    {
+      "key": "event.smart_ime.start.1",
+      "text": "输入法更新了智能预测，开始抢在你之前打出箭头。"
+    },
+    {
+      "key": "event.smart_ime.start.2",
+      "text": "词库管理界面闪着提示：本地空间不足，请谨慎选择。"
+    },
+    {
+      "key": "event.smart_ime.option.llm",
+      "text": "接入大模型！"
+    },
+    {
+      "key": "event.smart_ime.option.update_dict",
+      "text": "更新词库"
+    },
+    {
+      "key": "event.smart_ime.option.no_space",
+      "text": "空间不足"
+    },
+    {
+      "key": "event.smart_ime.llm.1",
+      "text": "大模型接管了联想。每回合多抽1张箭头，代价是所有箭头的方向被它重新猜了一遍。"
+    },
+    {
+      "key": "event.smart_ime.update_dict.1",
+      "text": "词库更新完毕，2张箭头被换成它更喜欢的方向。"
+    },
+    {
+      "key": "event.smart_ime.no_space.1",
+      "text": "空间不足，更新失败。输入法道歉的时候顺手给你回了4点血。"
+    },
+    {
+      "key": "event.input_setup.title",
+      "text": "新手按键设置"
+    },
+    {
+      "key": "event.input_setup.start.1",
+      "text": "首次启动的引导弹窗还没关：请选择你的操作方式。"
+    },
+    {
+      "key": "event.input_setup.start.2",
+      "text": "两种方案的代价都写着同一行小字——“会清空当前金币”。"
+    },
+    {
+      "key": "event.input_setup.option.gamepad",
+      "text": "手柄模式"
+    },
+    {
+      "key": "event.input_setup.option.keyboard_mouse",
+      "text": "键鼠模式"
+    },
+    {
+      "key": "event.input_setup.option.not_now",
+      "text": "先不设置"
+    },
+    {
+      "key": "event.input_setup.gamepad.1",
+      "text": "手柄振动了一下确认映射。金币被清空，换回一包为手柄准备的新手道具。"
+    },
+    {
+      "key": "event.input_setup.keyboard_mouse.1",
+      "text": "映射写进配置。金币被清空，换回一包为键鼠准备的新手道具。"
+    },
+    {
+      "key": "event.input_setup.not_now.1",
+      "text": "你决定稍后再设置。系统扣掉2金币作为“配置暂存费”，态度非常自然。"
     }
   ]
 }

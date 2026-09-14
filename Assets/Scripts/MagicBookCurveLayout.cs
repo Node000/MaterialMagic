@@ -326,8 +326,16 @@ public class MagicBookCurveLayout : MonoBehaviour
         for (int i = 0; i < area.childCount; i++)
         {
             RectTransform child = area.GetChild(i) as RectTransform;
-            if (child != null && child.gameObject.activeSelf && child.GetComponent<MagicItemView>() != null)
-                activeSlots.Add(child);
+            if (child == null || !child.gameObject.activeSelf)
+                continue;
+
+            MagicItemView view = child.GetComponent<MagicItemView>();
+            if (view == null)
+                continue;
+
+            // 子物体顺序即槽位索引：先还原 Hover 提层，避免提层顺序被当成真实槽位顺序排布。
+            view.ReleaseHoverRaise();
+            activeSlots.Add(child);
         }
     }
 }

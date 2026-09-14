@@ -38,7 +38,7 @@ public class SettingsPanelUI : MonoBehaviour
         SetLocalizedText("Title", "ui.battle_settings.title", "设置");
         SetLocalizedText("MusicLabel", "ui.battle_settings.music", "音乐");
         SetLocalizedText("SfxLabel", "ui.battle_settings.sfx", "音效");
-        SetLocalizedText("CloseButton/Text", "ui.common.close", "关闭");
+        // CloseButton 的文案已由美术统一改为图标（X）：不再在运行时写文字。
         SetLocalizedText(
             "ReturnStartButton/Text",
             RunSaveSystem.IsTutorialRunActive() ? "ui.battle_settings.return_menu" : "ui.battle_settings.return_start",

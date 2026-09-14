@@ -124,6 +124,15 @@ public class MaterialModifierModel
         return material;
     }
 
+    /// <summary>
+    /// 该附魔自身方向已确定时，提供要锁定显示的箭头方向，供附魔 RT 链把循环/随机表现定格到实际方向。
+    /// 返回 <see cref="MaterialEnum.None"/> 表示尚未确定，表现层继续按原样播放。
+    /// </summary>
+    public virtual MaterialEnum GetLockedArrowDisplayMaterial()
+    {
+        return MaterialEnum.None;
+    }
+
     public virtual bool UsesArrowBaseEffect(bool usesBaseEffect)
     {
         return usesBaseEffect;

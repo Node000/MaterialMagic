@@ -402,7 +402,7 @@
     },
     {
       "key": "buff.burning_damage_shield_next_turn.desc",
-      "text": "This turn, when an enemy takes Burning damage, gain prepared Shield next turn equal to damage × {0}."
+      "text": "This turn, when an enemy takes Burning damage, gain prepared Shield next turn equal to damage x {0}."
     },
     {
       "key": "buff.spell_power_on_extra_draw.name",

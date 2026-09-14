@@ -24,22 +24,16 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
     [SerializeField] private StartExitConfirmPanelUI exitConfirmPanelUI;
     [SerializeField] private BouncingTitleUI bouncingTitleUI;
-    [Header("配置选择过渡")]
-    [SerializeField] private RectTransform menuRoot;
+    [Header("配置选择弹窗")]
     [SerializeField] private RectTransform initialButtonsRoot;
     [SerializeField] private RectTransform configActionButtonsRoot;
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button backButton;
-    [SerializeField] private float configRootShiftDistance = 960f;
-    [SerializeField] private float configTransitionDuration = 0.45f;
-    [SerializeField] private AnimationCurve configTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField, Min(0f)] private float configPanelShowDelay;
     [SerializeField, Min(0f)] private float configRootResetDelay;
 
     private readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
     private readonly List<GameObject> initialMenuObjects = new List<GameObject>();
-    private Vector2 menuRootInitialPosition;
-    private Tween configTransitionTween;
     private Tween configDelayTween;
     private PointerEventData pointerEventData;
     private PlayerStartConfigData selectedConfig;
@@ -104,14 +98,11 @@ public class StartMenuUI : MonoBehaviour
             confirmButton.onClick.RemoveListener(ConfirmStartGame);
         if (backButton != null)
             backButton.onClick.RemoveListener(HideStartConfigSelection);
-        configTransitionTween?.Kill(false);
         configDelayTween?.Kill(false);
     }
 
     private void CacheMenuPresentation()
     {
-        if (menuRoot == null)
-            menuRoot = transform as RectTransform;
         if (initialButtonsRoot == null && buttonGroupUI != null)
             initialButtonsRoot = buttonGroupUI.transform as RectTransform;
         if (configActionButtonsRoot == null)
@@ -121,7 +112,6 @@ public class StartMenuUI : MonoBehaviour
         if (backButton == null)
             backButton = configActionButtonsRoot != null ? configActionButtonsRoot.Find("CancelButton")?.GetComponent<Button>() : transform.Find("MenuContentRoot/StartConfigPanel/ActionButtonGroup/CancelButton")?.GetComponent<Button>();
 
-        menuRootInitialPosition = menuRoot != null ? menuRoot.anchoredPosition : Vector2.zero;
         CacheInitialMenuObject(initialButtonsRoot != null ? initialButtonsRoot.gameObject : null);
         CacheInitialMenuObject(tutorialButton != null ? tutorialButton.gameObject : null);
         CacheInitialMenuObject(forumButton != null ? forumButton.gameObject : null);
@@ -181,25 +171,6 @@ public class StartMenuUI : MonoBehaviour
             confirmButton.gameObject.SetActive(visible);
         if (backButton != null)
             backButton.gameObject.SetActive(visible);
-    }
-
-    private void MoveMenuRoot(bool moveRight, System.Action onComplete = null)
-    {
-        configTransitionTween?.Kill(false);
-        Vector2 targetPosition = moveRight
-            ? menuRootInitialPosition + Vector2.right * configRootShiftDistance
-            : menuRootInitialPosition;
-        if (menuRoot == null)
-        {
-            onComplete?.Invoke();
-            return;
-        }
-
-        configTransitionTween = menuRoot.DOAnchorPos(targetPosition, configTransitionDuration)
-            .SetEase(configTransitionCurve)
-            .SetUpdate(true)
-            .SetTarget(this)
-            .OnComplete(() => onComplete?.Invoke());
     }
 
     private void RunConfigDelay(float delay, System.Action onComplete)
@@ -357,8 +328,6 @@ public class StartMenuUI : MonoBehaviour
         startingTutorial = tutorial;
         selectedConfig = null;
         SetActionButtonsVisible(false);
-        SetInitialMenuVisible(false);
-        bouncingTitleUI?.SetVisible(false);
         HideExitConfirm();
         HideAbandonRunConfirm();
         HideTutorial();
@@ -368,7 +337,8 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         settingsPanelUI.Hide();
         saveSlotSelectionPanelUI.Hide();
-        MoveMenuRoot(true, () => RunConfigDelay(configPanelShowDelay, ShowConfigPanel));
+        // 弹窗形式：不再平移/隐藏整块菜单 UI，只把配置选择面板和确认按钮叠在菜单上。
+        RunConfigDelay(configPanelShowDelay, ShowConfigPanel);
     }
 
     private void ShowConfigPanel()
@@ -397,11 +367,8 @@ public class StartMenuUI : MonoBehaviour
 
     private void ReturnToInitialMenu()
     {
-        MoveMenuRoot(false, () =>
-        {
-            bouncingTitleUI?.SetVisible(true);
-            SetInitialMenuVisible(true);
-        });
+        bouncingTitleUI?.SetVisible(true);
+        SetInitialMenuVisible(true);
     }
 
     private void SelectConfig(PlayerStartConfigData config)

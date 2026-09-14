@@ -291,8 +291,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
                 deckName = transform.Find("Name");
             deckNameText = deckName != null ? deckName.GetComponent<TMP_Text>() : null;
         }
-        if (windowCloseButton == null)
-            windowCloseButton = transform.Find("PopupDragonWindowBackground/Frame/TitleBar/Close")?.GetComponent<Button>();
+        // windowCloseButton 走 Inspector 绑定：美术已统一停用窗口标题栏按钮，不再按路径/名字查找。
     }
 
     private bool CanDragFrom(PointerEventData eventData)

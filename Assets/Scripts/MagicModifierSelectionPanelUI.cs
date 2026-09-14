@@ -213,9 +213,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         {
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(CancelSelection);
-            TMP_Text backText = UIManager.FindChildComponent<TMP_Text>(backButton.transform, "Text");
-            if (backText != null)
-                backText.text = LocalizationSystem.GetText("ui.magic_modifier.panel.back", "返回");
+            // 返回按钮文案已由美术统一改为图标（X）：不再在运行时写文字。
         }
         CachePopupReferences();
     }

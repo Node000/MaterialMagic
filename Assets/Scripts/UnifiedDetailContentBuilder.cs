@@ -753,8 +753,6 @@ public static class EventDetailTextUtility
             return FormatText("ui.event.effect.apply_material_modifier", "选择{0}张手牌箭头，添加{1}", GetChoiceCountText(option), GetModifierNameText("liquefy"));
         if (option.resultId == 300)
             return FormatText("ui.event.effect.heal_percent_max", "恢复{0}%最大生命", "30");
-        if (option.resultId == 301)
-            return LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个道具上");
         if (option.resultId == 302)
             return LocalizationSystem.GetText("rest.option.arrow_modifier.effect", "从2个强化中选择1个，附魔到一个箭头上");
 
@@ -780,10 +778,14 @@ public static class EventDetailTextUtility
             case EventRewardType.GainMagic:
                 return LocalizationSystem.GetText("ui.event.effect.gain_magic", "获得一次道具奖励");
             case EventRewardType.GainMagicModifier:
+                if (!string.IsNullOrEmpty(effect.modifierId))
+                    return FormatText("ui.event.effect.gain_magic_modifier_specified", "指定一件道具获得{0}", GetMagicModifierNameText(effect.modifierId));
                 return LocalizationSystem.GetText("ui.event.effect.gain_magic_modifier", "获得一次道具强化");
             case EventRewardType.IncreaseMaxHealth:
                 return FormatText("ui.event.effect.increase_max_health", "生命上限+{0}", GetEffectAmountText(effect, 5));
             case EventRewardType.GainMaterial:
+                if (!string.IsNullOrEmpty(effect.modifierId))
+                    return FormatText("ui.event.effect.gain_material_with_modifier", "获得{0}张带有{1}的箭头", GetEffectCountText(effect, 1), GetModifierNameText(effect.modifierId));
                 return FormatText("ui.event.effect.gain_material_count", "获得{0}张箭头", GetEffectCountText(effect, 1));
             case EventRewardType.GainRandomMaterial:
                 return FormatText("ui.event.effect.gain_random_material", "获得{0}张随机箭头", GetEffectCountText(effect, 1));
@@ -803,9 +805,36 @@ public static class EventDetailTextUtility
                 return LocalizationSystem.GetText("ui.event.effect.randomize_deck_basic_materials", "将牌库中的基础箭头随机重置");
             case EventRewardType.GainRandomSyntaxMaterial:
                 return FormatText("ui.event.effect.gain_random_syntax_material", "获得{0}张随机语法箭头", GetEffectCountText(effect, 1));
+            case EventRewardType.IncreasePlayLimit:
+                return FormatText("ui.event.effect.increase_play_limit", "每回合出牌数+{0}", GetEffectAmountText(effect, 1));
+            case EventRewardType.DecreaseMaxHealth:
+                return FormatText("ui.event.effect.decrease_max_health", "生命上限-{0}", GetEffectAmountText(effect, 1));
+            case EventRewardType.LoseGold:
+                return FormatText("ui.event.effect.lose_gold", "失去{0}金币", GetEffectAmountText(effect, 1));
+            case EventRewardType.ApplyMaterialModifierToDeck:
+                return GetDeckModifierEffectText(effect);
+            case EventRewardType.RandomizeRandomMaterials:
+                return FormatText("ui.event.effect.randomize_random_materials", "随机变化{0}张箭头", GetEffectCountText(effect, 1));
             default:
                 return string.Empty;
         }
+    }
+
+    private static string GetDeckModifierEffectText(EventEffectData effect)
+    {
+        string modifierName = GetModifierNameText(effect != null ? effect.modifierId : null);
+        if (effect != null && effect.percent > 0)
+            return FormatText("ui.event.effect.deck_arrows_modifier_percent", "牌组中随机{0}%的箭头获得{1}", Mathf.Clamp(effect.percent, 1, 100).ToString(), modifierName);
+        if (effect != null && effect.count > 0)
+            return FormatText("ui.event.effect.deck_arrows_modifier_count", "牌组中随机{0}张箭头获得{1}", effect.count.ToString(), modifierName);
+        return FormatText("ui.event.effect.deck_arrows_modifier_all", "牌组中所有箭头获得{0}", modifierName);
+    }
+
+    private static string GetMagicModifierNameText(string modifierId)
+    {
+        if (string.IsNullOrEmpty(modifierId))
+            return LocalizationSystem.GetText("ui.event.effect.gain_magic_modifier", "获得一次道具强化");
+        return LocalizationSystem.GetText("magic_modifier." + modifierId + ".name", modifierId);
     }
 
     private static string GetModifierNameText(string modifierId)

@@ -61,6 +61,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Color modifierMarkerFallbackColor;
     private int slotIndex = -1;
     private Tween sellButtonTween;
+    private bool raiseToFrontOnHover;
+    private int hoverRaiseSiblingIndex = -1;
+    private bool pointerHovering;
 
     private static readonly Dictionary<string, Sprite> magicIconCache = new Dictionary<string, Sprite>();
     private static Material sharedModifierMarkerFallbackMaterial;
@@ -80,6 +83,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private void OnDisable()
     {
+        pointerHovering = false;
+        ReleaseHoverRaise();
         pulseTween?.Kill(false);
         modifierMarkerTween?.Kill(false);
         HideLocalDetailTooltip(true);
@@ -161,6 +166,63 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void SetSlotIndex(int index)
     {
         slotIndex = index;
+    }
+
+    /// <summary>
+    /// 由 HandSystemUI 对道具栏槽位打开：Hover 时把槽位提到同级最后，
+    /// 让放大后的图标与弹簧线框绘制在相邻道具之上，而不是被它们盖住。
+    /// </summary>
+    public void SetRaiseToFrontOnHover(bool value)
+    {
+        raiseToFrontOnHover = value;
+        if (!value)
+            ReleaseHoverRaise();
+    }
+
+    private void RaiseToFrontOnHover()
+    {
+        if (!raiseToFrontOnHover)
+            return;
+
+        Transform parent = transform.parent;
+        if (parent == null)
+            return;
+
+        if (hoverRaiseSiblingIndex < 0)
+            hoverRaiseSiblingIndex = transform.GetSiblingIndex();
+
+        if (transform.GetSiblingIndex() != parent.childCount - 1)
+            transform.SetAsLastSibling();
+    }
+
+    /// <summary>指针是否停在本槽位上（Hover 状态），跨重建后仍可用它恢复提层。</summary>
+    public bool IsPointerHovering => pointerHovering;
+
+    /// <summary>
+    /// 重建/重排后重新提层：指针还停在槽位上时把提层补回来，
+    /// 避免一直悬停的道具在重建后失去提层、又被相邻道具盖住。
+    /// </summary>
+    public void ReapplyHoverRaiseIfHovering()
+    {
+        if (pointerHovering)
+            RaiseToFrontOnHover();
+    }
+
+    /// <summary>
+    /// 结束 Hover 提层，把槽位放回原来的兄弟索引。
+    /// 道具栏的圆弧布局与“槽位壳↔槽位索引”绑定都按子物体顺序读取，
+    /// 所以任何按顺序读取或重建子物体的流程（重排、绑定、飞入动画）都必须先调用它。
+    /// </summary>
+    public void ReleaseHoverRaise()
+    {
+        if (hoverRaiseSiblingIndex < 0)
+            return;
+
+        Transform parent = transform.parent;
+        if (parent != null)
+            transform.SetSiblingIndex(Mathf.Clamp(hoverRaiseSiblingIndex, 0, parent.childCount - 1));
+
+        hoverRaiseSiblingIndex = -1;
     }
 
     public int GetSlotIndex()
@@ -266,6 +328,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        pointerHovering = true;
+        RaiseToFrontOnHover();
+
         UnifiedDetailContent content = magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
         if (localDetailTooltipRoot != null)
         {
@@ -279,6 +344,9 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        pointerHovering = false;
+        ReleaseHoverRaise();
+
         if (localDetailTooltipRoot != null)
         {
             HideLocalDetailTooltip(false);

@@ -314,11 +314,11 @@
     },
     {
       "key": "ui.unified_detail.reward.gold",
-      "text": "Gain Gold ×{0}"
+      "text": "Gain Gold x{0}"
     },
     {
       "key": "ui.unified_detail.reward.heal",
-      "text": "Heal ×{0}"
+      "text": "Heal x{0}"
     },
     {
       "key": "ui.unified_detail.map_move.title",
@@ -937,6 +937,42 @@
       "text": "Gain {0} random syntax arrow(s)"
     },
     {
+      "key": "ui.event.effect.gain_material_with_modifier",
+      "text": "Gain {0} arrow(s) with {1}"
+    },
+    {
+      "key": "ui.event.effect.gain_magic_modifier_specified",
+      "text": "Give one item {0}"
+    },
+    {
+      "key": "ui.event.effect.increase_play_limit",
+      "text": "Play limit per turn +{0}"
+    },
+    {
+      "key": "ui.event.effect.decrease_max_health",
+      "text": "Max HP -{0}"
+    },
+    {
+      "key": "ui.event.effect.lose_gold",
+      "text": "Lose {0} Gold"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_all",
+      "text": "All arrows in your deck gain {0}"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_count",
+      "text": "{0} random arrows in your deck gain {1}"
+    },
+    {
+      "key": "ui.event.effect.deck_arrows_modifier_percent",
+      "text": "{0}% of the arrows in your deck randomly gain {1}"
+    },
+    {
+      "key": "ui.event.effect.randomize_random_materials",
+      "text": "Randomize {0} arrow(s)"
+    },
+    {
       "key": "ui.event.effect.arrow_modifier",
       "text": "Arrow Enchantment"
     },
@@ -947,6 +983,10 @@
     {
       "key": "ui.battle.floating.max_health_up",
       "text": "Max HP +{0}"
+    },
+    {
+      "key": "ui.battle.floating.max_health_down",
+      "text": "Max HP -{0}"
     },
     {
       "key": "ui.reward_magic_confirm.title",

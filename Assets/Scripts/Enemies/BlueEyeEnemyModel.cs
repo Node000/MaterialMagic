@@ -8,7 +8,7 @@ public class BlueEyeEnemyModel : EnemyModel
 
     public override string GetSpecialIntentDisplayValue(EnemyIntentData intent, PlayerState playerState)
     {
-        return intent != null && intent.value == 1 && summonCount > 1 ? "×" + summonCount : string.Empty;
+        return intent != null && intent.value == 1 && summonCount > 1 ? "x" + summonCount : string.Empty;
     }
 
     protected override string GetSpecialIntentTooltipTitle(EnemyIntentData intent)

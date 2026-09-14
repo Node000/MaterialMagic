@@ -402,7 +402,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         if (intent.actionType == EnemyActionType.GainShield)
             return attackValue.ToString();
         if (intent.actionType == EnemyActionType.Summon)
-            return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
+            return intent.summonCount > 1 ? "x" + intent.summonCount : string.Empty;
         if (intent.actionType == EnemyActionType.ApplyBuff || intent.actionType == EnemyActionType.ApplyDebuff || intent.actionType == EnemyActionType.Special || intent.actionType == EnemyActionType.Stunned)
             return string.Empty;
         if (intent.value > 0)

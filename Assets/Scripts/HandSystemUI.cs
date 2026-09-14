@@ -641,8 +641,6 @@ public class HandSystemUI : MonoBehaviour
 
 	private const int RestDefaultHealResultId = 300;
 
-	private const int RestStudyResultId = 301;
-
 	private const int RestArrowModifierResultId = 302;
 
     private const float RestDefaultHealRatio = 0.3f;
@@ -1765,6 +1763,7 @@ public class HandSystemUI : MonoBehaviour
 
 		busy = false;
 		SetButtonsInteractable(interactable: true);
+		TutorialManager?.OnRestPanelShown();
 	}
 
 	private void StartRewardLevel(LevelData level)
@@ -1915,21 +1914,8 @@ public class HandSystemUI : MonoBehaviour
             nextNodeId = "rest_result",
             isExitOption = true
         };
-        string studyRecipe = CreateRandomRecipe(1);
-        string arrowModifierRecipe;
-        do
-        {
-            arrowModifierRecipe = CreateRandomRecipe(1);
-        }
-        while (arrowModifierRecipe == studyRecipe);
+        string arrowModifierRecipe = CreateRandomRecipe(1);
 
-        EventOptionData study = new EventOptionData
-        {
-            id = "study_magic",
-            titleKey = "rest.option.study",
-            recipe = studyRecipe,
-            resultId = RestStudyResultId
-        };
         EventOptionData arrowModifier = new EventOptionData
         {
             id = "arrow_modifier",
@@ -1952,7 +1938,7 @@ public class HandSystemUI : MonoBehaviour
                 {
                     id = "start",
                     textKeys = !string.IsNullOrEmpty(startTextKey) ? new[] { startTextKey } : Array.Empty<string>(),
-                    options = new[] { defaultRest, study, arrowModifier }
+                    options = new[] { defaultRest, arrowModifier }
                 },
                 new EventNodeData
                 {
@@ -3390,13 +3376,15 @@ public class HandSystemUI : MonoBehaviour
         }
 #endif
 
-        if (!tutorialClickConsumedThisFrame && CanUseRefreshCardInput() && Input.GetKeyDown(KeyCode.R))
+        bool tutorialAllowsRefresh = TutorialManager == null || TutorialManager.AllowsRefreshShortcut;
+        if (!tutorialClickConsumedThisFrame && tutorialAllowsRefresh && CanUseRefreshCardInput() && Input.GetKeyDown(KeyCode.R))
         {
             RefreshPlayZoneCards();
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.R))
+        bool tutorialAllowsUndo = TutorialManager == null || TutorialManager.AllowsUndoShortcut;
+        if (tutorialAllowsUndo && (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.R)))
         {
             if (TryUndoRewardMagicClaim())
                 return;
@@ -4344,12 +4332,6 @@ public bool IsCardDragActive => cardDragActive;
 
         RebuildCards(animateFromCurrent: true);
         refreshUsedThisTurn = false;
-        if (matched && matchedOption != null && matchedOption.resultId == RestStudyResultId)
-        {
-            ShowMagicModifierSelection(2);
-            yield break;
-        }
-
         if (matched && matchedOption != null && matchedOption.resultId == RestArrowModifierResultId)
         {
             List<MaterialModifierData> choices = GetArrowModifierChoices(2);
@@ -4527,10 +4509,10 @@ public bool IsCardDragActive => cardDragActive;
 				yield return ShowEventMagicRewardRoutine();
 				break;
 			case EventRewardType.GainMagicModifier:
-				yield return ShowEventMagicModifierRoutine(GetEventEffectChoiceCount(effect, option, 2));
+				yield return ShowEventMagicModifierRoutine(effect.modifierId, GetEventEffectChoiceCount(effect, option, 2));
 				break;
             case EventRewardType.GainMaterialModifier:
-                yield return ShowEventMaterialModifierRoutine(effect.modifierId);
+                yield return ShowEventMaterialModifierRoutine(effect.modifierId, GetEventEffectChoiceCount(effect, option, 1));
                 break;
 			case EventRewardType.IncreaseMaxHealth:
 				ApplyEventIncreaseMaxHealth(GetEventEffectAmount(effect, 5));
@@ -4561,6 +4543,21 @@ public bool IsCardDragActive => cardDragActive;
                 break;
             case EventRewardType.GainRandomSyntaxMaterial:
                 AddEventRandomSyntaxMaterial();
+                break;
+            case EventRewardType.IncreasePlayLimit:
+                ApplyEventIncreasePlayLimit(GetEventEffectAmount(effect, 1));
+                break;
+            case EventRewardType.ApplyMaterialModifierToDeck:
+                ApplyEventMaterialModifierToDeck(effect);
+                break;
+            case EventRewardType.RandomizeRandomMaterials:
+                ApplyEventRandomizeRandomMaterials(GetEventEffectCount(effect, 1));
+                break;
+            case EventRewardType.DecreaseMaxHealth:
+                ApplyEventDecreaseMaxHealth(GetEventEffectAmount(effect, 1));
+                break;
+            case EventRewardType.LoseGold:
+                ApplyEventLoseGold(GetEventEffectAmount(effect, 1));
                 break;
 		}
 	}
@@ -4695,6 +4692,145 @@ public bool IsCardDragActive => cardDragActive;
         SaveRunProgress();
     }
 
+    private void ApplyEventIncreasePlayLimit(int amount)
+    {
+        if (playerState == null || amount == 0)
+            return;
+
+        playerState.MaxPlayCount = Mathf.Max(1, playerState.MaxPlayCount + amount);
+        GameLog.Data($"Event result player play limit +{amount} now={playerState.MaxPlayCount}");
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private void ApplyEventDecreaseMaxHealth(int amount)
+    {
+        if (playerState == null || amount <= 0)
+            return;
+
+        playerState.AdjustMaxHealthOnly(-amount);
+        PlayPlayerCornerFeedback(new Color(0.95f, 0.05f, 0.02f, 0.48f));
+        ShowPlayerFloatingText(string.Format(LocalizationSystem.GetText("ui.battle.floating.max_health_down", "-{0}上限"), amount), FloatingTextType.Damage);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private void ApplyEventLoseGold(int amount)
+    {
+        if (playerState == null || amount <= 0 || playerState.Gold <= 0)
+            return;
+
+        playerState.AddGold(-amount);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    /// <summary>事件效果：给牌组里已有箭头附加指定附魔，用于“所有/随机一半箭头获得某附魔”类效果。</summary>
+    private void ApplyEventMaterialModifierToDeck(EventEffectData effect)
+    {
+        if (playerState == null || effect == null)
+            return;
+
+        MaterialModifierData modifierData = GetMaterialModifierDataById(effect.modifierId);
+        MaterialModifierModel sampleModifier = MaterialModifierFactory.Create(modifierData);
+        if (sampleModifier == null)
+            return;
+
+        List<MaterialModel> candidates = new List<MaterialModel>();
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            MaterialModel card = playerState.Deck[i];
+            if (!IsArrowModifierTargetSelectable(card) || HasMaterialModifierOfSameType(card, sampleModifier))
+                continue;
+
+            candidates.Add(card);
+        }
+        if (candidates.Count == 0)
+            return;
+
+        int targetCount = ResolveEventDeckModifierTargetCount(effect, candidates.Count);
+        for (int i = 0; i < targetCount; i++)
+        {
+            int pickIndex = NextRunRandomInt(0, candidates.Count);
+            MaterialModel target = candidates[pickIndex];
+            candidates[pickIndex] = candidates[candidates.Count - 1];
+            candidates.RemoveAt(candidates.Count - 1);
+
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(modifierData);
+            if (modifier != null)
+                target.AddModifier(modifier);
+        }
+
+        GameLog.Data($"Event effect deck modifier={effect.modifierId} applied={targetCount}/{playerState.Deck.Count}");
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private int ResolveEventDeckModifierTargetCount(EventEffectData effect, int candidateCount)
+    {
+        if (effect.percent > 0)
+            return Mathf.Clamp(Mathf.CeilToInt(candidateCount * Mathf.Clamp(effect.percent, 1, 100) / 100f), 1, candidateCount);
+        if (effect.count > 0)
+            return Mathf.Clamp(effect.count, 1, candidateCount);
+        return candidateCount;
+    }
+
+    private static bool HasMaterialModifierOfSameType(MaterialModel card, MaterialModifierModel sampleModifier)
+    {
+        if (card == null || sampleModifier == null)
+            return false;
+
+        Type sampleType = sampleModifier.GetType();
+        for (int i = 0; i < card.modifiers.Count; i++)
+        {
+            if (card.modifiers[i] != null && card.modifiers[i].GetType() == sampleType)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>事件效果：随机挑 count 张基础箭头改变方向（素材类型）。</summary>
+    private void ApplyEventRandomizeRandomMaterials(int count)
+    {
+        if (playerState == null || count <= 0)
+            return;
+
+        List<MaterialModel> candidates = new List<MaterialModel>();
+        for (int i = 0; i < playerState.Deck.Count; i++)
+        {
+            MaterialModel card = playerState.Deck[i];
+            if (card != null && card.material != MaterialEnum.None && card.material != MaterialEnum.Wild)
+                candidates.Add(card);
+        }
+        if (candidates.Count == 0)
+            return;
+
+        int targetCount = Mathf.Clamp(count, 1, candidates.Count);
+        bool changed = false;
+        for (int i = 0; i < targetCount; i++)
+        {
+            int pickIndex = NextRunRandomInt(0, candidates.Count);
+            MaterialModel target = candidates[pickIndex];
+            candidates[pickIndex] = candidates[candidates.Count - 1];
+            candidates.RemoveAt(candidates.Count - 1);
+
+            MaterialEnum material = GetRandomBasicMaterial();
+            if (target.material != material)
+                changed = true;
+            target.material = material;
+        }
+
+        if (!changed)
+            return;
+
+        RefreshMaterialListPanel();
+        RebuildCards(animateFromCurrent: true);
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
     private void AddEventRandomSyntaxMaterial()
     {
         AddEventMaterial(MaterialEnum.Wild, 1, GetRandomSyntaxModifierId());
@@ -4816,13 +4952,31 @@ public bool IsCardDragActive => cardDragActive;
 
 	private IEnumerator ShowEventMagicModifierRoutine(int choiceCount)
 	{
+		yield return ShowEventMagicModifierRoutine(null, choiceCount);
+	}
+
+	/// <summary>事件的道具强化奖励；modifierId 非空时只提供该强化（“指定道具强化”）。</summary>
+	private IEnumerator ShowEventMagicModifierRoutine(string modifierId, int choiceCount)
+	{
+		List<MagicModifierData> choices = GetEventMagicModifierChoices(modifierId, choiceCount);
+		if (choices.Count == 0)
+			yield break;
+
 		bool completed = false;
-		ShowMagicModifierSelection(choiceCount, delegate { completed = true; });
+		ShowMagicModifierSelection(choices, delegate { completed = true; });
 		while (!completed)
 			yield return null;
 
 		RefreshStaticUI();
 		SaveRunProgress();
+	}
+
+	private List<MagicModifierData> GetEventMagicModifierChoices(string modifierId, int choiceCount)
+	{
+		if (!string.IsNullOrEmpty(modifierId) && GameDataDatabase.TryGetMagicModifierData(modifierId, out MagicModifierData specified) && specified != null)
+			return new List<MagicModifierData> { specified };
+
+		return GetMagicModifierChoices(choiceCount);
 	}
 
 	private bool IsCardChoiceEventResult(int resultId)
@@ -5681,9 +5835,18 @@ public bool IsCardDragActive => cardDragActive;
 
         private void CachePlayLimitDisplay()
         {
-            Transform found = UIManager.FindChildRecursive(((Component)this).transform, "PlayLimitDisplay");
-            if (found != null)
-                playLimitDisplay = found.GetComponent<PlayLimitDisplayUI>();
+            Transform root = ((Component)this).transform;
+
+            // 优先按组件找（美术随时可改名字、加“底”层级），再兜底按名字找。
+            PlayLimitDisplayUI found = root.GetComponentInChildren<PlayLimitDisplayUI>(true);
+            if ((Object)found == (Object)null)
+            {
+                Transform named = UIManager.FindChildRecursive(root, "PlayLimitDisplay");
+                if (named != null)
+                    found = named.GetComponent<PlayLimitDisplayUI>();
+            }
+
+            playLimitDisplay = found;
         }
 
         private void CachePileCountTexts()
@@ -6342,6 +6505,7 @@ public bool IsCardDragActive => cardDragActive;
 		if (magicDragActive)
 			return;
 
+		ReleaseMagicSlotHoverRaise();
 		MagicItemView[] componentsInChildren = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
 		if (componentsInChildren.Length == 0)
 			return;
@@ -6358,6 +6522,7 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			bool visibleSlot = i < magicCount;
 			MagicItemView view = componentsInChildren[i];
+			view.SetRaiseToFrontOnHover(true);
 			view.gameObject.SetActive(visibleSlot);
 			if (!visibleSlot)
 				continue;
@@ -6376,6 +6541,43 @@ public bool IsCardDragActive => cardDragActive;
 		MagicBookCurveLayout curveLayout = magicBookArea.GetComponent<MagicBookCurveLayout>();
 		if (curveLayout != null)
 			curveLayout.RefreshLayoutAnimated();
+
+		// 圆弧排布完成后再补回提层，否则布局会把提层后的顺序当成真实槽位顺序。
+		ReapplyMagicSlotHoverRaise();
+	}
+
+	/// <summary>
+	/// 释放道具栏槽位的 Hover 提层。圆弧布局与“槽位壳↔槽位索引”绑定都按子物体顺序读取，
+	/// 所以任何按顺序读取或重建子物体的流程（绑定、重排、飞入动画）前都要先还原真实顺序。
+	/// </summary>
+	private void ReleaseMagicSlotHoverRaise()
+	{
+		if ((Object)magicBookArea == (Object)null)
+			return;
+
+		MagicItemView[] views = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+		for (int i = 0; i < views.Length; i++)
+		{
+			if (views[i] != null)
+				views[i].ReleaseHoverRaise();
+		}
+	}
+
+	/// <summary>
+	/// 重建后补回提层：指针仍停在某个槽位上时把它重新提到同级最后。
+	/// 必须在圆弧排布之后调用，避免布局把提层顺序当成真实槽位顺序。
+	/// </summary>
+	private void ReapplyMagicSlotHoverRaise()
+	{
+		if ((Object)magicBookArea == (Object)null)
+			return;
+
+		MagicItemView[] views = ((Component)magicBookArea).GetComponentsInChildren<MagicItemView>(true);
+		for (int i = 0; i < views.Length; i++)
+		{
+			if (views[i] != null)
+				views[i].ReapplyHoverRaiseIfHovering();
+		}
 	}
 
 	/// <summary>
@@ -8117,6 +8319,7 @@ public bool IsCardDragActive => cardDragActive;
         if (!CanBeginMagicBookReorder || slotRect == null || playerState == null || magicDragActive || !IsMagicSlotOccupied(fromSlotIndex))
             return false;
 
+        ReleaseMagicSlotHoverRaise();
         HideMagicSellPopup();
         magicDragActive = true;
         magicDragFromIndex = fromSlotIndex;
@@ -8283,6 +8486,7 @@ public bool IsCardDragActive => cardDragActive;
         if (magicBookArea == null)
             return;
 
+        ReleaseMagicSlotHoverRaise();
         MagicItemView[] views = magicBookArea.GetComponentsInChildren<MagicItemView>(true);
         for (int i = 0; i < views.Length; i++)
         {
@@ -8656,14 +8860,16 @@ public bool IsCardDragActive => cardDragActive;
         StartShopLevel(shopLevel);
     }
 
-    private IEnumerator ShowEventMaterialModifierRoutine(string modifierId)
+    /// <summary>事件/奖励发放箭头附魔：targetCount 为本次可附魔的箭头数量（来自效果/选项的 choiceCount）。</summary>
+    private IEnumerator ShowEventMaterialModifierRoutine(string modifierId, int targetCount = 1)
     {
         MaterialModifierData data = GetMaterialModifierDataById(modifierId);
-        if (data == null || CountSelectableArrowModifierTargets() == 0)
+        int selectableTargets = CountSelectableArrowModifierTargets();
+        if (data == null || selectableTargets == 0)
             yield break;
 
         bool completed = false;
-        ShowArrowModifierRewardSelection(new List<MaterialModifierData> { data }, delegate { completed = true; });
+        ShowArrowModifierRewardSelection(new List<MaterialModifierData> { data }, delegate { completed = true; }, null, Mathf.Clamp(targetCount, 1, selectableTargets));
         while (!completed)
             yield return null;
     }
@@ -8730,19 +8936,19 @@ public bool IsCardDragActive => cardDragActive;
         return materialModel != null && playerState != null && playerState.Deck.Contains(materialModel) && materialModel.material != MaterialEnum.None;
     }
 
-    private void ShowArrowModifierRewardSelection(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled = null)
+    private void ShowArrowModifierRewardSelection(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled = null, int targetCount = 1)
     {
         busy = true;
         SetButtonsInteractable(interactable: false);
         pendingMaterialModifier = null;
         MagicModifierSelectionPanelUI panel = GetUIManager().MagicModifierSelectionPanel;
         if (panel != null)
-            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(choices, selected, completed, cancelled), completed, cancelled);
+            panel.ShowMaterialModifierChoices(choices, selected => StartArrowModifierTargetSelection(choices, selected, completed, cancelled, targetCount), completed, cancelled);
         else
             completed?.Invoke();
     }
 
-    private void StartArrowModifierTargetSelection(IReadOnlyList<MaterialModifierData> choices, MaterialModifierData selectedModifier, Action completed, Action cancelled)
+    private void StartArrowModifierTargetSelection(IReadOnlyList<MaterialModifierData> choices, MaterialModifierData selectedModifier, Action completed, Action cancelled, int targetCount = 1)
     {
         if (selectedModifier == null)
             return;
@@ -8762,38 +8968,63 @@ public bool IsCardDragActive => cardDragActive;
             return;
         }
 
-        materialListPanel.BeginSelection(1, IsArrowModifierTargetSelectable, selectedMaterials =>
+        materialListPanel.BeginSelection(ResolveArrowModifierTargetCount(targetCount), IsArrowModifierTargetSelectable, selectedMaterials =>
         {
-            MaterialModel target = selectedMaterials != null && selectedMaterials.Count > 0 ? selectedMaterials[0] : null;
-            if (TryApplyPendingMaterialModifier(target))
+            if (TryApplyPendingMaterialModifier(selectedMaterials))
                 GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
-        }, () => ReturnToArrowModifierChoices(choices, completed, cancelled), LocalizationSystem.GetText("ui.arrow_modifier.select_target_title", "选择要附魔的箭头"));
+        }, () => ReturnToArrowModifierChoices(choices, completed, cancelled, targetCount), LocalizationSystem.GetText("ui.arrow_modifier.select_target_title", "选择要附魔的箭头"));
     }
 
-    private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled)
+    /// <summary>本次要附魔的箭头数量：取效果/选项配置的数量，夹在 1 ~ 当前可选箭头数之间。</summary>
+    private int ResolveArrowModifierTargetCount(int targetCount)
+    {
+        int selectableCount = CountSelectableArrowModifierTargets();
+        return Mathf.Clamp(targetCount, 1, Mathf.Max(1, selectableCount));
+    }
+
+    private void ReturnToArrowModifierChoices(IReadOnlyList<MaterialModifierData> choices, Action completed, Action cancelled, int targetCount = 1)
     {
         pendingMaterialModifier = null;
         MaterialListPanelUI materialListPanel = GetUIManager().MaterialSelectionPanel;
         materialListPanel?.EndSelectionMode();
-        ShowArrowModifierRewardSelection(choices, completed, cancelled);
+        ShowArrowModifierRewardSelection(choices, completed, cancelled, targetCount);
     }
 
-    private bool TryApplyPendingMaterialModifier(MaterialModel target)
+    /// <summary>把待应用的箭头附魔逐张应用到选中的箭头上（每张各生成独立附魔实例）。</summary>
+    private bool TryApplyPendingMaterialModifier(IReadOnlyList<MaterialModel> targets)
     {
-        if (pendingMaterialModifier == null || !IsArrowModifierTargetSelectable(target))
+        if (pendingMaterialModifier == null || targets == null)
             return false;
 
-        MaterialModifierModel modifier = MaterialModifierFactory.Create(pendingMaterialModifier);
-        if (modifier == null)
+        bool applied = false;
+        for (int i = 0; i < targets.Count; i++)
+        {
+            MaterialModel target = targets[i];
+            if (!IsArrowModifierTargetSelectable(target))
+                continue;
+
+            MaterialModifierModel modifier = MaterialModifierFactory.Create(pendingMaterialModifier);
+            if (modifier == null)
+                continue;
+
+            target.AddModifier(modifier);
+            applied = true;
+        }
+
+        if (!applied)
             return false;
 
-        target.AddModifier(modifier);
         pendingMaterialModifier = null;
         RefreshMaterialListPanel();
         RebuildCards(animateFromCurrent: true);
         RefreshStaticUI();
         SaveRunProgress();
         return true;
+    }
+
+    private bool TryApplyPendingMaterialModifier(MaterialModel target)
+    {
+        return target != null && TryApplyPendingMaterialModifier(new[] { target });
     }
 
     private IEnumerator ShowEliteMagicModifierRewardRoutine()
@@ -10052,7 +10283,7 @@ public bool IsCardDragActive => cardDragActive;
 		}
 		if (intent.actionType == EnemyActionType.Summon)
 		{
-			return intent.summonCount > 1 ? "×" + intent.summonCount : string.Empty;
+			return intent.summonCount > 1 ? "x" + intent.summonCount : string.Empty;
 		}
 		if (intent.actionType == EnemyActionType.Special)
 		{
@@ -10381,6 +10612,7 @@ public bool IsCardDragActive => cardDragActive;
         if (magicBookArea == null || slotIndex < 0)
             return null;
 
+        ReleaseMagicSlotHoverRaise();
         MagicItemView[] all = magicBookArea.GetComponentsInChildren<MagicItemView>(true);
         if (slotIndex >= all.Length || all[slotIndex] == null)
             return null;

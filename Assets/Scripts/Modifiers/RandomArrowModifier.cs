@@ -31,6 +31,12 @@ public class RandomArrowModifier : MaterialModifierModel
         return rolledMaterial != MaterialEnum.None ? rolledMaterial : material;
     }
 
+    /// <summary>读取前随机掷出的方向，用于让附魔表现（循环的四种箭头贴图）定格到该方向。</summary>
+    public override MaterialEnum GetLockedArrowDisplayMaterial()
+    {
+        return rolledMaterial;
+    }
+
     public override bool UsesArrowBaseEffect(bool usesBaseEffect)
     {
         return false;
