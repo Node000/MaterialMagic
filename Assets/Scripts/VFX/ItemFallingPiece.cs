@@ -11,14 +11,13 @@ public struct ItemFallPieceSettings
     public float restSpin;
     public float restDuration;
     public float landedLifetime;
-    public float grayDelay;
-    public float grayDuration;
-    public Color grayTint;
-    public float removeDuration;
+    public float whiteDelay;
+    public float whiteDuration;
+    public Color whiteColor;
 }
 
 /// <summary>
-/// 道具瀑布里掉落的单个道具：落地停稳后逐渐变成黑白，被回收时缩小消失。
+/// 道具瀑布里掉落的单个道具：落地停稳后逐渐变成纯白，被回收时直接销毁（无缩小/淡出动画）。
 /// 由 <see cref="ItemWaterfallEffect"/> 在运行时生成并驱动，不要手动放进场景。
 /// </summary>
 [DisallowMultipleComponent]
@@ -28,8 +27,8 @@ public class ItemFallingPiece : MonoBehaviour
     [SerializeField] private Rigidbody2D body;
     [SerializeField] private BoxCollider2D hitBox;
 
-    private static readonly int GrayAmountId = Shader.PropertyToID("_GrayAmount");
-    private static readonly int GrayTintId = Shader.PropertyToID("_GrayTint");
+    private static readonly int WhiteAmountId = Shader.PropertyToID("_WhiteAmount");
+    private static readonly int WhiteColorId = Shader.PropertyToID("_WhiteColor");
 
     private Material materialInstance;
     private float colliderFit = 0.92f;
@@ -38,20 +37,17 @@ public class ItemFallingPiece : MonoBehaviour
     private float restSpin = 40f;
     private float restDuration = 0.2f;
     private float landedLifetime;
-    private float grayDelay;
-    private float grayDuration;
-    private float removeDuration;
+    private float whiteDelay;
+    private float whiteDuration;
     private float restingTime;
     private float lifetimeTimer = -1f;
-    private float grayTimer = -1f;
-    private float grayAmount;
-    private float removeTimer = -1f;
-    private Vector3 standingScale = Vector3.one;
+    private float whiteTimer = -1f;
+    private float whiteAmount;
     private bool touchedSomething;
     private bool dying;
 
     public bool IsDying => dying;
-    public float GrayAmount => grayAmount;
+    public float WhiteAmount => whiteAmount;
 
     /// <summary>开始消失时回调（不论是被数量上限回收还是存活时间到期），控制器据此把自己从队列里摘掉。</summary>
     public event System.Action<ItemFallingPiece> RemovalStarted;
@@ -59,7 +55,6 @@ public class ItemFallingPiece : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
-        standingScale = transform.localScale;
     }
 
     /// <summary>生成时由瀑布控制器调用：下发参数、绑定图标、贴碰撞箱、重置状态。</summary>
@@ -73,28 +68,25 @@ public class ItemFallingPiece : MonoBehaviour
         restSpin = Mathf.Max(0f, settings.restSpin);
         restDuration = Mathf.Max(0f, settings.restDuration);
         landedLifetime = Mathf.Max(0f, settings.landedLifetime);
-        grayDelay = Mathf.Max(0f, settings.grayDelay);
-        grayDuration = Mathf.Max(0.01f, settings.grayDuration);
-        removeDuration = Mathf.Max(0.01f, settings.removeDuration);
+        whiteDelay = Mathf.Max(0f, settings.whiteDelay);
+        whiteDuration = Mathf.Max(0.01f, settings.whiteDuration);
 
-        standingScale = Vector3.one * Mathf.Max(0.0001f, settings.scale);
-        transform.localScale = standingScale;
+        transform.localScale = Vector3.one * Mathf.Max(0.0001f, settings.scale);
 
         if (spriteRenderer != null)
             spriteRenderer.sprite = sprite;
 
         FitCollider(sprite);
-        ApplyGrayTint(settings.grayTint);
+        ApplyWhiteColor(settings.whiteColor);
 
         restingTime = 0f;
         lifetimeTimer = -1f;
-        grayTimer = -1f;
-        grayAmount = 0f;
-        removeTimer = -1f;
+        whiteTimer = -1f;
+        whiteAmount = 0f;
         touchedSomething = false;
         dying = false;
 
-        SetGrayAmount(0f);
+        SetWhiteAmount(0f);
 
         if (body != null)
         {
@@ -104,7 +96,7 @@ public class ItemFallingPiece : MonoBehaviour
         }
     }
 
-    /// <summary>被瀑布控制器回收：停止物理并缩小消失。</summary>
+    /// <summary>被瀑布控制器回收：直接销毁（无缩小/淡出动画）。</summary>
     public void RequestRemove()
     {
         BeginRemoval();
@@ -116,28 +108,24 @@ public class ItemFallingPiece : MonoBehaviour
             return;
 
         dying = true;
-        removeTimer = 0f;
         if (body != null)
             body.simulated = false;
         if (hitBox != null)
             hitBox.enabled = false;
 
         RemovalStarted?.Invoke(this);
+        Destroy(gameObject);
     }
 
     private void Update()
     {
-        float delta = Time.deltaTime;
-
         if (dying)
-        {
-            UpdateRemove(delta);
             return;
-        }
 
+        float delta = Time.deltaTime;
         UpdateLifetime(delta);
         UpdateResting(delta);
-        UpdateGray(delta);
+        UpdateWhite(delta);
     }
 
     /// <summary>落地（第一次碰到地面/其它道具）后开始计时，到点自行消失。</summary>
@@ -151,56 +139,44 @@ public class ItemFallingPiece : MonoBehaviour
             BeginRemoval();
     }
 
-    private void UpdateRemove(float delta)
-    {
-        if (removeTimer < 0f)
-            return;
-
-        removeTimer += delta;
-        float progress = Mathf.Clamp01(removeTimer / removeDuration);
-        transform.localScale = standingScale * (1f - progress);
-        if (progress >= 1f)
-            Destroy(gameObject);
-    }
-
     private void UpdateResting(float delta)
     {
-        if (grayTimer >= 0f || !touchedSomething || body == null)
+        if (whiteTimer >= 0f || !touchedSomething || body == null)
             return;
 
         bool resting = body.velocity.sqrMagnitude <= restSpeed * restSpeed && Mathf.Abs(body.angularVelocity) <= restSpin;
         restingTime = resting ? restingTime + delta : 0f;
         if (restingTime >= restDuration)
-            grayTimer = 0f;
+            whiteTimer = 0f;
     }
 
-    private void UpdateGray(float delta)
+    private void UpdateWhite(float delta)
     {
-        if (grayTimer < 0f)
+        if (whiteTimer < 0f)
             return;
 
-        grayTimer += delta;
-        float progress = grayDelay <= 0f ? 1f : Mathf.Clamp01((grayTimer - grayDelay) / grayDuration);
-        if (Mathf.Approximately(progress, grayAmount))
+        whiteTimer += delta;
+        float progress = whiteDelay <= 0f ? 1f : Mathf.Clamp01((whiteTimer - whiteDelay) / whiteDuration);
+        if (Mathf.Approximately(progress, whiteAmount))
             return;
 
-        grayAmount = progress;
-        SetGrayAmount(grayAmount);
+        whiteAmount = progress;
+        SetWhiteAmount(whiteAmount);
     }
 
-    private void SetGrayAmount(float amount)
+    private void SetWhiteAmount(float amount)
     {
         if (materialInstance == null)
             return;
 
-        materialInstance.SetFloat(GrayAmountId, amount);
+        materialInstance.SetFloat(WhiteAmountId, amount);
     }
 
     /// <summary>
-    /// 每个碎片用一份材质实例驱动黑白（不要用 MaterialPropertyBlock：SpriteRenderer 会把
+    /// 每个碎片用一份材质实例驱动变白（不要用 MaterialPropertyBlock：SpriteRenderer 会把
     /// Sprite 纹理也放在同一个 property block 里，外部覆盖会丢掉 _MainTex）。
     /// </summary>
-    private void ApplyGrayTint(Color grayTint)
+    private void ApplyWhiteColor(Color whiteColor)
     {
         if (spriteRenderer == null || spriteRenderer.sharedMaterial == null)
             return;
@@ -211,8 +187,8 @@ public class ItemFallingPiece : MonoBehaviour
             spriteRenderer.sharedMaterial = materialInstance;
         }
 
-        materialInstance.SetFloat(GrayAmountId, 0f);
-        materialInstance.SetColor(GrayTintId, grayTint);
+        materialInstance.SetFloat(WhiteAmountId, 0f);
+        materialInstance.SetColor(WhiteColorId, whiteColor);
     }
 
     private void OnDestroy()

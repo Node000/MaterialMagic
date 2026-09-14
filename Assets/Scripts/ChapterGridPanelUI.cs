@@ -103,6 +103,11 @@ public class ChapterGridPanelUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public UIManager GetUIManager()
+    {
+        return owner != null ? owner.GetUIManager() : null;
+    }
+
     public void SetDirectionRoot(RectTransform root)
     {
         if (root != null)
@@ -768,6 +773,13 @@ public class ChapterGridPanelUI : MonoBehaviour
         EnsureDirectionButton(MaterialEnum.Earth, 3);
         foreach (RectTransform button in directionButtons.Values)
         {
+            MapDirectionCardView mapDirectionCardView = button != null ? button.GetComponent<MapDirectionCardView>() : null;
+            if (mapDirectionCardView != null)
+            {
+                mapDirectionCardView.SetInteractable(!inputLocked);
+                continue;
+            }
+
             Button unityButton = button.GetComponent<Button>();
             if (unityButton != null)
                 unityButton.interactable = !inputLocked;

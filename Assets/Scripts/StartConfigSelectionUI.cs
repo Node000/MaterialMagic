@@ -9,13 +9,7 @@ public class StartConfigSelectionUI : MonoBehaviour
     [SerializeField] private StartConfigBookmarkUI startConfigBookmark;
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
-    [SerializeField] private PopupDragonBackgroundUI popupDragonBackground;
     [SerializeField] private StartConfigEnchantTransitionUI enchantTransition;
-    [Header("弹窗龙接管")]
-    [SerializeField] private bool replaceDragonFrontWindow;
-    [SerializeField] private bool alignToDragonFrontWindow;
-    [SerializeField] private Vector2 dragonFrontWindowOffset;
-    [SerializeField] private bool inheritDragonFrontRotation;
     [Header("配置切换")]
     [SerializeField] private bool useSwitchTransition;
 
@@ -23,6 +17,7 @@ public class StartConfigSelectionUI : MonoBehaviour
     private readonly List<PlayerStartConfigData> startConfigs = new List<PlayerStartConfigData>();
     private string visibleOnlyConfigId;
     private bool configsLoaded;
+    private bool missingReferenceWarned;
     private bool switchingConfig;
     private int currentConfigIndex = -1;
 
@@ -109,8 +104,6 @@ public class StartConfigSelectionUI : MonoBehaviour
         PlayerStartConfigData currentConfig = startConfigs[currentConfigIndex];
         SelectedConfig = IsConfigUnlocked(currentConfig) ? currentConfig : null;
         root.gameObject.SetActive(true);
-        SetDragonFrontWindowReplacement(true);
-        ApplyDragonFrontWindowPose();
         EnsureBookmarkPool();
         ShowCurrentBookmark(true, onShown);
         UpdateNavigationButtons();
@@ -128,7 +121,6 @@ public class StartConfigSelectionUI : MonoBehaviour
         {
             if (root != null)
                 root.gameObject.SetActive(false);
-            SetDragonFrontWindowReplacement(false);
             onHidden?.Invoke();
             return;
         }
@@ -138,12 +130,11 @@ public class StartConfigSelectionUI : MonoBehaviour
         {
             if (root != null)
                 root.gameObject.SetActive(false);
-            SetDragonFrontWindowReplacement(false);
             onHidden?.Invoke();
             return;
         }
 
-        bookmark.Hide(bookmark.RectTransform.anchoredPosition.x, 0f, hiddenBookmark =>
+        bookmark.Hide(0f, hiddenBookmark =>
         {
             HideBookmark(hiddenBookmark);
             onHidden?.Invoke();
@@ -161,7 +152,6 @@ public class StartConfigSelectionUI : MonoBehaviour
             ShowInternal(visibleOnlyConfigId);
         else
         {
-            ApplyDragonFrontWindowPose();
             EnsureBookmarkPool();
             ShowCurrentBookmark(false);
             UpdateNavigationButtons();
@@ -188,16 +178,17 @@ public class StartConfigSelectionUI : MonoBehaviour
     {
         if (root == null)
             root = transform as RectTransform;
-        if (previousButton == null)
-            previousButton = transform.Find("PreviousButton")?.GetComponent<Button>() ?? transform.Find("StartConfigBookmark/PreviousButton")?.GetComponent<Button>();
-        if (nextButton == null)
-            nextButton = transform.Find("NextButton")?.GetComponent<Button>() ?? transform.Find("StartConfigBookmark/NextButton")?.GetComponent<Button>();
         if (startConfigBookmark == null)
-            startConfigBookmark = GetComponent<StartConfigBookmarkUI>() ?? transform.Find("StartConfigBookmark")?.GetComponent<StartConfigBookmarkUI>();
-        if (popupDragonBackground == null && transform.parent != null)
-            popupDragonBackground = transform.parent.GetComponentInChildren<PopupDragonBackgroundUI>(true);
+            startConfigBookmark = GetComponent<StartConfigBookmarkUI>();
         if (enchantTransition == null)
             enchantTransition = GetComponent<StartConfigEnchantTransitionUI>();
+
+        if (!missingReferenceWarned &&
+            (root == null || startConfigBookmark == null || previousButton == null || nextButton == null))
+        {
+            missingReferenceWarned = true;
+            Debug.LogWarning("[StartConfigSelectionUI] Inspector 引用未绑定完整（root/startConfigBookmark/previousButton/nextButton），请在 StartConfigPanel 上补齐绑定。", this);
+        }
     }
 
     private void LoadStartConfigs()
@@ -307,7 +298,6 @@ public class StartConfigSelectionUI : MonoBehaviour
         currentConfigIndex = nextIndex;
         PlayerStartConfigData currentConfig = startConfigs[currentConfigIndex];
         SelectedConfig = IsConfigUnlocked(currentConfig) ? currentConfig : null;
-        ApplyDragonFrontWindowPose();
         ShowCurrentBookmark(false);
         UpdateNavigationButtons();
         ConfigSelected?.Invoke(SelectedConfig);
@@ -350,8 +340,7 @@ public class StartConfigSelectionUI : MonoBehaviour
         bookmark.SetSelectedImmediate(false);
         if (animate)
         {
-            float readyX = bookmark.RectTransform.anchoredPosition.x;
-            bookmark.Show(readyX, readyX, 0f, onShown);
+            bookmark.Show(0f, onShown);
             return;
         }
 
@@ -406,27 +395,6 @@ public class StartConfigSelectionUI : MonoBehaviour
             previousButton.interactable = interactable;
         if (nextButton != null)
             nextButton.interactable = interactable;
-    }
-
-    private void SetDragonFrontWindowReplacement(bool replaced)
-    {
-        if (!replaceDragonFrontWindow || popupDragonBackground == null)
-            return;
-
-        popupDragonBackground.SetFrontWindowReplaced(replaced);
-    }
-
-    private void ApplyDragonFrontWindowPose()
-    {
-        if (!alignToDragonFrontWindow || root == null || popupDragonBackground == null)
-            return;
-
-        if (!popupDragonBackground.TryGetFrontWindowPose(out Vector2 anchoredPosition, out float rotation, out _))
-            return;
-
-        root.anchoredPosition = anchoredPosition + dragonFrontWindowOffset;
-        if (inheritDragonFrontRotation)
-            root.localEulerAngles = new Vector3(0f, 0f, rotation);
     }
 
     private PlayerStartConfigData FindConfigById(string id)
@@ -491,10 +459,7 @@ public class StartConfigSelectionUI : MonoBehaviour
         if (bookmark != null)
             bookmark.HideImmediate();
         if (CountVisibleBookmarks() == 0 && root != null)
-        {
             root.gameObject.SetActive(false);
-            SetDragonFrontWindowReplacement(false);
-        }
     }
 
     private void ClearBookmarksImmediate()

@@ -31,10 +31,15 @@ public class GameSfxClipEntry
     public GameSfxId id;
     public AudioClip clip;
 
+    [Tooltip("音量归一化增益（dB）。0 = 保持素材原始电平；正值提升，负值衰减。")]
+    public float volumeDb;
+
     public GameSfxClipEntry(GameSfxId id)
     {
         this.id = id;
     }
+
+    public float Gain => Mathf.Pow(10f, volumeDb / 20f);
 }
 
 public class AudioManager : MonoBehaviour
@@ -163,13 +168,39 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySfx(AudioClip clip)
     {
-        if (clip == null || sfxSource == null)
-            return;
-
-        sfxSource.PlayOneShot(clip);
+        PlaySfxOneShot(clip, 1f);
     }
 
     public void PlaySfx(AudioClip clip, float pitch)
+    {
+        PlaySfxPitched(clip, 1f, pitch);
+    }
+
+    public void PlaySfx(GameSfxId id)
+    {
+        if (!TryGetSfxEntry(id, out GameSfxClipEntry entry))
+            return;
+
+        PlaySfxOneShot(entry.clip, entry.Gain);
+    }
+
+    public void PlaySfx(GameSfxId id, float pitch)
+    {
+        if (!TryGetSfxEntry(id, out GameSfxClipEntry entry))
+            return;
+
+        PlaySfxPitched(entry.clip, entry.Gain, pitch);
+    }
+
+    private void PlaySfxOneShot(AudioClip clip, float gain)
+    {
+        if (clip == null || sfxSource == null)
+            return;
+
+        sfxSource.PlayOneShot(clip, gain);
+    }
+
+    private void PlaySfxPitched(AudioClip clip, float gain, float pitch)
     {
         if (clip == null)
             return;
@@ -180,18 +211,8 @@ public class AudioManager : MonoBehaviour
 
         source.clip = clip;
         source.pitch = Mathf.Clamp(pitch, MinimumSfxPitch, MaximumSfxPitch);
-        source.volume = SfxVolume;
+        source.volume = SfxVolume * gain;
         source.Play();
-    }
-
-    public void PlaySfx(GameSfxId id)
-    {
-        PlaySfx(GetSfxClip(id));
-    }
-
-    public void PlaySfx(GameSfxId id, float pitch)
-    {
-        PlaySfx(GetSfxClip(id), pitch);
     }
 
     public void PlayDamageResultSfx(int healthDamage, int shieldDamage)
@@ -204,17 +225,26 @@ public class AudioManager : MonoBehaviour
 
     public AudioClip GetSfxClip(GameSfxId id)
     {
+        return TryGetSfxEntry(id, out GameSfxClipEntry entry) ? entry.clip : null;
+    }
+
+    private bool TryGetSfxEntry(GameSfxId id, out GameSfxClipEntry entry)
+    {
+        entry = null;
         if (id == GameSfxId.None || gameSfxClips == null)
-            return null;
+            return false;
 
         for (int i = 0; i < gameSfxClips.Length; i++)
         {
-            GameSfxClipEntry entry = gameSfxClips[i];
-            if (entry != null && entry.id == id)
-                return entry.clip;
+            GameSfxClipEntry candidate = gameSfxClips[i];
+            if (candidate == null || candidate.id != id)
+                continue;
+
+            entry = candidate;
+            return true;
         }
 
-        return null;
+        return false;
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)

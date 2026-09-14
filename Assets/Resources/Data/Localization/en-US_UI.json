@@ -973,6 +973,10 @@
       "text": "Randomize {0} arrow(s)"
     },
     {
+      "key": "ui.event.effect.gain_magic_by_id",
+      "text": "Gain item(s): {0}"
+    },
+    {
       "key": "ui.event.effect.arrow_modifier",
       "text": "Arrow Enchantment"
     },

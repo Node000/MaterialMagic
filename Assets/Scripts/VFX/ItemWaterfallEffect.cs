@@ -3,8 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// 道具瀑布：一个矩形区域里不断有道具从区域正上方落下（2D 物理），落到底部（区域下边缘即地面）后堆积起来；
-/// 数量超过上限时，最先落下的道具缩小消失；落地停稳的道具会逐渐变成黑白（需要道具碎片使用 Style/Sprite/Desaturate）。
-/// 区域矩形由 <see cref="area"/>（RectTransform）定义，墙面与地面碰撞体按矩形自动贴合，改矩形尺寸即可整体缩放瀑布。
+/// 堆到数量上限或落地存活时间到期时，最早的/到期的道具直接消失；落地停稳的道具会逐渐变成纯白（需要道具碎片使用 Style/Sprite/FadeToWhite）。
+/// 区域矩形的具体位置完全由 <see cref="area"/>（RectTransform）在场景里手摆，脚本不会改它；墙面与地面碰撞体按矩形尺寸自动贴合。
 /// </summary>
 [DisallowMultipleComponent]
 public class ItemWaterfallEffect : MonoBehaviour
@@ -17,12 +17,6 @@ public class ItemWaterfallEffect : MonoBehaviour
     [SerializeField] private BoxCollider2D rightWallCollider;
     [Tooltip("勾选时墙面/地面碰撞体按矩形自动贴合；取消后碰撞体完全由手工摆放决定。")]
     [SerializeField] private bool autoFitBounds = true;
-
-    [Header("贴屏幕边缘")]
-    [Tooltip("运行时把区域矩形贴到相机视口边缘，避免不同宽高比下跑偏。")]
-    [SerializeField] private bool alignToScreenEdge = true;
-    [SerializeField] private bool alignToRightEdge = true;
-    [SerializeField, Min(0f)] private float edgeInset;
 
     [Header("投放")]
     [SerializeField] private ItemFallingPiece piecePrefab;
@@ -55,10 +49,12 @@ public class ItemWaterfallEffect : MonoBehaviour
     [SerializeField, Min(0f)] private float restDuration = 0.2f;
 
     [Header("落地表现")]
-    [SerializeField, Min(0f)] private float grayDelay = 0.3f;
-    [SerializeField, Min(0.01f)] private float grayDuration = 1.8f;
-    [SerializeField] private Color grayTint = Color.white;
-    [SerializeField, Min(0.01f)] private float removeDuration = 0.32f;
+    [Tooltip("落地停稳后延迟多少秒开始变白。")]
+    [SerializeField, Min(0f)] private float whiteDelay = 0.3f;
+    [Tooltip("变白（渐变到纯白）的时长，秒。")]
+    [SerializeField, Min(0.01f)] private float whiteDuration = 1.8f;
+    [Tooltip("变白的目标颜色，默认纯白；想偏冷/偏暖白可改。")]
+    [SerializeField] private Color whiteColor = Color.white;
 
     [Header("碰撞体尺寸（区域单位，1 单位 = 区域 1 像素）")]
     [SerializeField, Min(1f)] private float wallThickness = 40f;
@@ -78,7 +74,6 @@ public class ItemWaterfallEffect : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
-        AlignToScreenEdge();
         FitBounds();
         spawnTimer = GetSpawnInterval();
         spawning = spawnOnStart;
@@ -108,7 +103,6 @@ public class ItemWaterfallEffect : MonoBehaviour
     public void RefreshBounds()
     {
         ResolveReferences();
-        AlignToScreenEdge();
         FitBounds();
     }
 
@@ -188,10 +182,9 @@ public class ItemWaterfallEffect : MonoBehaviour
             restSpin = restSpin,
             restDuration = restDuration,
             landedLifetime = landedLifetime,
-            grayDelay = grayDelay,
-            grayDuration = grayDuration,
-            grayTint = grayTint,
-            removeDuration = removeDuration,
+            whiteDelay = whiteDelay,
+            whiteDuration = whiteDuration,
+            whiteColor = whiteColor,
         };
     }
 
@@ -241,27 +234,6 @@ public class ItemWaterfallEffect : MonoBehaviour
         float min = Mathf.Max(0.02f, Mathf.Min(spawnIntervalRange.x, spawnIntervalRange.y));
         float max = Mathf.Max(min, Mathf.Max(spawnIntervalRange.x, spawnIntervalRange.y));
         return Random.Range(min, max);
-    }
-
-    private void AlignToScreenEdge()
-    {
-        if (!alignToScreenEdge || area == null)
-            return;
-
-        Camera mainCamera = Camera.main;
-        if (mainCamera == null || !mainCamera.orthographic)
-            return;
-
-        float halfWidth = mainCamera.orthographicSize * mainCamera.aspect;
-        float edgeLocalX = alignToRightEdge ? halfWidth - edgeInset : -halfWidth + edgeInset;
-        float areaWorldWidth = Mathf.Abs(area.rect.width * area.lossyScale.x);
-        float areaCenterX = (alignToRightEdge ? edgeLocalX - areaWorldWidth * 0.5f : edgeLocalX + areaWorldWidth * 0.5f) + mainCamera.transform.position.x;
-        Vector3 position = area.position;
-        if (!Mathf.Approximately(position.x, areaCenterX))
-        {
-            position.x = areaCenterX;
-            area.position = position;
-        }
     }
 
     private void FitBounds()
@@ -371,7 +343,6 @@ public class ItemWaterfallEffect : MonoBehaviour
             return;
 
         ResolveReferences();
-        AlignToScreenEdge();
         FitBounds();
     }
 #endif

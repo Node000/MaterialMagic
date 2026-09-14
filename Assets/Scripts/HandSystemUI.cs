@@ -4559,6 +4559,9 @@ public bool IsCardDragActive => cardDragActive;
             case EventRewardType.LoseGold:
                 ApplyEventLoseGold(GetEventEffectAmount(effect, 1));
                 break;
+            case EventRewardType.GainMagicById:
+                yield return ShowEventMagicByIdRoutine(effect);
+                break;
 		}
 	}
 
@@ -4723,6 +4726,50 @@ public bool IsCardDragActive => cardDragActive;
         playerState.AddGold(-amount);
         RefreshStaticUI();
         SaveRunProgress();
+    }
+
+    /// <summary>事件效果：按配置依次发放指定道具。有空格直接入槽；没有空格时沿用商店的待选流程，由玩家点选要替换的槽位。</summary>
+    private IEnumerator ShowEventMagicByIdRoutine(EventEffectData effect)
+    {
+        if (effect == null || effect.magicIds == null || effect.magicIds.Length == 0)
+            yield break;
+
+        for (int i = 0; i < effect.magicIds.Length; i++)
+        {
+            if (!GameDataDatabase.TryGetMagicData(effect.magicIds[i], out MagicData magicData) || magicData == null)
+                continue;
+
+            yield return GrantEventMagicRoutine(magicData);
+        }
+
+        RefreshStaticUI();
+        SaveRunProgress();
+    }
+
+    private IEnumerator GrantEventMagicRoutine(MagicData magicData)
+    {
+        if (magicData == null || playerState == null)
+            yield break;
+
+        bool placed = false;
+        int targetSlot = -1;
+        SelectPendingShopMagic(magicData, delegate(int slotIndex)
+        {
+            targetSlot = slotIndex;
+            placed = true;
+        });
+
+        // 有空格时上面已经同步入槽；槽位已满时 pending 状态会保持，等玩家点选道具槽。
+        while (!placed && pendingShopMagic != null)
+            yield return null;
+
+        if (!placed)
+            yield break;
+
+        // 不用商店的飞入动画：它的源物体取自动画起点（事件里可能是整个 UI 根），会被动画置为隐藏状态，并额外依赖一层协程。
+        SetShopMagicAtSlot(magicData, targetSlot);
+        GameLog.Data($"Event granted magic id={magicData.numericId} slot={targetSlot}");
+        yield return null;
     }
 
     /// <summary>事件效果：给牌组里已有箭头附加指定附魔，用于“所有/随机一半箭头获得某附魔”类效果。</summary>

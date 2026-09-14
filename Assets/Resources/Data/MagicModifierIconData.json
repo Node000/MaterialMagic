@@ -14,27 +14,27 @@
     },
     {
       "modifierId": "mercury_weak",
-      "iconName": "yellowStar"
+      "iconName": "水银"
     },
     {
       "modifierId": "mirror_reverse_recipe",
-      "iconName": "yellowStar"
+      "iconName": "镜像"
     },
     {
       "modifierId": "rupture_vulnerable",
-      "iconName": "yellowStar"
+      "iconName": "破裂"
     },
     {
       "modifierId": "midas_gold",
-      "iconName": "yellowStar"
+      "iconName": "点金"
     },
     {
       "modifierId": "regeneration_heal",
-      "iconName": "yellowStar"
+      "iconName": "再生"
     },
     {
       "modifierId": "bulwark_shield",
-      "iconName": "yellowStar"
+      "iconName": "坚盾"
     }
   ]
 }

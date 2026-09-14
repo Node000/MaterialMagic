@@ -30,8 +30,10 @@ Material:
     m_Ints: []
     m_Floats:
     - _GrayAmount: 0
+    - _WhiteAmount: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _GrayTint: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+    - _WhiteColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

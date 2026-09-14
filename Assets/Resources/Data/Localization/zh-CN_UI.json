@@ -973,6 +973,10 @@
       "text": "随机变化{0}张箭头"
     },
     {
+      "key": "ui.event.effect.gain_magic_by_id",
+      "text": "获得道具：{0}"
+    },
+    {
       "key": "ui.event.effect.arrow_modifier",
       "text": "箭头附魔"
     },

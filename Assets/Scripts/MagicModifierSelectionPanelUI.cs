@@ -15,10 +15,10 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
     private readonly List<MaterialModifierData> currentMaterialChoices = new List<MaterialModifierData>();
 
-    private const float OptionWidth = 168f;
+    private const float OptionWidth = 134.4f;
     private const float OptionHeight = 89.6f;
     private const float SelectedOptionScale = 1.06f;
-    private const float OptionIconSize = 34f;
+    private const float OptionIconSize = 51f;
     private const float OptionIconY = 13f;
     private const float OptionNameY = -27f;
     private static readonly Color OptionFrameColor = new Color(0.72f, 0.72f, 0.72f, 1f);

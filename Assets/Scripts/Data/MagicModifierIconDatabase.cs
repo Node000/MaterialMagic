@@ -17,7 +17,7 @@ public class MagicModifierIconTable
 
 public static class MagicModifierIconDatabase
 {
-    private const string IconRoot = "Images/Buffs/";
+    private const string IconRoot = "Images/MagicModifiers/";
     private static readonly Dictionary<string, Sprite> IconByModifierId = new Dictionary<string, Sprite>();
     private static bool loaded;
 

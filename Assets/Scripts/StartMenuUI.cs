@@ -23,7 +23,6 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private Button changeSaveButton;
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
     [SerializeField] private StartExitConfirmPanelUI exitConfirmPanelUI;
-    [SerializeField] private BouncingTitleUI bouncingTitleUI;
     [Header("配置选择弹窗")]
     [SerializeField] private RectTransform initialButtonsRoot;
     [SerializeField] private RectTransform configActionButtonsRoot;
@@ -105,12 +104,8 @@ public class StartMenuUI : MonoBehaviour
     {
         if (initialButtonsRoot == null && buttonGroupUI != null)
             initialButtonsRoot = buttonGroupUI.transform as RectTransform;
-        if (configActionButtonsRoot == null)
-            configActionButtonsRoot = transform.Find("StartConfigActionButtonGroup") as RectTransform;
-        if (confirmButton == null)
-            confirmButton = configActionButtonsRoot != null ? configActionButtonsRoot.Find("ConfirmButton")?.GetComponent<Button>() : transform.Find("MenuContentRoot/StartConfigPanel/ActionButtonGroup/ConfirmButton")?.GetComponent<Button>();
-        if (backButton == null)
-            backButton = configActionButtonsRoot != null ? configActionButtonsRoot.Find("CancelButton")?.GetComponent<Button>() : transform.Find("MenuContentRoot/StartConfigPanel/ActionButtonGroup/CancelButton")?.GetComponent<Button>();
+        if (configActionButtonsRoot == null || confirmButton == null || backButton == null)
+            Debug.LogWarning("[StartMenuUI] 配置确认/返回按钮组引用未绑定（configActionButtonsRoot/confirmButton/backButton），请在 StartMenuCanvas 上补齐 Inspector 绑定。", this);
 
         CacheInitialMenuObject(initialButtonsRoot != null ? initialButtonsRoot.gameObject : null);
         CacheInitialMenuObject(tutorialButton != null ? tutorialButton.gameObject : null);
@@ -224,8 +219,6 @@ public class StartMenuUI : MonoBehaviour
             settingsPanelUI = GetComponentInChildren<StartSettingsPanelUI>(true);
         if (exitConfirmPanelUI == null)
             exitConfirmPanelUI = GetComponentInChildren<StartExitConfirmPanelUI>(true);
-        if (bouncingTitleUI == null)
-            bouncingTitleUI = GetComponentInChildren<BouncingTitleUI>(true);
         buttonGroupUI.RefreshContinueButton(RunSaveSystem.HasCurrentRun());
         ConfigureTutorialButton();
     }
@@ -367,7 +360,6 @@ public class StartMenuUI : MonoBehaviour
 
     private void ReturnToInitialMenu()
     {
-        bouncingTitleUI?.SetVisible(true);
         SetInitialMenuVisible(true);
     }
 

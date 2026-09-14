@@ -1042,11 +1042,11 @@
     },
     {
       "key": "event.input_setup.gamepad.1",
-      "text": "手柄振动了一下确认映射。金币被清空，换回一包为手柄准备的新手道具。"
+      "text": "手柄振动了一下确认映射。金币被清空，换回【保护色】和【叶绿体】。"
     },
     {
       "key": "event.input_setup.keyboard_mouse.1",
-      "text": "映射写进配置。金币被清空，换回一包为键鼠准备的新手道具。"
+      "text": "映射写进配置。金币被清空，换回【雨幡】和【贴纸】。"
     },
     {
       "key": "event.input_setup.not_now.1",

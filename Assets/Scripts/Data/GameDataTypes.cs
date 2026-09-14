@@ -227,7 +227,9 @@ public enum EventRewardType
     /// <summary>生命上限降低 amount（默认 1），当前生命随之夹取。</summary>
     DecreaseMaxHealth = 23,
     /// <summary>失去 amount 金币（默认 1），最低降到 0。</summary>
-    LoseGold = 24
+    LoseGold = 24,
+    /// <summary>直接发放 magicIds 中指定的道具（按数字 ID）；有空格自动入槽，无空格由玩家点选要替换的槽位。</summary>
+    GainMagicById = 25
 }
 
 public enum BonusRewardType
@@ -426,6 +428,8 @@ public class EventEffectData
     public string modifierId;
     /// <summary>ApplyMaterialModifierToDeck 专用比例（0-100，向上取整），大于 0 时优先于 count。</summary>
     public int percent;
+    /// <summary>GainMagicById 专用：要发放的道具数字 ID 列表。</summary>
+    public int[] magicIds = Array.Empty<int>();
 }
 
 [Serializable]

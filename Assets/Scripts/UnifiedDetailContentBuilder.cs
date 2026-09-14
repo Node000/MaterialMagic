@@ -815,6 +815,8 @@ public static class EventDetailTextUtility
                 return GetDeckModifierEffectText(effect);
             case EventRewardType.RandomizeRandomMaterials:
                 return FormatText("ui.event.effect.randomize_random_materials", "随机变化{0}张箭头", GetEffectCountText(effect, 1));
+            case EventRewardType.GainMagicById:
+                return FormatText("ui.event.effect.gain_magic_by_id", "获得道具：{0}", GetMagicNamesText(effect));
             default:
                 return string.Empty;
         }
@@ -835,6 +837,26 @@ public static class EventDetailTextUtility
         if (string.IsNullOrEmpty(modifierId))
             return LocalizationSystem.GetText("ui.event.effect.gain_magic_modifier", "获得一次道具强化");
         return LocalizationSystem.GetText("magic_modifier." + modifierId + ".name", modifierId);
+    }
+
+    /// <summary>GainMagicById 的道具名列表，用于事件选项 tooltip。</summary>
+    private static string GetMagicNamesText(EventEffectData effect)
+    {
+        if (effect == null || effect.magicIds == null || effect.magicIds.Length == 0)
+            return GetNoDirectEffectText();
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < effect.magicIds.Length; i++)
+        {
+            if (!GameDataDatabase.TryGetMagicData(effect.magicIds[i], out MagicData magicData) || magicData == null)
+                continue;
+
+            if (builder.Length > 0)
+                builder.Append(LocalizationSystem.GetText("ui.event.effect.separator", "；"));
+            builder.Append(LocalizationSystem.GetText(magicData.nameKey, magicData.id));
+        }
+
+        return builder.Length > 0 ? builder.ToString() : GetNoDirectEffectText();
     }
 
     private static string GetModifierNameText(string modifierId)

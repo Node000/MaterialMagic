@@ -1,12 +1,12 @@
-Shader "Style/Sprite/Desaturate"
+Shader "Style/Sprite/FadeToWhite"
 {
     Properties
     {
         _MainTex ("Sprite Texture", 2D) = "white" {}
         [HideInInspector] _Color ("Tint", Color) = (1,1,1,1)
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
-        _GrayAmount ("Gray Amount", Range(0,1)) = 0
-        _GrayTint ("Gray Tint", Color) = (1,1,1,1)
+        _WhiteAmount ("White Amount", Range(0,1)) = 0
+        _WhiteColor ("White Color", Color) = (1,1,1,1)
     }
 
     SubShader
@@ -34,10 +34,10 @@ Shader "Style/Sprite/Desaturate"
         float4 _MainTex_ST;
         float4 _Color;
         half4 _RendererColor;
-        float _GrayAmount;
-        half4 _GrayTint;
+        float _WhiteAmount;
+        half4 _WhiteColor;
 
-        struct DesaturateAttributes
+        struct FadeToWhiteAttributes
         {
             float3 positionOS : POSITION;
             float4 color : COLOR;
@@ -45,7 +45,7 @@ Shader "Style/Sprite/Desaturate"
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
-        struct DesaturateVaryings
+        struct FadeToWhiteVaryings
         {
             float4 positionCS : SV_POSITION;
             half4 color : COLOR;
@@ -53,9 +53,9 @@ Shader "Style/Sprite/Desaturate"
             UNITY_VERTEX_OUTPUT_STEREO
         };
 
-        DesaturateVaryings DesaturateVertex(DesaturateAttributes input)
+        FadeToWhiteVaryings FadeToWhiteVertex(FadeToWhiteAttributes input)
         {
-            DesaturateVaryings output = (DesaturateVaryings)0;
+            FadeToWhiteVaryings output = (FadeToWhiteVaryings)0;
             UNITY_SETUP_INSTANCE_ID(input);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
@@ -74,12 +74,10 @@ Shader "Style/Sprite/Desaturate"
             return output;
         }
 
-        half4 DesaturateFragment(DesaturateVaryings input) : SV_Target
+        half4 FadeToWhiteFragment(FadeToWhiteVaryings input) : SV_Target
         {
             half4 source = input.color * SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
-            half luma = dot(source.rgb, half3(0.299, 0.587, 0.114));
-            half3 gray = luma * _GrayTint.rgb;
-            source.rgb = lerp(source.rgb, gray, saturate(_GrayAmount));
+            source.rgb = lerp(source.rgb, _WhiteColor.rgb, saturate(_WhiteAmount));
             return source;
         }
         ENDHLSL
@@ -89,8 +87,8 @@ Shader "Style/Sprite/Desaturate"
             Tags { "LightMode" = "Universal2D" }
 
             HLSLPROGRAM
-            #pragma vertex DesaturateVertex
-            #pragma fragment DesaturateFragment
+            #pragma vertex FadeToWhiteVertex
+            #pragma fragment FadeToWhiteFragment
             #pragma multi_compile_instancing
             ENDHLSL
         }
@@ -100,8 +98,8 @@ Shader "Style/Sprite/Desaturate"
             Tags { "LightMode" = "UniversalForward" "Queue"="Transparent" "RenderType"="Transparent" }
 
             HLSLPROGRAM
-            #pragma vertex DesaturateVertex
-            #pragma fragment DesaturateFragment
+            #pragma vertex FadeToWhiteVertex
+            #pragma fragment FadeToWhiteFragment
             #pragma multi_compile_instancing
             ENDHLSL
         }

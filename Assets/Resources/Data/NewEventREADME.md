@@ -128,6 +128,7 @@
 | `escalatePerUse` | int | 每次重复选择同一 option 后，额外增加的失血数值。当前只在 `LoseHealth` 中使用。 |
 | `material` | int | 指定素材类型。当前用于 `GainMaterial`；为 0 时随机基础素材。 |
 | `percent` | int | 比例（0-100）。当前只在 `ApplyMaterialModifierToDeck` 中使用，如 `50` 表示牌组中随机一半箭头；大于 0 时优先于 `count`。 |
+| `magicIds` | int[] | 道具数字 ID 列表。当前只在 `GainMagicById` 中使用。 |
 
 ## EventRewardType
 
@@ -154,6 +155,7 @@
 | `22` | `RandomizeRandomMaterials` | `count`，默认 1 | 随机改变牌组中 `count` 张基础箭头的方向。 |
 | `23` | `DecreaseMaxHealth` | `amount`，默认 1 | 降低生命上限（最低 1），当前生命随之夹取。 |
 | `24` | `LoseGold` | `amount`，默认 1 | 失去金币（最低 0）。 |
+| `25` | `GainMagicById` | `magicIds` | 直接发放指定道具（道具数字 ID 列表，即 `MagicData.numericId`）：有空道具槽时自动入槽，槽位已满时由玩家点选要替换的槽位。 |
 
 枚举里还有旧值 `0 None`、`5 UpgradeMaterial`、`6 RemovePollution`、`7 GainRelic`，当前事件执行代码没有处理这些效果，新事件不要使用。
 

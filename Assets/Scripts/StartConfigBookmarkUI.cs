@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using TMPro;
 
-public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class StartConfigBookmarkUI : MonoBehaviour
 {
     [SerializeField] private RectTransform rectTransform;
     [SerializeField] private Image backgroundImage;
@@ -56,11 +55,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private Ease enterEase = Ease.OutCubic;
     [SerializeField] private Ease selectEase = Ease.OutCubic;
     [SerializeField] private Ease exitEase = Ease.OutCubic;
-    [Header("浮动")]
-    [SerializeField] private Vector2 floatAmplitude = new Vector2(10f, 6f);
-    [SerializeField] private float floatSpeed = 0.75f;
-    [SerializeField] private float floatPhaseStep = 0.8f;
-
     private readonly List<MagicItemView> magicViews = new List<MagicItemView>();
     private readonly List<GameObject> materialItems = new List<GameObject>();
     private Action<PlayerStartConfigData> onClick;
@@ -69,12 +63,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     private Tween scaleTween;
     private bool selected;
     private bool locked;
-    private bool visible;
-    private bool dragging;
-    private Vector2 floatCenter;
-    private Vector2 currentFloatOffset;
-    private Vector2 dragOffset;
-    private float floatPhase;
 
     public PlayerStartConfigData Config { get; private set; }
     public RectTransform RectTransform => rectTransform != null ? rectTransform : (RectTransform)transform;
@@ -114,16 +102,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     }
 #endif
 
-    private void Update()
-    {
-        if (!visible || dragging || (moveTween != null && moveTween.IsActive() && moveTween.IsPlaying()))
-            return;
-
-        float t = Time.unscaledTime * floatSpeed + floatPhase;
-        currentFloatOffset = new Vector2(Mathf.Sin(t) * floatAmplitude.x, Mathf.Sin(t * 0.73f + floatPhaseStep) * floatAmplitude.y);
-        RectTransform.anchoredPosition = floatCenter + currentFloatOffset;
-    }
-
     public void Bind(PlayerStartConfigData config, Action<PlayerStartConfigData> clickHandler, Action<StartConfigBookmarkUI> closeHandler = null, bool locked = false)
     {
         Config = config;
@@ -159,12 +137,8 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
         RectTransform.localScale = Vector3.one;
     }
 
-    public void Show(float initialX, float readyX, float delay, Action onComplete = null)
+    public void Show(float delay, Action onComplete = null)
     {
-        visible = true;
-        currentFloatOffset = Vector2.zero;
-        floatPhase = transform.GetSiblingIndex() * floatPhaseStep;
-        SetCenter(new Vector2(readyX, RectTransform.anchoredPosition.y));
         moveTween?.Kill(false);
         scaleTween?.Kill(false);
         RectTransform.localScale = Vector3.one * enterStartScale;
@@ -176,11 +150,8 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             .OnComplete(() => onComplete?.Invoke());
     }
 
-    public void Hide(float initialX, float delay, Action<StartConfigBookmarkUI> onComplete)
+    public void Hide(float delay, Action<StartConfigBookmarkUI> onComplete)
     {
-        visible = false;
-        currentFloatOffset = Vector2.zero;
-        SetCenter(RectTransform.anchoredPosition);
         moveTween?.Kill(false);
         scaleTween?.Kill(false);
         moveTween = RectTransform.DOScale(Vector3.one * exitEndScale, exitDuration)
@@ -191,7 +162,7 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             .OnComplete(() => onComplete?.Invoke(this));
     }
 
-    public void SetSelected(bool selected, float readyX, float displayX)
+    public void SetSelected(bool selected)
     {
         this.selected = selected;
         RefreshSelectButtonState();
@@ -215,9 +186,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void HideImmediate()
     {
-        visible = false;
-        dragging = false;
-        currentFloatOffset = Vector2.zero;
         KillTweens();
         RectTransform.localScale = Vector3.one * exitEndScale;
         gameObject.SetActive(false);
@@ -227,41 +195,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
     {
         moveTween?.Kill(false);
         scaleTween?.Kill(false);
-    }
-
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        if (!CanDragFrom(eventData))
-            return;
-
-        RectTransform parent = RectTransform.parent as RectTransform;
-        if (parent == null || !RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, eventData.position, GetEventCamera(eventData), out Vector2 localPoint))
-            return;
-
-        moveTween?.Kill(false);
-        currentFloatOffset = Vector2.zero;
-        SetCenter(RectTransform.anchoredPosition);
-        dragging = true;
-        dragOffset = floatCenter - localPoint;
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (!dragging)
-            return;
-
-        RectTransform parent = RectTransform.parent as RectTransform;
-        if (parent == null || !RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, eventData.position, GetEventCamera(eventData), out Vector2 localPoint))
-            return;
-
-        SetCenter(localPoint + dragOffset);
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        dragging = false;
-        currentFloatOffset = Vector2.zero;
-        SetCenter(RectTransform.anchoredPosition);
     }
 
     private void ResolveReferences()
@@ -292,41 +225,6 @@ public class StartConfigBookmarkUI : MonoBehaviour, IBeginDragHandler, IDragHand
             deckNameText = deckName != null ? deckName.GetComponent<TMP_Text>() : null;
         }
         // windowCloseButton 走 Inspector 绑定：美术已统一停用窗口标题栏按钮，不再按路径/名字查找。
-    }
-
-    private bool CanDragFrom(PointerEventData eventData)
-    {
-        Transform hit = eventData.pointerPressRaycast.gameObject != null
-            ? eventData.pointerPressRaycast.gameObject.transform
-            : eventData.pointerCurrentRaycast.gameObject != null ? eventData.pointerCurrentRaycast.gameObject.transform : null;
-        if (hit == null || !hit.IsChildOf(transform))
-            return false;
-        if (selectButton != null && hit.IsChildOf(selectButton.transform))
-            return false;
-        if (windowCloseButton != null && hit.IsChildOf(windowCloseButton.transform))
-            return false;
-        if (magicRoot != null && hit.IsChildOf(magicRoot))
-            return false;
-        if (materialRoot != null && hit.IsChildOf(materialRoot))
-            return false;
-        Button hitButton = hit.GetComponentInParent<Button>();
-        if (hitButton != null && hitButton != button)
-            return false;
-        return true;
-    }
-
-    private Camera GetEventCamera(PointerEventData eventData)
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            return null;
-        return eventData.pressEventCamera != null ? eventData.pressEventCamera : canvas != null ? canvas.worldCamera : null;
-    }
-
-    private void SetCenter(Vector2 center)
-    {
-        floatCenter = center;
-        RectTransform.anchoredPosition = floatCenter + currentFloatOffset;
     }
 
     private void RefreshLocalizedText()

@@ -1812,7 +1812,11 @@
                   "rewardType": 17
                 },
                 {
-                  "rewardType": 4
+                  "rewardType": 25,
+                  "magicIds": [
+                    47,
+                    45
+                  ]
                 }
               ],
               "nextNodeId": "gamepad"
@@ -1827,7 +1831,11 @@
                   "rewardType": 17
                 },
                 {
-                  "rewardType": 4
+                  "rewardType": 25,
+                  "magicIds": [
+                    37,
+                    52
+                  ]
                 }
               ],
               "nextNodeId": "keyboard_mouse"
