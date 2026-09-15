@@ -20,7 +20,16 @@ public class UnifiedDetailArrowSequenceUI : MonoBehaviour
     [Tooltip("箭头之间的间距（运行时写到布局组的 spacing）。")]
     [SerializeField] private float iconSpacing = 3f;
 
+    [Header("弹簧线框")]
+    [Tooltip("序列框的弹簧线组件；留空时取本物体上的组件。")]
+    [SerializeField] private SpringLineHighlightUI lineFrame;
+    [Tooltip("参数来源：详情面板自身的弹簧线框。绑定后线框参数（含步进帧率）整体跟随面板。")]
+    [SerializeField] private SpringLineHighlightUI styleSource;
+    [Tooltip("线条数量相对来源的比例：0.5 = 减半。")]
+    [SerializeField, Range(0.1f, 1f)] private float lineCountScale = 0.5f;
+
     private readonly List<Image> slots = new List<Image>();
+    private bool styleApplied;
 
     private void Awake()
     {
@@ -99,6 +108,33 @@ public class UnifiedDetailArrowSequenceUI : MonoBehaviour
     public void Hide()
     {
         SetVisible(false);
+    }
+
+    /// <summary>
+    /// 线框样式与颜色：参数整体复制自详情面板的弹簧线框（含步进帧率），
+    /// 只把线条数量按 <see cref="lineCountScale"/> 缩减；颜色跟内容强调色（道具按稀有度取色）。
+    /// </summary>
+    public void ApplyLineStyle(SpringLineHighlightUI source, Color accentColor)
+    {
+        SpringLineHighlightUI frame = ResolveLineFrame();
+        if (frame == null)
+            return;
+
+        if (source != null && source != frame && !styleApplied)
+        {
+            frame.CopyVisualSettingsFrom(source);
+            frame.SetLineCount(Mathf.Max(1, Mathf.RoundToInt(source.LineCount * Mathf.Clamp01(lineCountScale))));
+            styleApplied = true;
+        }
+
+        frame.color = accentColor;
+    }
+
+    private SpringLineHighlightUI ResolveLineFrame()
+    {
+        if (lineFrame == null)
+            lineFrame = GetComponent<SpringLineHighlightUI>();
+        return lineFrame;
     }
 
     private void SetVisible(bool visible)

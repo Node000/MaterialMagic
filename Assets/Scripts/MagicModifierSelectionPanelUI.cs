@@ -632,6 +632,9 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         spring.SetShape(SpringLineHighlightUI.HighlightShape.RoundedRect);
         spring.SetLineCount(fill ? 2 : 1);
         spring.SetSamplesPerLine(120);
+        // 步进帧率与道具栏（MagicSlot_PC）线框一致：道具强化与箭头附魔共用本面板，
+        // 帧率不能只依赖场景里的旧值（可能仍为 12）。
+        spring.SetAnimationFramesPerSecond(SpringLineHighlightUI.StandardSteppedFrameRate);
         spring.SetLineWidth(fill ? 1.5f : 2f);
         spring.SetLineSpacing(fill ? 1.5f : 2f);
         spring.SetOutset(fill ? 0f : 5f);

@@ -94,7 +94,7 @@
     },
     {
       "key": "tutorial.shop.buy_hint.body",
-      "text": "你可以在商店内购买新的道具和箭头，或者删除多余的箭头。"
+      "text": "你可以在商店内购买新的道具和箭头，或者删除多余的箭头。\n若要退出商店，请点击界面底部的红色宽箭头。"
     },
     {
       "key": "tutorial.event.options.title",

@@ -31,38 +31,41 @@ public class TutorialVisualConfig : ScriptableObject
     [SerializeField] private TutorialBorderStyle borderStyle = TutorialBorderStyle.Spring;
 
     [Header("弹簧线框（borderStyle = Spring 时生效）")]
-    [Tooltip("细线组相对洞边界向内的偏移（画布像素）：第一圈线的中心线位置。默认贴洞内侧。")]
-    [SerializeField, Min(0f)] private float springInset = 14f;
+    [Tooltip("细线组相对洞边界向内的偏移（画布像素）：第一圈线的外边缘位置。对齐道具槽框（MagicItemView.slotFrame 的 outset 2.7）。")]
+    [SerializeField, Min(0f)] private float springInset = 2.7f;
 
-    [Tooltip("细线条数。")]
-    [SerializeField, Range(1, 8)] private int springLineCount = 3;
+    [Tooltip("细线条数。对齐道具框弹簧线：1。")]
+    [SerializeField, Range(1, 8)] private int springLineCount = 1;
 
-    [Tooltip("单条线宽（画布像素；比道具框的 3 更细）。")]
-    [SerializeField, Min(0.5f)] private float springLineWidth = 1.8f;
+    [Tooltip("单条线宽（画布像素）。对齐道具框弹簧线：5。")]
+    [SerializeField, Min(0.5f)] private float springLineWidth = 5f;
 
-    [Tooltip("圈间距（画布像素）。")]
-    [SerializeField, Min(0f)] private float springLineSpacing = 4f;
+    [Tooltip("圈间距（画布像素）。对齐道具框弹簧线：0.2。")]
+    [SerializeField, Min(0f)] private float springLineSpacing = 0.2f;
 
-    [Tooltip("主抖动幅度（画布像素）；与道具框弹簧线一致取 4。")]
-    [SerializeField, Min(0f)] private float springWobbleAmplitude = 4f;
+    [Tooltip("主抖动幅度（画布像素）。对齐道具框弹簧线：8。")]
+    [SerializeField, Min(0f)] private float springWobbleAmplitude = 8f;
 
-    [Tooltip("每圈波数；与道具框弹簧线一致取 7。")]
+    [Tooltip("每圈波数。对齐道具框弹簧线：7。")]
     [SerializeField, Range(1, 32)] private int springWaveCount = 7;
 
-    [Tooltip("次级噪声幅度；与道具框弹簧线一致取 3。")]
+    [Tooltip("次级噪声幅度。对齐道具框弹簧线：3。")]
     [SerializeField, Min(0f)] private float springScribbleAmount = 3f;
 
-    [Tooltip("每圈采样点数。")]
-    [SerializeField, Range(16, 256)] private int springSamplesPerLine = 120;
+    [Tooltip("每圈采样点数。对齐道具框弹簧线：56。")]
+    [SerializeField, Range(16, 256)] private int springSamplesPerLine = 56;
 
-    [Tooltip("转角圆度：2 = 最圆，12 = 接近直角；与道具框弹簧线一致取 5。")]
+    [Tooltip("转角圆度：2 = 最圆，12 = 接近直角。对齐道具框弹簧线：5。")]
     [SerializeField, Range(2f, 12f)] private float springSharpness = 5f;
+
+    [Tooltip("噪声种子。对齐道具框弹簧线：71。")]
+    [SerializeField] private int springSeed = 71;
 
     [Tooltip("是否流动。关闭后只在目标变化时重建，零每帧开销。")]
     [SerializeField] private bool springAnimate = true;
 
-    [Tooltip("流动的步进帧率（与道具框弹簧线一致：12 fps）。")]
-    [SerializeField, Range(1, 30)] private int springFps = 12;
+    [Tooltip("流动的步进帧率。对齐道具框弹簧线：3 fps（手绘“沸腾”感）。")]
+    [SerializeField, Range(1, 30)] private int springFps = 3;
 
     [Tooltip("波形流动速度。")]
     [SerializeField, Min(0f)] private float springFlowSpeed = 0.7f;
@@ -127,6 +130,9 @@ public class TutorialVisualConfig : ScriptableObject
 
     public float SpringSharpness => Mathf.Clamp(springSharpness, 2f, 12f);
 
+    /// <summary>噪声种子。</summary>
+    public int SpringSeed => springSeed;
+
     public bool SpringAnimate => springAnimate;
 
     public int SpringFps => Mathf.Clamp(springFps, 1, 30);
@@ -150,7 +156,7 @@ public class TutorialVisualConfig : ScriptableObject
             scribbleAmount = SpringScribbleAmount,
             tangentWobble = 0.18f,
             linePhaseOffset = 0.045f,
-            seed = 17
+            seed = SpringSeed
         };
     }
 

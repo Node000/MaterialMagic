@@ -9,7 +9,7 @@
       "maxHealth": 50,
       "gold": 2,
       "drawCount": 4,
-      "maxPlayCount": 10,
+      "maxPlayCount": 8,
       "initialMaterials": [
         { "material": 1, "count": 4 },
         { "material": 2, "count": 4 },
@@ -31,7 +31,7 @@
       "maxHealth": 50,
       "gold": 2,
       "drawCount": 4,
-      "maxPlayCount": 10,
+      "maxPlayCount": 8,
       "initialMaterials": [
         { "material": 1, "count": 5 },
         { "material": 2, "count": 3 },
@@ -53,7 +53,7 @@
       "maxHealth": 50,
       "gold": 2,
       "drawCount": 4,
-      "maxPlayCount": 10,
+      "maxPlayCount": 8,
       "initialMaterials": [
         { "material": 1, "count": 3 },
         { "material": 2, "count": 5 },
@@ -75,7 +75,7 @@
       "maxHealth": 45,
       "gold": 2,
       "drawCount": 4,
-      "maxPlayCount": 10,
+      "maxPlayCount": 8,
       "initialMaterials": [
         { "material": 1, "count": 4 },
         { "material": 3, "count": 4 },

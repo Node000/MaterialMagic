@@ -175,6 +175,8 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         owner?.SetCardHover(this, false);
         RefreshSpringHighlight();
         PlayFeedback(false);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayHandHoverSfx();
         if (TryGetTooltipContent(out UnifiedDetailContent content))
             owner?.GetUIManager()?.ShowUnifiedDetailPopup(this, content);
     }

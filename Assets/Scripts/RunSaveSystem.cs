@@ -581,7 +581,7 @@ public static class RunSaveSystem
         PlayerStatus player = new PlayerStatus(playerData.maxHealth, playerData.gold);
         player.RestoreCurrentHealth(playerData.currentHealth);
         player.DrawCount = playerData.drawCount;
-        // 打出上限来自开局配置 maxPlayCount（默认为 10）：旧存档里该字段只是与配置无关联的镜像值，
+        // 打出上限来自开局配置 maxPlayCount（默认为 8）：旧存档里该字段只是与配置无关联的镜像值，
         // 不用它覆盖配置；将来若出现“局内修改打出上限”的玩法，再在这里补回存档优先。
         GameDataDatabase.TryGetPlayerStartConfigData(
             !string.IsNullOrEmpty(save.startConfigId) ? save.startConfigId : PlayerState.SelectedStartConfigId,

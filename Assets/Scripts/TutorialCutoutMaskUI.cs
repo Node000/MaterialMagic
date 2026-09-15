@@ -26,6 +26,7 @@ public class TutorialCutoutMaskUI : Graphic
     [SerializeField, Min(0f)] private float springScribbleAmount = 3f;
     [SerializeField, Range(16, 256)] private int springSamplesPerLine = 120;
     [SerializeField, Range(2f, 12f)] private float springSharpness = 5f;
+    [SerializeField] private int springSeed = 71;
     [SerializeField] private bool springAnimate = true;
     [SerializeField, Range(1, 30)] private int springFps = 12;
     [SerializeField, Min(0f)] private float springFlowSpeed = 0.7f;
@@ -82,6 +83,7 @@ public class TutorialCutoutMaskUI : Graphic
         springScribbleAmount = config.SpringScribbleAmount;
         springSamplesPerLine = config.SpringSamplesPerLine;
         springSharpness = config.SpringSharpness;
+        springSeed = config.SpringSeed;
         springAnimate = config.SpringAnimate;
         springFps = config.SpringFps;
         springFlowSpeed = config.SpringFlowSpeed;
@@ -367,7 +369,9 @@ public class TutorialCutoutMaskUI : Graphic
 
         for (int i = 0; i < count; i++)
         {
-            float offset = -Mathf.Max(0f, springInset) + i * Mathf.Max(0f, springLineSpacing);
+            // 与 SpringLineHighlightUI 的公式对齐（那个是向往外扩，此处向内收）：
+            // 线的外边缘落在洞边界内侧 (inset + i * spacing) 处，半线宽补回以对齐描边内侧。
+            float offset = -(Mathf.Max(0f, springInset) + i * Mathf.Max(0f, springLineSpacing) + width * 0.5f);
             Rect loopRect = SpringLineGeometry.Expand(hole, offset);
             if (loopRect.width <= 0f || loopRect.height <= 0f)
                 continue;
@@ -389,7 +393,7 @@ public class TutorialCutoutMaskUI : Graphic
             scribbleAmount = Mathf.Max(0f, springScribbleAmount),
             tangentWobble = 0.18f,
             linePhaseOffset = 0.045f,
-            seed = 17
+            seed = springSeed
         };
     }
 

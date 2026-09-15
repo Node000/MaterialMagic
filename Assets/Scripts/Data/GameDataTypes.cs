@@ -273,8 +273,8 @@ public class PlayerStartConfigData : IDataRecord
     public int maxHealth = 50;
     public int gold;
     public int drawCount = 4;
-    /// <summary>每回合玩家主动打出箭头的上限；未配置或 &lt;= 0 时用 PlayerState.DefaultPlayLimitPerTurn（10）。</summary>
-    public int maxPlayCount = 10;
+    /// <summary>每回合玩家主动打出箭头的上限；未配置或 &lt;= 0 时用 PlayerState.DefaultPlayLimitPerTurn（8）。</summary>
+    public int maxPlayCount = 8;
     public PlayerStartMaterialData[] initialMaterials = Array.Empty<PlayerStartMaterialData>();
     public PlayerStartMagicData[] initialMagics = Array.Empty<PlayerStartMagicData>();
 

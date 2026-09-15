@@ -6,6 +6,6 @@ public class FireballArtMagicModel : MagicModel
     {
         EnemyModel target = Target(battleManager);
         DamageTarget(playerState, battleManager, 2, result);
-        AddBuff(target, BuffEnum.Burning, 2, result);
+        AddBuff(target, BuffEnum.Burning, 3, result);
     }
 }

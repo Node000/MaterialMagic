@@ -5,6 +5,6 @@ public class EarthFireMagicModel : MagicModel
     public override bool CastParticleTargetsPlayer => true;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        playerState.AddBuff(BuffEnum.BurningOnEnemyAttack, 3);
+        playerState.AddBuff(BuffEnum.BurningOnEnemyAttack, 5);
     }
 }

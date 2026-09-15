@@ -249,7 +249,11 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
         if (arrowSequenceUI != null)
+        {
             arrowSequenceUI.SetRecipe(content.Recipe);
+            // 序列框的参数跟随本面板的弹簧线框（只把线条数量减半），颜色跟内容强调色（道具按稀有度）。
+            arrowSequenceUI.ApplyLineStyle(borderGraphic as SpringLineHighlightUI, content.AccentColor);
+        }
     }
 
     private void ApplyAccentColor(Color color)

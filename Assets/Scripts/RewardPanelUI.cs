@@ -381,6 +381,9 @@ public class RewardPanelUI : MonoBehaviour
             RectTransform cardRect = itemChoiceCard.transform as RectTransform;
             if (cardRect != null)
                 DisableChildRaycasts(cardRect);
+            // 卡面自带一层 Hover 线框（RewardItemCard 复制自道具栏槽位壳，由 MagicItemView 绑定）。
+            // 结算槽位已由 HoverFrame 提供悬停线框，两层同时点亮会让线数变成金币 / 箭头选项的两倍。
+            SuppressCardHoverFrame(cardRect);
             if (itemChoicePreview != null)
                 EnsureSlotHover(itemChoiceSlot, UnifiedDetailContentBuilder.Build(itemChoicePreview));
         }
@@ -415,6 +418,8 @@ public class RewardPanelUI : MonoBehaviour
             arrowChoiceCard = CreateSlotArrowCard(content, option, out preview);
             arrowChoicePreview = preview;
         }
+        // 与道具选项同样处理：箭头卡自带的 Hover 框不参与悬停，槽位悬停反馈统一走 HoverFrame。
+        SuppressCardHoverFrame(arrowChoiceCard);
 
         BindSlotButton(arrowChoiceSlot, ClaimArrowChoice, interactive);
         BindArrowChoiceLabel(option);
@@ -888,6 +893,39 @@ public class RewardPanelUI : MonoBehaviour
         highlight.gameObject.SetActive(visible);
     }
 
+    /// <summary>
+    /// 停用卡面自带的 Hover 线框（道具卡的 MagicItemView.hoverHighlight、箭头卡的 MaterialCardView.springHighlight）。
+    /// 结算三个奖励槽的悬停反馈统一走 EnsureSlotHover 创建的 HoverFrame；
+    /// 否则卡面框会与槽位框同时点亮（线数翻倍），而它的场景值还是 12fps、与道具栏的 3fps 不一致。
+    /// </summary>
+    private static void SuppressCardHoverFrame(RectTransform card)
+    {
+        if (card == null)
+            return;
+
+        SpringLineHighlightUI frame = null;
+        SpringLineHighlightUI[] frames = card.GetComponentsInChildren<SpringLineHighlightUI>(true);
+        for (int i = 0; i < frames.Length; i++)
+        {
+            // 只处理子级的 Hover 框：卡面根上的框是卡自己的底色框（沿用道具栏槽位壳的表现）。
+            if (frames[i] != null && frames[i].transform != card)
+            {
+                frame = frames[i];
+                break;
+            }
+        }
+        if (frame == null)
+            return;
+
+        HoverHighlightTargetRelayUI relay = card.GetComponent<HoverHighlightTargetRelayUI>();
+        if (relay != null)
+            relay.Unregister(frame.gameObject);
+
+        // 除了隐藏还要停掉绘制：MagicItemView.Bind 每次都会重新把它注册回 Relay。
+        frame.SetRenderingEnabled(false);
+        frame.gameObject.SetActive(false);
+    }
+
     private SpringLineHighlightUI FindRewardMagicHighlight(MagicItemView view)
     {
         if (view == null)
@@ -1069,6 +1107,8 @@ public class RewardPanelUI : MonoBehaviour
         frame.SetLineCount(2);
         frame.SetLineWidth(2.5f);
         frame.SetOutset(2.7f);
+        // 步进帧率与道具栏（MagicSlot_PC 的槽位框 / Hover 框）一致，避免结算槽位比道具栏跳得更快。
+        frame.SetAnimationFramesPerSecond(SpringLineHighlightUI.StandardSteppedFrameRate);
         frame.SetFillEnabled(false);
         frame.SetBindHoverTarget(false);
         frame.SetHideOnAwake(false);

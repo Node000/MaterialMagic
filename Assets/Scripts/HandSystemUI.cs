@@ -243,25 +243,21 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float postMagicResolveDelay = 0.11f;
 
-	[Header("结算演出速度")]
+	[Header("结算与道具飞行速度")]
 	/// <summary>
-	/// 结算段（CastRange 线框框选 + 卡牌移动）的基础速度倍率：1 = 保持 layoutDuration 原值，2 = 时长减半。
-	/// 只作用于线框框选/移动与卡牌移动，不改变读牌停顿、飘字、死亡演出与粒子等待。
+	/// 基础速度倍率，同时作用于出牌区结算（CastRange 线框框选 + 卡牌移动）与道具飞行（法术弹道）。
+	/// 1.1 = 原速的 110%（时长 = 原时长 / 1.1）。
 	/// </summary>
 	[SerializeField]
-	private float resolveMotionSpeedMultiplier = 2f;
+	private float resolveSpeedMultiplier = 1.1f;
 
-	/// <summary>道具飞行（施法弹道）的基础速度倍率：1.5 = 飞行时长缩短 1/3。</summary>
+	/// <summary>连击加速的起始层数：达到该层才开始追加（5 = Combo 5 起）。</summary>
 	[SerializeField]
-	private float castProjectileSpeedMultiplier = 1.5f;
+	private int comboSpeedStartLayer = 5;
 
-	/// <summary>每层连击在“新基础速度”上额外追加的速度比例：0.1 = 每层 +10%（线性叠加在新基础速度上）。</summary>
+	/// <summary>起始层及之后每层在原速上的追加比例：0.05 = 每层 +5%（Combo 5 = 110% + 5% = 115%）。</summary>
 	[SerializeField]
-	private float comboResolveSpeedStep = 0.1f;
-
-	/// <summary>连击追加速度是否同样作用于道具飞行（法术弹道）。</summary>
-	[SerializeField]
-	private bool comboResolveSpeedAffectsProjectile = true;
+	private float comboSpeedStep = 0.05f;
 
 	[SerializeField]
 	private float magicDamageHitInterval = 0.15f;
@@ -5168,20 +5164,30 @@ public bool IsCardDragActive => cardDragActive;
 	/// <summary>当前连击层数（连续施法计数）：0 = 本次结算中尚未施法；结算结束后由 ResetContinuousCastCounterUI 清零。</summary>
 	private int CurrentComboLayerCount => battleManager != null ? Mathf.Max(0, battleManager.ContinuousCastCount) : 0;
 
-	/// <summary>连击追加的速度倍率：1 + comboResolveSpeedStep × 连击层数（叠加在“新基础速度”上，不是对上一层再叠乘）。</summary>
-	private float ComboResolveSpeedFactor => 1f + Mathf.Max(0f, comboResolveSpeedStep) * CurrentComboLayerCount;
+	/// <summary>
+	/// 连击追加的速度比例：从 comboSpeedStartLayer 层开始，每层在原基础上 +comboSpeedStep（线性叠加在原基础速度上）。
+	/// 例（默认 1.1 / 起始 5 / 步进 0.05）：Combo 5 = +5% → 115%，Combo 6 = +10% → 120%，起始层之前为 0。
+	/// </summary>
+	private float ComboSpeedBonus
+	{
+		get
+		{
+			int startLayer = Mathf.Max(1, comboSpeedStartLayer);
+			int layer = CurrentComboLayerCount;
+			if (layer < startLayer)
+				return 0f;
 
-	/// <summary>结算段（线框框选 + 移动）当前速度倍率。</summary>
-	private float ResolveMotionSpeedScale => Mathf.Max(0.01f, resolveMotionSpeedMultiplier) * ComboResolveSpeedFactor;
+			return Mathf.Max(0f, comboSpeedStep) * (layer - startLayer + 1);
+		}
+	}
 
-	/// <summary>道具飞行（法术弹道）当前速度倍率。</summary>
-	private float CastProjectileSpeedScale => Mathf.Max(0.01f, castProjectileSpeedMultiplier)
-		* (comboResolveSpeedAffectsProjectile ? ComboResolveSpeedFactor : 1f);
+	/// <summary>出牌区结算（线框框选 + 移动）与道具飞行共用的当前速度倍率：基础倍率 + 连击追加。</summary>
+	private float ResolveSpeedScale => (resolveSpeedMultiplier > 0f ? resolveSpeedMultiplier : 1f) + ComboSpeedBonus;
 
-	/// <summary>结算段时长换算：倍率越高时长越短（2 = 减半）。</summary>
+	/// <summary>结算段时长换算：倍率越高时长越短（1.1 = 时长变为原来的 1/1.1）。</summary>
 	private float ResolveMotionDuration(float baseDuration)
 	{
-		return Mathf.Max(0.001f, baseDuration / ResolveMotionSpeedScale);
+		return Mathf.Max(0.001f, baseDuration / ResolveSpeedScale);
 	}
 
 	private IEnumerator PlayResolveAnimation(List<MaterialModel> cards)
@@ -5205,7 +5211,7 @@ public bool IsCardDragActive => cardDragActive;
 			{
 				ResetMagicHighlights();
 									MoveIndicatorToReadStep(cards, step, sequenceIndex == 0 && stepIndex == 0);
-								// 线框框选（CastRange）与其等待同步按结算速度换算：速度翻倍 = 框选移动与等待都减半。
+								// 线框框选（CastRange）与其等待同步按结算速度换算（当前基础 110%，Combo 5 起逐层追加）。
 								yield return (object)new WaitForSeconds(ResolveMotionDuration(layoutDuration) * 0.35f);
 				HandCardView handCardView = FindView(card);
 				if ((Object)handCardView != (Object)null)
@@ -5855,7 +5861,7 @@ public bool IsCardDragActive => cardDragActive;
         Sequence sequence = DOTween.Sequence();
         if (delay > 0f)
             sequence.AppendInterval(delay);
-        // 结算段“移动”速度：卡牌位移/旋转/入场缩放的时长同样按结算速度倍率换算（翻倍 = 减半）。
+        // 结算段“移动”速度：卡牌位移/旋转/入场缩放的时长同样按结算速度倍率换算。
         float moveDuration = ResolveMotionDuration(layoutDuration);
         sequence.Append(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, moveDuration, false).SetEase(layoutEase));
         sequence.Join(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, moveDuration, (RotateMode)0).SetEase(layoutEase));
@@ -7199,7 +7205,7 @@ public bool IsCardDragActive => cardDragActive;
 	{
 		CastParticleEffectBase castEffect = playerCastEffect as CastParticleEffectBase;
 		if (castEffect != null)
-			castEffect.SpeedMultiplier = CastProjectileSpeedScale;
+			castEffect.SpeedMultiplier = ResolveSpeedScale;
 	}
 
 	/// <summary>还原发射器速度倍率到 Prefab 原始速度（1）。</summary>
@@ -7380,7 +7386,7 @@ public bool IsCardDragActive => cardDragActive;
                 {
                     QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
 					pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
-					impactWait = GetCastParticleImpactStartWait() / CastProjectileSpeedScale;
+					impactWait = GetCastParticleImpactStartWait() / ResolveSpeedScale;
                 }
             }
             else
@@ -7390,7 +7396,7 @@ public bool IsCardDragActive => cardDragActive;
                 {
 					QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
 					pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
-					impactWait = GetCastParticleImpactStartWait() / CastProjectileSpeedScale;
+					impactWait = GetCastParticleImpactStartWait() / ResolveSpeedScale;
                 }
             }
         }
