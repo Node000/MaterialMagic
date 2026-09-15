@@ -4695,9 +4695,9 @@ public bool IsCardDragActive => cardDragActive;
 
 		private void ApplyEventIncreaseMaxHealth(int amount)
 		{
-			playerState.IncreaseMaxHealthOnly(amount);
+			playerState.IncreaseMaxHealth(amount);
 			PlayPlayerCornerFeedback(new Color(0.1f, 0.95f, 0.25f, 0.48f));
-            ShowPlayerFloatingText(string.Format(LocalizationSystem.GetText("ui.battle.floating.max_health_up", "+{0}上限"), amount), FloatingTextType.Heal);
+			ShowPlayerFloatingText("+" + amount, FloatingTextType.Heal);
 			RefreshStaticUI();
 			SaveRunProgress();
 		}
@@ -4772,7 +4772,7 @@ public bool IsCardDragActive => cardDragActive;
 
         playerState.AdjustMaxHealthOnly(-amount);
         PlayPlayerCornerFeedback(new Color(0.95f, 0.05f, 0.02f, 0.48f));
-        ShowPlayerFloatingText(string.Format(LocalizationSystem.GetText("ui.battle.floating.max_health_down", "-{0}上限"), amount), FloatingTextType.Damage);
+        ShowPlayerFloatingText("-" + amount, FloatingTextType.Damage);
         RefreshStaticUI();
         SaveRunProgress();
     }

@@ -977,14 +977,6 @@
       "text": "选择替换道具"
     },
     {
-      "key": "ui.battle.floating.max_health_up",
-      "text": "+{0}上限"
-    },
-    {
-      "key": "ui.battle.floating.max_health_down",
-      "text": "-{0}上限"
-    },
-    {
       "key": "ui.reward_magic_confirm.title",
       "text": "确认替换道具？"
     },
