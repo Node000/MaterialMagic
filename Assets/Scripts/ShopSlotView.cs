@@ -212,7 +212,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     rect.pivot = new Vector2(0.5f, 0.5f);
                     rect.anchoredPosition = new Vector2(0f, -16f);
                     rect.sizeDelta = new Vector2(196f, 92f);
-                    rect.localScale = Vector3.one * 0.8f;
+                    rect.localScale = Vector3.one * 0.7f;
                     magicView?.Bind(MagicFactory.Create(offer.magicData));
                 }
                 break;
@@ -232,7 +232,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     rect.pivot = new Vector2(0.5f, 0.5f);
                     rect.anchoredPosition = new Vector2(0f, 0f);
                     rect.sizeDelta = new Vector2(82f, 118f);
-                    rect.localScale = Vector3.one * 0.85f;
+                    rect.localScale = Vector3.one * 1.2f;
                     MaterialModel preview = new MaterialModel("shop_preview_" + offer.material, offer.material);
                     MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
                     if (modifier != null)
