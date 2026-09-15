@@ -31,14 +31,14 @@ public class PlayerState
     private readonly HashSet<MaterialModel> playLimitChargedCards = new HashSet<MaterialModel>();
 
     /// <summary>每回合玩家主动打出箭头的默认上限；开局配置 maxPlayCount 缺省/非法时使用。</summary>
-    public const int DefaultPlayLimitPerTurn = 10;
+    public const int DefaultPlayLimitPerTurn = 8;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
     public int Gold { get; private set; }
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
-    /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 10。</summary>
+    /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 8。</summary>
     public int MaxPlayCount { get; set; } = DefaultPlayLimitPerTurn;
     /// <summary>实际生效的每回合打出上限；配置值小于等于 0 时回落到默认值。</summary>
     public int PlayLimitPerTurn => MaxPlayCount > 0 ? MaxPlayCount : DefaultPlayLimitPerTurn;
@@ -121,7 +121,7 @@ public class PlayerState
         return state;
     }
 
-    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（10）。</summary>
+    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（8）。</summary>
     public static int ResolveMaxPlayCount(PlayerStartConfigData config)
     {
         return config != null && config.maxPlayCount > 0 ? config.maxPlayCount : DefaultPlayLimitPerTurn;

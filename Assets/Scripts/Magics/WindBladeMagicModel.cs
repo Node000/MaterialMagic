@@ -4,7 +4,7 @@ public class WindBladeMagicModel : MagicModel
     public override MagicEffectType EffectType => MagicEffectType.Damage;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        DamageTarget(playerState, battleManager, 2, result);
-        AddBuffSelf(playerState, BuffEnum.SpellPower, 1);
+        DamageTarget(playerState, battleManager, 3, result);
+        AddBuffSelf(playerState, BuffEnum.SpellPower, 2);
     }
 }

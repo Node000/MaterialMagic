@@ -4,7 +4,7 @@ public class BurningHandMagicModel : MagicModel
     public override MagicEffectType EffectType => MagicEffectType.ApplyBuff;
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
-        AddBuffAll(battleManager, BuffEnum.Burning, 4, result);
+        AddBuffAll(battleManager, BuffEnum.Burning, 6, result);
         AddBuffAll(battleManager, BuffEnum.DoubleEnemyBurningOnTurnEnd, 1, result);
     }
 }

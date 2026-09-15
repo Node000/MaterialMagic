@@ -17,17 +17,18 @@ MonoBehaviour:
   borderColor: {r: 1, g: 0.84, b: 0.16, a: 1}
   borderThickness: 4
   borderStyle: 1
-  springInset: 14
-  springLineCount: 3
-  springLineWidth: 1.8
-  springLineSpacing: 4
-  springWobbleAmplitude: 4
+  springInset: 2.7
+  springLineCount: 1
+  springLineWidth: 5
+  springLineSpacing: 0.2
+  springWobbleAmplitude: 8
   springWaveCount: 7
   springScribbleAmount: 3
-  springSamplesPerLine: 120
+  springSamplesPerLine: 56
   springSharpness: 5
+  springSeed: 71
   springAnimate: 1
-  springFps: 12
+  springFps: 3
   springFlowSpeed: 0.7
   springPulseAmount: 0.14
   springPulseSpeed: 2.2

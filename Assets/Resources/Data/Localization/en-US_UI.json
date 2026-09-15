@@ -977,14 +977,6 @@
       "text": "Choose Replacement Item"
     },
     {
-      "key": "ui.battle.floating.max_health_up",
-      "text": "Max HP +{0}"
-    },
-    {
-      "key": "ui.battle.floating.max_health_down",
-      "text": "Max HP -{0}"
-    },
-    {
       "key": "ui.reward_magic_confirm.title",
       "text": "Replace Item?"
     },

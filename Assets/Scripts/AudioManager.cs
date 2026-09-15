@@ -16,6 +16,7 @@ public enum GameSfxId
     HitPitch = 5,
     Buy = 6,
     NotEnoughMoney = 7,
+    HandHover = 8,
 
     CardPlay = NormalInteract,
     CardReturnToHand = NormalInteract,
@@ -61,11 +62,14 @@ public class AudioManager : MonoBehaviour
         new GameSfxClipEntry(GameSfxId.NormalInteract),
         new GameSfxClipEntry(GameSfxId.HitPitch),
         new GameSfxClipEntry(GameSfxId.Buy),
-        new GameSfxClipEntry(GameSfxId.NotEnoughMoney)
+        new GameSfxClipEntry(GameSfxId.NotEnoughMoney),
+        new GameSfxClipEntry(GameSfxId.HandHover)
     };
     [SerializeField] private float defaultMusicVolume = 0.8f;
     [SerializeField] private float defaultSfxVolume = 0.8f;
     [SerializeField, Range(0f, 1f)] private float musicVolumeMultiplier = 0.5f;
+    [SerializeField] private float handHoverMinInterval = 0.07f;
+    [SerializeField, Range(0f, 0.2f)] private float handHoverPitchJitter = 0.03f;
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
@@ -75,6 +79,7 @@ public class AudioManager : MonoBehaviour
     private readonly List<RaycastResult> pointerRaycastResults = new List<RaycastResult>(8);
     private PointerEventData pointerEventData;
     private EventSystem pointerEventSystem;
+    private float lastHandHoverTime = float.NegativeInfinity;
 
     private const string MusicVolumeKey = "MusicVolume";
     private const string SfxVolumeKey = "SfxVolume";
@@ -221,6 +226,23 @@ public class AudioManager : MonoBehaviour
             PlaySfx(GameSfxId.Damaged);
         else if (shieldDamage > 0)
             PlaySfx(GameSfxId.Blocked);
+    }
+
+    /// <summary>
+    /// 手牌/出牌区箭头 hover 音效。快速划过多个箭头时限流，避免同一个素材被连续重放。
+    /// </summary>
+    public void PlayHandHoverSfx()
+    {
+        float now = Time.unscaledTime;
+        if (now - lastHandHoverTime < handHoverMinInterval)
+            return;
+
+        lastHandHoverTime = now;
+
+        float pitch = 1f;
+        if (handHoverPitchJitter > 0f)
+            pitch += UnityEngine.Random.Range(-handHoverPitchJitter, handHoverPitchJitter);
+        PlaySfx(GameSfxId.HandHover, pitch);
     }
 
     public AudioClip GetSfxClip(GameSfxId id)
@@ -401,6 +423,7 @@ public class AudioManager : MonoBehaviour
         EnsureSfxClipEntry(GameSfxId.HitPitch);
         EnsureSfxClipEntry(GameSfxId.Buy);
         EnsureSfxClipEntry(GameSfxId.NotEnoughMoney);
+        EnsureSfxClipEntry(GameSfxId.HandHover);
     }
 
     private void EnsureSfxClipEntry(GameSfxId id)

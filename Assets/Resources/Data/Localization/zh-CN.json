@@ -6,7 +6,7 @@
     },
     {
       "key": "magic.ignite.desc",
-      "text": "使敌方获得2层【燃烧】"
+      "text": "使敌方获得3层【燃烧】"
     },
     {
       "key": "magic.fireball_art.name",
@@ -14,7 +14,7 @@
     },
     {
       "key": "magic.fireball_art.desc",
-      "text": "对敌方造成2点伤害，使其获得2层【燃烧】"
+      "text": "对敌方造成2点伤害，使其获得3层【燃烧】"
     },
     {
       "key": "magic.flame_barrier.name",
@@ -30,7 +30,7 @@
     },
     {
       "key": "magic.magma.desc",
-      "text": "使敌方获得2层【燃烧】，下回合将一张带有【临时】的右加入手牌"
+      "text": "使敌方获得3层【燃烧】，下回合将一张带有【临时】的右加入手牌"
     },
     {
       "key": "magic.molten.name",
@@ -54,7 +54,7 @@
     },
     {
       "key": "magic.burning_hand.desc",
-      "text": "对敌方全体施加4层【燃烧】和1层【燃烧翻倍】"
+      "text": "对敌方全体施加6层【燃烧】，回合结束时，翻倍全体敌方【燃烧】层数"
     },
     {
       "key": "magic.flame_demon.name",
@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "本回合获得1层【伤害提升】，对敌方造成2点伤害"
+      "text": "本回合获得2层【伤害提升】，对敌方造成3点伤害"
     },
     {
       "key": "magic.burning_wind.name",
@@ -134,7 +134,7 @@
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "使敌方获得2层【易损】，对敌方造成两次1点伤害"
+      "text": "使敌方获得3层【易损】，对敌方造成两次1点伤害"
     },
     {
       "key": "magic.swamp.name",
@@ -214,7 +214,7 @@
     },
     {
       "key": "magic.earth_fire.desc",
-      "text": "本回合每被敌方攻击1次，使攻击者获得3层【燃烧】"
+      "text": "本回合每被敌方攻击1次，使攻击者获得5层【燃烧】"
     },
     {
       "key": "magic.petrify.name",
@@ -354,7 +354,7 @@
     },
     {
       "key": "magic.tumbler.desc",
-      "text": "本回合敌方每获得一层debuff，额外获得一层debuff"
+      "text": "本回合敌方每获得1层负面状态，额外获得1层负面状态"
     },
     {
       "key": "magic.tangram.name",

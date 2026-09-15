@@ -11,6 +11,13 @@ public class SpringLineHighlightUI : MaskableGraphic
         RoundedRect,
         Ellipse
     }
+
+    /// <summary>
+    /// UI 上通用的弹簧线步进帧率：以道具栏（MagicSlot_PC 的槽位框与 Hover 框）为准，
+    /// 结算槽位、道具强化 / 箭头附魔选项等由脚本生成的线框统一取该值，保证各处观感一致。
+    /// </summary>
+    public const int StandardSteppedFrameRate = 3;
+
     [Header("形状")]
     [SerializeField] private HighlightShape shape = HighlightShape.RoundedRect;
     [SerializeField, Range(1, 8)] private int lineCount = 4;
@@ -39,7 +46,8 @@ public class SpringLineHighlightUI : MaskableGraphic
     [SerializeField, Range(0f, 1f)] private float pulseAmount = 0.14f;
     [SerializeField, Min(0f)] private float pulseSpeed = 2.2f;
     [SerializeField] private bool steppedAnimation = true;
-    [SerializeField, Range(1, 30)] private int animationFramesPerSecond = 12;
+    [Tooltip("步进帧率。运行时统一收敛为 StandardSteppedFrameRate（3fps，与道具栏一致），此值仅作编辑器预览。")]
+    [SerializeField, Range(1, 30)] private int animationFramesPerSecond = 3;
     [SerializeField, Min(0f)] private float redrawInterval = 0f;
 
     [Header("Hover绑定")]
@@ -57,6 +65,11 @@ public class SpringLineHighlightUI : MaskableGraphic
     {
         base.Awake();
         raycastTarget = false;
+
+        // 全项目 UI 线框步进帧率统一为 3fps（以道具栏 MagicSlot_PC 为准）：
+        // 场景 / 预制体里存的历史值（12、8、4）不再决定表现，避免各处快慢不一。
+        if (Application.isPlaying && steppedAnimation)
+            animationFramesPerSecond = StandardSteppedFrameRate;
 
         if (!Application.isPlaying)
             return;
@@ -212,6 +225,16 @@ public class SpringLineHighlightUI : MaskableGraphic
         lineSpacing = Mathf.Max(0f, value);
         SetVerticesDirty();
     }
+
+    /// <summary>步进动画帧率（仅在 steppedAnimation 为真时生效）。</summary>
+    public void SetAnimationFramesPerSecond(int value)
+    {
+        animationFramesPerSecond = Mathf.Clamp(value, 1, 30);
+        SetVerticesDirty();
+    }
+
+    /// <summary>当前线条数量（只读），供按比例派生的小线框使用。</summary>
+    public int LineCount => lineCount;
 
     public void SetFill(bool enabled, Color value)
     {

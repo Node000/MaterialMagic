@@ -94,7 +94,7 @@
     },
     {
       "key": "tutorial.shop.buy_hint.body",
-      "text": "In the shop you can buy new items and arrows, or delete arrows you no longer need."
+      "text": "In the shop you can buy new items and arrows, or delete arrows you no longer need.\nTo leave the shop, click the wide red arrow at the bottom of the screen."
     },
     {
       "key": "tutorial.event.options.title",

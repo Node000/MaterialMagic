@@ -454,8 +454,9 @@ public class TutorialManagerUI : MonoBehaviour
         AddStep(root, TutorialStep.RewardClaim, "Reward_Claim");
         AddStep(root, TutorialStep.ShopBuyHint, "Shop_BuyHint");
         AddStep(root, TutorialStep.EventOptions, "Event_Options");
-        // 已从流程中移除的页面（场景对象保留、暂停用）：Battle_Combo / Battle_Cancel / Reward_UndoHint /
-        // Shop_OrderHint / Shop_UndoHint / Event_Refresh / Rest_Options。需要恢复时在此处重新登记即可。
+        // 已从流程中删除的页面（旧 20 页版）：Battle_Combo / Battle_Cancel / Reward_UndoHint /
+        // Shop_OrderHint / Shop_UndoHint / Event_Refresh / Rest_Options —— 场景对象已删，
+        // 需要恢复时从 git 取回旧场景对象名（与上述名字一致）并在此处重新登记即可。
     }
 
     private void AddStep(RectTransform root, TutorialStep step, string objectName)
@@ -545,6 +546,7 @@ public class TutorialManagerUI : MonoBehaviour
         bool lastParagraph = stepParagraphIndex >= stepParagraphs.Count - 1;
         waitingForStepClick = stepParagraphs.Count > 1 ? (!lastParagraph || stepAdvanceByClick) : stepAdvanceByClick;
 
+        UpdateCutoutTarget(currentStep, stepParagraphIndex);
         UpdateInputBlocker(waitingForStepClick);
         SetMapTutorialInputLocked(IsMapTutorialBlockingInput);
         StepChanged?.Invoke();
@@ -642,7 +644,7 @@ public class TutorialManagerUI : MonoBehaviour
             pair.Value.SetActive(active);
             SetStepRaycastTarget(pair.Value, active && waitForClick);
         }
-        UpdateCutoutTarget(step);
+        UpdateCutoutTarget(step, 0);
         ApplyParagraph();
     }
 
@@ -743,10 +745,15 @@ public class TutorialManagerUI : MonoBehaviour
             inputBlocker.transform.SetAsFirstSibling();
     }
 
-    private void UpdateCutoutTarget(TutorialStep step)
+    /// <summary>
+    /// 每段一个高亮框：第 1 段用子对象 `Cutout`，第 2 段 `Cutout2`，第 3 段 `Cutout3`…
+    /// 对应名字的子对象不存在或未启用时回退到 `Cutout`，所以单框页面不用改场景。
+    /// 切段时只换洞目标，高亮框沿用该段自己的矩形。
+    /// </summary>
+    private void UpdateCutoutTarget(TutorialStep step, int paragraphIndex)
     {
         cutoutTargets.Clear();
-        RectTransform cutout = GetStepCutoutTarget(step, CutoutChildName);
+        RectTransform cutout = GetStepParagraphCutoutTarget(step, paragraphIndex);
         if (cutout != null)
             cutoutTargets.Add(cutout);
 
@@ -756,6 +763,19 @@ public class TutorialManagerUI : MonoBehaviour
         cutoutMask.gameObject.SetActive(true);
         cutoutMask.SetTargetList(cutoutTargets);
         cutoutMask.transform.SetAsFirstSibling();
+    }
+
+    /// <summary>取某一段的高亮目标：优先 Cutout(N)（N = 段落序号 + 1），否则回退 Cutout。</summary>
+    private RectTransform GetStepParagraphCutoutTarget(TutorialStep step, int paragraphIndex)
+    {
+        if (paragraphIndex > 0)
+        {
+            RectTransform named = GetStepCutoutTarget(step, CutoutChildName + (paragraphIndex + 1));
+            if (named != null && named.gameObject.activeSelf)
+                return named;
+        }
+
+        return GetStepCutoutTarget(step, CutoutChildName);
     }
 
     private RectTransform GetStepCutoutTarget(TutorialStep step, string childName)

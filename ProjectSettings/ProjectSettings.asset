@@ -14,8 +14,8 @@ PlayerSettings:
   accelerometerFrequency: 60
   companyName: WoShuoHaoPaiDuoZhua
   productName: "\u6709\u6C27\u5730\u4E0B\u57CE"
-  defaultCursor: {fileID: 0}
-  cursorHotspot: {x: 0, y: 0}
+  defaultCursor: {fileID: 2800000, guid: c2ae4cf6b140c3e46b4fe6ebd9729ecf, type: 3}
+  cursorHotspot: {x: 17, y: 10}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
   m_ShowUnitySplashScreen: 1
   m_ShowUnitySplashLogo: 1

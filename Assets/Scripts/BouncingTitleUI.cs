@@ -2,6 +2,13 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
 
+/// <summary>
+/// 开始界面标题的漂浮动画。
+/// 注意：不再在 Awake 里替换标题 Image 的材质。溶解材质（M_StartTitlePixelParticleDissolve）的 shader
+/// 不消费 uv1/uv2/uv3，一旦替换就会顶掉美术的蜡笔材质（cray.mat / UI/ProceduralCrayon_Edge）与
+/// CrayonUIEdge，使标题在 Play Mode 下失去蜡笔效果；而且配置界面现在是弹窗叠在菜单上，也不需要靠溶解隐藏标题。
+/// 溶解相关引用保留在 Inspector 里以便日后需要时手动启用（useDissolveMaterial 默认关闭）。
+/// </summary>
 [DisallowMultipleComponent]
 public class BouncingTitleUI : MonoBehaviour
 {
@@ -13,6 +20,8 @@ public class BouncingTitleUI : MonoBehaviour
     [SerializeField] private CanvasGroup dissolveTargetCanvasGroup;
     [SerializeField] private Material dissolveMaterialTemplate;
     [SerializeField, Min(0.01f)] private float dissolveDuration = 0.45f;
+    [Tooltip("默认关闭：替换材质会顶掉标题的蜡笔材质。开启后才会使用 dissolveMaterialTemplate 做溶解。")]
+    [SerializeField] private bool useDissolveMaterial;
 
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
@@ -31,7 +40,8 @@ public class BouncingTitleUI : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
         image = dissolveTargetImage != null ? dissolveTargetImage : GetComponent<Image>();
-        if (image != null && dissolveMaterialTemplate != null)
+        // 默认不换材质：保留美术为标题配置的蜡笔材质，标题在 Play Mode 下与 Edit Mode 外观一致。
+        if (useDissolveMaterial && image != null && dissolveMaterialTemplate != null)
         {
             dissolveMaterial = new Material(dissolveMaterialTemplate);
             image.material = dissolveMaterial;
