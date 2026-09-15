@@ -62,7 +62,7 @@
     },
     {
       "key": "buff.charge_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain CHARGE. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain Charge. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.burning_next_turn.name",
@@ -70,7 +70,7 @@
     },
     {
       "key": "buff.burning_next_turn.desc",
-      "text": "At the start of next turn, gain BURN equal to the stack count, then clear this."
+      "text": "At the start of next turn, gain Burn equal to the stack count, then clear this."
     },
     {
       "key": "buff.shield_reflect.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "buff.sturdy.desc",
-      "text": "The first {0} arrows drawn next turn gain STURDY. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain Sturdy. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.stable.name",
@@ -166,7 +166,7 @@
     },
     {
       "key": "buff.vortex_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain VORTEX. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain Vortex. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.eggdeathexplosion.name",
@@ -410,7 +410,7 @@
     },
     {
       "key": "buff.spell_power_on_extra_draw.desc",
-      "text": "This turn, whenever you gain 1 EXTRA_DRAW, gain {0} DAMAGE_UP."
+      "text": "This turn, whenever you gain 1 Extra Draw, gain {0} Damage Up."
     },
     {
       "key": "buff.weak_on_enemy_attack.name",
@@ -418,7 +418,7 @@
     },
     {
       "key": "buff.weak_on_enemy_attack.desc",
-      "text": "This turn, whenever an enemy attacks, the attacker gains {0} WEAK next turn."
+      "text": "This turn, whenever an enemy attacks, the attacker gains {0} Weak next turn."
     },
     {
       "key": "buff.temporary_wind_on_material_consumed.name",
@@ -426,7 +426,7 @@
     },
     {
       "key": "buff.temporary_wind_on_material_consumed.desc",
-      "text": "This turn, whenever an arrow is consumed, add {0} EPHEMERAL Left arrow(s) to your hand next turn."
+      "text": "This turn, whenever an arrow is consumed, add {0} Temporary Left arrow(s) to your hand next turn."
     },
     {
       "key": "buff.weak_next_turn.name",
@@ -434,7 +434,7 @@
     },
     {
       "key": "buff.weak_next_turn.desc",
-      "text": "At turn start, gain WEAK equal to the stack count, then clear this."
+      "text": "At turn start, gain Weak equal to the stack count, then clear this."
     },
     {
       "key": "buff.foam_shield.name",
@@ -474,7 +474,7 @@
     },
     {
       "key": "buff.random_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain RANDOM. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain Random. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.temporary_proliferating_next_draw.name",
@@ -482,7 +482,7 @@
     },
     {
       "key": "buff.temporary_proliferating_next_draw.desc",
-      "text": "The first {0} arrows drawn next turn gain EPHEMERAL and PROLIFERATING. Consumes 1 stack per arrow and clears remaining stacks after drawing."
+      "text": "The first {0} arrows drawn next turn gain Temporary and Proliferating. Consumes 1 stack per arrow and clears remaining stacks after drawing."
     },
     {
       "key": "buff.hand_limit_next_turn.name",

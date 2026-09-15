@@ -34,11 +34,11 @@
     },
     {
       "key": "magic.ignite.desc",
-      "text": "Apply 3 BURN to the enemy."
+      "text": "Apply 3 Burn to the enemy."
     },
     {
       "key": "magic.fireball_art.desc",
-      "text": "Deal 2 damage to the enemy and apply 3 BURN."
+      "text": "Deal 2 damage to the enemy and apply 3 Burn."
     },
     {
       "key": "magic.flame_barrier.name",
@@ -46,7 +46,7 @@
     },
     {
       "key": "magic.flame_barrier.desc",
-      "text": "The next 3 arrows drawn next turn gain KINDLING."
+      "text": "The next 3 arrows drawn next turn gain Kindling."
     },
     {
       "key": "magic.magma.name",
@@ -54,7 +54,7 @@
     },
     {
       "key": "magic.magma.desc",
-      "text": "Apply 3 BURN to the enemy. Next turn, add a EPHEMERAL Right arrow to your hand."
+      "text": "Apply 3 Burn to the enemy. Next turn, add a Temporary Right arrow to your hand."
     },
     {
       "key": "magic.molten.name",
@@ -62,7 +62,7 @@
     },
     {
       "key": "magic.molten.desc",
-      "text": "Deal 3 damage to the enemy. This damage gains +1 for each stack of BURN on the enemy."
+      "text": "Deal 3 damage to the enemy. This damage gains +1 for each stack of Burn on the enemy."
     },
     {
       "key": "magic.explosion.name",
@@ -70,7 +70,7 @@
     },
     {
       "key": "magic.explosion.desc",
-      "text": "Trigger the target's BURN immediately."
+      "text": "Trigger the target's Burn immediately."
     },
     {
       "key": "magic.burning_hand.name",
@@ -78,11 +78,11 @@
     },
     {
       "key": "magic.burning_hand.desc",
-      "text": "Apply 6 BURN to all enemies. At turn end, double all enemies' BURN stacks."
+      "text": "Apply 6 Burn to all enemies. At turn end, double all enemies' Burn stacks."
     },
     {
       "key": "magic.flame_demon.desc",
-      "text": "Next turn, add 1 EPHEMERAL Up arrow to your hand."
+      "text": "Next turn, add 1 Temporary Up arrow to your hand."
     },
     {
       "key": "magic.airflow.name",
@@ -90,11 +90,11 @@
     },
     {
       "key": "magic.airflow.desc",
-      "text": "Gain 1 EXTRA_DRAW."
+      "text": "Gain 1 Extra Draw."
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "Gain 2 DAMAGE_UP this turn. Deal 3 damage to the enemy."
+      "text": "Gain 2 Damage Up this turn. Deal 3 damage to the enemy."
     },
     {
       "key": "magic.burning_wind.name",
@@ -102,7 +102,7 @@
     },
     {
       "key": "magic.burning_wind.desc",
-      "text": "Gain ITEM_ECHO this turn. (ITEM_ECHO: items trigger one extra time.)"
+      "text": "Gain Item Echo this turn. (Item Echo: items trigger one extra time.)"
     },
     {
       "key": "magic.lightning.name",
@@ -110,7 +110,7 @@
     },
     {
       "key": "magic.lightning.desc",
-      "text": "Deal 2 damage to the enemy and apply 2 ARC."
+      "text": "Deal 2 damage to the enemy and apply 2 Arc."
     },
     {
       "key": "magic.storm_hand.name",
@@ -118,15 +118,15 @@
     },
     {
       "key": "magic.storm_hand.desc",
-      "text": "Apply 4 ARC to all enemies and gain 1 DAMAGE_UP."
+      "text": "Apply 4 Arc to all enemies and gain 1 Damage Up."
     },
     {
       "key": "magic.current_attachment.desc",
-      "text": "The next 2 arrows drawn next turn gain CHARGE."
+      "text": "The next 2 arrows drawn next turn gain Charge."
     },
     {
       "key": "magic.sandstorm.desc",
-      "text": "Each time you are attacked by an enemy this turn, gain 1 EXTRA_DRAW."
+      "text": "Each time you are attacked by an enemy this turn, gain 1 Extra Draw."
     },
     {
       "key": "magic.gale.name",
@@ -134,11 +134,11 @@
     },
     {
       "key": "magic.gale.desc",
-      "text": "Gain 1 EXTRA_DRAW. The next 3 arrows drawn next turn gain RETAIN."
+      "text": "Gain 1 Extra Draw. The next 3 arrows drawn next turn gain Retain."
     },
     {
       "key": "magic.ice_pick.desc",
-      "text": "Apply 3 VULNERABLE to the enemy, then deal 1 damage twice."
+      "text": "Apply 3 Vulnerable to the enemy, then deal 1 damage twice."
     },
     {
       "key": "magic.swamp.name",
@@ -146,7 +146,7 @@
     },
     {
       "key": "magic.swamp.desc",
-      "text": "Apply 1 DEBUFF_UP to all enemies."
+      "text": "Apply 1 Debuff Up to all enemies."
     },
     {
       "key": "magic.poison_fog.name",
@@ -154,7 +154,7 @@
     },
     {
       "key": "magic.poison_fog.desc",
-      "text": "Each time you deal HP damage to enemies 2 times this turn, gain 1 EXTRA_DRAW."
+      "text": "Each time you deal HP damage to enemies 2 times this turn, gain 1 Extra Draw."
     },
     {
       "key": "magic.boiling_rain.name",
@@ -170,7 +170,7 @@
     },
     {
       "key": "magic.blizzard.desc",
-      "text": "Apply 1 WEAK, SLOW, and VULNERABLE to all enemies, then deal damage equal to each enemy's total debuff stacks."
+      "text": "Apply 1 Weak, Slow, and Vulnerable to all enemies, then deal damage equal to each enemy's total debuff stacks."
     },
     {
       "key": "magic.turbid_current.name",
@@ -178,7 +178,7 @@
     },
     {
       "key": "magic.turbid_current.desc",
-      "text": "The next 3 arrows drawn next turn gain VORTEX."
+      "text": "The next 3 arrows drawn next turn gain Vortex."
     },
     {
       "key": "magic.tide_hand.name",
@@ -194,7 +194,7 @@
     },
     {
       "key": "magic.water_corrosion.desc",
-      "text": "Apply 1 VULNERABLE to the enemy."
+      "text": "Apply 1 Vulnerable to the enemy."
     },
     {
       "key": "magic.stone_wall.name",
@@ -202,11 +202,11 @@
     },
     {
       "key": "magic.stone_wall.desc",
-      "text": "Gain 2 SHIELD."
+      "text": "Gain 2 Shield."
     },
     {
       "key": "magic.rockfall.desc",
-      "text": "Gain 2 SHIELD. The next 3 arrows drawn next turn gain STURDY."
+      "text": "Gain 2 Shield. The next 3 arrows drawn next turn gain Sturdy."
     },
     {
       "key": "magic.earth_fire.name",
@@ -214,7 +214,7 @@
     },
     {
       "key": "magic.earth_fire.desc",
-      "text": "Each time you are attacked by an enemy this turn, apply 5 BURN to the attacker."
+      "text": "Each time you are attacked by an enemy this turn, apply 5 Burn to the attacker."
     },
     {
       "key": "magic.petrify.name",
@@ -222,7 +222,7 @@
     },
     {
       "key": "magic.petrify.desc",
-      "text": "Apply 3 SLOW and 3 WEAK to the enemy."
+      "text": "Apply 3 Slow and 3 Weak to the enemy."
     },
     {
       "key": "magic.floating.name",
@@ -230,7 +230,7 @@
     },
     {
       "key": "magic.floating.desc",
-      "text": "Gain 3 Shield and gain HAND_RETAIN."
+      "text": "Gain 3 Shield and gain Keep Hand."
     },
     {
       "key": "magic.thorn_bush.name",
@@ -238,7 +238,7 @@
     },
     {
       "key": "magic.thorn_bush.desc",
-      "text": "Gain 3 Shield and gain SHIELD_THORNS."
+      "text": "Gain 3 Shield and gain Shield Thorns."
     },
     {
       "key": "magic.refine.name",
@@ -254,7 +254,99 @@
     },
     {
       "key": "magic.earth_hand.desc",
-      "text": "Gain 10 SHIELD. Deal damage to all enemies equal to your current SHIELD."
+      "text": "Gain 10 Shield. Deal damage to all enemies equal to your current Shield."
+    },
+    {
+      "key": "chapter.001.name",
+      "text": "Chapter 1"
+    },
+    {
+      "key": "level.battle_001.title",
+      "text": "Battle 1"
+    },
+    {
+      "key": "level.battle_002.title",
+      "text": "Battle 2"
+    },
+    {
+      "key": "level.battle_003.title",
+      "text": "Battle 3"
+    },
+    {
+      "key": "level.battle_004.title",
+      "text": "Battle 4"
+    },
+    {
+      "key": "level.battle_005.title",
+      "text": "Battle 5"
+    },
+    {
+      "key": "level.battle_006.title",
+      "text": "Battle 6"
+    },
+    {
+      "key": "level.battle_007.title",
+      "text": "Battle 7"
+    },
+    {
+      "key": "level.battle_008.title",
+      "text": "Battle 8"
+    },
+    {
+      "key": "level.battle_009.title",
+      "text": "Battle 9"
+    },
+    {
+      "key": "level.battle_010.title",
+      "text": "Battle 10"
+    },
+    {
+      "key": "level.battle_011.title",
+      "text": "Battle 11"
+    },
+    {
+      "key": "level.battle_012.title",
+      "text": "Battle 12"
+    },
+    {
+      "key": "level.battle_013.title",
+      "text": "Battle 13"
+    },
+    {
+      "key": "level.battle_014.title",
+      "text": "Battle 14"
+    },
+    {
+      "key": "level.battle_015.title",
+      "text": "Battle 15"
+    },
+    {
+      "key": "level.battle_016.title",
+      "text": "Battle 16"
+    },
+    {
+      "key": "level.battle_017.title",
+      "text": "Battle 17"
+    },
+    {
+      "key": "level.battle_018.title",
+      "text": "Battle 18"
+    },
+    {
+      "key": "level.battle_019.title",
+      "text": "Battle 19"
+    },
+    {
+      "key": "level.battle_020.title",
+      "text": "Battle 20"
+    },
+    {
+      "key": "level.reward_001.title",
+      "text": "Bonus Stage"
+    },
+    {
+      "key": "level.shop_001.title",
+      "text": "Shop"
     },
     {
       "key": "magic.tumbler.name",
@@ -270,7 +362,7 @@
     },
     {
       "key": "magic.tangram.desc",
-      "text": "Next turn, add 1 EPHEMERAL Left arrow and 1 EPHEMERAL Down arrow to your hand."
+      "text": "Next turn, add 1 Temporary Left arrow and 1 Temporary Down arrow to your hand."
     },
     {
       "key": "magic.glue.name",
@@ -278,7 +370,7 @@
     },
     {
       "key": "magic.glue.desc",
-      "text": "Your Items gain AoE this turn."
+      "text": "Your Items gain Attack All this turn."
     },
     {
       "key": "magic.spring.name",
@@ -286,7 +378,7 @@
     },
     {
       "key": "magic.spring.desc",
-      "text": "Gain 2 EXTRA_TRIGGER."
+      "text": "Gain 2 Repeat Trigger."
     },
     {
       "key": "magic.rain_banner.name",
@@ -294,7 +386,7 @@
     },
     {
       "key": "magic.rain_banner.desc",
-      "text": "Add 5 EPHEMERAL Down arrows to your hand."
+      "text": "Add 5 Temporary Down arrows to your hand."
     },
     {
       "key": "magic.lighter.name",
@@ -302,7 +394,7 @@
     },
     {
       "key": "magic.lighter.desc",
-      "text": "Lose all Shield. For each Shield lost, a random enemy gains 2 BURN."
+      "text": "Lose all Shield. For each Shield lost, a random enemy gains 2 Burn."
     },
     {
       "key": "magic.water_ball.name",
@@ -310,7 +402,7 @@
     },
     {
       "key": "magic.water_ball.desc",
-      "text": "For every 3 debuff stacks on enemies, gain 1 EXTRA_DRAW."
+      "text": "For every 3 debuff stacks on enemies, gain 1 Extra Draw."
     },
     {
       "key": "magic.can.name",
@@ -326,7 +418,7 @@
     },
     {
       "key": "magic.plastic_bag.desc",
-      "text": "For each card in the consumed pile, apply 2 BURN to the enemy."
+      "text": "For each card in the consumed pile, apply 2 Burn to the enemy."
     },
     {
       "key": "magic.boxing_glove.name",
@@ -342,7 +434,7 @@
     },
     {
       "key": "magic.sailboat.desc",
-      "text": "This turn, whenever you gain 1 EXTRA_DRAW, gain 1 DAMAGE_UP."
+      "text": "This turn, whenever you gain 1 Extra Draw, gain 1 Damage Up."
     },
     {
       "key": "magic.harmful_wave.name",
@@ -382,7 +474,7 @@
     },
     {
       "key": "magic.caramel_bear.desc",
-      "text": "Each time an enemy attacks, it gains 2 WEAK next turn."
+      "text": "Each time an enemy attacks, it gains 2 Weak next turn."
     },
     {
       "key": "magic.colored_lamp.name",
@@ -390,7 +482,7 @@
     },
     {
       "key": "magic.colored_lamp.desc",
-      "text": "Apply 4 VULNERABLE, 4 BURN, and 4 WEAK to the enemy."
+      "text": "Apply 4 Vulnerable, 4 Burn, and 4 Weak to the enemy."
     },
     {
       "key": "magic.foam_board.name",
@@ -406,7 +498,7 @@
     },
     {
       "key": "magic.yoyo.desc",
-      "text": "Apply SLOW to the enemy equal to your current Shield."
+      "text": "Apply Slow to the enemy equal to your current Shield."
     },
     {
       "key": "magic.sticker.name",
@@ -414,7 +506,27 @@
     },
     {
       "key": "magic.sticker.desc",
-      "text": "This turn, whenever an arrow is consumed, add 1 EPHEMERAL Left arrow to your hand next turn."
+      "text": "This turn, whenever an arrow is consumed, add 1 Temporary Left arrow to your hand next turn."
+    },
+    {
+      "key": "chapter.tutorial.name",
+      "text": "Tutorial Chapter"
+    },
+    {
+      "key": "level.tutorial_battle.title",
+      "text": "Tutorial Battle"
+    },
+    {
+      "key": "level.tutorial_event.title",
+      "text": "Signpost"
+    },
+    {
+      "key": "level.tutorial_shop.title",
+      "text": "Tutorial Shop"
+    },
+    {
+      "key": "level.tutorial_boss.title",
+      "text": "Tutorial Boss"
     }
   ]
 }

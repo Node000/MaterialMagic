@@ -767,6 +767,294 @@
     {
       "key": "event.tutorial_signpost.straight.1",
       "text": "You refuse to turn, so you receive an item reward."
+    },
+    {
+      "key": "event.idle_trade_platform.title",
+      "text": "Secondhand Market"
+    },
+    {
+      "key": "event.idle_trade_platform.start.1",
+      "text": "The secondhand platform glows with an old console's light, and every seller avatar is the default grey figure."
+    },
+    {
+      "key": "event.idle_trade_platform.start.2",
+      "text": "There are a few items you want, but the prices are no different from buying them new. Maybe you can try haggling?"
+    },
+    {
+      "key": "event.idle_trade_platform.option.cut_to_last",
+      "text": "Haggle It Down"
+    },
+    {
+      "key": "event.idle_trade_platform.option.buyout",
+      "text": "Buy It Outright"
+    },
+    {
+      "key": "event.idle_trade_platform.option.check_in",
+      "text": "Just Check In"
+    },
+    {
+      "key": "event.idle_trade_platform.cut_to_last.1",
+      "text": "The seller's price was clearly too high, and they knew it themselves. You talk them down and take your target for half price."
+    },
+    {
+      "key": "event.idle_trade_platform.buyout.1",
+      "text": "Time is short and there is work to do, so you hit \"Buy Now\" without hesitation."
+    },
+    {
+      "key": "event.idle_trade_platform.check_in.1",
+      "text": "Today is not a good day for shopping either, so you just check in. The platform hands out the usual points, then starts pushing ads."
+    },
+    {
+      "key": "event.data_backup.title",
+      "text": "Data Safety"
+    },
+    {
+      "key": "event.data_backup.start.1",
+      "text": "A pre-maintenance backup reminder pops up. Necessary data must be backed up before the system update."
+    },
+    {
+      "key": "event.data_backup.start.2",
+      "text": "The notice is written very politely: a full backup takes a while, so please mind your remaining space."
+    },
+    {
+      "key": "event.data_backup.option.full_backup",
+      "text": "Full Backup"
+    },
+    {
+      "key": "event.data_backup.option.key_backup",
+      "text": "Key Data Only"
+    },
+    {
+      "key": "event.data_backup.option.shortcut_only",
+      "text": "Shortcuts Only?"
+    },
+    {
+      "key": "event.data_backup.full_backup.1",
+      "text": "Back everything up. This data is bound to be useful somewhere."
+    },
+    {
+      "key": "event.data_backup.key_backup.1",
+      "text": "Backing up only the most critical data is enough. The rest of the space can be put to other uses."
+    },
+    {
+      "key": "event.data_backup.shortcut_only.1",
+      "text": "Just copy the shortcuts on the desktop. Keeping up appearances is all that is needed."
+    },
+    {
+      "key": "event.what_day_is_it.title",
+      "text": "What Day Is It?"
+    },
+    {
+      "key": "event.what_day_is_it.start.1",
+      "text": "Spending so long in a room with the curtains drawn has left you with no sense of day or night. Thinking about how to arrange your life, you decide to check the electronic calendar."
+    },
+    {
+      "key": "event.what_day_is_it.start.2",
+      "text": "So what day is it today?"
+    },
+    {
+      "key": "event.what_day_is_it.option.holiday",
+      "text": "A Holiday!"
+    },
+    {
+      "key": "event.what_day_is_it.option.rest_day",
+      "text": "A Day Off!"
+    },
+    {
+      "key": "event.what_day_is_it.option.workday",
+      "text": "A Workday!"
+    },
+    {
+      "key": "event.what_day_is_it.holiday.1",
+      "text": "The electronic calendar says today is a holiday. Everyone has free time, so it is the perfect time for party games!"
+    },
+    {
+      "key": "event.what_day_is_it.rest_day.1",
+      "text": "The electronic calendar says today is a day off. Another whole day of lying in bed awaits."
+    },
+    {
+      "key": "event.what_day_is_it.workday.1",
+      "text": "The electronic calendar says today is a workday... Is that manuscript deadline coming up? You have to start working right now."
+    },
+    {
+      "key": "event.old_hard_drive.title",
+      "text": "Old Hard Drive"
+    },
+    {
+      "key": "event.old_hard_drive.start.1",
+      "text": "You dig an old hard drive out of the back of a drawer. The label on it is worn past reading."
+    },
+    {
+      "key": "event.old_hard_drive.start.2",
+      "text": "Who put it here? Why is it here? Nobody knows."
+    },
+    {
+      "key": "event.old_hard_drive.option.peek",
+      "text": "Take a Look"
+    },
+    {
+      "key": "event.old_hard_drive.option.wipe_spare",
+      "text": "Wipe It as a Spare"
+    },
+    {
+      "key": "event.old_hard_drive.option.buy_new",
+      "text": "Buy a New One"
+    },
+    {
+      "key": "event.old_hard_drive.peek.1",
+      "text": "You hook the drive up to your computer. Plenty of old software still has its uses today."
+    },
+    {
+      "key": "event.old_hard_drive.wipe_spare.1",
+      "text": "Formatting it clean is strangely satisfying. You now have another spare drive, and plenty of room for more downloads."
+    },
+    {
+      "key": "event.old_hard_drive.buy_new.1",
+      "text": "Let the old thing stay where it is. Buying a new one is simply more convenient."
+    },
+    {
+      "key": "event.membership_expired.title",
+      "text": "Membership Expiring"
+    },
+    {
+      "key": "event.membership_expired.start.1",
+      "text": "The renewal reminder bounces in place on your screen, and the red badges in the corner keep piling up."
+    },
+    {
+      "key": "event.membership_expired.start.2",
+      "text": "Today is the last day before your membership expires. It looks like it is time to make a decision."
+    },
+    {
+      "key": "event.membership_expired.option.gold_plan",
+      "text": "Gold Plan"
+    },
+    {
+      "key": "event.membership_expired.option.budget_plan",
+      "text": "Budget Plan"
+    },
+    {
+      "key": "event.membership_expired.option.cancel",
+      "text": "Cancel Renewal"
+    },
+    {
+      "key": "event.membership_expired.gold_plan.1",
+      "text": "Expensive means good. The more money you pour into the platform, the fewer limits it puts on you."
+    },
+    {
+      "key": "event.membership_expired.budget_plan.1",
+      "text": "Value for money is what counts. Not a single coin should be wasted on pointless things."
+    },
+    {
+      "key": "event.membership_expired.cancel.1",
+      "text": "This platform is not worth paying for anymore. Better to save the money for other activities."
+    },
+    {
+      "key": "event.unreliable_helper.title",
+      "text": "Unreliable Little Helper"
+    },
+    {
+      "key": "event.unreliable_helper.start.1",
+      "text": "A script titled \"Little Helper\" is requesting system permissions."
+    },
+    {
+      "key": "event.unreliable_helper.start.2",
+      "text": "There are three levels of authorization, and every one of them promises \"nothing will go wrong.\""
+    },
+    {
+      "key": "event.unreliable_helper.option.loose_auth",
+      "text": "Loose Access"
+    },
+    {
+      "key": "event.unreliable_helper.option.strict_auth",
+      "text": "Strict Access"
+    },
+    {
+      "key": "event.unreliable_helper.option.full_auth",
+      "text": "Full Access"
+    },
+    {
+      "key": "event.unreliable_helper.loose_auth.1",
+      "text": "The little helper copies every file in your workspace, then runs off on its own."
+    },
+    {
+      "key": "event.unreliable_helper.strict_auth.1",
+      "text": "The little helper copies every file belonging to the current user, then runs off on its own."
+    },
+    {
+      "key": "event.unreliable_helper.full_auth.1",
+      "text": "The little helper copies every file in the system, then runs off on its own."
+    },
+    {
+      "key": "event.smart_ime.title",
+      "text": "Smart Input Method"
+    },
+    {
+      "key": "event.smart_ime.start.1",
+      "text": "Your input method just received a major update. It can now connect to a large language model to predict what you type!"
+    },
+    {
+      "key": "event.smart_ime.start.2",
+      "text": "That would take up a lot of space, so a dictionary-only update is also a fine choice."
+    },
+    {
+      "key": "event.smart_ime.option.llm",
+      "text": "Connect the LLM!"
+    },
+    {
+      "key": "event.smart_ime.option.update_dict",
+      "text": "Update the Dictionary"
+    },
+    {
+      "key": "event.smart_ime.option.no_space",
+      "text": "Not Enough Space"
+    },
+    {
+      "key": "event.smart_ime.llm.1",
+      "text": "The language model makes typing far more efficient! The only flaw is that it keeps predicting the exact opposite of what you meant."
+    },
+    {
+      "key": "event.smart_ime.update_dict.1",
+      "text": "Dictionary updated: the old common words are gone, and some new trending slang has been added."
+    },
+    {
+      "key": "event.smart_ime.no_space.1",
+      "text": "Not enough space. It is time to clean up your computer. Maybe you should buy a new hard drive?"
+    },
+    {
+      "key": "event.input_setup.title",
+      "text": "Control Setup"
+    },
+    {
+      "key": "event.input_setup.start.1",
+      "text": "The first-launch tutorial popup is still open: please choose your control method."
+    },
+    {
+      "key": "event.input_setup.start.2",
+      "text": "Which mode are you more used to?"
+    },
+    {
+      "key": "event.input_setup.option.gamepad",
+      "text": "Gamepad Mode"
+    },
+    {
+      "key": "event.input_setup.option.keyboard_mouse",
+      "text": "Keyboard & Mouse"
+    },
+    {
+      "key": "event.input_setup.option.not_now",
+      "text": "Not Now"
+    },
+    {
+      "key": "event.input_setup.gamepad.1",
+      "text": "You are more used to a gamepad. Maybe that is what you are holding right now?"
+    },
+    {
+      "key": "event.input_setup.keyboard_mouse.1",
+      "text": "You are more used to a keyboard. Maybe that is what you are using right now?"
+    },
+    {
+      "key": "event.input_setup.not_now.1",
+      "text": "You decide to set it up later, since your controller has not arrived yet."
     }
   ]
 }

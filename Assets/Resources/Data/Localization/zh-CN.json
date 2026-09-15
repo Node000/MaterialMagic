@@ -354,7 +354,7 @@
     },
     {
       "key": "magic.tumbler.desc",
-      "text": "本回合敌方每获得一层debuff，额外获得一层debuff"
+      "text": "本回合敌方每获得1层负面状态，额外获得1层负面状态"
     },
     {
       "key": "magic.tangram.name",

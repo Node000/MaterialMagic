@@ -42,7 +42,7 @@
     },
     {
       "key": "magic_modifier.searing_burning.desc",
-      "text": "After this item triggers, apply 1 extra 【Burning】."
+      "text": "After this item triggers, apply 1 extra Burn."
     },
     {
       "key": "magic_modifier.pioneer_extra_draw.name",
@@ -58,7 +58,7 @@
     },
     {
       "key": "magic_modifier.mercury_weak.desc",
-      "text": "When this item triggers, a random enemy gains 2 【Weak】."
+      "text": "When this item triggers, a random enemy gains 2 Weak."
     },
     {
       "key": "magic_modifier.mirror_reverse_recipe.name",
@@ -74,7 +74,7 @@
     },
     {
       "key": "magic_modifier.rupture_vulnerable.desc",
-      "text": "When this item triggers, a random enemy gains 2 【Vulnerable】."
+      "text": "When this item triggers, a random enemy gains 2 Vulnerable."
     },
     {
       "key": "magic_modifier.midas_gold.name",
@@ -98,7 +98,7 @@
     },
     {
       "key": "magic_modifier.bulwark_shield.desc",
-      "text": "When this item triggers, gain 2 shield."
+      "text": "When this item triggers, gain 2 Shield."
     },
     {
       "key": "rest.option.rest",
