@@ -13,12 +13,10 @@ public class SecondFloorPCMapConfig : ScriptableObject
     [SerializeField] private StripDungeonContentRule[] contentRules =
     {
         new StripDungeonContentRule { levelType = LevelType.Battle, minCount = 0, maxCount = 0, weight = 8 },
-        new StripDungeonContentRule { levelType = LevelType.Event, minCount = 0, maxCount = 0, weight = 4 },
+        new StripDungeonContentRule { levelType = LevelType.Event, minCount = 0, maxCount = 0, weight = 6 },
         new StripDungeonContentRule { levelType = LevelType.Elite, minCount = 0, maxCount = 0, weight = 2 },
         new StripDungeonContentRule { levelType = LevelType.Rest, minCount = 0, maxCount = 0, weight = 2 },
-        new StripDungeonContentRule { levelType = LevelType.Reward, minCount = 0, maxCount = 0, weight = 3 },
-        new StripDungeonContentRule { levelType = LevelType.AddMaterial, minCount = 0, maxCount = 0, weight = 1 },
-        new StripDungeonContentRule { levelType = LevelType.RemoveMaterial, minCount = 0, maxCount = 0, weight = 1 }
+        new StripDungeonContentRule { levelType = LevelType.Reward, minCount = 0, maxCount = 0, weight = 3 }
     };
 
     public int RegionWidth => regionWidth;

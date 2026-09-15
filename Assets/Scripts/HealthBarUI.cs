@@ -12,10 +12,7 @@ public class HealthBarUI : MonoBehaviour
     [SerializeField] private Image healthBufferFill;
     [SerializeField] private Image shieldFill;
 
-    [Header("血条样式")]
-    [SerializeField] private Color healthFillColor = new Color(0.441f, 0.774f, 0.09f, 1f);
-    [SerializeField] private Color healthBufferFillColor = Color.white;
-    [SerializeField] private Color shieldFillColor = new Color(0.2f, 0.55f, 1f, 1f);
+    // 血条与血量文本的颜色一律由美术在 Scene/Prefab 上设置：代码不写任何颜色，只负责长度、层级与显隐。
 
     [Header("动画参数")]
     [SerializeField] private float healthFillDuration = 0.35f;
@@ -59,7 +56,7 @@ public class HealthBarUI : MonoBehaviour
         if (healthFill == null)
             return;
 
-        SetupFillImage(healthFill, healthFillColor, 1);
+        SetupFillImage(healthFill, 1);
         CacheLayers();
         SetHealthLayerOrder(healthBufferFill, healthFill, shieldFill);
         UpdateValue(currentHealth, maxHealth, shield, instant);
@@ -71,8 +68,6 @@ public class HealthBarUI : MonoBehaviour
         int targetHealth = Mathf.Max(0, currentHealth);
         int targetMaxHealth = Mathf.Max(0, maxHealth);
         int targetShield = Mathf.Max(0, shield);
-        ApplyHealthTextColor();
-        ApplyShieldTextColor();
         healthNumberTween?.Kill(false);
         healthNumberTween = UpdateHealthText(
             healthText,
@@ -105,34 +100,18 @@ public class HealthBarUI : MonoBehaviour
             return;
 
         if (healthBufferFill == null)
-            healthBufferFill = CreateHealthFillLayer(barBack, "HealthBufferFill", healthBufferFillColor, 0);
+            healthBufferFill = CreateHealthFillLayer(barBack, "HealthBufferFill", 0);
         else
-            SetupFillImage(healthBufferFill, healthBufferFillColor, 0);
+            SetupFillImage(healthBufferFill, 0);
         if (shieldFill == null)
-            shieldFill = CreateHealthFillLayer(barBack, "ShieldFill", shieldFillColor, 2);
+            shieldFill = CreateHealthFillLayer(barBack, "ShieldFill", 2);
         else
-            SetupFillImage(shieldFill, shieldFillColor, 2);
+            SetupFillImage(shieldFill, 2);
         if (shieldFill != null)
             shieldFill.raycastTarget = false;
     }
 
-    private void ApplyHealthTextColor()
-    {
-        if (healthText == null)
-            return;
-
-        healthText.color = healthFillColor;
-    }
-
-    private void ApplyShieldTextColor()
-    {
-        if (shieldText == null)
-            return;
-
-        shieldText.color = shieldFillColor;
-    }
-
-    public static Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
+    public static Image CreateHealthFillLayer(RectTransform parent, string name, int siblingIndex)
     {
         Transform child = parent.Find(name);
         Image image = child != null ? child.GetComponent<Image>() : null;
@@ -162,16 +141,15 @@ public class HealthBarUI : MonoBehaviour
                 image.sprite = parentImage.sprite;
             }
         }
-        SetupFillImage(image, color, siblingIndex);
+        SetupFillImage(image, siblingIndex);
         return image;
     }
 
-    public static void SetupFillImage(Image image, Color color, int siblingIndex)
+    public static void SetupFillImage(Image image, int siblingIndex)
     {
         if (image == null)
             return;
 
-        image.color = color;
         image.raycastTarget = false;
         image.fillAmount = 1f;
         image.transform.SetSiblingIndex(siblingIndex);
@@ -199,7 +177,6 @@ public class HealthBarUI : MonoBehaviour
         text.fontStyle = FontStyles.Bold;
         if (fontSize > 0f)
             text.fontSize = fontSize;
-        SetHealthTextColor(text, false);
         text.raycastTarget = false;
     }
 
@@ -222,14 +199,6 @@ public class HealthBarUI : MonoBehaviour
             return;
 
         text.text = GetShieldTextValue(shield);
-    }
-
-    public static void SetHealthTextColor(TMP_Text text, bool shielded)
-    {
-        if (text == null)
-            return;
-
-        text.color = shielded ? new Color(0.25f, 0.55f, 1f, 1f) : new Color(0.95f, 0.08f, 0.04f, 1f);
     }
 
     public static void PositionHealthTextRightOfBar(TMP_Text text, RectTransform barBack, float width)

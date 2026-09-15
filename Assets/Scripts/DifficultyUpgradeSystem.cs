@@ -36,7 +36,9 @@ public enum DifficultyUpgradeEffectType
     StartingDeckAddOmniArrow = 27,
     StartingDeckAddRandomDoubled = 28,
     EliteGuaranteedLegendary = 29,
-    AdditionalTopBossCellCount = 30
+    AdditionalTopBossCellCount = 30,
+    /// <summary>每回合出牌数（打出上限）修正，取 intValue。</summary>
+    PlayLimitDelta = 31
 }
 
 [Serializable]
@@ -156,6 +158,11 @@ public abstract class DifficultyUpgrade
     public virtual int ModifyMagicSlotCount(int slotCount)
     {
         return slotCount;
+    }
+
+    public virtual int ModifyPlayLimit(int limit)
+    {
+        return limit;
     }
 
     public virtual float ModifyMagicRarityWeight(MagicRarity rarity, float weight)
@@ -309,6 +316,21 @@ public sealed class DataDrivenDifficultyUpgrade : DifficultyUpgrade
         {
             DifficultyUpgradeEffectData effect = Data.effects[i];
             if (effect != null && effect.type == DifficultyUpgradeEffectType.StartingMagicSlotDelta)
+                result += GetEffectInt(effect);
+        }
+        return Mathf.Max(1, result);
+    }
+
+    public override int ModifyPlayLimit(int limit)
+    {
+        if (Data == null)
+            return limit;
+
+        int result = limit;
+        for (int i = 0; Data.effects != null && i < Data.effects.Length; i++)
+        {
+            DifficultyUpgradeEffectData effect = Data.effects[i];
+            if (effect != null && effect.type == DifficultyUpgradeEffectType.PlayLimitDelta)
                 result += GetEffectInt(effect);
         }
         return Mathf.Max(1, result);
@@ -712,6 +734,14 @@ public static class DifficultyUpgradeSystem
         int result = slotCount;
         for (int i = 0; i < activeUpgrades.Count; i++)
             result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyMagicSlotCount(result) : result;
+        return Mathf.Max(1, result);
+    }
+
+    public static int ModifyPlayLimit(int limit)
+    {
+        int result = limit;
+        for (int i = 0; i < activeUpgrades.Count; i++)
+            result = activeUpgrades[i] != null ? activeUpgrades[i].ModifyPlayLimit(result) : result;
         return Mathf.Max(1, result);
     }
 

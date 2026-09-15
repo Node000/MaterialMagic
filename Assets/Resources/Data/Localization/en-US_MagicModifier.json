@@ -105,6 +105,14 @@
       "text": "Recover Health"
     },
     {
+      "key": "rest.option.study",
+      "text": "Item Enhancement"
+    },
+    {
+      "key": "rest.option.study.effect",
+      "text": "Choose 1 of 2 enhancements and enchant an item with it."
+    },
+    {
       "key": "rest.option.arrow_modifier",
       "text": "Arrow Enchantment"
     },

@@ -756,6 +756,8 @@ public static class EventDetailTextUtility
             return FormatText("ui.event.effect.apply_material_modifier", "选择{0}张手牌箭头，添加{1}", GetChoiceCountText(option), GetModifierNameText("liquefy"));
         if (option.resultId == 300)
             return FormatText("ui.event.effect.heal_percent_max", "恢复{0}%最大生命", "30");
+        if (option.resultId == 301)
+            return LocalizationSystem.GetText("rest.option.study.effect", "从2个强化中选择1个，附魔到一个道具上");
         if (option.resultId == 302)
             return LocalizationSystem.GetText("rest.option.arrow_modifier.effect", "从2个强化中选择1个，附魔到一个箭头上");
 

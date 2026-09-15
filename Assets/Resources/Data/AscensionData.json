@@ -40,7 +40,7 @@
       "id": "ascension_6",
       "nameKey": "ascension.6.name",
       "descriptionKey": "ascension.6.desc",
-      "upgradeIds": ["reward_magic_choices_minus_1"]
+      "upgradeIds": ["play_limit_minus_1_a6"]
     },
     {
       "numericId": 7,
@@ -180,7 +180,7 @@
       "id": "ascension_minus_6",
       "nameKey": "ascension.minus_6.name",
       "descriptionKey": "ascension.minus_6.desc",
-      "upgradeIds": ["reward_magic_choices_plus_1"]
+      "upgradeIds": ["play_limit_plus_1_a6"]
     },
     {
       "numericId": -7,

@@ -1098,15 +1098,15 @@
     },
     {
       "key": "ascension.6.name",
-      "text": "A6 选择道具选项-1"
+      "text": "A6 打出上限-1"
     },
     {
       "key": "ascension.6.desc",
-      "text": "道具奖励选项减少。"
+      "text": "每回合打出上限减少1。"
     },
     {
       "key": "ascension.7.name",
-      "text": "A7 初始道具槽位-2"
+      "text": "A7 初始道具槽位-1"
     },
     {
       "key": "ascension.7.desc",
@@ -1263,6 +1263,22 @@
     {
       "key": "difficulty.reward_magic_choices_minus_1.desc",
       "text": "战斗结算不再提供“更多金币”选项。"
+    },
+    {
+      "key": "difficulty.play_limit_minus_1_a6.name",
+      "text": "打出上限-1"
+    },
+    {
+      "key": "difficulty.play_limit_minus_1_a6.desc",
+      "text": "每回合打出上限减少1。"
+    },
+    {
+      "key": "difficulty.play_limit_plus_1_a6.name",
+      "text": "打出上限+1"
+    },
+    {
+      "key": "difficulty.play_limit_plus_1_a6.desc",
+      "text": "每回合打出上限增加1。"
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
@@ -1442,11 +1458,11 @@
     },
     {
       "key": "ascension.minus_6.name",
-      "text": "A-6 更多奖励选择"
+      "text": "A-6 打出上限+1"
     },
     {
       "key": "ascension.minus_6.desc",
-      "text": "道具奖励选项+1。"
+      "text": "每回合打出上限增加1。"
     },
     {
       "key": "ascension.minus_7.name",

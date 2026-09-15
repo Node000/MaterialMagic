@@ -121,10 +121,11 @@ public class PlayerState
         return state;
     }
 
-    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（8）。</summary>
+    /// <summary>开局配置里的每回合打出上限（叠加进阶“打出上限”词条）；配置缺失或值非法时回落到默认值（8）。</summary>
     public static int ResolveMaxPlayCount(PlayerStartConfigData config)
     {
-        return config != null && config.maxPlayCount > 0 ? config.maxPlayCount : DefaultPlayLimitPerTurn;
+        int baseCount = config != null && config.maxPlayCount > 0 ? config.maxPlayCount : DefaultPlayLimitPerTurn;
+        return DifficultyUpgradeSystem.ModifyPlayLimit(baseCount);
     }
 
     public int DrawCards(int count)

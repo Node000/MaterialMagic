@@ -366,8 +366,24 @@ public class ShopPanelUI : MonoBehaviour
         int layerCount = layerOffers.Count;
         const float layerGap = 6f;
         const float sepHeight = 1f;
+        // 箭头层连同它上方的第一条分隔线整体下移、第二条分隔线保持原位，
+        // 使“道具价格 → 第一条分隔线”与“箭头价格 → 第二条分隔线”的间距一致：
+        // 道具价格下沿在道具层行框下方 6px、箭头价格下沿在箭头层行框上方 14px，两者相差 20px，各让一半。
+        const float arrowLayerDrop = 10f;
+
+        int arrowLayerIndex = -1;
+        for (int l = 0; l < layerCount; l++)
+        {
+            if (GetLayerRowName(shopLayers[l]) == "ArrowLayer")
+            {
+                arrowLayerIndex = l;
+                break;
+            }
+        }
 
         float[] rowHeight = new float[layerCount];
+        float[] rowCenterY = new float[layerCount];
+        float[] separatorCenterY = new float[layerCount];
         float totalHeight = 0f;
         for (int l = 0; l < layerCount; l++)
         {
@@ -384,6 +400,21 @@ public class ShopPanelUI : MonoBehaviour
         float y = totalHeight * 0.5f + Mathf.Max(1f, Mathf.RoundToInt(439.2f * 0.1f));
         for (int l = 0; l < layerCount; l++)
         {
+            rowCenterY[l] = y - rowHeight[l] * 0.5f;
+            y -= rowHeight[l] + layerGap + sepHeight;
+            separatorCenterY[l] = y + sepHeight * 0.5f;
+            y -= sepHeight;
+        }
+
+        // 只挪箭头层和它上方的第一条分隔线，第二条分隔线保持原位。
+        if (arrowLayerIndex > 0)
+        {
+            rowCenterY[arrowLayerIndex] -= arrowLayerDrop;
+            separatorCenterY[arrowLayerIndex - 1] -= arrowLayerDrop;
+        }
+
+        for (int l = 0; l < layerCount; l++)
+        {
             string rowName = GetLayerRowName(shopLayers[l]);
             RectTransform row = FindChildRectRecursive(itemRoot, rowName);
             if (row != null)
@@ -395,9 +426,8 @@ public class ShopPanelUI : MonoBehaviour
                 row.anchorMin = new Vector2(0.5f, 0.5f);
                 row.anchorMax = new Vector2(0.5f, 0.5f);
                 row.pivot = new Vector2(0.5f, 0.5f);
-                row.anchoredPosition = new Vector2(0f, y - rowHeight[l] * 0.5f);
+                row.anchoredPosition = new Vector2(0f, rowCenterY[l]);
             }
-            y -= rowHeight[l] + layerGap + sepHeight;
             // 使用预制体实例化分隔线（如果已创建则只更新位置），避免场景手动放置的分隔线不生效。
             GameObject existingSep = null;
             for (int s = 0; s < createdSeparators.Count; s++)
@@ -416,7 +446,7 @@ public class ShopPanelUI : MonoBehaviour
                     sep.anchorMin = new Vector2(0.5f, 0.5f);
                     sep.anchorMax = new Vector2(0.5f, 0.5f);
                     sep.pivot = new Vector2(0.5f, 0.5f);
-                    sep.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
+                    sep.anchoredPosition = new Vector2(0f, separatorCenterY[l]);
                     sep.sizeDelta = new Vector2(754f, sepHeight);
                 }
             }
@@ -428,11 +458,10 @@ public class ShopPanelUI : MonoBehaviour
                 sepRect.anchorMin = new Vector2(0.5f, 0.5f);
                 sepRect.anchorMax = new Vector2(0.5f, 0.5f);
                 sepRect.pivot = new Vector2(0.5f, 0.5f);
-                sepRect.anchoredPosition = new Vector2(0f, y + sepHeight * 0.5f);
+                sepRect.anchoredPosition = new Vector2(0f, separatorCenterY[l]);
                 sepRect.sizeDelta = new Vector2(754f, sepHeight);
                 createdSeparators.Add(sepObj);
             }
-            y -= sepHeight;
         }
     }
 
@@ -872,7 +901,8 @@ public class ShopPanelUI : MonoBehaviour
 
     public static int GetMagicSellPrice(MagicData data)
     {
-        return Mathf.Max(0, GetMagicBuyPrice(data) - 1);
+        // 卖出价 = 购买价减半（向下取整）。
+        return Mathf.Max(0, GetMagicBuyPrice(data) / 2);
     }
 
     private static int GetMagicRarityPriceOffset(MagicRarity rarity)

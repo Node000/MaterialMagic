@@ -580,6 +580,22 @@
       "eventPoolId": 107
     },
     {
+      "id": "level_event_arrow_recycle_station",
+      "titleKey": "event.arrow_recycle_station.title",
+      "levelType": 1,
+      "numericId": 108,
+      "enemyIds": [],
+      "eventPoolId": 108
+    },
+    {
+      "id": "level_event_arrow_claw_machine",
+      "titleKey": "event.arrow_claw_machine.title",
+      "levelType": 1,
+      "numericId": 109,
+      "enemyIds": [],
+      "eventPoolId": 109
+    },
+    {
       "id": "level_event_screen_protector_stall",
       "titleKey": "event.screen_protector_stall.title",
       "levelType": 1,
@@ -717,22 +733,6 @@
       "levelType": 2,
       "numericId": 401,
       "enemyIds": []
-    },
-    {
-      "id": "level_arrow_remove",
-      "titleKey": "level.arrow_remove.title",
-      "levelType": 6,
-      "numericId": 501,
-      "enemyIds": [],
-      "eventPoolId": 108
-    },
-    {
-      "id": "level_arrow_add",
-      "titleKey": "level.arrow_add.title",
-      "levelType": 7,
-      "numericId": 502,
-      "enemyIds": [],
-      "eventPoolId": 109
     },
     {
       "id": "level_tutorial_battle",

@@ -23,7 +23,7 @@ MonoBehaviour:
   - levelType: 1
     minCount: 0
     maxCount: 0
-    weight: 4
+    weight: 6
   - levelType: 5
     minCount: 0
     maxCount: 0
@@ -36,11 +36,3 @@ MonoBehaviour:
     minCount: 0
     maxCount: 0
     weight: 3
-  - levelType: 7
-    minCount: 0
-    maxCount: 0
-    weight: 1
-  - levelType: 6
-    minCount: 0
-    maxCount: 0
-    weight: 1

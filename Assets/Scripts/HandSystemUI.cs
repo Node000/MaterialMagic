@@ -416,6 +416,11 @@ public class HandSystemUI : MonoBehaviour
 
 		private readonly List<MagicItemView> castableMagicViews = new List<MagicItemView>();
 
+		// 与 magicViews 同序的道具模型缓存 + 匹配结果下标缓存：每次匹配复用，避免在结算循环里反复分配。
+		private readonly List<MagicModel> magicMatchCandidates = new List<MagicModel>();
+
+		private readonly List<int> matchedMagicIndices = new List<int>();
+
     private HandCardView layoutHoverCardView;
 
     private bool cardDragActive;
@@ -703,6 +708,8 @@ public class HandSystemUI : MonoBehaviour
 	}
 
 	private const int RestDefaultHealResultId = 300;
+
+	private const int RestStudyResultId = 301;
 
 	private const int RestArrowModifierResultId = 302;
 
@@ -1976,8 +1983,21 @@ public class HandSystemUI : MonoBehaviour
             nextNodeId = "rest_result",
             isExitOption = true
         };
-        string arrowModifierRecipe = CreateRandomRecipe(1);
+        string studyRecipe = CreateRandomRecipe(1);
+        string arrowModifierRecipe;
+        do
+        {
+            arrowModifierRecipe = CreateRandomRecipe(1);
+        }
+        while (arrowModifierRecipe == studyRecipe);
 
+        EventOptionData study = new EventOptionData
+        {
+            id = "study_magic",
+            titleKey = "rest.option.study",
+            recipe = studyRecipe,
+            resultId = RestStudyResultId
+        };
         EventOptionData arrowModifier = new EventOptionData
         {
             id = "arrow_modifier",
@@ -2000,7 +2020,7 @@ public class HandSystemUI : MonoBehaviour
                 {
                     id = "start",
                     textKeys = !string.IsNullOrEmpty(startTextKey) ? new[] { startTextKey } : Array.Empty<string>(),
-                    options = new[] { defaultRest, arrowModifier }
+                    options = new[] { defaultRest, study, arrowModifier }
                 },
                 new EventNodeData
                 {
@@ -2742,8 +2762,7 @@ public class HandSystemUI : MonoBehaviour
         }
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Battle, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Battle, 3));
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Elite, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Elite, 2));
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.RemoveMaterial, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.RemoveMaterial, 1));
-        AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.AddMaterial, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.AddMaterial, 1));
+        // 删箭头 / 加箭头格已删除（改为事件格与事件池）：不再占用固定配额，其权重已在 ChapterData.eventMapLevelWeight 中并入事件格。
         AssignDesignedMapLevels(chapter, levels, width, positions, LevelType.Rest, DifficultyUpgradeSystem.ModifyDesignedMapLevelCount(LevelType.Rest, 2));
 
         while (positions.Count > 0)
@@ -2843,8 +2862,6 @@ public class HandSystemUI : MonoBehaviour
         List<LevelData> candidateLevels = GetLevelsForProgress(chapter, progress);
         RemoveBossBattleLevel(candidateLevels, bossLevel);
         AddLevelsIfMissing(candidateLevels, GetEventLevelsForChapter(chapter));
-        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.RemoveMaterial));
-        AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.AddMaterial));
         AddLevelsIfMissing(candidateLevels, GetRestLevels());
         AddLevelsIfMissing(candidateLevels, GetLevels(LevelType.Reward));
         if (candidateLevels.Count == 0)
@@ -3062,10 +3079,9 @@ public class HandSystemUI : MonoBehaviour
                 weight = chapter != null ? chapter.eventMapLevelWeight : 4;
                 break;
             case LevelType.RemoveMaterial:
-                weight = chapter != null ? chapter.removeMapLevelWeight : 2;
-                break;
             case LevelType.AddMaterial:
-                weight = chapter != null ? chapter.addMapLevelWeight : 2;
+                // 删箭头 / 加箭头格已删除：即使旧数据残留权重也不参与地图生成。
+                weight = 0;
                 break;
             case LevelType.Rest:
                 weight = chapter != null ? chapter.restMapLevelWeight : 2;
@@ -3140,15 +3156,10 @@ public class HandSystemUI : MonoBehaviour
 		List<LevelData> levels = new List<LevelData>();
 		for (int i = 0; i < poolIds.Length; i++)
 		{
-			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite || level.levelType == LevelType.Event || level.levelType == LevelType.RemoveMaterial || level.levelType == LevelType.AddMaterial || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
+			if (GameDataDatabase.TryGetLevelData(poolIds[i], out LevelData level) && (level.levelType == LevelType.Battle || level.levelType == LevelType.Elite || level.levelType == LevelType.Event || level.levelType == LevelType.Rest || level.levelType == LevelType.Reward))
 				levels.Add(level);
 		}
-        if (chapter == null || progress < chapter.levelLength)
-        {
-            AddLevelsIfMissing(levels, GetLevels(LevelType.RemoveMaterial));
-            AddLevelsIfMissing(levels, GetLevels(LevelType.AddMaterial));
-        }
-		return levels;
+        return levels;
 	}
 
 	private int[] GetLevelPoolIdsForProgress(ChapterData chapter, int progress)
@@ -4391,6 +4402,12 @@ public bool IsCardDragActive => cardDragActive;
 
         RebuildCards(animateFromCurrent: true);
         refreshUsedThisTurn = false;
+        if (matched && matchedOption != null && matchedOption.resultId == RestStudyResultId)
+        {
+            ShowMagicModifierSelection(2);
+            yield break;
+        }
+
         if (matched && matchedOption != null && matchedOption.resultId == RestArrowModifierResultId)
         {
             List<MaterialModifierData> choices = GetArrowModifierChoices(2);
@@ -5244,7 +5261,7 @@ public bool IsCardDragActive => cardDragActive;
 				int stepTokenCount = step.Tokens.Count;
 				for (int tokenStart = step.FirstTokenIndex; tokenStart < step.FirstTokenIndex + stepTokenCount; tokenStart++)
 				{
-						CollectCastableMagicsByRecipeLength(resolveSequence.Tokens, tokenStart);
+						CollectCastableMagicsInLayoutOrder(resolveSequence.Tokens, tokenStart);
 					if (castableMagicViews.Count == 0)
 					{
 						continue;
@@ -5479,29 +5496,22 @@ public bool IsCardDragActive => cardDragActive;
 
 
 
-	private void CollectCastableMagicsByRecipeLength(IReadOnlyList<ArrowReadToken> tokens, int startIndex)
+	/// <summary>
+	/// 收集从指定 Token 起点可施放的道具，顺序为道具栏从左到右（slotIndex 升序）。
+	/// 设计约定（教程 7-2）：以同一个箭头为起点满足多个道具要求时，按道具栏从左到右依次触发，
+	/// 与配方长度无关——短配方只要排在更左侧就先触发，不会被长配方插队。
+	/// 顺序规则统一在 <see cref="MagicMatchOrderUtility"/>，避免与其它展示/匹配入口产生第二套排序。
+	/// </summary>
+	private void CollectCastableMagicsInLayoutOrder(IReadOnlyList<ArrowReadToken> tokens, int startIndex)
 	{
 		castableMagicViews.Clear();
+		magicMatchCandidates.Clear();
 		for (int i = 0; i < magicViews.Count; i++)
-		{
-			MagicItemView magicItemView = magicViews[i];
-			MagicModel magic = magicItemView.Magic;
-			if (magic == null || !magic.IsMatch(tokens, startIndex))
-			{
-				continue;
-			}
-			int recipeLength = GetRecipeLength(magic);
-			int insertIndex = castableMagicViews.Count;
-			for (int j = 0; j < castableMagicViews.Count; j++)
-			{
-				if (recipeLength > GetRecipeLength(castableMagicViews[j].Magic))
-				{
-					insertIndex = j;
-					break;
-				}
-			}
-			castableMagicViews.Insert(insertIndex, magicItemView);
-		}
+			magicMatchCandidates.Add(magicViews[i] != null ? magicViews[i].Magic : null);
+
+		MagicMatchOrderUtility.CollectMatchedMagicIndices(magicMatchCandidates, tokens, startIndex, matchedMagicIndices);
+		for (int i = 0; i < matchedMagicIndices.Count; i++)
+			castableMagicViews.Add(magicViews[matchedMagicIndices[i]]);
 	}
 
 	private static int GetRecipeLength(MagicModel magic)
@@ -6311,10 +6321,10 @@ public bool IsCardDragActive => cardDragActive;
 				}
 
 
-			SetupFillImage(enemyHealthFill, new Color(0.82f, 0.05f, 0.04f, 1f), 1);
+			SetupFillImage(enemyHealthFill, 1);
 
-			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", Color.white, 0);
-			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", new Color(0.2f, 0.55f, 1f, 1f), 2);
+			enemyHealthBufferFill = CreateHealthFillLayer(val2, "HealthBufferFill", 0);
+			enemyShieldFill = CreateHealthFillLayer(val2, "ShieldFill", 2);
 				SetHealthLayerOrder(enemyHealthBufferFill, enemyHealthFill, enemyShieldFill);
 					enemyShieldText = FindEnemyShieldText(enemyView);
 					if ((Object)enemyShieldText == (Object)null)
@@ -6349,7 +6359,7 @@ public bool IsCardDragActive => cardDragActive;
 			return text;
 		}
 
-		private Image CreateHealthFillLayer(RectTransform parent, string name, Color color, int siblingIndex)
+		private Image CreateHealthFillLayer(RectTransform parent, string name, int siblingIndex)
 
 
 	{
@@ -6387,18 +6397,17 @@ public bool IsCardDragActive => cardDragActive;
 				image.sprite = parentImage.sprite;
 			}
 		}
-		SetupFillImage(image, color, siblingIndex);
+		SetupFillImage(image, siblingIndex);
 		return image;
 	}
 
-	private static void SetupFillImage(Image image, Color color, int siblingIndex)
+	private static void SetupFillImage(Image image, int siblingIndex)
 	{
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
 		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)image == (Object)null))
 		{
-			image.color = color;
 			image.raycastTarget = false;
 			image.fillAmount = 1f;
 			((Component)image).transform.SetSiblingIndex(siblingIndex);
@@ -6477,8 +6486,7 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			TweenExtensions.Kill(val, false);
 		}
-			HealthBarUI.SetHealthTextColor(enemyHealthText, false);
-				enemyHealthNumberTween = UpdateHealthText(enemyHealthText, enemyShieldText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.MaxHealth, enemyModel.Shield, instant, delegate(int healthValue)
+			enemyHealthNumberTween = UpdateHealthText(enemyHealthText, enemyShieldText, displayedEnemyHealth, enemyModel.CurrentHealth, enemyModel.MaxHealth, enemyModel.Shield, instant, delegate(int healthValue)
 
 			{
 				displayedEnemyHealth = healthValue;
@@ -10243,8 +10251,7 @@ public bool IsCardDragActive => cardDragActive;
 		{
 			TweenExtensions.Kill(healthNumberTween, false);
 		}
-			HealthBarUI.SetHealthTextColor(state.healthText, false);
-				state.healthNumberTween = UpdateHealthText(state.healthText, state.shieldText, state.displayedHealth, state.model.CurrentHealth, state.model.MaxHealth, state.model.Shield, instant, delegate(int healthValue)
+			state.healthNumberTween = UpdateHealthText(state.healthText, state.shieldText, state.displayedHealth, state.model.CurrentHealth, state.model.MaxHealth, state.model.Shield, instant, delegate(int healthValue)
 
 			{
 				state.displayedHealth = healthValue;

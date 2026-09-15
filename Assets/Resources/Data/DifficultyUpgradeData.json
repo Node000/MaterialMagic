@@ -57,6 +57,24 @@
       ]
     },
     {
+      "id": "play_limit_minus_1_a6",
+      "nameKey": "difficulty.play_limit_minus_1_a6.name",
+      "descriptionKey": "difficulty.play_limit_minus_1_a6.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 31, "intValue": -1 }
+      ]
+    },
+    {
+      "id": "play_limit_plus_1_a6",
+      "nameKey": "difficulty.play_limit_plus_1_a6.name",
+      "descriptionKey": "difficulty.play_limit_plus_1_a6.desc",
+      "scope": 0,
+      "effects": [
+        { "type": 31, "intValue": 1 }
+      ]
+    },
+    {
       "id": "starting_magic_slots_minus_2_a7",
       "nameKey": "difficulty.starting_magic_slots_minus_2.name",
       "descriptionKey": "difficulty.starting_magic_slots_minus_2.desc",

@@ -26,12 +26,10 @@ public class StripDungeonMapConfig : ScriptableObject
     [SerializeField] private StripDungeonContentRule[] contentRules =
     {
         new StripDungeonContentRule { levelType = LevelType.Battle, minCount = 3, maxCount = 5, weight = 8 },
-        new StripDungeonContentRule { levelType = LevelType.Event, minCount = 1, maxCount = 2, weight = 4 },
+        new StripDungeonContentRule { levelType = LevelType.Event, minCount = 1, maxCount = 2, weight = 6 },
         new StripDungeonContentRule { levelType = LevelType.Elite, minCount = 1, maxCount = 2, weight = 3 },
         new StripDungeonContentRule { levelType = LevelType.Rest, minCount = 1, maxCount = 1, weight = 2 },
-        new StripDungeonContentRule { levelType = LevelType.Reward, minCount = 1, maxCount = 2, weight = 3 },
-        new StripDungeonContentRule { levelType = LevelType.AddMaterial, minCount = 0, maxCount = 1, weight = 1 },
-        new StripDungeonContentRule { levelType = LevelType.RemoveMaterial, minCount = 0, maxCount = 1, weight = 1 }
+        new StripDungeonContentRule { levelType = LevelType.Reward, minCount = 1, maxCount = 2, weight = 3 }
     };
 
     public int MapWidth => mapWidth;

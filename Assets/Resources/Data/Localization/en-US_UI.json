@@ -1098,11 +1098,11 @@
     },
     {
       "key": "ascension.6.name",
-      "text": "A6 Fewer Choices"
+      "text": "A6 Play Limit -1"
     },
     {
       "key": "ascension.6.desc",
-      "text": "Item rewards offer fewer choices."
+      "text": "Play limit per turn is reduced by 1."
     },
     {
       "key": "ascension.7.name",
@@ -1263,6 +1263,22 @@
     {
       "key": "difficulty.reward_magic_choices_minus_1.desc",
       "text": "Battle settlement no longer offers the extra gold option."
+    },
+    {
+      "key": "difficulty.play_limit_minus_1_a6.name",
+      "text": "Play Limit -1"
+    },
+    {
+      "key": "difficulty.play_limit_minus_1_a6.desc",
+      "text": "Play limit per turn is reduced by 1."
+    },
+    {
+      "key": "difficulty.play_limit_plus_1_a6.name",
+      "text": "Play Limit +1"
+    },
+    {
+      "key": "difficulty.play_limit_plus_1_a6.desc",
+      "text": "Play limit per turn is increased by 1."
     },
     {
       "key": "difficulty.starting_magic_slots_minus_2.name",
@@ -1442,11 +1458,11 @@
     },
     {
       "key": "ascension.minus_6.name",
-      "text": "A-6 More Reward Choices"
+      "text": "A-6 Play Limit +1"
     },
     {
       "key": "ascension.minus_6.desc",
-      "text": "Item rewards offer 1 additional choice."
+      "text": "Play limit per turn is increased by 1."
     },
     {
       "key": "ascension.minus_7.name",
