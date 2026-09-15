@@ -69,14 +69,12 @@ public class MagicSlotClickHandler : MonoBehaviour, IPointerClickHandler, IBegin
                 return;
         }
 
+        // 道具获取（奖励/事件/商店）只在有空槽时生效，已移除“点选道具槽覆盖”的替换机制；
+        // 因此点击道具槽只可能是强化目标或卖出道具。
         if (owner != null && owner.HasPendingMagicModifier)
             owner.TryApplyPendingMagicModifier(slotIndex);
         else if (owner != null && owner.HasPendingMaterialModifier)
             owner.TryApplyPendingMaterialModifierToSelectedHandCard(slotIndex);
-        else if (owner != null && owner.HasPendingShopMagic)
-            owner.TryPlacePendingShopMagic(slotIndex);
-        else if (owner != null && owner.HasPendingRewardMagic)
-            owner.TryPlacePendingRewardMagic(slotIndex);
         else
             owner?.ShowMagicSellPopup(GetComponent<MagicItemView>(), slotIndex);
     }

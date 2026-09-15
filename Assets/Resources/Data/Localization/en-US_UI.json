@@ -662,7 +662,7 @@
     },
     {
       "key": "ui.reward_panel.hint",
-      "text": "Choose a reward. After selecting an item reward, click an item slot in the scene to replace it."
+      "text": "Choose a reward. Item rewards go straight into an empty item slot — sell an item first if your slots are full."
     },
     {
       "key": "ui.reward_panel.magic_only.title",
@@ -670,7 +670,7 @@
     },
     {
       "key": "ui.reward_panel.magic_only.hint",
-      "text": "Choose an item, then click an item slot in the scene to replace it."
+      "text": "Choose an item. If your item slots are full, sell an item first."
     },
     {
       "key": "ui.reward_panel.option.magic",
@@ -694,7 +694,7 @@
     },
     {
       "key": "ui.reward_panel.magic_choice.hint",
-      "text": "After choosing, click a slot below or in the scene to replace it. You can reselect."
+      "text": "Your choice goes straight into an empty item slot. If your slots are full, sell an item first."
     },
     {
       "key": "ui.slot_select.title",
@@ -714,7 +714,7 @@
     },
     {
       "key": "ui.shop.hint",
-      "text": "Each item can be bought once. After buying an item, click an existing item slot to replace it."
+      "text": "Each item can be bought once. If your item slots are full, sell an item to free a slot first."
     },
     {
       "key": "ui.shop.remove_material.title",

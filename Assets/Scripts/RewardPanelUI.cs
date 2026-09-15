@@ -476,9 +476,20 @@ public class RewardPanelUI : MonoBehaviour
         if (claimInProgress || settlementClaimed || currentChoices == null || currentChoices.Magic == null)
             return;
 
-        // 选中后进入现有放置流程：有空槽自动放入，否则点场景道具槽覆盖。
+        // 道具栏已满：替换机制已移除，点击道具选项不给任何反馈（玩家可先卖出道具腾出空位），
+        // 也不能进入 claimInProgress 状态，否则其它选项与关闭按钮会一起失效。
+        if (owner == null || owner.GetFreeMagicSlotIndex() < 0)
+            return;
+
+        // 选中后直接放入空槽。
         claimInProgress = true;
         owner.SelectPendingRewardMagic(currentChoices.Magic);
+        if (owner.HasPendingRewardMagic)
+        {
+            // 兜底：只有在未能直接入槽时才会留下待放置状态，此时立即撤销，避免面板卡在“等待点选道具槽”的旧状态。
+            owner.SelectPendingRewardMagic(null);
+            claimInProgress = false;
+        }
         RefreshChoiceSlots();
     }
 
@@ -842,8 +853,18 @@ public class RewardPanelUI : MonoBehaviour
         if (magicClaimed)
             return;
 
+        // 道具栏已满：替换机制已移除，点击道具选项不给任何反馈。
+        if (owner == null || owner.GetFreeMagicSlotIndex() < 0)
+            return;
+
         selectedMagicView = view;
         owner.SelectPendingRewardMagic(data);
+        if (owner.HasPendingRewardMagic)
+        {
+            // 兜底：未放入时不留“等待点选道具槽”的状态，回到未选中。
+            owner.SelectPendingRewardMagic(null);
+            selectedMagicView = null;
+        }
         RefreshSelectedMagicVisuals();
     }
 
@@ -1265,7 +1286,7 @@ public class RewardPanelUI : MonoBehaviour
 
         TMP_Text title = CreatePanelText(magicChoicePanel, "Title", LocalizationSystem.GetText("ui.reward_panel.magic_choice.title", "选择一个道具"), 26, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(360f, 40f));
         title.color = new Color(1f, 0.9f, 0.55f, 1f);
-        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。"), 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
+        TMP_Text hint = CreatePanelText(magicChoicePanel, "Hint", LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后直接放入道具栏的空位；没有空位时需先卖出道具。"), 16, FontStyles.Normal, new Vector2(0f, 72f), new Vector2(620f, 30f));
         hint.color = new Color(0.82f, 0.84f, 0.9f, 1f);
 
         magicChoiceBackButton = CreatePanelButton(magicChoicePanel, "BackButton", LocalizationSystem.GetText("ui.common.back", "返回"), new Vector2(-360f, 112f), new Vector2(110f, 42f));
@@ -1297,7 +1318,7 @@ public class RewardPanelUI : MonoBehaviour
             title.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.title", "选择一个道具");
         TMP_Text hint = UIManager.FindChildComponent<TMP_Text>(magicChoicePanel, "Hint");
         if (hint != null)
-            hint.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后点击下方/场景中的道具槽覆盖；可重新选择。");
+            hint.text = LocalizationSystem.GetText("ui.reward_panel.magic_choice.hint", "选择后直接放入道具栏的空位；没有空位时需先卖出道具。");
 
         if (magicChoiceBackButton == null)
             magicChoiceBackButton = FindMagicChoiceBackButton();

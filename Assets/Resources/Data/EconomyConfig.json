@@ -5,6 +5,7 @@
       "id": "default",
       "shopSpellPrice": 5,
       "shopMaterialPrice": 1,
+      "materialEnchantPriceStep": 1,
       "shopRemoveMaterialPrice": 2,
       "shopRefreshPrice": 1,
       "shopProductPoolId": 1,

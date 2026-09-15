@@ -21,6 +21,8 @@ public class EconomyConfigData : INumericDataRecord
     public string id;
     public int shopSpellPrice = 5;
     public int shopMaterialPrice = 1;
+    // 商店箭头附魔对价格的增量：每个正面附魔 +step，每个负面附魔 -step。
+    public int materialEnchantPriceStep = 1;
     public int shopRemoveMaterialPrice = 2;
     public int shopRefreshPrice = 1;
     public int shopProductPoolId = 1;

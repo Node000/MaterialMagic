@@ -662,7 +662,7 @@
     },
     {
       "key": "ui.reward_panel.hint",
-      "text": "选择奖励；道具奖励选中后，点击场景中的道具槽覆盖。"
+      "text": "选择奖励；道具奖励会直接放入道具栏的空位，没有空位时需先卖出道具。"
     },
     {
       "key": "ui.reward_panel.magic_only.title",
@@ -670,7 +670,7 @@
     },
     {
       "key": "ui.reward_panel.magic_only.hint",
-      "text": "选择一个道具后，点击场景中的道具槽覆盖。"
+      "text": "选择一个道具；没有空位时需先卖出道具腾出位置。"
     },
     {
       "key": "ui.reward_panel.option.magic",
@@ -694,7 +694,7 @@
     },
     {
       "key": "ui.reward_panel.magic_choice.hint",
-      "text": "选择后点击下方/场景中的道具槽覆盖；可重新选择。"
+      "text": "选择后直接放入道具栏的空位；没有空位时需先卖出道具。"
     },
     {
       "key": "ui.slot_select.title",
@@ -714,7 +714,7 @@
     },
     {
       "key": "ui.shop.hint",
-      "text": "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。"
+      "text": "每件商品只能购买一次。道具栏已满时需先卖出道具才能购买道具。"
     },
     {
       "key": "ui.shop.remove_material.title",

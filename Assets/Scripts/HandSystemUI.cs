@@ -4804,7 +4804,7 @@ public bool IsCardDragActive => cardDragActive;
         SaveRunProgress();
     }
 
-    /// <summary>事件效果：按配置依次发放指定道具。有空格直接入槽；没有空格时沿用商店的待选流程，由玩家点选要替换的槽位。</summary>
+    /// <summary>事件效果：按配置依次发放指定道具。道具栏满时本次发放直接跳过（替换机制已移除，玩家需先卖出道具腾出空位）。</summary>
     private IEnumerator ShowEventMagicByIdRoutine(EventEffectData effect)
     {
         if (effect == null || effect.magicIds == null || effect.magicIds.Length == 0)
@@ -4827,20 +4827,13 @@ public bool IsCardDragActive => cardDragActive;
         if (magicData == null || playerState == null)
             yield break;
 
-        bool placed = false;
-        int targetSlot = -1;
-        SelectPendingShopMagic(magicData, delegate(int slotIndex)
+        // 道具栏已满：不再提供替换机制，本次道具直接不发（避免陷入等待点选槽位的状态）。
+        int targetSlot = GetFreeMagicSlotIndex();
+        if (targetSlot < 0)
         {
-            targetSlot = slotIndex;
-            placed = true;
-        });
-
-        // 有空格时上面已经同步入槽；槽位已满时 pending 状态会保持，等玩家点选道具槽。
-        while (!placed && pendingShopMagic != null)
-            yield return null;
-
-        if (!placed)
+            GameLog.Data($"Event skipped magic id={magicData.numericId}: magic slots full");
             yield break;
+        }
 
         // 不用商店的飞入动画：它的源物体取自动画起点（事件里可能是整个 UI 根），会被动画置为隐藏状态，并额外依赖一层协程。
         SetShopMagicAtSlot(magicData, targetSlot);
@@ -7990,7 +7983,16 @@ public bool IsCardDragActive => cardDragActive;
 
 		public void SelectPendingRewardMagic(MagicData rewardMagic)
 		{
-	        HideRewardMagicConfirmPanel(false);
+        HideRewardMagicConfirmPanel(false);
+        // 道具栏已满：替换机制已移除，此时不接受待放置状态（玩家需先卖出道具腾出空位）。
+        if (rewardMagic != null && !HasFreeMagicSlot)
+        {
+            pendingRewardMagic = null;
+            RefreshPlayerAnimationState();
+            GetUIManager().HideSlotSelect();
+            return;
+        }
+
 			pendingRewardMagic = rewardMagic;
 	        RefreshPlayerAnimationState();
 	        if (rewardMagic != null)
@@ -8008,6 +8010,16 @@ public bool IsCardDragActive => cardDragActive;
 
     public void SelectPendingShopMagic(MagicData magicData, Action<int> onSlotChosen)
     {
+        // 道具栏已满：替换机制已移除，此时不接受待放置状态。
+        if (magicData != null && !HasFreeMagicSlot)
+        {
+            pendingShopMagic = null;
+            pendingShopMagicSlotChosen = null;
+            RefreshPlayerAnimationState();
+            GetUIManager().HideSlotSelect();
+            return;
+        }
+
         pendingShopMagic = magicData;
         pendingShopMagicSlotChosen = onSlotChosen;
         RefreshPlayerAnimationState();
@@ -8438,6 +8450,9 @@ public bool IsCardDragActive => cardDragActive;
         return occupied < MagicSlotCapacity ? occupied : -1;
     }
 
+    /// <summary>道具栏是否还有空位。道具获取（奖励/事件/商店）都要求有空位，满栏时不再提供替换机制。</summary>
+    public bool HasFreeMagicSlot => GetFreeMagicSlotIndex() >= 0;
+
     public bool CanBeginMagicBookReorder
     {
         get
@@ -8493,6 +8508,8 @@ public bool IsCardDragActive => cardDragActive;
         playerState.AddGold(sellPrice, false);
         CreateMagicViews();
         RefreshStaticUI();
+        // 卖出会腾出道具槽：商店开着时立刻刷新道具商品的可购买状态。
+        GetUIManager().ShopPanel?.RefreshOfferAvailability();
         SaveRunProgress();
         return true;
     }

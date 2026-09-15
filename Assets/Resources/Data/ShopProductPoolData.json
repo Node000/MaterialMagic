@@ -62,37 +62,37 @@
         {
           "material": 1,
           "modifierId": "charge",
-          "price": 2
+          "price": 3
         },
         {
           "material": 2,
           "modifierId": "vortex",
-          "price": 2
+          "price": 3
         },
         {
           "material": 3,
           "modifierId": "kindling",
-          "price": 2
+          "price": 3
         },
         {
           "material": 4,
           "modifierId": "flow",
-          "price": 2
+          "price": 3
         },
         {
           "material": 1,
           "modifierId": "liquefy",
-          "price": 2
+          "price": 3
         },
         {
           "material": 2,
           "modifierId": "sturdy",
-          "price": 2
+          "price": 3
         },
         {
           "material": 3,
           "modifierId": "big_arrow_2",
-          "price": 2
+          "price": 3
         },
         {
           "material": 4,
@@ -102,17 +102,17 @@
         {
           "material": 1,
           "modifierId": "big_arrow_4",
-          "price": 4
+          "price": 3
         },
         {
           "material": 2,
           "modifierId": "proliferating_arrow",
-          "price": 2
+          "price": 3
         },
         {
           "material": 3,
           "modifierId": "retained_arrow",
-          "price": 2
+          "price": 3
         }
       ],
       "normalMaterialOffers": [

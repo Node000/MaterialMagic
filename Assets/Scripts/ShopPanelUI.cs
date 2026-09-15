@@ -99,6 +99,8 @@ public class ShopPanelUI : MonoBehaviour
     private int refreshCount;
     private bool refreshInProgress;
 
+    private const int DefaultMaterialEnchantPriceStep = 1;
+
     public RectTransform MagicViewPrefab => magicViewPrefab;
     public RectTransform MaterialCardPrefab => materialCardPrefab;
 
@@ -123,6 +125,18 @@ public class ShopPanelUI : MonoBehaviour
     {
         int basePrice = config != null ? config.shopRefreshPrice : 0;
         return Mathf.Max(0, basePrice) + refreshCount;
+    }
+
+    /// <summary>
+    /// 道具栏占用变化后刷新商品的可用状态。商店开着时玩家可以卖出道具腾出空位，
+    /// 商品（尤其道具）的可用性需要跟着变，否则刷新后面板再关闭前的状态会过期。
+    /// </summary>
+    public void RefreshOfferAvailability()
+    {
+        if (!gameObject.activeInHierarchy)
+            return;
+
+        Refresh();
     }
 
     public void RefreshShop()
@@ -237,7 +251,7 @@ public class ShopPanelUI : MonoBehaviour
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText(level != null ? level.titleKey : string.Empty, LocalizationSystem.GetText("ui.shop.title", "商店"));
         if (hintText != null)
-            hintText.text = LocalizationSystem.GetText("ui.shop.hint", "每件商品只能购买一次。道具购买后点击已有道具槽完成覆盖。");
+            hintText.text = LocalizationSystem.GetText("ui.shop.hint", "每件商品只能购买一次。道具栏已满时需先卖出道具才能购买道具。");
 
         BuildOffers();
         BuildLayerViews();
@@ -783,6 +797,26 @@ public class ShopPanelUI : MonoBehaviour
         }
     }
 
+    private int ResolveMaterialBasePrice()
+    {
+        // 基础价 = 商品池里“普通箭头”（无附魔）的报价；池里没有时回落到经济配置的箭头价。
+        for (int i = 0; i < normalMaterialOfferPool.Count; i++)
+        {
+            ShopMaterialOfferData pooledOffer = normalMaterialOfferPool[i];
+            if (pooledOffer != null && pooledOffer.price >= 0)
+                return pooledOffer.price;
+        }
+
+        for (int i = 0; productPool != null && i < productPool.normalMaterialOffers.Length; i++)
+        {
+            ShopMaterialOfferData configuredOffer = productPool.normalMaterialOffers[i];
+            if (configuredOffer != null && configuredOffer.price >= 0)
+                return configuredOffer.price;
+        }
+
+        return config != null ? Mathf.Max(0, config.shopMaterialPrice) : 0;
+    }
+
     private enum ShopMaterialPoolKind
     {
         Normal,
@@ -959,7 +993,7 @@ public class ShopPanelUI : MonoBehaviour
         ShopMaterialOfferData offerData = pool[index];
         pool.RemoveAt(index);
         MaterialModifierData modifierData = GetMaterialModifierDataById(offerData.modifierId);
-        target.Add(new ShopOffer { kind = ShopItemKind.Material, price = GetOfferPrice(offerData.price), material = offerData.material, materialModifierData = modifierData });
+        target.Add(new ShopOffer { kind = ShopItemKind.Material, price = GetMaterialOfferPrice(offerData), material = offerData.material, materialModifierData = modifierData });
         return true;
     }
 
@@ -968,6 +1002,24 @@ public class ShopPanelUI : MonoBehaviour
         // 显式价格（含免费 0）直接生效；仅无效负价回落到箭头默认价。
         int basePrice = price >= 0 ? price : config.shopMaterialPrice;
         return DifficultyUpgradeSystem.ModifyShopPrice(basePrice);
+    }
+
+    /// <summary>
+    /// 商店箭头价格：普通箭头用条目报价；带附魔的箭头按“基础价 ± 每个附魔”计算
+    /// （正面附魔 +step、负面附魔 -step；step 取 EconomyConfig.materialEnchantPriceStep），
+    /// 不再读取条目里为附魔箭头填的 price。
+    /// </summary>
+    private int GetMaterialOfferPrice(ShopMaterialOfferData offerData)
+    {
+        if (offerData == null)
+            return GetOfferPrice(0);
+
+        if (string.IsNullOrEmpty(offerData.modifierId))
+            return GetOfferPrice(offerData.price);
+
+        int step = config != null && config.materialEnchantPriceStep > 0 ? config.materialEnchantPriceStep : DefaultMaterialEnchantPriceStep;
+        int delta = IsWeakShopModifierId(offerData.modifierId) ? -step : step;
+        return GetOfferPrice(Mathf.Max(0, ResolveMaterialBasePrice() + delta));
     }
 
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
@@ -1011,6 +1063,9 @@ public class ShopPanelUI : MonoBehaviour
         {
             case ShopItemKind.RemoveMaterial:
                 return HasRemovableMaterial();
+            case ShopItemKind.Magic:
+                // 道具栏已满：替换机制已移除，必须先卖出道具腾出空位才能购买道具。
+                return owner != null && owner.HasFreeMagicSlot;
             default:
                 return true;
         }
@@ -1306,25 +1361,17 @@ public class ShopPanelUI : MonoBehaviour
         if (offer.magicData == null)
             return;
 
+        // 道具栏已满：不再提供替换机制，购买直接不生效（按钮已由 CanUseOffer 置为不可用）。
+        int targetSlot = owner != null ? owner.GetFreeMagicSlotIndex() : -1;
+        if (targetSlot < 0)
+            return;
+
         selectedOffer = offer;
         waitingForSelection = false;
         purchaseInProgress = false;
         owner.ClearPendingShopMagic();
 
-        int targetSlot = GetMagicPlacementSlot();
         CompleteMagicPurchase(offer, targetSlot);
-    }
-
-    private int GetMagicPlacementSlot()
-    {
-        if (owner == null || owner.PlayerState == null)
-            return 0;
-
-        int count = owner.PlayerState.MagicBook.Count;
-        int capacity = owner.MagicSlotCapacity;
-        if (capacity > 0 && count >= capacity)
-            count = capacity - 1;
-        return Mathf.Max(0, count);
     }
 
     private void CancelMagicPurchaseSelection(bool refresh)
@@ -1514,9 +1561,14 @@ public class ShopPanelUI : MonoBehaviour
         purchaseInProgress = false;
         RestoreUndoState(savedState.undo);
 
-        if (waitingForSelection && selectedOffer != null && selectedOffer.kind == ShopItemKind.Magic && selectedOffer.magicData != null)
-            owner.SelectPendingShopMagic(selectedOffer.magicData, slotIndex => CompleteMagicPurchase(selectedOffer, slotIndex));
-        else if (!waitingForSelection)
+        // 道具购买已不再需要“等待点选道具槽”：旧存档里残留的该状态直接丢弃。
+        if (waitingForSelection && selectedOffer != null && selectedOffer.kind == ShopItemKind.Magic)
+        {
+            selectedOffer = null;
+            waitingForSelection = false;
+        }
+
+        if (!waitingForSelection)
             owner.ClearPendingShopMagic();
     }
 

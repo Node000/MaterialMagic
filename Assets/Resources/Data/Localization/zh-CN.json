@@ -78,7 +78,7 @@
     },
     {
       "key": "magic.wind_blade.desc",
-      "text": "本回合获得2层【伤害提升】，对敌方造成3点伤害"
+      "text": "本回合获得1层【伤害提升】，对敌方造成3点伤害"
     },
     {
       "key": "magic.burning_wind.name",
