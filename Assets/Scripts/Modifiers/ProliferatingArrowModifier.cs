@@ -1,10 +1,9 @@
+/// <summary>
+/// 【增殖】箭头：读取时在弃牌堆中添加本箭头的临时复制（复制卡战斗结束后移除）。
+/// 本体不改变读取后去向，按普通箭头随出牌区进入弃牌堆。
+/// </summary>
 public class ProliferatingArrowModifier : MaterialModifierModel
 {
-    public override ArrowReadAfterReadAction GetArrowAfterReadAction()
-    {
-        return ArrowReadAfterReadAction.ReturnNextTurn;
-    }
-
     public override void OnArrowBaseEffectResolve(ArrowReadContext context)
     {
         PlayerState playerState = context?.PlayerState ?? Context?.PlayerState;

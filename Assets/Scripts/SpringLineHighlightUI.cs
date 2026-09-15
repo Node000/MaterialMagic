@@ -11,9 +11,6 @@ public class SpringLineHighlightUI : MaskableGraphic
         RoundedRect,
         Ellipse
     }
-
-    private const float TwoPi = 6.28318530718f;
-
     [Header("形状")]
     [SerializeField] private HighlightShape shape = HighlightShape.RoundedRect;
     [SerializeField, Range(1, 8)] private int lineCount = 4;
@@ -156,7 +153,7 @@ public class SpringLineHighlightUI : MaskableGraphic
         for (int i = 0; i < count; i++)
         {
             float loopOutset = outset + i * lineSpacing;
-            Rect loopRect = Expand(rect, loopOutset + lineWidth * 0.5f);
+            Rect loopRect = SpringLineGeometry.Expand(rect, loopOutset + lineWidth * 0.5f);
             if (loopRect.width <= 0f || loopRect.height <= 0f)
                 continue;
 
@@ -164,7 +161,7 @@ public class SpringLineHighlightUI : MaskableGraphic
             if (fillEnabled && i == 0)
                 AddFilledShape(vh, points, loopRect.center, fillColor);
 
-            AddClosedStroke(vh, points, lineWidth, lineColor);
+            SpringLineGeometry.AddClosedStroke(vh, points, lineWidth, lineColor);
         }
     }
 
@@ -313,84 +310,29 @@ public class SpringLineHighlightUI : MaskableGraphic
         relay.Register(gameObject);
     }
 
-    private static Rect Expand(Rect rect, float amount)
+    private SpringLineGeometry.Settings CreateGeometrySettings()
     {
-        return new Rect(rect.xMin - amount, rect.yMin - amount, rect.width + amount * 2f, rect.height + amount * 2f);
+        return new SpringLineGeometry.Settings
+        {
+            shape = shape == HighlightShape.Ellipse ? SpringLineGeometry.Shape.Ellipse : SpringLineGeometry.Shape.RoundedRect,
+            samplesPerLine = samplesPerLine,
+            sharpness = roundedRectSharpness,
+            wobbleAmplitude = wobbleAmplitude,
+            waveCount = waveCount,
+            scribbleAmount = scribbleAmount,
+            tangentWobble = tangentWobble,
+            linePhaseOffset = linePhaseOffset,
+            seed = seed
+        };
     }
 
     private void BuildLoopPoints(Rect rect, int lineIndex)
     {
         points.Clear();
 
-        int sampleCount = Mathf.Clamp(samplesPerLine, 16, 256);
         bool runtimeAnimating = Application.isPlaying && animate;
         float frameTime = runtimeAnimating ? visibleAnimationTime : 0f;
-        float phase = frameTime * flowSpeed;
-        float pulse = 1f;
-        if (runtimeAnimating && pulseAmount > 0f && pulseSpeed > 0f)
-            pulse += Mathf.Sin(frameTime * pulseSpeed + lineIndex * 0.91f) * pulseAmount;
-
-        float amplitude = Mathf.Max(0f, wobbleAmplitude * Mathf.Max(0f, pulse));
-        float lineOffset = lineIndex * linePhaseOffset + seed * 0.0017f;
-
-        for (int i = 0; i < sampleCount; i++)
-        {
-            float t = i / (float)sampleCount;
-            float sampleT = Mathf.Repeat(t + lineOffset, 1f);
-            GetShapeSample(rect, sampleT, sampleCount, out Vector2 point, out Vector2 tangent, out Vector2 normal);
-
-            float wave = Mathf.Sin((t * waveCount + phase + lineIndex * 0.23f) * TwoPi);
-            float secondaryWave = Mathf.Sin((t * (waveCount * 0.47f + 1f) - phase * 1.63f + lineIndex * 0.41f + seed * 0.013f) * TwoPi);
-            float scribble = Mathf.Sin((t * 19.7f + lineIndex * 1.31f + seed * 0.071f) * TwoPi);
-            scribble += Mathf.Sin((t * 37.3f - lineIndex * 0.73f + seed * 0.029f) * TwoPi) * 0.5f;
-
-            float normalOffset = amplitude * (wave * 0.68f + secondaryWave * 0.32f) + scribble * scribbleAmount;
-            float tangentOffset = normalOffset * tangentWobble * Mathf.Sin((t * 13f + lineIndex * 0.37f + seed * 0.011f) * TwoPi);
-            points.Add(point + normal * normalOffset + tangent * tangentOffset);
-        }
-    }
-
-    private void GetShapeSample(Rect rect, float t, int sampleCount, out Vector2 point, out Vector2 tangent, out Vector2 normal)
-    {
-        point = GetShapePoint(rect, t);
-        Vector2 next = GetShapePoint(rect, t + 1f / (sampleCount * 2f));
-        tangent = next - point;
-        if (tangent.sqrMagnitude <= 0.0001f)
-            tangent = Vector2.up;
-        else
-            tangent.Normalize();
-
-        normal = new Vector2(tangent.y, -tangent.x);
-        if (normal.sqrMagnitude <= 0.0001f)
-            normal = Vector2.right;
-        else
-            normal.Normalize();
-    }
-
-    private Vector2 GetShapePoint(Rect rect, float t)
-    {
-        float angle = Mathf.Repeat(t, 1f) * TwoPi;
-        float cos = Mathf.Cos(angle);
-        float sin = Mathf.Sin(angle);
-        Vector2 center = rect.center;
-        float halfWidth = rect.width * 0.5f;
-        float halfHeight = rect.height * 0.5f;
-
-        if (shape == HighlightShape.Ellipse)
-            return center + new Vector2(cos * halfWidth, sin * halfHeight);
-
-        float exponent = 2f / Mathf.Max(2f, roundedRectSharpness);
-        float x = SignedPower(cos, exponent) * halfWidth;
-        float y = SignedPower(sin, exponent) * halfHeight;
-        return center + new Vector2(x, y);
-    }
-
-    private static float SignedPower(float value, float exponent)
-    {
-        if (value == 0f)
-            return 0f;
-
-        return Mathf.Sign(value) * Mathf.Pow(Mathf.Abs(value), exponent);
+        SpringLineGeometry.BuildLoop(rect, CreateGeometrySettings(), lineIndex, runtimeAnimating, frameTime, flowSpeed, pulseAmount, pulseSpeed, points);
     }
 
     private void AddFilledShape(VertexHelper vh, List<Vector2> shapePoints, Vector2 center, Color32 shapeFillColor)
@@ -410,37 +352,6 @@ public class SpringLineHighlightUI : MaskableGraphic
             int next = centerIndex + 1 + ((i + 1) % pointCount);
             vh.AddTriangle(centerIndex, current, next);
         }
-    }
-
-    private void AddClosedStroke(VertexHelper vh, List<Vector2> strokePoints, float width, Color32 lineColor)
-    {
-        int pointCount = strokePoints.Count;
-        if (pointCount < 2)
-            return;
-
-        for (int i = 0; i < pointCount; i++)
-        {
-            Vector2 start = strokePoints[i];
-            Vector2 end = strokePoints[(i + 1) % pointCount];
-            AddStrokeSegment(vh, start, end, width, lineColor);
-        }
-    }
-
-    private static void AddStrokeSegment(VertexHelper vh, Vector2 start, Vector2 end, float width, Color32 lineColor)
-    {
-        Vector2 direction = end - start;
-        if (direction.sqrMagnitude <= 0.0001f)
-            return;
-
-        direction.Normalize();
-        Vector2 normal = new Vector2(-direction.y, direction.x) * (width * 0.5f);
-        int vertexIndex = vh.currentVertCount;
-        vh.AddVert(start - normal, lineColor, Vector2.zero);
-        vh.AddVert(start + normal, lineColor, Vector2.zero);
-        vh.AddVert(end + normal, lineColor, Vector2.zero);
-        vh.AddVert(end - normal, lineColor, Vector2.zero);
-        vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-        vh.AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex);
     }
 
 #if UNITY_EDITOR

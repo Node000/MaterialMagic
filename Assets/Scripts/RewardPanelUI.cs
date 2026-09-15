@@ -184,7 +184,8 @@ public class RewardPanelUI : MonoBehaviour
         // 进阶效果 13：累计 <=0 时结算不提供“更多金币”选项。
         if (DifficultyUpgradeSystem.ModifyBattleRewardGoldChoiceCount(1) <= 0)
             return 0;
-        return Mathf.Max(0, owner.PendingBattleGoldReward);
+        // 基础金币已统一为固定值自动发放，金币选项改为沿用改造前的战斗结算金币数值。
+        return Mathf.Max(0, owner.PendingBattleGoldChoiceReward);
     }
 
     private void SetTitle(string text)
@@ -747,7 +748,6 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         StopMagicChoicePrewarm();
-        owner.GetUIManager().TutorialManager?.OnMagicRewardChoicesShown();
         EnsureMagicChoicePanel();
         magicChoicePanel.gameObject.SetActive(true);
         magicChoicePanel.SetAsLastSibling();

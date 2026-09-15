@@ -11,6 +11,27 @@ public class TutorialCutoutMaskUI : Graphic
     [SerializeField] private float borderThickness = 4f;
     [SerializeField] private Color borderColor = new Color(1f, 0.84f, 0.16f, 1f);
 
+    [Header("高亮框样式（跟随 TutorialVisualConfig）")]
+    [Tooltip("Straight = 直角实线框；Spring = 3 条细弹簧线；None = 只变暗不描边。")]
+    [SerializeField] private TutorialBorderStyle borderStyle = TutorialBorderStyle.Spring;
+
+    [Tooltip("弹簧线组相对洞边界向内的偏移（画布像素）。")]
+    [SerializeField, Min(0f)] private float springInset = 14f;
+
+    [SerializeField, Range(1, 8)] private int springLineCount = 3;
+    [SerializeField, Min(0.5f)] private float springLineWidth = 1.8f;
+    [SerializeField, Min(0f)] private float springLineSpacing = 4f;
+    [SerializeField, Min(0f)] private float springWobbleAmplitude = 4f;
+    [SerializeField, Range(1, 32)] private int springWaveCount = 7;
+    [SerializeField, Min(0f)] private float springScribbleAmount = 3f;
+    [SerializeField, Range(16, 256)] private int springSamplesPerLine = 120;
+    [SerializeField, Range(2f, 12f)] private float springSharpness = 5f;
+    [SerializeField] private bool springAnimate = true;
+    [SerializeField, Range(1, 30)] private int springFps = 12;
+    [SerializeField, Min(0f)] private float springFlowSpeed = 0.7f;
+    [SerializeField, Range(0f, 1f)] private float springPulseAmount = 0.14f;
+    [SerializeField, Min(0f)] private float springPulseSpeed = 2.2f;
+
     [Header("全局配置")]
     [Tooltip("教程全局视觉配置；留空时从 Resources/Config/TutorialVisualConfig 读取。")]
     [SerializeField] private TutorialVisualConfig visualConfig;
@@ -23,6 +44,9 @@ public class TutorialCutoutMaskUI : Graphic
     protected readonly List<Rect> holeRects = new List<Rect>();
     private readonly List<float> xEdges = new List<float>();
     private readonly List<Vector2> coveredSpans = new List<Vector2>();
+    private readonly List<Vector2> springPoints = new List<Vector2>(256);
+    private float springTime;
+    private float springRedrawTimer;
 
     protected override void Awake()
     {
@@ -48,6 +72,48 @@ public class TutorialCutoutMaskUI : Graphic
         borderColor = config.BorderColor;
         borderThickness = config.BorderThickness;
         padding = config.HolePadding;
+        borderStyle = config.BorderStyle;
+        springInset = config.SpringInset;
+        springLineCount = config.SpringLineCount;
+        springLineWidth = config.SpringLineWidth;
+        springLineSpacing = config.SpringLineSpacing;
+        springWobbleAmplitude = config.SpringWobbleAmplitude;
+        springWaveCount = config.SpringWaveCount;
+        springScribbleAmount = config.SpringScribbleAmount;
+        springSamplesPerLine = config.SpringSamplesPerLine;
+        springSharpness = config.SpringSharpness;
+        springAnimate = config.SpringAnimate;
+        springFps = config.SpringFps;
+        springFlowSpeed = config.SpringFlowSpeed;
+        springPulseAmount = config.SpringPulseAmount;
+        springPulseSpeed = config.SpringPulseSpeed;
+        SetVerticesDirty();
+    }
+
+    /// <summary>弹簧线的步进重绘：只在启用弹簧线且处于播放时运行（输入拦截器等 DrawBorders=false 的派生类不参与）。</summary>
+    private void Update()
+    {
+        if (!Application.isPlaying || !DrawBorders || borderStyle != TutorialBorderStyle.Spring || !springAnimate)
+            return;
+
+        float deltaTime = Time.unscaledDeltaTime;
+        springTime += deltaTime;
+        if (springTime > 10000f)
+            springTime = 0f;
+
+        float frameInterval = 1f / Mathf.Max(1, springFps);
+        springRedrawTimer += deltaTime;
+        if (springRedrawTimer < frameInterval)
+            return;
+
+        springRedrawTimer %= frameInterval;
+        SetVerticesDirty();
+    }
+
+    /// <summary>调试/预览用：临时切换边框样式（不改配置资产）。</summary>
+    public void SetBorderStyle(TutorialBorderStyle style)
+    {
+        borderStyle = style;
         SetVerticesDirty();
     }
 
@@ -263,6 +329,15 @@ public class TutorialCutoutMaskUI : Graphic
 
     private void AddBorderMesh(VertexHelper vh, Rect hole)
     {
+        if (borderStyle == TutorialBorderStyle.None)
+            return;
+
+        if (borderStyle == TutorialBorderStyle.Spring)
+        {
+            AddSpringBorder(vh, hole);
+            return;
+        }
+
         Color line = borderColor;
         line.a = 1f;
         Color32 lineColor = line;
@@ -271,6 +346,51 @@ public class TutorialCutoutMaskUI : Graphic
         AddQuad(vh, new Rect(hole.xMin - t, hole.yMin - t, hole.width + t * 2f, t), lineColor);
         AddQuad(vh, new Rect(hole.xMin - t, hole.yMin, t, hole.height), lineColor);
         AddQuad(vh, new Rect(hole.xMax, hole.yMin, t, hole.height), lineColor);
+    }
+
+    /// <summary>
+    /// 弹簧线框：以洞边界为基准向内收 springInset，再按 springLineSpacing 排 springLineCount 圈抖动细线。
+    /// 抖动参数与道具框弹簧线一致（见 TutorialVisualConfig）。
+    /// </summary>
+    private void AddSpringBorder(VertexHelper vh, Rect hole)
+    {
+        int count = Mathf.Clamp(springLineCount, 1, 8);
+        float width = Mathf.Max(0.5f, springLineWidth);
+        SpringLineGeometry.Settings settings = CreateSpringSettings();
+
+        bool animating = Application.isPlaying && springAnimate;
+        float time = animating ? springTime : 0f;
+
+        Color line = borderColor;
+        line.a = 1f;
+        Color32 lineColor = line;
+
+        for (int i = 0; i < count; i++)
+        {
+            float offset = -Mathf.Max(0f, springInset) + i * Mathf.Max(0f, springLineSpacing);
+            Rect loopRect = SpringLineGeometry.Expand(hole, offset);
+            if (loopRect.width <= 0f || loopRect.height <= 0f)
+                continue;
+
+            SpringLineGeometry.BuildLoop(loopRect, settings, i, animating, time, springFlowSpeed, springPulseAmount, springPulseSpeed, springPoints);
+            SpringLineGeometry.AddClosedStroke(vh, springPoints, width, lineColor);
+        }
+    }
+
+    private SpringLineGeometry.Settings CreateSpringSettings()
+    {
+        return new SpringLineGeometry.Settings
+        {
+            shape = SpringLineGeometry.Shape.RoundedRect,
+            samplesPerLine = Mathf.Clamp(springSamplesPerLine, SpringLineGeometry.MinSamplesPerLine, SpringLineGeometry.MaxSamplesPerLine),
+            sharpness = Mathf.Clamp(springSharpness, 2f, 12f),
+            wobbleAmplitude = Mathf.Max(0f, springWobbleAmplitude),
+            waveCount = Mathf.Clamp(springWaveCount, 1, 32),
+            scribbleAmount = Mathf.Max(0f, springScribbleAmount),
+            tangentWobble = 0.18f,
+            linePhaseOffset = 0.045f,
+            seed = 17
+        };
     }
 
     protected void AddQuad(VertexHelper vh, Rect rect, Color32 quadColor)

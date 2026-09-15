@@ -1660,7 +1660,6 @@ public class ShopPanelUI : MonoBehaviour
         undoMagicSlotIndex = slotIndex;
         undoPreviousMagic = previousMagic;
         undoAvailable = true;
-        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
     }
 
     private void RegisterUndoMaterialPurchase(ShopOffer offer, int goldBefore, MaterialModel addedMaterial)
@@ -1670,7 +1669,6 @@ public class ShopPanelUI : MonoBehaviour
         undoGold = goldBefore;
         undoAddedMaterial = addedMaterial;
         undoAvailable = true;
-        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
     }
 
     private void RegisterUndoRemoveMaterialPurchase(ShopOffer offer, int goldBefore, MaterialModel removedMaterial)
@@ -1680,7 +1678,6 @@ public class ShopPanelUI : MonoBehaviour
         undoGold = goldBefore;
         undoRemovedMaterial = removedMaterial;
         undoAvailable = true;
-        owner.GetUIManager().TutorialManager?.OnShopPurchaseCompleted();
     }
 
     private void ClearUndoPurchase()

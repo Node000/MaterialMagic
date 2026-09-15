@@ -12,7 +12,6 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private StartConfigSelectionUI startConfigSelectionUI;
     [SerializeField] private AscensionDetailPanelUI ascensionDetailPanelUI;
     [SerializeField] private SaveSlotSelectionPanelUI saveSlotSelectionPanelUI;
-    [SerializeField] private StartTutorialPanelUI tutorialPanelUI;
     [SerializeField] private StartForumPanelUI forumPanelUI;
     [SerializeField] private RunHistoryPanelUI historyPanelUI;
     [SerializeField] private StartMagicCodexPanelUI codexPanelUI;
@@ -183,7 +182,7 @@ public class StartMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if ((confirmingExit || confirmingAbandonRun || settingsPanelUI.IsShowing || (ascensionDetailPanelUI != null && ascensionDetailPanelUI.IsShowing) || (tutorialPanelUI != null && tutorialPanelUI.IsShowing) || (forumPanelUI != null && forumPanelUI.IsShowing) || (historyPanelUI != null && historyPanelUI.IsShowing) || (codexPanelUI != null && codexPanelUI.IsShowing) || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
+        if ((confirmingExit || confirmingAbandonRun || settingsPanelUI.IsShowing || (ascensionDetailPanelUI != null && ascensionDetailPanelUI.IsShowing) || (forumPanelUI != null && forumPanelUI.IsShowing) || (historyPanelUI != null && historyPanelUI.IsShowing) || (codexPanelUI != null && codexPanelUI.IsShowing) || (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.gameObject.activeSelf)) && Input.GetMouseButtonDown(0) && IsOutsideAllPanelsClick())
             HideAllPanels();
     }
 
@@ -197,8 +196,6 @@ public class StartMenuUI : MonoBehaviour
             ascensionDetailPanelUI = GetComponentInChildren<AscensionDetailPanelUI>(true);
         if (saveSlotSelectionPanelUI == null)
             saveSlotSelectionPanelUI = GetComponentInChildren<SaveSlotSelectionPanelUI>(true);
-        if (tutorialPanelUI == null)
-            tutorialPanelUI = GetComponentInChildren<StartTutorialPanelUI>(true);
         if (forumPanelUI == null)
             forumPanelUI = GetComponentInChildren<StartForumPanelUI>(true);
         if (historyPanelUI == null)
@@ -251,7 +248,6 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideForum();
         HideHistory();
         HideCodex();
@@ -323,7 +319,6 @@ public class StartMenuUI : MonoBehaviour
         SetActionButtonsVisible(false);
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideForum();
         HideHistory();
         HideCodex();
@@ -392,18 +387,11 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideForum();
         HideHistory();
         HideCodex();
         saveSlotSelectionPanelUI.Hide();
         settingsPanelUI.Show();
-    }
-
-    private void HideTutorial()
-    {
-        if (tutorialPanelUI != null)
-            tutorialPanelUI.Hide();
     }
 
     private void OpenForum()
@@ -415,7 +403,6 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideHistory();
         HideCodex();
         saveSlotSelectionPanelUI.Hide();
@@ -438,7 +425,6 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideForum();
         HideCodex();
         saveSlotSelectionPanelUI.Hide();
@@ -461,7 +447,6 @@ public class StartMenuUI : MonoBehaviour
         HideAscensionDetail();
         HideExitConfirm();
         HideAbandonRunConfirm();
-        HideTutorial();
         HideForum();
         HideHistory();
         saveSlotSelectionPanelUI.Hide();
@@ -489,7 +474,6 @@ public class StartMenuUI : MonoBehaviour
             HideAbandonRunConfirm();
             saveSlotSelectionPanelUI.Hide();
             settingsPanelUI.Hide();
-            HideTutorial();
             HideForum();
             HideHistory();
             HideCodex();
@@ -518,7 +502,6 @@ public class StartMenuUI : MonoBehaviour
         HideStartConfigSelection();
         HideAscensionDetail();
         HideExitConfirm();
-        HideTutorial();
         HideForum();
         HideHistory();
         HideCodex();
@@ -565,7 +548,6 @@ public class StartMenuUI : MonoBehaviour
         HideStartConfigSelection();
         saveSlotSelectionPanelUI.Hide();
         settingsPanelUI.Hide();
-        HideTutorial();
         HideForum();
         HideHistory();
         HideCodex();
@@ -598,7 +580,6 @@ public class StartMenuUI : MonoBehaviour
                 startConfigSelectionUI.Contains(hit) ||
                 (ascensionDetailPanelUI != null && ascensionDetailPanelUI.Contains(hit)) ||
                 (saveSlotSelectionPanelUI != null && saveSlotSelectionPanelUI.Contains(hit)) ||
-                (tutorialPanelUI != null && tutorialPanelUI.Contains(hit)) ||
                 (forumPanelUI != null && forumPanelUI.Contains(hit)) ||
                 (historyPanelUI != null && historyPanelUI.Contains(hit)) ||
                 (codexPanelUI != null && codexPanelUI.Contains(hit)) ||

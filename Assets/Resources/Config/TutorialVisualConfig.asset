@@ -16,6 +16,21 @@ MonoBehaviour:
   dimAlpha: 0.58
   borderColor: {r: 1, g: 0.84, b: 0.16, a: 1}
   borderThickness: 4
+  borderStyle: 1
+  springInset: 14
+  springLineCount: 3
+  springLineWidth: 1.8
+  springLineSpacing: 4
+  springWobbleAmplitude: 4
+  springWaveCount: 7
+  springScribbleAmount: 3
+  springSamplesPerLine: 120
+  springSharpness: 5
+  springAnimate: 1
+  springFps: 12
+  springFlowSpeed: 0.7
+  springPulseAmount: 0.14
+  springPulseSpeed: 2.2
   holePadding: {x: 18, y: 18}
   promptBoxSize: {x: 620, y: 190}
   sideBoxSize: {x: 480, y: 190}

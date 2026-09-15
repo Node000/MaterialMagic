@@ -36,6 +36,20 @@ public abstract class CastParticleEffectBase : MonoBehaviour
     private readonly List<GameObject> effectObjects = new List<GameObject>();
     private Coroutine routine;
 
+    /// <summary>
+    /// 运行时速度倍率（1 = 保持 Prefab 上的数值）。
+    /// 只影响设置之后启动的爆发：飞行、发射间隔与落点淡出时长都按倍率缩短；
+    /// 每次 PlayBurst 在启动瞬间取一次值，因此同一批投射物不会因为中途改值而速度不一致。
+    /// 不参与 BurstDuration / SingleProjectileImpactDelay 的换算（这两个仍表示 Prefab 原始时长）。
+    /// </summary>
+    private float speedMultiplier = 1f;
+
+    public float SpeedMultiplier
+    {
+        get => speedMultiplier;
+        set => speedMultiplier = Mathf.Max(0.01f, value);
+    }
+
     public float BurstDuration => travelDuration + Mathf.Max(0, projectileCount - 1) * launchInterval + ImpactFadeDuration;
     public float SingleProjectileImpactDelay => travelDuration;
 
@@ -90,7 +104,9 @@ public abstract class CastParticleEffectBase : MonoBehaviour
             return;
 
         projectileCount = Mathf.Max(1, count);
-        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize), color, onImpact));
+        // 速度倍率在启动瞬间锁定：整批投射物共用同一个值。
+        float speedScale = speedMultiplier;
+        StartCoroutine(PlayBurstRoutine(GetLocalCenter(from), GetLocalCenter(to), projectileCount, projectileSprite, Mathf.Max(1f, visualSize), color, onImpact, speedScale));
     }
 
     protected virtual void GetCastVisual(MagicModel magic, out Sprite icon, out Color color, out float visualSize)
@@ -131,35 +147,35 @@ public abstract class CastParticleEffectBase : MonoBehaviour
         {
             for (int i = 0; i < projectileCount; i++)
             {
-                LaunchProjectile(i);
-                yield return new WaitForSeconds(launchInterval);
+                LaunchProjectile(i, speedMultiplier);
+                yield return new WaitForSeconds(launchInterval / speedMultiplier);
             }
 
-            yield return new WaitForSeconds(travelDuration + loopDelay);
+            yield return new WaitForSeconds((travelDuration + loopDelay) / speedMultiplier);
         }
         while (loop);
 
         routine = null;
     }
 
-    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count, Sprite projectileSprite, float visualSize, Color color, Action onImpact)
+    private IEnumerator PlayBurstRoutine(Vector2 start, Vector2 end, int count, Sprite projectileSprite, float visualSize, Color color, Action onImpact, float speedScale)
     {
         for (int i = 0; i < count; i++)
         {
-            LaunchProjectile(start, end, i, count, projectileSprite, color, visualSize, i == count - 1 ? onImpact : null);
-            yield return new WaitForSeconds(launchInterval);
+            LaunchProjectile(start, end, i, count, projectileSprite, color, visualSize, i == count - 1 ? onImpact : null, speedScale);
+            yield return new WaitForSeconds(launchInterval / Mathf.Max(0.01f, speedScale));
         }
     }
 
-    private void LaunchProjectile(int index)
+    private void LaunchProjectile(int index, float speedScale)
     {
         if (startPoint == null || targetPoint == null)
             return;
 
-        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount, null, projectileColor, projectileSize, null);
+        LaunchProjectile(startPoint.anchoredPosition, targetPoint.anchoredPosition, index, projectileCount, null, projectileColor, projectileSize, null, speedScale);
     }
 
-    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, Color color, float visualSize, Action onImpact)
+    private void LaunchProjectile(Vector2 startCenter, Vector2 endCenter, int index, int count, Sprite projectileSprite, Color color, float visualSize, Action onImpact, float speedScale)
     {
         Color trailColor = GetTrailColor(color);
         Color impactColor = GetImpactColor(color);
@@ -195,10 +211,10 @@ public abstract class CastParticleEffectBase : MonoBehaviour
             }
 
             lastPosition = position;
-        }, 1f, travelDuration).SetEase(Ease.InOutSine).SetTarget(this).OnComplete(() =>
+        }, 1f, travelDuration / Mathf.Max(0.01f, speedScale)).SetEase(Ease.InOutSine).SetTarget(this).OnComplete(() =>
         {
             onImpact?.Invoke();
-            SpawnImpact(end, projectileSprite, visualSize, impactColor);
+            SpawnImpact(end, projectileSprite, visualSize, impactColor, speedScale);
             effectObjects.Remove(projectile.gameObject);
             effectObjects.Remove(trail.gameObject);
             Destroy(projectile.gameObject);
@@ -249,16 +265,17 @@ public abstract class CastParticleEffectBase : MonoBehaviour
         return rect;
     }
 
-    private void SpawnImpact(Vector2 position, Sprite projectileSprite, float visualSize, Color color)
+    private void SpawnImpact(Vector2 position, Sprite projectileSprite, float visualSize, Color color, float speedScale)
     {
         RectTransform impact = CreateImage("ArcImpact", visualSize * 1.15f, color, projectileSprite);
         impact.anchoredPosition = position;
 
+        float fadeDuration = ImpactFadeDuration / Mathf.Max(0.01f, speedScale);
         CanvasGroup canvasGroup = impact.gameObject.AddComponent<CanvasGroup>();
         float impactScale = projectileSprite != null ? 1.45f : 2.8f;
         Sequence sequence = DOTween.Sequence();
-        sequence.Join(impact.DOScale(Vector3.one * impactScale, ImpactFadeDuration).SetEase(Ease.OutCubic));
-        sequence.Join(canvasGroup.DOFade(0f, ImpactFadeDuration));
+        sequence.Join(impact.DOScale(Vector3.one * impactScale, fadeDuration).SetEase(Ease.OutCubic));
+        sequence.Join(canvasGroup.DOFade(0f, fadeDuration));
         sequence.SetTarget(this);
         sequence.OnComplete(() =>
         {

@@ -115,6 +115,9 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         transform.localEulerAngles = originalLocalEulerAngles;
     }
 
+    /// <summary>悬停/点击动画当前的基准缩放（圆弧布局排布后由 MagicBookCurveLayout 同步）。</summary>
+    public Vector3 BaseScale => originalScale;
+
     public void SetBaseScale(Vector3 scale, bool applyImmediately)
     {
         SetBaseScale(scale, applyImmediately, false);

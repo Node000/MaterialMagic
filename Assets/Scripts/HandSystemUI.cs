@@ -243,6 +243,26 @@ public class HandSystemUI : MonoBehaviour
 	[SerializeField]
 	private float postMagicResolveDelay = 0.11f;
 
+	[Header("结算演出速度")]
+	/// <summary>
+	/// 结算段（CastRange 线框框选 + 卡牌移动）的基础速度倍率：1 = 保持 layoutDuration 原值，2 = 时长减半。
+	/// 只作用于线框框选/移动与卡牌移动，不改变读牌停顿、飘字、死亡演出与粒子等待。
+	/// </summary>
+	[SerializeField]
+	private float resolveMotionSpeedMultiplier = 2f;
+
+	/// <summary>道具飞行（施法弹道）的基础速度倍率：1.5 = 飞行时长缩短 1/3。</summary>
+	[SerializeField]
+	private float castProjectileSpeedMultiplier = 1.5f;
+
+	/// <summary>每层连击在“新基础速度”上额外追加的速度比例：0.1 = 每层 +10%（线性叠加在新基础速度上）。</summary>
+	[SerializeField]
+	private float comboResolveSpeedStep = 0.1f;
+
+	/// <summary>连击追加速度是否同样作用于道具飞行（法术弹道）。</summary>
+	[SerializeField]
+	private bool comboResolveSpeedAffectsProjectile = true;
+
 	[SerializeField]
 	private float magicDamageHitInterval = 0.15f;
 
@@ -637,7 +657,54 @@ public class HandSystemUI : MonoBehaviour
 
     private float runStartRealtime;
 
-	private TutorialManagerUI TutorialManager => GetUIManager().TutorialManager;
+	private TutorialManagerUI tutorialManagerCache;
+
+	/// <summary>
+	/// 教程管理器（惰性获取）。首次拿到实例时订阅 <see cref="TutorialManagerUI.StepChanged"/>，
+	/// 以便教程页切换时同步“换牌/出手”按钮的可用性（出牌页禁用换牌、换牌页禁用出手）。
+	/// </summary>
+	private TutorialManagerUI TutorialManager
+	{
+		get
+		{
+			TutorialManagerUI manager = GetUIManager().TutorialManager;
+			if (manager != tutorialManagerCache)
+			{
+				if (tutorialManagerCache != null)
+					tutorialManagerCache.StepChanged -= OnTutorialStepChanged;
+
+				tutorialManagerCache = manager;
+
+				if (manager != null)
+					manager.StepChanged += OnTutorialStepChanged;
+			}
+
+			return manager;
+		}
+	}
+
+	/// <summary>当前教程是否允许点击“换牌”按钮（出牌页 `Battle_Play` 会临时禁用）。</summary>
+	private bool TutorialAllowsRefreshButton => TutorialManager == null || TutorialManager.AllowsRefreshButton;
+
+	/// <summary>当前教程是否允许点击“出手”按钮（换牌页 `Battle_Refresh` 会临时禁用）。</summary>
+	private bool TutorialAllowsEndTurnButton => TutorialManager == null || TutorialManager.AllowsEndTurnButton;
+
+	private void OnTutorialStepChanged()
+	{
+		RefreshTutorialActionButtons();
+	}
+
+	/// <summary>教程页切换后同步两个动作按钮的可用性（只改按钮本身，不重算 buttonsInteractable，避免打断 busy/演出状态）。</summary>
+	private void RefreshTutorialActionButtons()
+	{
+		if ((Object)refreshButton != (Object)null)
+			refreshButton.interactable = buttonsInteractable && CanUseRefreshCardInput() && GetRemainingRefreshChanceCount() > 0 && TutorialAllowsRefreshButton;
+
+		if ((Object)endTurnButton != (Object)null)
+			endTurnButton.interactable = buttonsInteractable && TutorialAllowsEndTurnButton;
+
+		RefreshRefreshChanceUI();
+	}
 
 	private const int RestDefaultHealResultId = 300;
 
@@ -1763,7 +1830,6 @@ public class HandSystemUI : MonoBehaviour
 
 		busy = false;
 		SetButtonsInteractable(interactable: true);
-		TutorialManager?.OnRestPanelShown();
 	}
 
 	private void StartRewardLevel(LevelData level)
@@ -2486,17 +2552,6 @@ public class HandSystemUI : MonoBehaviour
 				candidateLevels = GetBattleLevels();
 			if (candidateLevels.Count == 0)
 				return;
-			if (i == 0 && TutorialManager != null && TutorialManager.ShouldForceFirstNodeBattles())
-			{
-				List<LevelData> battleLevels = GetBattleLevels();
-				if (battleLevels.Count == 0)
-					return;
-                mapNodeModel.leftLevel = battleLevels[NextRunRandomInt(0, battleLevels.Count)];
-                mapNodeModel.rightLevel = battleLevels[NextRunRandomInt(0, battleLevels.Count)];
-                ApplyHiddenRolls(chapter, mapNodeModel);
-				mapNodes.Add(mapNodeModel);
-				continue;
-			}
 			LevelData fixedLevel = GetFixedLevelForProgress(chapter, progress);
 			if (fixedLevel != null)
 			{
@@ -3272,6 +3327,9 @@ public class HandSystemUI : MonoBehaviour
         PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
         if (saveData == null)
             DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
+        // 教程开局固定 10 金币（覆盖“均衡”配置的初始值，不走进阶金币倍率，也不影响普通新局）。
+        if (saveData == null && startingTutorialRun)
+            playerStatus.SetStartingGold(TutorialManagerUI.TutorialStartGold);
 			playerState = playerStatus;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
@@ -3426,6 +3484,11 @@ public class HandSystemUI : MonoBehaviour
 		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ea: Expected O, but got Unknown
         SaveRunProgress();
+        if (tutorialManagerCache != null)
+		{
+			tutorialManagerCache.StepChanged -= OnTutorialStepChanged;
+			tutorialManagerCache = null;
+		}
         if (playerState != null)
         {
             playerState.BuffAdded -= OnPlayerBuffAdded;
@@ -4037,7 +4100,7 @@ public bool IsCardDragActive => cardDragActive;
 			views.Add(cardViews[i]);
 
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-		playerState.EndTurn(removedTemporaryCards);
+		playerState.ForceDiscardAll(removedTemporaryCards);
 		RefreshStaticUI();
 		bool returnDone = false;
 		AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -4320,7 +4383,7 @@ public bool IsCardDragActive => cardDragActive;
         for (int i = 0; i < cardViews.Count; i++)
             views.Add(cardViews[i]);
         List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-        playerState.EndTurn(removedTemporaryCards);
+        playerState.ForceDiscardAll(removedTemporaryCards);
         RefreshStaticUI();
         bool returnDone = false;
         AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -4369,7 +4432,7 @@ public bool IsCardDragActive => cardDragActive;
             views.Add(cardViews[i]);
 
         List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-        playerState.EndTurn(removedTemporaryCards);
+        playerState.ForceDiscardAll(removedTemporaryCards);
         RefreshStaticUI();
         bool returnDone = false;
         AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -4437,7 +4500,7 @@ public bool IsCardDragActive => cardDragActive;
 			list.Add(cardViews[j]);
 
 		List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-		playerState.EndTurn(removedTemporaryCards);
+		playerState.ForceDiscardAll(removedTemporaryCards);
 		RefreshStaticUI();
 		bool returnDone = false;
 		AnimateReturningViews(list, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -5038,7 +5101,7 @@ public bool IsCardDragActive => cardDragActive;
             views.Add(cardViews[i]);
 
         List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-        playerState.EndTurn(removedTemporaryCards);
+        playerState.ForceDiscardAll(removedTemporaryCards);
         RefreshStaticUI();
         bool returnDone = false;
         AnimateReturningViews(views, removedTemporaryCards, GetDiscardPileArea(), (TweenCallback)delegate
@@ -5102,6 +5165,25 @@ public bool IsCardDragActive => cardDragActive;
 		FinishReward();
 	}
 
+	/// <summary>当前连击层数（连续施法计数）：0 = 本次结算中尚未施法；结算结束后由 ResetContinuousCastCounterUI 清零。</summary>
+	private int CurrentComboLayerCount => battleManager != null ? Mathf.Max(0, battleManager.ContinuousCastCount) : 0;
+
+	/// <summary>连击追加的速度倍率：1 + comboResolveSpeedStep × 连击层数（叠加在“新基础速度”上，不是对上一层再叠乘）。</summary>
+	private float ComboResolveSpeedFactor => 1f + Mathf.Max(0f, comboResolveSpeedStep) * CurrentComboLayerCount;
+
+	/// <summary>结算段（线框框选 + 移动）当前速度倍率。</summary>
+	private float ResolveMotionSpeedScale => Mathf.Max(0.01f, resolveMotionSpeedMultiplier) * ComboResolveSpeedFactor;
+
+	/// <summary>道具飞行（法术弹道）当前速度倍率。</summary>
+	private float CastProjectileSpeedScale => Mathf.Max(0.01f, castProjectileSpeedMultiplier)
+		* (comboResolveSpeedAffectsProjectile ? ComboResolveSpeedFactor : 1f);
+
+	/// <summary>结算段时长换算：倍率越高时长越短（2 = 减半）。</summary>
+	private float ResolveMotionDuration(float baseDuration)
+	{
+		return Mathf.Max(0.001f, baseDuration / ResolveMotionSpeedScale);
+	}
+
 	private IEnumerator PlayResolveAnimation(List<MaterialModel> cards)
 	{
 		if (GetUIManager().PlayArea == null || GetUIManager().PlayArea.ResolveIndicator == null)
@@ -5122,12 +5204,15 @@ public bool IsCardDragActive => cardDragActive;
 			if (card != null)
 			{
 				ResetMagicHighlights();
-					MoveIndicatorToReadStep(cards, step, sequenceIndex == 0 && stepIndex == 0);
-				yield return (object)new WaitForSeconds(layoutDuration * 0.35f);
+									MoveIndicatorToReadStep(cards, step, sequenceIndex == 0 && stepIndex == 0);
+								// 线框框选（CastRange）与其等待同步按结算速度换算：速度翻倍 = 框选移动与等待都减半。
+								yield return (object)new WaitForSeconds(ResolveMotionDuration(layoutDuration) * 0.35f);
 				HandCardView handCardView = FindView(card);
 				if ((Object)handCardView != (Object)null)
 				{
-							TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
+							// 读牌的手牌位移反馈也按结算速度换算，否则固定 0.22s 的位移会跟不上加速后的读牌节奏。
+							float cardPunchDuration = ResolveMotionDuration(materialCardPunchDuration);
+							TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, cardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
 
 				}
                 GameLog.Data($"Resolve arrow from play zone material={card.material} cardIndex={step.SourceCardIndex} step={stepIndex}");
@@ -5163,15 +5248,16 @@ public bool IsCardDragActive => cardDragActive;
 						ResetMagicHighlights();
 						MagicItemView matchedMagicView = castableMagicViews[matchedIndex];
 						int matchLength = GetRecipeLength(matchedMagicView.Magic);
-						MoveIndicatorToTokenRange(cards, resolveSequence.Tokens, tokenStart, matchLength, false);
-						yield return (object)new WaitForSeconds(layoutDuration * 0.65f);
+							MoveIndicatorToTokenRange(cards, resolveSequence.Tokens, tokenStart, matchLength, false);
+							yield return (object)new WaitForSeconds(ResolveMotionDuration(layoutDuration) * 0.65f);
 						for (int i = 0; i < matchLength; i++)
 						{
 							ArrowReadToken token = resolveSequence.Tokens[tokenStart + i];
 							HandCardView handCardView = FindView(token.SourceCard);
 							if ((Object)handCardView != (Object)null)
 							{
-								TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, materialCardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
+								float cardPunchDuration = ResolveMotionDuration(materialCardPunchDuration);
+								TweenSettingsExtensions.SetTarget<Tweener>(ShortcutExtensions.DOPunchPosition((Transform)handCardView.RectTransform, Vector3.up * materialCardPunchStrength, cardPunchDuration, materialCardPunchVibrato, materialCardPunchElasticity, false), (object)handCardView.RectTransform);
 								PlayMaterialFillParticle(handCardView, matchedMagicView, token.DisplayMaterial);
 							}
 						}
@@ -5769,10 +5855,12 @@ public bool IsCardDragActive => cardDragActive;
         Sequence sequence = DOTween.Sequence();
         if (delay > 0f)
             sequence.AppendInterval(delay);
-        sequence.Append(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, layoutDuration, false).SetEase(layoutEase));
-        sequence.Join(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, layoutDuration, (RotateMode)0).SetEase(layoutEase));
+        // 结算段“移动”速度：卡牌位移/旋转/入场缩放的时长同样按结算速度倍率换算（翻倍 = 减半）。
+        float moveDuration = ResolveMotionDuration(layoutDuration);
+        sequence.Append(ShortcutExtensions.DOLocalMove((Transform)view.RectTransform, targetLocalPosition, moveDuration, false).SetEase(layoutEase));
+        sequence.Join(ShortcutExtensions.DOLocalRotate((Transform)view.RectTransform, Vector3.zero, moveDuration, (RotateMode)0).SetEase(layoutEase));
         if (restoreFromZero)
-            sequence.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, baseScale, layoutDuration).SetEase(layoutEase));
+            sequence.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, baseScale, moveDuration).SetEase(layoutEase));
         TweenSettingsExtensions.SetTarget<Sequence>(sequence, (object)view.RectTransform);
 	}
 
@@ -6011,7 +6099,7 @@ public bool IsCardDragActive => cardDragActive;
         if ((Object)endTurnButton == (Object)null)
             return;
 
-        endTurnButton.interactable = buttonsInteractable;
+        endTurnButton.interactable = buttonsInteractable && TutorialAllowsEndTurnButton;
         if (!endTurnButton.interactable && (Object)playerCastAnimator != (Object)null)
             playerCastAnimator.ClearEndTurnHover();
     }
@@ -7099,7 +7187,27 @@ public bool IsCardDragActive => cardDragActive;
 		pendingCastShakeCount = 0;
         PlayPlayerCastSwingSfx(shakeCount);
 		PlayCastScreenShake(shakeCount);
+		// 道具飞行（法术弹道）：启动前把当前速度倍率交给发射器（投射物飞行/拖尾/落点淡出按倍率缩短），
+		// 启动后立即还原，避免影响同一发射器上后续的素材填充粒子。
+		ApplyCastProjectileSpeed();
 		PlayPendingCastParticle();
+		RestoreCastProjectileSpeed();
+    }
+
+	/// <summary>把当前的道具飞行速度倍率写到施法粒子发射器上（仅支持 CastParticleEffectBase 系实现）。</summary>
+	private void ApplyCastProjectileSpeed()
+	{
+		CastParticleEffectBase castEffect = playerCastEffect as CastParticleEffectBase;
+		if (castEffect != null)
+			castEffect.SpeedMultiplier = CastProjectileSpeedScale;
+	}
+
+	/// <summary>还原发射器速度倍率到 Prefab 原始速度（1）。</summary>
+	private void RestoreCastProjectileSpeed()
+	{
+		CastParticleEffectBase castEffect = playerCastEffect as CastParticleEffectBase;
+		if (castEffect != null)
+			castEffect.SpeedMultiplier = 1f;
 	}
 
     private void ArmCastReleaseFallback(float releaseWait)
@@ -7271,8 +7379,8 @@ public bool IsCardDragActive => cardDragActive;
                 if (castParticleTargetBuffer.Count > 0)
                 {
                     QueueCastParticles(magicView.Magic, castParticleTargetBuffer, onImpact);
-                    pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
-                    impactWait = GetCastParticleImpactStartWait();
+					pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+					impactWait = GetCastParticleImpactStartWait() / CastProjectileSpeedScale;
                 }
             }
             else
@@ -7281,8 +7389,8 @@ public bool IsCardDragActive => cardDragActive;
 				if ((Object)magicEffectTarget != (Object)null)
                 {
 					QueueCastParticle(magicView.Magic, magicEffectTarget, onImpact);
-                    pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
-                    impactWait = GetCastParticleImpactStartWait();
+					pendingCastShakeCount = battleManager != null ? battleManager.ContinuousCastCount + 1 : 1;
+					impactWait = GetCastParticleImpactStartWait() / CastProjectileSpeedScale;
                 }
             }
         }
@@ -7388,8 +7496,10 @@ public bool IsCardDragActive => cardDragActive;
         pendingBattleRewardShop = true;
         SaveRunProgress();
 
-        // 结算基础金币改为战斗结束后自动获取，不再由玩家点击领取。
-        PendingBattleGoldReward = RollBattleGoldReward();
+        // 结算基础金币改为战斗结束后自动获取（统一固定值），不再由玩家点击领取。
+        // 改造前按关卡池/精英/Boss 变化的基础金币数值，改为结算“更多金币”选项的追加量。
+        PendingBattleGoldChoiceReward = RollBattleGoldReward();
+        PendingBattleGoldReward = RollBaseBattleGoldReward();
         if (PendingBattleGoldReward > 0)
         {
             yield return GainGoldAnimated(PendingBattleGoldReward, GetBattleRewardGoldSourceRect(), false);
@@ -7710,10 +7820,22 @@ public bool IsCardDragActive => cardDragActive;
         return options;
     }
 
-    /// <summary>结算面板展示的“自动获取”金币量（与面板上“更多金币”追加量一致）。</summary>
+    /// <summary>战斗结束后自动发放的基础金币（统一固定值，不再随关卡池/精英/Boss 变化）。</summary>
     public int PendingBattleGoldReward { get; private set; }
 
+    /// <summary>结算面板“更多金币”选项的追加量：沿用改造前的战斗结算金币奖励数值。</summary>
+    public int PendingBattleGoldChoiceReward { get; private set; }
+
+    /// <summary>统一的基础金币奖励：战斗结束后固定自动发放 2 金币。</summary>
+    private const int BaseBattleGoldReward = 2;
+
     private const int FallbackBattleGoldReward = 2;
+
+    /// <summary>自动发放的基础金币仍走进阶金币倍率管线（当前 0.8 / 1.25 倍率下取整后仍为 2）。</summary>
+    private static int RollBaseBattleGoldReward()
+    {
+        return DifficultyUpgradeSystem.ModifyGoldGain(BaseBattleGoldReward);
+    }
 
     public int RollBattleGoldReward()
     {
@@ -8606,7 +8728,6 @@ public bool IsCardDragActive => cardDragActive;
 		playerState.SetMagicAtSlot(MagicFactory.Create(rewardMagic, slotIndex), slotIndex);
 		CreateMagicViews();
 		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
-		TutorialManager?.OnRewardMagicEquipped(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), currentLevel);
 	}
 
     private bool TryUndoRewardMagicClaim()
@@ -8825,6 +8946,9 @@ public bool IsCardDragActive => cardDragActive;
         pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
         pendingMaterialModifier = null;
+        // 边界保险：离开关卡节点（战斗结算/事件/休息/奖励/商店）时强制清空手牌与出牌区，
+        // 避免带【保留】的箭头残留到地图阶段（地图方向卡与战斗手牌区共用 HandArea）。
+        playerState.ForceDiscardAll();
         playerState.ClearCombatState();
         ClearOrphanedCardViews();
 		GetUIManager().HideRewardPanel();
@@ -10412,7 +10536,7 @@ public bool IsCardDragActive => cardDragActive;
 
 		HandCardView first = FindView(cards[startIndex]);
 		HandCardView last = FindView(cards[startIndex + count - 1]);
-		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, layoutDuration, layoutEase, instant);
+		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, ResolveMotionDuration(layoutDuration), layoutEase, instant);
 	}
 
 	private void MoveIndicatorToReadStep(List<MaterialModel> cards, ArrowReadStep step, bool instant)
@@ -10432,7 +10556,7 @@ public bool IsCardDragActive => cardDragActive;
 		ArrowReadToken lastToken = tokens[startIndex + count - 1];
 		HandCardView first = FindView(firstToken?.SourceCard);
 		HandCardView last = FindView(lastToken?.SourceCard);
-		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, layoutDuration, layoutEase, instant);
+		GetUIManager().PlayArea?.MoveIndicatorToCardRange(first?.RectTransform, last?.RectTransform, playArea, ResolveMotionDuration(layoutDuration), layoutEase, instant);
 	}
 
 	private void MoveIndicatorToSourceCard(List<MaterialModel> cards, int sourceCardIndex, MaterialModel sourceCard, bool instant)
@@ -10442,7 +10566,7 @@ public bool IsCardDragActive => cardDragActive;
 		else
 		{
 			HandCardView view = FindView(sourceCard);
-			GetUIManager().PlayArea?.MoveIndicatorToCardRange(view?.RectTransform, view?.RectTransform, playArea, layoutDuration, layoutEase, instant);
+			GetUIManager().PlayArea?.MoveIndicatorToCardRange(view?.RectTransform, view?.RectTransform, playArea, ResolveMotionDuration(layoutDuration), layoutEase, instant);
 		}
 	}
 
@@ -10961,10 +11085,12 @@ public bool IsCardDragActive => cardDragActive;
 		Sequence obj = DOTween.Sequence();
 		if (delay > 0f)
 			obj.AppendInterval(delay);
-		obj.Append(ShortcutExtensions.DOMove((Transform)view.RectTransform, targetWorldPosition, layoutDuration, false).SetEase(layoutEase));
-		obj.Join(ShortcutExtensions.DORotate((Transform)view.RectTransform, new Vector3(0f, 0f, targetZRotation), layoutDuration, (RotateMode)0).SetEase(layoutEase));
+		// 结算段“移动”速度：卡牌飞入牌堆/区域的时长同样按结算速度倍率换算。
+		float moveDuration = ResolveMotionDuration(layoutDuration);
+		obj.Append(ShortcutExtensions.DOMove((Transform)view.RectTransform, targetWorldPosition, moveDuration, false).SetEase(layoutEase));
+		obj.Join(ShortcutExtensions.DORotate((Transform)view.RectTransform, new Vector3(0f, 0f, targetZRotation), moveDuration, (RotateMode)0).SetEase(layoutEase));
 		if (shrinkToZero)
-			obj.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, Vector3.zero, layoutDuration).SetEase(layoutEase));
+			obj.Join(ShortcutExtensions.DOScale((Transform)view.RectTransform, Vector3.zero, moveDuration).SetEase(layoutEase));
 		TweenSettingsExtensions.SetTarget<Sequence>(obj, (object)this);
 		TweenSettingsExtensions.OnComplete<Sequence>(obj, onComplete);
 	}
@@ -10979,7 +11105,7 @@ public bool IsCardDragActive => cardDragActive;
 			if ((Object)refreshButton != (Object)null)
 			{
 					bool canRefresh = GetRemainingRefreshChanceCount() > 0;
-				refreshButton.interactable = interactable && CanUseRefreshCardInput() && canRefresh;
+				refreshButton.interactable = interactable && CanUseRefreshCardInput() && canRefresh && TutorialAllowsRefreshButton;
 			}
 	        RefreshRefreshChanceUI();
 	        RefreshEndTurnButtonInteractable(HasSelectedArrowCard());

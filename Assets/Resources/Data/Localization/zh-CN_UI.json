@@ -113,18 +113,6 @@
       "text": "{0}/{1}"
     },
     {
-      "key": "ui.start_menu.start_tutorial",
-      "text": "开始教程"
-    },
-    {
-      "key": "ui.start_menu.start_tutorial_with_config",
-      "text": "开始教程！"
-    },
-    {
-      "key": "ui.start_menu.skip_tutorial",
-      "text": "跳过教程"
-    },
-    {
       "key": "ui.magic_modifier.panel.material_title",
       "text": "选择箭头附魔"
     },
@@ -463,14 +451,6 @@
     {
       "key": "ui.run_history.build.arrow_count_suffix",
       "text": "张"
-    },
-    {
-      "key": "ui.start_tutorial.title",
-      "text": "新手教程"
-    },
-    {
-      "key": "ui.start_tutorial.prompt",
-      "text": "最重要的东西：\n\n点击箭头，选中，然后调整顺序并打出。\n\n通过打出不同箭头形成组合，将身边的道具狠狠地挥到敌人脸上！\n\n遇到事件也靠打出上下左右解决！\n\n嗯……对！就是这样！\n\n点击弹窗的右上角关闭教程，\n\n然后开始游戏吧！"
     },
     {
       "key": "ui.forum.title",
@@ -862,15 +842,23 @@
     },
     {
       "key": "ui.event.effect.increase_draw_count_per_turn",
-      "text": "之后每回合抽牌数+1"
+      "text": "每回合抽牌数+1"
     },
     {
       "key": "ui.event.effect.remove_material_choice",
-      "text": "删除{0}张箭头"
+      "text": "选择并删除{0}张箭头"
     },
     {
       "key": "ui.event.effect.gain_material_count",
       "text": "获得{0}张箭头"
+    },
+    {
+      "key": "ui.event.effect.material_arrow_name",
+      "text": "{0}箭头"
+    },
+    {
+      "key": "ui.event.effect.gain_material_direction",
+      "text": "获得{0}张{1}"
     },
     {
       "key": "ui.event.effect.apply_material_modifier",
@@ -886,7 +874,7 @@
     },
     {
       "key": "ui.event.effect.escalate_per_use_suffix",
-      "text": "，每次+{0}"
+      "text": "（每次重复+{0}）"
     },
     {
       "key": "ui.event.effect.gain_gold",
@@ -894,11 +882,11 @@
     },
     {
       "key": "ui.event.effect.gain_magic",
-      "text": "获得一次道具奖励"
+      "text": "选择并获得1件道具"
     },
     {
       "key": "ui.event.effect.gain_magic_modifier",
-      "text": "获得一次道具强化"
+      "text": "选择并获得1次道具强化"
     },
     {
       "key": "ui.event.effect.increase_max_health",
@@ -907,6 +895,10 @@
     {
       "key": "ui.event.effect.gain_random_material",
       "text": "获得{0}张随机箭头"
+    },
+    {
+      "key": "ui.event.effect.random_direction_material",
+      "text": "随机方向箭头"
     },
     {
       "key": "ui.event.effect.gain_same_random_materials",
@@ -922,7 +914,7 @@
     },
     {
       "key": "ui.event.effect.gain_material_modifier_to_choice",
-      "text": "选择{0}张箭头获得{1}"
+      "text": "选择{0}张箭头获得【{1}】"
     },
     {
       "key": "ui.event.effect.spend_all_gold",
@@ -930,7 +922,7 @@
     },
     {
       "key": "ui.event.effect.randomize_deck_basic_materials",
-      "text": "将牌库中的基础箭头随机重置"
+      "text": "将牌库中的基础箭头随机重置（保留附魔）"
     },
     {
       "key": "ui.event.effect.gain_random_syntax_material",
@@ -938,11 +930,11 @@
     },
     {
       "key": "ui.event.effect.gain_material_with_modifier",
-      "text": "获得{0}张带有{1}的箭头"
+      "text": "获得{0}张{1}，并使其获得【{2}】"
     },
     {
       "key": "ui.event.effect.gain_magic_modifier_specified",
-      "text": "指定一件道具获得{0}"
+      "text": "选择1件道具获得【{0}】"
     },
     {
       "key": "ui.event.effect.increase_play_limit",
@@ -958,19 +950,19 @@
     },
     {
       "key": "ui.event.effect.deck_arrows_modifier_all",
-      "text": "牌组中所有箭头获得{0}"
+      "text": "使牌组中所有箭头获得【{0}】"
     },
     {
       "key": "ui.event.effect.deck_arrows_modifier_count",
-      "text": "牌组中随机{0}张箭头获得{1}"
+      "text": "使牌组中随机{0}张箭头获得【{1}】"
     },
     {
       "key": "ui.event.effect.deck_arrows_modifier_percent",
-      "text": "牌组中随机{0}%的箭头获得{1}"
+      "text": "使牌组中随机{0}%的箭头获得【{1}】"
     },
     {
       "key": "ui.event.effect.randomize_random_materials",
-      "text": "随机变化{0}张箭头"
+      "text": "选择并变化{0}张箭头"
     },
     {
       "key": "ui.event.effect.gain_magic_by_id",

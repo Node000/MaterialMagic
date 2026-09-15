@@ -120,6 +120,18 @@ public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
             CreateItem(orderedEntries[i].Material, orderedEntries[i].Selectable, itemCount++);
 
         SetEmptyActive(itemCount == 0);
+
+        // Content 若是横向拉伸锚点（anchorMin.x != anchorMax.x），下面设置的 sizeDelta.x 会被叠加到父级宽度上，
+        // 实际宽度变成“父宽 + 布局宽度”；而箭头布局始终以 Content 左边缘为 x = 0，整行就会偏到左侧并溢出容器。
+        // 这里把拉伸锚点收敛成居中固定锚点：实际宽度等于布局宽度，行内容在所属容器内居中。
+        if (!Mathf.Approximately(contentRoot.anchorMin.x, contentRoot.anchorMax.x))
+        {
+            contentRoot.anchorMin = new Vector2(0.5f, contentRoot.anchorMin.y);
+            contentRoot.anchorMax = new Vector2(0.5f, contentRoot.anchorMax.y);
+            contentRoot.pivot = new Vector2(0.5f, contentRoot.pivot.y);
+            contentRoot.anchoredPosition = new Vector2(0f, contentRoot.anchoredPosition.y);
+        }
+
         contentRoot.sizeDelta = new Vector2(GetLayoutWidth(), contentRoot.sizeDelta.y);
         ApplyLayout(true);
     }

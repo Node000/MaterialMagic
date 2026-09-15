@@ -85,7 +85,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         pointerHovering = false;
         ReleaseHoverRaise();
-        pulseTween?.Kill(false);
+        // Kill(false) 会把缩放停在放大过程的中间值上，所以中断 Pulse 时必须复位到槽位基准缩放。
+        if (pulseTween != null)
+        {
+            pulseTween.Kill(false);
+            pulseTween = null;
+            transform.localScale = GetPulseBaseScale();
+        }
         modifierMarkerTween?.Kill(false);
         HideLocalDetailTooltip(true);
         HideSellPopupImmediate();
@@ -319,11 +325,36 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         recipeBlocks[slotIndex].transform.DOPunchScale(Vector3.one * recipeHighlightPunchScale, recipeHighlightDuration, recipeHighlightVibrato, recipeHighlightElasticity).SetTarget(this);
     }
 
+    /// <summary>
+    /// 打出素材触发本道具时的“放大”反馈。
+    /// 基准缩放不能写死 Vector3.one：道具栏的圆弧布局（MagicBookCurveLayout）会按槽位位置把槽根设成 0.88~1，
+    /// 若从这里复位成 1，两端槽位在反馈结束后会停在放大状态。
+    /// 基准缩放以 JuicyMotion 同步的圆弧基准值为准（布局每次排布都会通过 SetBaseTransform 同步它），
+    /// 并在 Punch 结束时显式复位，保证“放大”一定回到槽位自身的缩放。
+    /// </summary>
     public void PulseCast()
     {
         pulseTween?.Kill(false);
-        transform.localScale = Vector3.one;
-        pulseTween = transform.DOPunchScale(Vector3.one * castPulseScale, castPulseDuration, castPulseVibrato, castPulseElasticity).SetTarget(this);
+        Vector3 baseScale = GetPulseBaseScale();
+        transform.localScale = baseScale;
+        pulseTween = transform.DOPunchScale(baseScale * castPulseScale, castPulseDuration, castPulseVibrato, castPulseElasticity)
+            .SetTarget(this)
+            .OnComplete(() => transform.localScale = baseScale);
+    }
+
+    /// <summary>Pulse 的基准缩放：优先取 JuicyMotion 里由圆弧布局同步的基准值，取不到才回退当前缩放。</summary>
+    private Vector3 GetPulseBaseScale()
+    {
+        JuicyMotion motion = GetComponent<JuicyMotion>();
+        if (motion != null)
+        {
+            Vector3 motionBase = motion.BaseScale;
+            if (motionBase.x > 0.0001f && motionBase.y > 0.0001f)
+                return motionBase;
+        }
+
+        Vector3 current = transform.localScale;
+        return current.x > 0.0001f && current.y > 0.0001f ? current : Vector3.one;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -638,7 +669,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     private static readonly Dictionary<MaterialEnum, Sprite> recipeIconCache = new Dictionary<MaterialEnum, Sprite>();
 
-    private static Sprite GetRecipeIcon(MaterialEnum material)
+    /// <summary>箭头序列（施法序列）图标；详情面板的序列小线框复用同一套美术。</summary>
+    public static Sprite GetRecipeIcon(MaterialEnum material)
     {
         if (recipeIconCache.TryGetValue(material, out Sprite sprite))
             return sprite;

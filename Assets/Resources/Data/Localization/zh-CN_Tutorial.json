@@ -1,150 +1,6 @@
 {
   "items": [
     {
-      "key": "tutorial.reward.undo_hint",
-      "text": "如果道具换错了，可以按R键撤回奖励获取"
-    },
-    {
-      "key": "tutorial.shop.undo_hint",
-      "text": "如果买错了，可以按R键撤回本次购买，但是在离开商店后就无法撤回了"
-    },
-    {
-      "key": "tutorial.battle.info.title",
-      "text": "玩家信息"
-    },
-    {
-      "key": "tutorial.battle.info.body",
-      "text": "战斗界面分三层：左上角是你的生命值、Buff和金币；中上方是敌人和它下一回合的意图。\n\n中下方依次是道具栏、出牌区和手牌；左下是牌堆与换牌按钮，右下是“出手”按钮。"
-    },
-    {
-      "key": "tutorial.battle.magic_book.title",
-      "text": "玩家道具栏"
-    },
-    {
-      "key": "tutorial.battle.magic_book.body",
-      "text": "这是你的道具栏。出牌区的箭头组合满足道具配方时，会按顺序触发对应道具效果。（从长到短触发）"
-    },
-    {
-      "key": "tutorial.battle.enemy_info.title",
-      "text": "敌人信息"
-    },
-    {
-      "key": "tutorial.battle.enemy_info.body",
-      "text": "这里是敌人，敌人头顶显示的图标和数值代表了其下一回合的意图。\n\n若有多个敌人存在，可以通过点击敌人进行集火。（道具的默认释放对象是最左边的敌人）"
-    },
-    {
-      "key": "tutorial.battle.arrow_base.title",
-      "text": "基础箭头"
-    },
-    {
-      "key": "tutorial.battle.arrow_base.body",
-      "text": "箭头只有四个方向：上、下、左、右。\n\n每个方向在读取时会先触发自己的基础效果：火（上）造成伤害，水（下）施加弱化，风（左）让你下回合多抽一张，土（右）给你护盾。"
-    },
-    {
-      "key": "tutorial.battle.magic_combo.title",
-      "text": "触发道具"
-    },
-    {
-      "key": "tutorial.battle.magic_combo.body",
-      "text": "出牌区里的箭头会从左到右依次读取。读到的位置满足某个道具的配方时，就会自动触发该道具。\n\n同一个起点可以连续触发多个道具，长的配方优先。"
-    },
-    {
-      "key": "tutorial.battle.play.title",
-      "text": "打出箭头"
-    },
-    {
-      "key": "tutorial.battle.play.body",
-      "text": "点击选中手牌区的箭头，再点击上方区域即可出牌；也可以拖动出牌并调整先后顺序。\n\n把箭头放进出牌区后，点右下角“出手”结束回合。"
-    },
-    {
-      "key": "tutorial.battle.cancel.title",
-      "text": "取消出牌"
-    },
-    {
-      "key": "tutorial.battle.cancel.body",
-      "text": "如果箭头放错了，点击出牌区里的箭头就能把它拿回手牌（不消耗本回合打出额度）。\n\n请先放入一张，再把它点回手牌。"
-    },
-    {
-      "key": "tutorial.battle.play_limit.title",
-      "text": "出牌上限"
-    },
-    {
-      "key": "tutorial.battle.play_limit.body",
-      "text": "出牌区与道具栏之间的数字是「本回合已打出 / 打出上限」。\n\n放入箭头会占用额度，把出牌区的箭头点回手牌会把额度退还；额度用完后，本回合无法再从手牌打出箭头（带豁免的箭头除外）。"
-    },
-    {
-      "key": "tutorial.battle.refresh.title",
-      "text": "换牌"
-    },
-    {
-      "key": "tutorial.battle.refresh.body",
-      "text": "在抽到不想要的箭头时，可以选中这些箭头并点击左下角的换牌按钮重新抽取。\n\n你的回合开始时，换牌次数会重置为 1，通过某些方式可以临时或永久增加换牌次数。\n\n现在，请尝试更换所有手牌。"
-    },
-    {
-      "key": "tutorial.reward.claim.title",
-      "text": "结算奖励"
-    },
-    {
-      "key": "tutorial.reward.claim.body",
-      "text": "战斗胜利后金币会自动到手，接着在三个奖励中选一个（也可以跳过）。"
-    },
-    {
-      "key": "tutorial.reward.undo_hint.title",
-      "text": "撤回奖励"
-    },
-    {
-      "key": "tutorial.reward.undo_hint.body",
-      "text": "如果出现了决策失误，可以按R键撤回本次奖励获取。"
-    },
-    {
-      "key": "tutorial.shop.buy_hint.title",
-      "text": "商店购买"
-    },
-    {
-      "key": "tutorial.shop.buy_hint.body",
-      "text": "你可以在商店内购买道具和箭头，或者删除多余的箭头。\n\n道具买下来就会自动进入道具栏，不需要选位置；箭头与删除同样是点击即生效。"
-    },
-    {
-      "key": "tutorial.shop.order.title",
-      "text": "道具栏顺序"
-    },
-    {
-      "key": "tutorial.shop.order.body",
-      "text": "道具栏里的道具可以从左往右拖动调整顺序。\n\n顺序决定道具的触发顺序：同一个位置可以连续触发多个道具，长的配方优先。"
-    },
-    {
-      "key": "tutorial.shop.undo_hint.title",
-      "text": "撤回购买"
-    },
-    {
-      "key": "tutorial.shop.undo_hint.body",
-      "text": "如果买错了，可以按 R 键撤回本次购买。\n\n注意：离开商店后就无法撤回了。"
-    },
-    {
-      "key": "tutorial.event.options.title",
-      "text": "事件选项"
-    },
-    {
-      "key": "tutorial.event.options.body",
-      "text": "每个事件会有多个处理选项，通过打出对应的箭头组合来选定选项。\n\n选项的需求大多是随机的；如果当前手牌凑不出任何选项，不打牌直接结束就是离开事件。"
-    },
-    {
-      "key": "tutorial.event.refresh.title",
-      "text": "事件换牌"
-    },
-    {
-      "key": "tutorial.event.refresh.body",
-      "text": "每个事件的抽牌数都是不一样的。\n\n事件里同样可以换牌，换不换、换几张都由你决定。"
-    },
-    {
-      "key": "tutorial.rest.title",
-      "text": "休息"
-    },
-    {
-      "key": "tutorial.rest.body",
-      "text": "休息关有两个选项：回复血量，或者给一张箭头附魔。\n\n附魔需要消耗一次抽牌来选中目标箭头。"
-    },
-    {
       "key": "tutorial.map.panel.title",
       "text": "地图面板"
     },
@@ -158,7 +14,7 @@
     },
     {
       "key": "tutorial.map.movement.body",
-      "text": "通过打出上、下、左、右方向的箭头，可以在地图上移动到相邻格子。\n\n若你抵达的格子不为空，则会触发相应的内容。"
+      "text": "通过点击上、下、左、右方向的箭头，可以在地图上移动到相邻格子。\n\n若你抵达的格子不为空，则会触发相应的内容。"
     },
     {
       "key": "tutorial.map.step_limit.title",
@@ -167,6 +23,86 @@
     {
       "key": "tutorial.map.step_limit.body",
       "text": "当经过的关卡数达到上限时，所有格位都会变成Boss格位，强制进入Boss战。请在此之前做好准备。"
+    },
+    {
+      "key": "tutorial.battle.info.title",
+      "text": "玩家信息"
+    },
+    {
+      "key": "tutorial.battle.info.body",
+      "text": "左上角是你的生命值、Buff和金币。"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.title",
+      "text": "敌人信息"
+    },
+    {
+      "key": "tutorial.battle.enemy_info.body",
+      "text": "这里是敌人，敌人头顶显示的图标和数值代表了其本回合的意图。\n\n若有多个敌人存在，可以通过点击敌人进行集火。（默认目标是最左边的敌人）"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.title",
+      "text": "基础箭头"
+    },
+    {
+      "key": "tutorial.battle.arrow_base.body",
+      "text": "这是你的手牌区，你在本回合抽取到的箭头会显示在这里。\n\n这是你的出牌区，你准备打出/更换的箭头会显示在这里。\n\n箭头分为四个方向：上、下、左、右。每个箭头在读取时会先触发自己的基础效果，随后进行道具匹配。"
+    },
+    {
+      "key": "tutorial.battle.magic_book.title",
+      "text": "玩家道具栏"
+    },
+    {
+      "key": "tutorial.battle.magic_book.body",
+      "text": "这是你的道具栏。出牌区的箭头组合满足道具配方时，会触发对应道具效果。\n\n以同一个箭头为起点，若满足多个道具的要求，则会按从左到右的顺序依次触发道具效果。\n\n你可以拖动道具来调整顺序。"
+    },
+    {
+      "key": "tutorial.battle.play_limit.title",
+      "text": "出牌上限"
+    },
+    {
+      "key": "tutorial.battle.play_limit.body",
+      "text": "出牌区与道具栏之间的数字是你的出牌限制。\n\n更换/打出箭头时会占用出牌额度，当出牌额度用完后就无法出牌了。\n\n点击手牌区的箭头将其移动到出牌区，点击出牌区的箭头可以取消出牌。"
+    },
+    {
+      "key": "tutorial.battle.play.title",
+      "text": "打出箭头"
+    },
+    {
+      "key": "tutorial.battle.play.body",
+      "text": "点击手牌区的箭头将其移动到出牌区，然后点击右下角的“出手”确认出牌并结束回合。"
+    },
+    {
+      "key": "tutorial.battle.refresh.title",
+      "text": "换牌"
+    },
+    {
+      "key": "tutorial.battle.refresh.body",
+      "text": "在抽到不想要的箭头时，可以点击“更换”按钮进行换牌。\n\n你的回合开始时，换牌次数会重置为 1，通过某些方式可以临时或永久增加换牌次数。\n\n点击手牌区的箭头将其移动到出牌区，然后点击左下角的按钮更换所有位于出牌区的箭头。"
+    },
+    {
+      "key": "tutorial.reward.claim.title",
+      "text": "结算奖励"
+    },
+    {
+      "key": "tutorial.reward.claim.body",
+      "text": "战斗胜利后会获得2个金币，然后你可以从3个额外奖励中选择1个获取。"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.title",
+      "text": "商店购买"
+    },
+    {
+      "key": "tutorial.shop.buy_hint.body",
+      "text": "你可以在商店内购买新的道具和箭头，或者删除多余的箭头。"
+    },
+    {
+      "key": "tutorial.event.options.title",
+      "text": "事件选项"
+    },
+    {
+      "key": "tutorial.event.options.body",
+      "text": "每个事件会有多个选项，通过打出对应的箭头组合来选择，如果没有匹配的选项，则会自动触发无组合需求的选项。\n\n点击手牌区的箭头将其移动到出牌区，然后点击“出手”按钮确认选项。\n\n事件的抽牌基于你的牌组，若无法组成你想要的组合，同样可以进行换牌。"
     }
   ]
 }

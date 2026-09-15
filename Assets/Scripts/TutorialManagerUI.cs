@@ -10,23 +10,16 @@ public enum TutorialStep
     BattleInfo,
     BattleArrowBase,
     BattleMagicBook,
-    BattleCombo,
     BattlePlayLimit,
     BattleEnemyInfo,
-    BattleCancel,
     BattlePlay,
     BattleRefresh,
     MapPanel,
     MapMovement,
     MapStepLimit,
     RewardClaim,
-    RewardUndoHint,
     ShopBuyHint,
-    ShopOrderHint,
-    ShopUndoHint,
     EventOptions,
-    EventRefresh,
-    RestOptions,
     Completed
 }
 
@@ -35,12 +28,12 @@ public class TutorialManagerUI : MonoBehaviour
     public const int TutorialChapterNumericId = 100;
     public const int TutorialBattleLevelId = 1001;
     public const int TutorialEventLevelId = 1002;
-    public const int TutorialShopLevelId = 1003;
     public const int TutorialRestLevelId = 201;
     public const int TutorialBossLevelId = 1005;
     public const int TutorialEventNumericId = 1001;
-    public const int TutorialDummyLEnemyId = 1001;
-    public const int TutorialDummyXXLEnemyId = 1002;
+
+    /// <summary>教程开局固定金币（不走进阶金币倍率，也不影响普通新局）。</summary>
+    public const int TutorialStartGold = 10;
 
     [SerializeField] private RectTransform stepsRoot;
     [SerializeField] private TutorialCutoutMaskUI cutoutMask;
@@ -55,9 +48,32 @@ public class TutorialManagerUI : MonoBehaviour
     private int battleTurnIndex;
     private bool tutorialBattleInputUnlocked;
     private readonly List<RectTransform> cutoutTargets = new List<RectTransform>();
-    private static readonly string[] CutoutChildNames = { "Cutout", "Cutout2", "Cutout3" };
+
+    /// <summary>页码的完整本地化正文（按步骤缓存，供段落拆分使用）。</summary>
+    private readonly Dictionary<TutorialStep, string> stepBodies = new Dictionary<TutorialStep, string>();
+
+    /// <summary>当前步骤的段落列表（不拆分的步骤只有 1 段）。</summary>
+    private readonly List<string> stepParagraphs = new List<string>();
+
+    /// <summary>正文段落分隔符（文案表里用空行分段）。</summary>
+    private const string ParagraphSeparator = "\n\n";
+
+    private int stepParagraphIndex;
+
+    /// <summary>
+    /// 当前步骤在看完最后一段后是否还需“点击推进”（阅读页 true，行为页 false）。
+    /// 拆分步骤的中间段落总是靠点击推进。
+    /// </summary>
+    private bool stepAdvanceByClick;
+
+    /// <summary>
+    /// 每步只使用一个高亮框：页面下名为 Cutout 的子对象。
+    /// 历史上 Battle_Play/Battle_Refresh/Event_Refresh 曾附带 Cutout2/Cutout3 作为第二/第三洞，
+    /// 现在统一收敛为单框（多余子对象已在场景内停用）。需要换高亮区域时改 Cutout 的矩形即可。
+    /// </summary>
+    private const string CutoutChildName = "Cutout";
     private bool mapTutorialShown;
-    private bool shopUndoHintShown;
+    private bool shopTutorialShown;
     private bool tutorialCompleted;
     private bool tutorialEventShown;
     private bool consumedStepClickThisFrame;
@@ -73,15 +89,28 @@ public class TutorialManagerUI : MonoBehaviour
     /// <summary>当前步骤是否允许“换牌”快捷键（R）。</summary>
     public bool AllowsRefreshShortcut => StepAllowsShortcut(TutorialStep.BattleRefresh);
 
-    /// <summary>当前步骤是否允许“右键/点击出牌区出牌”。</summary>
-    public bool AllowsPlayShortcut => StepAllowsShortcut(TutorialStep.BattlePlay);
+    /// <summary>当前步骤是否允许“换牌”按钮：换牌页或教学战斗已解锁时为 true。
+    /// 出牌页（`Battle_Play`）会临时禁用换牌按钮。</summary>
+    public bool AllowsRefreshButton => StepAllowsShortcut(TutorialStep.BattleRefresh);
 
-    /// <summary>当前步骤是否允许“撤回”快捷键（R / Backspace）。</summary>
-    public bool AllowsUndoShortcut => StepAllowsShortcut(TutorialStep.RewardUndoHint) || StepAllowsShortcut(TutorialStep.ShopUndoHint);
+    /// <summary>当前步骤是否允许“出手”按钮：出牌页或教学战斗已解锁时为 true。
+    /// 换牌页（`Battle_Refresh`）会临时禁用出手按钮，直到点过换牌按钮。</summary>
+    public bool AllowsEndTurnButton => StepAllowsShortcut(TutorialStep.BattlePlay);
+
+    /// <summary>当前步骤是否允许“撤回”快捷键（R / Backspace）。
+    /// 教程已不再专门教学撤回，所以只要求“当前没有正在显示的教程页”（阅读页仍会整屏拦截）。</summary>
+    public bool AllowsUndoShortcut => StepAllowsShortcut(TutorialStep.None);
+
+    /// <summary>步骤切换通知（显示新页 / 收起所有页），供业务 UI 同步按钮可用性等派生状态。</summary>
+    public event System.Action StepChanged;
 
     /// <summary>无活动步骤、教学已解锁输入、或正处于允许该操作的页面时为 true。</summary>
     private bool StepAllowsShortcut(TutorialStep step)
     {
+        // 段落阅读中（拆分步骤的中间段落）不允许任何快捷键/按钮。
+        if (waitingForStepClick)
+            return false;
+
         if (currentStep == TutorialStep.None || tutorialBattleInputUnlocked)
             return true;
 
@@ -106,11 +135,6 @@ public class TutorialManagerUI : MonoBehaviour
         consumedStepClickThisFrame = false;
         if (Input.GetMouseButtonDown(0))
             AdvanceStepByClick();
-    }
-
-    public bool ShouldForceFirstNodeBattles()
-    {
-        return false;
     }
 
     public void OnLevelSelectShown(int nodeIndex)
@@ -179,7 +203,8 @@ public class TutorialManagerUI : MonoBehaviour
                 // 教学不限制张数，放哪张都行。
                 return card != null;
             case TutorialStep.BattleRefresh:
-                return card != null && card.CanActAs(MaterialEnum.Earth) && CountMaterial(playZone, MaterialEnum.Earth) < 3;
+                // 换牌页同样不限制：玩家可自行决定放入几张再去点换牌按钮。
+                return card != null;
             default:
                 return false;
         }
@@ -192,10 +217,10 @@ public class TutorialManagerUI : MonoBehaviour
         if (waitingForStepClick)
             return false;
 
-        if (currentStep == TutorialStep.BattlePlay)
+        if (currentStep == TutorialStep.BattlePlay || currentStep == TutorialStep.BattleRefresh)
             return card != null;
 
-        return currentStep == TutorialStep.BattleRefresh && card != null && card.CanActAs(MaterialEnum.Earth);
+        return false;
     }
 
     public bool CanReplacePlayZone(int playZoneCount)
@@ -205,60 +230,27 @@ public class TutorialManagerUI : MonoBehaviour
         if (waitingForStepClick)
             return false;
 
-        return currentStep == TutorialStep.BattleRefresh && playZoneCount == 3;
+        // 只要求出牌区里有箭头；不限张数。
+        return currentStep == TutorialStep.BattleRefresh && playZoneCount > 0;
     }
 
+    /// <summary>
+    /// 换牌页的强制换牌结果：按玩家放进出牌区的张数，依次取「上 上 下」序列，不足循环补齐，
+    /// 保证“放 3 张 → 上 上 下”的演示不变，同时支持 1–任意张。
+    /// </summary>
     public bool TryGetForcedRefreshMaterialsForPlayZone(int playZoneCount, List<MaterialEnum> materials)
     {
         if (materials == null)
             return false;
 
         materials.Clear();
-        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh && playZoneCount == 3)
-        {
-            materials.Add(MaterialEnum.Fire);
-            materials.Add(MaterialEnum.Fire);
-            materials.Add(MaterialEnum.Water);
-            return true;
-        }
-
-        if (IsTutorialRun && currentStep == TutorialStep.EventRefresh && playZoneCount > 0)
-        {
-            for (int i = 0; i < playZoneCount; i++)
-                materials.Add(MaterialEnum.Earth);
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool CanRefreshSelected(IReadOnlyList<MaterialModel> selectedCards)
-    {
-        return tutorialBattleRunning && (tutorialBattleInputUnlocked || currentStep == TutorialStep.BattleRefresh && selectedCards != null && selectedCards.Count == 3);
-    }
-
-    public bool TryGetForcedRefreshMaterials(int selectedCount, List<MaterialEnum> materials)
-    {
-        if (materials == null)
+        if (!tutorialBattleRunning || currentStep != TutorialStep.BattleRefresh || playZoneCount <= 0)
             return false;
 
-        materials.Clear();
-        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh && selectedCount == 3)
-        {
-            materials.Add(MaterialEnum.Fire);
-            materials.Add(MaterialEnum.Fire);
-            materials.Add(MaterialEnum.Water);
-            return true;
-        }
-
-        if (IsTutorialRun && currentStep == TutorialStep.EventRefresh && selectedCount > 0)
-        {
-            for (int i = 0; i < selectedCount; i++)
-                materials.Add(MaterialEnum.Earth);
-            return true;
-        }
-
-        return false;
+        MaterialEnum[] scripted = { MaterialEnum.Fire, MaterialEnum.Fire, MaterialEnum.Water };
+        for (int i = 0; i < playZoneCount; i++)
+            materials.Add(scripted[i % scripted.Length]);
+        return true;
     }
 
     public void OnRefreshCompleted(PlayerState playerState)
@@ -267,11 +259,7 @@ public class TutorialManagerUI : MonoBehaviour
         {
             tutorialBattleInputUnlocked = true;
             HideAllSteps();
-            return;
         }
-
-        if (IsTutorialRun && currentStep == TutorialStep.EventRefresh)
-            HideAllSteps();
     }
 
     public bool CanEndTurn(IReadOnlyList<MaterialModel> playZone)
@@ -281,13 +269,7 @@ public class TutorialManagerUI : MonoBehaviour
         if (waitingForStepClick)
             return false;
 
-        return currentStep == TutorialStep.BattleCancel || currentStep == TutorialStep.BattlePlay;
-    }
-
-    public void OnBattleCardsSelected(IReadOnlyList<MaterialModel> selectedCards)
-    {
-        if (!tutorialBattleRunning || selectedCards == null)
-            return;
+        return currentStep == TutorialStep.BattlePlay;
     }
 
     public void OnBattleCardsPlayed(IReadOnlyList<MaterialModel> playZone)
@@ -331,22 +313,9 @@ public class TutorialManagerUI : MonoBehaviour
             ShowStep(TutorialStep.RewardClaim, true);
     }
 
-    public void OnMagicRewardChoicesShown()
-    {
-    }
-
-    /// <summary>
-    /// 选完道具奖励后，道具会自动进入道具栏第一位空槽，因此不再有“装备到槽位”教学页。
-    /// 保留此钩子仅作语义显式（HandSystemUI 在选中奖励道具时调用）。
-    /// </summary>
+    /// <summary>选中奖励道具（钩子保留作语义显式：道具现在会自动进入第一位空槽）。</summary>
     public void OnRewardMagicSelected()
     {
-    }
-
-    public void OnRewardMagicEquipped(PlayerState playerState, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
-    {
-        if (mainTutorialRunning && !tutorialCompleted && ShouldShowKeyboardUndoHint())
-            ShowStep(TutorialStep.RewardUndoHint, true);
     }
 
     public void CompleteTutorial(PlayerState playerState, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
@@ -369,7 +338,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnEventOptionResolved()
     {
-        if (currentStep != TutorialStep.EventOptions && currentStep != TutorialStep.EventRefresh)
+        if (currentStep != TutorialStep.EventOptions)
             return;
 
         tutorialEventShown = true;
@@ -381,26 +350,14 @@ public class TutorialManagerUI : MonoBehaviour
         return IsTutorialRun && eventData != null && eventData.numericId == TutorialEventNumericId;
     }
 
+    /// <summary>商店面板显示时调用。教程只在**首次**打开商店时给一页购买提示（战后自动商店）。</summary>
     public void OnShopPanelShown()
     {
-        if (IsTutorialRun)
-            ShowStep(TutorialStep.ShopBuyHint, true);
-    }
+        if (!IsTutorialRun || shopTutorialShown)
+            return;
 
-    /// <summary>休息关进入时调用（HandSystemUI.StartRestLevel）。</summary>
-    public void OnRestPanelShown()
-    {
-        if (IsTutorialRun)
-            ShowStep(TutorialStep.RestOptions, true);
-    }
-
-    public void OnShopPurchaseCompleted()
-    {
-        if (IsTutorialRun && !shopUndoHintShown && ShouldShowKeyboardUndoHint())
-        {
-            shopUndoHintShown = true;
-            ShowStep(TutorialStep.ShopUndoHint, true);
-        }
+        shopTutorialShown = true;
+        ShowStep(TutorialStep.ShopBuyHint, true);
     }
 
     public bool ConsumeBlockingTutorialClick(PointerEventData eventData)
@@ -425,31 +382,31 @@ public class TutorialManagerUI : MonoBehaviour
         if (!waitingForStepClick)
             return;
 
+        // 拆分步骤：先逐段展示同一下面的正文，高亮框与页面对象保持不动，只换文本框。
+        if (stepParagraphIndex + 1 < stepParagraphs.Count)
+        {
+            stepParagraphIndex++;
+            ApplyParagraph();
+            return;
+        }
+
         switch (currentStep)
         {
+            // 教学战斗阅读页顺序：信息 → 敌人意图 → 手牌/出牌区与四方向 → 道具栏 → 出牌限制 → 出牌（行为）
             case TutorialStep.BattleInfo:
+                ShowStep(TutorialStep.BattleEnemyInfo, true);
+                break;
+            case TutorialStep.BattleEnemyInfo:
                 ShowStep(TutorialStep.BattleArrowBase, true);
                 break;
             case TutorialStep.BattleArrowBase:
                 ShowStep(TutorialStep.BattleMagicBook, true);
                 break;
             case TutorialStep.BattleMagicBook:
-                ShowStep(TutorialStep.BattleCombo, true);
-                break;
-            case TutorialStep.BattleCombo:
                 ShowStep(TutorialStep.BattlePlayLimit, true);
                 break;
             case TutorialStep.BattlePlayLimit:
-                ShowStep(TutorialStep.BattleEnemyInfo, true);
-                break;
-            case TutorialStep.BattleEnemyInfo:
-                ShowStep(TutorialStep.BattleCancel, true);
-                break;
-            case TutorialStep.BattleCancel:
                 ShowStep(TutorialStep.BattlePlay, false);
-                break;
-            case TutorialStep.ShopBuyHint:
-                ShowStep(TutorialStep.ShopOrderHint, true);
                 break;
             case TutorialStep.MapPanel:
                 ShowStep(TutorialStep.MapMovement, true);
@@ -459,9 +416,6 @@ public class TutorialManagerUI : MonoBehaviour
                 break;
             case TutorialStep.MapStepLimit:
                 HideAllSteps();
-                break;
-            case TutorialStep.EventOptions:
-                ShowStep(TutorialStep.EventRefresh, false);
                 break;
             default:
                 HideAllSteps();
@@ -480,20 +434,6 @@ public class TutorialManagerUI : MonoBehaviour
         playerState.DrawSpecificMaterialsToHand(materials, true);
     }
 
-    private int CountMaterial(IReadOnlyList<MaterialModel> cards, MaterialEnum material)
-    {
-        if (cards == null)
-            return 0;
-
-        int count = 0;
-        for (int i = 0; i < cards.Count; i++)
-        {
-            if (cards[i] != null && cards[i].CanActAs(material))
-                count++;
-        }
-        return count;
-    }
-
     private void CacheSteps()
     {
         stepObjects.Clear();
@@ -502,25 +442,20 @@ public class TutorialManagerUI : MonoBehaviour
             root = transform as RectTransform;
 
         AddStep(root, TutorialStep.BattleInfo, "Battle_Info");
+        AddStep(root, TutorialStep.BattleEnemyInfo, "Battle_EnemyInfo");
         AddStep(root, TutorialStep.BattleArrowBase, "Battle_ArrowBase");
         AddStep(root, TutorialStep.BattleMagicBook, "Battle_MagicBook");
-        AddStep(root, TutorialStep.BattleCombo, "Battle_Combo");
         AddStep(root, TutorialStep.BattlePlayLimit, "Battle_PlayLimit");
-        AddStep(root, TutorialStep.BattleEnemyInfo, "Battle_EnemyInfo");
-        AddStep(root, TutorialStep.BattleCancel, "Battle_Cancel");
         AddStep(root, TutorialStep.BattlePlay, "Battle_Play");
         AddStep(root, TutorialStep.BattleRefresh, "Battle_Refresh");
         AddStep(root, TutorialStep.MapPanel, "Map_Panel");
         AddStep(root, TutorialStep.MapMovement, "Map_Movement");
         AddStep(root, TutorialStep.MapStepLimit, "Map_StepLimit");
         AddStep(root, TutorialStep.RewardClaim, "Reward_Claim");
-        AddStep(root, TutorialStep.RewardUndoHint, "Reward_UndoHint");
         AddStep(root, TutorialStep.ShopBuyHint, "Shop_BuyHint");
-        AddStep(root, TutorialStep.ShopOrderHint, "Shop_OrderHint");
-        AddStep(root, TutorialStep.ShopUndoHint, "Shop_UndoHint");
         AddStep(root, TutorialStep.EventOptions, "Event_Options");
-        AddStep(root, TutorialStep.EventRefresh, "Event_Refresh");
-        AddStep(root, TutorialStep.RestOptions, "Rest_Options");
+        // 已从流程中移除的页面（场景对象保留、暂停用）：Battle_Combo / Battle_Cancel / Reward_UndoHint /
+        // Shop_OrderHint / Shop_UndoHint / Event_Refresh / Rest_Options。需要恢复时在此处重新登记即可。
     }
 
     private void AddStep(RectTransform root, TutorialStep step, string objectName)
@@ -536,7 +471,94 @@ public class TutorialManagerUI : MonoBehaviour
         {
             SetStepText(pair.Value, "Title", GetStepTitleKey(pair.Key));
             SetStepText(pair.Value, "Body", GetStepBodyKey(pair.Key));
+
+            // 缓存完整正文：段落拆分时反复覆写 Body，需要保留原文。
+            TMP_Text body = FindStepText(pair.Value.transform, "Body");
+            if (body != null)
+                stepBodies[pair.Key] = body.text;
         }
+    }
+
+    /// <summary>
+    /// 评审要求：除前 5 步（地图 3 页 + 玩家信息 + 敌人信息）外，每个 > 段落 = 一次点击推进。
+    /// 这里声明的步骤会按空行拆段、逐段展示（高亮框不动）。
+    /// </summary>
+    private static bool StepSplitsParagraphs(TutorialStep step)
+    {
+        switch (step)
+        {
+            case TutorialStep.BattleArrowBase:
+            case TutorialStep.BattleMagicBook:
+            case TutorialStep.BattlePlayLimit:
+            case TutorialStep.BattleRefresh:
+            case TutorialStep.EventOptions:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>准备当前步骤的段落列表（每次展示页面时重新按完整正文拆分）。</summary>
+    private void PrepareParagraphs(TutorialStep step)
+    {
+        stepParagraphs.Clear();
+        stepParagraphIndex = 0;
+
+        GameObject stepObject;
+        if (!stepObjects.TryGetValue(step, out stepObject) || stepObject == null)
+            return;
+
+        string fullBody;
+        if (!stepBodies.TryGetValue(step, out fullBody) || string.IsNullOrEmpty(fullBody))
+        {
+            TMP_Text body = FindStepText(stepObject.transform, "Body");
+            fullBody = body != null ? body.text : string.Empty;
+        }
+
+        if (!StepSplitsParagraphs(step))
+        {
+            stepParagraphs.Add(fullBody);
+            return;
+        }
+
+        string[] parts = fullBody.Split(new[] { ParagraphSeparator }, System.StringSplitOptions.None);
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string paragraph = parts[i].Trim();
+            if (paragraph.Length > 0)
+                stepParagraphs.Add(paragraph);
+        }
+
+        if (stepParagraphs.Count == 0)
+            stepParagraphs.Add(fullBody);
+    }
+
+    /// <summary>
+    /// 把当前段落写进文本框，并根据“是否还有下一段”重算点击推进与输入拦截。
+    /// 拆分步骤的中间段落：点击推进；最后一段：阅读页继续点击推进，行为页则等玩家完成操作。
+    /// </summary>
+    private void ApplyParagraph()
+    {
+        string text = stepParagraphs.Count > 0 ? stepParagraphs[Mathf.Clamp(stepParagraphIndex, 0, stepParagraphs.Count - 1)] : string.Empty;
+        SetStepBodyText(currentStep, text);
+
+        bool lastParagraph = stepParagraphIndex >= stepParagraphs.Count - 1;
+        waitingForStepClick = stepParagraphs.Count > 1 ? (!lastParagraph || stepAdvanceByClick) : stepAdvanceByClick;
+
+        UpdateInputBlocker(waitingForStepClick);
+        SetMapTutorialInputLocked(IsMapTutorialBlockingInput);
+        StepChanged?.Invoke();
+    }
+
+    private void SetStepBodyText(TutorialStep step, string text)
+    {
+        GameObject stepObject;
+        if (!stepObjects.TryGetValue(step, out stepObject) || stepObject == null)
+            return;
+
+        TMP_Text body = FindStepText(stepObject.transform, "Body");
+        if (body != null)
+            body.text = text;
     }
 
     private void SetStepText(GameObject stepObject, string childName, string key)
@@ -571,23 +593,16 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleInfo: return "tutorial.battle.info.title";
             case TutorialStep.BattleArrowBase: return "tutorial.battle.arrow_base.title";
             case TutorialStep.BattleMagicBook: return "tutorial.battle.magic_book.title";
-            case TutorialStep.BattleCombo: return "tutorial.battle.magic_combo.title";
             case TutorialStep.BattlePlayLimit: return "tutorial.battle.play_limit.title";
             case TutorialStep.BattleEnemyInfo: return "tutorial.battle.enemy_info.title";
-            case TutorialStep.BattleCancel: return "tutorial.battle.cancel.title";
             case TutorialStep.BattlePlay: return "tutorial.battle.play.title";
             case TutorialStep.BattleRefresh: return "tutorial.battle.refresh.title";
             case TutorialStep.MapPanel: return "tutorial.map.panel.title";
             case TutorialStep.MapMovement: return "tutorial.map.movement.title";
             case TutorialStep.MapStepLimit: return "tutorial.map.step_limit.title";
             case TutorialStep.RewardClaim: return "tutorial.reward.claim.title";
-            case TutorialStep.RewardUndoHint: return "tutorial.reward.undo_hint.title";
             case TutorialStep.ShopBuyHint: return "tutorial.shop.buy_hint.title";
-            case TutorialStep.ShopOrderHint: return "tutorial.shop.order.title";
-            case TutorialStep.ShopUndoHint: return "tutorial.shop.undo_hint.title";
             case TutorialStep.EventOptions: return "tutorial.event.options.title";
-            case TutorialStep.EventRefresh: return "tutorial.event.refresh.title";
-            case TutorialStep.RestOptions: return "tutorial.rest.title";
             default: return string.Empty;
         }
     }
@@ -599,23 +614,16 @@ public class TutorialManagerUI : MonoBehaviour
             case TutorialStep.BattleInfo: return "tutorial.battle.info.body";
             case TutorialStep.BattleArrowBase: return "tutorial.battle.arrow_base.body";
             case TutorialStep.BattleMagicBook: return "tutorial.battle.magic_book.body";
-            case TutorialStep.BattleCombo: return "tutorial.battle.magic_combo.body";
             case TutorialStep.BattlePlayLimit: return "tutorial.battle.play_limit.body";
             case TutorialStep.BattleEnemyInfo: return "tutorial.battle.enemy_info.body";
-            case TutorialStep.BattleCancel: return "tutorial.battle.cancel.body";
             case TutorialStep.BattlePlay: return "tutorial.battle.play.body";
             case TutorialStep.BattleRefresh: return "tutorial.battle.refresh.body";
             case TutorialStep.MapPanel: return "tutorial.map.panel.body";
             case TutorialStep.MapMovement: return "tutorial.map.movement.body";
             case TutorialStep.MapStepLimit: return "tutorial.map.step_limit.body";
             case TutorialStep.RewardClaim: return "tutorial.reward.claim.body";
-            case TutorialStep.RewardUndoHint: return "tutorial.reward.undo_hint.body";
             case TutorialStep.ShopBuyHint: return "tutorial.shop.buy_hint.body";
-            case TutorialStep.ShopOrderHint: return "tutorial.shop.order.body";
-            case TutorialStep.ShopUndoHint: return "tutorial.shop.undo_hint.body";
             case TutorialStep.EventOptions: return "tutorial.event.options.body";
-            case TutorialStep.EventRefresh: return "tutorial.event.refresh.body";
-            case TutorialStep.RestOptions: return "tutorial.rest.body";
             default: return string.Empty;
         }
     }
@@ -626,7 +634,8 @@ public class TutorialManagerUI : MonoBehaviour
             gameObject.SetActive(true);
 
         currentStep = step;
-        waitingForStepClick = waitForClick;
+        stepAdvanceByClick = waitForClick;
+        PrepareParagraphs(step);
         foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
         {
             bool active = pair.Key == step;
@@ -634,25 +643,25 @@ public class TutorialManagerUI : MonoBehaviour
             SetStepRaycastTarget(pair.Value, active && waitForClick);
         }
         UpdateCutoutTarget(step);
-        UpdateInputBlocker(waitForClick);
-        SetMapTutorialInputLocked(IsMapTutorialBlockingInput);
+        ApplyParagraph();
     }
 
     /// <summary>
-    /// 输入拦截：阅读页（点击推进）阻挡全屏，行为页（如出牌/换牌）只阻挡高亮框以外，
-    /// 保证所有操作都发生在高亮框内；教学战斗解锁输入后完全不拦。
+    /// 输入拦截只在「点击推进」的阅读页生效（整屏挡，点哪里都只推进教程）。
+    /// 行为页（出牌/换牌/事件换牌）不拦截：这些页面玩家必须同时操作多个区域
+    /// （手牌 + 出牌区 + 出手按钮），单框遮挡会挡住必要操作；
+    /// 行为页的限制由教程白名单负责（CanMoveCardToPlay / CanMovePlayCardToHand / CanEndTurn /
+    /// CanReplacePlayZone / AllowsRefreshShortcut / AllowsUndoShortcut）。
     /// </summary>
     private void UpdateInputBlocker(bool waitForClick)
     {
         if (inputBlocker == null)
             return;
 
-        bool hasHoles = cutoutTargets.Count > 0;
-        bool active = !tutorialBattleInputUnlocked && (waitForClick || hasHoles);
-        inputBlocker.BlockWholeScreen = waitForClick || !hasHoles;
+        inputBlocker.BlockWholeScreen = true;
         inputBlocker.SetTargetList(cutoutTargets);
         inputBlocker.RefreshFromConfig();
-        SetInputBlockerActive(active);
+        SetInputBlockerActive(!tutorialBattleInputUnlocked && waitForClick);
     }
 
     private void SetStepRaycastTarget(GameObject stepObject, bool raycastTarget)
@@ -670,6 +679,9 @@ public class TutorialManagerUI : MonoBehaviour
         bool wasBlockingMapInput = IsMapTutorialBlockingInput;
         currentStep = TutorialStep.None;
         waitingForStepClick = false;
+        stepParagraphs.Clear();
+        stepParagraphIndex = 0;
+        stepAdvanceByClick = false;
         foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
             pair.Value.SetActive(false);
         if (cutoutMask != null)
@@ -677,6 +689,7 @@ public class TutorialManagerUI : MonoBehaviour
         SetInputBlockerActive(false);
         if (wasBlockingMapInput)
             SetMapTutorialInputLocked(false);
+        StepChanged?.Invoke();
     }
 
     private void SetMapTutorialInputLocked(bool locked)
@@ -733,12 +746,9 @@ public class TutorialManagerUI : MonoBehaviour
     private void UpdateCutoutTarget(TutorialStep step)
     {
         cutoutTargets.Clear();
-        for (int i = 0; i < CutoutChildNames.Length; i++)
-        {
-            RectTransform cutout = GetStepCutoutTarget(step, CutoutChildNames[i]);
-            if (cutout != null)
-                cutoutTargets.Add(cutout);
-        }
+        RectTransform cutout = GetStepCutoutTarget(step, CutoutChildName);
+        if (cutout != null)
+            cutoutTargets.Add(cutout);
 
         if (cutoutMask == null)
             return;
@@ -756,15 +766,6 @@ public class TutorialManagerUI : MonoBehaviour
 
         Transform child = stepObject.transform.Find(childName);
         return child != null ? child.GetComponent<RectTransform>() : null;
-    }
-
-    private bool ShouldShowKeyboardUndoHint()
-    {
-#if UNITY_IOS || UNITY_ANDROID
-        return false;
-#else
-        return !Application.isMobilePlatform;
-#endif
     }
 }
 

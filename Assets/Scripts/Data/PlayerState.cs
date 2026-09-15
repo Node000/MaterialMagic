@@ -31,14 +31,14 @@ public class PlayerState
     private readonly HashSet<MaterialModel> playLimitChargedCards = new HashSet<MaterialModel>();
 
     /// <summary>每回合玩家主动打出箭头的默认上限；开局配置 maxPlayCount 缺省/非法时使用。</summary>
-    public const int DefaultPlayLimitPerTurn = 7;
+    public const int DefaultPlayLimitPerTurn = 10;
 
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
     public int Gold { get; private set; }
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
-    /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 7。</summary>
+    /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 10。</summary>
     public int MaxPlayCount { get; set; } = DefaultPlayLimitPerTurn;
     /// <summary>实际生效的每回合打出上限；配置值小于等于 0 时回落到默认值。</summary>
     public int PlayLimitPerTurn => MaxPlayCount > 0 ? MaxPlayCount : DefaultPlayLimitPerTurn;
@@ -121,7 +121,7 @@ public class PlayerState
         return state;
     }
 
-    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（7）。</summary>
+    /// <summary>开局配置里的每回合打出上限；配置缺失或值非法时回落到默认值（10）。</summary>
     public static int ResolveMaxPlayCount(PlayerStartConfigData config)
     {
         return config != null && config.maxPlayCount > 0 ? config.maxPlayCount : DefaultPlayLimitPerTurn;
@@ -996,19 +996,30 @@ public class PlayerState
 
     public void EndBattle(List<MaterialModel> removedTemporaryCards)
     {
-        IsEndingTurn = true;
-        ReturnHandCardsToDiscardPile(new List<MaterialModel>(Hand), removedTemporaryCards);
-        IsEndingTurn = false;
-        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
-        KeepHandOnEndTurn = false;
+        // 战斗结束进入结算/地图阶段：所有手牌强制弃掉，不保留任何【保留】/【保留手牌】手牌。
+        ForceDiscardAll(removedTemporaryCards);
+    }
+
+    /// <summary>
+    /// 强制弃掉手牌与出牌区的全部箭头，无视【保留】(isRetained) 与【保留手牌】(KeepHandOnEndTurn) 等阻止弃牌的效果。
+    /// 用于战斗结束、事件/休息/奖励关收尾以及回到地图阶段前的边界，保证非战斗阶段手中不留任何箭头。
+    /// </summary>
+    public void ForceDiscardAll(List<MaterialModel> removedTemporaryCards = null)
+    {
+        EndTurnInternal(removedTemporaryCards, force: true);
     }
 
     public void EndTurn(List<MaterialModel> removedTemporaryCards)
     {
+        EndTurnInternal(removedTemporaryCards, force: false);
+    }
+
+    private void EndTurnInternal(List<MaterialModel> removedTemporaryCards, bool force)
+    {
         IsEndingTurn = true;
         if (Hand.Count > 0)
         {
-            if (KeepHandOnEndTurn)
+            if (!force && KeepHandOnEndTurn)
             {
                 GameLog.Data("End turn keeps hand cards.");
             }
@@ -1017,7 +1028,13 @@ public class PlayerState
                 for (int i = Hand.Count - 1; i >= 0; i--)
                 {
                     MaterialModel card = Hand[i];
-                    if (card != null && card.isRetained)
+                    if (card == null)
+                    {
+                        Hand.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (!force && card.isRetained)
                     {
                         GameLog.Data($"End turn retains hand card {DescribeMaterial(card)}.");
                         continue;
@@ -1039,6 +1056,9 @@ public class PlayerState
                     }
                 }
             }
+
+            if (force)
+                GameLog.Data($"Force discard all hand cards. hand={Hand.Count} discardPile={DiscardPile.Count}");
         }
         IsEndingTurn = false;
 
@@ -1377,6 +1397,16 @@ public class PlayerState
 
         for (int i = 0; i < cards.Count; i++)
             cards[i]?.RemoveTurnOnlyModifiers();
+    }
+
+    /// <summary>
+    /// 开局把金币直接设成固定值（教程等特殊运行使用）：不走进阶金币倍率、不播放音效。
+    /// 普通新局仍走起始配置的初始金币。
+    /// </summary>
+    public void SetStartingGold(int gold)
+    {
+        Gold = Mathf.Max(0, gold);
+        GameLog.Data($"Player starting gold set to {Gold}");
     }
 
     public void AddGold(int amount, bool applyDifficulty = true)

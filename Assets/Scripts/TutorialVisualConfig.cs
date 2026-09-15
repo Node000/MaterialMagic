@@ -24,8 +24,54 @@ public class TutorialVisualConfig : ScriptableObject
     [Header("高亮框（洞的边框）")]
     [SerializeField] private Color borderColor = new Color(1f, 0.84f, 0.16f, 1f);
 
-    [Tooltip("边框线宽（像素，画布坐标）。")]
+    [Tooltip("直角框线宽（像素，画布坐标）；仅 borderStyle = Straight 时使用。")]
     [SerializeField, Min(0f)] private float borderThickness = 4f;
+
+    [Tooltip("高亮框样式：Straight = 直角实线框（旧表现）；Spring = 3 条细弹簧线（当前）；None = 只变暗不描边。")]
+    [SerializeField] private TutorialBorderStyle borderStyle = TutorialBorderStyle.Spring;
+
+    [Header("弹簧线框（borderStyle = Spring 时生效）")]
+    [Tooltip("细线组相对洞边界向内的偏移（画布像素）：第一圈线的中心线位置。默认贴洞内侧。")]
+    [SerializeField, Min(0f)] private float springInset = 14f;
+
+    [Tooltip("细线条数。")]
+    [SerializeField, Range(1, 8)] private int springLineCount = 3;
+
+    [Tooltip("单条线宽（画布像素；比道具框的 3 更细）。")]
+    [SerializeField, Min(0.5f)] private float springLineWidth = 1.8f;
+
+    [Tooltip("圈间距（画布像素）。")]
+    [SerializeField, Min(0f)] private float springLineSpacing = 4f;
+
+    [Tooltip("主抖动幅度（画布像素）；与道具框弹簧线一致取 4。")]
+    [SerializeField, Min(0f)] private float springWobbleAmplitude = 4f;
+
+    [Tooltip("每圈波数；与道具框弹簧线一致取 7。")]
+    [SerializeField, Range(1, 32)] private int springWaveCount = 7;
+
+    [Tooltip("次级噪声幅度；与道具框弹簧线一致取 3。")]
+    [SerializeField, Min(0f)] private float springScribbleAmount = 3f;
+
+    [Tooltip("每圈采样点数。")]
+    [SerializeField, Range(16, 256)] private int springSamplesPerLine = 120;
+
+    [Tooltip("转角圆度：2 = 最圆，12 = 接近直角；与道具框弹簧线一致取 5。")]
+    [SerializeField, Range(2f, 12f)] private float springSharpness = 5f;
+
+    [Tooltip("是否流动。关闭后只在目标变化时重建，零每帧开销。")]
+    [SerializeField] private bool springAnimate = true;
+
+    [Tooltip("流动的步进帧率（与道具框弹簧线一致：12 fps）。")]
+    [SerializeField, Range(1, 30)] private int springFps = 12;
+
+    [Tooltip("波形流动速度。")]
+    [SerializeField, Min(0f)] private float springFlowSpeed = 0.7f;
+
+    [Tooltip("脉动幅度（各圈错开呼吸感）。")]
+    [SerializeField, Range(0f, 1f)] private float springPulseAmount = 0.14f;
+
+    [Tooltip("脉动速度。")]
+    [SerializeField, Min(0f)] private float springPulseSpeed = 2.2f;
 
     [Tooltip("洞相对目标矩形的外扩量（画布像素）。")]
     [SerializeField] private Vector2 holePadding = new Vector2(18f, 18f);
@@ -58,6 +104,55 @@ public class TutorialVisualConfig : ScriptableObject
     public Color BorderColor => borderColor;
 
     public float BorderThickness => Mathf.Max(0f, borderThickness);
+
+    /// <summary>高亮框样式。</summary>
+    public TutorialBorderStyle BorderStyle => borderStyle;
+
+    /// <summary>弹簧线组相对洞边界的内收（画布像素）。</summary>
+    public float SpringInset => Mathf.Max(0f, springInset);
+
+    public int SpringLineCount => Mathf.Clamp(springLineCount, 1, 8);
+
+    public float SpringLineWidth => Mathf.Max(0.5f, springLineWidth);
+
+    public float SpringLineSpacing => Mathf.Max(0f, springLineSpacing);
+
+    public float SpringWobbleAmplitude => Mathf.Max(0f, springWobbleAmplitude);
+
+    public int SpringWaveCount => Mathf.Clamp(springWaveCount, 1, 32);
+
+    public float SpringScribbleAmount => Mathf.Max(0f, springScribbleAmount);
+
+    public int SpringSamplesPerLine => Mathf.Clamp(springSamplesPerLine, SpringLineGeometry.MinSamplesPerLine, SpringLineGeometry.MaxSamplesPerLine);
+
+    public float SpringSharpness => Mathf.Clamp(springSharpness, 2f, 12f);
+
+    public bool SpringAnimate => springAnimate;
+
+    public int SpringFps => Mathf.Clamp(springFps, 1, 30);
+
+    public float SpringFlowSpeed => Mathf.Max(0f, springFlowSpeed);
+
+    public float SpringPulseAmount => Mathf.Clamp01(springPulseAmount);
+
+    public float SpringPulseSpeed => Mathf.Max(0f, springPulseSpeed);
+
+    /// <summary>弹簧线的抖动参数（供 <see cref="SpringLineGeometry"/> 使用）。</summary>
+    public SpringLineGeometry.Settings CreateSpringSettings()
+    {
+        return new SpringLineGeometry.Settings
+        {
+            shape = SpringLineGeometry.Shape.RoundedRect,
+            samplesPerLine = SpringSamplesPerLine,
+            sharpness = SpringSharpness,
+            wobbleAmplitude = SpringWobbleAmplitude,
+            waveCount = SpringWaveCount,
+            scribbleAmount = SpringScribbleAmount,
+            tangentWobble = 0.18f,
+            linePhaseOffset = 0.045f,
+            seed = 17
+        };
+    }
 
     public Vector2 HolePadding => holePadding;
 
@@ -127,4 +222,17 @@ public enum TutorialPromptAnchor
     Bottom = 1,
     Left = 2,
     Right = 3
+}
+
+/// <summary>教程高亮框样式。</summary>
+public enum TutorialBorderStyle
+{
+    /// <summary>直角实线框（旧表现）。</summary>
+    Straight = 0,
+
+    /// <summary>多条细弹簧线（手绘线）。</summary>
+    Spring = 1,
+
+    /// <summary>只变暗、不描边。</summary>
+    None = 2
 }

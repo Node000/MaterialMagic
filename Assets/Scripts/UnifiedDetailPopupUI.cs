@@ -24,6 +24,8 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     [SerializeField] private UnifiedDetailTextConfig textConfig;
     [SerializeField] private AddedDetailedUI addedDetailPrefab;
     [SerializeField] private RectTransform addedDetailRoot;
+    [Tooltip("详情面板左下角的箭头序列小线框（道具内容时按施法序列刷新）。")]
+    [SerializeField] private UnifiedDetailArrowSequenceUI arrowSequenceUI;
     [SerializeField] private float autoScrollStartDelay = 1.2f;
     [SerializeField] private float autoScrollDuration = 3f;
     [SerializeField] private float autoScrollPause = 1.2f;
@@ -246,6 +248,8 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         }
         ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
+        if (arrowSequenceUI != null)
+            arrowSequenceUI.SetRecipe(content.Recipe);
     }
 
     private void ApplyAccentColor(Color color)
@@ -365,6 +369,8 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             bodyContent = bodyText.rectTransform;
         if (addedDetailRoot == null)
             addedDetailRoot = FindChildRectRecursive("AddedDetailRoot");
+        if (arrowSequenceUI == null)
+            arrowSequenceUI = GetComponentInChildren<UnifiedDetailArrowSequenceUI>(true);
         if (bodyScrollRect != null)
         {
             if (bodyViewport != null)

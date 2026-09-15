@@ -73,18 +73,6 @@
       "text": "Confirm Abandon"
     },
     {
-      "key": "ui.start_menu.start_tutorial",
-      "text": "Start Tutorial"
-    },
-    {
-      "key": "ui.start_menu.start_tutorial_with_config",
-      "text": "Start Tutorial!"
-    },
-    {
-      "key": "ui.start_menu.skip_tutorial",
-      "text": "Skip Tutorial"
-    },
-    {
       "key": "ui.start_menu.exit_prompt",
       "text": "Exit the game?"
     },
@@ -259,14 +247,6 @@
     {
       "key": "ui.run_history.build.arrow_count_suffix",
       "text": ""
-    },
-    {
-      "key": "ui.start_tutorial.title",
-      "text": "Tutorial"
-    },
-    {
-      "key": "ui.start_tutorial.prompt",
-      "text": "The most important thing:\n\nClick arrows to select them, then arrange and play them.\n\nPlay different arrows to form combos and smash your items into enemies!\n\nEvents are also resolved by playing Up, Down, Left, and Right.\n\nYep... that's it!\n\nClick the top-right corner of this popup to close the tutorial,\n\nthen start the game!"
     },
     {
       "key": "ui.forum.title",
@@ -873,6 +853,14 @@
       "text": "Gain {0} arrow(s)"
     },
     {
+      "key": "ui.event.effect.material_arrow_name",
+      "text": "{0} Arrow"
+    },
+    {
+      "key": "ui.event.effect.gain_material_direction",
+      "text": "Gain {0} {1}"
+    },
+    {
       "key": "ui.event.effect.apply_material_modifier",
       "text": "Choose {0} hand arrow(s) and add {1}"
     },
@@ -907,6 +895,10 @@
     {
       "key": "ui.event.effect.gain_random_material",
       "text": "Gain {0} random arrow(s)"
+    },
+    {
+      "key": "ui.event.effect.random_direction_material",
+      "text": "random-direction arrow"
     },
     {
       "key": "ui.event.effect.gain_same_random_materials",

@@ -186,11 +186,11 @@
     },
     {
       "key": "event.midnight_convenience.start.1",
-      "text": "凌晨两点，粉色霓虹把便利店门口照得像过曝的梦。"
+      "text": "凌晨两点，粉色的霓虹灯把便利店门口照得像过曝的梦。"
     },
     {
       "key": "event.midnight_convenience.start.2",
-      "text": "货架上只剩三样东西，扫码枪还在自言自语。"
+      "text": "自助收银台在无人值守的店铺内滚动着模糊的广告，随便挑点什么适合晚上工作用的东西吧。"
     },
     {
       "key": "event.midnight_convenience.option.biscuit",
@@ -210,11 +210,11 @@
     },
     {
       "key": "event.midnight_convenience.energy_drink.1",
-      "text": "饮料把一段多余记忆冲掉了。选择一张素材，把它从牌组里删除。"
+      "text": "你从饮料柜里拿出一罐颜色奇怪的饮料，诡异的酸甜味在从你的舌尖蔓延开来。草莓味？百香果味？说不清的味道让你头脑清醒了几分。"
     },
     {
       "key": "event.midnight_convenience.mint.1",
-      "text": "薄荷味在舌尖炸开，一个新道具广告弹了出来。"
+      "text": "你从货架随手取下一袋的黑色包装的薄荷糖。说到提神，果然只能是薄荷味的零食了吧！"
     },
     {
       "key": "event.midnight_convenience.leave.1",
@@ -230,7 +230,7 @@
     },
     {
       "key": "event.capsule_machine.start.2",
-      "text": "投币口在闪，旁边贴着“中奖率由心情决定”。"
+      "text": "投币口上挂着读卡器，但是找不到任何取卡的机器，看起来似乎随便塞点小物件进去。"
     },
     {
       "key": "event.capsule_machine.option.insert_coin",
@@ -242,11 +242,11 @@
     },
     {
       "key": "event.capsule_machine.insert_coin.1",
-      "text": "扭蛋滚出来三次，里面是同一种素材的复制品。"
+      "text": "拉动摇杆，滚出了三个完全一样的扭蛋。是机器坏掉了吗？"
     },
     {
       "key": "event.capsule_machine.smash_open.1",
-      "text": "塑料外壳碎了一地。你受了伤，但从机器肚子里掏出一张素材。"
+      "text": "你用力踢碎机器上方的塑料外壳，崩裂的残片划破了你的小腿，不过至少你成功拿到了自己想要的那个奖品。"
     },
     {
       "key": "event.capsule_machine.leave.1",
@@ -258,11 +258,11 @@
     },
     {
       "key": "event.anonymous_forum.start.1",
-      "text": "你刷到一个匿名论坛，头像全是默认图标，帖子却像活物一样刷新。"
+      "text": "粗糙的网站交互界面颇为复古，似乎网站的主人并没有与时俱进地做更新，不过蓝色的网站主题足够美观，看起来用户依然不少。"
     },
     {
       "key": "event.anonymous_forum.start.2",
-      "text": "热帖标题闪烁着：“来都来了，说点什么吧。”"
+      "text": "你点开一个感兴趣的分区，最上面的帖子的最新回复是“1分钟前”。"
     },
     {
       "key": "event.anonymous_forum.option.argue",
@@ -274,11 +274,11 @@
     },
     {
       "key": "event.anonymous_forum.argue.1",
-      "text": "你赢了一场没有观众的争论，顺手删掉一张不顺眼的素材，并恢复生命值。"
+      "text": "显然你并不认同最热贴的主要观点，一整个晚上都在反驳其他用户的言论，等到日光从东边升起时，你终于获得了短暂的胜利。"
     },
     {
       "key": "event.anonymous_forum.post.1",
-      "text": "帖子发出后，评论区反噬了你的精神值，但也给了你一次道具强化。"
+      "text": "你的新帖很快就引起了广泛的议论，两种对立的观点在你的帖子下面吵起来了，看起来还会持续一段时间，但这就是分区管理员要处理的事情了。你感觉自己似乎学会了如何制造话题？"
     },
     {
       "key": "event.anonymous_forum.leave.1",
@@ -290,11 +290,11 @@
     },
     {
       "key": "event.coffee_or_cola.start.1",
-      "text": "自动贩卖机的屏幕裂成两半，一边是咖啡，一边是可乐。"
+      "text": "经过一整天的营业，售货机内的商品已经所剩无几了。"
     },
     {
       "key": "event.coffee_or_cola.start.2",
-      "text": "它问你：“清醒，还是更清醒？”"
+      "text": "喝点什么？似乎饮料只剩咖啡和可乐了。"
     },
     {
       "key": "event.coffee_or_cola.option.all",
@@ -310,7 +310,7 @@
     },
     {
       "key": "event.coffee_or_cola.all.1",
-      "text": "你把两罐混在一起喝了。味道很危险，但生命值和上限都提高了。"
+      "text": "将两者混合在一起，可乐的甜味中和了咖啡的苦涩，于是你得到了美味的气泡咖啡。"
     },
     {
       "key": "event.coffee_or_cola.coffee.1",
@@ -318,7 +318,7 @@
     },
     {
       "key": "event.coffee_or_cola.cola.1",
-      "text": "气泡在血管里跑圈。你的生命上限提高了。"
+      "text": "冰冷的碳酸气泡在舌尖爆开，似乎身体更有活力了。"
     },
     {
       "key": "event.coffee_or_cola.leave.1",
@@ -330,11 +330,11 @@
     },
     {
       "key": "event.limited_sale.start.1",
-      "text": "商场大屏把你的脸识别成“潜在冲动消费者”。"
+      "text": "网购平台给老用户派发了大额优惠券，看起来是一个消费的好时机。"
     },
     {
       "key": "event.limited_sale.start.2",
-      "text": "弹窗一层叠一层：只有现在，错过再等永远。"
+      "text": "大数据似乎推送了一些你喜欢的内容？看起来商品都很不错，但是真的有必要现在就用掉优惠券吗？"
     },
     {
       "key": "event.limited_sale.option.clothes",
@@ -350,11 +350,11 @@
     },
     {
       "key": "event.limited_sale.clothes.1",
-      "text": "新衣服像护甲一样贴合。你的生命上限提高了。"
+      "text": "美观、优质的服饰使人愉悦，按下“确认购买”时，你的呼吸似乎都顺畅了不少"
     },
     {
       "key": "event.limited_sale.weapon.1",
-      "text": "武器只是贴纸，但贴纸真的改变了你的道具。"
+      "text": "武器的价格不菲，但是希望能物有所值。等一下，为什么你能从正规平台买到武器？"
     },
     {
       "key": "event.limited_sale.no_buy.1",
@@ -366,11 +366,11 @@
     },
     {
       "key": "event.promo_link.start.1",
-      "text": "一个弹窗追着你跑：“分享给朋友，立刻获得奖励！”"
+      "text": "手机上突然弹出了转发赚钱的广告弹窗，似乎随时可以关掉。"
     },
     {
       "key": "event.promo_link.start.2",
-      "text": "下面的小字写着：本活动可能造成轻微社死或生命流失。"
+      "text": "反正也没有什么损失，不如转发一下试试？"
     },
     {
       "key": "event.promo_link.option.share",
@@ -378,15 +378,15 @@
     },
     {
       "key": "event.promo_link.option.share_again",
-      "text": "继续分享链接"
+      "text": "继续分享"
     },
     {
       "key": "event.promo_link.repeat.1",
-      "text": "链接已经发出，金币到账。弹窗变得更兴奋了：要不要再分享一次？"
+      "text": "随便转发给一个好久没上线的朋友，钱包的余额确实增长了，看来不是诈骗，要不要再分享一次？"
     },
     {
       "key": "event.promo_link.leave.1",
-      "text": "你关掉弹窗。它在关闭动画里还试图说服你。"
+      "text": "似乎再转发下去就会惹人生厌了，你决定就此收手。"
     },
     {
       "key": "event.traffic_growth.title",
@@ -422,7 +422,7 @@
     },
     {
       "key": "event.capsule_machine.punch.1",
-      "text": "你给了扭蛋机一拳，硬币槽咳出两枚硬币，你的手也隐隐作痛。"
+      "text": "你用力捶打着投币口，似乎从松动的金属器件中掉出了几个卡住的硬币？真是意外之喜。"
     },
     {
       "key": "event.anonymous_forum.option.reply",
@@ -430,11 +430,11 @@
     },
     {
       "key": "event.anonymous_forum.reply.1",
-      "text": "你认真跟了一句，陌生人的认同感让你放松下来，立即恢复4点生命。"
+      "text": "模仿着其他人发了几句没什么营养的话，拿到了每日任务的积分，似乎是这个论坛的一种习俗？看起来还有积分商城可以买东西。这家论坛是怎么运营的？你很想知道。"
     },
     {
       "key": "event.coffee_or_cola.coffee_remove.1",
-      "text": "咖啡苦得像待办事项。你清醒过来，决定删掉一张不该继续留着的素材。"
+      "text": "咖啡的香气与苦涩让昏昏欲睡的你振奋了起来。"
     },
     {
       "key": "event.coffee_or_cola.option.water",
@@ -442,14 +442,18 @@
     },
     {
       "key": "event.coffee_or_cola.water.1",
-      "text": "你接了一杯白开水，身体没有抗议，反而悄悄恢复了一点精神。"
+      "text": "目前最重要的只是补水，今天已经喝了太多饮料了。"
     },
     {
       "key": "event.limited_sale.no_buy_save.1",
-      "text": "你关掉所有弹窗，发现最划算的购买方案就是不买。系统不情愿地吐出2金币当作“理性消费奖励”。"
+      "text": "你并没有什么购物需求，这张优惠券可以留到下次用。"
     },
     {
       "key": "event.promo_link.option.stop",
+      "text": "还是算了"
+    },
+    {
+      "key": "event.promo_link.option.stop_again",
       "text": "适可而止"
     },
     {
@@ -514,43 +518,43 @@
     },
     {
       "key": "event.arrow_claw_machine.start.2",
-      "text": "机械爪悬在半空，只会响应你打出的同方向箭头。"
+      "text": "机械爪悬在半空，四个方向的移动按钮正闪烁着提示的光，似乎不需要投币就可以直接使用。"
     },
     {
       "key": "event.arrow_claw_machine.option.up",
-      "text": "抓上箭头"
+      "text": "往前移动"
     },
     {
       "key": "event.arrow_claw_machine.option.down",
-      "text": "抓下箭头"
+      "text": "往后移动"
     },
     {
       "key": "event.arrow_claw_machine.option.left",
-      "text": "抓左箭头"
+      "text": "往左移动"
     },
     {
       "key": "event.arrow_claw_machine.option.right",
-      "text": "抓右箭头"
+      "text": "往右移动"
     },
     {
       "key": "event.arrow_claw_machine.up.1",
-      "text": "机械爪晃晃悠悠地落下，夹起一个发光的上箭头。新的箭头落入你的牌组。"
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的上箭头。"
     },
     {
       "key": "event.arrow_claw_machine.down.1",
-      "text": "机械爪晃晃悠悠地落下，夹起一个发光的下箭头。新的箭头落入你的牌组。"
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的下箭头。"
     },
     {
       "key": "event.arrow_claw_machine.left.1",
-      "text": "机械爪晃晃悠悠地落下，夹起一个发光的左箭头。新的箭头落入你的牌组。"
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的左箭头。"
     },
     {
       "key": "event.arrow_claw_machine.right.1",
-      "text": "机械爪晃晃悠悠地落下，夹起一个发光的右箭头。新的箭头落入你的牌组。"
+      "text": "机械爪晃晃悠悠地落下，夹起一个发光的右箭头。"
     },
     {
       "key": "event.arrow_claw_machine.leave.1",
-      "text": "你松开操纵杆，娃娃机里的箭头继续闪着霓虹光。"
+      "text": "你没有时间停留，看起来只能和免费的抓取机会说再见了。"
     },
     {
       "key": "event.screen_protector_stall.title",
@@ -558,11 +562,11 @@
     },
     {
       "key": "event.screen_protector_stall.start.1",
-      "text": "路边小摊挂着一排会发光的保护膜，摊主说每一张都能贴在箭头上。"
+      "text": "路边小摊挂着一排会发光的保护膜，看起来贴在手机上会很不错。"
     },
     {
       "key": "event.screen_protector_stall.start.2",
-      "text": "他熟练地甩出刮板，气泡在霓虹灯下像小型道具事故。"
+      "text": "摊主给你展示了一些热门品类，似乎有免费的可以尝试？"
     },
     {
       "key": "event.screen_protector_stall.option.free",
@@ -578,15 +582,15 @@
     },
     {
       "key": "event.screen_protector_stall.free.1",
-      "text": "免费膜意外地很服帖。选择一张箭头，让它在手里多待一会儿。"
+      "text": "保护膜只是为了防摔，免费的就够用了。"
     },
     {
       "key": "event.screen_protector_stall.cheap.1",
-      "text": "膜一贴上就裂出漂亮纹路。选择一张箭头，让它变得脆弱。"
+      "text": "你不是很能理解为什么有这种品类，也许是有不少客人喜欢这种破碎的美感？于是你也打算买一个试试。"
     },
     {
       "key": "event.screen_protector_stall.tempered.1",
-      "text": "钢化膜发出清脆的咔哒声。选择一张箭头，让它下回合也会回来。"
+      "text": "手指滑过手机膜边缘，足够坚硬，甚至可以防弹了。"
     },
     {
       "key": "event.printer_accident.title",
@@ -594,7 +598,7 @@
     },
     {
       "key": "event.printer_accident.start.1",
-      "text": "一台自助打印机正在吐出方向箭头，纸张边缘冒着热气。"
+      "text": "一台自助打印机正在不断吐出新的海报，但是内容全部都糊在一起了。"
     },
     {
       "key": "event.printer_accident.start.2",
@@ -614,15 +618,15 @@
     },
     {
       "key": "event.printer_accident.unclear.1",
-      "text": "你决定假装没看懂。打印机退回两枚硬币作为精神损失费。"
+      "text": "你不清楚为什么打印出来的内容有问题，只是取消了原本的打印任务。"
     },
     {
       "key": "event.printer_accident.wrong_size.1",
-      "text": "打印比例被拉大了。选择一张箭头，把它变成更占配方格的多重箭头。"
+      "text": "似乎是海报比例问题，重新拉伸一下文件就好了。"
     },
     {
       "key": "event.printer_accident.misaligned.1",
-      "text": "同一个箭头被印了两遍。选择一张箭头，让它读取时变得更重。"
+      "text": "似乎是连续按下打印按钮的问题，重启一下机器就好了。"
     },
     {
       "key": "event.website_emergency.title",
@@ -634,7 +638,7 @@
     },
     {
       "key": "event.website_emergency.start.2",
-      "text": "错误提示一层叠一层，像一群急着报名的怪物。"
+      "text": "莫名其妙的弹窗一个接一个弹出，干扰着你原本的计划。"
     },
     {
       "key": "event.website_emergency.option.refresh",
@@ -650,15 +654,15 @@
     },
     {
       "key": "event.website_emergency.refresh.1",
-      "text": "你按下刷新键，页面短暂恢复正常，连带着你的精神也恢复了一点。"
+      "text": "你按下刷新键，页面短暂恢复正常，至于是否还会出现问题，没人知道。"
     },
     {
       "key": "event.website_emergency.reversed_direction.1",
-      "text": "网页卡死在加载圈里。选择一张箭头，让它在回合结束时继续留在手牌。"
+      "text": "网页卡死在加载圈里，看起来你要在这里等上一段时间了。"
     },
     {
       "key": "event.website_emergency.popups.1",
-      "text": "弹窗越关越多。选择一张箭头，让它学会在打出后复制自己。"
+      "text": "手动关闭弹窗的速度显然无法战胜弹窗生成的速度，可能还是直接关掉浏览器比较好。"
     },
     {
       "key": "event.neon_wayfinding.title",
@@ -754,15 +758,15 @@
     },
     {
       "key": "event.tutorial_signpost.left.1",
-      "text": "你选择了左边。生命上限提高了。"
+      "text": "你选择了左边。"
     },
     {
       "key": "event.tutorial_signpost.right.1",
-      "text": "你选择了右边。疼痛和取舍都很真实。"
+      "text": "你选择了右边。"
     },
     {
       "key": "event.tutorial_signpost.straight.1",
-      "text": "你拒绝转弯，于是获得了一次道具奖励。"
+      "text": "直行的道路没有封死，显然没有转弯的必要。"
     },
     {
       "key": "event.idle_trade_platform.title",
@@ -774,7 +778,7 @@
     },
     {
       "key": "event.idle_trade_platform.start.2",
-      "text": "三个挂着“闲置”标签的箭头排成一列，备注写着：一口价，砍价免谈。"
+      "text": "有几件你想要的物品，但价格和全新的没什么区别，似乎可以尝试砍价？"
     },
     {
       "key": "event.idle_trade_platform.option.cut_to_last",
@@ -790,15 +794,15 @@
     },
     {
       "key": "event.idle_trade_platform.cut_to_last.1",
-      "text": "你把价格砍到卖家放弃回复。屏幕一暗，一件商品直接落进你的道具栏。"
+      "text": "显然商家的价格开得过高了，TA自己也知道，于是你顺利地用一半价格拿下了目标。"
     },
     {
       "key": "event.idle_trade_platform.buyout.1",
-      "text": "你按下“立即购买”，金币少了3枚。卖家秒发货，一句谢谢都没有。"
+      "text": "时间紧任务重，你果断地点击了“立即购买”。"
     },
     {
       "key": "event.idle_trade_platform.check_in.1",
-      "text": "你只点了签到。平台照例给了2金币，然后开始给你推广告。"
+      "text": "看起来今天也不适合购物，你只是来平台签到。平台照例给了点积分，然后开始推送广告。"
     },
     {
       "key": "event.data_backup.title",
@@ -806,7 +810,7 @@
     },
     {
       "key": "event.data_backup.start.1",
-      "text": "维护前的备份提醒弹了出来，磁盘进度条卡在0.3%已经很久。"
+      "text": "维护前的备份提醒弹了出来，系统更新前需要完成必要的数据备份。"
     },
     {
       "key": "event.data_backup.start.2",
@@ -826,15 +830,15 @@
     },
     {
       "key": "event.data_backup.full_backup.1",
-      "text": "进度条走到100%。三枚半透明的箭头被完整复制出来——它们不占打出次数，离开手牌就会消失。"
+      "text": "全部都要做备份，总会有地方用到这些数据的。"
     },
     {
       "key": "event.data_backup.key_backup.1",
-      "text": "你只备份了最关键的那一份。一枚【临时】箭头落进牌组，轻得几乎没有重量。"
+      "text": "只备份最关键的数据就行，更多的空间可以留作他用。"
     },
     {
       "key": "event.data_backup.shortcut_only.1",
-      "text": "备份变成了快捷方式：牌组里一半的箭头被随手贴上【临时】标签，指向原件的影子。"
+      "text": "只复制桌面上的快捷方式，做做面子工程就够了。"
     },
     {
       "key": "event.what_day_is_it.title",
@@ -842,11 +846,11 @@
     },
     {
       "key": "event.what_day_is_it.start.1",
-      "text": "日历插件崩了，日期位置只剩“节假日 / 休息日 / 工作日”三个词在闪。"
+      "text": "长时间待在拉上窗帘的房间让你完全不清楚昼夜变化，考虑到自己未来的生活安排，你决定看一眼电子日历。"
     },
     {
       "key": "event.what_day_is_it.start.2",
-      "text": "屏幕角落的像素小人举着牌子：今天到底算哪一种？"
+      "text": "所以今天是什么日子？"
     },
     {
       "key": "event.what_day_is_it.option.holiday",
@@ -862,15 +866,15 @@
     },
     {
       "key": "event.what_day_is_it.holiday.1",
-      "text": "你把今天定成节假日。系统放起像素烟花，并允许你指定一件道具获得【再生】。"
+      "text": "电子日历上的今天是节假日。大家都有闲暇，是时候玩点派对游戏了！"
     },
     {
       "key": "event.what_day_is_it.rest_day.1",
-      "text": "你把今天定成休息日。绷紧的东西松开了一些，生命上限提高4点。"
+      "text": "电子日历上的今天是休息日。又可以在床上躺一整天了。"
     },
     {
       "key": "event.what_day_is_it.workday.1",
-      "text": "你把今天定成工作日。加班扣掉2点生命上限，工资到账6金币。"
+      "text": "电子日历上写今天是工作日……是不是稿件的截止日期要到了！必须立刻开始工作了。"
     },
     {
       "key": "event.old_hard_drive.title",
@@ -878,11 +882,11 @@
     },
     {
       "key": "event.old_hard_drive.start.1",
-      "text": "抽屉深处翻出一块老硬盘，标签被人用力写过：“备用，勿动”。"
+      "text": "抽屉深处翻出一块老硬盘，贴在上面的标签已经磨损的看不清了。"
     },
     {
       "key": "event.old_hard_drive.start.2",
-      "text": "它转起来的声音，像有人在很远的地方咳嗽。"
+      "text": "是谁放在这里的？为什么放在这里？没人知道。"
     },
     {
       "key": "event.old_hard_drive.option.peek",
@@ -898,15 +902,15 @@
     },
     {
       "key": "event.old_hard_drive.peek.1",
-      "text": "你强行读取坏道，手指被划出一道血口。硬盘吐出一枚随机方向的【三重箭头】。"
+      "text": "将硬盘接入电脑，过去的软件也有不少可以在现在发挥作用。"
     },
     {
       "key": "event.old_hard_drive.wipe_spare.1",
-      "text": "格式化干净得让人愉快。你顺手丢掉3张不再需要的箭头。"
+      "text": "格式化干净得让人愉快，多了一个新的备用盘，又可以下载不少东西。"
     },
     {
       "key": "event.old_hard_drive.buy_new.1",
-      "text": "拆卸时你流了5点血，但新硬盘的空位让你的生命上限提高了4点。"
+      "text": "旧的东西就让它放在那里吧，还是买个新的更方便。"
     },
     {
       "key": "event.membership_expired.title",
@@ -918,7 +922,7 @@
     },
     {
       "key": "event.membership_expired.start.2",
-      "text": "套餐说明用小字写着：本会员可能不包含你真正想要的东西。"
+      "text": "今天是会员到期前的最后一天，看起来是时候做出决断了。"
     },
     {
       "key": "event.membership_expired.option.gold_plan",
@@ -934,15 +938,15 @@
     },
     {
       "key": "event.membership_expired.gold_plan.1",
-      "text": "金牌套餐生效。每回合你能多打出一张箭头，限制被一行小字悄悄松开了。"
+      "text": "贵就是好，给平台充值的钱越多，平台对你的限制就越宽松。"
     },
     {
       "key": "event.membership_expired.budget_plan.1",
-      "text": "平价套餐只保留了抽牌速度：之后每回合抽牌数+1。"
+      "text": "性价比才是王道，任何一点资金都不应该浪费在无意义的地方。"
     },
     {
       "key": "event.membership_expired.cancel.1",
-      "text": "你点下停止续费。系统把余额折成3金币退给你，顺手清空了所有红点。"
+      "text": "这个平台并不值得你继续为它付费了，不如将钱留给其他活动。"
     },
     {
       "key": "event.unreliable_helper.title",
@@ -950,7 +954,7 @@
     },
     {
       "key": "event.unreliable_helper.start.1",
-      "text": "一个自称“小帮手”的脚本请求读取你的牌组权限。"
+      "text": "一个标题为“小帮手”的脚本请求读取你的系统权限。"
     },
     {
       "key": "event.unreliable_helper.start.2",
@@ -970,15 +974,15 @@
     },
     {
       "key": "event.unreliable_helper.loose_auth.1",
-      "text": "小帮手复制出3枚带【增殖】的箭头，然后自顾自地跑掉了。"
+      "text": "小帮手把工作区下的所有文件都复制了一份，然后自顾自地跑掉了。"
     },
     {
       "key": "event.unreliable_helper.strict_auth.1",
-      "text": "严格鉴权下，它只复制了1枚带【增殖】的箭头，看起来有点委屈。"
+      "text": "小帮手把当前用户的所有文件都复制了一份，然后自顾自地跑掉了。"
     },
     {
       "key": "event.unreliable_helper.full_auth.1",
-      "text": "你把权限全给了它。牌组里每一枚箭头都获得了【增殖】。"
+      "text": "小帮手把系统里的所有文件都复制了一份，然后自顾自地跑掉了。"
     },
     {
       "key": "event.smart_ime.title",
@@ -986,11 +990,11 @@
     },
     {
       "key": "event.smart_ime.start.1",
-      "text": "输入法更新了智能预测，开始抢在你之前打出箭头。"
+      "text": "输入法更新了大版本，现在可以接入大模型来快速预测输入了！"
     },
     {
       "key": "event.smart_ime.start.2",
-      "text": "词库管理界面闪着提示：本地空间不足，请谨慎选择。"
+      "text": "这会占用掉不少空间，所以仅采用词库更新也是个不错的选择。"
     },
     {
       "key": "event.smart_ime.option.llm",
@@ -1006,15 +1010,15 @@
     },
     {
       "key": "event.smart_ime.llm.1",
-      "text": "大模型接管了联想。每回合多抽1张箭头，代价是所有箭头的方向被它重新猜了一遍。"
+      "text": "大模型让你的输入效率大幅提高了！美中不足的是，它总是会输出一些与你想法相反的内容。"
     },
     {
       "key": "event.smart_ime.update_dict.1",
-      "text": "词库更新完毕，2张箭头被换成它更喜欢的方向。"
+      "text": "词库更新完毕，删除了旧的常用词，新增了一些新的热门网络词。"
     },
     {
       "key": "event.smart_ime.no_space.1",
-      "text": "空间不足，更新失败。输入法道歉的时候顺手给你回了4点血。"
+      "text": "空间不足，是时候去清理一下电脑空间了。也许你应该买块新的硬盘？"
     },
     {
       "key": "event.input_setup.title",
@@ -1022,11 +1026,11 @@
     },
     {
       "key": "event.input_setup.start.1",
-      "text": "首次启动的引导弹窗还没关：请选择你的操作方式。"
+      "text": "首次启动游戏的引导弹窗还没关：请选择你的操作方式。"
     },
     {
       "key": "event.input_setup.start.2",
-      "text": "两种方案的代价都写着同一行小字——“会清空当前金币”。"
+      "text": "你更习惯哪种模式？"
     },
     {
       "key": "event.input_setup.option.gamepad",
@@ -1042,15 +1046,15 @@
     },
     {
       "key": "event.input_setup.gamepad.1",
-      "text": "手柄振动了一下确认映射。金币被清空，换回【保护色】和【叶绿体】。"
+      "text": "你更习惯手柄的操作模式，也许你现在用的就是手柄？"
     },
     {
       "key": "event.input_setup.keyboard_mouse.1",
-      "text": "映射写进配置。金币被清空，换回【雨幡】和【贴纸】。"
+      "text": "你更习惯键盘的操作模式，也许你现在用的就是键盘？"
     },
     {
       "key": "event.input_setup.not_now.1",
-      "text": "你决定稍后再设置。系统扣掉2金币作为“配置暂存费”，态度非常自然。"
+      "text": "你决定稍后再设置，因为你的控制器还没有到货。"
     }
   ]
 }
