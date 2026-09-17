@@ -41,6 +41,8 @@ public struct UnifiedDetailContent
     public List<UnifiedDetailAddedDetail> AddedDetails;
     /// <summary>道具的施法序列（箭头序列）；非道具内容或空序列时为 null。</summary>
     public IReadOnlyList<MaterialEnum> Recipe;
+    /// <summary>箭头附魔的 id 列表（用于详情面板里的附魔图标）；非箭头内容或无附魔时为 null。</summary>
+    public List<string> EnchantIds;
 }
 
 public static class UnifiedDetailContentBuilder
@@ -120,9 +122,26 @@ public static class UnifiedDetailContentBuilder
             Body = BuildMaterialBody(material),
             AccentColor = GetMaterialAccentColor(material, displayMaterial),
             Icon = MaterialCardView.GetMaterialIcon(displayMaterial),
-            AddedDetails = BuildMaterialAddedDetails(material)
+            AddedDetails = BuildMaterialAddedDetails(material),
+            EnchantIds = BuildMaterialEnchantIds(material)
         };
         return content;
+    }
+
+    /// <summary>箭头上已附魔的附魔 id（去重、保持附加顺序），没有附魔时返回 null。</summary>
+    private static List<string> BuildMaterialEnchantIds(MaterialModel material)
+    {
+        if (material == null || material.modifiers == null || material.modifiers.Count == 0)
+            return null;
+
+        List<string> ids = new List<string>();
+        for (int i = 0; i < material.modifiers.Count; i++)
+        {
+            string id = MaterialModifierFactory.GetId(material.modifiers[i]);
+            if (!string.IsNullOrEmpty(id) && !ids.Contains(id))
+                ids.Add(id);
+        }
+        return ids.Count > 0 ? ids : null;
     }
 
     public static UnifiedDetailContent BuildMapMove(MaterialEnum material)

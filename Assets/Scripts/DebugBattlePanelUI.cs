@@ -13,8 +13,8 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button killAllButton;
     [SerializeField] private Button drawCardButton;
     [SerializeField] private Button goldButton;
-    [SerializeField] private Button randomEnchantButton;
     [SerializeField] private Button enchantRewardButton;
+    [SerializeField] private Button magicModifierRewardButton;
     [SerializeField] private Button startRestButton;
     [SerializeField] private TMP_Dropdown eventDropdown;
     [SerializeField] private Button startEventButton;
@@ -62,8 +62,8 @@ public class DebugBattlePanelUI : MonoBehaviour
         arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
         goldButton?.onClick.RemoveListener(AddGold);
-        randomEnchantButton?.onClick.RemoveListener(AddRandomEnchantToHand);
         enchantRewardButton?.onClick.RemoveListener(GrantEnchantReward);
+        magicModifierRewardButton?.onClick.RemoveListener(GrantMagicModifierReward);
 
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
         damageButton?.onClick.AddListener(DealDamageToTarget);
@@ -78,8 +78,8 @@ public class DebugBattlePanelUI : MonoBehaviour
         arrowUpgradeButton?.onClick.AddListener(OpenArrowUpgradePanel);
         closeButton?.onClick.AddListener(Hide);
         goldButton?.onClick.AddListener(AddGold);
-        randomEnchantButton?.onClick.AddListener(AddRandomEnchantToHand);
         enchantRewardButton?.onClick.AddListener(GrantEnchantReward);
+        magicModifierRewardButton?.onClick.AddListener(GrantMagicModifierReward);
     }
 
     private void OnDestroy()
@@ -97,8 +97,8 @@ public class DebugBattlePanelUI : MonoBehaviour
         arrowUpgradeButton?.onClick.RemoveListener(OpenArrowUpgradePanel);
         closeButton?.onClick.RemoveListener(Hide);
         goldButton?.onClick.RemoveListener(AddGold);
-        randomEnchantButton?.onClick.RemoveListener(AddRandomEnchantToHand);
         enchantRewardButton?.onClick.RemoveListener(GrantEnchantReward);
+        magicModifierRewardButton?.onClick.RemoveListener(GrantMagicModifierReward);
     }
 
     public void Show()
@@ -162,10 +162,10 @@ public class DebugBattlePanelUI : MonoBehaviour
             drawCardButton = FindInPanel<Button>("DrawCardButton");
         if (goldButton == null)
             goldButton = FindInPanel<Button>("GoldButton");
-        if (randomEnchantButton == null)
-            randomEnchantButton = FindInPanel<Button>("RandomEnchantButton");
         if (enchantRewardButton == null)
             enchantRewardButton = FindInPanel<Button>("EnchantRewardButton");
+        if (magicModifierRewardButton == null)
+            magicModifierRewardButton = FindInPanel<Button>("MagicModifierRewardButton");
         if (startRestButton == null)
             startRestButton = FindInPanel<Button>("StartRestButton");
         if (eventDropdown == null)
@@ -380,12 +380,12 @@ public class DebugBattlePanelUI : MonoBehaviour
         handSystem.GetUIManager()?.GoldDisplay?.SetGold(handSystem.PlayerState.Gold, true);
     }
 
-    private void AddRandomEnchantToHand()
+    private void GrantEnchantReward()
     {
-        handSystem?.DebugAddRandomEnchantToHand();
+        handSystem?.DebugGrantArrowModifierReward();
     }
 
-    private void GrantEnchantReward()
+    private void GrantMagicModifierReward()
     {
         handSystem?.DebugGrantMagicModifierReward();
     }

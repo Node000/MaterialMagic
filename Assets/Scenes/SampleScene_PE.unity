@@ -6843,6 +6843,7 @@ RectTransform:
   - {fileID: 1941814606}
   - {fileID: 1203581593}
   - {fileID: 1944626354}
+  - {fileID: 1161364767}
   m_Father: {fileID: 1171655047}
   m_LocalEulerAnglesHint: {x: 0, y: -16.3, z: 5.42}
   m_AnchorMin: {x: 0, y: 0.5}
@@ -6879,6 +6880,8 @@ MonoBehaviour:
   addedDetailPrefab: {fileID: 3659712173203625444, guid: 0a9d1509292dbee4ea28080bbc980ff7, type: 3}
   addedDetailRoot: {fileID: 1203581593}
   arrowSequenceUI: {fileID: 1944626358}
+  enchantEntryPrefab: {fileID: 2848628843091071298, guid: 70819f18abec88b4f8d47c33fe1588c9, type: 3}
+  enchantEntryRoot: {fileID: 1161364767}
   autoScrollStartDelay: 1.2
   autoScrollDuration: 3
   autoScrollPause: 1.2
@@ -41153,6 +41156,68 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4222246363379612794, guid: b6b52cbd142214840a2d3fd05a055cbd, type: 3}
   m_PrefabInstance: {fileID: 1159021839}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1161364766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1161364767}
+  - component: {fileID: 1161364768}
+  m_Layer: 0
+  m_Name: EnchantEntryRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1161364767
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1161364766}
+  m_LocalRotation: {x: -0.0000000032596286, y: 8.271806e-25, z: -0.0000000032596286, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 162136058}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.00012207031, y: -119.99994}
+  m_SizeDelta: {x: 278, y: 112}
+  m_Pivot: {x: 0, y: 0}
+--- !u!114 &1161364768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1161364766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 2
+    m_Right: 2
+    m_Top: 2
+    m_Bottom: 2
+  m_ChildAlignment: 4
+  m_Spacing: 8
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1167728219
 GameObject:
   m_ObjectHideFlags: 0
@@ -54790,8 +54855,8 @@ MonoBehaviour:
   killAllButton: {fileID: 0}
   drawCardButton: {fileID: 0}
   goldButton: {fileID: 0}
-  randomEnchantButton: {fileID: 0}
   enchantRewardButton: {fileID: 0}
+  magicModifierRewardButton: {fileID: 0}
   startRestButton: {fileID: 0}
   eventDropdown: {fileID: 1771543158}
   startEventButton: {fileID: 737992050}

@@ -18,6 +18,9 @@ public sealed class EnchantColorConfig : ScriptableObject
         [Tooltip("附魔 id（与 Assets/Resources/EnchantConfig/MaterialModifiers/<id>.asset 的 id 一致）")]
         public string modifierId;
 
+        [Tooltip("附魔中文名注释（只给美术看，不参与运行逻辑）；用 Inspector 上的「刷新附魔中文名」或菜单 Tools/Content/Enchant 从本地化表重新写入")]
+        public string displayName;
+
         [Tooltip("图标上层颜色")]
         public Color topColor = Color.white;
 

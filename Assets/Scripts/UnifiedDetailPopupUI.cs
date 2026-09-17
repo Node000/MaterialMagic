@@ -26,6 +26,10 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     [SerializeField] private RectTransform addedDetailRoot;
     [Tooltip("详情面板左下角的箭头序列小线框（道具内容时按施法序列刷新）。")]
     [SerializeField] private UnifiedDetailArrowSequenceUI arrowSequenceUI;
+    [Tooltip("箭头附魔内容项预制体（Assets/Prefabs/UI/EnchantEntry.prefab：附魔图标 + 名字，尺寸参考道具强化选择面板）：详情面板里按箭头已附魔逐个生成。")]
+    [SerializeField] private EnchantEntryUI enchantEntryPrefab;
+    [Tooltip("附魔内容项的父容器（在 Scene 里搭好，运行时只生成子项）；留空则不显示附魔内容。")]
+    [SerializeField] private RectTransform enchantEntryRoot;
     [SerializeField] private float autoScrollStartDelay = 1.2f;
     [SerializeField] private float autoScrollDuration = 3f;
     [SerializeField] private float autoScrollPause = 1.2f;
@@ -235,6 +239,8 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         RefreshBodyScroll();
     }
 
+    private readonly List<EnchantEntryUI> enchantEntries = new List<EnchantEntryUI>();
+
     private void ApplyContent(UnifiedDetailContent content)
     {
         if (titleText != null)
@@ -248,12 +254,64 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         }
         ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
+        ApplyEnchantIcons(content.EnchantIds);
         if (arrowSequenceUI != null)
         {
             arrowSequenceUI.SetRecipe(content.Recipe);
             // 序列框的参数跟随本面板的弹簧线框（只把线条数量减半），颜色跟内容强调色（道具按稀有度）。
             arrowSequenceUI.ApplyLineStyle(borderGraphic as SpringLineHighlightUI, content.AccentColor);
         }
+    }
+
+    /// <summary>
+    /// 箭头附魔行：按内容里的附魔 id 逐个生成内容项（附魔图标 + 名字，颜色由 <see cref="EnchantIconUI"/> 依据
+    /// Enchant_Color 配置刷新），没附魔时整行隐藏。容器在 Scene 里，运行时只生成子项；
+    /// 图标尺寸与名字字号都取自 <c>Assets/Prefabs/UI/EnchantEntry.prefab</c>。
+    /// </summary>
+    private void ApplyEnchantIcons(List<string> enchantIds)
+    {
+        if (enchantEntryRoot == null)
+            return;
+
+        int count = enchantIds != null ? enchantIds.Count : 0;
+        if (count == 0 || enchantEntryPrefab == null)
+        {
+            for (int i = 0; i < enchantEntries.Count; i++)
+            {
+                if (enchantEntries[i] != null)
+                    enchantEntries[i].gameObject.SetActive(false);
+            }
+            if (count == 0)
+                enchantEntryRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        enchantEntryRoot.gameObject.SetActive(true);
+        for (int i = 0; i < count; i++)
+        {
+            EnchantEntryUI entry = GetOrCreateEnchantEntry(i);
+            if (entry == null)
+                continue;
+
+            entry.gameObject.SetActive(true);
+            entry.transform.SetSiblingIndex(i);
+            entry.Apply(enchantIds[i]);
+        }
+        for (int i = count; i < enchantEntries.Count; i++)
+        {
+            if (enchantEntries[i] != null)
+                enchantEntries[i].gameObject.SetActive(false);
+        }
+    }
+
+    private EnchantEntryUI GetOrCreateEnchantEntry(int index)
+    {
+        while (enchantEntries.Count <= index)
+        {
+            EnchantEntryUI entry = enchantEntryPrefab != null ? Instantiate(enchantEntryPrefab, enchantEntryRoot) : null;
+            enchantEntries.Add(entry);
+        }
+        return enchantEntries[index];
     }
 
     private void ApplyAccentColor(Color color)
@@ -443,8 +501,9 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         bodyText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentHeight);
         bodyScrollRect.content = scrollContent;
         bodyScrollRect.verticalNormalizedPosition = 1f;
-        bodyScrollRect.enabled = pinned && bodyCanScroll;
-        if (pinned && bodyCanScroll)
+        // 文本溢出时无论悬停预览还是固定面板都允许滚动（否则悬停时被 mask 截断、无法查看）。
+        bodyScrollRect.enabled = bodyCanScroll;
+        if (bodyCanScroll)
             manualScrollResumeTime = Time.unscaledTime + autoScrollStartDelay;
     }
 
@@ -464,7 +523,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
         HidePinnedPopupOnOutsideClick();
 
-        if (!pinned || !bodyCanScroll || draggingBody || autoScrollTween != null)
+        if (!bodyCanScroll || draggingBody || autoScrollTween != null)
             return;
         if (Time.unscaledTime < manualScrollResumeTime)
             return;
@@ -552,7 +611,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     private void PauseAutoScrollAfterManualInput()
     {
-        if (!pinned)
+        if (!bodyCanScroll)
             return;
 
         StopAutoScroll();

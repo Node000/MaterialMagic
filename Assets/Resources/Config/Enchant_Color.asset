@@ -14,77 +14,102 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - modifierId: big_arrow_2
+    displayName: "\u53CC\u91CD\u7BAD\u5934"
     topColor: {r: 1, g: 0.72156864, b: 0.3019608, a: 1}
     baseColor: {r: 1, g: 0.72156864, b: 0.3019608, a: 1}
   - modifierId: big_arrow_3
+    displayName: "\u4E09\u91CD\u7BAD\u5934"
     topColor: {r: 1, g: 0.62352943, b: 0.2, a: 1}
     baseColor: {r: 1, g: 0.62352943, b: 0.2, a: 1}
   - modifierId: big_arrow_4
+    displayName: "\u56DB\u91CD\u7BAD\u5934"
     topColor: {r: 1, g: 0.49803922, b: 0.101960786, a: 1}
     baseColor: {r: 1, g: 0.49803922, b: 0.101960786, a: 1}
   - modifierId: charge
+    displayName: "\u7535\u8377"
     topColor: {r: 1, g: 0.89411765, b: 0.36078432, a: 1}
     baseColor: {r: 1, g: 0.89411765, b: 0.36078432, a: 1}
   - modifierId: disabled_arrow
+    displayName: "\u7981\u7528"
     topColor: {r: 0.6901961, g: 0.29803923, b: 0.29803923, a: 1}
     baseColor: {r: 0.6901961, g: 0.29803923, b: 0.29803923, a: 1}
   - modifierId: doom
+    displayName: "\u5384\u8FD0"
     topColor: {r: 0.45490196, g: 0.45490196, b: 0.47058824, a: 1}
     baseColor: {r: 0.45490196, g: 0.45490196, b: 0.47058824, a: 1}
   - modifierId: eternal_arrow
+    displayName: "\u6C38\u6052"
     topColor: {r: 1, g: 0.8509804, b: 0.41960785, a: 1}
     baseColor: {r: 1, g: 0.8509804, b: 0.41960785, a: 1}
   - modifierId: flow
+    displayName: "\u6D41\u8F6C"
     topColor: {r: 0.27058825, g: 0.8509804, b: 1, a: 1}
     baseColor: {r: 0.27058825, g: 0.8509804, b: 1, a: 1}
   - modifierId: fragile_arrow
+    displayName: "\u8106\u5F31"
     topColor: {r: 0.78039217, g: 0.9490196, b: 1, a: 1}
     baseColor: {r: 0.78039217, g: 0.9490196, b: 1, a: 1}
   - modifierId: half_arrow
+    displayName: "\u534A\u7BAD\u5934"
     topColor: {r: 0.6901961, g: 0.6901961, b: 0.6901961, a: 1}
     baseColor: {r: 0.6901961, g: 0.6901961, b: 0.6901961, a: 1}
   - modifierId: kindling
+    displayName: "\u71C3\u85AA"
     topColor: {r: 1, g: 0.47843137, b: 0.101960786, a: 1}
     baseColor: {r: 1, g: 0.47843137, b: 0.101960786, a: 1}
   - modifierId: lazy
+    displayName: "\u61D2\u60F0"
     topColor: {r: 0.54901963, g: 0.54901963, b: 1, a: 1}
     baseColor: {r: 0.54901963, g: 0.54901963, b: 1, a: 1}
   - modifierId: linked_arrow
+    displayName: "\u9ECF\u5408\u7BAD\u5934"
     topColor: {r: 0.72156864, g: 0.46666667, b: 1, a: 1}
     baseColor: {r: 0.72156864, g: 0.46666667, b: 1, a: 1}
   - modifierId: liquefy
+    displayName: "\u6DB2\u5316"
     topColor: {r: 0.3019608, g: 0.5529412, b: 1, a: 1}
     baseColor: {r: 0.3019608, g: 0.5529412, b: 1, a: 1}
   - modifierId: omni_arrow
+    displayName: "\u4E07\u5411\u7BAD\u5934"
     topColor: {r: 0.8, g: 0.44705883, b: 1, a: 1}
     baseColor: {r: 0.8, g: 0.44705883, b: 1, a: 1}
   - modifierId: pack_arrow
+    displayName: "\u6253\u5305\u7B26\u53F7"
     topColor: {r: 1, g: 0.44705883, b: 0.84705883, a: 1}
     baseColor: {r: 1, g: 0.44705883, b: 0.84705883, a: 1}
   - modifierId: period_arrow
+    displayName: "\u53E5\u70B9\u7B26\u53F7"
     topColor: {r: 0.84705883, g: 0.84705883, b: 0.84705883, a: 1}
     baseColor: {r: 0.84705883, g: 0.84705883, b: 0.84705883, a: 1}
   - modifierId: proliferating_arrow
+    displayName: "\u589E\u6B96"
     topColor: {r: 0.39607844, g: 0.8901961, b: 0.54509807, a: 1}
     baseColor: {r: 0.39607844, g: 0.8901961, b: 0.54509807, a: 1}
   - modifierId: random_arrow
+    displayName: "\u968F\u673A\u7BAD\u5934"
     topColor: {r: 0.84705883, g: 0.41960785, b: 1, a: 1}
     baseColor: {r: 0.84705883, g: 0.41960785, b: 1, a: 1}
   - modifierId: repeat_arrow
+    displayName: "\u91CD\u590D"
     topColor: {r: 0.6117647, g: 0.41960785, b: 1, a: 1}
     baseColor: {r: 0.6117647, g: 0.41960785, b: 1, a: 1}
   - modifierId: retained_arrow
+    displayName: "\u4FDD\u7559"
     topColor: {r: 0.54509807, g: 0.91764706, b: 0.54509807, a: 1}
     baseColor: {r: 0.54509807, g: 0.91764706, b: 0.54509807, a: 1}
   - modifierId: return_arrow
+    displayName: "\u8FD4\u56DE\u7B26\u53F7"
     topColor: {r: 1, g: 1, b: 1, a: 1}
     baseColor: {r: 1, g: 1, b: 1, a: 1}
   - modifierId: sturdy
+    displayName: "\u575A\u56FA"
     topColor: {r: 0.81960785, g: 0.60784316, b: 0.3529412, a: 1}
     baseColor: {r: 0.81960785, g: 0.60784316, b: 0.3529412, a: 1}
   - modifierId: temporary
+    displayName: "\u4E34\u65F6"
     topColor: {r: 0.72156864, g: 0.72156864, b: 0.72156864, a: 1}
     baseColor: {r: 0.72156864, g: 0.72156864, b: 0.72156864, a: 1}
   - modifierId: vortex
+    displayName: "\u6F29\u6DA1"
     topColor: {r: 0.48235294, g: 0.36078432, b: 1, a: 1}
     baseColor: {r: 0.48235294, g: 0.36078432, b: 1, a: 1}

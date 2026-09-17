@@ -998,47 +998,12 @@ public class HandSystemUI : MonoBehaviour
         RefreshStaticUI();
     }
 
-    public void DebugAddRandomEnchantToHand()
-    {
-        if (playerState == null || playerState.Hand == null || playerState.Hand.Count == 0)
-            return;
-
-        List<MaterialModifierData> pool = new List<MaterialModifierData>();
-        IReadOnlyList<MaterialModifierData> all = MaterialModifierDatabase.RuntimeData;
-        for (int i = 0; i < all.Count; i++)
-        {
-            MaterialModifierData data = all[i];
-            if (data == null || !data.inArrowModifierRewardPool)
-                continue;
-            if (!UnlockSystem.IsMaterialModifierUnlocked(data))
-                continue;
-            if (string.IsNullOrEmpty(data.script))
-                continue;
-            if (MaterialModifierFactory.Create(data) == null)
-                continue;
-            pool.Add(data);
-        }
-        if (pool.Count == 0)
-            return;
-
-        for (int i = 0; i < playerState.Hand.Count; i++)
-        {
-            MaterialModel card = playerState.Hand[i];
-            if (card == null)
-                continue;
-            MaterialModifierData data = pool[UnityEngine.Random.Range(0, pool.Count)];
-            card.AddModifier(MaterialModifierFactory.Create(data));
-        }
-
-        RefreshArrowUpgradeVisuals();
-    }
-
     /// <summary>
-    /// Debug：获得 1 次附魔（道具强化）奖励——直接打开与事件/精英奖励相同的附魔选择面板，
-    /// 不走关卡/地图流程；不要求战斗不 busy（单独 Play 场景测试时战斗可能一直处于 busy），
-    /// 选完/取消后把 busy 与按钮状态恢复到打开前的值。
+    /// Debug：获得 1 次道具强化（MagicModifier）奖励——打开与休息“学习道具”/精英奖励同一个强化选择面板，
+    /// 选完强化后点击一个已有道具完成强化（与箭头附魔是两回事，箭头附魔走 DebugGrantArrowModifierReward）。
+    /// 不要求战斗不 busy（单独 Play 场景测试时可能一直 busy），选完/取消后恢复到打开前的状态。
     /// </summary>
-    public void DebugGrantMagicModifierReward(int choiceCount = 1)
+    public void DebugGrantMagicModifierReward(int choiceCount = 2)
     {
         if (playerState == null)
             return;
@@ -1047,22 +1012,40 @@ public class HandSystemUI : MonoBehaviour
         if (choices == null || choices.Count == 0)
             return;
 
-        UIManager ui = GetUIManager();
-        MagicModifierSelectionPanelUI panel = ui != null ? ui.MagicModifierSelectionPanel : null;
-        if (panel == null)
-            return;
-
         bool wasBusy = busy;
-        busy = true;
-        SetButtonsInteractable(false);
-
-        Action restore = delegate
+        ShowMagicModifierSelection(choices, delegate
         {
             busy = wasBusy;
             SetButtonsInteractable(!wasBusy);
             RefreshStaticUI();
-        };
-        panel.Show(choices, restore, restore);
+        });
+    }
+
+    /// <summary>
+    /// Debug：获得 1 次箭头附魔奖励——与休息/事件里的箭头附魔走同一条流程：
+    /// 先选一个附魔（MagicModifierSelectionPanel 的箭头模式），再调出箭头选择面板（SelectionShowPanel）
+    /// 选中要附魔的箭头，选中后立即生效。
+    /// 注意与“随机附魔（手牌）”不同：不随机直接生效，而是由玩家逐步选择。
+    /// </summary>
+    public void DebugGrantArrowModifierReward(int choiceCount = 2)
+    {
+        if (playerState == null)
+            return;
+
+        List<MaterialModifierData> choices = GetArrowModifierChoices(choiceCount);
+        if (choices == null || choices.Count == 0)
+            return;
+
+        if (CountSelectableArrowModifierTargets() == 0)
+            return;
+
+        bool wasBusy = busy;
+        ShowArrowModifierRewardSelection(choices, delegate
+        {
+            busy = wasBusy;
+            SetButtonsInteractable(!wasBusy);
+            RefreshStaticUI();
+        });
     }
 
     public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
