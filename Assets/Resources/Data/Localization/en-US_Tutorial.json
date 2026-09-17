@@ -81,6 +81,10 @@
       "text": "When you draw arrows you do not want, click the “Redraw” button to redraw them.\n\nYour redraw count resets to 1 at the start of each turn; some effects can raise it temporarily or permanently.\n\nClick arrows in your hand to move them to the play area, then click the bottom-left button to redraw every arrow in the play area."
     },
     {
+      "key": "tutorial.battle.refresh.body_pe",
+      "text": "When you draw arrows you do not want, click the “Redraw” button to redraw them.\n\nYour redraw count resets to 1 at the start of each turn; some effects can raise it temporarily or permanently.\n\nClick arrows in your hand to move them to the play area, then click the bottom-right button to redraw every arrow in the play area."
+    },
+    {
       "key": "tutorial.reward.claim.title",
       "text": "Battle Reward"
     },

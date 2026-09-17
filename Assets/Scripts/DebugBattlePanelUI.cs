@@ -14,6 +14,7 @@ public class DebugBattlePanelUI : MonoBehaviour
     [SerializeField] private Button drawCardButton;
     [SerializeField] private Button goldButton;
     [SerializeField] private Button randomEnchantButton;
+    [SerializeField] private Button enchantRewardButton;
     [SerializeField] private Button startRestButton;
     [SerializeField] private TMP_Dropdown eventDropdown;
     [SerializeField] private Button startEventButton;
@@ -62,6 +63,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         closeButton?.onClick.RemoveListener(Hide);
         goldButton?.onClick.RemoveListener(AddGold);
         randomEnchantButton?.onClick.RemoveListener(AddRandomEnchantToHand);
+        enchantRewardButton?.onClick.RemoveListener(GrantEnchantReward);
 
         startBattleButton?.onClick.AddListener(StartSelectedBattle);
         damageButton?.onClick.AddListener(DealDamageToTarget);
@@ -77,6 +79,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         closeButton?.onClick.AddListener(Hide);
         goldButton?.onClick.AddListener(AddGold);
         randomEnchantButton?.onClick.AddListener(AddRandomEnchantToHand);
+        enchantRewardButton?.onClick.AddListener(GrantEnchantReward);
     }
 
     private void OnDestroy()
@@ -95,6 +98,7 @@ public class DebugBattlePanelUI : MonoBehaviour
         closeButton?.onClick.RemoveListener(Hide);
         goldButton?.onClick.RemoveListener(AddGold);
         randomEnchantButton?.onClick.RemoveListener(AddRandomEnchantToHand);
+        enchantRewardButton?.onClick.RemoveListener(GrantEnchantReward);
     }
 
     public void Show()
@@ -112,50 +116,80 @@ public class DebugBattlePanelUI : MonoBehaviour
         gameObject.SetActive(!gameObject.activeSelf);
     }
 
+    /// <summary>
+    /// 面板内容放在 ScrollView/Viewport/Content 里，控件不是面板的直接子物体，所以查找要递归，
+    /// 避免后续改成滑框后按路径取引用失效（引用优先走 Inspector 序列化绑定）。
+    /// </summary>
+    private T FindInPanel<T>(string childName) where T : Component
+    {
+        Transform found = FindChildRecursive(transform, childName);
+        return found != null ? found.GetComponent<T>() : null;
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null)
+            return null;
+
+        Transform direct = root.Find(childName);
+        if (direct != null)
+            return direct;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildRecursive(root.GetChild(i), childName);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
     private void CacheReferences()
     {
         if (handSystem == null)
             handSystem = GetComponentInParent<HandSystemUI>(true);
         if (levelDropdown == null)
-            levelDropdown = transform.Find("LevelDropdown")?.GetComponent<TMP_Dropdown>();
+            levelDropdown = FindInPanel<TMP_Dropdown>("LevelDropdown");
         if (startBattleButton == null)
-            startBattleButton = transform.Find("StartBattleButton")?.GetComponent<Button>();
+            startBattleButton = FindInPanel<Button>("StartBattleButton");
         if (damageButton == null)
-            damageButton = transform.Find("DamageButton")?.GetComponent<Button>();
+            damageButton = FindInPanel<Button>("DamageButton");
         if (killTargetButton == null)
-            killTargetButton = transform.Find("KillTargetButton")?.GetComponent<Button>();
+            killTargetButton = FindInPanel<Button>("KillTargetButton");
         if (killAllButton == null)
-            killAllButton = transform.Find("KillAllButton")?.GetComponent<Button>();
+            killAllButton = FindInPanel<Button>("KillAllButton");
         if (drawCardButton == null)
-            drawCardButton = transform.Find("DrawCardButton")?.GetComponent<Button>();
+            drawCardButton = FindInPanel<Button>("DrawCardButton");
         if (goldButton == null)
-            goldButton = transform.Find("GoldButton")?.GetComponent<Button>();
+            goldButton = FindInPanel<Button>("GoldButton");
         if (randomEnchantButton == null)
-            randomEnchantButton = transform.Find("RandomEnchantButton")?.GetComponent<Button>();
+            randomEnchantButton = FindInPanel<Button>("RandomEnchantButton");
+        if (enchantRewardButton == null)
+            enchantRewardButton = FindInPanel<Button>("EnchantRewardButton");
         if (startRestButton == null)
-            startRestButton = transform.Find("StartRestButton")?.GetComponent<Button>();
+            startRestButton = FindInPanel<Button>("StartRestButton");
         if (eventDropdown == null)
-            eventDropdown = transform.Find("EventDropdown")?.GetComponent<TMP_Dropdown>();
+            eventDropdown = FindInPanel<TMP_Dropdown>("EventDropdown");
         if (startEventButton == null)
-            startEventButton = transform.Find("StartEventButton")?.GetComponent<Button>();
+            startEventButton = FindInPanel<Button>("StartEventButton");
         if (magicDropdown == null)
-            magicDropdown = transform.Find("MagicDropdown")?.GetComponent<TMP_Dropdown>();
+            magicDropdown = FindInPanel<TMP_Dropdown>("MagicDropdown");
         if (addMagicButton == null)
-            addMagicButton = transform.Find("AddMagicButton")?.GetComponent<Button>();
+            addMagicButton = FindInPanel<Button>("AddMagicButton");
         if (removeLastMagicButton == null)
-            removeLastMagicButton = transform.Find("RemoveLastMagicButton")?.GetComponent<Button>();
+            removeLastMagicButton = FindInPanel<Button>("RemoveLastMagicButton");
         if (shopDropdown == null)
-            shopDropdown = transform.Find("ShopDropdown")?.GetComponent<TMP_Dropdown>();
+            shopDropdown = FindInPanel<TMP_Dropdown>("ShopDropdown");
         if (openShopButton == null)
-            openShopButton = transform.Find("OpenShopButton")?.GetComponent<Button>();
+            openShopButton = FindInPanel<Button>("OpenShopButton");
         if (arrowUpgradeButton == null)
-            arrowUpgradeButton = transform.Find("ArrowUpgradeButton")?.GetComponent<Button>();
+            arrowUpgradeButton = FindInPanel<Button>("ArrowUpgradeButton");
         if (arrowUpgradePanel == null)
             arrowUpgradePanel = GetComponentInParent<ArrowUpgradePanelUI>(true);
         if (arrowUpgradePanel == null && transform.parent != null)
             arrowUpgradePanel = transform.parent.Find("ArrowUpgradePanel")?.GetComponent<ArrowUpgradePanelUI>();
         if (closeButton == null)
-            closeButton = transform.Find("CloseButton")?.GetComponent<Button>();
+            closeButton = FindInPanel<Button>("CloseButton");
     }
 
     private void PopulateBattleDropdown()
@@ -349,6 +383,11 @@ public class DebugBattlePanelUI : MonoBehaviour
     private void AddRandomEnchantToHand()
     {
         handSystem?.DebugAddRandomEnchantToHand();
+    }
+
+    private void GrantEnchantReward()
+    {
+        handSystem?.DebugGrantMagicModifierReward();
     }
 
     private void StartSelectedRest()

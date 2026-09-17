@@ -690,6 +690,23 @@ public class ChapterGridPanelUI : MonoBehaviour
         return label;
     }
 
+    /// <summary>
+    /// Boss 地图格图标：先按本局 Boss 在关卡数据里配的图标路径取图（打 BOSS 战时两格/多格都用同一个 Boss），
+    /// 没配或 Boss 还没确定时回退通用图标 Images/UI/Boss。
+    /// </summary>
+    private Sprite ResolveBossMapIcon()
+    {
+        string path = owner != null ? owner.ResolveChapterBossMapIconPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            Sprite configured = Resources.Load<Sprite>(path);
+            if (configured != null)
+                return configured;
+        }
+
+        return Resources.Load<Sprite>("Images/UI/Boss");
+    }
+
     private void ApplyCellVisual(CellView cell)
     {
         if (cell == null || cell.Icon == null)
@@ -699,7 +716,7 @@ public class ChapterGridPanelUI : MonoBehaviour
         string labelText = string.Empty;
         if (cell.Model != null && cell.Model.isBoss)
         {
-            iconSprite = Resources.Load<Sprite>("Images/UI/Boss");
+            iconSprite = ResolveBossMapIcon();
             labelText = "Boss";
         }
         else if (cell.Model != null && cell.Model.level != null)

@@ -231,7 +231,7 @@ public class StartMenuUI : MonoBehaviour
         PlayerState.GameSceneEntryRequested = true;
         if (SceneTransitionManager.Instance != null)
         {
-            if (Application.isMobilePlatform)
+            if (SceneTransitionManager.Instance.ShouldUseMobileScene())
                 SceneTransitionManager.Instance.LoadGameSceneWithTransition(buttonGroupUI.ContinueButtonObject);
             else
                 SceneTransitionManager.Instance.LoadSceneWithTransition(sceneName, buttonGroupUI.ContinueButtonObject);

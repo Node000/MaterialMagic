@@ -486,6 +486,12 @@ public class LevelEnemyData
 public class LevelEnemyGroupData
 {
     public LevelEnemyData[] enemies = Array.Empty<LevelEnemyData>();
+
+    /// <summary>
+    /// 该敌人组对应的 Boss 地图格图标路径（Resources 相对路径，如 Images/UI/Boss蓝眼）。
+    /// 留空则用通用图标 Images/UI/Boss。仅对 Boss 战生效。
+    /// </summary>
+    public string mapIconPath = string.Empty;
 }
 
 [Serializable]
@@ -503,6 +509,13 @@ public class LevelData : IDataRecord, INumericDataRecord
     public int bonusLevelId;
     public string[] restTextKeys = Array.Empty<string>();
     public int restHealAmount;
+
+    /// <summary>
+    /// Boss 地图格图标路径（Resources 相对路径）。关卡没有随机敌人组时用它；
+    /// 有随机组时优先用组上的 <see cref="LevelEnemyGroupData.mapIconPath"/>。
+    /// 留空则用通用图标 Images/UI/Boss。仅对 Boss 战生效。
+    /// </summary>
+    public string mapIconPath = string.Empty;
 
     public string Id => id;
     public int NumericId => numericId;

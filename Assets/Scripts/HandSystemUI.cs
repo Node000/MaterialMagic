@@ -421,6 +421,11 @@ public class HandSystemUI : MonoBehaviour
 
 		private readonly List<int> matchedMagicIndices = new List<int>();
 
+		// 道具栏视觉阅读顺序（行从上到下、行内从左到右）：槽位位置与序号缓存，与 magicViews 同序。
+		private readonly List<Vector2> magicSlotPositions = new List<Vector2>();
+
+		private readonly List<int> magicSlotVisualRanks = new List<int>();
+
     private HandCardView layoutHoverCardView;
 
     private bool cardDragActive;
@@ -1028,6 +1033,38 @@ public class HandSystemUI : MonoBehaviour
         RefreshArrowUpgradeVisuals();
     }
 
+    /// <summary>
+    /// Debug：获得 1 次附魔（道具强化）奖励——直接打开与事件/精英奖励相同的附魔选择面板，
+    /// 不走关卡/地图流程；不要求战斗不 busy（单独 Play 场景测试时战斗可能一直处于 busy），
+    /// 选完/取消后把 busy 与按钮状态恢复到打开前的值。
+    /// </summary>
+    public void DebugGrantMagicModifierReward(int choiceCount = 1)
+    {
+        if (playerState == null)
+            return;
+
+        List<MagicModifierData> choices = GetMagicModifierChoices(choiceCount);
+        if (choices == null || choices.Count == 0)
+            return;
+
+        UIManager ui = GetUIManager();
+        MagicModifierSelectionPanelUI panel = ui != null ? ui.MagicModifierSelectionPanel : null;
+        if (panel == null)
+            return;
+
+        bool wasBusy = busy;
+        busy = true;
+        SetButtonsInteractable(false);
+
+        Action restore = delegate
+        {
+            busy = wasBusy;
+            SetButtonsInteractable(!wasBusy);
+            RefreshStaticUI();
+        };
+        panel.Show(choices, restore, restore);
+    }
+
     public void ShowDebugMagicReplacementDropdown(int slotIndex, Vector2 screenPosition)
 
     {
@@ -1083,11 +1120,27 @@ public class HandSystemUI : MonoBehaviour
         debugMagicDropdown.Show();
     }
 
+    /// <summary>
+    /// 取关卡本次战斗使用的随机敌人组：Boss 关用生成地图时定下的那一组（保证与 Boss 格图标一致），
+    /// 其它关卡照旧随机。无随机组时返回 null。
+    /// </summary>
+    private LevelEnemyGroupData SelectLevelEnemyGroup(LevelData level)
+    {
+        if (level == null || level.randomEnemyGroups == null || level.randomEnemyGroups.Length == 0)
+            return null;
+
+        int forcedIndex = runManager != null ? runManager.ResolveChapterBossGroupIndex(level) : -1;
+        if (forcedIndex >= 0 && forcedIndex < level.randomEnemyGroups.Length)
+            return level.randomEnemyGroups[forcedIndex];
+
+        return level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+    }
+
     private void SpawnDebugLevelEnemies(LevelData level)
     {
         if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
         {
-            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+            LevelEnemyGroupData group = SelectLevelEnemyGroup(level);
             if (group?.enemies == null)
                 return;
             for (int i = 0; i < group.enemies.Length; i++)
@@ -1650,11 +1703,11 @@ public class HandSystemUI : MonoBehaviour
 	        battleStartRoutine = null;
 		}
 
-		private IEnumerator SpawnBattleLevelEnemiesRoutine(LevelData level)
+        private IEnumerator SpawnBattleLevelEnemiesRoutine(LevelData level)
 		{
 	        if (level.randomEnemyGroups != null && level.randomEnemyGroups.Length > 0)
 	        {
-	            LevelEnemyGroupData group = level.randomEnemyGroups[NextRunRandomInt(0, level.randomEnemyGroups.Length)];
+	            LevelEnemyGroupData group = SelectLevelEnemyGroup(level);
 	            if (group != null && group.enemies != null)
 	            {
 	                for (int i = 0; i < group.enemies.Length; i++)
@@ -2681,7 +2734,8 @@ public class HandSystemUI : MonoBehaviour
             return;
         }
 
-        LevelData bossLevel = GetChapterBossPreviewLevel(chapter);
+        // 生成地图时就把本局 Boss（关卡 + 随机敌人组）定下来：Boss 格图标与真正开打用的是同一个 Boss。
+        LevelData bossLevel = runManager.ResolveChapterBoss(chapter) ?? GetChapterBossPreviewLevel(chapter);
         HashSet<Vector2Int> designedBlockedCells = isDesignedMap ? SelectDesignedChapterBlockedCells(baseHeight, DifficultyUpgradeSystem.GetMapBlockedCellCount()) : null;
         if (isDesignedMap)
             BuildDesignedChapterMapGrid(chapter, levels, width, height, bossLevel, designedBlockedCells, additionalTopBossCellCount);
@@ -2884,6 +2938,10 @@ public class HandSystemUI : MonoBehaviour
 
     private LevelData GetChapterBossPreviewLevel(ChapterData chapter)
     {
+        // 已在地图生成时确定过的 Boss 优先：地图格图标、预览与实战必须是同一个。
+        if (runManager != null && runManager.ChapterBossLevel != null)
+            return runManager.ChapterBossLevel;
+
         if (chapter != null && chapter.BossPool != null)
         {
             for (int i = 0; i < chapter.BossPool.Length; i++)
@@ -2893,6 +2951,20 @@ public class HandSystemUI : MonoBehaviour
             }
         }
         return GetBossBattleLevel();
+    }
+
+    /// <summary>进入 / 触发 Boss 战时用的 Boss 关卡：优先用生成地图时确定的那个，保证与 Boss 格图标一致。</summary>
+    private LevelData ResolveChapterBossBattleLevel()
+    {
+        ChapterData chapter = activeChapter ?? GetActiveChapter();
+        LevelData resolved = runManager != null ? runManager.ResolveChapterBoss(chapter) : null;
+        return resolved ?? (runManager != null ? runManager.DrawBossLevel(chapter) : GetBossBattleLevel());
+    }
+
+    /// <summary>Boss 地图格图标路径（Resources 相对路径）；未配置或 Boss 未确定时返回 null（调用方回退通用图标）。</summary>
+    public string ResolveChapterBossMapIconPath()
+    {
+        return runManager != null ? runManager.ResolveChapterBossMapIconPath() : null;
     }
 
     private void EnsureChapterMapGrid()
@@ -2944,7 +3016,7 @@ public class HandSystemUI : MonoBehaviour
 
         pendingChapterMapBossStart = targetCell.isBoss || (ChapterMapGrid != null && ChapterMapGrid.bossMapActive);
         LevelData level = pendingChapterMapBossStart
-            ? directSampleDebugRun ? targetCell.level : runManager.DrawBossLevel(activeChapter ?? GetActiveChapter())
+            ? directSampleDebugRun ? targetCell.level : ResolveChapterBossBattleLevel()
             : targetCell.level;
         if (level == null)
         {
@@ -5491,18 +5563,26 @@ public bool IsCardDragActive => cardDragActive;
 
 	/// <summary>
 	/// 收集从指定 Token 起点可施放的道具，顺序为道具栏从左到右（slotIndex 升序）。
-	/// 设计约定（教程 7-2）：以同一个箭头为起点满足多个道具要求时，按道具栏从左到右依次触发，
-	/// 与配方长度无关——短配方只要排在更左侧就先触发，不会被长配方插队。
+	/// 设计约定（教程 7-2）：以同一个箭头为起点满足多个道具要求时，按道具栏的视觉阅读顺序依次触发
+	/// （行从上到下、行内从左到右），与配方长度无关——排在阅读顺序更前的道具先触发。
+	/// 视觉顺序由 <see cref="MagicBookVisualOrder"/> 按道具栏当前真实布局算出（弧形单行 = 从左到右，
+	/// 移动端网格 = 行优先），所以道具栏增减导致的行列变化会自动跟随。
 	/// 顺序规则统一在 <see cref="MagicMatchOrderUtility"/>，避免与其它展示/匹配入口产生第二套排序。
 	/// </summary>
 	private void CollectCastableMagicsInLayoutOrder(IReadOnlyList<ArrowReadToken> tokens, int startIndex)
 	{
 		castableMagicViews.Clear();
 		magicMatchCandidates.Clear();
+		magicSlotPositions.Clear();
 		for (int i = 0; i < magicViews.Count; i++)
+		{
 			magicMatchCandidates.Add(magicViews[i] != null ? magicViews[i].Magic : null);
+			RectTransform slotRect = magicViews[i] != null ? magicViews[i].transform as RectTransform : null;
+			magicSlotPositions.Add(slotRect != null ? slotRect.anchoredPosition : Vector2.zero);
+		}
 
-		MagicMatchOrderUtility.CollectMatchedMagicIndices(magicMatchCandidates, tokens, startIndex, matchedMagicIndices);
+		MagicBookVisualOrder.ComputeRanks(magicBookArea, magicSlotPositions, magicSlotVisualRanks);
+		MagicMatchOrderUtility.CollectMatchedMagicIndices(magicMatchCandidates, tokens, startIndex, matchedMagicIndices, magicSlotVisualRanks);
 		for (int i = 0; i < matchedMagicIndices.Count; i++)
 			castableMagicViews.Add(magicViews[matchedMagicIndices[i]]);
 	}
@@ -6683,6 +6763,11 @@ public bool IsCardDragActive => cardDragActive;
 		MagicBookCurveLayout curveLayout = magicBookArea.GetComponent<MagicBookCurveLayout>();
 		if (curveLayout != null)
 			curveLayout.RefreshLayoutAnimated();
+
+		// 移动端的行式道具栏（MagicBookRowLayout）按槽位编号摆位，重建槽位后立即重排一次。
+		MagicBookRowLayout rowLayout = magicBookArea.GetComponent<MagicBookRowLayout>();
+		if (rowLayout != null)
+			rowLayout.RefreshLayoutImmediate();
 
 		// 圆弧排布完成后再补回提层，否则布局会把提层后的顺序当成真实槽位顺序。
 		ReapplyMagicSlotHoverRaise();
@@ -8660,20 +8745,17 @@ public bool IsCardDragActive => cardDragActive;
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(magicBookArea, eventData.position, GetMagicDragCamera(eventData), out localPoint))
             return -1;
 
-        int leftCount = 0;
+        // 落点按道具栏的视觉阅读顺序判定（行从上到下、行内从左到右），
+        // 否则移动端 2 列网格里只能比较 x，拖到左列会被算成最后一个槽位。
+        magicSlotPositions.Clear();
         for (int i = 0; i < magicViews.Count; i++)
         {
-            MagicItemView view = magicViews[i];
-            RectTransform rect = view != null ? view.transform as RectTransform : null;
-            if (rect == null || rect == magicDraggedRect)
-                continue;
-
-            if (rect.anchoredPosition.x < localPoint.x)
-                leftCount++;
+            RectTransform rect = magicViews[i] != null ? magicViews[i].transform as RectTransform : null;
+            magicSlotPositions.Add(rect != null ? rect.anchoredPosition : localPoint);
         }
 
-        int count = magicViews.Count;
-        return count > 0 ? Mathf.Clamp(leftCount, 0, count - 1) : -1;
+        MagicBookVisualOrder.ComputeRanks(magicBookArea, magicSlotPositions, magicSlotVisualRanks);
+        return MagicBookVisualOrder.ComputeDropTargetIndex(magicSlotPositions, magicDragFromIndex, localPoint, magicSlotVisualRanks);
     }
 
     private Camera GetMagicDragCamera(PointerEventData eventData)
@@ -10392,7 +10474,7 @@ public bool IsCardDragActive => cardDragActive;
 		TMP_Text valueText = new GameObject("ValueText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
 		valueText.transform.SetParent(rect, false);
 		valueText.font = GetDefaultFont();
-		valueText.fontSize = 16;
+		valueText.fontSize = 32;
 		valueText.fontStyle = FontStyles.Bold;
 		valueText.color = Color.white;
 		valueText.alignment = TextAlignmentOptions.Center;

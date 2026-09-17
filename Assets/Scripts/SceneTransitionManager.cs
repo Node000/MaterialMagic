@@ -11,6 +11,8 @@ public class SceneTransitionManager : MonoBehaviour
     [SerializeField] private Material transitionMaterial;
     [SerializeField] private string pcGameSceneName = "SampleScene_PC";
     [SerializeField] private string peGameSceneName = "SampleScene_PE";
+    [Tooltip("仅编辑器生效：勾选后从 StartScene 开始/继续游戏会进入移动端场景（SampleScene_PE），用于在编辑器里测 PE 效果；不影响真机构建。")]
+    [SerializeField] private bool forceMobileSceneInEditor;
     [SerializeField] private float coverDuration = 0.38f;
     [SerializeField] private float revealToFocusDuration = 0.34f;
     [SerializeField] private float focusExpandDuration = 0.28f;
@@ -73,13 +75,26 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    public void LoadGameSceneWithTransition(GameObject focusTarget = null)
+    /// <summary>
+    /// 是否使用移动端（PE）场景：真机 Android/iOS 由编译期宏决定；
+    /// 编辑器/Standalone 走运行时判断，编辑器里还可以用 <see cref="forceMobileSceneInEditor"/> 强制进 PE。
+    /// </summary>
+    public bool ShouldUseMobileScene()
     {
 #if UNITY_ANDROID || UNITY_IOS
-        LoadSceneWithTransition(peGameSceneName, focusTarget);
+        return true;
 #else
-        LoadSceneWithTransition(pcGameSceneName, focusTarget);
+#if UNITY_EDITOR
+        if (forceMobileSceneInEditor)
+            return true;
 #endif
+        return Application.isMobilePlatform;
+#endif
+    }
+
+    public void LoadGameSceneWithTransition(GameObject focusTarget = null)
+    {
+        LoadSceneWithTransition(ShouldUseMobileScene() ? peGameSceneName : pcGameSceneName, focusTarget);
     }
 
     public void LoadSecondFloorWithTransition(GameObject focusTarget = null)

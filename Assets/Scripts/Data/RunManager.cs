@@ -28,6 +28,9 @@ public class RunManager
     private readonly List<int> combinedCandidateIndexes = new List<int>();
     private List<RunMapNodeModel> mapNodes;
     private RunMapGridModel mapGrid;
+    private ChapterData chapterBossOwner;
+    private LevelData chapterBossLevel;
+    private int chapterBossGroupIndex = -1;
 
     public static RunManager Current { get; private set; }
 
@@ -42,6 +45,12 @@ public class RunManager
     public LevelData CurrentLevel { get; private set; }
     public RunFlowState State { get; private set; }
     public BattleManager CurrentBattle { get; private set; }
+
+    /// <summary>本局在生成章节地图时确定的 Boss 关卡（未确定时为 null）。</summary>
+    public LevelData ChapterBossLevel => chapterBossLevel;
+
+    /// <summary>本局 Boss 使用的随机敌人组下标；无组或未确定时为 -1。</summary>
+    public int ChapterBossGroupIndex => chapterBossGroupIndex;
 
     public RunManager(PlayerStatus playerStatus)
     {
@@ -247,6 +256,7 @@ public class RunManager
             return;
 
         ActiveChapter = chapter;
+        ResetChapterBoss();
         ResetChapterBattlePools();
     }
 
@@ -334,6 +344,55 @@ public class RunManager
         return DrawFromArray(ActiveChapter.BossPool, LevelType.Battle, LevelType.Elite) ?? GetFallbackBossLevel();
     }
 
+    /// <summary>
+    /// 确定（并缓存）本局章节 Boss：在生成章节地图时调用一次，先从章节 BossPool 抽关卡，
+    /// 再为它抽一个随机敌人组（若关卡配了 randomEnemyGroups）。这样地图格图标与真正开打时用的是同一个 Boss。
+    /// 同一章节重复调用返回缓存结果；换章节或新开局会自动重置。
+    /// </summary>
+    public LevelData ResolveChapterBoss(ChapterData chapter)
+    {
+        if (chapterBossLevel != null && ReferenceEquals(chapterBossOwner, chapter))
+            return chapterBossLevel;
+
+        chapterBossOwner = chapter;
+        chapterBossLevel = DrawBossLevel(chapter);
+        chapterBossGroupIndex = chapterBossLevel != null && chapterBossLevel.randomEnemyGroups != null && chapterBossLevel.randomEnemyGroups.Length > 0
+            ? NextRandomInt(0, chapterBossLevel.randomEnemyGroups.Length)
+            : -1;
+        return chapterBossLevel;
+    }
+
+    /// <summary>
+    /// 若 level 就是本局已确定的 Boss，则返回它固定使用的敌人组下标；否则返回 -1（表示按普通随机）。
+    /// </summary>
+    public int ResolveChapterBossGroupIndex(LevelData level)
+    {
+        return level != null && ReferenceEquals(level, chapterBossLevel) ? chapterBossGroupIndex : -1;
+    }
+
+    /// <summary>Boss 地图格图标路径（Resources 相对路径）；未配或未确定时返回 null（调用方回退通用图标）。</summary>
+    public string ResolveChapterBossMapIconPath()
+    {
+        if (chapterBossLevel == null)
+            return null;
+
+        if (chapterBossLevel.randomEnemyGroups != null && chapterBossGroupIndex >= 0 && chapterBossGroupIndex < chapterBossLevel.randomEnemyGroups.Length)
+        {
+            string groupPath = chapterBossLevel.randomEnemyGroups[chapterBossGroupIndex] != null ? chapterBossLevel.randomEnemyGroups[chapterBossGroupIndex].mapIconPath : null;
+            if (!string.IsNullOrEmpty(groupPath))
+                return groupPath;
+        }
+
+        return chapterBossLevel.mapIconPath;
+    }
+
+    private void ResetChapterBoss()
+    {
+        chapterBossOwner = null;
+        chapterBossLevel = null;
+        chapterBossGroupIndex = -1;
+    }
+
     public RunPoolSaveData ExportPoolState()
     {
         return new RunPoolSaveData
@@ -343,7 +402,9 @@ public class RunManager
             remainingMidPool = remainingMidPool.ToArray(),
             remainingNormalPool = remainingNormalPool.ToArray(),
             remainingEventPool = remainingEventPool.ToArray(),
-            remainingElitePool = remainingElitePool.ToArray()
+            remainingElitePool = remainingElitePool.ToArray(),
+            chapterBossLevelId = chapterBossLevel != null ? chapterBossLevel.numericId : 0,
+            chapterBossGroupIndex = chapterBossGroupIndex
         };
     }
 
@@ -358,6 +419,17 @@ public class RunManager
         FillPool(remainingNormalPool, data.remainingNormalPool);
         FillPool(remainingEventPool, data.remainingEventPool);
         FillPool(remainingElitePool, data.remainingElitePool);
+        RestoreChapterBoss(data.chapterBossLevelId, data.chapterBossGroupIndex);
+    }
+
+    /// <summary>从存档恢复本局 Boss（关卡 id + 敌人组下标）；id 为 0 表示旧存档没存过，保持未确定。</summary>
+    private void RestoreChapterBoss(int bossLevelId, int bossGroupIndex)
+    {
+        chapterBossOwner = ActiveChapter;
+        chapterBossGroupIndex = bossGroupIndex >= 0 ? bossGroupIndex : -1;
+        chapterBossLevel = bossLevelId > 0 && GameDataDatabase.TryGetLevelData(bossLevelId, out LevelData level) ? level : null;
+        if (chapterBossLevel == null)
+            chapterBossGroupIndex = -1;
     }
 
     public int NextRandomInt(int minInclusive, int maxExclusive)

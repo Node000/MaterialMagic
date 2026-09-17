@@ -72,6 +72,9 @@ public class TutorialManagerUI : MonoBehaviour
     /// 现在统一收敛为单框（多余子对象已在场景内停用）。需要换高亮区域时改 Cutout 的矩形即可。
     /// </summary>
     private const string CutoutChildName = "Cutout";
+
+    /// <summary>移动端战斗场景名（与 SceneTransitionManager.peGameSceneName 保持一致）。</summary>
+    private const string MobileSceneName = "SampleScene_PE";
     private bool mapTutorialShown;
     private bool shopTutorialShown;
     private bool tutorialCompleted;
@@ -570,7 +573,29 @@ public class TutorialManagerUI : MonoBehaviour
 
         TMP_Text text = FindStepText(stepObject.transform, childName);
         if (text != null)
-            text.text = LocalizationSystem.GetText(key, text.text);
+            text.text = LocalizationSystem.GetText(ResolveStepKey(key), LocalizationSystem.GetText(key, text.text));
+    }
+
+    /// <summary>
+    /// 步骤文案的本地化 key：移动端（PE）优先用 <c>&lt;key&gt;_pe</c>，缺失时回退到两端共用的文案。
+    /// 背景：教程文案里的方位词描述的是 PC 排布（例如换牌的“更换”按钮 PC 在左下、PE 在右下），
+    /// 而本地化表两端共用，因此 PE 的差异文案单独挂一条 `_pe` key。
+    /// </summary>
+    private string ResolveStepKey(string key)
+    {
+        return IsMobileTutorialContext() ? key + "_pe" : key;
+    }
+
+    /// <summary>
+    /// 当前教程是否跑在移动端（PE）排布下：有常驻 SceneTransitionManager 时问它；
+    /// 编辑器里单独 Play PE 场景时没有管理器，退回按场景名/平台判断。
+    /// </summary>
+    private bool IsMobileTutorialContext()
+    {
+        if (SceneTransitionManager.Instance != null)
+            return SceneTransitionManager.Instance.ShouldUseMobileScene();
+
+        return Application.isMobilePlatform || gameObject.scene.name == MobileSceneName;
     }
 
     private TMP_Text FindStepText(Transform root, string name)

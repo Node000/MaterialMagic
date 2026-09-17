@@ -501,7 +501,8 @@
               "x": 0,
               "y": 0
             }
-          ]
+          ],
+          "mapIconPath": "Images/UI/Boss蓝眼"
         },
         {
           "enemies": [
@@ -510,7 +511,8 @@
               "x": 0,
               "y": 0
             }
-          ]
+          ],
+          "mapIconPath": "Images/UI/Boss彩虹"
         },
         {
           "enemies": [
@@ -519,7 +521,8 @@
               "x": 0,
               "y": 500
             }
-          ]
+          ],
+          "mapIconPath": "Images/UI/Boss南极洲"
         }
       ]
     },

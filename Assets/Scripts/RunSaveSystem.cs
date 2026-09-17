@@ -113,6 +113,10 @@ public class RunPoolSaveData
     public int[] remainingNormalPool = Array.Empty<int>();
     public int[] remainingEventPool = Array.Empty<int>();
     public int[] remainingElitePool = Array.Empty<int>();
+    /// <summary>本局在地图生成时确定的 Boss 关卡 id；0 表示旧存档未存（保持未确定）。</summary>
+    public int chapterBossLevelId;
+    /// <summary>Boss 使用的随机敌人组下标；-1 表示无组或未确定。</summary>
+    public int chapterBossGroupIndex = -1;
 }
 
 [Serializable]

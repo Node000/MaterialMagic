@@ -12,7 +12,9 @@ public enum UnifiedDetailSourceType
     EnemyIntent = 4,
     EventOption = 5,
     BonusReward = 6,
-    MagicModifier = 7
+    MagicModifier = 7,
+    /// <summary>箭头附魔（MaterialModifierData）。</summary>
+    MaterialModifier = 8
 }
 
 public enum UnifiedDetailAddedDetailType
@@ -94,6 +96,18 @@ public static class UnifiedDetailContentBuilder
             Icon = MagicModifierIconDatabase.Get(modifier)
         };
         return content;
+    }
+
+    public static UnifiedDetailContent Build(MaterialModifierData modifier)
+    {
+        return new UnifiedDetailContent
+        {
+            SourceType = UnifiedDetailSourceType.MaterialModifier,
+            Title = modifier != null ? LocalizationSystem.GetText(modifier.nameKey, modifier.id) : string.Empty,
+            Body = modifier != null ? LocalizationSystem.GetText(modifier.descriptionKey, string.Empty) : string.Empty,
+            AccentColor = Color.white,
+            Icon = null
+        };
     }
 
     public static UnifiedDetailContent Build(MaterialModel material)

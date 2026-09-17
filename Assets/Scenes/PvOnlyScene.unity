@@ -3489,9 +3489,6 @@ MonoBehaviour:
   healthFill: {fileID: 771216648}
   healthBufferFill: {fileID: 319798117}
   shieldFill: {fileID: 1126419254}
-  healthFillColor: {r: 0.44115454, g: 0.7735849, b: 0.09000817, a: 1}
-  healthBufferFillColor: {r: 1, g: 1, b: 1, a: 1}
-  shieldFillColor: {r: 0.2, g: 0.55, b: 1, a: 1}
   healthFillDuration: 0.35
   healthBufferDecreaseDuration: 0.55
   healthBufferIncreaseDuration: 0.35
@@ -15305,6 +15302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 784a7017ca209ce4da874e279c08ef6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enchantIconPrefab: {fileID: 3078878492611023605, guid: 5fabf187e7c140249ba4d04c20293caf, type: 3}
 --- !u!114 &488397845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24424,10 +24422,9 @@ MonoBehaviour:
   materialCardPunchVibrato: 6
   materialCardPunchElasticity: 0.6
   postMagicResolveDelay: 0.11
-  resolveMotionSpeedMultiplier: 2
-  castProjectileSpeedMultiplier: 1.5
-  comboResolveSpeedStep: 0.1
-  comboResolveSpeedAffectsProjectile: 1
+  resolveSpeedMultiplier: 1.1
+  comboSpeedStartLayer: 5
+  comboSpeedStep: 0.05
   magicDamageHitInterval: 0.15
   playerCastSwingPitchBase: 1
   playerCastSwingPitchIncrease: 0.08

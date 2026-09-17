@@ -12,6 +12,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private readonly List<Image> optionIcons = new List<Image>();
     private readonly List<SpringLineHighlightUI> optionBackgrounds = new List<SpringLineHighlightUI>();
     private readonly List<SpringLineHighlightUI> optionSelectedHighlights = new List<SpringLineHighlightUI>();
+    private readonly List<EnchantIconUI> optionEnchantIcons = new List<EnchantIconUI>();
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
     private readonly List<MaterialModifierData> currentMaterialChoices = new List<MaterialModifierData>();
 
@@ -20,6 +21,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private const float SelectedOptionScale = 1.06f;
     private const float OptionIconSize = 51f;
     private const float OptionIconY = 13f;
+    /// <summary>箭头附魔图标尺寸（附魔页无文字，图标居中）。</summary>
+    private const float EnchantIconSize = 64f;
     private const float OptionNameY = -27f;
     private static readonly Color OptionFrameColor = new Color(0.72f, 0.72f, 0.72f, 1f);
     private static readonly Color SelectedOptionFrameColor = Color.white;
@@ -43,6 +46,9 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private Action<MaterialModifierData> materialModifierSelected;
     private bool materialModifierMode;
     private Sprite fallbackModifierIcon;
+
+    [Tooltip("箭头附魔图标预制体（Assets/Prefabs/UI/EnchantIcon.prefab）：上层 + 底色两层图片合成，颜色由 Enchant_Color 配置决定。")]
+    [SerializeField] private EnchantIconUI enchantIconPrefab;
 
     public MagicModifierData SelectedModifier => selectedModifier;
     public bool HasSelectedModifier => selectedModifier != null;
@@ -229,6 +235,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         if (optionButtons.Count == 0)
             return;
 
+        HideEnchantIcons();
+
         if (currentChoices.Count == 0)
         {
             LayoutOptionButtons(1);
@@ -236,6 +244,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
                 optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.empty", "暂无可用道具强化");
+            SetOptionTextVisible(0, true);
             ConfigureOptionTextLayout(0, false);
             SetOptionIconVisible(0, false);
             for (int i = 1; i < optionButtons.Count; i++)
@@ -256,6 +265,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[i].interactable = true;
             if (optionTexts[i] != null)
                 optionTexts[i].text = BuildOptionText(data);
+            SetOptionTextVisible(i, true);
             ConfigureOptionTextLayout(i, true);
             SetMagicModifierOptionIcon(i, data);
             int index = i;
@@ -277,8 +287,10 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons[0].interactable = false;
             if (optionTexts[0] != null)
                 optionTexts[0].text = LocalizationSystem.GetText("ui.magic_modifier.panel.material_empty", "暂无可用箭头附魔");
+            SetOptionTextVisible(0, true);
             ConfigureOptionTextLayout(0, false);
             SetOptionIconVisible(0, false);
+            SetEnchantIconVisible(0, false, null);
             for (int i = 1; i < optionButtons.Count; i++)
                 optionButtons[i].gameObject.SetActive(false);
             return;
@@ -295,10 +307,13 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
             MaterialModifierData data = currentMaterialChoices[i];
             optionButtons[i].interactable = true;
+            // 附魔选择界面不再显示文本（名称/描述改由统一详情面板展示），只显示两层合成的附魔图标。
             if (optionTexts[i] != null)
-                optionTexts[i].text = BuildMaterialModifierOptionText(data);
+                optionTexts[i].text = string.Empty;
+            SetOptionTextVisible(i, false);
             ConfigureOptionTextLayout(i, false);
             SetOptionIconVisible(i, false);
+            SetEnchantIconVisible(i, true, data);
             int index = i;
             optionButtons[i].onClick.RemoveAllListeners();
             optionButtons[i].onClick.AddListener(() => SelectMaterialModifierOption(index));
@@ -341,13 +356,6 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         return data != null ? LocalizationSystem.GetText(data.nameKey, data.id) : string.Empty;
     }
 
-    private string BuildMaterialModifierOptionText(MaterialModifierData data)
-    {
-        string name = data != null && !string.IsNullOrEmpty(data.nameKey) ? LocalizationSystem.GetText(data.nameKey, data.id) : string.Empty;
-        string desc = data != null && !string.IsNullOrEmpty(data.descriptionKey) ? LocalizationSystem.GetText(data.descriptionKey, string.Empty) : string.Empty;
-        return string.IsNullOrEmpty(desc) ? name : name + "\n" + desc;
-    }
-
     private void ConfigureOptionTextLayout(int index, bool withIcon)
     {
         if (index < 0 || index >= optionTexts.Count || optionTexts[index] == null)
@@ -387,6 +395,98 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     {
         if (index >= 0 && index < optionIcons.Count && optionIcons[index] != null)
             optionIcons[index].gameObject.SetActive(visible);
+    }
+
+    private void SetOptionTextVisible(int index, bool visible)
+    {
+        if (index < 0 || index >= optionTexts.Count || optionTexts[index] == null)
+            return;
+
+        optionTexts[index].gameObject.SetActive(visible);
+    }
+
+    /// <summary>显示/隐藏某个选项上的箭头附魔图标（两层合成）；显示时按附魔 id 刷新两层颜色。</summary>
+    private void SetEnchantIconVisible(int index, bool visible, MaterialModifierData data)
+    {
+        EnchantIconUI icon = visible ? EnsureOptionEnchantIcon(index) : GetOptionEnchantIcon(index);
+        if (icon == null)
+            return;
+
+        if (!visible)
+        {
+            icon.gameObject.SetActive(false);
+            return;
+        }
+
+        icon.Apply(data);
+        icon.gameObject.SetActive(true);
+        icon.transform.SetAsLastSibling();
+    }
+
+    private void HideEnchantIcons()
+    {
+        for (int i = 0; i < optionEnchantIcons.Count; i++)
+        {
+            if (optionEnchantIcons[i] != null)
+                optionEnchantIcons[i].gameObject.SetActive(false);
+        }
+    }
+
+    private EnchantIconUI GetOptionEnchantIcon(int index)
+    {
+        return index >= 0 && index < optionEnchantIcons.Count ? optionEnchantIcons[index] : null;
+    }
+
+    /// <summary>选项上已存在的附魔图标（首次构建时为 null，由 <see cref="EnsureOptionEnchantIcon"/> 补上）。</summary>
+    private EnchantIconUI FindExistingEnchantIcon(RectTransform optionRect)
+    {
+        if (optionRect == null)
+            return null;
+
+        Transform existing = optionRect.Find("EnchantIcon");
+        return existing != null ? existing.GetComponent<EnchantIconUI>() : null;
+    }
+
+    private EnchantIconUI EnsureOptionEnchantIcon(int index)
+    {
+        RectTransform optionRect = GetOptionRect(index);
+        if (optionRect == null || enchantIconPrefab == null)
+            return null;
+
+        while (optionEnchantIcons.Count <= index)
+            optionEnchantIcons.Add(null);
+        if (optionEnchantIcons[index] != null)
+            return optionEnchantIcons[index];
+
+        Transform existing = optionRect.Find("EnchantIcon");
+        EnchantIconUI icon = existing != null ? existing.GetComponent<EnchantIconUI>() : null;
+        if (icon == null)
+        {
+            icon = Instantiate(enchantIconPrefab, optionRect);
+            icon.name = "EnchantIcon";
+        }
+
+        RectTransform rect = icon.transform as RectTransform;
+        if (rect != null)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(EnchantIconSize, EnchantIconSize);
+        }
+
+        icon.gameObject.SetActive(false);
+        optionEnchantIcons[index] = icon;
+        return icon;
+    }
+
+    private RectTransform GetOptionRect(int index)
+    {
+        if (index < 0 || index >= optionButtons.Count || optionButtons[index] == null)
+            return null;
+
+        return optionButtons[index].transform as RectTransform;
     }
 
     private Sprite GetFallbackModifierIcon()
@@ -477,7 +577,16 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     public void ShowOptionDetail(int index, object anchor)
     {
-        if (materialModifierMode || index < 0 || index >= currentChoices.Count)
+        if (materialModifierMode)
+        {
+            if (index < 0 || index >= currentMaterialChoices.Count)
+                return;
+
+            owner?.GetUIManager()?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(currentMaterialChoices[index]));
+            return;
+        }
+
+        if (index < 0 || index >= currentChoices.Count)
             return;
 
         owner?.GetUIManager()?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(currentChoices[index]));
@@ -534,6 +643,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         optionIcons.Clear();
         optionBackgrounds.Clear();
         optionSelectedHighlights.Clear();
+        optionEnchantIcons.Clear();
         if (optionRoot == null)
             return;
 
@@ -548,6 +658,7 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             optionButtons.Add(button);
             optionTexts.Add(UIManager.FindChildComponent<TMP_Text>(button.transform, "Text"));
             optionIcons.Add(EnsureOptionIcon(button.transform as RectTransform));
+            optionEnchantIcons.Add(FindExistingEnchantIcon(button.transform as RectTransform));
             optionBackgrounds.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringBackground", OptionFrameColor, true, true));
             RemoveOptionSpring(button.transform as RectTransform, "SpringHoverHighlight");
             optionSelectedHighlights.Add(EnsureOptionSpring(button.transform as RectTransform, "SpringSelectedHighlight", SelectedOptionFrameColor, false, false));
