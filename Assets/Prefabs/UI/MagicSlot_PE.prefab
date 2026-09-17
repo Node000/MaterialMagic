@@ -259,7 +259,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 82.808, y: 3.946}
-  m_SizeDelta: {x: -94.806, y: 34.508}
+  m_SizeDelta: {x: -6.8536, y: 34.508}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &4354082109982519606
 MonoBehaviour:
@@ -283,8 +283,8 @@ MonoBehaviour:
   m_StartAxis: 0
   m_CellSize: {x: 36, y: 36}
   m_Spacing: {x: -14, y: -14}
-  m_Constraint: 0
-  m_ConstraintCount: 2
+  m_Constraint: 2
+  m_ConstraintCount: 1
 --- !u!1 &1261845213210816197
 GameObject:
   m_ObjectHideFlags: 0
@@ -1284,12 +1284,12 @@ MonoBehaviour:
   backgroundImage: {fileID: 0}
   magicNameText: {fileID: 3484640033665330615}
   recipeRoot: {fileID: 8015279287715532659}
-  recipeIconSize: {x: 54, y: 54}
-  recipeIconSpacing: {x: -24, y: -24}
+  recipeIconSize: {x: 75, y: 75}
+  recipeIconSpacing: {x: -48, y: -14}
   recipeIconPadding:
-    m_Left: 0
+    m_Left: -12
     m_Right: 0
-    m_Top: 0
+    m_Top: -24
     m_Bottom: 0
   modifierMarkerImage: {fileID: 1416186160861175905}
   slotFrame: {fileID: 0}
@@ -1448,7 +1448,7 @@ RectTransform:
   m_GameObject: {fileID: 6353209803457677756}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1355, y: 1.1355, z: 1.1355}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4274433677382035282}
@@ -1456,7 +1456,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 44, y: 0}
+  m_AnchoredPosition: {x: 42, y: -0.4743}
   m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8547544234486144887
