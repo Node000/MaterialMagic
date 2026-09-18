@@ -26,10 +26,10 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     [SerializeField] private RectTransform addedDetailRoot;
     [Tooltip("详情面板左下角的箭头序列小线框（道具内容时按施法序列刷新）。")]
     [SerializeField] private UnifiedDetailArrowSequenceUI arrowSequenceUI;
-    [Tooltip("箭头附魔内容项预制体（Assets/Prefabs/UI/EnchantEntry.prefab：附魔图标 + 名字，尺寸参考道具强化选择面板）：详情面板里按箭头已附魔逐个生成。")]
-    [SerializeField] private EnchantEntryUI enchantEntryPrefab;
-    [Tooltip("附魔内容项的父容器（在 Scene 里搭好，运行时只生成子项）；留空则不显示附魔内容。")]
-    [SerializeField] private RectTransform enchantEntryRoot;
+    [Tooltip("附魔图标预制体（Assets/Prefabs/UI/EnchantIcon.prefab）：附魔自身的详情（如悬停附魔选项）在面板左上角显示。")]
+    [SerializeField] private EnchantIconUI enchantIconPrefab;
+    [Tooltip("附魔图标容器（在 Scene 里摆位，容器尺寸 = 图标尺寸）；留空则不显示附魔图标。")]
+    [SerializeField] private RectTransform enchantIconRoot;
     [SerializeField] private float autoScrollStartDelay = 1.2f;
     [SerializeField] private float autoScrollDuration = 3f;
     [SerializeField] private float autoScrollPause = 1.2f;
@@ -46,6 +46,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private float manualScrollResumeTime;
     private bool bodyCanScroll;
     private int pinnedFrame;
+    private EnchantIconUI enchantIcon;
 
     public void Initialize()
     {
@@ -239,8 +240,6 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         RefreshBodyScroll();
     }
 
-    private readonly List<EnchantEntryUI> enchantEntries = new List<EnchantEntryUI>();
-
     private void ApplyContent(UnifiedDetailContent content)
     {
         if (titleText != null)
@@ -254,7 +253,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
         }
         ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
-        ApplyEnchantIcons(content.EnchantIds);
+        ApplyEnchantIcon(content.EnchantId);
         if (arrowSequenceUI != null)
         {
             arrowSequenceUI.SetRecipe(content.Recipe);
@@ -264,54 +263,36 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     }
 
     /// <summary>
-    /// 箭头附魔行：按内容里的附魔 id 逐个生成内容项（附魔图标 + 名字，颜色由 <see cref="EnchantIconUI"/> 依据
-    /// Enchant_Color 配置刷新），没附魔时整行隐藏。容器在 Scene 里，运行时只生成子项；
-    /// 图标尺寸与名字字号都取自 <c>Assets/Prefabs/UI/EnchantEntry.prefab</c>。
+    /// 附魔自身的详情（悬停附魔选项/奖励等）：在面板左上角显示附魔图标（两层合成，颜色与视觉效果由
+    /// <see cref="EnchantIconUI"/> 按附魔刷新）；非附魔内容隐藏它，继续用原有的图片图标槽。
     /// </summary>
-    private void ApplyEnchantIcons(List<string> enchantIds)
+    private void ApplyEnchantIcon(string enchantId)
     {
-        if (enchantEntryRoot == null)
-            return;
-
-        int count = enchantIds != null ? enchantIds.Count : 0;
-        if (count == 0 || enchantEntryPrefab == null)
+        bool hasIcon = !string.IsNullOrEmpty(enchantId) && enchantIconPrefab != null && enchantIconRoot != null;
+        if (!hasIcon)
         {
-            for (int i = 0; i < enchantEntries.Count; i++)
+            if (enchantIcon != null)
+                enchantIcon.gameObject.SetActive(false);
+            return;
+        }
+
+        if (enchantIcon == null)
+        {
+            enchantIcon = Instantiate(enchantIconPrefab, enchantIconRoot);
+            enchantIcon.name = "EnchantIcon";
+            if (enchantIcon.transform is RectTransform iconRect)
             {
-                if (enchantEntries[i] != null)
-                    enchantEntries[i].gameObject.SetActive(false);
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+                iconRect.anchoredPosition = Vector2.zero;
+                iconRect.localScale = Vector3.one;
+                iconRect.sizeDelta = enchantIconRoot.rect.size;
             }
-            if (count == 0)
-                enchantEntryRoot.gameObject.SetActive(false);
-            return;
         }
 
-        enchantEntryRoot.gameObject.SetActive(true);
-        for (int i = 0; i < count; i++)
-        {
-            EnchantEntryUI entry = GetOrCreateEnchantEntry(i);
-            if (entry == null)
-                continue;
-
-            entry.gameObject.SetActive(true);
-            entry.transform.SetSiblingIndex(i);
-            entry.Apply(enchantIds[i]);
-        }
-        for (int i = count; i < enchantEntries.Count; i++)
-        {
-            if (enchantEntries[i] != null)
-                enchantEntries[i].gameObject.SetActive(false);
-        }
-    }
-
-    private EnchantEntryUI GetOrCreateEnchantEntry(int index)
-    {
-        while (enchantEntries.Count <= index)
-        {
-            EnchantEntryUI entry = enchantEntryPrefab != null ? Instantiate(enchantEntryPrefab, enchantEntryRoot) : null;
-            enchantEntries.Add(entry);
-        }
-        return enchantEntries[index];
+        enchantIcon.gameObject.SetActive(true);
+        enchantIcon.Apply(enchantId);
     }
 
     private void ApplyAccentColor(Color color)
@@ -343,7 +324,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
                 itemRect.anchoredPosition = new Vector2(itemRect.anchoredPosition.x, firstYOffset + i * ySpacing);
             item.gameObject.SetActive(true);
             UnifiedDetailAddedDetail detail = details[i];
-            item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type));
+            item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type), detail.EnchantId, detail.Icon);
             item.SetScrollInteractionEnabled(pinned);
         }
     }

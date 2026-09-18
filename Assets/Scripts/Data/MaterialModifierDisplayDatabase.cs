@@ -65,6 +65,26 @@ public static class MaterialModifierDisplayDatabase
         return false;
     }
 
+    /// <summary>
+    /// 按附魔 id 取视觉材质（附魔图标这类没有卡实例的地方用）。
+    /// 与卡上走的是同一个 <see cref="MaterialModifierDefinition.VisualMaterial"/>，所以图标和箭头效果同一套 Shader/参数。
+    /// </summary>
+    public static bool TryGetVisualMaterial(string modifierId, out Material material)
+    {
+        if (!string.IsNullOrEmpty(modifierId)
+            && MaterialModifierDatabase.TryGetData(modifierId, out MaterialModifierData data)
+            && data != null
+            && MaterialModifierDatabase.TryGetDefinition(data.script, out MaterialModifierDefinition definition)
+            && definition.VisualMaterial != null)
+        {
+            material = definition.VisualMaterial;
+            return true;
+        }
+
+        material = null;
+        return false;
+    }
+
     private static bool TryGetData(object modifier, out MaterialModifierData data)
     {
         EnsureLoaded();

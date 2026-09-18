@@ -118,7 +118,7 @@
     },
     {
       "key": "ui.magic_modifier.panel.material_hint",
-      "text": "选择一个附魔后，再选择一个箭头应用。后来的附魔会覆盖旧附魔。"
+      "text": "选择一个附魔后，再选择一个箭头应用。"
     },
     {
       "key": "ui.magic_modifier.panel.material_empty",

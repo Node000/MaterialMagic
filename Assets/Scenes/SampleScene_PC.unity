@@ -6556,7 +6556,6 @@ RectTransform:
   - {fileID: 1941814606}
   - {fileID: 1203581593}
   - {fileID: 564552784}
-  - {fileID: 1161364767}
   m_Father: {fileID: 946764211}
   m_LocalEulerAnglesHint: {x: -1, y: 44.28, z: 0.2}
   m_AnchorMin: {x: 0, y: 0.5}
@@ -6593,8 +6592,8 @@ MonoBehaviour:
   addedDetailPrefab: {fileID: 3659712173203625444, guid: 0a9d1509292dbee4ea28080bbc980ff7, type: 3}
   addedDetailRoot: {fileID: 1203581593}
   arrowSequenceUI: {fileID: 564552787}
-  enchantEntryPrefab: {fileID: 2848628843091071298, guid: 70819f18abec88b4f8d47c33fe1588c9, type: 3}
-  enchantEntryRoot: {fileID: 1161364767}
+  enchantIconPrefab: {fileID: 3078878492611023605, guid: 5fabf187e7c140249ba4d04c20293caf, type: 3}
+  enchantIconRoot: {fileID: 542482692}
   autoScrollStartDelay: 1.2
   autoScrollDuration: 3
   autoScrollPause: 1.2
@@ -18382,6 +18381,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enchantIconPrefab: {fileID: 3078878492611023605, guid: 5fabf187e7c140249ba4d04c20293caf, type: 3}
+  selectedPanel: {fileID: 0}
+  selectedIcon: {fileID: 0}
+  selectedNameText: {fileID: 0}
+  selectedLabelText: {fileID: 0}
+  selectedPanelHintText: {fileID: 0}
+  selectedCancelButton: {fileID: 0}
 --- !u!114 &488397845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20160,6 +20165,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 540654288}
   m_CullTransparentMesh: 1
+--- !u!1 &542482691
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 542482692}
+  m_Layer: 0
+  m_Name: EnchantIconRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &542482692
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 542482691}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1941814606}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -235.83002, y: -0.80000305}
+  m_SizeDelta: {x: 110, y: 110}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &546860635
 GameObject:
   m_ObjectHideFlags: 0
@@ -20817,7 +20857,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0.00012207031, y: -119.99994}
+  m_AnchoredPosition: {x: 0.00012207031, y: -120}
   m_SizeDelta: {x: 278, y: 112}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &564552785
@@ -20849,9 +20889,9 @@ MonoBehaviour:
   m_Padding:
     m_Left: 10
     m_Right: 10
-    m_Top: 8
-    m_Bottom: 8
-  m_ChildAlignment: 3
+    m_Top: 30
+    m_Bottom: 4
+  m_ChildAlignment: 6
   m_Spacing: -18
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
@@ -20879,7 +20919,7 @@ MonoBehaviour:
   - {fileID: 1653875994}
   - {fileID: 946579309}
   - {fileID: 1196817604}
-  iconSize: {x: 78, y: 96}
+  iconSize: {x: 78, y: 78}
   iconSpacing: -18
   lineFrame: {fileID: 564552788}
   styleSource: {fileID: 162136063}
@@ -34393,7 +34433,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: 78
-  m_PreferredHeight: 96
+  m_PreferredHeight: 78
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -41562,68 +41602,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4222246363379612794, guid: b6b52cbd142214840a2d3fd05a055cbd, type: 3}
   m_PrefabInstance: {fileID: 1159021839}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1161364766
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1161364767}
-  - component: {fileID: 1161364768}
-  m_Layer: 0
-  m_Name: EnchantEntryRoot
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1161364767
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1161364766}
-  m_LocalRotation: {x: -0.0000000032596286, y: 8.271806e-25, z: -0.0000000032596286, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 162136058}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0.00012207031, y: -119.99994}
-  m_SizeDelta: {x: 278, y: 112}
-  m_Pivot: {x: 0, y: 0}
---- !u!114 &1161364768
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1161364766}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 2
-    m_Right: 2
-    m_Top: 2
-    m_Bottom: 2
-  m_ChildAlignment: 4
-  m_Spacing: 8
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!1 &1167728219
 GameObject:
   m_ObjectHideFlags: 0
@@ -43504,7 +43482,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: 78
-  m_PreferredHeight: 96
+  m_PreferredHeight: 78
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -44788,7 +44766,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: 78
-  m_PreferredHeight: 96
+  m_PreferredHeight: 78
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -58841,7 +58819,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: 78
-  m_PreferredHeight: 96
+  m_PreferredHeight: 78
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -68808,6 +68786,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 984339088}
+  - {fileID: 542482692}
   - {fileID: 1598171162}
   - {fileID: 1274621469}
   m_Father: {fileID: 162136058}

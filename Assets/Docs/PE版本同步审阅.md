@@ -89,3 +89,26 @@
 - 绑定缺失：扫描两端场景中项目脚本的 `{fileID: 0}` 引用字段并按脚本名求差（PE 少绑 18 个字段）
 - 断链检查：两端场景内所有本地 `fileID` 引用都能解析，无断引用；缺失 GUID 均为 UGUI/TMP 内置包脚本，属误报
 - 运行时验证**尚未做**。PE 同步完成后建议：打开 `Assets/Scenes/SampleScene_PE.unity` 检查无缺失组件 → 开 `simulateMobileInteractionInEditor` 跑商店/道具栏/结算/教程 → Android 或 iOS 真机各跑一轮
+
+## 七、2026-09-18 追加：三个选择面板 PE 与 PC 完全对齐
+
+- 对比口径：按路径快照三个面板子树的 `sizeDelta / anchoredPosition / localScale / anchor / pivot / 组件 / 预制体来源`，逐节点求差。
+- 对齐结果：**差异 0 个节点**（`DebugBattleUI/RewardPanel`、`DebugBattleUI/RewardMagicChoicePanel`、`DebugBattleUI/MagicModifierSelectionPanel`，PC 141 节点 / PE 141 节点）。
+- 为对齐所做的改动（都在 PE 场景）：
+  1. 结算奖励槽 `RewardPanel/RewardMagic0..2` 由 `MagicSlot_PE.prefab` 换成 `MagicSlot_PC.prefab`（名称、父级、位置、尺寸不变；`RewardPanelUI.CacheReferences` 按名字/组件收集，无需重绑）。
+  2. 补上 `RewardPanel/PopupDragonWindowBackground/Frame/TitleBar/TitleText`（PC 是场景新增节点：文本 `C:/BattleReward`、字号 22、白色、拉伸锚点、rect (-122,0)、pos (16,0)）。
+- 道具强化 / 箭头附魔选择面板（`MagicModifierSelectionPanel`）两端本来就逐节点一致，无需改动；选项布局由代码统一（168×92、间距 230、图标在上、名字在下）。
+- 未纳入本次对齐：`MagicSlot_PE.prefab` 仍用于手牌区道具栏（分平台差异，未动）。
+
+## 八、2026-09-18 追加：Debug 战斗面板 PE 完全采用 PC 版
+
+- 对比口径：按路径快照 `DebugBattleUI/DebugPanel` 整棵子树（尺寸/位置/缩放/锚点/组件/文本），逐节点求差。
+- 对齐结果：**差异 0 个节点**（PC 78 / PE 78）。
+- 做法（PE 场景）：把 PC 的 `DebugPanel` 整棵复制过来替换旧面板（临时预制体 → PE 实例化 → 完全解包 → 删除临时预制体），**名称与路径保持不变**（`DebugBattleUI/DebugPanel`，父级、兄弟序号一致），所以任何按名字/类型找面板的逻辑都不受影响。
+- 补齐的功能（PE 原来缺 5 个按钮 + 弹性滑框）：
+  1. `KillTargetButton`（秒杀目标敌人）、`KillAllButton`（击杀所有敌人）、`GoldButton`（获得10金币）
+  2. `EnchantRewardButton`（获得1次附魔奖励 → 选附魔 → 箭头选择面板）
+  3. `MagicModifierRewardButton`（获得1次道具强化 → 选择道具强化面板）
+  4. 面板内容改为 `ScrollView / Viewport(RectMask2D) / Content(VerticalLayoutGroup + ContentSizeFitter)` 弹性滑框（内容 984 / 视口 640，可滚动）
+- 复制后重接的外部引用：`DebugBattlePanelUI.handSystem → DebugBattleUI`（存预制体时对场景对象的引用会被清空，已在 PE 里补回）；其余引用都在面板内部，逐字段对比 PC 与 PE 完全一致。
+- 运行时验证（PE Play）：面板 21 个控件齐全，滑框可滚；点「获得1次附魔奖励」弹出「选择箭头附魔」、点「获得1次道具强化」弹出「选择道具强化」，均正常。

@@ -29,6 +29,10 @@ public struct UnifiedDetailAddedDetail
     public UnifiedDetailAddedDetailType Type;
     public string Title;
     public string Body;
+    /// <summary>附魔类附加说明对应的附魔 id（用于在附加框标题左侧画两层附魔图标）；非附魔内容为 null。</summary>
+    public string EnchantId;
+    /// <summary>单层 Sprite 图标（如道具强化的图标）；没配时为 null。</summary>
+    public Sprite Icon;
 }
 
 public struct UnifiedDetailContent
@@ -39,10 +43,10 @@ public struct UnifiedDetailContent
     public string Body;
     public Color AccentColor;
     public List<UnifiedDetailAddedDetail> AddedDetails;
-    /// <summary>道具的施法序列（箭头序列）；非道具内容或空序列时为 null。</summary>
+    /// <summary>本内容对应的箭头附魔 id（附魔自身的详情，用于在面板左上角画附魔图标）；其它内容为 null。</summary>
+    public string EnchantId;
+    /// <summary>箭头的施法序列；非道具内容或空序列时为 null。</summary>
     public IReadOnlyList<MaterialEnum> Recipe;
-    /// <summary>箭头附魔的 id 列表（用于详情面板里的附魔图标）；非箭头内容或无附魔时为 null。</summary>
-    public List<string> EnchantIds;
 }
 
 public static class UnifiedDetailContentBuilder
@@ -108,7 +112,8 @@ public static class UnifiedDetailContentBuilder
             Title = modifier != null ? LocalizationSystem.GetText(modifier.nameKey, modifier.id) : string.Empty,
             Body = modifier != null ? LocalizationSystem.GetText(modifier.descriptionKey, string.Empty) : string.Empty,
             AccentColor = Color.white,
-            Icon = null
+            Icon = null,
+            EnchantId = modifier != null ? modifier.id : null
         };
     }
 
@@ -122,26 +127,9 @@ public static class UnifiedDetailContentBuilder
             Body = BuildMaterialBody(material),
             AccentColor = GetMaterialAccentColor(material, displayMaterial),
             Icon = MaterialCardView.GetMaterialIcon(displayMaterial),
-            AddedDetails = BuildMaterialAddedDetails(material),
-            EnchantIds = BuildMaterialEnchantIds(material)
+            AddedDetails = BuildMaterialAddedDetails(material)
         };
         return content;
-    }
-
-    /// <summary>箭头上已附魔的附魔 id（去重、保持附加顺序），没有附魔时返回 null。</summary>
-    private static List<string> BuildMaterialEnchantIds(MaterialModel material)
-    {
-        if (material == null || material.modifiers == null || material.modifiers.Count == 0)
-            return null;
-
-        List<string> ids = new List<string>();
-        for (int i = 0; i < material.modifiers.Count; i++)
-        {
-            string id = MaterialModifierFactory.GetId(material.modifiers[i]);
-            if (!string.IsNullOrEmpty(id) && !ids.Contains(id))
-                ids.Add(id);
-        }
-        return ids.Count > 0 ? ids : null;
     }
 
     public static UnifiedDetailContent BuildMapMove(MaterialEnum material)
@@ -285,7 +273,7 @@ public static class UnifiedDetailContentBuilder
     {
         List<UnifiedDetailAddedDetail> details = BuildTagDetails(magic != null && magic.Data != null ? magic.Data.tagIds : null);
         if (magic != null && magic.HasModifier && magic.PrimaryModifier != null)
-            AddDetail(details, UnifiedDetailAddedDetailType.Enhancement, magic.PrimaryModifier.Name, magic.PrimaryModifier.Description);
+            AddDetail(details, UnifiedDetailAddedDetailType.Enhancement, magic.PrimaryModifier.Name, magic.PrimaryModifier.Description, null, MagicModifierIconDatabase.Get(magic.PrimaryModifier));
         return details;
     }
 
@@ -306,7 +294,8 @@ public static class UnifiedDetailContentBuilder
                 if (modifier == null)
                     continue;
 
-                AddDetail(details, UnifiedDetailAddedDetailType.Modifier, LocalizationKeys.GetModifierName(modifier), LocalizationKeys.GetModifierDescription(modifier));
+                string modifierId = MaterialModifierFactory.GetId(modifier);
+                AddDetail(details, UnifiedDetailAddedDetailType.Modifier, LocalizationKeys.GetModifierName(modifier), LocalizationKeys.GetModifierDescription(modifier), modifierId);
             }
         }
         return details;
@@ -353,7 +342,7 @@ public static class UnifiedDetailContentBuilder
         return details;
     }
 
-    private static void AddDetail(List<UnifiedDetailAddedDetail> details, UnifiedDetailAddedDetailType type, string title, string body)
+    private static void AddDetail(List<UnifiedDetailAddedDetail> details, UnifiedDetailAddedDetailType type, string title, string body, string enchantId = null, Sprite icon = null)
     {
         if (details == null || string.IsNullOrEmpty(title))
             return;
@@ -362,7 +351,9 @@ public static class UnifiedDetailContentBuilder
         {
             Type = type,
             Title = title,
-            Body = body
+            Body = body,
+            EnchantId = enchantId,
+            Icon = icon
         });
     }
 

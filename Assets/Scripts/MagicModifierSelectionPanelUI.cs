@@ -16,14 +16,17 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private readonly List<MagicModifierData> currentChoices = new List<MagicModifierData>();
     private readonly List<MaterialModifierData> currentMaterialChoices = new List<MaterialModifierData>();
 
-    private const float OptionWidth = 134.4f;
-    private const float OptionHeight = 89.6f;
+    private const float OptionWidth = 168f;
+    private const float OptionHeight = 92f;
     private const float SelectedOptionScale = 1.06f;
     private const float OptionIconSize = 51f;
-    private const float OptionIconY = 13f;
-    /// <summary>箭头附魔图标尺寸（附魔页无文字，图标居中）。</summary>
+    private const float OptionIconY = 14f;
+    /// <summary>箭头附魔图标尺寸（与战斗结算奖励的图标区同为 64）。</summary>
     private const float EnchantIconSize = 64f;
-    private const float OptionNameY = -27f;
+    /// <summary>选项名字所在行（参考战斗结算奖励：图标在上、名字在下）。</summary>
+    private const float OptionNameY = -31f;
+    /// <summary>选项间距（参考战斗结算奖励：196 宽 + 34 间隔 = 230）。</summary>
+    private const float OptionSpacing = 230f;
     private static readonly Color OptionFrameColor = new Color(0.72f, 0.72f, 0.72f, 1f);
     private static readonly Color SelectedOptionFrameColor = Color.white;
 
@@ -46,7 +49,6 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
     private Action<MaterialModifierData> materialModifierSelected;
     private bool materialModifierMode;
     private Sprite fallbackModifierIcon;
-
     [Tooltip("箭头附魔图标预制体（Assets/Prefabs/UI/EnchantIcon.prefab）：上层 + 底色两层图片合成，颜色由 Enchant_Color 配置决定。")]
     [SerializeField] private EnchantIconUI enchantIconPrefab;
 
@@ -307,11 +309,11 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
             MaterialModifierData data = currentMaterialChoices[i];
             optionButtons[i].interactable = true;
-            // 附魔选择界面不再显示文本（名称/描述改由统一详情面板展示），只显示两层合成的附魔图标。
+            // 与「道具强化」模式一致：图标在上、名字在下（布局参考战斗结算奖励的选项）。
             if (optionTexts[i] != null)
-                optionTexts[i].text = string.Empty;
-            SetOptionTextVisible(i, false);
-            ConfigureOptionTextLayout(i, false);
+                optionTexts[i].text = BuildMaterialOptionText(data);
+            SetOptionTextVisible(i, true);
+            ConfigureOptionTextLayout(i, true);
             SetOptionIconVisible(i, false);
             SetEnchantIconVisible(i, true, data);
             int index = i;
@@ -344,16 +346,22 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
 
     private float GetOptionSpacing()
     {
-        RectTransform first = optionButtons[0] != null ? optionButtons[0].transform as RectTransform : null;
-        if (first == null || first.sizeDelta.x <= 0f)
-            return 230f;
-
-        return first.sizeDelta.x + 20f;
+        // 与战斗结算奖励的道具选项一致：选项 196 宽 + 34 间隔 = 230。
+        return OptionSpacing;
     }
 
     private string BuildOptionText(MagicModifierData data)
     {
         return data != null ? LocalizationSystem.GetText(data.nameKey, data.id) : string.Empty;
+    }
+
+    /// <summary>箭头附魔选项的名字（显示在图标下方，取自附魔本地化 nameKey）。</summary>
+    private string BuildMaterialOptionText(MaterialModifierData data)
+    {
+        if (data == null)
+            return string.Empty;
+
+        return LocalizationSystem.GetText(data.nameKey, data.id);
     }
 
     private void ConfigureOptionTextLayout(int index, bool withIcon)
@@ -472,7 +480,8 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
+            // 图标在上、名字在下（布局参考战斗结算奖励的选项）。
+            rect.anchoredPosition = new Vector2(0f, OptionIconY);
             rect.sizeDelta = new Vector2(EnchantIconSize, EnchantIconSize);
         }
 
