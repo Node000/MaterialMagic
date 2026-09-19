@@ -14,7 +14,9 @@ public enum UnifiedDetailSourceType
     BonusReward = 6,
     MagicModifier = 7,
     /// <summary>箭头附魔（MaterialModifierData）。</summary>
-    MaterialModifier = 8
+    MaterialModifier = 8,
+    /// <summary>商店功能按钮（刷新商品 / 删除箭头）等自建的按钮详情：主图标缩放单独控制。</summary>
+    ShopFunction = 9
 }
 
 public enum UnifiedDetailAddedDetailType

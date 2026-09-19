@@ -47,6 +47,9 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private bool bodyCanScroll;
     private int pinnedFrame;
     private EnchantIconUI enchantIcon;
+    private Vector3 iconBaseScale = Vector3.one;
+    private Vector2 iconBaseAnchoredPosition;
+    private bool iconBaseCached;
 
     public void Initialize()
     {
@@ -251,6 +254,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             iconImage.sprite = content.Icon;
             iconImage.gameObject.SetActive(content.Icon != null);
         }
+        ApplyIconScale(content.SourceType);
         ApplyAccentColor(content.AccentColor);
         ApplyAddedDetails(content.AddedDetails);
         ApplyEnchantIcon(content.EnchantId);
@@ -293,6 +297,34 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
         enchantIcon.gameObject.SetActive(true);
         enchantIcon.Apply(enchantId);
+    }
+
+    /// <summary>
+    /// 按详情来源类型缩放主图标（"Icon" 槽的 localScale 上乘一个倍数，例如事件选项 / 商店功能图标 0.8）。
+    /// 不改 sizeDelta（拉伸锚点上写 sizeDelta 的语义与固定锚点不同），也不碰颜色；
+    /// 倍数是以 pivot 为原点缩的，这里额外补回 pivot 到矩形中心的位移，让图标的视觉中心保持不动。
+    /// </summary>
+    private void ApplyIconScale(UnifiedDetailSourceType sourceType)
+    {
+        if (iconRect == null)
+            return;
+
+        if (!iconBaseCached)
+        {
+            // 首次应用时记下美术在 Scene 里摆好的值，之后都在它上面乘倍数，不写成绝对值。
+            iconBaseScale = iconRect.localScale;
+            iconBaseAnchoredPosition = iconRect.anchoredPosition;
+            iconBaseCached = true;
+        }
+
+        float scale = theme != null ? theme.GetIconScale(sourceType) : 1f;
+        iconRect.localScale = iconBaseScale * scale;
+
+        Vector2 size = iconRect.rect.size;
+        Vector2 pivotOffset = new Vector2(0.5f - iconRect.pivot.x, 0.5f - iconRect.pivot.y);
+        iconRect.anchoredPosition = iconBaseAnchoredPosition + new Vector2(
+            iconBaseScale.x * (1f - scale) * pivotOffset.x * size.x,
+            iconBaseScale.y * (1f - scale) * pivotOffset.y * size.y);
     }
 
     private void ApplyAccentColor(Color color)

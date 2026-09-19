@@ -18,3 +18,9 @@ MonoBehaviour:
   hoverExitHideDelay: 0.15
   showEase: 27
   hideEase: 26
+  defaultIconScale: 1
+  iconScales:
+  - sourceType: 5
+    scale: 0.6
+  - sourceType: 9
+    scale: 0.6

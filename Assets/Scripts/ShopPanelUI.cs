@@ -610,7 +610,7 @@ public class ShopPanelUI : MonoBehaviour
     {
         return new UnifiedDetailContent
         {
-            SourceType = UnifiedDetailSourceType.None,
+            SourceType = UnifiedDetailSourceType.ShopFunction,
             Title = LocalizationSystem.GetText("ui.shop.refresh.title", "刷新商品"),
             Body = LocalizationSystem.GetText("ui.shop.refresh.body", "消耗金币以刷新商店内所有商品"),
             Icon = GetButtonIcon(refreshButton),
@@ -622,7 +622,7 @@ public class ShopPanelUI : MonoBehaviour
     {
         return new UnifiedDetailContent
         {
-            SourceType = UnifiedDetailSourceType.None,
+            SourceType = UnifiedDetailSourceType.ShopFunction,
             Title = LocalizationSystem.GetText("ui.shop.remove.title", "删除箭头"),
             Body = LocalizationSystem.GetText("ui.shop.remove.body", "消耗金币以从牌组中删除一个箭头"),
             Icon = GetButtonIcon(removeArrowButton),
