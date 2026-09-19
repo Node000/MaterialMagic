@@ -2015,6 +2015,7 @@ public class HandSystemUI : MonoBehaviour
         {
             id = "default_rest",
             titleKey = "rest.option.rest",
+            iconName = "休息",
             resultId = RestDefaultHealResultId,
             nextNodeId = "rest_result",
             isExitOption = true
@@ -2031,6 +2032,7 @@ public class HandSystemUI : MonoBehaviour
         {
             id = "study_magic",
             titleKey = "rest.option.study",
+            iconName = "道具附魔",
             recipe = studyRecipe,
             resultId = RestStudyResultId
         };
@@ -2038,6 +2040,7 @@ public class HandSystemUI : MonoBehaviour
         {
             id = "arrow_modifier",
             titleKey = "rest.option.arrow_modifier",
+            iconName = "箭头附魔",
             recipe = arrowModifierRecipe,
             resultId = RestArrowModifierResultId
         };
