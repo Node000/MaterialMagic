@@ -1338,11 +1338,11 @@
     },
     {
       "key": "difficulty.level_cap_minus_4.name",
-      "text": "Progress Limit -4"
+      "text": "Progress Limit -1"
     },
     {
       "key": "difficulty.level_cap_minus_4.desc",
-      "text": "The chapter has 4 fewer progress steps."
+      "text": "The chapter has 1 fewer progress step."
     },
     {
       "key": "difficulty.starting_magic_slots_minus_1.name",
@@ -1378,11 +1378,11 @@
     },
     {
       "key": "difficulty.level_cap_minus_2.name",
-      "text": "Progress Limit -2"
+      "text": "Progress Limit -1"
     },
     {
       "key": "difficulty.level_cap_minus_2.desc",
-      "text": "The chapter has 2 fewer progress steps."
+      "text": "The chapter has 1 fewer progress step."
     },
     {
       "key": "difficulty.boss_harder.name",

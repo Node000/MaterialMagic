@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.big_arrow_2.desc
   lineColor: {r: 1, g: 0.72156864, b: 0.3019608, a: 1}
   inArrowModifierRewardPool: 1
+  price: 1
   visualMaterial: {fileID: 2100000, guid: e1551fa1edfe10a45892b83b2b7d2f28, type: 2}

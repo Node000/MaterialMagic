@@ -18,6 +18,10 @@ public class BuffModel
         this.stack = stack;
     }
 
+    /// <summary>
+    /// 自己回合开始时触发。清除时机约定：触发点可能落在敌方回合的「本回合」Buff（不倒翁、泡沫板、
+    /// 汽油、焦糖熊、荆棘、护盾反射等）必须在这里清除，才能覆盖整轮（玩家回合 + 紧接的敌方回合）。
+    /// </summary>
     public virtual void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
     }
@@ -103,6 +107,10 @@ public class BuffModel
     {
     }
 
+    /// <summary>
+    /// 自己回合结束时触发。只在自己的回合内生效的「本回合」Buff 才在这里清除；
+    /// 清除过早会让敌方回合里重复触发的效果失效，敌方回合还会用到的 Buff 请改用 <see cref="OnTurnStart"/> 清除。
+    /// </summary>
     public virtual void OnTurnEnd(CombatantModel self, CombatantModel opponent)
     {
     }

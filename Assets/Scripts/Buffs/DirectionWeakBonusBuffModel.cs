@@ -10,7 +10,8 @@ public class DirectionWeakBonusBuffModel : BuffModel
             stack += this.stack;
     }
 
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
+    // 与 ExtraEnemyDebuff 同构：触发点可能在敌方回合发生，清除时机必须在玩家下个回合开始。
+    public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
         if (self.IsPlayer)
             stack = 0;

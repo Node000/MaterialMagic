@@ -51,7 +51,7 @@ MonoBehaviour:
           descriptionKey: 
         - intentType: 0
           actionType: 1
-          value: 14
+          value: 10
           times: 1
           hitInterval: 0.2
           summonEnemyId: 0
@@ -68,7 +68,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 3
-            stack: 3
+            stack: 8
           displayType: debuff
           descriptionKey: 
       - id: 2
@@ -105,7 +105,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 6
-            stack: 8
+            stack: 5
           displayType: debuff
           descriptionKey: 
       - id: 3
@@ -120,13 +120,13 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 61
-            stack: 4
+            stack: 3
           displayType: debuff
           descriptionKey: 
         - intentType: 0
           actionType: 1
           value: 2
-          times: 6
+          times: 3
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
@@ -142,7 +142,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 10
-            stack: 4
+            stack: 3
           displayType: buff
           descriptionKey: 
       - id: 4
@@ -162,7 +162,7 @@ MonoBehaviour:
           descriptionKey: 
         - intentType: 0
           actionType: 1
-          value: 9
+          value: 8
           times: 2
           hitInterval: 0.2
           summonEnemyId: 0

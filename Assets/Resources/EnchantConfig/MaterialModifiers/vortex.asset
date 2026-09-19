@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.vortex.desc
   lineColor: {r: 0.48235294, g: 0.36078432, b: 1, a: 1}
   inArrowModifierRewardPool: 1
+  price: 1
   visualMaterial: {fileID: 2100000, guid: ad17107e2fa928940bc37c9cb8403ad7, type: 2}

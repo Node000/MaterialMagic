@@ -11,6 +11,11 @@ public class MaterialModifierData : IDataRecord
     public string descriptionKey;
     public string lineColor;
     public bool inArrowModifierRewardPool;
+    /// <summary>
+    /// 商店价格差值：该附魔给箭头价格带来的增减，基准是「无附魔普通箭头价」。
+    /// 0 = 不影响价格；负数 = 弱附魔更便宜。见 <see cref="MaterialModifierDefinition.price"/>。
+    /// </summary>
+    public int price;
 
     public string Id => id;
 }

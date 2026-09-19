@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.flow.desc
   lineColor: {r: 0.27058825, g: 0.8509804, b: 1, a: 1}
   inArrowModifierRewardPool: 1
+  price: 2
   visualMaterial: {fileID: 2100000, guid: d644944c987ad864cb4b90ed66c31680, type: 2}

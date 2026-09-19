@@ -20,9 +20,8 @@ public class EconomyConfigData : INumericDataRecord
     public int numericId;
     public string id;
     public int shopSpellPrice = 5;
-    public int shopMaterialPrice = 1;
-    // 商店箭头附魔对价格的增量：每个正面附魔 +step，每个负面附魔 -step。
-    public int materialEnchantPriceStep = 1;
+    // 无附魔普通箭头的商店价格；附魔箭头在此基础上加各附魔自身的 price 差值（见 MaterialModifierDefinition.price）。
+    public int shopMaterialPrice = 2;
     public int shopRemoveMaterialPrice = 2;
     public int shopRefreshPrice = 1;
     public int shopProductPoolId = 1;
@@ -439,6 +438,8 @@ public class EventOptionData
 {
     public string id;
     public string titleKey;
+    /// <summary>选项图标名：只写图片名（不含路径与扩展名），运行时自动拼 Resources/Images/Events/ 路径加载。留空则不显示图标。</summary>
+    public string iconName;
     public string recipe;
     public int randomRecipeLength;
     public bool ignoreOrder;

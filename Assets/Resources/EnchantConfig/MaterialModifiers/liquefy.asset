@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.liquefy.desc
   lineColor: {r: 0.3019608, g: 0.5529412, b: 1, a: 1}
   inArrowModifierRewardPool: 1
+  price: 1
   visualMaterial: {fileID: 2100000, guid: a2e059f528f3b494a92c30a686e8faf7, type: 2}

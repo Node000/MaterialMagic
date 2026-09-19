@@ -120,7 +120,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 10
-            stack: 4
+            stack: 3
           displayType: buff
           descriptionKey: 
         - intentType: 0
@@ -154,7 +154,7 @@ MonoBehaviour:
         - intentType: 0
           actionType: 1
           value: 4
-          times: 5
+          times: 4
           hitInterval: 0.2
           summonEnemyId: 0
           summonCount: 1
@@ -170,7 +170,7 @@ MonoBehaviour:
           summonCount: 1
           buffs:
           - buffType: 3
-            stack: 6
+            stack: 8
           displayType: debuff
           descriptionKey: 
       intentLoop:

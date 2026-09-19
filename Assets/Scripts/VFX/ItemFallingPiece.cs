@@ -17,8 +17,8 @@ public struct ItemFallPieceSettings
 }
 
 /// <summary>
-/// 道具瀑布里掉落的单个道具：落地停稳后逐渐变成纯白，被回收时直接销毁（无缩小/淡出动画）。
-/// 由 <see cref="ItemWaterfallEffect"/> 在运行时生成并驱动，不要手动放进场景。
+/// 道具瀑布里掉落的单个道具：落地停稳后逐渐变成纯白。
+/// 自身不跑 Update、也不自行销毁：由 <see cref="ItemWaterfallEffect"/> 统一 Tick 驱动，并在回收时放回对象池复用。
 /// </summary>
 [DisallowMultipleComponent]
 public class ItemFallingPiece : MonoBehaviour
@@ -39,18 +39,22 @@ public class ItemFallingPiece : MonoBehaviour
     private float landedLifetime;
     private float whiteDelay;
     private float whiteDuration;
+
     private float restingTime;
     private float lifetimeTimer = -1f;
     private float whiteTimer = -1f;
     private float whiteAmount;
     private bool touchedSomething;
-    private bool dying;
+    private bool prepared;
+    private bool removeRequested;
 
-    public bool IsDying => dying;
+    /// <summary>是否已经由控制器下发过参数（池内/未激活期间为 false）。</summary>
+    public bool IsPrepared => prepared;
+
+    /// <summary>是否请求回收（存活时间到期），控制器在 Tick 之后统一处理。</summary>
+    public bool IsRemoveRequested => removeRequested;
+
     public float WhiteAmount => whiteAmount;
-
-    /// <summary>开始消失时回调（不论是被数量上限回收还是存活时间到期），控制器据此把自己从队列里摘掉。</summary>
-    public event System.Action<ItemFallingPiece> RemovalStarted;
 
     private void Awake()
     {
@@ -71,6 +75,9 @@ public class ItemFallingPiece : MonoBehaviour
         whiteDelay = Mathf.Max(0f, settings.whiteDelay);
         whiteDuration = Mathf.Max(0.01f, settings.whiteDuration);
 
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
         transform.localScale = Vector3.one * Mathf.Max(0.0001f, settings.scale);
 
         if (spriteRenderer != null)
@@ -84,9 +91,12 @@ public class ItemFallingPiece : MonoBehaviour
         whiteTimer = -1f;
         whiteAmount = 0f;
         touchedSomething = false;
-        dying = false;
+        removeRequested = false;
 
         SetWhiteAmount(0f);
+
+        if (hitBox != null)
+            hitBox.enabled = true;
 
         if (body != null)
         {
@@ -94,41 +104,67 @@ public class ItemFallingPiece : MonoBehaviour
             body.velocity = Vector2.zero;
             body.angularVelocity = 0f;
         }
+
+        prepared = true;
     }
 
-    /// <summary>被瀑布控制器回收：直接销毁（无缩小/淡出动画）。</summary>
-    public void RequestRemove()
+    /// <summary>生成时由控制器下发运动参数（重力倍数与初速自旋）。</summary>
+    public void ApplySpawnDynamics(float gravityScale, float spinVelocity)
     {
-        BeginRemoval();
-    }
-
-    private void BeginRemoval()
-    {
-        if (dying)
+        if (body == null)
             return;
 
-        dying = true;
+        body.gravityScale = Mathf.Max(0.01f, gravityScale);
+        body.angularVelocity = spinVelocity;
+    }
+
+    /// <summary>请求回收（存活时间到期时由自己标记，控制器在 Tick 之后统一回收）。</summary>
+    public void RequestRemove()
+    {
+        removeRequested = true;
+    }
+
+    /// <summary>被控制器回收：关闭模拟与碰撞、清空状态并隐藏，等待复用（不销毁）。</summary>
+    public void PrepareForPool()
+    {
+        prepared = false;
+        removeRequested = false;
+        touchedSomething = false;
+        restingTime = 0f;
+        lifetimeTimer = -1f;
+        whiteTimer = -1f;
+
         if (body != null)
+        {
             body.simulated = false;
+            body.velocity = Vector2.zero;
+            body.angularVelocity = 0f;
+        }
+
         if (hitBox != null)
             hitBox.enabled = false;
 
-        RemovalStarted?.Invoke(this);
-        Destroy(gameObject);
+        if (spriteRenderer != null)
+            spriteRenderer.sprite = null;
+
+        gameObject.SetActive(false);
     }
 
-    private void Update()
+    /// <summary>由控制器每帧统一驱动：推进存活、停稳与变白计时。</summary>
+    public void Tick(float delta)
     {
-        if (dying)
+        if (!prepared || removeRequested)
             return;
 
-        float delta = Time.deltaTime;
         UpdateLifetime(delta);
+        if (removeRequested)
+            return;
+
         UpdateResting(delta);
         UpdateWhite(delta);
     }
 
-    /// <summary>落地（第一次碰到地面/其它道具）后开始计时，到点自行消失。</summary>
+    /// <summary>落地（第一次碰到地面/其它道具）后开始计时，到点请求回收。</summary>
     private void UpdateLifetime(float delta)
     {
         if (!touchedSomething || landedLifetime <= 0f)
@@ -136,9 +172,10 @@ public class ItemFallingPiece : MonoBehaviour
 
         lifetimeTimer = lifetimeTimer < 0f ? 0f : lifetimeTimer + delta;
         if (lifetimeTimer >= landedLifetime)
-            BeginRemoval();
+            removeRequested = true;
     }
 
+    /// <summary>落地停稳后开始变白。</summary>
     private void UpdateResting(float delta)
     {
         if (whiteTimer >= 0f || !touchedSomething || body == null)

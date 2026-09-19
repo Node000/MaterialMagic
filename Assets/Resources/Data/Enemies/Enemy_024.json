@@ -92,7 +92,7 @@
               "buffs": [
                 {
                   "buffType": 10,
-                  "stack": 4
+                  "stack": 3
                 }
               ],
               "displayType": "buff"
@@ -124,7 +124,7 @@
             {
               "actionType": 1,
               "value": 4,
-              "times": 5,
+              "times": 4,
               "displayType": "multiAttack"
             },
             {
@@ -132,7 +132,7 @@
               "buffs": [
                 {
                   "buffType": 3,
-                  "stack": 6
+                  "stack": 8
                 }
               ],
               "displayType": "debuff"

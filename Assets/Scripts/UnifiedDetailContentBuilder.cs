@@ -225,7 +225,7 @@ public static class UnifiedDetailContentBuilder
             Title = option != null ? LocalizationSystem.GetText(option.titleKey, option.id) : string.Empty,
             Body = BuildEventOptionBody(option),
             AccentColor = new Color(0.94f, 0.76f, 0.34f, 1f),
-            Icon = null,
+            Icon = LoadEventOptionIcon(option),
             AddedDetails = BuildTagDetails(option != null ? option.tagIds : null)
         };
         return content;
@@ -708,6 +708,14 @@ public static class UnifiedDetailContentBuilder
                 return sprite;
         }
         return null;
+    }
+
+    /// <summary>事件选项图标：数据里只写图片名，这里统一拼 Resources 路径（缺图或留空时返回 null，详情面板不显示图标）。</summary>
+    private static Sprite LoadEventOptionIcon(EventOptionData option)
+    {
+        if (option == null || string.IsNullOrEmpty(option.iconName))
+            return null;
+        return Resources.Load<Sprite>("Images/Events/" + option.iconName);
     }
 
     private static Sprite LoadRewardIcon(BonusRewardData rewardData)

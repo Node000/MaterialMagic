@@ -209,6 +209,7 @@ public class ShopNodeSaveData
     public int selectedOfferIndex = -1;
     public bool waitingForSelection;
     public bool purchaseInProgress;
+    public bool removeArrowUsed;
     public ShopUndoSaveData undo;
 }
 

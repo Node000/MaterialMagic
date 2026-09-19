@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.proliferating_arrow.desc
   lineColor: {r: 0.39607844, g: 0.8901961, b: 0.54509807, a: 1}
   inArrowModifierRewardPool: 1
+  price: 2
   visualMaterial: {fileID: 2100000, guid: 3d00a66af684b5d4ba33878ac12c72d0, type: 2}

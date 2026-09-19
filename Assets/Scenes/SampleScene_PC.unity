@@ -18381,12 +18381,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enchantIconPrefab: {fileID: 3078878492611023605, guid: 5fabf187e7c140249ba4d04c20293caf, type: 3}
-  selectedPanel: {fileID: 0}
-  selectedIcon: {fileID: 0}
-  selectedNameText: {fileID: 0}
-  selectedLabelText: {fileID: 0}
-  selectedPanelHintText: {fileID: 0}
-  selectedCancelButton: {fileID: 0}
 --- !u!114 &488397845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39089,7 +39083,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -292.7}
+  m_AnchoredPosition: {x: 0, y: 60}
   m_SizeDelta: {x: 916.45, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1091647597

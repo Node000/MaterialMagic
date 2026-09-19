@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.half_arrow.desc
   lineColor: {r: 0.6901961, g: 0.6901961, b: 0.6901961, a: 1}
   inArrowModifierRewardPool: 0
+  price: -1
   visualMaterial: {fileID: 2100000, guid: b2257a4902999f04699a44aa49a781e0, type: 2}

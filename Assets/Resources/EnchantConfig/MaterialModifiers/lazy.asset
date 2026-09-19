@@ -18,4 +18,5 @@ MonoBehaviour:
   descriptionKey: modifier.lazy.desc
   lineColor: {r: 0.54901963, g: 0.54901963, b: 1, a: 1}
   inArrowModifierRewardPool: 0
+  price: -1
   visualMaterial: {fileID: 2100000, guid: 1559c4ddacb6c454aa497761909acb31, type: 2}

@@ -3,7 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// 道具瀑布：一个矩形区域里不断有道具从区域正上方落下（2D 物理），落到底部（区域下边缘即地面）后堆积起来；
-/// 堆到数量上限或落地存活时间到期时，最早的/到期的道具直接消失；落地停稳的道具会逐渐变成纯白（需要道具碎片使用 Style/Sprite/FadeToWhite）。
+/// 堆到数量上限或落地存活时间到期时，最早的/到期的道具直接回收（碎片走对象池复用，不反复创建销毁）；
+/// 落地停稳的道具会逐渐变成纯白（需要道具碎片使用 Style/Sprite/FadeToWhite）。
 /// 区域矩形的具体位置完全由 <see cref="area"/>（RectTransform）在场景里手摆，脚本不会改它；墙面与地面碰撞体按矩形尺寸自动贴合。
 /// </summary>
 [DisallowMultipleComponent]
@@ -63,6 +64,7 @@ public class ItemWaterfallEffect : MonoBehaviour
     [SerializeField, Min(0f)] private float boundsPadding = 100f;
 
     private readonly List<ItemFallingPiece> pieces = new List<ItemFallingPiece>();
+    private readonly Stack<ItemFallingPiece> piecePool = new Stack<ItemFallingPiece>();
     private static Sprite[] itemSpriteCache;
     private float spawnTimer;
     private bool spawning;
@@ -81,15 +83,38 @@ public class ItemWaterfallEffect : MonoBehaviour
 
     private void Update()
     {
+        float delta = Time.deltaTime;
+
+        // 所有碎片由控制器统一驱动：碎片自身不再跑 Update。
+        TickPieces(delta);
+
         if (!spawning)
             return;
 
-        spawnTimer -= Time.deltaTime;
+        spawnTimer -= delta;
         if (spawnTimer > 0f)
             return;
 
         spawnTimer = GetSpawnInterval();
         SpawnPiece();
+    }
+
+    /// <summary>推进所有存活碎片，并回收本帧请求回收的碎片。</summary>
+    private void TickPieces(float delta)
+    {
+        for (int i = pieces.Count - 1; i >= 0; i--)
+        {
+            ItemFallingPiece piece = pieces[i];
+            if (piece == null)
+            {
+                pieces.RemoveAt(i);
+                continue;
+            }
+
+            piece.Tick(delta);
+            if (piece.IsRemoveRequested)
+                RecyclePiece(piece);
+        }
     }
 
     public void SetSpawning(bool value)
@@ -144,7 +169,7 @@ public class ItemWaterfallEffect : MonoBehaviour
         TrimOverflowPieces();
 
         Transform parent = piecesRoot != null ? piecesRoot : transform;
-        ItemFallingPiece piece = Instantiate(piecePrefab, parent);
+        ItemFallingPiece piece = TakeFromPool(parent);
         Transform pieceTransform = piece.transform;
         pieceTransform.position = worldPosition;
         pieceTransform.rotation = Quaternion.Euler(0f, 0f, rotation);
@@ -152,23 +177,46 @@ public class ItemWaterfallEffect : MonoBehaviour
         float rootScale = Mathf.Max(0.000001f, Mathf.Abs(parent.lossyScale.x));
         piece.Prepare(sprite, CreatePieceSettings(pieceWorldScale / rootScale));
 
-        Rigidbody2D pieceBody = piece.GetComponent<Rigidbody2D>();
-        if (pieceBody != null)
-        {
-            pieceBody.gravityScale = Mathf.Max(0.01f, gravityScale);
-            if (spawnSpin > 0f)
-                pieceBody.angularVelocity = Random.Range(-spawnSpin, spawnSpin);
-        }
+        // 池化复用：复位之后才下发初速，避免残留上一颗的运动。
+        piece.ApplySpawnDynamics(gravityScale, spawnSpin > 0f ? Random.Range(-spawnSpin, spawnSpin) : 0f);
 
-        piece.RemovalStarted += HandlePieceRemovalStarted;
         pieces.Add(piece);
     }
 
-    /// <summary>碎片开始消失（存活时间到期或被动回收）时，把它从列表里摘掉。</summary>
-    private void HandlePieceRemovalStarted(ItemFallingPiece piece)
+    /// <summary>回收一个碎片：放回对象池复用（不销毁）。</summary>
+    private void RecyclePiece(ItemFallingPiece piece)
     {
-        if (piece != null)
-            pieces.Remove(piece);
+        pieces.Remove(piece);
+        if (piece == null)
+            return;
+
+        ReleaseToPool(piece);
+    }
+
+    private ItemFallingPiece TakeFromPool(Transform parent)
+    {
+        while (piecePool.Count > 0)
+        {
+            ItemFallingPiece pooled = piecePool.Pop();
+            if (pooled != null)
+                return pooled;
+        }
+
+        return Instantiate(piecePrefab, parent);
+    }
+
+    private void ReleaseToPool(ItemFallingPiece piece)
+    {
+        piece.PrepareForPool();
+
+        // 按单次最大存活数兜底，避免池无限增长。
+        if (piecePool.Count >= Mathf.Max(1, maxPieceCount))
+        {
+            Destroy(piece.gameObject);
+            return;
+        }
+
+        piecePool.Push(piece);
     }
 
     private ItemFallPieceSettings CreatePieceSettings(float localScale)
@@ -186,6 +234,24 @@ public class ItemWaterfallEffect : MonoBehaviour
             whiteDuration = whiteDuration,
             whiteColor = whiteColor,
         };
+    }
+
+    private void OnDestroy()
+    {
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            if (pieces[i] != null)
+                Destroy(pieces[i].gameObject);
+        }
+
+        pieces.Clear();
+
+        while (piecePool.Count > 0)
+        {
+            ItemFallingPiece pooled = piecePool.Pop();
+            if (pooled != null)
+                Destroy(pooled.gameObject);
+        }
     }
 
     private bool IsSpawnAreaBlocked(Vector3 worldPosition, Sprite sprite, float rotation, float pieceWorldScale)
@@ -206,18 +272,7 @@ public class ItemWaterfallEffect : MonoBehaviour
     {
         int limit = Mathf.Max(1, maxPieceCount);
         while (pieces.Count >= limit && pieces.Count > 0)
-            RemoveOldestPiece();
-    }
-
-    private void RemoveOldestPiece()
-    {
-        if (pieces.Count == 0)
-            return;
-
-        ItemFallingPiece oldest = pieces[0];
-        pieces.RemoveAt(0);
-        if (oldest != null)
-            oldest.RequestRemove();
+            RecyclePiece(pieces[0]);
     }
 
     /// <summary>碎片缩放：按图标像素尺寸换算 —— 区域 1 单位 = 1 像素，pieceScale = 1 时图标按原始像素大小绘制。</summary>

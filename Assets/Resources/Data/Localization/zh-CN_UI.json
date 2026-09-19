@@ -1170,7 +1170,7 @@
     },
     {
       "key": "ascension.15.name",
-      "text": "A15 关卡上限-4"
+      "text": "A15 关卡上限-1"
     },
     {
       "key": "ascension.15.desc",
@@ -1202,7 +1202,7 @@
     },
     {
       "key": "ascension.19.name",
-      "text": "A19 关卡上限-2"
+      "text": "A19 关卡上限-1"
     },
     {
       "key": "ascension.19.desc",
@@ -1338,11 +1338,11 @@
     },
     {
       "key": "difficulty.level_cap_minus_4.name",
-      "text": "关卡上限-4"
+      "text": "关卡上限-1"
     },
     {
       "key": "difficulty.level_cap_minus_4.desc",
-      "text": "章节可推进关卡数减少4。"
+      "text": "章节可推进关卡数减少1。"
     },
     {
       "key": "difficulty.starting_magic_slots_minus_1.name",
@@ -1378,11 +1378,11 @@
     },
     {
       "key": "difficulty.level_cap_minus_2.name",
-      "text": "关卡上限-2"
+      "text": "关卡上限-1"
     },
     {
       "key": "difficulty.level_cap_minus_2.desc",
-      "text": "章节可推进关卡数减少2。"
+      "text": "章节可推进关卡数减少1。"
     },
     {
       "key": "difficulty.boss_harder.name",

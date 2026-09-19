@@ -153,7 +153,7 @@
       "descriptionKey": "difficulty.level_cap_minus_4.desc",
       "scope": 0,
       "effects": [
-        { "type": 23, "intValue": -4 }
+        { "type": 23, "intValue": -1 }
       ]
     },
     {
@@ -191,7 +191,7 @@
       "descriptionKey": "difficulty.level_cap_minus_2.desc",
       "scope": 0,
       "effects": [
-        { "type": 23, "intValue": -2 }
+        { "type": 23, "intValue": -1 }
       ]
     },
     {

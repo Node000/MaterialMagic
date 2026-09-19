@@ -9,10 +9,13 @@ public sealed class MaterialModifierDefinition : ScriptableObject
     [SerializeField] private string descriptionKey;
     [SerializeField] private Color lineColor = Color.white;
     [SerializeField] private bool inArrowModifierRewardPool;
+    [Tooltip("商店价格差值：相对「无附魔普通箭头价」的增减（正数更贵、负数更便宜）。0 = 不影响价格。")]
+    [SerializeField] private int price;
     [SerializeField] private Material visualMaterial;
 
     public string Id => id;
     public string Script => script;
+    public int Price => price;
     public Material VisualMaterial => visualMaterial;
 
     public MaterialModifierData CreateRuntimeData()
@@ -24,7 +27,8 @@ public sealed class MaterialModifierDefinition : ScriptableObject
             nameKey = nameKey,
             descriptionKey = descriptionKey,
             lineColor = "#" + ColorUtility.ToHtmlStringRGB(lineColor),
-            inArrowModifierRewardPool = inArrowModifierRewardPool
+            inArrowModifierRewardPool = inArrowModifierRewardPool,
+            price = price
         };
     }
 
@@ -40,6 +44,7 @@ public sealed class MaterialModifierDefinition : ScriptableObject
         if (!ColorUtility.TryParseHtmlString(value.lineColor, out lineColor))
             lineColor = Color.white;
         inArrowModifierRewardPool = value.inArrowModifierRewardPool;
+        price = value.price;
         visualMaterial = valueVisualMaterial;
     }
 }

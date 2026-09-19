@@ -17,6 +17,8 @@ public enum RunFlowState
 
 public class RunManager
 {
+    // 出战分档：前 2 场弱怪（BeginPool）→ 接下来 3 场普怪（MidPool）→ 之后全部强怪（NormalPool）。
+    // 三档池互相独立，跨档时不把上一档没抽完的关卡并入下一档，避免普怪池混弱怪、强怪池混普怪与弱怪。
     private const int BeginPoolBattleLimit = 2;
     private const int MidPoolBattleLimit = 5;
 
@@ -309,11 +311,9 @@ public class RunManager
         if (BattleCount <= BeginPoolBattleLimit)
             return DrawFromPool(remainingBeginPool, ActiveChapter.BeginPool, LevelType.Battle) ?? GetFallbackBattleLevel();
 
-        MovePool(remainingBeginPool, remainingMidPool);
         if (BattleCount <= MidPoolBattleLimit)
             return DrawFromPool(remainingMidPool, ActiveChapter.MidPool, LevelType.Battle) ?? GetFallbackBattleLevel();
 
-        MovePool(remainingMidPool, remainingNormalPool);
         return DrawFromPool(remainingNormalPool, ActiveChapter.NormalPool, LevelType.Battle) ?? GetFallbackBattleLevel();
     }
 
@@ -456,16 +456,6 @@ public class RunManager
         FillPool(remainingNormalPool, ActiveChapter != null ? ActiveChapter.NormalPool : null);
         FillPool(remainingEventPool, ActiveChapter != null ? ActiveChapter.EventPool : null);
         FillPool(remainingElitePool, ActiveChapter != null ? ActiveChapter.ElitePool : null);
-    }
-
-    private static void MovePool(List<int> source, List<int> target)
-    {
-        if (source == null || target == null || source.Count == 0)
-            return;
-
-        for (int i = 0; i < source.Count; i++)
-            target.Add(source[i]);
-        source.Clear();
     }
 
     private static void FillPool(List<int> target, int[] source)

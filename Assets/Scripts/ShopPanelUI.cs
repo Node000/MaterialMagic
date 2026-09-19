@@ -98,8 +98,8 @@ public class ShopPanelUI : MonoBehaviour
     private Coroutine showRoutine;
     private int refreshCount;
     private bool refreshInProgress;
-
-    private const int DefaultMaterialEnchantPriceStep = 1;
+    private bool removeArrowUsed;
+    private TMP_Text removeArrowCostText;
 
     public RectTransform MagicViewPrefab => magicViewPrefab;
     public RectTransform MaterialCardPrefab => materialCardPrefab;
@@ -159,6 +159,22 @@ public class ShopPanelUI : MonoBehaviour
         StartCoroutine(RefreshRoutine());
     }
 
+    /// <summary>
+    /// 删除箭头选项的可用状态：每次刷新商店、或重新进入商店时都恢复为可用；
+    /// 同一次商店里用过一次后保持置灰（连同隐藏价格文本），直到刷新或换到下一次商店。
+    /// </summary>
+    private void UpdateRemoveArrowButtonState()
+    {
+        if (removeArrowButton == null)
+            return;
+
+        removeArrowButton.interactable = !removeArrowUsed;
+        if (removeArrowCostText == null)
+            removeArrowCostText = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
+        if (removeArrowCostText != null)
+            removeArrowCostText.gameObject.SetActive(!removeArrowUsed);
+    }
+
     private System.Collections.IEnumerator RefreshRoutine()
     {
         yield return AnimateSlotsDisappearRoutine();
@@ -167,11 +183,14 @@ public class ShopPanelUI : MonoBehaviour
         selectedOffer = null;
         waitingForSelection = false;
         purchaseInProgress = false;
+        // 刷新等同于重新开一次商店：删除箭头选项重新可用。
+        removeArrowUsed = false;
         BuildOffers();
         BuildLayerViews();
         Refresh();
         AnimateSlotsAppear();
         UpdateButtonCosts();
+        UpdateRemoveArrowButtonState();
         refreshInProgress = false;
     }
 
@@ -190,14 +209,9 @@ public class ShopPanelUI : MonoBehaviour
             PlayShopSfx(GameSfxId.NotEnoughMoney);
             return;
         }
-        // 标记为已使用：按钮变暗、隐藏价格文本
-        removeArrowButton.interactable = false;
-        if (removeArrowButton != null)
-        {
-            TMP_Text costText = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
-            if (costText != null)
-                costText.gameObject.SetActive(false);
-        }
+        // 标记为已使用：按钮变暗、隐藏价格文本（下一次刷新商店或重新进入商店时恢复）。
+        removeArrowUsed = true;
+        UpdateRemoveArrowButtonState();
         BeginRemoveArrowSelection();
     }
 
@@ -244,6 +258,8 @@ public class ShopPanelUI : MonoBehaviour
         purchaseInProgress = false;
         refreshCount = 0;
         refreshInProgress = false;
+        // 进入商店（含战斗结束后进入下一个商店节点）时，删除箭头选项重新可用。
+        removeArrowUsed = false;
         ClearUndoPurchase();
         owner.ClearPendingShopMagic();
         gameObject.SetActive(true);
@@ -331,6 +347,8 @@ public class ShopPanelUI : MonoBehaviour
             refreshButton = FindChildComponentRecursive<Button>(searchRoot, "RefreshButton");
         if (removeArrowButton == null)
             removeArrowButton = FindChildComponentRecursive<Button>(searchRoot, "RemoveArrowButton");
+        if (removeArrowCostText == null && removeArrowButton != null)
+            removeArrowCostText = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
         if (materialCardPrefab == null)
         {
             PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
@@ -566,6 +584,7 @@ public class ShopPanelUI : MonoBehaviour
         BindHoverDetail(refreshButton, BuildRefreshDetail);
         BindHoverDetail(removeArrowButton, BuildRemoveArrowDetail);
         UpdateButtonCosts();
+        UpdateRemoveArrowButtonState();
     }
 
     private void BindHoverDetail(Button button, Func<UnifiedDetailContent> contentProvider)
@@ -629,9 +648,10 @@ public class ShopPanelUI : MonoBehaviour
         }
         if (removeArrowButton != null)
         {
-            TMP_Text cost = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
-            if (cost != null)
-                cost.text = RemoveArrowPrice + "$";
+            if (removeArrowCostText == null)
+                removeArrowCostText = UIManager.FindChildComponent<TMP_Text>(removeArrowButton.transform, "Cost");
+            if (removeArrowCostText != null)
+                removeArrowCostText.text = RemoveArrowPrice + "$";
         }
     }
 
@@ -1005,9 +1025,9 @@ public class ShopPanelUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 商店箭头价格：普通箭头用条目报价；带附魔的箭头按“基础价 ± 每个附魔”计算
-    /// （正面附魔 +step、负面附魔 -step；step 取 EconomyConfig.materialEnchantPriceStep），
-    /// 不再读取条目里为附魔箭头填的 price。
+    /// 商店箭头价格：无附魔箭头用条目报价；带附魔的箭头 = 基础价 + 附魔自身的 price 差值
+    /// （见 <see cref="MaterialModifierDefinition.price"/>，0 = 不影响价格、负数 = 弱附魔更便宜），
+    /// 不再读取条目里为附魔箭头填的 price；最后统一经 <see cref="DifficultyUpgradeSystem.ModifyShopPrice"/>。
     /// </summary>
     private int GetMaterialOfferPrice(ShopMaterialOfferData offerData)
     {
@@ -1017,9 +1037,14 @@ public class ShopPanelUI : MonoBehaviour
         if (string.IsNullOrEmpty(offerData.modifierId))
             return GetOfferPrice(offerData.price);
 
-        int step = config != null && config.materialEnchantPriceStep > 0 ? config.materialEnchantPriceStep : DefaultMaterialEnchantPriceStep;
-        int delta = IsWeakShopModifierId(offerData.modifierId) ? -step : step;
-        return GetOfferPrice(Mathf.Max(0, ResolveMaterialBasePrice() + delta));
+        int price = ResolveMaterialBasePrice() + GetMaterialEnchantPriceDelta(offerData.modifierId);
+        return GetOfferPrice(Mathf.Max(0, price));
+    }
+
+    /// <summary>附魔自身的价格差值（<see cref="MaterialModifierData.price"/>）；查不到定义时按 0 处理（不影响价格）。</summary>
+    private static int GetMaterialEnchantPriceDelta(string modifierId)
+    {
+        return MaterialModifierDatabase.TryGetData(modifierId, out MaterialModifierData data) && data != null ? data.price : 0;
     }
 
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
@@ -1529,6 +1554,7 @@ public class ShopPanelUI : MonoBehaviour
             selectedOfferIndex = selectedOffer != null ? offers.IndexOf(selectedOffer) : -1,
             waitingForSelection = waitingForSelection,
             purchaseInProgress = purchaseInProgress,
+            removeArrowUsed = removeArrowUsed,
             undo = ExportUndoState()
         };
 
@@ -1559,6 +1585,8 @@ public class ShopPanelUI : MonoBehaviour
         selectedOffer = savedState.selectedOfferIndex >= 0 && savedState.selectedOfferIndex < offers.Count ? offers[savedState.selectedOfferIndex] : null;
         waitingForSelection = savedState.waitingForSelection;
         purchaseInProgress = false;
+        // 读档回到同一次商店：已用过的删除箭头选项保持置灰。
+        removeArrowUsed = savedState.removeArrowUsed;
         RestoreUndoState(savedState.undo);
 
         // 道具购买已不再需要“等待点选道具槽”：旧存档里残留的该状态直接丢弃。

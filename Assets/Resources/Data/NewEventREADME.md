@@ -6,9 +6,10 @@
 
 1. 在 `EventData.json` 的 `items` 中新增一项，填写唯一 `numericId`。
 2. 在 `Assets/Resources/Data/Localization/zh-CN_Event.json` 增加标题、节点文本、选项标题等 key。
-3. 如果要让关卡使用该事件，在 `Assets/Resources/Data/LevelData.json` 的事件关卡中设置 `eventPoolId` 为事件的 `numericId`。如果 `eventPoolId <= 0` 或找不到，会退回读取第一个事件。
-4. 优先使用 `effects` 数组描述奖励/惩罚；旧 `resultId` 只保留给少量兼容事件。
-5. 如选项使用 `tagIds` 展示素材 modifier 提示，需要保证对应 `modifier.{id}.name/desc` 本地化存在。
+3. 选项需要图标时，把图片放进 `Assets/Resources/Images/Events/`，并在该选项的 `iconName` 里只写图片名（不含路径和扩展名）。
+4. 如果要让关卡使用该事件，在 `Assets/Resources/Data/LevelData.json` 的事件关卡中设置 `eventPoolId` 为事件的 `numericId`。如果 `eventPoolId <= 0` 或找不到，会退回读取第一个事件。
+5. 优先使用 `effects` 数组描述奖励/惩罚；旧 `resultId` 只保留给少量兼容事件。
+6. 如选项使用 `tagIds` 展示素材 modifier 提示，需要保证对应 `modifier.{id}.name/desc` 本地化存在。
 
 ## 基础结构
 
@@ -30,6 +31,7 @@
         {
           "id": "take_reward",
           "titleKey": "event.example.option.take_reward",
+          "iconName": "示例图标",
           "recipe": "12",
           "ignoreOrder": true,
           "effects": [
@@ -90,6 +92,7 @@
 | --- | --- | --- | --- |
 | `id` | string | 是 | 选项 ID。重复选项的 `escalatePerUse` 计数按这个 ID 记录。 |
 | `titleKey` | string | 是 | 选项标题本地化 key。 |
+| `iconName` | string | 否 | 选项图标名：只写图片名（不含路径与扩展名），代码自动拼 `Resources/Images/Events/` 路径加载，显示在悬停详情面板的图标槽。留空或找不到图片时详情面板不显示图标。 |
 | `recipe` | string | 条件 | 固定配方字符串，如 `"123"` 表示火风水。普通选项需要它才能被素材匹配。 |
 | `randomRecipeLength` | int | 否 | 大于 0 时进入事件时随机生成该长度配方，并覆盖 `recipe`。随机素材范围为 1-4。 |
 | `ignoreOrder` | bool | 否 | true 时只要求素材种类/数量匹配，不要求顺序。默认 false。 |
@@ -189,6 +192,7 @@
 
 - JSON 不能写注释。
 - 文本都写本地化 key，不要把正文中文直接写进事件 JSON。
+- `iconName` 只写图片名（如 `投币`），路径固定为 `Assets/Resources/Images/Events/`；不要写路径、扩展名或用中文正文冒充图标名。缺图只是不显示图标，不会报错。
 - 有 `randomRecipeLength` 的选项会在事件创建时随机一次；同一事件模型内不会每回合重随机。
 - `GainMagic` 和 `GainMagicModifier` 是延后效果；如果同一个选项还有扣血/金币/素材等效果，会先执行那些，再回收卡牌，最后打开奖励选择。
 - `isExitOption=true` 的选项不会被 `TryGetMatchedOption` 当作普通素材选项匹配，因此退出选项可以不写 `recipe`。

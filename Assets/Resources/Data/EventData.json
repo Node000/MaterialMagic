@@ -39,6 +39,7 @@
             {
               "id": "energy_drink",
               "titleKey": "event.midnight_convenience.option.energy_drink",
+              "iconName": "能量饮料",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -52,6 +53,7 @@
             {
               "id": "mint_candy",
               "titleKey": "event.midnight_convenience.option.mint",
+              "iconName": "薄荷糖",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -64,6 +66,7 @@
             {
               "id": "leave",
               "titleKey": "event.midnight_convenience.option.sleep",
+              "iconName": "回家睡觉",
               "nextNodeId": "leave",
               "isExitOption": true,
               "effects": [
@@ -115,6 +118,7 @@
             {
               "id": "insert_coin",
               "titleKey": "event.capsule_machine.option.insert_coin",
+              "iconName": "投币",
               "randomRecipeLength": 3,
               "ignoreOrder": true,
               "effects": [
@@ -128,6 +132,7 @@
             {
               "id": "smash_open",
               "titleKey": "event.capsule_machine.option.kick",
+              "iconName": "给它一脚",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -145,6 +150,7 @@
             {
               "id": "leave",
               "titleKey": "event.capsule_machine.option.punch",
+              "iconName": "给它一拳",
               "nextNodeId": "leave",
               "isExitOption": true,
               "effects": [
@@ -200,6 +206,7 @@
             {
               "id": "argue",
               "titleKey": "event.anonymous_forum.option.argue",
+              "iconName": "抬杠",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -217,6 +224,7 @@
             {
               "id": "post_thread",
               "titleKey": "event.anonymous_forum.option.post",
+              "iconName": "发帖",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -234,6 +242,7 @@
             {
               "id": "leave",
               "titleKey": "event.anonymous_forum.option.reply",
+              "iconName": "跟帖",
               "nextNodeId": "leave",
               "isExitOption": true,
               "effects": [
@@ -285,6 +294,7 @@
             {
               "id": "all_in",
               "titleKey": "event.coffee_or_cola.option.all",
+              "iconName": "我全都要",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -302,6 +312,7 @@
             {
               "id": "coffee",
               "titleKey": "event.coffee_or_cola.option.coffee",
+              "iconName": "咖啡",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -315,6 +326,7 @@
             {
               "id": "cola",
               "titleKey": "event.coffee_or_cola.option.cola",
+              "iconName": "可乐",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -328,6 +340,7 @@
             {
               "id": "leave",
               "titleKey": "event.coffee_or_cola.option.water",
+              "iconName": "白开水更健康",
               "nextNodeId": "leave",
               "isExitOption": true,
               "effects": [
@@ -386,6 +399,7 @@
             {
               "id": "pretty_clothes",
               "titleKey": "event.limited_sale.option.clothes",
+              "iconName": "好看的衣服",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -399,6 +413,7 @@
             {
               "id": "pretty_weapon",
               "titleKey": "event.limited_sale.option.weapon",
+              "iconName": "好看的武器",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -412,6 +427,7 @@
             {
               "id": "no_buy",
               "titleKey": "event.limited_sale.option.no_buy",
+              "iconName": "不买立省百分百",
               "effects": [
                 {
                   "rewardType": 3,
@@ -463,6 +479,7 @@
             {
               "id": "share_link",
               "titleKey": "event.promo_link.option.share",
+              "iconName": "分享链接",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -513,6 +530,7 @@
             {
               "id": "leave",
               "titleKey": "event.promo_link.option.stop_again",
+              "iconName": "适可而止",
               "nextNodeId": "leave",
               "isExitOption": true
             }
@@ -543,6 +561,7 @@
             {
               "id": "accept_growth",
               "titleKey": "event.traffic_growth.option.cheer",
+              "iconName": "好耶！！！",
               "effects": [
                 {
                   "rewardType": 13,
@@ -580,6 +599,7 @@
             {
               "id": "free_film",
               "titleKey": "event.screen_protector_stall.option.free",
+              "iconName": "免费贴模",
               "isExitOption": true,
               "effects": [
                 {
@@ -592,6 +612,7 @@
             {
               "id": "cheap_film",
               "titleKey": "event.screen_protector_stall.option.cheap",
+              "iconName": "劣质膜",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -605,6 +626,7 @@
             {
               "id": "tempered_film",
               "titleKey": "event.screen_protector_stall.option.tempered",
+              "iconName": "钢化膜",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -657,6 +679,7 @@
             {
               "id": "unclear",
               "titleKey": "event.printer_accident.option.unclear",
+              "iconName": "看不出来",
               "isExitOption": true,
               "effects": [
                 {
@@ -669,6 +692,7 @@
             {
               "id": "wrong_size",
               "titleKey": "event.printer_accident.option.wrong_size",
+              "iconName": "大小不对",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -682,6 +706,7 @@
             {
               "id": "misaligned",
               "titleKey": "event.printer_accident.option.misaligned",
+              "iconName": "错位了",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -734,6 +759,7 @@
             {
               "id": "refresh",
               "titleKey": "event.website_emergency.option.refresh",
+              "iconName": "刷新就好",
               "isExitOption": true,
               "effects": [
                 {
@@ -746,6 +772,7 @@
             {
               "id": "reversed_direction",
               "titleKey": "event.website_emergency.option.reversed_direction",
+              "iconName": "网页未响应",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -759,6 +786,7 @@
             {
               "id": "popups",
               "titleKey": "event.website_emergency.option.popups",
+              "iconName": "好多弹窗",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -811,6 +839,7 @@
             {
               "id": "single_recycle",
               "titleKey": "event.arrow_recycle_station.option.single",
+              "iconName": "轻量回收",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -824,6 +853,7 @@
             {
               "id": "double_recycle",
               "titleKey": "event.arrow_recycle_station.option.double",
+              "iconName": "深度回收",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -837,6 +867,7 @@
             {
               "id": "leave",
               "titleKey": "event.common.option.leave",
+              "iconName": "离开",
               "nextNodeId": "leave",
               "isExitOption": true
             }
@@ -882,6 +913,7 @@
             {
               "id": "catch_up",
               "titleKey": "event.arrow_claw_machine.option.up",
+              "iconName": "抓上箭头",
               "recipe": "1",
               "effects": [
                 {
@@ -895,6 +927,7 @@
             {
               "id": "catch_down",
               "titleKey": "event.arrow_claw_machine.option.down",
+              "iconName": "抓下箭头",
               "recipe": "3",
               "effects": [
                 {
@@ -908,6 +941,7 @@
             {
               "id": "catch_left",
               "titleKey": "event.arrow_claw_machine.option.left",
+              "iconName": "抓左箭头",
               "recipe": "2",
               "effects": [
                 {
@@ -921,6 +955,7 @@
             {
               "id": "catch_right",
               "titleKey": "event.arrow_claw_machine.option.right",
+              "iconName": "抓右箭头",
               "recipe": "4",
               "effects": [
                 {
@@ -934,6 +969,7 @@
             {
               "id": "leave",
               "titleKey": "event.common.option.leave",
+              "iconName": "离开",
               "nextNodeId": "leave",
               "isExitOption": true
             }
@@ -992,6 +1028,7 @@
             {
               "id": "follow_all_arrows",
               "titleKey": "event.neon_wayfinding.option.follow_all_arrows",
+              "iconName": "跟着所有箭头走",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1007,6 +1044,7 @@
             {
               "id": "take_photo",
               "titleKey": "event.neon_wayfinding.option.take_photo",
+              "iconName": "只拍一张照",
               "nextNodeId": "take_photo",
               "isExitOption": true,
               "effects": [
@@ -1064,6 +1102,7 @@
             {
               "id": "reinstall_system",
               "titleKey": "event.suspected_trojan.option.reinstall_system",
+              "iconName": "重装系统",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1122,6 +1161,7 @@
             {
               "id": "keep_compatibility",
               "titleKey": "event.missing_fonts.option.keep_compatibility",
+              "iconName": "保持兼容",
               "nextNodeId": "keep_compatibility",
               "isExitOption": true,
               "effects": [
@@ -1165,6 +1205,7 @@
             {
               "id": "left",
               "titleKey": "event.tutorial_signpost.option.left",
+              "iconName": "走左边",
               "recipe": "2",
               "effects": [
                 {
@@ -1177,6 +1218,7 @@
             {
               "id": "right",
               "titleKey": "event.tutorial_signpost.option.right",
+              "iconName": "走右边",
               "recipe": "4",
               "effects": [
                 {
@@ -1193,6 +1235,7 @@
             {
               "id": "straight",
               "titleKey": "event.tutorial_signpost.option.straight",
+              "iconName": "为什么要转弯？",
               "isExitOption": true,
               "effects": [
                 {
@@ -1243,6 +1286,7 @@
             {
               "id": "cut_to_last",
               "titleKey": "event.idle_trade_platform.option.cut_to_last",
+              "iconName": "砍到最后",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1255,6 +1299,7 @@
             {
               "id": "buyout",
               "titleKey": "event.idle_trade_platform.option.buyout",
+              "iconName": "一口价拍下",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1271,6 +1316,7 @@
             {
               "id": "check_in",
               "titleKey": "event.idle_trade_platform.option.check_in",
+              "iconName": "只是来签到",
               "isExitOption": true,
               "effects": [
                 {
@@ -1322,6 +1368,7 @@
             {
               "id": "full_backup",
               "titleKey": "event.data_backup.option.full_backup",
+              "iconName": "全量备份",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1336,6 +1383,7 @@
             {
               "id": "key_backup",
               "titleKey": "event.data_backup.option.key_backup",
+              "iconName": "重点备份",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1350,6 +1398,7 @@
             {
               "id": "shortcut_only",
               "titleKey": "event.data_backup.option.shortcut_only",
+              "iconName": "只复制快捷方式？",
               "isExitOption": true,
               "effects": [
                 {
@@ -1402,6 +1451,7 @@
             {
               "id": "holiday",
               "titleKey": "event.what_day_is_it.option.holiday",
+              "iconName": "节假日！",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1415,6 +1465,7 @@
             {
               "id": "rest_day",
               "titleKey": "event.what_day_is_it.option.rest_day",
+              "iconName": "休息日！",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1428,6 +1479,7 @@
             {
               "id": "workday",
               "titleKey": "event.what_day_is_it.option.workday",
+              "iconName": "工作日！",
               "isExitOption": true,
               "effects": [
                 {
@@ -1483,6 +1535,7 @@
             {
               "id": "peek",
               "titleKey": "event.old_hard_drive.option.peek",
+              "iconName": "看看有什么",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1501,6 +1554,7 @@
             {
               "id": "wipe_spare",
               "titleKey": "event.old_hard_drive.option.wipe_spare",
+              "iconName": "清空备用",
               "randomRecipeLength": 3,
               "ignoreOrder": true,
               "effects": [
@@ -1514,6 +1568,7 @@
             {
               "id": "buy_new",
               "titleKey": "event.old_hard_drive.option.buy_new",
+              "iconName": "换个新的",
               "isExitOption": true,
               "effects": [
                 {
@@ -1569,6 +1624,7 @@
             {
               "id": "gold_plan",
               "titleKey": "event.membership_expired.option.gold_plan",
+              "iconName": "金牌套餐",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1582,6 +1638,7 @@
             {
               "id": "budget_plan",
               "titleKey": "event.membership_expired.option.budget_plan",
+              "iconName": "平价套餐",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1595,6 +1652,7 @@
             {
               "id": "cancel",
               "titleKey": "event.membership_expired.option.cancel",
+              "iconName": "停止续费",
               "isExitOption": true,
               "effects": [
                 {
@@ -1646,6 +1704,7 @@
             {
               "id": "loose_auth",
               "titleKey": "event.unreliable_helper.option.loose_auth",
+              "iconName": "宽松鉴权",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1660,6 +1719,7 @@
             {
               "id": "strict_auth",
               "titleKey": "event.unreliable_helper.option.strict_auth",
+              "iconName": "严格鉴权",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1674,6 +1734,7 @@
             {
               "id": "full_auth",
               "titleKey": "event.unreliable_helper.option.full_auth",
+              "iconName": "完全授权",
               "isExitOption": true,
               "effects": [
                 {
@@ -1725,6 +1786,7 @@
             {
               "id": "llm",
               "titleKey": "event.smart_ime.option.llm",
+              "iconName": "接入大模型！",
               "randomRecipeLength": 3,
               "ignoreOrder": true,
               "effects": [
@@ -1741,6 +1803,7 @@
             {
               "id": "update_dict",
               "titleKey": "event.smart_ime.option.update_dict",
+              "iconName": "更新词库",
               "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
@@ -1754,6 +1817,7 @@
             {
               "id": "no_space",
               "titleKey": "event.smart_ime.option.no_space",
+              "iconName": "空间不足",
               "isExitOption": true,
               "effects": [
                 {
@@ -1805,6 +1869,7 @@
             {
               "id": "gamepad",
               "titleKey": "event.input_setup.option.gamepad",
+              "iconName": "手柄模式",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
@@ -1824,6 +1889,7 @@
             {
               "id": "keyboard_mouse",
               "titleKey": "event.input_setup.option.keyboard_mouse",
+              "iconName": "键鼠模式",
               "randomRecipeLength": 1,
               "ignoreOrder": true,
               "effects": [
