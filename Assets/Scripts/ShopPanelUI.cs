@@ -306,21 +306,20 @@ public class ShopPanelUI : MonoBehaviour
         PlayCloseAnimation();
     }
 
-    public void ShowMaterialTooltip(RectTransform anchor, ShopOffer offer)
+    /// <summary>
+    /// 商店里“材料/附魔”商品的详情内容：与槽位里的预览一致（带上附魔），供 UnifiedDetailTriggerUI 的 Provider 使用；
+    /// 非材料商品返回空内容（道具走自己的详情来源）。
+    /// </summary>
+    public UnifiedDetailContent BuildMaterialTooltipContent(ShopOffer offer)
     {
-        if (anchor == null || offer == null || offer.kind != ShopItemKind.Material)
-            return;
+        if (offer == null || offer.kind != ShopItemKind.Material)
+            return default;
 
         MaterialModel preview = new MaterialModel("shop_tooltip_" + offer.material, offer.material);
         MaterialModifierModel modifier = MaterialModifierFactory.Create(offer.materialModifierData);
         if (modifier != null)
             preview.AddModifier(modifier);
-        owner.GetUIManager().MaterialListPanel?.ShowModifierTooltip(anchor, preview);
-    }
-
-    public void HideMaterialTooltip(RectTransform anchor)
-    {
-        owner.GetUIManager().MaterialListPanel?.HideModifierTooltip(anchor);
+        return UnifiedDetailContentBuilder.Build(preview);
     }
 
     private void CacheReferences()
@@ -589,21 +588,22 @@ public class ShopPanelUI : MonoBehaviour
 
     private void BindHoverDetail(Button button, Func<UnifiedDetailContent> contentProvider)
     {
-        if (button == null)
+        if (button == null || contentProvider == null)
             return;
 
-        EventTrigger trigger = button.GetComponent<EventTrigger>();
+        // 旧实现用 EventTrigger 自己接 enter/exit；现在统一交给 UnifiedDetailTriggerUI
+        // （PC 悬停显示详情，PE 长按看详情、短按放行按钮自身的点击动作）。
+        EventTrigger legacyTrigger = button.GetComponent<EventTrigger>();
+        if (legacyTrigger != null)
+            legacyTrigger.triggers.Clear();
+
+        UnifiedDetailTriggerUI trigger = button.GetComponent<UnifiedDetailTriggerUI>();
         if (trigger == null)
-            trigger = button.gameObject.AddComponent<EventTrigger>();
+            trigger = button.gameObject.AddComponent<UnifiedDetailTriggerUI>();
 
-        trigger.triggers.Clear();
-        EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => { UIManager ui = owner?.GetUIManager(); if (ui != null) ui.ShowUnifiedDetailPopup(button, contentProvider()); });
-        trigger.triggers.Add(enter);
-
-        EventTrigger.Entry exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => { UIManager ui = owner?.GetUIManager(); if (ui != null) ui.HideUnifiedDetailPopup(button); });
-        trigger.triggers.Add(exit);
+        trigger.SetAnchor(button);
+        trigger.SetShortPressBehavior(UnifiedDetailTriggerUI.ShortPressBehavior.ClickThrough);
+        trigger.SetContentProvider(contentProvider);
     }
 
     private UnifiedDetailContent BuildRefreshDetail()

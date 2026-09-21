@@ -515,28 +515,11 @@ public class EventPanelUI : MonoBehaviour
         MatchedOptionRect = null;
     }
 
-    public void ShowOptionTooltip(RectTransform anchor, EventOptionData option)
-    {
-        if (anchor == null || option == null)
-            return;
-
-        UIManager uiManager = GetComponentInParent<UIManager>();
-        uiManager?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(option));
-    }
-
+    /// <summary>面板收起时收掉还没固定展开的选项详情（固定展开的那块由 UnifiedDetailTriggerUI 自己收）。</summary>
     public void HideOptionTooltip()
     {
         UIManager uiManager = GetComponentInParent<UIManager>();
         uiManager?.HideUnifiedDetailPopup(null);
-    }
-
-    public void PinOptionTooltip(RectTransform anchor, EventOptionData option)
-    {
-        if (anchor == null || option == null)
-            return;
-
-        UIManager uiManager = GetComponentInParent<UIManager>();
-        uiManager?.PinUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(option));
     }
 
     private Vector2 GetTooltipAnchoredPosition(RectTransform anchor)

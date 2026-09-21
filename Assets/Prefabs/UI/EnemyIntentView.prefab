@@ -144,6 +144,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7479783438284333676}
   - component: {fileID: 8091517715270911092}
+  - component: {fileID: 765680573403217276}
   m_Layer: 0
   m_Name: EnemyIntentView
   m_TagString: Untagged
@@ -196,6 +197,32 @@ MonoBehaviour:
   horizontalPadding: 10
   iconTextSpacing: 6
   minWidth: 72
+--- !u!114 &765680573403217276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3432182963699544304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &4863303532972469258
 GameObject:
   m_ObjectHideFlags: 0

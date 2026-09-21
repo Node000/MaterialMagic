@@ -146,6 +146,7 @@ GameObject:
   - component: {fileID: 2872547824772821843}
   - component: {fileID: 2168312851368878063}
   - component: {fileID: 2227460982758621779}
+  - component: {fileID: 2888009747270105137}
   m_Layer: 0
   m_Name: BonusRewardIcon
   m_TagString: Untagged
@@ -226,6 +227,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   iconImage: {fileID: 9050708801874202745}
   amountText: {fileID: 2649082096710980808}
+--- !u!114 &2888009747270105137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3301433198289566260}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &8161915407094326769
 GameObject:
   m_ObjectHideFlags: 0

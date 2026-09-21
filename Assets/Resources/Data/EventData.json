@@ -707,7 +707,7 @@
               "id": "misaligned",
               "titleKey": "event.printer_accident.option.misaligned",
               "iconName": "错位了",
-              "randomRecipeLength": 1,
+              "randomRecipeLength": 2,
               "ignoreOrder": true,
               "effects": [
                 {

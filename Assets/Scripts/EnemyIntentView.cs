@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text valueText;
@@ -36,6 +36,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private PlayerState boundPlayerState;
     private Image hitImage;
     private bool hidden;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public RectTransform RectTransform => rectTransform != null ? rectTransform : (RectTransform)transform;
     public float LayoutWidth
@@ -57,6 +58,10 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private void Awake()
     {
         CacheReferences();
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情）。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     private void Update()
@@ -410,21 +415,32 @@ public class EnemyIntentView : MonoBehaviour, IPointerEnterHandler, IPointerExit
         return string.Empty;
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (!hidden && boundEnemy != null && boundIntent != null)
-            owner?.ShowEnemyIntentTooltip(this, boundEnemy, boundIntent, boundPlayerState);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        owner?.HideEnemyIntentTooltip(this);
-    }
-
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Left && !hidden && boundEnemy != null && boundIntent != null)
-            owner?.GetUIManager().PinEnemyIntentTooltip(this, boundEnemy, boundIntent, boundPlayerState);
+        if (eventData.button == PointerEventData.InputButton.Left)
+            EnsureDetailTrigger().PinDetailNow();
+    }
+
+    /// <summary>详情内容随当前敌人/意图变化，所以用 Provider 注入；未绑定或已隐藏时不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        if (hidden || boundEnemy == null || boundIntent == null)
+            return default;
+
+        return UnifiedDetailContentBuilder.Build(boundEnemy, boundIntent, boundPlayerState);
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     private void OnDisable()

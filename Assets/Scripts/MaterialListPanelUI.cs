@@ -166,35 +166,6 @@ public class MaterialListPanelUI : MonoBehaviour
         }
     }
 
-    public void ShowModifierTooltip(MaterialCardView cardView, MaterialModel materialModel)
-    {
-        if (cardView == null)
-            return;
-
-        ShowModifierTooltip(cardView.RectTransform, materialModel);
-    }
-
-    public void ShowModifierTooltip(RectTransform anchor, MaterialModel materialModel)
-    {
-        if (anchor == null || materialModel == null || owner == null)
-            return;
-
-        owner.GetUIManager().ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(materialModel));
-    }
-
-    public void HideModifierTooltip(MaterialCardView cardView)
-    {
-        HideModifierTooltip(cardView != null ? cardView.RectTransform : null);
-    }
-
-    public void HideModifierTooltip(RectTransform anchor)
-    {
-        if (owner == null)
-            return;
-
-        owner.GetUIManager().HideUnifiedDetailPopup(anchor);
-    }
-
     public void EndSelectionMode()
     {
         ClearSelectionMode();
@@ -226,11 +197,7 @@ public class MaterialListPanelUI : MonoBehaviour
         row.gameObject.SetActive(true);
         row.SetOwnerPanel(this);
         activeRows.Add(row);
-        row.MaterialHovered -= ShowRowMaterialTooltip;
-        row.MaterialUnhovered -= HideRowMaterialTooltip;
         row.MaterialClicked -= HandleMaterialClicked;
-        row.MaterialHovered += ShowRowMaterialTooltip;
-        row.MaterialUnhovered += HideRowMaterialTooltip;
         row.MaterialClicked += HandleMaterialClicked;
         MaterialListPanelLayoutConfig config = GetLayoutConfig();
         float rowTotalLength = config != null ? config.ArrowRowTotalLength : 780f;
@@ -280,7 +247,7 @@ public class MaterialListPanelUI : MonoBehaviour
         if (materialModel == null || owner == null)
             return;
 
-        owner.GetUIManager().PinUnifiedDetailPopup(this, UnifiedDetailContentBuilder.Build(materialModel));
+        // 点击固定详情已由卡上的 UnifiedDetailTriggerUI 统一负责，这里只处理选中逻辑。
         if (selectionCompleted == null)
             return;
 
@@ -301,16 +268,6 @@ public class MaterialListPanelUI : MonoBehaviour
         selectedMaterials.Add(materialModel);
         RefreshSelectionVisuals();
         UpdateSelectionConfirmButtonState();
-    }
-
-    private void ShowRowMaterialTooltip(RectTransform anchor, MaterialModel materialModel)
-    {
-        ShowModifierTooltip(anchor, materialModel);
-    }
-
-    private void HideRowMaterialTooltip()
-    {
-        HideModifierTooltip((RectTransform)null);
     }
 
     private void RefreshSelectionVisuals()

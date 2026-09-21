@@ -356,6 +356,7 @@ GameObject:
   - component: {fileID: 6213850469525854393}
   - component: {fileID: 7636838423752827942}
   - component: {fileID: 8321768328743563346}
+  - component: {fileID: 8743406027679845245}
   m_Layer: 0
   m_Name: StartConfigMagicView
   m_TagString: Untagged
@@ -551,6 +552,32 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &8743406027679845245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2370232684246684197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &2666451991955614391
 GameObject:
   m_ObjectHideFlags: 0

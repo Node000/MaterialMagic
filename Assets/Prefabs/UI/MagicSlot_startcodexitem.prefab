@@ -1642,6 +1642,7 @@ GameObject:
   - component: {fileID: 336784513072200653}
   - component: {fileID: 5039508773884183671}
   - component: {fileID: 7089275873771220554}
+  - component: {fileID: 4024828674812635463}
   m_Layer: 0
   m_Name: MagicSlot_startcodexitem
   m_TagString: Untagged
@@ -1838,6 +1839,32 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &4024828674812635463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7460076679345486477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &7629710479457574752
 GameObject:
   m_ObjectHideFlags: 0

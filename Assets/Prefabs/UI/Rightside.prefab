@@ -52,6 +52,7 @@ GameObject:
   - component: {fileID: 2846783602278430540}
   - component: {fileID: 8387423541221452277}
   - component: {fileID: 1881400845687688193}
+  - component: {fileID: 1673769214948331803}
   m_Layer: 0
   m_Name: ChapterProgressButton
   m_TagString: Untagged
@@ -201,6 +202,32 @@ MonoBehaviour:
   bodyKey: ui.top_bar.chapter_progress.body
   titleFallback: "\u5173\u5361\u8FDB\u5EA6"
   bodyFallback: "\u663E\u793A\u5F53\u524D\u5173\u5361\u6570\u4E0E\u7AE0\u8282\u603B\u5173\u5361\u6570\u3002"
+--- !u!114 &1673769214948331803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825159790466445279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &935564127301145538
 GameObject:
   m_ObjectHideFlags: 0
@@ -1704,6 +1731,7 @@ GameObject:
   - component: {fileID: 3705353027491774964}
   - component: {fileID: 4858847519645238568}
   - component: {fileID: 4140651955275232440}
+  - component: {fileID: 926651490683384116}
   m_Layer: 0
   m_Name: MapIconButton
   m_TagString: Untagged
@@ -1852,6 +1880,32 @@ MonoBehaviour:
   bodyKey: ui.top_bar.map.body
   titleFallback: "\u5730\u56FE"
   bodyFallback: "\u67E5\u770B\u5F53\u524D\u7AE0\u8282\u5730\u56FE\u548C\u5F53\u524D\u4F4D\u7F6E\u3002"
+--- !u!114 &926651490683384116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5280064124699922765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &5300685437662331922
 GameObject:
   m_ObjectHideFlags: 0
@@ -2000,6 +2054,7 @@ GameObject:
   - component: {fileID: 1731136541706252878}
   - component: {fileID: 5760075972446972208}
   - component: {fileID: 109517465713085682}
+  - component: {fileID: 7290985193879864475}
   m_Layer: 0
   m_Name: SettingsIconButton
   m_TagString: Untagged
@@ -2148,6 +2203,32 @@ MonoBehaviour:
   bodyKey: ui.top_bar.settings.body
   titleFallback: "\u8BBE\u7F6E"
   bodyFallback: "\u6253\u5F00\u8BBE\u7F6E\u83DC\u5355\uFF0C\u8C03\u6574\u97F3\u91CF\u6216\u8FD4\u56DE\u5F00\u59CB\u754C\u9762\u3002"
+--- !u!114 &7290985193879864475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5905043484242554257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &5994768861133954992
 GameObject:
   m_ObjectHideFlags: 0

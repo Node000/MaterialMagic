@@ -19,3 +19,6 @@ MonoBehaviour:
   cardQueueSpreadFalloffPower: 2
   cardQueueZoneSwitchScreenDistance: 45
   cardQueueDropScreenPadding: {x: 80, y: 70}
+  detailLongPressThreshold: 0.6
+  detailPressMoveSlop: 20
+  keepDetailAfterLongPress: 1

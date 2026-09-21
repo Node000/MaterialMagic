@@ -26,6 +26,7 @@ public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler, IPointe
     private Button button;
     private Tween hoverTween;
     private Vector3 baseScale = Vector3.one;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public void Initialize(ChapterGridPanelUI owner, MaterialEnum material)
     {
@@ -34,6 +35,11 @@ public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler, IPointe
         uiManager = owner != null ? owner.GetUIManager() : null;
         CacheReferences();
         RefreshVisual();
+
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情）。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     public void SetInteractable(bool interactable)
@@ -59,8 +65,25 @@ public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler, IPointe
             return;
 
         PlayHoverMotion(true);
-        if (showHoverDetail && uiManager != null)
-            uiManager.ShowUnifiedDetailPopup(this, UnifiedDetailContentBuilder.BuildMapMove(material));
+    }
+
+    /// <summary>详情内容随方向牌变化，所以用 Provider 注入；关掉悬停详情时不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        return showHoverDetail ? UnifiedDetailContentBuilder.BuildMapMove(material) : default;
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     public void OnPointerExit(PointerEventData eventData)

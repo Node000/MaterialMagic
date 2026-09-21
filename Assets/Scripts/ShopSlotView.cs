@@ -20,6 +20,7 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private JuicyMotion motion;
     private SpringLineHighlightUI hoverStroke;
     private bool pointerInside;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public RectTransform MagicVisualRect => magicView != null ? magicView.transform as RectTransform : null;
     public RectTransform MaterialVisualRect => materialView != null ? materialView.transform as RectTransform : null;
@@ -50,6 +51,30 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             button.onClick.AddListener(OnClicked);
             button.interactable = offer != null && !offer.purchased && canUse;
         }
+
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情），归属锚点仍按原有取材料预览卡。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(TooltipAnchor);
+        trigger.SetContentProvider(BuildDetailContent);
+    }
+
+    /// <summary>材料/附魔商品的详情（与槽位预览一致）；其它商品不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        return owner != null ? owner.BuildMaterialTooltipContent(offer) : default;
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     private void CacheReferences()
@@ -76,15 +101,11 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         pointerInside = false;
         SetHoverOutline(false);
         ResetMotionState();
-        if (offer != null && offer.kind == ShopItemKind.Material)
-            owner?.HideMaterialTooltip(TooltipAnchor);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         pointerInside = true;
-        if (offer != null && offer.kind == ShopItemKind.Material)
-            owner?.ShowMaterialTooltip(TooltipAnchor, offer);
         transform.DOScale(Vector3.one * 1.1f, 0.12f).SetEase(Ease.OutBack).SetTarget(this);
         SetHoverOutline(offer != null && offer.kind == ShopItemKind.Material);
     }
@@ -92,8 +113,6 @@ public class ShopSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerExit(PointerEventData eventData)
     {
         pointerInside = false;
-        if (offer != null && offer.kind == ShopItemKind.Material)
-            owner?.HideMaterialTooltip(TooltipAnchor);
         transform.DOScale(Vector3.one, 0.12f).SetEase(Ease.OutQuad).SetTarget(this);
         SetHoverOutline(false);
     }

@@ -177,25 +177,10 @@ public class RewardGridPanelUI : MonoBehaviour
         }
     }
 
-    public void ShowRewardTooltip(RectTransform anchor, BonusRewardData rewardData)
-    {
-        if (anchor == null || rewardData == null || owner == null)
-            return;
-
-        owner.GetUIManager().ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(rewardData));
-    }
-
+    /// <summary>奖励图标自身的详情由 UnifiedDetailTriggerUI 负责（见 BonusRewardIconUI），这里只保留面板收起时的清理。</summary>
     public void HideRewardTooltip()
     {
         owner?.GetUIManager().HideUnifiedDetailPopup(null);
-    }
-
-    public void PinRewardTooltip(RectTransform anchor, BonusRewardData rewardData)
-    {
-        if (anchor == null || rewardData == null || owner == null)
-            return;
-
-        owner.GetUIManager().PinUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(rewardData));
     }
 
     private void CacheReferences()

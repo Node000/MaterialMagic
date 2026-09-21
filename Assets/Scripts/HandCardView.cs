@@ -31,6 +31,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
     private Action<HandCardView, PointerEventData> clickOverride;
     private UnifiedDetailContent tooltipContentOverride;
     private bool hasTooltipContentOverride;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public MaterialModel Card => card;
     public bool InPlayZone => inPlayZone;
@@ -47,6 +48,11 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         JuicyMotion juicyMotion = GetComponent<JuicyMotion>();
         if (juicyMotion != null)
             juicyMotion.enabled = false;
+
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情），内容按当前手牌状态实时构建。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     private void OnDisable()
@@ -55,7 +61,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         layoutHovered = false;
         RefreshSpringHighlight();
         owner?.ClearCardHover(this, true);
-        owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
+        // 详情由 UnifiedDetailTriggerUI 在自己的 OnDisable 里收起，这里不再重复处理。
         feedbackTween?.Kill(false);
         feedbackTween = null;
     }
@@ -177,8 +183,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         PlayFeedback(false);
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayHandHoverSfx();
-        if (TryGetTooltipContent(out UnifiedDetailContent content))
-            owner?.GetUIManager()?.ShowUnifiedDetailPopup(this, content);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -190,7 +194,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         owner?.ClearCardHover(this, false);
         RefreshSpringHighlight();
         PlayFeedback(false);
-        owner?.GetUIManager()?.HideUnifiedDetailPopup(this);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -229,6 +232,25 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
         dragging = false;
         owner?.OnCardDragEnd(this, eventData);
+    }
+
+    /// <summary>详情内容随当前手牌变化，所以用 Provider 注入而不是在 Inspector 里写死。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        return TryGetTooltipContent(out UnifiedDetailContent content) ? content : default;
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资产漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     private bool TryGetTooltipContent(out UnifiedDetailContent content)

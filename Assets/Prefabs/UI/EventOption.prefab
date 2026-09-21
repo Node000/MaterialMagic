@@ -146,6 +146,7 @@ GameObject:
   - component: {fileID: 5315206384095899278}
   - component: {fileID: 1788762980600038072}
   - component: {fileID: 5501554048243543449}
+  - component: {fileID: 4496803209846714042}
   m_Layer: 0
   m_Name: EventOption
   m_TagString: Untagged
@@ -226,6 +227,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   recipeText: {fileID: 5100462174555001326}
   optionText: {fileID: 2925217821356758056}
+--- !u!114 &4496803209846714042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4215271744876441099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4336402d1dfdf543b122e519806a15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentMode: 0
+  sourceType: 0
+  titleKey: 
+  titleFallback: 
+  bodyKey: 
+  bodyFallback: 
+  iconSource: 1
+  iconSprite: {fileID: 0}
+  iconName: 
+  overrideAccentColor: 0
+  accentColor: {r: 1, g: 1, b: 1, a: 1}
+  pinOnClick: 0
+  enablePressGesture: 1
+  shortPress: 0
 --- !u!1 &5842380142297730464
 GameObject:
   m_ObjectHideFlags: 0

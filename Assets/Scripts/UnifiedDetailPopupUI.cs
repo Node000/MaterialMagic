@@ -50,6 +50,22 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
     private Vector3 iconBaseScale = Vector3.one;
     private Vector2 iconBaseAnchoredPosition;
     private bool iconBaseCached;
+    private Color defaultAccentColor = Color.white;
+    private bool defaultAccentColorCaptured;
+
+    /// <summary>美术在场景里给面板设的边框强调色（首次刷新引用时记录，不会被之后内容写入的颜色污染）。</summary>
+    public Color DefaultAccentColor
+    {
+        get
+        {
+            if (!defaultAccentColorCaptured)
+                CacheReferences();
+            return defaultAccentColor;
+        }
+    }
+
+    /// <summary>当前是否处于“固定展开”状态（要玩家点面板外才收起）。</summary>
+    public bool IsPinned => pinned;
 
     public void Initialize()
     {
@@ -453,6 +469,13 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
             if (bodyContent != null)
                 bodyScrollRect.content = bodyContent;
         }
+        if (!defaultAccentColorCaptured)
+        {
+            // 在第一次 ApplyContent 写颜色之前记下面板上美术设的边框色，供“不改颜色”的调用方原样传回。
+            defaultAccentColor = borderGraphic != null ? borderGraphic.color : (borderImage != null ? borderImage.color : Color.white);
+            defaultAccentColorCaptured = true;
+        }
+
         EnsureBodyViewportMaskVisible();
         if (iconRect == null && iconImage != null)
             iconRect = iconImage.transform as RectTransform;

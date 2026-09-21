@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 using System.Collections;
@@ -403,7 +403,6 @@ public class HandSystemUI : MonoBehaviour
     private bool simulateMobileInteractionInEditor;
 
     [SerializeField]
-    private Vector2 rewardMagicConfirmCellSize = new Vector2(196f, 92f);
 
 	private readonly List<HandCardView> cardViews = new List<HandCardView>();
 
@@ -564,26 +563,6 @@ public class HandSystemUI : MonoBehaviour
 
 	private MagicData pendingRewardMagic;
 
-    [SerializeField]
-    private RectTransform rewardMagicConfirmPanel;
-
-    [SerializeField]
-    private RectTransform rewardMagicConfirmExistingRoot;
-
-    [SerializeField]
-    private RectTransform rewardMagicConfirmNewRoot;
-
-    [SerializeField]
-    private Button rewardMagicConfirmButton;
-
-    [SerializeField]
-    private Button rewardMagicConfirmCancelButton;
-
-    private int rewardMagicConfirmSlotIndex = -1;
-
-    private RectTransform rewardMagicConfirmSourceRect;
-
-    private MagicData pendingShopMagic;
 
     private int undoRewardMagicSlotIndex = -1;
 
@@ -593,7 +572,6 @@ public class HandSystemUI : MonoBehaviour
 
     private readonly List<MaterialEnum> forcedRefreshMaterials = new List<MaterialEnum>();
 
-    private Action<int> pendingShopMagicSlotChosen;
 
 	private MagicModifierData pendingMagicModifier;
 
@@ -830,13 +808,10 @@ public class HandSystemUI : MonoBehaviour
     private void PrepareDebugLevelTransition()
     {
         HideDebugMagicDropdown();
-        HideRewardMagicConfirmPanel(false);
         undoRewardAvailable = false;
         undoRewardMagicSlotIndex = -1;
         undoRewardPreviousMagic = null;
         pendingRewardMagic = null;
-        pendingShopMagic = null;
-        pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
         pendingMaterialModifier = null;
         ClearSelectedCards(true);
@@ -846,7 +821,6 @@ public class HandSystemUI : MonoBehaviour
         GetUIManager().HideShopPanel();
         GetUIManager().HideRewardPanel();
         GetUIManager().RewardGridPanel?.Hide();
-        GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
         if (eventPanel != null)
         {
@@ -1786,15 +1760,11 @@ public class HandSystemUI : MonoBehaviour
 		currentLevel = level;
 		runManager?.BeginLevel(level);
         currentEvent = null;
-        HideRewardMagicConfirmPanel(false);
         pendingRewardMagic = null;
-        pendingShopMagic = null;
-        pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
 		HideMapPanel();
         GetUIManager().HideRewardPanel();
         GetUIManager().RewardGridPanel?.Hide();
-        GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
 			enemyModels.Clear();
 			battleManager.ClearEnemies();
@@ -2120,20 +2090,10 @@ public class HandSystemUI : MonoBehaviour
 		}
 	}
 
-	public void ShowBuffTooltip(BuffSlotView slot, BuffModel buff)
-	{
-		GetUIManager().ShowBuffTooltip(slot, buff);
-	}
-
 	public void HideBuffTooltip(BuffSlotView slot)
 	{
 		GetUIManager().HideBuffTooltip(slot);
 	}
-
-    public void ShowEnemyIntentTooltip(EnemyIntentView view, EnemyModel enemy, EnemyIntentData intent, PlayerState intentPlayerState)
-    {
-        GetUIManager().ShowEnemyIntentTooltip(view, enemy, intent, intentPlayerState);
-    }
 
     public void HideEnemyIntentTooltip(EnemyIntentView view)
     {
@@ -2294,19 +2254,7 @@ public class HandSystemUI : MonoBehaviour
         return false;
     }
 
-    public void ShowModifierTooltip(HandCardView cardView, MaterialModel materialModel)
-    {
-        if (cardView != null)
-            GetUIManager().MaterialListPanel?.ShowModifierTooltip(cardView.RectTransform, materialModel);
-    }
-
-    public void HideModifierTooltip(HandCardView cardView)
-    {
-        if (cardView != null)
-            GetUIManager().MaterialListPanel?.HideModifierTooltip(cardView.RectTransform);
-    }
-
-	private Graphic EnsureFocusMarker(RectTransform enemyView)
+    private Graphic EnsureFocusMarker(RectTransform enemyView)
 	{
 		Transform val = ((Transform)enemyView).Find("FocusMarker");
 		Graphic marker = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Graphic>() : null);
@@ -4694,7 +4642,7 @@ public bool IsCardDragActive => cardDragActive;
                 ApplyEventLoseGold(GetEventEffectAmount(effect, 1));
                 break;
             case EventRewardType.GainMagicById:
-                yield return ShowEventMagicByIdRoutine(effect);
+                yield return ShowEventMagicByIdRoutine(effect, sourceRect);
                 break;
 		}
 	}
@@ -4862,41 +4810,57 @@ public bool IsCardDragActive => cardDragActive;
         SaveRunProgress();
     }
 
-    /// <summary>事件效果：按配置依次发放指定道具。道具栏满时本次发放直接跳过（替换机制已移除，玩家需先卖出道具腾出空位）。</summary>
-    private IEnumerator ShowEventMagicByIdRoutine(EventEffectData effect)
+    /// <summary>事件效果：按配置发放指定道具；多件会同时从事件选项飞入各自空槽。道具栏满时放不下的直接不发（替换机制已移除）。</summary>
+    private IEnumerator ShowEventMagicByIdRoutine(EventEffectData effect, RectTransform sourceRect)
     {
         if (effect == null || effect.magicIds == null || effect.magicIds.Length == 0)
             yield break;
 
+        List<MagicData> magics = new List<MagicData>();
         for (int i = 0; i < effect.magicIds.Length; i++)
         {
             if (!GameDataDatabase.TryGetMagicData(effect.magicIds[i], out MagicData magicData) || magicData == null)
                 continue;
 
-            yield return GrantEventMagicRoutine(magicData);
+            magics.Add(magicData);
         }
+
+        yield return GrantEventMagicPackRoutine(magics, sourceRect);
 
         RefreshStaticUI();
         SaveRunProgress();
     }
 
-    private IEnumerator GrantEventMagicRoutine(MagicData magicData)
+    /// <summary>
+    /// 事件直接发放的道具包：先算好各自的空槽，再从事件选项（sourceRect）同时飞出，全部落地后再入槽。
+    /// 放不下的部分直接不发，与单件时代的行为一致（不提供槽位替换）。
+    /// </summary>
+    private IEnumerator GrantEventMagicPackRoutine(List<MagicData> magics, RectTransform sourceRect)
     {
-        if (magicData == null || playerState == null)
+        if (magics == null || magics.Count == 0 || playerState == null)
             yield break;
 
-        // 道具栏已满：不再提供替换机制，本次道具直接不发（避免陷入等待点选槽位的状态）。
-        int targetSlot = GetFreeMagicSlotIndex();
-        if (targetSlot < 0)
+        int firstSlot = GetFreeMagicSlotIndex();
+        if (firstSlot < 0)
         {
-            GameLog.Data($"Event skipped magic id={magicData.numericId}: magic slots full");
+            GameLog.Data("Event skipped magic pack: magic slots full");
             yield break;
         }
 
-        // 不用商店的飞入动画：它的源物体取自动画起点（事件里可能是整个 UI 根），会被动画置为隐藏状态，并额外依赖一层协程。
-        SetShopMagicAtSlot(magicData, targetSlot);
-        GameLog.Data($"Event granted magic id={magicData.numericId} slot={targetSlot}");
-        yield return null;
+        int count = Mathf.Clamp(MagicSlotCapacity - firstSlot, 0, magics.Count);
+        if (count <= 0)
+            yield break;
+
+        yield return PlayMagicAcquirePackRoutine(magics, count, firstSlot, sourceRect);
+
+        for (int i = 0; i < count; i++)
+        {
+            int slotIndex = firstSlot + i;
+            playerState.SetMagicAtSlot(MagicFactory.Create(magics[i], slotIndex), slotIndex);
+        }
+
+        GameLog.Data($"Event granted magic pack count={count} firstSlot={firstSlot}");
+        CreateMagicViews();
     }
 
     /// <summary>事件效果：给牌组里已有箭头附加指定附魔，用于“所有/随机一半箭头获得某附魔”类效果。</summary>
@@ -8054,13 +8018,11 @@ public bool IsCardDragActive => cardDragActive;
 
 		public void SelectPendingRewardMagic(MagicData rewardMagic)
 		{
-        HideRewardMagicConfirmPanel(false);
         // 道具栏已满：替换机制已移除，此时不接受待放置状态（玩家需先卖出道具腾出空位）。
         if (rewardMagic != null && !HasFreeMagicSlot)
         {
             pendingRewardMagic = null;
             RefreshPlayerAnimationState();
-            GetUIManager().HideSlotSelect();
             return;
         }
 
@@ -8070,41 +8032,12 @@ public bool IsCardDragActive => cardDragActive;
 	        {
 	            ClearPendingShopMagic();
 				TutorialManager?.OnRewardMagicSelected();
-	            GetUIManager().HideSlotSelect();
 	            AutoPlacePendingRewardMagicToFreeSlot();
 	        }
 	        else
 	        {
-	            GetUIManager().HideSlotSelect();
 	        }
 		}
-
-    public void SelectPendingShopMagic(MagicData magicData, Action<int> onSlotChosen)
-    {
-        // 道具栏已满：替换机制已移除，此时不接受待放置状态。
-        if (magicData != null && !HasFreeMagicSlot)
-        {
-            pendingShopMagic = null;
-            pendingShopMagicSlotChosen = null;
-            RefreshPlayerAnimationState();
-            GetUIManager().HideSlotSelect();
-            return;
-        }
-
-        pendingShopMagic = magicData;
-        pendingShopMagicSlotChosen = onSlotChosen;
-        RefreshPlayerAnimationState();
-        if (magicData != null)
-        {
-            pendingRewardMagic = null;
-            GetUIManager().HideSlotSelect();
-            AutoPlacePendingShopMagicToFreeSlot();
-        }
-        else
-        {
-            GetUIManager().HideSlotSelect();
-        }
-    }
 
     private bool AutoPlacePendingRewardMagicToFreeSlot()
     {
@@ -8122,65 +8055,10 @@ public bool IsCardDragActive => cardDragActive;
         return true;
     }
 
-    private bool AutoPlacePendingShopMagicToFreeSlot()
-    {
-        if (pendingShopMagic == null)
-            return false;
-
-        int freeSlot = GetFreeMagicSlotIndex();
-        if (freeSlot < 0)
-            return false;
-
-        Action<int> slotChosen = pendingShopMagicSlotChosen;
-        ClearPendingShopMagic();
-        slotChosen?.Invoke(freeSlot);
-        return true;
-    }
-
-
 	    public void ClearPendingShopMagic()
 	    {
-	        pendingShopMagic = null;
-	        pendingShopMagicSlotChosen = null;
-	        GetUIManager().HideSlotSelect();
 	        RefreshPlayerAnimationState();
 	    }
-
-    public bool TryPlacePendingShopMagic(int slotIndex)
-    {
-        if (pendingShopMagic == null)
-            return false;
-
-        if (ShouldConfirmRewardMagicOnMobile() && ShowShopMagicConfirmPanel(pendingShopMagic, slotIndex))
-            return true;
-
-        Action<int> slotChosen = pendingShopMagicSlotChosen;
-        ClearPendingShopMagic();
-        slotChosen?.Invoke(slotIndex);
-        return true;
-    }
-
-	public bool TryPlacePendingRewardMagic(int slotIndex)
-	{
-		if (pendingRewardMagic == null)
-			return false;
-
-        MagicData rewardMagic = pendingRewardMagic;
-        RectTransform sourceRect = GetUIManager().RewardPanel != null ? GetUIManager().RewardPanel.SelectedMagicRect : null;
-        if (ShouldConfirmRewardMagicOnMobile() && ShowRewardMagicConfirmPanel(rewardMagic, slotIndex, sourceRect))
-            return true;
-
-        pendingRewardMagic = null;
-        RefreshPlayerAnimationState();
-        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
-		return true;
-	}
-
-    private bool ShouldConfirmRewardMagicOnMobile()
-    {
-        return ShouldUseMobileInteraction();
-    }
-
 
     public bool ShouldUseMobileInteraction()
     {
@@ -8194,307 +8072,10 @@ public bool IsCardDragActive => cardDragActive;
     }
 
 
-    private bool ShowShopMagicConfirmPanel(MagicData magicData, int slotIndex)
-
-    {
-        EnsureRewardMagicConfirmPanel();
-        if (rewardMagicConfirmPanel == null)
-            return false;
-
-        rewardMagicConfirmSlotIndex = slotIndex;
-        rewardMagicConfirmSourceRect = null;
-        BindRewardMagicConfirmView(rewardMagicConfirmExistingRoot, playerState.GetMagicAtSlot(slotIndex));
-        BindRewardMagicConfirmView(rewardMagicConfirmNewRoot, MagicFactory.Create(magicData, slotIndex));
-
-        if (rewardMagicConfirmButton != null)
-        {
-            rewardMagicConfirmButton.onClick.RemoveAllListeners();
-            rewardMagicConfirmButton.onClick.AddListener(ConfirmShopMagicPlacement);
-        }
-        if (rewardMagicConfirmCancelButton != null)
-        {
-            rewardMagicConfirmCancelButton.onClick.RemoveAllListeners();
-            rewardMagicConfirmCancelButton.onClick.AddListener(CancelShopMagicPlacementConfirm);
-        }
-
-        rewardMagicConfirmPanel.gameObject.SetActive(true);
-        rewardMagicConfirmPanel.SetAsLastSibling();
-        return true;
-    }
-
-	    private bool ShowRewardMagicConfirmPanel(MagicData rewardMagic, int slotIndex, RectTransform sourceRect)
-    {
-        EnsureRewardMagicConfirmPanel();
-        if (rewardMagicConfirmPanel == null)
-            return false;
-
-        rewardMagicConfirmSlotIndex = slotIndex;
-        rewardMagicConfirmSourceRect = sourceRect;
-        BindRewardMagicConfirmView(rewardMagicConfirmExistingRoot, playerState.GetMagicAtSlot(slotIndex));
-        BindRewardMagicConfirmView(rewardMagicConfirmNewRoot, MagicFactory.Create(rewardMagic, slotIndex));
-
-        if (rewardMagicConfirmButton != null)
-        {
-            rewardMagicConfirmButton.onClick.RemoveAllListeners();
-            rewardMagicConfirmButton.onClick.AddListener(ConfirmRewardMagicPlacement);
-        }
-        if (rewardMagicConfirmCancelButton != null)
-        {
-            rewardMagicConfirmCancelButton.onClick.RemoveAllListeners();
-            rewardMagicConfirmCancelButton.onClick.AddListener(CancelRewardMagicPlacementConfirm);
-        }
-
-        rewardMagicConfirmPanel.gameObject.SetActive(true);
-        rewardMagicConfirmPanel.SetAsLastSibling();
-        return true;
-    }
-
-    private void ConfirmRewardMagicPlacement()
-    {
-        if (pendingRewardMagic == null || rewardMagicConfirmSlotIndex < 0)
-        {
-            HideRewardMagicConfirmPanel(false);
-            return;
-        }
-
-        MagicData rewardMagic = pendingRewardMagic;
-        int slotIndex = rewardMagicConfirmSlotIndex;
-        RectTransform sourceRect = rewardMagicConfirmSourceRect;
-        HideRewardMagicConfirmPanel(false);
-        pendingRewardMagic = null;
-        RefreshPlayerAnimationState();
-        StartCoroutine(SetRewardMagicAtSlotAnimatedRoutine(rewardMagic, slotIndex, sourceRect));
-    }
-
-    private void ConfirmShopMagicPlacement()
-    {
-        if (pendingShopMagic == null || rewardMagicConfirmSlotIndex < 0)
-        {
-            HideRewardMagicConfirmPanel(false);
-            return;
-        }
-
-        Action<int> slotChosen = pendingShopMagicSlotChosen;
-        int slotIndex = rewardMagicConfirmSlotIndex;
-        HideRewardMagicConfirmPanel(false);
-        ClearPendingShopMagic();
-        slotChosen?.Invoke(slotIndex);
-    }
-
-	    private void CancelRewardMagicPlacementConfirm()
-	    {
-	        HideRewardMagicConfirmPanel(false);
-	    }
-
-    private void CancelShopMagicPlacementConfirm()
-    {
-        HideRewardMagicConfirmPanel(false);
-    }
-
-	    private void HideRewardMagicConfirmPanel(bool clearPendingReward)
-    {
-        if (clearPendingReward)
-        {
-            pendingRewardMagic = null;
-            RefreshPlayerAnimationState();
-        }
-
-        rewardMagicConfirmSlotIndex = -1;
-        rewardMagicConfirmSourceRect = null;
-        if (rewardMagicConfirmPanel != null)
-            rewardMagicConfirmPanel.gameObject.SetActive(false);
-    }
-
-    private void EnsureRewardMagicConfirmPanel()
-    {
-        if (rewardMagicConfirmPanel != null)
-            return;
-
-        RectTransform existingPanel = UIManager.FindChildRecursive(transform, "RewardMagicConfirmPanel") as RectTransform;
-        if (existingPanel != null)
-        {
-            rewardMagicConfirmPanel = existingPanel;
-            CacheRewardMagicConfirmPanelReferences();
-            rewardMagicConfirmPanel.gameObject.SetActive(false);
-            return;
-        }
-
-        RectTransform parent = transform as RectTransform;
-        if (parent == null)
-            return;
-
-        TMP_Text overlayBlocker = new GameObject("RewardMagicConfirmPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-        rewardMagicConfirmPanel = overlayBlocker.rectTransform;
-        rewardMagicConfirmPanel.SetParent(parent, false);
-        rewardMagicConfirmPanel.anchorMin = Vector2.zero;
-        rewardMagicConfirmPanel.anchorMax = Vector2.one;
-        rewardMagicConfirmPanel.offsetMin = Vector2.zero;
-        rewardMagicConfirmPanel.offsetMax = Vector2.zero;
-        overlayBlocker.text = string.Empty;
-        overlayBlocker.color = Color.white;
-        overlayBlocker.raycastTarget = true;
-        PopupLayerUtility.ApplyTo(rewardMagicConfirmPanel);
-
-        RectTransform window = CreateRewardMagicConfirmWindow(rewardMagicConfirmPanel);
-        RectTransform content = GetPopupContent(window);
-        CreateRewardMagicConfirmText(content, "Title", LocalizationSystem.GetText("ui.reward_magic_confirm.title", "确认替换道具？"), 28, FontStyles.Bold, new Vector2(0f, 112f), new Vector2(420f, 42f));
-        CreateRewardMagicConfirmText(content, "Hint", LocalizationSystem.GetText("ui.reward_magic_confirm.hint", "确认后才会覆盖；取消后可以重新选择道具槽。"), 16, FontStyles.Normal, new Vector2(0f, 76f), new Vector2(560f, 28f));
-        CreateRewardMagicConfirmText(content, "ExistingLabel", LocalizationSystem.GetText("ui.reward_magic_confirm.existing_label", "已有道具"), 18, FontStyles.Bold, new Vector2(-160f, 36f), new Vector2(160f, 28f));
-        CreateRewardMagicConfirmText(content, "NewLabel", LocalizationSystem.GetText("ui.reward_magic_confirm.new_label", "新道具"), 18, FontStyles.Bold, new Vector2(160f, 36f), new Vector2(160f, 28f));
-        Vector2 cellSize = GetRewardMagicConfirmCellSize();
-        rewardMagicConfirmExistingRoot = CreateRewardMagicConfirmRoot(content, "ExistingMagic", new Vector2(-160f, -34f), cellSize);
-        rewardMagicConfirmNewRoot = CreateRewardMagicConfirmRoot(content, "NewMagic", new Vector2(160f, -34f), cellSize);
-        rewardMagicConfirmCancelButton = CreateRewardMagicConfirmButton(content, "CancelButton", LocalizationSystem.GetText("ui.common.cancel", "取消"), new Vector2(-90f, -130f), new Vector2(130f, 44f), new Color(0.09f, 0.09f, 0.14f, 1f));
-        rewardMagicConfirmButton = CreateRewardMagicConfirmButton(content, "ConfirmButton", LocalizationSystem.GetText("ui.common.confirm", "确认"), new Vector2(90f, -130f), new Vector2(130f, 44f), new Color(0.1f, 0.95f, 0.25f, 1f));
-        rewardMagicConfirmPanel.gameObject.SetActive(false);
-    }
-
-    private void CacheRewardMagicConfirmPanelReferences()
-    {
-        rewardMagicConfirmExistingRoot = UIManager.FindChildRecursive(rewardMagicConfirmPanel, "ExistingMagic") as RectTransform;
-        rewardMagicConfirmNewRoot = UIManager.FindChildRecursive(rewardMagicConfirmPanel, "NewMagic") as RectTransform;
-        rewardMagicConfirmButton = GetRewardMagicConfirmButton("ConfirmButton");
-        rewardMagicConfirmCancelButton = GetRewardMagicConfirmButton("CancelButton");
-        ApplyRewardMagicConfirmButtonColor(rewardMagicConfirmButton, new Color(0.1f, 0.95f, 0.25f, 1f));
-        ApplyRewardMagicConfirmButtonColor(rewardMagicConfirmCancelButton, new Color(0.09f, 0.09f, 0.14f, 1f));
-    }
-
-    private Button GetRewardMagicConfirmButton(string name)
-    {
-        Transform child = UIManager.FindChildRecursive(rewardMagicConfirmPanel, name);
-        return child != null ? child.GetComponent<Button>() : null;
-    }
-
-    private static void ApplyRewardMagicConfirmButtonColor(Button button, Color color)
-    {
-        if (button == null)
-            return;
-
-        Graphic targetGraphic = button.targetGraphic;
-        if (targetGraphic != null)
-            targetGraphic.color = color;
-    }
-
-    private RectTransform CreateRewardMagicConfirmWindow(RectTransform parent)
-    {
-        RectTransform prefab = GetPopupDragonWindowBlankPrefab();
-        RectTransform window;
-        if (prefab != null)
-        {
-            window = Object.Instantiate(prefab, parent);
-            window.name = "PopupDragonWindowBlank";
-        }
-        else
-        {
-            Image image = new GameObject("PopupDragonWindowBlank", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-            image.color = new Color(0.02f, 0.02f, 0.04f, 1f);
-            image.raycastTarget = true;
-            window = image.rectTransform;
-            window.SetParent(parent, false);
-        }
-
-        window.anchorMin = new Vector2(0.5f, 0.5f);
-        window.anchorMax = new Vector2(0.5f, 0.5f);
-        window.pivot = new Vector2(0.5f, 0.5f);
-        window.anchoredPosition = Vector2.zero;
-        window.sizeDelta = new Vector2(680f, 380f);
-        window.localScale = Vector3.one;
-        window.SetAsLastSibling();
-        return window;
-    }
-
-    private RectTransform GetPopupContent(RectTransform window)
-    {
-        Transform contentTransform = UIManager.FindChildRecursive(window, "Content");
-        RectTransform content = contentTransform as RectTransform;
-        if (content != null)
-            return content;
-        return window;
-    }
-
     private RectTransform GetPopupDragonWindowBlankPrefab()
     {
         PrefabReferenceLibrary library = GetComponentInParent<PrefabReferenceLibrary>();
         return library != null ? library.PopupDragonWindowBlankPrefab : null;
-    }
-
-    private TMP_Text CreateRewardMagicConfirmText(RectTransform parent, string name, string text, int fontSize, FontStyles fontStyle, Vector2 anchoredPosition, Vector2 size)
-    {
-        TMP_Text label = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-        label.transform.SetParent(parent, false);
-        label.font = GetDefaultFont();
-        label.fontSize = fontSize;
-        label.fontStyle = fontStyle;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = fontStyle == FontStyles.Bold ? new Color(1f, 0.9f, 0.55f, 1f) : new Color(0.86f, 0.88f, 0.94f, 1f);
-        label.text = text;
-        label.raycastTarget = false;
-        RectTransform rect = label.rectTransform;
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = size;
-        return label;
-    }
-
-    private RectTransform CreateRewardMagicConfirmRoot(RectTransform parent, string name, Vector2 anchoredPosition, Vector2 size)
-    {
-        RectTransform root = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-        root.SetParent(parent, false);
-        root.anchorMin = new Vector2(0.5f, 0.5f);
-        root.anchorMax = new Vector2(0.5f, 0.5f);
-        root.pivot = new Vector2(0.5f, 0.5f);
-        root.anchoredPosition = anchoredPosition;
-        root.sizeDelta = size;
-        return root;
-    }
-
-    private Vector2 GetRewardMagicConfirmCellSize()
-    {
-        return new Vector2(Mathf.Max(1f, rewardMagicConfirmCellSize.x), Mathf.Max(1f, rewardMagicConfirmCellSize.y));
-    }
-
-    private Button CreateRewardMagicConfirmButton(RectTransform parent, string name, string text, Vector2 anchoredPosition, Vector2 size, Color color)
-    {
-        Image image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(JuicyMotion)).GetComponent<Image>();
-        image.transform.SetParent(parent, false);
-        image.color = color;
-        RectTransform rect = image.rectTransform;
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = size;
-        TMP_Text label = CreateRewardMagicConfirmText(rect, "Text", text, 18, FontStyles.Bold, Vector2.zero, size);
-        label.color = Color.white;
-        return image.GetComponent<Button>();
-    }
-
-    private void BindRewardMagicConfirmView(RectTransform root, MagicModel magic)
-    {
-        if (root == null)
-            return;
-
-        Vector2 cellSize = GetRewardMagicConfirmCellSize();
-        root.sizeDelta = cellSize;
-        if (magicViewPrefab == null)
-            return;
-
-        for (int i = root.childCount - 1; i >= 0; i--)
-            Object.Destroy(root.GetChild(i).gameObject);
-
-        RectTransform viewRect = Object.Instantiate(magicViewPrefab, root);
-        viewRect.gameObject.SetActive(true);
-        viewRect.anchorMin = new Vector2(0.5f, 0.5f);
-        viewRect.anchorMax = new Vector2(0.5f, 0.5f);
-        viewRect.pivot = new Vector2(0.5f, 0.5f);
-        viewRect.anchoredPosition = Vector2.zero;
-        viewRect.sizeDelta = cellSize;
-        MagicItemView view = viewRect.GetComponent<MagicItemView>();
-        if (view != null)
-            view.Bind(magic);
-        UIManager.RemoveJuicyMotion(viewRect.transform);
     }
 
     public void SelectPendingMagicModifier(MagicModifierData modifierData)
@@ -8505,7 +8086,6 @@ public bool IsCardDragActive => cardDragActive;
 
 	public bool HasPendingRewardMagic => pendingRewardMagic != null;
 
-    public bool HasPendingShopMagic => pendingShopMagic != null;
 
     public bool HasPendingMagicModifier => pendingMagicModifier != null;
 
@@ -8528,7 +8108,7 @@ public bool IsCardDragActive => cardDragActive;
     {
         get
         {
-            if (playerState == null || HasPendingRewardMagic || HasPendingShopMagic || HasPendingMagicModifier || HasPendingMaterialModifier)
+            if (playerState == null || HasPendingRewardMagic || HasPendingMagicModifier || HasPendingMaterialModifier)
                 return false;
             if (!busy)
                 return true;
@@ -8810,17 +8390,11 @@ public bool IsCardDragActive => cardDragActive;
         return applied;
     }
 
-	public void ShowSlotSelect(MagicData rewardMagic)
-	{
-		SelectPendingRewardMagic(rewardMagic);
-	}
-
 	public void SetRewardMagicAtSlot(MagicData rewardMagic, int slotIndex)
 	{
 		if (rewardMagic == null)
 			return;
 
-        HideRewardMagicConfirmPanel(false);
         undoRewardMagicSlotIndex = slotIndex;
         undoRewardPreviousMagic = playerState.GetMagicAtSlot(slotIndex);
         undoRewardAvailable = true;
@@ -8828,6 +8402,33 @@ public bool IsCardDragActive => cardDragActive;
 		CreateMagicViews();
 		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
 	}
+
+    /// <summary>
+    /// 奖励道具（战斗结算的道具选项 / 事件的道具奖励）从奖励选项卡飞入道具栏第一个空槽：
+    /// 飞行期间不改状态，落地后才真正入槽（<see cref="SetRewardMagicAtSlot"/> 会通知奖励面板完成领奖）。
+    /// </summary>
+    public IEnumerator GainRewardMagicAnimatedRoutine(MagicData magicData, RectTransform sourceRect)
+    {
+        if (magicData == null || playerState == null)
+            yield break;
+
+        int slotIndex = GetFreeMagicSlotIndex();
+        if (slotIndex < 0)
+            yield break;
+
+        ClearPendingShopMagic();
+        TutorialManager?.OnRewardMagicSelected();
+
+        if (sourceRect == null || GetMagicSlotRect(slotIndex) == null)
+        {
+            // 没有可用的飞行起点/终点时退化为直接入槽，避免卡住领奖流程。
+            SetRewardMagicAtSlot(magicData, slotIndex);
+            yield break;
+        }
+
+        yield return PlayMagicAcquireAnimation(magicData, slotIndex, sourceRect);
+        SetRewardMagicAtSlot(magicData, slotIndex);
+    }
 
     private bool TryUndoRewardMagicClaim()
     {
@@ -9036,13 +8637,10 @@ public bool IsCardDragActive => cardDragActive;
         bool finishedBossMapLevel = currentChapterMapBossLevel;
         bool autoOpenBattleShop = pendingBattleRewardShop;
         pendingBattleRewardShop = false;
-        HideRewardMagicConfirmPanel(false);
         undoRewardAvailable = false;
         undoRewardMagicSlotIndex = -1;
         undoRewardPreviousMagic = null;
 		pendingRewardMagic = null;
-        pendingShopMagic = null;
-        pendingShopMagicSlotChosen = null;
         pendingMagicModifier = null;
         pendingMaterialModifier = null;
         // 边界保险：离开关卡节点（战斗结算/事件/休息/奖励/商店）时强制清空手牌与出牌区，
@@ -9053,7 +8651,6 @@ public bool IsCardDragActive => cardDragActive;
 		GetUIManager().HideRewardPanel();
         GetUIManager().HideShopPanel();
 		GetUIManager().RewardGridPanel?.Hide();
-		GetUIManager().HideSlotSelect();
         GetUIManager().MagicModifierSelectionPanel?.Hide();
 		GetUIManager().MaterialSelectionPanel?.EndSelectionMode();
 
@@ -9307,7 +8904,6 @@ public bool IsCardDragActive => cardDragActive;
         }
 
         GetUIManager().HideRewardPanel();
-        GetUIManager().HideSlotSelect();
         bool completed = false;
         ShowMagicModifierSelection(choices, delegate { completed = true; });
         while (!completed)
@@ -9633,10 +9229,8 @@ public bool IsCardDragActive => cardDragActive;
             AudioManager.Instance.PlayGameplayMusic();
 		GetUIManager().HideLevelSelect();
 		GetUIManager().HideMapPanel();
-        HideRewardMagicConfirmPanel(false);
 		GetUIManager().HideRewardPanel();
 		GetUIManager().RewardGridPanel?.Hide();
-		GetUIManager().HideSlotSelect();
 		ResetContinuousCastCounterUI();
 		if (victory)
             GetUIManager().ShowVictoryPanel(playSeconds, magicNames, tutorialVictory);
@@ -10759,13 +10353,24 @@ public bool IsCardDragActive => cardDragActive;
     }
 
 	private IEnumerator PlayMagicAcquireAnimation(MagicData magicData, int slotIndex, RectTransform sourceRect)
+	{
+		yield return PlayMagicAcquireAnimation(magicData, slotIndex, sourceRect, -1, true, true);
+	}
+
+	/// <summary>
+	/// 槽壳飞入的通用实现（原商店专用，现由商店 / 结算奖励 / 事件道具奖励 / 事件道具包共用）。
+	/// </summary>
+	/// <param name="futureCountOverride">&gt;0 时作为“本批道具全部入槽后的道具总数”来算最终槽位姿态；否则按“当前数量 +1”。</param>
+	/// <param name="arrangeExistingSlots">是否顺带让现有道具沿新圆弧让位；多件同时飞入时由外层统一让位一次。</param>
+	/// <param name="hideSource">飞行期间是否隐藏来源物体（商店的来源会被消费掉；奖励选项卡也隐藏）。</param>
+	private IEnumerator PlayMagicAcquireAnimation(MagicData magicData, int slotIndex, RectTransform sourceRect, int futureCountOverride, bool arrangeExistingSlots, bool hideSource)
     {
         RectTransform targetRect = GetMagicSlotRect(slotIndex);
         if (magicData == null || sourceRect == null || targetRect == null)
             yield break;
 
         MagicBookCurveLayout curve = magicBookArea != null ? magicBookArea.GetComponent<MagicBookCurveLayout>() : null;
-        int futureCount = playerState != null ? playerState.MagicBook.Count + 1 : slotIndex + 1;
+        int futureCount = futureCountOverride > 0 ? futureCountOverride : (playerState != null ? playerState.MagicBook.Count + 1 : slotIndex + 1);
         Vector2 finalAnchor = default;
         bool hasCurvePose = curve != null && playerState != null;
         if (hasCurvePose)
@@ -10801,10 +10406,10 @@ public bool IsCardDragActive => cardDragActive;
         // 以目标槽壳“最终姿态”作为飞入终点：位置取槽壳世界中心，缩放/旋转/尺寸取槽壳自身最终值。
         Vector3 targetWorldPos = GetAreaCenterWorldPosition(targetRect);
         // 在飞入的同时让现有道具滑块沿新增后的圆弧向左让位（同时长启动）。
-        if (hasCurvePose)
+        if (hasCurvePose && arrangeExistingSlots)
             curve.ArrangeExistingSlotsForCount(futureCount, AcquireMagicAnimationDuration);
 
-        yield return PlayAcquireRectAnimation(targetRect, sourceRect, targetWorldPos, targetRect.rotation, targetRect.localScale, targetRect.rect.size, AcquireMagicAnimationDuration);
+        yield return PlayAcquireRectAnimation(targetRect, sourceRect, targetWorldPos, targetRect.rotation, targetRect.localScale, targetRect.rect.size, AcquireMagicAnimationDuration, hideSource);
 
         // 落点后把槽壳还回魔法道具栏并恢复其原始兄弟索引；世界姿态保真，localScale/anchoredPosition 会按新父级自动还原为曲线布局值。
         targetRect.SetParent(slotParent, true);
@@ -10823,6 +10428,40 @@ public bool IsCardDragActive => cardDragActive;
         slot.anchoredPosition = anchoredPosition;
         slot.localEulerAngles = new Vector3(0f, 0f, rotationDeg);
         slot.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    /// <summary>
+    /// 多件道具同时飞入：统一按“全部入槽后的槽数”算最终姿态，并只让现有道具让位一次，
+    /// 之后并发播放各自从来源（事件选项 / 奖励选项卡）到目标空槽的飞入。
+    /// </summary>
+    private IEnumerator PlayMagicAcquirePackRoutine(List<MagicData> magics, int count, int firstSlot, RectTransform sourceRect)
+    {
+        if (magics == null || count <= 0 || sourceRect == null)
+            yield break;
+
+        int currentCount = playerState != null ? playerState.MagicBook.Count : firstSlot;
+        int futureCount = currentCount + count;
+        MagicBookCurveLayout curve = magicBookArea != null ? magicBookArea.GetComponent<MagicBookCurveLayout>() : null;
+        if (curve != null)
+            curve.ArrangeExistingSlotsForCount(futureCount, AcquireMagicAnimationDuration);
+
+        int remaining = count;
+        for (int i = 0; i < count; i++)
+        {
+            MagicData magicData = magics[i];
+            int slotIndex = firstSlot + i;
+            StartCoroutine(FlyMagicToSlotForPackRoutine(magicData, slotIndex, sourceRect, futureCount, () => remaining--));
+        }
+
+        while (remaining > 0)
+            yield return null;
+    }
+
+    private IEnumerator FlyMagicToSlotForPackRoutine(MagicData magicData, int slotIndex, RectTransform sourceRect, int futureCount, Action onDone)
+    {
+        // 多件同飞：来源（事件选项）不隐藏，让位已由 PlayMagicAcquirePackRoutine 统一做过一次。
+        yield return PlayMagicAcquireAnimation(magicData, slotIndex, sourceRect, futureCount, false, false);
+        onDone?.Invoke();
     }
 
     private IEnumerator PlayMaterialAcquireAnimation(MaterialEnum material, RectTransform sourceRect)
@@ -10856,7 +10495,7 @@ public bool IsCardDragActive => cardDragActive;
         return library != null ? library.MaterialCardPrefab : null;
     }
 
-    private IEnumerator PlayAcquireRectAnimation(RectTransform clone, RectTransform sourceRect, Vector3 targetWorldPosition, Quaternion targetWorldRotation, Vector3 targetLocalScale, Vector2 targetSize, float duration)
+    private IEnumerator PlayAcquireRectAnimation(RectTransform clone, RectTransform sourceRect, Vector3 targetWorldPosition, Quaternion targetWorldRotation, Vector3 targetLocalScale, Vector2 targetSize, float duration, bool hideSource = true)
     {
         if (clone == null || sourceRect == null)
             yield break;
@@ -10866,7 +10505,8 @@ public bool IsCardDragActive => cardDragActive;
         clone.rotation = sourceRect.rotation;
         clone.localScale = GetScaleRelativeToParent(sourceRect, animationRoot);
         clone.sizeDelta = sourceRect.rect.size;
-        sourceRect.gameObject.SetActive(false);
+        if (hideSource)
+            sourceRect.gameObject.SetActive(false);
 
         Sequence sequence = DOTween.Sequence().SetTarget(this);
         sequence.Join(clone.DOMove(targetWorldPosition, duration).SetEase(Ease.OutCubic));

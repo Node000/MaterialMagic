@@ -20,7 +20,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RewardGridPanelUI rewardGridPanelUI;
     [SerializeField] private ShopPanelUI shopPanelUI;
     [SerializeField] private MagicModifierSelectionPanelUI magicModifierSelectionPanelUI;
-    [SerializeField] private SlotSelectPanelUI slotSelectPanelUI;
     [SerializeField] private UnifiedDetailPopupUI unifiedDetailPopupUI;
     [SerializeField] private PlayerStatusUI playerStatusUI;
     [SerializeField] private PlayAreaUI playAreaUI;
@@ -45,7 +44,6 @@ public class UIManager : MonoBehaviour
     public RewardGridPanelUI RewardGridPanel => rewardGridPanelUI;
     public ShopPanelUI ShopPanel => shopPanelUI;
     public MagicModifierSelectionPanelUI MagicModifierSelectionPanel => magicModifierSelectionPanelUI;
-    public SlotSelectPanelUI SlotSelectPanel => slotSelectPanelUI;
     public UnifiedDetailPopupUI UnifiedDetailPopup => unifiedDetailPopupUI;
     public PlayerStatusUI PlayerStatus => playerStatusUI;
     public PlayAreaUI PlayArea => playAreaUI;
@@ -72,7 +70,6 @@ public class UIManager : MonoBehaviour
         rewardGridPanelUI = GetOrAddPanel<RewardGridPanelUI>(root, "RewardGridPanel", rewardGridPanelUI);
         shopPanelUI = GetOrAddPanel<ShopPanelUI>(root, "ShopPanel", shopPanelUI);
         magicModifierSelectionPanelUI = GetOrAddPanel<MagicModifierSelectionPanelUI>(root, "MagicModifierSelectionPanel", magicModifierSelectionPanelUI);
-        slotSelectPanelUI = GetOrAddPanel<SlotSelectPanelUI>(root, "SlotSelectPanel", slotSelectPanelUI);
         unifiedDetailPopupUI = GetOrAddPanelInChildren<UnifiedDetailPopupUI>(root, "UnifiedDetailPopup", unifiedDetailPopupUI);
         playerStatusUI = GetOrAddPanelInChildren<PlayerStatusUI>(root, "PlayerStatus", playerStatusUI);
         playAreaUI = GetOrAddPanelInChildren<PlayAreaUI>(root, "PlayArea", playAreaUI);
@@ -96,7 +93,6 @@ public class UIManager : MonoBehaviour
         rewardGridPanelUI?.Initialize(owner);
         shopPanelUI?.Initialize(owner);
         magicModifierSelectionPanelUI?.Initialize(owner);
-        slotSelectPanelUI?.Initialize(owner);
         unifiedDetailPopupUI?.Initialize();
         playerStatusUI?.Initialize(owner);
         playAreaUI?.Initialize(owner);
@@ -369,21 +365,6 @@ public class UIManager : MonoBehaviour
     public void HideShopPanel()
     {
         shopPanelUI?.Hide();
-    }
-
-    public void ShowSlotSelect(MagicData rewardMagic)
-    {
-        slotSelectPanelUI?.Show(rewardMagic);
-    }
-
-    public void ShowSlotSelect(MagicData rewardMagic, Action<int> onSlotChosen)
-    {
-        slotSelectPanelUI?.Show(rewardMagic, onSlotChosen);
-    }
-
-    public void HideSlotSelect()
-    {
-        slotSelectPanelUI?.Hide();
     }
 
     public void ShowVictoryPanel(float playSeconds, IReadOnlyList<string> magicNames, bool tutorialVictory = false)

@@ -26,6 +26,7 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     private bool hovered;
     private bool springHighlightEnabled = true;
     private PlayerState upgradeVisualPlayer;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public RectTransform RectTransform => (RectTransform)transform;
     public MaterialModel MaterialModel => materialModel;
@@ -39,13 +40,18 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
         CacheSpringHighlight();
         RefreshRaycastTargets();
         RefreshSpringHighlight();
+
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情），内容按当前绑定的材料实时构建。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     private void OnDisable()
     {
         hovered = false;
         RefreshSpringHighlight();
-        owner?.GetComponentInParent<UIManager>()?.HideUnifiedDetailPopup(this);
+        // 详情由 UnifiedDetailTriggerUI 在自己的 OnDisable 里收起，这里不再重复处理。
         consumedTween?.Kill(false);
         consumedTween = null;
     }
@@ -117,16 +123,31 @@ public class MaterialCardView : MonoBehaviour, IPointerClickHandler, IPointerEnt
     {
         hovered = true;
         RefreshSpringHighlight();
-        UIManager uiManager = owner != null ? owner.GetComponentInParent<UIManager>() : null;
-        if (materialModel != null)
-            uiManager?.ShowUnifiedDetailPopup(this, UnifiedDetailContentBuilder.Build(materialModel));
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
         RefreshSpringHighlight();
-        owner?.GetComponentInParent<UIManager>()?.HideUnifiedDetailPopup(this);
+    }
+
+    /// <summary>详情内容随当前绑定的材料变化，所以用 Provider 注入；没材料时不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        return materialModel != null ? UnifiedDetailContentBuilder.Build(materialModel) : default;
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
     public static Color GetMaterialColor(MaterialEnum material)
     {

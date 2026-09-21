@@ -584,26 +584,19 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         RefreshOptionFrameColor(index);
     }
 
-    public void ShowOptionDetail(int index, object anchor)
+    /// <summary>选项详情内容随当前可选列表变化，所以用 Provider 注入。</summary>
+    private UnifiedDetailContent BuildOptionDetailContent(int index)
     {
         if (materialModifierMode)
         {
-            if (index < 0 || index >= currentMaterialChoices.Count)
-                return;
-
-            owner?.GetUIManager()?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(currentMaterialChoices[index]));
-            return;
+            return index >= 0 && index < currentMaterialChoices.Count
+                ? UnifiedDetailContentBuilder.Build(currentMaterialChoices[index])
+                : default;
         }
 
-        if (index < 0 || index >= currentChoices.Count)
-            return;
-
-        owner?.GetUIManager()?.ShowUnifiedDetailPopup(anchor, UnifiedDetailContentBuilder.Build(currentChoices[index]));
-    }
-
-    public void HideOptionDetail(object anchor)
-    {
-        owner?.GetUIManager()?.HideUnifiedDetailPopup(anchor);
+        return index >= 0 && index < currentChoices.Count
+            ? UnifiedDetailContentBuilder.Build(currentChoices[index])
+            : default;
     }
 
     private void ResetOptionHoverEffects()
@@ -689,12 +682,18 @@ public class MagicModifierSelectionPanelUI : MonoBehaviour
         button.transition = Selectable.Transition.None;
     }
 
+    /// <summary>
+    /// 详情与手势统一交给 UnifiedDetailTriggerUI：PC 悬停弹详情并高亮选项，PE 长按看详情、短按确认选项。
+    /// </summary>
     private void ConfigureOptionHover(Button button, int index)
     {
-        MagicModifierOptionHoverUI hover = button.GetComponent<MagicModifierOptionHoverUI>();
-        if (hover == null)
-            hover = button.gameObject.AddComponent<MagicModifierOptionHoverUI>();
-        hover.Initialize(this, index);
+        UnifiedDetailTriggerUI trigger = button.GetComponent<UnifiedDetailTriggerUI>();
+        if (trigger == null)
+            trigger = button.gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        trigger.SetAnchor(button);
+        trigger.SetContentProvider(() => BuildOptionDetailContent(index));
+        trigger.SetHoverActions(hovering => SetOptionHovered(index, hovering));
+        trigger.SetAction(() => ConfirmTouchOption(index));
     }
 
     private Image EnsureOptionIcon(RectTransform optionRect)

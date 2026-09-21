@@ -23,34 +23,6 @@ public class RewardArrowOption
     public bool HasModifier => modifierData != null;
 }
 
-public sealed class RewardChoiceHoverRelay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
-{
-    private RewardPanelUI owner;
-    private RectTransform slotRect;
-    private UnifiedDetailContent? detail;
-    private SpringLineHighlightUI hoverFrame;
-
-    public void Initialize(RewardPanelUI owner, RectTransform slotRect, UnifiedDetailContent? detail, SpringLineHighlightUI hoverFrame)
-    {
-        this.owner = owner;
-        this.slotRect = slotRect;
-        this.detail = detail;
-        this.hoverFrame = hoverFrame;
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (owner != null)
-            owner.SetChoiceHover(slotRect, detail, hoverFrame, true);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (owner != null)
-            owner.SetChoiceHover(slotRect, detail, hoverFrame, false);
-    }
-}
-
 public class RewardOptionView : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
@@ -292,6 +264,10 @@ public class RewardPanelUI : MonoBehaviour
 
     private void SetChoiceAreaVisible(bool visible)
     {
+        // 结算槽位面板是场景节点，但 choiceArea 过去只在 EnsureChoiceSlots()（结算路径）里解析；
+        // 没打过战斗结算就进事件时 field 还是 null，隐藏会变成空操作，结算三选一整个盖在“获得道具”按钮上。
+        if (choiceArea == null)
+            choiceArea = transform.Find("ChoiceArea") as RectTransform;
         if (choiceArea != null)
             choiceArea.gameObject.SetActive(visible);
         // 结算三选一与事件“获得道具”入口互斥：结算时藏定位区，事件时藏三选一。
@@ -379,13 +355,13 @@ public class RewardPanelUI : MonoBehaviour
             itemChoicePreview = MagicFactory.Create(data);
             itemChoiceCard.Bind(itemChoicePreview);
             RectTransform cardRect = itemChoiceCard.transform as RectTransform;
-            if (cardRect != null)
-                DisableChildRaycasts(cardRect);
             // 卡面自带一层 Hover 线框（RewardItemCard 复制自道具栏槽位壳，由 MagicItemView 绑定）。
             // 结算槽位已由 HoverFrame 提供悬停线框，两层同时点亮会让线数变成金币 / 箭头选项的两倍。
             SuppressCardHoverFrame(cardRect);
-            if (itemChoicePreview != null)
-                EnsureSlotHover(itemChoiceSlot, UnifiedDetailContentBuilder.Build(itemChoicePreview));
+            // 奖励选项卡（RewardItemCard.prefab）自带 Button：点击由卡面自己承担，
+            // 不再关掉卡面射线改让槽位 Button 代收（那样卡面按钮永远不会响）。
+            EnsureCardHover(cardRect);
+            BindCardButton(cardRect, SelectItemChoice, interactive);
         }
         else
         {
@@ -394,7 +370,42 @@ public class RewardPanelUI : MonoBehaviour
                 label.text = LocalizationSystem.GetText(data.nameKey, data.id);
         }
 
+        // 槽位自身的 Image + Button 是美术在场景里给的，继续作为槽位边缘的兵底点击。
         BindSlotButton(itemChoiceSlot, SelectItemChoice, interactive);
+    }
+
+    /// <summary>
+    /// 绑定奖励选项卡自带的 Button（烘焙在 RewardItemCard.prefab 上，不在运行期补）。
+    /// 卡面本身就是“必然可点的选项”，所以结算与事件道具奖励都走同一个按钮。
+    /// </summary>
+    private static void BindCardButton(RectTransform card, UnityEngine.Events.UnityAction action, bool interactive)
+    {
+        if (card == null)
+            return;
+
+        Button button = card.GetComponent<Button>();
+        if (button == null)
+            return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(action);
+        button.interactable = interactive;
+    }
+
+    /// <summary>
+    /// 卡面悬停：详情交给卡面自己的 UnifiedDetailTriggerUI（MagicItemView 已注入内容与锚点），
+    /// 本面板只接管“外框 + 轻微放大”，且线框挂在卡面上，不打开卡面射线时才能收到 Hover。
+    /// </summary>
+    private void EnsureCardHover(RectTransform card)
+    {
+        if (card == null)
+            return;
+
+        SpringLineHighlightUI frame = EnsureSlotHoverFrame(card);
+        UnifiedDetailTriggerUI trigger = card.GetComponent<UnifiedDetailTriggerUI>();
+        if (trigger == null)
+            trigger = card.gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        trigger.SetHoverActions(hovering => SetChoiceHoverVisual(card, frame, hovering));
     }
 
     private void BindArrowChoice(bool interactive)
@@ -481,16 +492,19 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null || owner.GetFreeMagicSlotIndex() < 0)
             return;
 
-        // 选中后直接放入空槽。
+        // 先竖起领取屏障，再从道具选项卡把道具飞进道具栏空槽；落地后由 SetRewardMagicAtSlot 通知面板收尾。
         claimInProgress = true;
-        owner.SelectPendingRewardMagic(currentChoices.Magic);
-        if (owner.HasPendingRewardMagic)
-        {
-            // 兜底：只有在未能直接入槽时才会留下待放置状态，此时立即撤销，避免面板卡在“等待点选道具槽”的旧状态。
-            owner.SelectPendingRewardMagic(null);
-            claimInProgress = false;
-        }
         RefreshChoiceSlots();
+        StartCoroutine(ClaimItemChoiceRoutine(currentChoices.Magic));
+    }
+
+    /// <summary>结算道具选项：从选项卡飞入道具栏空槽，落地时 <see cref="HandSystemUI.SetRewardMagicAtSlot"/> 会回调完成领奖。</summary>
+    private IEnumerator ClaimItemChoiceRoutine(MagicData data)
+    {
+        RectTransform sourceRect = itemChoiceCard != null ? itemChoiceCard.transform as RectTransform : itemChoiceSlot;
+        yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
+        if (!settlementClaimed)
+            claimInProgress = false;
     }
 
     private void ClaimArrowChoice()
@@ -797,12 +811,8 @@ public class RewardPanelUI : MonoBehaviour
             MagicData data = choices[i];
             if (!magicChoicesPrebound)
                 view.Bind(MagicFactory.Create(data));
-            Button button = view.GetComponent<Button>();
-            if (button != null)
-            {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => SelectMagicReward(data, view));
-            }
+            // 奖励选项卡（RewardItemCard.prefab）自带 Button，这里只负责绑行为。
+            BindCardButton(rect, () => SelectMagicReward(data, view), true);
             ConfigureMagicChoiceHover(view);
             view.gameObject.SetActive(true);
             SetRewardMagicHighlightVisible(view, view == selectedMagicView || view == hoveredMagicView);
@@ -850,22 +860,31 @@ public class RewardPanelUI : MonoBehaviour
 
     private void SelectMagicReward(MagicData data, MagicItemView view)
     {
-        if (magicClaimed)
+        if (magicClaimed || claimInProgress)
             return;
 
         // 道具栏已满：替换机制已移除，点击道具选项不给任何反馈。
         if (owner == null || owner.GetFreeMagicSlotIndex() < 0)
             return;
 
+        // 点中的选项卡就是飞入起点（hideSource 会在飞行期间把它隐藏）；飞行期间禁掉再次点击与关闭。
         selectedMagicView = view;
-        owner.SelectPendingRewardMagic(data);
-        if (owner.HasPendingRewardMagic)
+        claimInProgress = true;
+        BindEndButton();
+        StartCoroutine(ClaimMagicOnlyRewardRoutine(data, view));
+    }
+
+    /// <summary>事件道具奖励：从点中的选项卡飞入空槽，落地后入槽并结束本次奖励。</summary>
+    private IEnumerator ClaimMagicOnlyRewardRoutine(MagicData data, MagicItemView view)
+    {
+        RectTransform sourceRect = view != null ? view.transform as RectTransform : null;
+        yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
+        if (!magicClaimed)
         {
-            // 兜底：未放入时不留“等待点选道具槽”的状态，回到未选中。
-            owner.SelectPendingRewardMagic(null);
+            claimInProgress = false;
             selectedMagicView = null;
+            BindEndButton();
         }
-        RefreshSelectedMagicVisuals();
     }
 
     private void RefreshSelectedMagicVisuals()
@@ -1102,10 +1121,14 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         SpringLineHighlightUI frame = EnsureSlotHoverFrame(slot);
-        RewardChoiceHoverRelay relay = slot.GetComponent<RewardChoiceHoverRelay>();
-        if (relay == null)
-            relay = slot.gameObject.AddComponent<RewardChoiceHoverRelay>();
-        relay.Initialize(this, slot, detail, frame);
+
+        // 悬停的“外框 + 轻微放大”仍由本面板负责，详情面板交给 UnifiedDetailTriggerUI 统一弹/收。
+        UnifiedDetailTriggerUI trigger = slot.GetComponent<UnifiedDetailTriggerUI>();
+        if (trigger == null)
+            trigger = slot.gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        trigger.SetAnchor(slot);
+        trigger.SetContentProvider(() => detail.HasValue ? detail.Value : default);
+        trigger.SetHoverActions(hovering => SetChoiceHoverVisual(slot, frame, hovering));
     }
 
     private static SpringLineHighlightUI EnsureSlotHoverFrame(RectTransform slot)
@@ -1140,7 +1163,7 @@ public class RewardPanelUI : MonoBehaviour
         return frame;
     }
 
-    internal void SetChoiceHover(RectTransform slotRect, UnifiedDetailContent? detail, SpringLineHighlightUI hoverFrame, bool hovering)
+    internal void SetChoiceHoverVisual(RectTransform slotRect, SpringLineHighlightUI hoverFrame, bool hovering)
     {
         if (slotRect == null)
             return;
@@ -1163,12 +1186,6 @@ public class RewardPanelUI : MonoBehaviour
 
         slotRect.DOKill(false);
         slotRect.DOScale(Vector3.one * 1.05f, 0.16f).SetEase(Ease.OutBack);
-        if (owner != null && detail.HasValue)
-        {
-            UIManager uiManager = owner.GetUIManager();
-            if (uiManager != null)
-                uiManager.ShowUnifiedDetailPopup(slotRect, detail.Value);
-        }
     }
 
     private void ClearChoiceHover(bool animate)
@@ -1188,12 +1205,10 @@ public class RewardPanelUI : MonoBehaviour
         else
             slotRect.localScale = Vector3.one;
 
-        if (owner != null)
-        {
-            UIManager uiManager = owner.GetUIManager();
-            if (uiManager != null)
-                uiManager.HideUnifiedDetailPopup(slotRect);
-        }
+        // 槽位详情由 UnifiedDetailTriggerUI 负责，面板刷新/收起时显式让它收一下。
+        UnifiedDetailTriggerUI trigger = slotRect.GetComponent<UnifiedDetailTriggerUI>();
+        if (trigger != null)
+            trigger.HideDetailNow();
     }
 
     private RectTransform GetMaterialCardPrefab()

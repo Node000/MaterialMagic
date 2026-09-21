@@ -23,7 +23,7 @@ public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
     }
 }
 
-public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class BuffSlotView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text stackText;
@@ -33,6 +33,7 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     private RectTransform rectTransform;
     private Tween motionTween;
     private float visualSize = DefaultVisualSize;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     private const float AddDuration = 0.22f;
     private const float StackUpDuration = 0.12f;
@@ -64,6 +65,10 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         rectTransform = (RectTransform)transform;
         CacheCurrentSize();
         ApplyVisualSizing();
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情）。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     public void Initialize(Image iconImage, TMP_Text stackText)
@@ -211,15 +216,23 @@ public class BuffSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         owner?.HideBuffTooltip(this);
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    /// <summary>详情内容随当前增益变化，所以用 Provider 注入；空槽（buff == null）不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
     {
-        if (buff != null)
-            owner?.ShowBuffTooltip(this, buff);
+        return buff != null ? UnifiedDetailContentBuilder.Build(buff) : default;
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
     {
-        owner?.HideBuffTooltip(this);
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     public void OnPointerClick(PointerEventData eventData)

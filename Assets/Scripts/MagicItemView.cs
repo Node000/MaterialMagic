@@ -64,6 +64,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private bool raiseToFrontOnHover;
     private int hoverRaiseSiblingIndex = -1;
     private bool pointerHovering;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     private static readonly Dictionary<string, Sprite> magicIconCache = new Dictionary<string, Sprite>();
     private static Material sharedModifierMarkerFallbackMaterial;
@@ -74,6 +75,10 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private void Awake()
     {
         CacheMissingReferences();
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情），内容按当前绑定道具实时构建。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     private void Start()
@@ -95,8 +100,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         modifierMarkerTween?.Kill(false);
         HideLocalDetailTooltip(true);
         HideSellPopupImmediate();
-        UIManager uiManager = GetComponentInParent<UIManager>();
-        uiManager?.HideUnifiedDetailPopup(this);
+        // 统一详情浮框由 UnifiedDetailTriggerUI 在自己的 OnDisable 里收起。
     }
 
     private void OnDestroy()
@@ -362,15 +366,10 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         pointerHovering = true;
         RaiseToFrontOnHover();
 
-        UnifiedDetailContent content = magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
+        // 统一详情浮框由 UnifiedDetailTriggerUI 负责；只有预制体自带局部提示的站点（StartConfigMagicView）
+        // 继续走本脚本的局部提示，两套不会同时弹。
         if (localDetailTooltipRoot != null)
-        {
-            ShowLocalDetailTooltip(content);
-            return;
-        }
-
-        UIManager uiManager = GetComponentInParent<UIManager>();
-        uiManager?.ShowUnifiedDetailPopup(this, content);
+            ShowLocalDetailTooltip(BuildDetailContent());
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -379,13 +378,32 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         ReleaseHoverRaise();
 
         if (localDetailTooltipRoot != null)
-        {
             HideLocalDetailTooltip(false);
-            return;
+    }
+
+    /// <summary>
+    /// 详情内容随当前绑定道具变化，所以用 Provider 注入；自带局部提示的预制体返回空内容，
+    /// 让统一浮框保持静默（否则会和局部提示重叠弹出）。
+    /// </summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        if (localDetailTooltipRoot != null)
+            return default;
+
+        return magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
         }
 
-        UIManager uiManager = GetComponentInParent<UIManager>();
-        uiManager?.HideUnifiedDetailPopup(this);
+        return detailTrigger;
     }
 
     private void ShowLocalDetailTooltip(UnifiedDetailContent content)
@@ -502,7 +520,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private void CacheSellButton()
     {
         if (sellButton == null)
-            sellButton = GetComponentInChildren<Button>(true);
+            sellButton = FindSellButtonInChildren();
         if (sellButton == null)
             return;
 
@@ -513,6 +531,25 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         sellButton.onClick.RemoveListener(OnSellButtonClicked);
         sellButton.onClick.AddListener(OnSellButtonClicked);
+    }
+
+    /// <summary>
+    /// 兜底查找卖出按钮：只认子物体上的 Button。
+    /// 奖励选项卡（RewardItemCard）在卡面根上挂了自己的 Button 用于点选奖励，
+    /// 如果把它当成卖出按钮，HideSellPopupImmediate 会把卡面按钮置为非交互，导致卡面点不动。
+    /// </summary>
+    private Button FindSellButtonInChildren()
+    {
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] == null || buttons[i].gameObject == gameObject)
+                continue;
+
+            return buttons[i];
+        }
+
+        return null;
     }
 
     private void SetHoverHighlightEnabled(bool enabled)

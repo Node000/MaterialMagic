@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class AscensionTopBarIndicatorUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private Image iconImage;
@@ -14,12 +14,17 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
     [SerializeField] private Button button;
 
     private bool buttonBound;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     private void Awake()
     {
         ResolveDependencies();
         BindButton();
         LocalizationSystem.LanguageChanged += HandleLanguageChanged;
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情），内容按当前进阶等级实时构建。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(this);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     private void Start()
@@ -34,8 +39,7 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
 
     private void OnDisable()
     {
-        if (uiManager != null)
-            uiManager.HideUnifiedDetailPopup(this);
+        // 详情由 UnifiedDetailTriggerUI 在自己的 OnDisable 里收起。
     }
 
     private void OnDestroy()
@@ -45,26 +49,29 @@ public class AscensionTopBarIndicatorUI : MonoBehaviour, IPointerEnterHandler, I
             button.onClick.RemoveListener(ToggleDetail);
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    /// <summary>进阶按钮的说明详情：标题里的等级会变，所以用 Provider 注入；强调色沿用面板上美术设的颜色。</summary>
+    private UnifiedDetailContent BuildDetailContent()
     {
-        ResolveDependencies();
-        if (uiManager == null)
-            return;
-
         int level = DifficultyUpgradeSystem.CurrentAscensionLevel;
-        uiManager.ShowUnifiedDetailPopup(this, new UnifiedDetailContent
+        return new UnifiedDetailContent
         {
             Title = string.Format(LocalizationSystem.GetText("ui.ascension.button_detail.title", "进阶{0}"), level),
             Body = LocalizationSystem.GetText("ui.ascension.button_detail.body", "点击查看难度变化"),
-            AccentColor = Color.white,
             Icon = iconSprite
-        });
+        };
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
     {
-        if (uiManager != null)
-            uiManager.HideUnifiedDetailPopup(this);
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     public void Refresh()

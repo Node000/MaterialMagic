@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class BonusRewardIconUI : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text amountText;
@@ -11,6 +11,7 @@ public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerEx
     private RewardGridPanelUI owner;
     private BonusRewardData rewardData;
     private RectTransform rectTransform;
+    private UnifiedDetailTriggerUI detailTrigger;
 
     public RectTransform RectTransform => rectTransform != null ? rectTransform : (RectTransform)transform;
 
@@ -18,6 +19,10 @@ public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerEx
     {
         rectTransform = (RectTransform)transform;
         CacheReferences();
+        // 详情面板统一由 UnifiedDetailTriggerUI 负责（PC 悬停显示 / PE 长按看详情）。
+        UnifiedDetailTriggerUI trigger = EnsureDetailTrigger();
+        trigger.SetAnchor(RectTransform);
+        trigger.SetContentProvider(BuildDetailContent);
     }
 
     public void Bind(RewardGridPanelUI owner, BonusRewardData rewardData)
@@ -40,20 +45,29 @@ public class BonusRewardIconUI : MonoBehaviour, IPointerEnterHandler, IPointerEx
         }
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        owner?.ShowRewardTooltip(RectTransform, rewardData);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        owner?.HideRewardTooltip();
-    }
-
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button == PointerEventData.InputButton.Left)
-            owner?.PinRewardTooltip(RectTransform, rewardData);
+            EnsureDetailTrigger().PinDetailNow();
+    }
+
+    /// <summary>详情内容随格子奖励变化，所以用 Provider 注入；没数据时不弹面板。</summary>
+    private UnifiedDetailContent BuildDetailContent()
+    {
+        return rewardData != null ? UnifiedDetailContentBuilder.Build(rewardData) : default;
+    }
+
+    /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
+    private UnifiedDetailTriggerUI EnsureDetailTrigger()
+    {
+        if (detailTrigger == null)
+        {
+            detailTrigger = GetComponent<UnifiedDetailTriggerUI>();
+            if (detailTrigger == null)
+                detailTrigger = gameObject.AddComponent<UnifiedDetailTriggerUI>();
+        }
+
+        return detailTrigger;
     }
 
     private void CacheReferences()
