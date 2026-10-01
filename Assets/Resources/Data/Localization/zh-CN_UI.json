@@ -277,6 +277,26 @@
       "text": "音效"
     },
     {
+      "key": "ui.start_settings.test_data",
+      "text": "测试数据收集"
+    },
+    {
+      "key": "ui.test_data.title",
+      "text": "测试数据收集"
+    },
+    {
+      "key": "ui.test_data.body",
+      "text": "欢迎游玩《有氧地下城》！\n\n我们会收集您在游戏过程中的道具选取、事件选择、通关数据等游戏内数据，来辅助我们进行内容开发与平衡性调整。\n\n您随时可以在设置界面关闭这一功能。"
+    },
+    {
+      "key": "ui.test_data.agree",
+      "text": "同意"
+    },
+    {
+      "key": "ui.test_data.reject",
+      "text": "不同意"
+    },
+    {
       "key": "ui.start_menu.continue",
       "text": "继续游戏"
     },

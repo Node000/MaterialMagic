@@ -1,0 +1,11 @@
+column_name,column_desc,column_type,select_type,unit,status,remark,table_type,metaSubInfos
+build_type,版本类型（demo=TapTap试玩版）,varchar,string,,display,版本类型（demo=TapTap试玩版）,2,
+app_version,游戏版本号,varchar,string,,display,游戏版本号,2,
+platform,运行平台,varchar,string,,display,运行平台,2,
+channel,渠道标识,varchar,string,,display,渠道标识,2,
+region,区域,varchar,string,,display,区域,2,
+language,游戏语言,varchar,string,,display,游戏语言,2,
+is_dev,是否内部版本,boolean,bool,,display,是否内部版本,2,
+save_slot,存档栏位(1-3),integer,number,,display,存档栏位(1-3),2,
+ascension_max,最高已解锁进阶,integer,number,,display,最高已解锁进阶,2,
+tutorial_done,教程是否完成,boolean,bool,,display,教程是否完成,2,

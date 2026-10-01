@@ -33,6 +33,26 @@
       "text": "SFX"
     },
     {
+      "key": "ui.start_settings.test_data",
+      "text": "Test data collection"
+    },
+    {
+      "key": "ui.test_data.title",
+      "text": "Test data collection"
+    },
+    {
+      "key": "ui.test_data.body",
+      "text": "Welcome to Oxy Dungeon!\n\nWe collect in-game data such as item picks, event choices and clear records, to help us develop content and tune balance.\n\nYou can turn this off anytime in Settings."
+    },
+    {
+      "key": "ui.test_data.agree",
+      "text": "Agree"
+    },
+    {
+      "key": "ui.test_data.reject",
+      "text": "Decline"
+    },
+    {
       "key": "ui.start_menu.start",
       "text": "Start Game"
     },
