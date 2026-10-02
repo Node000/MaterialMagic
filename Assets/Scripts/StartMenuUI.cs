@@ -20,6 +20,9 @@ public class StartMenuUI : MonoBehaviour
     [SerializeField] private Button historyButton;
     [SerializeField] private Button codexButton;
     [SerializeField] private Button changeSaveButton;
+    [SerializeField] private Button feedbackButton;
+    [Tooltip("点击反馈图标打开的外部链接（腾讯文档反馈表）。" )]
+    [SerializeField] private string feedbackUrl = "https://docs.qq.com/sheet/DQVNXeEZNdHJRdkRo?tab=BB08J2";
     [SerializeField] private StartSettingsPanelUI settingsPanelUI;
     [SerializeField] private StartExitConfirmPanelUI exitConfirmPanelUI;
     [Header("配置选择弹窗")]
@@ -62,6 +65,8 @@ public class StartMenuUI : MonoBehaviour
             codexButton.onClick.AddListener(OpenCodex);
         if (changeSaveButton != null)
             changeSaveButton.onClick.AddListener(OpenSaveSlotSelection);
+        if (feedbackButton != null)
+            feedbackButton.onClick.AddListener(OpenFeedback);
         if (confirmButton != null)
             confirmButton.onClick.AddListener(ConfirmStartGame);
         if (backButton != null)
@@ -92,6 +97,8 @@ public class StartMenuUI : MonoBehaviour
             codexButton.onClick.RemoveListener(OpenCodex);
         if (changeSaveButton != null)
             changeSaveButton.onClick.RemoveListener(OpenSaveSlotSelection);
+        if (feedbackButton != null)
+            feedbackButton.onClick.RemoveListener(OpenFeedback);
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(ConfirmStartGame);
         if (backButton != null)
@@ -112,6 +119,7 @@ public class StartMenuUI : MonoBehaviour
         CacheInitialMenuObject(historyButton != null ? historyButton.gameObject : null);
         CacheInitialMenuObject(codexButton != null ? codexButton.gameObject : null);
         CacheInitialMenuObject(changeSaveButton != null ? changeSaveButton.gameObject : null);
+        CacheInitialMenuObject(feedbackButton != null ? feedbackButton.gameObject : null);
 
         if (initialButtonsRoot != null)
         {
@@ -212,6 +220,8 @@ public class StartMenuUI : MonoBehaviour
             codexButton = UIManager.FindChildComponent<Button>(transform, "CodexButton");
         if (changeSaveButton == null)
             changeSaveButton = UIManager.FindChildComponent<Button>(transform, "ChangeSaveButton");
+        if (feedbackButton == null)
+            feedbackButton = UIManager.FindChildComponent<Button>(transform, "FeedbackButton");
         if (settingsPanelUI == null)
             settingsPanelUI = GetComponentInChildren<StartSettingsPanelUI>(true);
         if (exitConfirmPanelUI == null)
@@ -414,6 +424,22 @@ public class StartMenuUI : MonoBehaviour
     {
         if (forumPanelUI != null)
             forumPanelUI.Hide();
+    }
+
+    /// <summary>反馈图标：打开外部反馈表（腾讯文档），不在游戏内自建面板。</summary>
+    private void OpenFeedback()
+    {
+        if (string.IsNullOrWhiteSpace(feedbackUrl))
+            return;
+
+        try
+        {
+            Application.OpenURL(feedbackUrl);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning("[StartMenuUI] 打开反馈链接失败：" + exception.Message, this);
+        }
     }
 
     private void OpenHistory()

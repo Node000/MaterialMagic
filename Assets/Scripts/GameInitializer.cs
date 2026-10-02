@@ -102,6 +102,13 @@ public class GameInitializer : MonoBehaviour
         //   * 首启未决时按“不采集”初始化（TapDB 开关只在 Init 时生效，运行期改不了），
         //     玩家同意后本会话的事件会落盘，下次启动自动补发（AnalyticsService.FlushPendingOnDisk）。
         pendingConsentPrompt = NeedsConsentPrompt;
+
+        // 场景里的「测试数据收集」面板可能留在激活状态（美术调面板时就是这样）。
+        // 不需要询问时（已做过选择的老玩家）必须在这一帧就收起：否则面板会一直糊在菜单上，
+        // 而且它的按钮只在 Show() 里绑回调，点上去没有任何反应（等于卡住界面）。
+        if (!pendingConsentPrompt && privacyConsentPanel != null)
+            privacyConsentPanel.Hide();
+
         StartBackendWithCurrentConsent();
     }
 
