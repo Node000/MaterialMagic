@@ -484,8 +484,21 @@ public static class RunSaveSystem
         MagicCodexProgressSystem.Clear(clampedSlotIndex);
     }
 
+    /// <summary>
+    /// 埋点台账生成的 runId：全新一局第一次存盘时沿用，保证 run_start 与后续事件、历史记录里的 run_id 一致。
+    /// 只在“还没有存档数据”（全新一局）时生效；清档时一并清空。
+    /// </summary>
+    private static string adoptedRunId;
+
+    /// <summary>由 RunAnalyticsLedger.BeginRun 调用：让本局存档沿用埋点侧生成的 run_id。</summary>
+    public static void AdoptRunId(string runId)
+    {
+        adoptedRunId = runId ?? string.Empty;
+    }
+
     public static void ClearCurrentRun()
     {
+        adoptedRunId = string.Empty;
         if (File.Exists(RunSavePath))
             File.Delete(RunSavePath);
     }
@@ -507,7 +520,9 @@ public static class RunSaveSystem
         {
             version = CurrentVersion,
             slotIndex = CurrentSlotIndex,
-            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId) ? currentData.runId : Guid.NewGuid().ToString("N"),
+            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId)
+                ? currentData.runId
+                : (string.IsNullOrEmpty(adoptedRunId) ? Guid.NewGuid().ToString("N") : adoptedRunId),
             createdAtUtc = currentData != null && !string.IsNullOrEmpty(currentData.createdAtUtc) ? currentData.createdAtUtc : now,
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,
@@ -810,7 +825,9 @@ public static class RunSaveSystem
         {
             version = CurrentVersion,
             slotIndex = CurrentSlotIndex,
-            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId) ? currentData.runId : Guid.NewGuid().ToString("N"),
+            runId = currentData != null && !string.IsNullOrEmpty(currentData.runId)
+                ? currentData.runId
+                : (string.IsNullOrEmpty(adoptedRunId) ? Guid.NewGuid().ToString("N") : adoptedRunId),
             createdAtUtc = currentData != null && !string.IsNullOrEmpty(currentData.createdAtUtc) ? currentData.createdAtUtc : now,
             lastSavedAtUtc = now,
             lastPlayedAtUtc = now,

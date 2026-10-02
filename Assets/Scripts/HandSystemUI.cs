@@ -713,6 +713,12 @@ public class HandSystemUI : MonoBehaviour
 
 		public PlayerState PlayerState => playerState;
 
+        /// <summary>埋点用：当前关卡（节点上下文由 RunAnalyticsLedger 维护，这里给事件取 is_elite 等）。</summary>
+        public LevelData CurrentLevelForAnalytics => currentLevel;
+
+        /// <summary>埋点用：当前节点是不是地图 Boss 格。</summary>
+        public bool CurrentLevelIsBossForAnalytics => currentChapterMapBossLevel;
+
     public void RefreshArrowUpgradeVisuals()
     {
         for (int i = 0; i < cardViews.Count; i++)
@@ -867,6 +873,9 @@ public class HandSystemUI : MonoBehaviour
         if (battleManager.Enemies.Count == 0)
             return;
 
+        // 埋点：Debug 面板直接开战斗也按同一口径发（run_start.is_debug_run=true 可过滤）
+        EmitBattleStart(level);
+
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayBattleMusic();
         battleManager.BeginBattleRules();
@@ -898,6 +907,7 @@ public class HandSystemUI : MonoBehaviour
         debugLevelActive = true;
         currentLevel = null;
         currentEvent = new EventModel(eventData);
+        EmitEventEnter();
 
         if (eventPanel != null)
             eventPanel.Close();
@@ -947,6 +957,9 @@ public class HandSystemUI : MonoBehaviour
             playerState.SetMagicAtSlot(MagicFactory.Create(magicData, slotIndex), slotIndex);
             CreateMagicViews();
             RefreshStaticUI();
+            // 埋点：Debug 面板加道具（source=debug，报表可按 run_start.is_debug_run 过滤）
+            RunAnalyticsLedger.SetAcquireContext("debug", 0, magicData.id, 0);
+            EmitMagicAcquire(magicData, slotIndex, null);
             return;
         }
     }
@@ -967,9 +980,12 @@ public class HandSystemUI : MonoBehaviour
         if (slotIndex < 0)
             return;
 
+        MagicModel removedMagic = playerState.GetMagicAtSlot(slotIndex);
         playerState.ClearMagicSlot(slotIndex);
         CreateMagicViews();
         RefreshStaticUI();
+        // 埋点：Debug 面板移除道具（reason=debug）
+        EmitMagicRemoved(removedMagic, "debug");
     }
 
     /// <summary>
@@ -1426,6 +1442,9 @@ public class HandSystemUI : MonoBehaviour
         if (level == null)
             return;
 
+		RunAnalyticsLedger.BeginNode();
+		RunAnalyticsLedger.SetNode(currentMapNodeIndex + 1, level != null ? level.levelType.ToString() : string.Empty, level != null ? level.numericId : 0);
+        EmitNodeEnter(level);
 		GameLog.Data($"Start level node={currentMapNodeIndex + 1}/{mapNodes.Count} id={level.id} type={level.levelType}");
 		currentLevel = level;
 		runManager?.SelectCurrentNodeLevel(level);
@@ -1690,6 +1709,8 @@ public class HandSystemUI : MonoBehaviour
 					yield return null;
 				}
 			}
+
+			EmitBattleStart(level);
 		}
 
 		private IEnumerator PrewarmBattleEnemyAssetsRoutine()
@@ -1920,6 +1941,7 @@ public class HandSystemUI : MonoBehaviour
 		}
 			currentEvent = new EventModel(eventData);
             currentEvent.RestoreSaveData(savedEvent);
+            EmitEventEnter();
 
 		if ((Object)eventPanel != (Object)null)
 		{
@@ -2587,6 +2609,7 @@ public class HandSystemUI : MonoBehaviour
         if (ChapterMapGrid == null || ChapterMapGrid.CellCount == 0)
             return;
 
+        RunAnalyticsLedger.SetFloor(2);
         RunSaveSystem.SaveCurrentRun(playerState, mapNodes, currentMapNodeIndex, activeChapter ?? GetActiveChapter(), null, GetCurrentRunPlaySeconds(), battleManager, null, SecondFloorSceneName);
         PlayerState.ContinueSavedRun = true;
         PlayerState.GameSceneEntryRequested = true;
@@ -3382,6 +3405,25 @@ public class HandSystemUI : MonoBehaviour
             ChapterData chapter = activeChapter ?? GetActiveChapter();
             BuildDebugMap();
             runManager.SetActiveChapter(chapter);
+        }
+
+        // ── 埋点：对局开始 / 续玩（此处 mapNodes、playerState、章节都已就绪）──
+        RunAnalyticsLedger.BeginRun(
+            saveData != null ? saveData.runId : null,
+            activeChapter ?? GetActiveChapter(),
+            mapNodes != null ? mapNodes.Count : 0,
+            currentMapNodeIndex + 1,
+            startingTutorialRun || RunSaveSystem.IsTutorialRunActive(),
+            directSampleDebugRun || debugLevelActive,
+            GetCurrentRunPlaySeconds,
+            () => playerState);
+        if (!secondFloorRun)
+        {
+            AnalyticsService.Track(saveData != null ? AnalyticsEvent.RunResume : AnalyticsEvent.RunStart, RunAnalyticsLedger.RunStartPayload(playerState, saveData != null));
+
+            // 开局-进阶选择（ascension_select）：只在新局发（续玩局的进阶已在 run_resume.ascension 里，免得一局多条）
+            if (saveData == null)
+                EmitAscensionSelect();
         }
 
 		CreateMagicViews();
@@ -4237,6 +4279,8 @@ public bool IsCardDragActive => cardDragActive;
         if (runEnded)
             return;
 
+        RunAnalyticsLedger.CountBattleTurn();
+
         if (choosingEventCard)
         {
             if (playerState != null && playerState.PlayZone.Count >= pendingChoiceCount)
@@ -4473,6 +4517,11 @@ public bool IsCardDragActive => cardDragActive;
 	{
 		busy = true;
 		SetButtonsInteractable(interactable: false);
+        // 埋点：本回合结算前后的快照，用于算 event_option_resolved 的 hp/gold/道具/箭头差值
+        int analyticsHpBefore = playerState != null ? playerState.CurrentHealth : 0;
+        int analyticsGoldBefore = playerState != null ? playerState.Gold : 0;
+        int analyticsMagicBefore = playerState != null ? playerState.MagicBook.Count : 0;
+        int analyticsDeckBefore = playerState != null ? playerState.Deck.Count : 0;
 			ArrowReadSequence playSequence = ArrowReadSystem.BuildSequence(playerState.PlayZone, playerState, battleManager);
 			EventOptionData matchedOption = null;
 			bool matched = currentEvent != null && currentEvent.TryGetMatchedOption(playSequence.Tokens, out matchedOption);
@@ -4484,6 +4533,7 @@ public bool IsCardDragActive => cardDragActive;
 		if (!matched && currentEvent != null)
 			matched = currentEvent.TryGetDefaultEndOption(out matchedOption);
 		GameLog.Data(string.Format("Resolve event end turn matched={0} option={1}", matched, (matchedOption != null) ? matchedOption.id : "none"));
+		RunAnalyticsLedger.SetEventPlay(RunAnalyticsLedger.DescribeTokens(playSequence.Tokens), refreshUsedThisTurn ? 1 : 0);
 
 		RectTransform matchedOptionRect = null;
 		if (matched && (Object)eventPanel != (Object)null)
@@ -4533,6 +4583,7 @@ public bool IsCardDragActive => cardDragActive;
 		refreshUsedThisTurn = false;
 		if (!matched)
 		{
+            EmitEventNoMatch("no_match");
 			FinishEventLevel();
 			yield break;
 		}
@@ -4542,6 +4593,7 @@ public bool IsCardDragActive => cardDragActive;
 		if (CheckPlayerDefeated())
 			yield break;
 
+        EmitEventOptionResolved(matchedOption, analyticsHpBefore, analyticsGoldBefore, analyticsMagicBefore, analyticsDeckBefore);
 		CompleteEventChoiceOption(matchedOption);
 	}
 
@@ -4853,10 +4905,13 @@ public bool IsCardDragActive => cardDragActive;
 
         yield return PlayMagicAcquirePackRoutine(magics, count, firstSlot, sourceRect);
 
+        string offerIds = AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(magics));
         for (int i = 0; i < count; i++)
         {
             int slotIndex = firstSlot + i;
             playerState.SetMagicAtSlot(MagicFactory.Create(magics[i], slotIndex), slotIndex);
+            RunAnalyticsLedger.SetAcquireContext("event", 0, offerIds, i);
+            EmitMagicAcquire(magics[i], slotIndex, null);
         }
 
         GameLog.Data($"Event granted magic pack count={count} firstSlot={firstSlot}");
@@ -7461,6 +7516,12 @@ public bool IsCardDragActive => cardDragActive;
 		List<HandCardView> views = new List<HandCardView>(cardViews);
 		List<MaterialModel> battleEndRemovedTemporaryCards = new List<MaterialModel>();
 		battleManager?.FinishBattleRules(battleEndRemovedTemporaryCards);
+        // 埋点：战斗结束（胜利分支；玩家已倒下时战斗失败由 ShowRunResultPanel 负责）
+        if (playerState != null && playerState.CurrentHealth > 0)
+        {
+            RunAnalyticsLedger.SetNodeResult("battle_win");
+            EmitBattleEnd("win");
+        }
         TutorialManager?.EndTutorialBattle();
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayGameplayMusic();
@@ -7536,6 +7597,7 @@ public bool IsCardDragActive => cardDragActive;
 		currentEvent = null;
 		SetButtonsInteractable(interactable: false);
         pendingBattleRewardShop = true;
+        RunAnalyticsLedger.MarkBattleShopPending();
         SaveRunProgress();
 
         // 结算基础金币改为战斗结束后自动获取（统一固定值），不再由玩家点击领取。
@@ -7684,6 +7746,13 @@ public bool IsCardDragActive => cardDragActive;
         }
         RefreshStaticUI();
         GameLog.Data($"Rest default heal amount={healed}");
+
+        Dictionary<string, object> restPayload = RunAnalyticsLedger.Context();
+        restPayload[AnalyticsProperty.Choice] = "heal";
+        restPayload[AnalyticsProperty.HealAmount] = healAmount;
+        restPayload[AnalyticsProperty.Hp] = healthBefore;
+        restPayload[AnalyticsProperty.HpDelta] = healed;
+        AnalyticsService.Track(AnalyticsEvent.RestChoose, restPayload);
     }
 
 	private void ResetBattleDeckState()
@@ -8158,6 +8227,16 @@ public bool IsCardDragActive => cardDragActive;
         GetUIManager().UnpinUnifiedDetailPopup();
         playerState.AddGold(sellPrice, false);
         CreateMagicViews();
+
+        Dictionary<string, object> sellPayload = RunAnalyticsLedger.Context();
+        sellPayload[AnalyticsProperty.MagicId] = magic.Id;
+        sellPayload[AnalyticsProperty.Rarity] = (int)magic.Data.rarity;
+        sellPayload[AnalyticsProperty.Price] = sellPrice;
+        sellPayload[AnalyticsProperty.GoldBefore] = playerState.Gold - sellPrice;
+        sellPayload[AnalyticsProperty.GoldAfter] = playerState.Gold;
+        sellPayload[AnalyticsProperty.Source] = "shop_sell";
+        AnalyticsService.Track(AnalyticsEvent.MagicSell, sellPayload);
+
         RefreshStaticUI();
         // 卖出会腾出道具槽：商店开着时立刻刷新道具商品的可购买状态。
         GetUIManager().ShopPanel?.RefreshOfferAvailability();
@@ -8368,6 +8447,7 @@ public bool IsCardDragActive => cardDragActive;
             return false;
         }
 
+        EmitUpgradeChoose("magic_modifier", magic != null ? magic.Id : string.Empty, pendingMagicModifier != null ? pendingMagicModifier.id : null);
         pendingMagicModifier = null;
         RefreshPlayerAnimationState();
         CreateMagicViews();
@@ -8386,7 +8466,10 @@ public bool IsCardDragActive => cardDragActive;
         MaterialModel target = playerState.Hand[handCardIndex];
         bool applied = TryApplyPendingMaterialModifier(target);
         if (applied)
+        {
+            EmitUpgradeChoose("arrow_modifier", target != null ? target.material.ToString() : string.Empty, pendingMaterialModifier != null ? pendingMaterialModifier.id : null);
             GetUIManager().MagicModifierSelectionPanel?.CompleteSelection();
+        }
         return applied;
     }
 
@@ -8400,8 +8483,307 @@ public bool IsCardDragActive => cardDragActive;
         undoRewardAvailable = true;
 		playerState.SetMagicAtSlot(MagicFactory.Create(rewardMagic, slotIndex), slotIndex);
 		CreateMagicViews();
+        EmitMagicReplaced(undoRewardPreviousMagic, rewardMagic);
+        EmitMagicAcquire(rewardMagic, slotIndex, undoRewardPreviousMagic);
 		GetUIManager().RewardPanel?.CompleteMagicRewardSelection();
 	}
+
+    /// <summary>
+    /// 埋点：道具真正落地进槽（reward / event / shop 路径共用）。
+    /// 来源、候选列表与价格由各路径在发道具前调 RunAnalyticsLedger.SetAcquireContext 声明。
+    /// </summary>
+    private void EmitMagicAcquire(MagicData data, int slotIndex, MagicModel replacedMagic)
+    {
+        if (data == null || playerState == null)
+            return;
+
+        int price = RunAnalyticsLedger.AcquirePrice;
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.MagicId] = data.id;
+        payload[AnalyticsProperty.MagicNumericId] = data.numericId;
+        payload[AnalyticsProperty.MagicName] = AnalyticsService.Truncate(LocalizationSystem.GetText(data.nameKey, data.id));
+        payload[AnalyticsProperty.Rarity] = (int)data.rarity;
+        payload[AnalyticsProperty.Source] = RunAnalyticsLedger.AcquireSource;
+        payload[AnalyticsProperty.SlotIndex] = slotIndex;
+        payload[AnalyticsProperty.Price] = price;
+        payload[AnalyticsProperty.GoldBefore] = playerState.Gold + price;
+        payload[AnalyticsProperty.GoldAfter] = playerState.Gold;
+        payload[AnalyticsProperty.MagicBookCount] = playerState.MagicBook.Count;
+        payload[AnalyticsProperty.MagicBookIds] = RunAnalyticsLedger.MagicBookIds(playerState);
+        if (!string.IsNullOrEmpty(RunAnalyticsLedger.AcquireOfferIds))
+        {
+            payload[AnalyticsProperty.OfferMagicIds] = RunAnalyticsLedger.AcquireOfferIds;
+            payload[AnalyticsProperty.OfferIndex] = RunAnalyticsLedger.AcquireOfferIndex;
+        }
+        if (replacedMagic != null)
+            payload[AnalyticsProperty.ReplacedMagicId] = replacedMagic.Id;
+
+        AnalyticsService.Track(AnalyticsEvent.MagicAcquire, payload);
+        RunAnalyticsLedger.RecordMagicAcquired(data);
+        RunAnalyticsLedger.ClearAcquireContext();
+    }
+
+    // ── 埋点（batch 2）：节点 / 战斗 / 事件 / 强化 / 道具替换 ──
+
+    /// <summary>进入节点（node_enter）：战斗/商店/休息/奖励/事件都从这里进，是漏斗与卡点的分母。</summary>
+    private void EmitNodeEnter(LevelData level)
+    {
+        LevelData target = level != null ? level : currentLevel;
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        RunAnalyticsLedger.AddPlayerSnapshot(payload, playerState);
+        if (target != null)
+        {
+            payload[AnalyticsProperty.LevelType] = target.levelType.ToString();
+            payload[AnalyticsProperty.IsElite] = target.levelType == LevelType.Elite;
+        }
+        payload[AnalyticsProperty.IsBoss] = currentChapterMapBossLevel;
+        AnalyticsService.Track(AnalyticsEvent.NodeEnter, payload);
+    }
+
+    /// <summary>节点结束（node_exit）；事件节点额外发 event_end。同一节点只发一次。</summary>
+    private void EmitNodeExit()
+    {
+        if (!RunAnalyticsLedger.HasRun || !RunAnalyticsLedger.MarkNodeExitEmitted())
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Result] = RunAnalyticsLedger.NodeResult;
+        payload[AnalyticsProperty.NodeSeconds] = RunAnalyticsLedger.NodeSeconds;
+        payload[AnalyticsProperty.HpDelta] = RunAnalyticsLedger.NodeHpDelta;
+        payload[AnalyticsProperty.GoldDelta] = RunAnalyticsLedger.NodeGoldDelta;
+        payload[AnalyticsProperty.MagicGainedCount] = RunAnalyticsLedger.NodeMagicGainedCount;
+        AnalyticsService.Track(AnalyticsEvent.NodeExit, payload);
+
+        if (RunAnalyticsLedger.NodeType != "Event")
+            return;
+
+        Dictionary<string, object> eventPayload = RunAnalyticsLedger.Context();
+        eventPayload[AnalyticsProperty.EventId] = RunAnalyticsLedger.EventId;
+        eventPayload[AnalyticsProperty.Result] = RunAnalyticsLedger.EventResolved ? "resolved" : "left";
+        eventPayload[AnalyticsProperty.NodeSeconds] = RunAnalyticsLedger.NodeSeconds;
+        eventPayload[AnalyticsProperty.HpDelta] = RunAnalyticsLedger.NodeHpDelta;
+        eventPayload[AnalyticsProperty.GoldDelta] = RunAnalyticsLedger.NodeGoldDelta;
+        eventPayload[AnalyticsProperty.MagicGained] = RunAnalyticsLedger.NodeMagicGainedCount;
+        AnalyticsService.Track(AnalyticsEvent.EventEnd, eventPayload);
+    }
+
+    /// <summary>战斗开始（battle_start）：敌人实例已全部生成。</summary>
+    private void EmitBattleStart(LevelData level)
+    {
+        RunAnalyticsLedger.MarkBattleStart();
+        IReadOnlyList<EnemyModel> enemies = battleManager != null ? battleManager.Enemies : null;
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        if (level != null)
+        {
+            payload[AnalyticsProperty.LevelType] = level.levelType.ToString();
+            payload[AnalyticsProperty.IsElite] = level.levelType == LevelType.Elite;
+        }
+        payload[AnalyticsProperty.IsBoss] = currentChapterMapBossLevel;
+        payload[AnalyticsProperty.EnemyIds] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyIds(enemies));
+        payload[AnalyticsProperty.EnemyNames] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyNames(enemies));
+        payload[AnalyticsProperty.EnemyCount] = enemies != null ? enemies.Count : 0;
+        payload[AnalyticsProperty.EnemyHpList] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyHpList(enemies));
+        if (playerState != null)
+        {
+            payload[AnalyticsProperty.Hp] = playerState.CurrentHealth;
+            payload[AnalyticsProperty.MaxHp] = playerState.MaxHealth;
+            payload[AnalyticsProperty.Gold] = playerState.Gold;
+            payload[AnalyticsProperty.MagicCount] = playerState.MagicBook.Count;
+            payload[AnalyticsProperty.DeckCount] = playerState.Deck.Count;
+        }
+        AnalyticsService.Track(AnalyticsEvent.BattleStart, payload);
+    }
+
+    /// <summary>战斗结束（battle_end）：result = win / defeat，失败时带致命敌人。</summary>
+    private void EmitBattleEnd(string result)
+    {
+        bool win = result == "win";
+        RunAnalyticsLedger.RecordBattle(win);
+        IReadOnlyList<EnemyModel> enemies = battleManager != null ? battleManager.Enemies : null;
+        EnemyModel source = playerState != null ? playerState.LastDamageSourceEnemy : null;
+        if (!win && source != null)
+            RunAnalyticsLedger.RecordDefeatEnemy(source);
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Result] = result;
+        payload[AnalyticsProperty.BattleTurns] = RunAnalyticsLedger.BattleTurns;
+        payload[AnalyticsProperty.BattleSeconds] = RunAnalyticsLedger.BattleSeconds;
+        payload[AnalyticsProperty.DamageDealt] = RunAnalyticsLedger.DamageDealt;
+        payload[AnalyticsProperty.DamageTaken] = RunAnalyticsLedger.DamageTaken;
+        payload[AnalyticsProperty.EnemyIds] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyIds(enemies));
+        payload[AnalyticsProperty.EnemyNames] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyNames(enemies));
+        payload[AnalyticsProperty.EnemyHpRemainingList] = AnalyticsService.JoinList(RunAnalyticsLedger.EnemyHpList(enemies));
+        payload[AnalyticsProperty.IsBoss] = currentChapterMapBossLevel;
+        if (currentLevel != null)
+            payload[AnalyticsProperty.IsElite] = currentLevel.levelType == LevelType.Elite;
+        if (playerState != null)
+        {
+            payload[AnalyticsProperty.HpLeft] = playerState.CurrentHealth;
+            payload[AnalyticsProperty.MaxHp] = playerState.MaxHealth;
+        }
+        if (source != null)
+        {
+            payload[AnalyticsProperty.DefeatSourceEnemyId] = source.Data != null ? source.Data.numericId : 0;
+            payload[AnalyticsProperty.DefeatSourceEnemyName] = AnalyticsService.Truncate(source.Name);
+        }
+        AnalyticsService.Track(AnalyticsEvent.BattleEnd, payload);
+    }
+
+    /// <summary>进入事件节点（event_enter）。</summary>
+    private void EmitEventEnter()
+    {
+        if (currentEvent == null)
+            return;
+
+        RunAnalyticsLedger.SetEventId(currentEvent.Id);
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.EventId] = currentEvent.Id;
+        payload[AnalyticsProperty.EventNumericId] = currentEvent.Data != null ? currentEvent.Data.numericId : 0;
+        payload[AnalyticsProperty.TitleKey] = currentEvent.Data != null ? currentEvent.Data.titleKey : string.Empty;
+        payload[AnalyticsProperty.OptionCount] = currentEvent.CurrentOptions.Length;
+        AnalyticsService.Track(AnalyticsEvent.EventEnter, payload);
+    }
+
+    /// <summary>事件打不出/无法匹配（event_no_match）。</summary>
+    private void EmitEventNoMatch(string reason)
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        if (currentEvent != null)
+        {
+            payload[AnalyticsProperty.EventId] = currentEvent.Id;
+            List<string> optionIds = new List<string>();
+            EventOptionData[] options = currentEvent.CurrentOptions;
+            for (int i = 0; options != null && i < options.Length; i++)
+            {
+                if (options[i] != null)
+                    optionIds.Add(options[i].id);
+            }
+            payload[AnalyticsProperty.OptionIds] = AnalyticsService.JoinList(optionIds);
+        }
+        payload[AnalyticsProperty.Reason] = reason;
+        if (!string.IsNullOrEmpty(RunAnalyticsLedger.EventPlaySequence))
+            payload[AnalyticsProperty.PlayedSequence] = RunAnalyticsLedger.EventPlaySequence;
+        payload[AnalyticsProperty.RefreshCount] = RunAnalyticsLedger.EventRefreshCount;
+        AnalyticsService.Track(AnalyticsEvent.EventNoMatch, payload);
+    }
+
+    /// <summary>事件选项结算（event_option_resolved）：选了什么 + 本回合的 hp/金币/道具/箭头差值。</summary>
+    private void EmitEventOptionResolved(EventOptionData option, int hpBefore, int goldBefore, int magicBefore, int deckBefore)
+    {
+        if (option == null)
+            return;
+
+        RunAnalyticsLedger.MarkEventResolved();
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.EventId] = currentEvent != null ? currentEvent.Id : RunAnalyticsLedger.EventId;
+        payload[AnalyticsProperty.OptionId] = option.id;
+        payload[AnalyticsProperty.OptionIndex] = EventOptionIndexOf(option);
+        payload[AnalyticsProperty.IsExit] = option.isExitOption;
+        payload[AnalyticsProperty.ResolveCount] = currentEvent != null ? currentEvent.GetOptionResolveCount(option) : 0;
+        if (!string.IsNullOrEmpty(RunAnalyticsLedger.EventPlaySequence))
+            payload[AnalyticsProperty.PlayedSequence] = RunAnalyticsLedger.EventPlaySequence;
+        payload[AnalyticsProperty.RefreshCount] = RunAnalyticsLedger.EventRefreshCount;
+        if (playerState != null)
+        {
+            payload[AnalyticsProperty.Hp] = hpBefore;
+            payload[AnalyticsProperty.HpDelta] = playerState.CurrentHealth - hpBefore;
+            payload[AnalyticsProperty.GoldDelta] = playerState.Gold - goldBefore;
+            payload[AnalyticsProperty.MagicDelta] = playerState.MagicBook.Count - magicBefore;
+            payload[AnalyticsProperty.ArrowDelta] = playerState.Deck.Count - deckBefore;
+        }
+        List<string> effectTypes = new List<string>();
+        if (option.effects != null)
+        {
+            for (int i = 0; i < option.effects.Length; i++)
+            {
+                if (option.effects[i] != null)
+                    effectTypes.Add(option.effects[i].rewardType.ToString());
+            }
+        }
+        payload[AnalyticsProperty.EffectTypes] = AnalyticsService.JoinList(effectTypes);
+        AnalyticsService.Track(AnalyticsEvent.EventOptionResolved, payload);
+    }
+
+    private int EventOptionIndexOf(EventOptionData option)
+    {
+        EventOptionData[] options = currentEvent != null ? currentEvent.CurrentOptions : null;
+        for (int i = 0; options != null && i < options.Length; i++)
+        {
+            if (options[i] == option)
+                return i;
+        }
+        return -1;
+    }
+
+    /// <summary>强化/附魔选择（upgrade_choose）；休息节点额外发一条 rest_choose 便于对齐「选择」与「强化」。</summary>
+    private void EmitUpgradeChoose(string kind, string targetId, string modifierId)
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.UpgradeKind] = kind;
+        if (!string.IsNullOrEmpty(targetId))
+            payload[AnalyticsProperty.TargetId] = targetId;
+        if (!string.IsNullOrEmpty(modifierId))
+            payload[AnalyticsProperty.ModifierId] = modifierId;
+        AnalyticsService.Track(AnalyticsEvent.UpgradeChoose, payload);
+
+        if (RunAnalyticsLedger.NodeType != "Rest")
+            return;
+
+        Dictionary<string, object> rest = RunAnalyticsLedger.Context();
+        rest[AnalyticsProperty.Choice] = kind == "magic_modifier" ? "learn_magic_modifier" : "enchant_arrow";
+        if (!string.IsNullOrEmpty(targetId))
+            rest[AnalyticsProperty.MagicId] = targetId;
+        if (!string.IsNullOrEmpty(modifierId))
+            rest[AnalyticsProperty.ModifierId] = modifierId;
+        AnalyticsService.Track(AnalyticsEvent.RestChoose, rest);
+    }
+
+    /// <summary>
+    /// 埋点：开局-进阶选择（ascension_select）。放在开局之后发，带 run_id 等对局上下文，
+    /// 可以直接和本局其余事件 join（旧版本在主菜单「确认开始」时发，没有 run_id）。
+    /// </summary>
+    private void EmitAscensionSelect()
+    {
+        int highestUnlocked = 0;
+        try
+        {
+            UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
+            highestUnlocked = progress != null ? progress.highestAscensionUnlocked : 0;
+        }
+        catch (System.Exception)
+        {
+        }
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Ascension] = DifficultyUpgradeSystem.CurrentAscensionLevel;
+        payload[AnalyticsProperty.HighestUnlocked] = highestUnlocked;
+        AnalyticsService.Track(AnalyticsEvent.AscensionSelect, payload);
+    }
+
+    /// <summary>道具被替换（magic_remove，reason=replace）；同一道具落回同一槽位不算替换。</summary>
+    private void EmitMagicReplaced(MagicModel replaced, MagicData incoming)
+    {
+        if (replaced == null || replaced.Data == null)
+            return;
+        if (incoming != null && replaced.Id == incoming.id)
+            return;
+
+        EmitMagicRemoved(replaced, "replace");
+    }
+
+    /// <summary>道具被移除（magic_remove）：reason = replace / shop_remove / debug。</summary>
+    private void EmitMagicRemoved(MagicModel magic, string reason)
+    {
+        if (magic == null || magic.Data == null)
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.MagicId] = magic.Id;
+        payload[AnalyticsProperty.Rarity] = (int)magic.Data.rarity;
+        payload[AnalyticsProperty.Reason] = reason;
+        payload[AnalyticsProperty.SlotIndex] = magic.SlotIndex;
+        AnalyticsService.Track(AnalyticsEvent.MagicRemove, payload);
+    }
 
     /// <summary>
     /// 奖励道具（战斗结算的道具选项 / 事件的道具奖励）从奖励选项卡飞入道具栏第一个空槽：
@@ -8504,8 +8886,11 @@ public bool IsCardDragActive => cardDragActive;
         if (magicData == null)
             return;
 
+        MagicModel replacedMagic = playerState.GetMagicAtSlot(slotIndex);
         playerState.SetMagicAtSlot(MagicFactory.Create(magicData, slotIndex), slotIndex);
         CreateMagicViews();
+        EmitMagicReplaced(replacedMagic, magicData);
+        EmitMagicAcquire(magicData, slotIndex, replacedMagic);
         RefreshStaticUI();
         SaveRunProgress();
     }
@@ -8628,6 +9013,7 @@ public bool IsCardDragActive => cardDragActive;
 
 	public void FinishReward()
 	{
+        EmitNodeExit();
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0011: Expected O, but got Unknown
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
@@ -9220,7 +9606,14 @@ public bool IsCardDragActive => cardDragActive;
         bool tutorialVictory = victory && chapter != null && chapter.numericId == TutorialManagerUI.TutorialChapterNumericId;
         float playSeconds = GetCurrentRunPlaySeconds();
         List<string> magicNames = victory ? GetVictoryMagicNames() : null;
+        if (!victory && currentLevel != null && (currentLevel.levelType == LevelType.Battle || currentLevel.levelType == LevelType.Elite))
+        {
+            RunAnalyticsLedger.SetNodeResult("battle_lose");
+            EmitBattleEnd("defeat");
+        }
+        AnalyticsService.Track(AnalyticsEvent.RunEnd, RunAnalyticsLedger.RunEndPayload(playerState, victory ? "Victory" : "Defeat"));
         RunSaveSystem.RecordRunEndAndClearCurrentRun(victory ? RunHistoryResultType.Victory : RunHistoryResultType.Defeat, playerState, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
+        RunAnalyticsLedger.Reset();
 		runEnded = true;
 		busy = true;
 		SetButtonsInteractable(interactable: false);

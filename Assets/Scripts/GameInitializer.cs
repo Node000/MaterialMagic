@@ -38,8 +38,6 @@ public class GameInitializer : MonoBehaviour
 
     [Header("埋点")]
     [SerializeField] private bool enableAnalytics = true;
-    [Tooltip("无版号的 TapTap 试玩版固定为 demo。")]
-    [SerializeField] private bool analyticsBuildTypeIsDemo = true;
     [SerializeField] private bool analyticsLogToConsole = false;
     [Tooltip("开发期把事件写入 persistentDataPath/Save/analytics_events.jsonl。")]
     [SerializeField] private bool analyticsWriteLocalFile = false;
@@ -235,56 +233,17 @@ public class GameInitializer : MonoBehaviour
         AnalyticsConfig config = new AnalyticsConfig
         {
             enabled = enableAnalytics,
-            channel = string.IsNullOrEmpty(tapTapChannel) ? "default" : tapTapChannel,
-            buildType = analyticsBuildTypeIsDemo ? AnalyticsBuildType.Demo : AnalyticsBuildType.Release,
-            region = "CN",
             logToConsole = analyticsLogToConsole,
             writeLocalFile = analyticsWriteLocalFile
         };
         AnalyticsService.Init(config);
 
         // 设备属性（对应 TapDB 的「用户属性 - 设备」，见 Assets/Docs/userProp.csv）：
-        // 这些是筛选/分部维度，不需要每个事件重复携带。
+        // 只上报两个必要维度；平台/机型、地区、渠道由 TapDB 自带采集，语言/存档栏位/进阶进度/
+        // 教程完成对平衡分析无增量（进阶与教程局已由事件属性 ascension / is_tutorial 承载）。
+        // 设备属性只留 app_version（TapDB 预置字段名）。is_dev 已改挂事件属性，
+        // 不再走 DeviceUpdate（实测设备属性通道会被接收端整条丢弃，见 Assets/Docs/埋点后台录入表.md 第四部分）。
         AnalyticsService.SetDeviceProperty(AnalyticsProperty.AppVersion, Application.version);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.BuildType, config.buildType == AnalyticsBuildType.Demo ? "demo" : "release");
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.Platform, Application.platform.ToString());
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.Channel, config.channel);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.Region, config.region);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.Language, LocalizationSystem.CurrentLanguage);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.IsDev, Application.isEditor || Debug.isDebugBuild);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.SaveSlot, RunSaveSystem.CurrentSlotIndex);
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.AscensionMax, ReadHighestUnlockedAscension());
-        AnalyticsService.SetDeviceProperty(AnalyticsProperty.TutorialDone, ReadTutorialDone());
-    }
-
-    private static int ReadHighestUnlockedAscension()
-    {
-        try
-        {
-            UnlockProgressData progress = UnlockProgressSaveSystem.LoadCurrent();
-            return progress != null ? progress.highestAscensionUnlocked : 0;
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning("[GameInitializer] 读取解锁进度失败：" + exception.Message);
-            return 0;
-        }
-    }
-
-    private static bool ReadTutorialDone()
-    {
-        try
-        {
-            if (!RunSaveSystem.HasCurrentRun())
-                return false;
-
-            RunSaveData save = RunSaveSystem.LoadCurrentRun();
-            return save != null && save.tutorialCompleted;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
     }
 
     private void InitializeTapTap()

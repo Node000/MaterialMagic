@@ -315,6 +315,7 @@ public class StartMenuUI : MonoBehaviour
         else
             RunSaveSystem.BeginNewRun();
 
+
         if (SceneTransitionManager.Instance != null)
             SceneTransitionManager.Instance.LoadGameSceneWithTransition();
         else

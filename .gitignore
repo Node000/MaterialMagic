@@ -45,6 +45,9 @@ crashlytics-build.properties
 # ── Local SDK credentials ──
 /Assets/Resources/LocalSettings/
 
+# ── 本地敏感信息（TapDB MCP Key 等，绝不提交）──
+/LocalSafe/
+
 # ── Recordings / Profiling ──
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/

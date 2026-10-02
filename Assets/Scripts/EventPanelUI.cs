@@ -355,6 +355,59 @@ public class EventPanelUI : MonoBehaviour
             bodyText.text = fullText;
     }
 
+    /// <summary>
+    /// 埋点：选项列表亮相（event_options_shown）。
+    /// 「提供了什么」是选择率的分母，与 event_option_resolved（选了什么）/ event_no_match（打不出）配对使用。
+    /// </summary>
+    private void EmitOptionsShown(EventOptionData[] options)
+    {
+        if (eventModel == null)
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.EventId] = eventModel.Id;
+        payload[AnalyticsProperty.EventNumericId] = eventModel.Data != null ? eventModel.Data.numericId : 0;
+        payload[AnalyticsProperty.TitleKey] = eventModel.Data != null ? eventModel.Data.titleKey : string.Empty;
+        payload[AnalyticsProperty.OptionCount] = options != null ? options.Length : 0;
+        if (options != null && options.Length > 0)
+        {
+            List<string> ids = new List<string>();
+            List<string> recipes = new List<string>();
+            List<string> exits = new List<string>();
+            List<string> tags = new List<string>();
+            for (int i = 0; i < options.Length; i++)
+            {
+                EventOptionData option = options[i];
+                if (option == null)
+                    continue;
+                ids.Add(option.id);
+                recipes.Add(EventModel.GetRecipeDisplay(option));
+                exits.Add(option.isExitOption ? "1" : "0");
+                tags.Add(option.tagIds != null ? string.Join("+", option.tagIds) : string.Empty);
+            }
+            payload[AnalyticsProperty.OptionIds] = AnalyticsService.JoinList(ids);
+            payload[AnalyticsProperty.OptionRecipes] = AnalyticsService.JoinList(recipes);
+            payload[AnalyticsProperty.OptionExitFlags] = AnalyticsService.JoinList(exits);
+            payload[AnalyticsProperty.OptionTags] = AnalyticsService.JoinList(tags);
+        }
+
+        PlayerState player = RunAnalyticsLedger.Player;
+        if (player != null)
+        {
+            List<string> hand = new List<string>();
+            for (int i = 0; i < player.Hand.Count; i++)
+            {
+                MaterialModel card = player.Hand[i];
+                if (card != null)
+                    hand.Add(card.material.ToString());
+            }
+            payload[AnalyticsProperty.HandMaterials] = AnalyticsService.JoinList(hand);
+            payload[AnalyticsProperty.Hp] = player.CurrentHealth;
+            payload[AnalyticsProperty.Gold] = player.Gold;
+        }
+        AnalyticsService.Track(AnalyticsEvent.EventOptionsShown, payload);
+    }
+
     private void ShowOptions()
     {
         showingOptions = true;
@@ -364,6 +417,7 @@ public class EventPanelUI : MonoBehaviour
 
         EventOptionData[] options = eventModel.CurrentOptions;
         optionsShown?.Invoke();
+        EmitOptionsShown(options);
         float optionHeight = GetOptionHeight(options.Length);
         float optionStep = optionHeight + optionSpacing;
         float startY = (options.Length - 1) * optionStep * 0.5f;

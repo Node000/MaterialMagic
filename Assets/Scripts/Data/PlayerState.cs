@@ -1106,6 +1106,8 @@ public class PlayerState
             LastDamageSourceEnemy = attacker != null && attacker.IsEnemy ? attacker.Enemy : null;
         result.ShieldDamage = blockedDamage;
         result.HealthDamage = healthDamage;
+        if (healthDamage > 0)
+            RunAnalyticsLedger.AddDamageTaken(healthDamage);
         result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
         GameLog.Data($"Player take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
         if (AudioManager.Instance != null)

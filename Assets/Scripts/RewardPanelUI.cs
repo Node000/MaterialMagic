@@ -149,6 +149,89 @@ public class RewardPanelUI : MonoBehaviour
         HideArrowChoiceCard();
         RefreshChoiceSlots();
         owner.GetUIManager().TutorialManager?.OnRewardPanelShown();
+        EmitRewardEnter();
+    }
+
+    // ── 埋点（batch 1）：奖励面板相关事件 ──
+
+    /// <summary>结算三选一面板打开（reward_enter）。</summary>
+    private void EmitRewardEnter()
+    {
+        if (owner == null || currentChoices == null)
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.GoldChoiceAmount] = currentChoices.GoldAmount;
+        LevelData level = owner.CurrentLevelForAnalytics;
+        if (level != null)
+        {
+            payload[AnalyticsProperty.IsElite] = level.levelType == LevelType.Elite;
+        }
+        payload[AnalyticsProperty.IsBoss] = owner.CurrentLevelIsBossForAnalytics;
+        if (currentChoices.Magic != null)
+        {
+            payload[AnalyticsProperty.OfferMagicIds] = currentChoices.Magic.id;
+            payload[AnalyticsProperty.OfferCount] = 1;
+        }
+        if (currentChoices.Arrow != null)
+        {
+            payload[AnalyticsProperty.ArrowOfferMaterial] = currentChoices.Arrow.material.ToString();
+            if (currentChoices.Arrow.HasModifier && currentChoices.Arrow.modifierData != null)
+                payload[AnalyticsProperty.ArrowOfferModifier] = currentChoices.Arrow.modifierData.id;
+        }
+        if (owner.PlayerState != null)
+        {
+            payload[AnalyticsProperty.Hp] = owner.PlayerState.CurrentHealth;
+            payload[AnalyticsProperty.Gold] = owner.PlayerState.Gold;
+        }
+        AnalyticsService.Track(AnalyticsEvent.RewardEnter, payload);
+    }
+
+    /// <summary>候选道具展示（magic_offer）。</summary>
+    private void EmitMagicOffer(IReadOnlyList<MagicData> offers, string source)
+    {
+        if (offers == null || offers.Count == 0)
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.OfferSource] = source;
+        payload[AnalyticsProperty.OfferMagicIds] = AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(offers));
+        payload[AnalyticsProperty.OfferCount] = offers.Count;
+        if (owner != null && owner.PlayerState != null)
+        {
+            payload[AnalyticsProperty.Gold] = owner.PlayerState.Gold;
+            payload[AnalyticsProperty.Hp] = owner.PlayerState.CurrentHealth;
+        }
+        AnalyticsService.Track(AnalyticsEvent.MagicOffer, payload);
+    }
+
+    /// <summary>奖励选择（reward_choice）：金币 / 道具 / 箭头。</summary>
+    private void EmitRewardChoice(string choice, int index, int amount)
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Choice] = choice;
+        if (index >= 0)
+            payload[AnalyticsProperty.ChoiceIndex] = index;
+        if (amount > 0)
+            payload[AnalyticsProperty.RewardAmount] = amount;
+        AnalyticsService.Track(AnalyticsEvent.RewardChoice, payload);
+    }
+
+    /// <summary>跳过奖励直接进商店（reward_skip）；事件道具奖励没有“跳过”语义，不算。</summary>
+    private void EmitRewardSkip()
+    {
+        if (magicOnlyMode)
+            return;
+
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        if (currentChoices != null)
+        {
+            if (currentChoices.Magic != null)
+                payload[AnalyticsProperty.OfferMagicIds] = currentChoices.Magic.id;
+            if (currentChoices.GoldAmount > 0)
+                payload[AnalyticsProperty.GoldChoiceAmount] = currentChoices.GoldAmount;
+        }
+        AnalyticsService.Track(AnalyticsEvent.RewardSkip, payload);
     }
 
     private int RollGoldChoiceAmount()
@@ -179,6 +262,7 @@ public class RewardPanelUI : MonoBehaviour
         claimInProgress = false;
         currentChoices = null;
         currentMagicChoices = owner.GetRewardMagicChoices(3);
+        EmitMagicOffer(currentMagicChoices, "event");
         selectedMagicView = null;
         hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
@@ -301,6 +385,7 @@ public class RewardPanelUI : MonoBehaviour
 
         // 可以跳过：未领奖（或选了道具但未装备）时直接放弃本次奖励并进入商店。
         owner?.SelectPendingRewardMagic(null);
+        EmitRewardSkip();
         settlementClaimed = true;
         claimInProgress = false;
         CloseSettlementAndFinish();
@@ -477,6 +562,7 @@ public class RewardPanelUI : MonoBehaviour
         claimInProgress = true;
         RefreshChoiceSlots();
         yield return owner.GainGoldAnimated(currentChoices.GoldAmount, goldChoiceSlot, false);
+        EmitRewardChoice("gold", -1, currentChoices.GoldAmount);
         settlementClaimed = true;
         claimInProgress = false;
         CloseSettlementAndFinish();
@@ -501,6 +587,8 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>结算道具选项：从选项卡飞入道具栏空槽，落地时 <see cref="HandSystemUI.SetRewardMagicAtSlot"/> 会回调完成领奖。</summary>
     private IEnumerator ClaimItemChoiceRoutine(MagicData data)
     {
+        RunAnalyticsLedger.SetAcquireContext("reward_choice", 0, data != null ? data.id : string.Empty, 0);
+        EmitRewardChoice("magic", 0, 0);
         RectTransform sourceRect = itemChoiceCard != null ? itemChoiceCard.transform as RectTransform : itemChoiceSlot;
         yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
         if (!settlementClaimed)
@@ -522,6 +610,7 @@ public class RewardPanelUI : MonoBehaviour
         claimInProgress = true;
         RefreshChoiceSlots();
         yield return owner.GainRewardArrow(option, sourceRect);
+        EmitRewardChoice("arrow", -1, 0);
         settlementClaimed = true;
         claimInProgress = false;
         CloseSettlementAndFinish();
@@ -878,6 +967,7 @@ public class RewardPanelUI : MonoBehaviour
     private IEnumerator ClaimMagicOnlyRewardRoutine(MagicData data, MagicItemView view)
     {
         RectTransform sourceRect = view != null ? view.transform as RectTransform : null;
+        RunAnalyticsLedger.SetAcquireContext("event", 0, AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(currentMagicChoices)), RunAnalyticsLedger.IndexOfMagic(currentMagicChoices, data));
         yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
         if (!magicClaimed)
         {

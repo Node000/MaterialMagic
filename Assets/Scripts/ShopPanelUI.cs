@@ -155,6 +155,7 @@ public class ShopPanelUI : MonoBehaviour
             return;
         }
         refreshCount++;
+        EmitShopRefresh(cost);
         refreshInProgress = true;
         StartCoroutine(RefreshRoutine());
     }
@@ -273,6 +274,8 @@ public class ShopPanelUI : MonoBehaviour
         BuildLayerViews();
         if (savedState != null)
             RestoreState(savedState);
+        RunAnalyticsLedger.BeginShop(owner.PlayerState != null ? owner.PlayerState.Gold : 0);
+        EmitShopEnter();
         BindActionButtons();
         StartShowRoutine();
     }
@@ -1339,6 +1342,7 @@ public class ShopPanelUI : MonoBehaviour
     {
         CancelMagicPurchaseSelection(false);
         ClearUndoPurchase();
+        EmitShopLeave();
         owner.FinishReward();
     }
 
@@ -1437,6 +1441,9 @@ public class ShopPanelUI : MonoBehaviour
         offer.purchased = true;
         purchaseInProgress = true;
         Refresh();
+        RunAnalyticsLedger.SetAcquireContext(RunAnalyticsLedger.IsBattleShop ? "battle_shop" : "shop", offer.price, offer.magicData != null ? offer.magicData.id : string.Empty, 0);
+        EmitShopPurchase("magic", offer, goldBefore, previousMagic, slotIndex, null);
+        RunAnalyticsLedger.RecordShopPurchase(offer.price);
         owner.SetShopMagicAtSlotAnimated(offer.magicData, slotIndex, sourceRect, () =>
         {
             purchaseInProgress = false;
@@ -1460,6 +1467,8 @@ public class ShopPanelUI : MonoBehaviour
 
         PlayShopSfx(GameSfxId.Buy);
         // 先捕获飞行起点，再标记已购：进入 tween 时价格/内容立即消失（槽位保留占位，其它商品不重排）。
+        EmitShopPurchase("material", offer, goldBefore, null, -1, offer.material.ToString());
+        RunAnalyticsLedger.RecordShopPurchase(offer.price);
         RectTransform sourceRect = GetMaterialOfferRect(offer);
         offer.purchased = true;
         purchaseInProgress = true;
@@ -1527,6 +1536,8 @@ public class ShopPanelUI : MonoBehaviour
         {
             PlayShopSfx(GameSfxId.Buy);
             offer.purchased = true;
+            EmitShopPurchase("remove_material", offer, goldBefore, null, -1, removedMaterial != null ? removedMaterial.material.ToString() : null);
+            RunAnalyticsLedger.RecordShopPurchase(offer.price);
             RegisterUndoRemoveMaterialPurchase(offer, goldBefore, removedMaterial);
         }
         Refresh();
@@ -1755,11 +1766,113 @@ public class ShopPanelUI : MonoBehaviour
         if (undoOffer != null)
             undoOffer.purchased = false;
 
+        EmitShopUndoPurchase();
         owner.CreateMagicViewsForShopUndo();
         owner.RefreshShopUndoUI();
         ClearUndoPurchase();
         Refresh();
         return true;
+    }
+
+    // ── 埋点（batch 1）：商店相关事件 ──
+
+    /// <summary>进入商店（shop_enter）。</summary>
+    private void EmitShopEnter()
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.IsBattleShop] = RunAnalyticsLedger.IsBattleShop;
+        payload[AnalyticsProperty.OfferCount] = offers != null ? offers.Count : 0;
+        if (offers != null && offers.Count > 0)
+        {
+            List<string> kinds = new List<string>();
+            List<string> ids = new List<string>();
+            for (int i = 0; i < offers.Count; i++)
+            {
+                ShopOffer offer = offers[i];
+                if (offer == null)
+                    continue;
+                kinds.Add(offer.kind.ToString());
+                if (offer.magicData != null)
+                    ids.Add(offer.magicData.id);
+                else
+                    ids.Add(offer.kind.ToString());
+            }
+            payload[AnalyticsProperty.OfferKinds] = AnalyticsService.JoinList(kinds);
+            payload[AnalyticsProperty.OfferIds] = AnalyticsService.JoinList(ids);
+        }
+        if (owner != null && owner.PlayerState != null)
+            payload[AnalyticsProperty.Gold] = owner.PlayerState.Gold;
+        AnalyticsService.Track(AnalyticsEvent.ShopEnter, payload);
+    }
+
+    /// <summary>刷新商店（shop_refresh）；调用时金币已扣。 </summary>
+    private void EmitShopRefresh(int cost)
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.RefreshIndex] = refreshCount;
+        payload[AnalyticsProperty.Price] = cost;
+        if (owner != null && owner.PlayerState != null)
+        {
+            payload[AnalyticsProperty.GoldBefore] = owner.PlayerState.Gold + cost;
+            payload[AnalyticsProperty.GoldAfter] = owner.PlayerState.Gold;
+        }
+        AnalyticsService.Track(AnalyticsEvent.ShopRefresh, payload);
+    }
+
+    /// <summary>商店购买（shop_purchase）。道具类的 magic_acquire 由 HandSystemUI 在落地时发。</summary>
+    private void EmitShopPurchase(string kind, ShopOffer offer, int goldBefore, MagicModel replacedMagic, int slotIndex, string materialName)
+    {
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Kind] = kind;
+        payload[AnalyticsProperty.Price] = offer != null ? offer.price : 0;
+        payload[AnalyticsProperty.GoldBefore] = goldBefore;
+        payload[AnalyticsProperty.GoldAfter] = owner != null && owner.PlayerState != null ? owner.PlayerState.Gold : goldBefore;
+        payload[AnalyticsProperty.RefreshIndex] = refreshCount;
+        payload[AnalyticsProperty.IsUndo] = false;
+        if (offer != null && offer.magicData != null)
+        {
+            payload[AnalyticsProperty.MagicId] = offer.magicData.id;
+            payload[AnalyticsProperty.Rarity] = (int)offer.magicData.rarity;
+        }
+        if (offer != null && offer.materialModifierData != null)
+            payload[AnalyticsProperty.ModifierId] = offer.materialModifierData.id;
+        if (!string.IsNullOrEmpty(materialName))
+            payload[AnalyticsProperty.Material] = materialName;
+        if (slotIndex >= 0)
+            payload[AnalyticsProperty.SlotIndex] = slotIndex;
+        if (replacedMagic != null)
+            payload[AnalyticsProperty.ReplacedMagicId] = replacedMagic.Id;
+        AnalyticsService.Track(AnalyticsEvent.ShopPurchase, payload);
+    }
+
+    /// <summary>撤回一次购买（shop_purchase + is_undo=true）。</summary>
+    private void EmitShopUndoPurchase()
+    {
+        string kind = undoMagicSlotIndex >= 0 ? "magic" : (undoAddedMaterial != null ? "material" : (undoRemovedMaterial != null ? "remove_material" : "unknown"));
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.Kind] = kind;
+        payload[AnalyticsProperty.IsUndo] = true;
+        payload[AnalyticsProperty.GoldBefore] = owner != null && owner.PlayerState != null ? owner.PlayerState.Gold : 0;
+        payload[AnalyticsProperty.GoldAfter] = undoGold;
+        if (undoOffer != null && undoOffer.magicData != null)
+        {
+            payload[AnalyticsProperty.MagicId] = undoOffer.magicData.id;
+            payload[AnalyticsProperty.Rarity] = (int)undoOffer.magicData.rarity;
+        }
+        AnalyticsService.Track(AnalyticsEvent.ShopPurchase, payload);
+    }
+
+    /// <summary>离开商店（shop_leave），汇总本次商店花费与停留时长。</summary>
+    private void EmitShopLeave()
+    {
+        int totalSpent, purchaseCount, seconds;
+        RunAnalyticsLedger.EndShop(out totalSpent, out purchaseCount, out seconds);
+        Dictionary<string, object> payload = RunAnalyticsLedger.Context();
+        payload[AnalyticsProperty.TotalSpent] = totalSpent;
+        payload[AnalyticsProperty.PurchaseCount] = purchaseCount;
+        payload[AnalyticsProperty.GoldLeft] = owner != null && owner.PlayerState != null ? owner.PlayerState.Gold : 0;
+        payload[AnalyticsProperty.ShopSeconds] = seconds;
+        AnalyticsService.Track(AnalyticsEvent.ShopLeave, payload);
     }
 
     private void RegisterUndoMagicPurchase(ShopOffer offer, int goldBefore, int slotIndex, MagicModel previousMagic)

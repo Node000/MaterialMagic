@@ -51,6 +51,16 @@ public class PrivacyConsentPanel : MonoBehaviour
     private Action onReject;
     private bool bound;
 
+    /// <summary>
+    /// 场景里的面板可能被美术临时打开（调样式时）；一旦玩家已经做过选择，这里立即收起。
+    /// 注意：节点在场景里被置为 inactive 时不会再走到这里，那种情况下本就什么都不显示。
+    /// </summary>
+    private void Awake()
+    {
+        if (PrivacyConsentGate.HasDecided)
+            SetVisible(false);
+    }
+
     /// <summary>兜底面板的 Canvas 根（整屏遮罩 + 面板都在它下面）。</summary>
     private GameObject fallbackCanvasRoot;
 
@@ -91,11 +101,15 @@ public class PrivacyConsentPanel : MonoBehaviour
     /// <summary>
     /// 统一切换显隐。**必须连整屏遮罩一起关**：否则面板看似消失，但全屏 Image 还开着，
     /// 它 raycastTarget=true 会把所有点击吃掉（曾导致同意后无法交互）。
+    /// 同时保证整条链都被激活（面板根节点在场景里可能是 inactive 的默认态）。
     /// </summary>
     private void SetVisible(bool visible)
     {
         if (fallbackCanvasRoot != null)
             fallbackCanvasRoot.SetActive(visible);
+
+        if (visible && !gameObject.activeSelf)
+            gameObject.SetActive(true);
 
         if (panelRoot != null)
             panelRoot.gameObject.SetActive(visible);

@@ -307,6 +307,8 @@ public class EnemyModel : UnitModel
         int healthDamage = healthBefore - CurrentHealth;
         result.ShieldDamage = blockedDamage;
         result.HealthDamage = healthDamage;
+        if (healthDamage > 0)
+            RunAnalyticsLedger.AddDamageDealt(healthDamage);
         result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
         GameLog.Data($"Enemy {Id} take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
         if (AudioManager.Instance != null)

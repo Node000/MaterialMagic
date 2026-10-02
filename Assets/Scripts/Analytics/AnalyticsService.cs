@@ -58,6 +58,13 @@ public static class AnalyticsService
     public static bool IsReady { get; private set; }
 
     /// <summary>
+    /// 是否内部版本（编辑器 / Development 包 / 调试包）。作为**公共事件属性** `is_dev` 挂在每条事件上
+    /// （见 Assets/Docs/eventProp.csv 与 AnalyticsProperty.IsDev）：TapDB 接收端对未登记的「用户属性」
+    /// 会整条丢弃，事件属性通道才稳定；用途是把内部测试数据排除在数值平衡样本之外。
+    /// </summary>
+    public static readonly bool IsDevBuild = Application.isEditor || Debug.isDebugBuild;
+
+    /// <summary>
     /// 运行期上报开关（对应设置面板的「测试数据收集」）。关闭后我们自己的事件立即停止入队/下发，
     /// 并清空待发队列；设备属性也不再推送。
     ///
@@ -430,6 +437,9 @@ public static class AnalyticsService
             foreach (KeyValuePair<string, object> pair in properties)
                 payload[pair.Key] = pair.Value;
         }
+
+        // 公共标记：与 eventProp.csv 里绑定到全部事件的字段一致（排除内部测试数据）。
+        payload[AnalyticsProperty.IsDev] = IsDevBuild;
 
         int maxLength = Config != null ? Mathf.Max(16, Config.maxStringLength) : 200;
         List<string> longKeys = null;
