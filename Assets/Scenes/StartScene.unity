@@ -1996,8 +1996,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb59097b2bb302346aff1a522ac8042a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  key: ui.start_menu.history_button
-  fallback: "\u5386\u53F2\u8BB0\u5F55"
+  key: ui.start_menu.feedback_button
+  fallback: "\u53CD\u9988"
 --- !u!114 &201214324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2018,7 +2018,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u5386\u53F2\u8BB0\u5F55"
+  m_text: "\u53CD\u9988"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 835e130129f85db45881589043345d2a, type: 2}
   m_sharedMaterial: {fileID: 2359404191872591554, guid: 835e130129f85db45881589043345d2a, type: 2}

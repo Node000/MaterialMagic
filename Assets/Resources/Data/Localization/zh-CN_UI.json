@@ -557,6 +557,10 @@
       "text": "图鉴"
     },
     {
+      "key": "ui.start_menu.feedback_button",
+      "text": "反馈"
+    },
+    {
       "key": "ui.magic_codex.title",
       "text": "C:/道具图鉴"
     },

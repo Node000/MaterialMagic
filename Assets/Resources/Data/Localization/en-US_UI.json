@@ -453,6 +453,10 @@
       "text": "Library"
     },
     {
+      "key": "ui.start_menu.feedback_button",
+      "text": "Feedback"
+    },
+    {
       "key": "ui.magic_codex.title",
       "text": "C:/Library"
     },
