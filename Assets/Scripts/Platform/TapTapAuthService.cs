@@ -48,6 +48,15 @@ public static class TapTapAuthService
     }
 
     /// <summary>
+    /// 允许下一次自动登录重新尝试。玩家重新打开「测试数据收集」时若尚未登录
+    /// （例如此前的授权被取消、或本会话已经尝试过一次），不能因为 <see cref="autoLoginAttempted"/> 而一直登不上。
+    /// </summary>
+    internal static void AllowAutoLoginRetry()
+    {
+        autoLoginAttempted = false;
+    }
+
+    /// <summary>
     /// 静默登录：启动时尝试复用本地已有的登录态，不弹任何界面。
     /// </summary>
     public static async Task<bool> TrySilentLoginAsync()

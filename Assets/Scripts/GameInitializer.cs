@@ -31,9 +31,9 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private PrivacyConsentPanel privacyConsentPanel;
 
     [Header("登录")]
-    [Tooltip("启动后自动登录：先复用本地登录态，未命中则自动发起一次 TapTap 授权。玩家可取消，取消后以游客身份游玩。")]
+    [Tooltip("启动后自动登录：先复用本地登录态，未命中则自动发起一次 TapTap 授权。玩家可取消，取消后以游客身份游玩。玩家曾在首启选「不同意」、之后又在设置里打开「测试数据收集」时，SDK 会在那时才初始化，并同样发起一次登录。")]
     [SerializeField] private bool autoLoginOnStartup = true;
-    [Tooltip("自动登录延后几秒发起，让 SDK 初始化/设备注册先稳定下来。首启的「测试数据收集」弹窗会等登录流程走完再出现。")]
+    [Tooltip("自动登录延后几秒发起，让 SDK 初始化/设备注册先稳定下来。首启会先弹「测试数据收集」，玩家作答后才初始化 SDK 并发起登录。")]
     [SerializeField] private float autoLoginDelaySeconds = 0.5f;
 
     [Header("埋点")]
@@ -68,8 +68,14 @@ public class GameInitializer : MonoBehaviour
     private ITapInitCallback tapTapInitCallback;
     public bool IsAnalyticsEnabled => enableAnalytics;
 
-    /// <summary>首启需要弹「测试数据收集」但还没弹（等登录流程结束）。</summary>
+    /// <summary>首启需要弹「测试数据收集」（还没做过选择）。玩家作答后才初始化 SDK 并发起登录。</summary>
     private bool pendingConsentPrompt;
+
+    /// <summary>
+    /// 后端启动流程是否已经发起。TapTapSDK.Init 是异步的，<see cref="IsInitialized"/> 要好几个帧之后才为 true；
+    /// 不单独记这一笔的话，同一帧里的第二次调用会重复 Init 并重复注册回调。
+    /// </summary>
+    private bool backendStartRequested;
 
     /// <summary>本次启动在 Init 时定下的 TapDB 采集开关（SDK 不能在运行期改变它）。</summary>
     private bool collectionEnabledAtInit;
@@ -94,11 +100,12 @@ public class GameInitializer : MonoBehaviour
 
         InitializeAnalytics();
 
-        // 数据收集合规（2026-10-01 第三版）：
-        //   * TapTap 登录不依赖同意，而且排在弹窗**之前**：启动即初始化 SDK（按上次的选择决定采不采集）并自动登录；
-        //   * 「测试数据收集」只在首启（Undecided）问一次，问的时机是**登录流程结束之后**；
-        //   * 首启未决时按“不采集”初始化（TapDB 开关只在 Init 时生效，运行期改不了），
-        //     玩家同意后本会话的事件会落盘，下次启动自动补发（AnalyticsService.FlushPendingOnDisk）。
+        // 数据收集合规（2026-10-02 第四版）：
+        //   * 「测试数据收集」只在首启（Undecided）问一次，而且问在**最前面**：玩家作答之后才初始化 SDK、
+        //     才发起 TapTap 登录（SDK 初始化本身就会处理设备与网络信息，必须排在同意之后）；
+        //   * 因为同意在 Init 之前就定了，首启选「同意」时本次启动即可正常采集，
+        //     不再需要“未决时按不采集初始化 + 事件落盘、下次启动补发”那条路径；
+        //   * 老玩家（Agreed / Declined）不弹窗，按已记录的选择直接初始化后端并登录。
         pendingConsentPrompt = NeedsConsentPrompt;
 
         // 场景里的「测试数据收集」面板可能留在激活状态（美术调面板时就是这样）。
@@ -106,26 +113,49 @@ public class GameInitializer : MonoBehaviour
         // 而且它的按钮只在 Show() 里绑回调，点上去没有任何反应（等于卡住界面）。
         if (!pendingConsentPrompt && privacyConsentPanel != null)
             privacyConsentPanel.Hide();
+    }
+
+    private void Start()
+    {
+        // 首启：先把「测试数据收集」问清楚再往下走。
+        // 面板不可用时 Show() 只会报错、不会有玩家作答，启动就停在这里（既不初始化 SDK 也不登录）——
+        // 这是有意的：这类问题要在联调时立刻暴露，而不是静默降级继续跑。
+        if (pendingConsentPrompt)
+        {
+            ShowConsentPrompt();
+            return;
+        }
 
         StartBackendWithCurrentConsent();
     }
 
-    /// <summary>首启（还没做过选择）才需要弹「测试数据收集」；实际弹出时机在登录流程之后。</summary>
+    /// <summary>首启（还没做过选择）才需要弹「测试数据收集」；弹出时机是启动最开始。</summary>
     private bool NeedsConsentPrompt =>
         EffectiveBackend != GameBackend.None && requirePrivacyConsent && !PrivacyConsentGate.HasDecided;
 
     /// <summary>
-    /// 按当前同意状态启动后端，并定下本次启动的采集开关。幂等。
+    /// 按当前同意状态启动后端，并定下本次启动的采集开关。幂等：
+    /// Init 是异步的，重复调用由 <see cref="backendStartRequested"/> 挡住。
+    ///
+    /// 2026-10-02 决定：**未同意「测试数据收集」就完全不初始化 TapSDK**。SDK 同时提供登录，
+    /// 所以“不同意”既是“不上报”也是“不使用 TapTap 登录”（见 plan/隐私授权与隐私政策软化改造.md §3）。
     /// </summary>
     public void StartBackendWithCurrentConsent()
     {
-        if (IsInitialized)
+        if (backendStartRequested || IsInitialized)
             return;
+
+        backendStartRequested = true;
 
         // TapDB 的采集开关只能在 Init 时决定；其它后端不受同意门控影响（开发/编辑器用）。
         bool collected = EffectiveBackend != GameBackend.TapTap
             || !requirePrivacyConsent
             || PrivacyConsentGate.HasConsented;
+
+        // 只针对 TapTap 后端、且在开启同意门控时才把整个 SDK 关掉。
+        bool blockedByConsent = EffectiveBackend == GameBackend.TapTap
+            && requirePrivacyConsent
+            && !PrivacyConsentGate.HasConsented;
 
         collectionEnabledAtInit = collected;
         sessionCollectionEnabled = collected;
@@ -137,9 +167,14 @@ public class GameInitializer : MonoBehaviour
             // 未同意（未决/已拒绝）：不采集，也不保留任何本地待发数据。
             AnalyticsService.DiscardPendingOnDisk();
         }
-        else if (!collected)
+
+        if (blockedByConsent)
         {
-            Debug.Log("[GameInitializer] 本次启动不采集（启动时尚未取得同意）：事件会落盘，下次启动补发。");
+            Debug.Log("[GameInitializer] 未同意「测试数据收集」：本次启动不初始化 TapSDK，也不发起登录。");
+
+            // 放掉“已发起”标记：玩家之后在设置里重新打开「测试数据收集」时，还要能补上 SDK 初始化。
+            backendStartRequested = false;
+            return;
         }
 
         InitializeBackend();
@@ -148,12 +183,18 @@ public class GameInitializer : MonoBehaviour
     /// <summary>
     /// 玩家在设置界面改动「测试数据收集」开关时调用（`AnalyticsConsentToggleUI`），
     /// 也用于首次弹窗的选择（同意/不同意）。
-    /// * 关闭：我们自己的上报立即停，并丢掉未上报的本地待发数据；原生预置事件下次启动起彻底停；
-    /// * 打开：我们自己的上报立即恢复；若本进程原生采集未开启（首启未决/曾被拒绝），
-    ///   接下来的事件会落盘，**下次启动自动补发**（原生开关运行期改不了）。
+    /// * 关闭：我们自己的上报立即停、丢掉未上报的本地待发数据（即**只取消数据传输**，
+    ///   **不结束当前登录态**）；原生预置事件下次启动起彻底停（SDK 无法在运行期反初始化）；
+    ///   下次启动起不再初始化 SDK、也不再登录；
+    /// * 打开：我们自己的上报立即恢复；若 SDK 尚未初始化（曾被拒绝），则补上初始化并按
+    ///   <see cref="autoLoginOnStartup"/> 发起一次登录；若 SDK 已就绪但当前未登录，也当场补一次登录。
     /// </summary>
     public void ApplyConsentChange(bool consented)
     {
+        // 重新打开开关时允许再尝试一次自动登录：此时若尚未登录就要补一次（玩家可能取消过授权）。
+        if (consented)
+            TapTapAuthService.AllowAutoLoginRetry();
+
         if (consented && !IsInitialized)
         {
             // 后端还没启动（如初始化失败的路径）：直接用新状态启动。
@@ -166,27 +207,39 @@ public class GameInitializer : MonoBehaviour
 
         if (!consented)
         {
+            // 关闭只取消数据传输（含未上报的本地暂存）；**不做登出**，当前登录态保留到本次会话结束，
+            // 但下次启动会因未同意而不初始化 SDK、也不再登录。
             AnalyticsService.DiscardPendingOnDisk();
             return;
         }
 
-        if (!collectionEnabledAtInit)
-        {
-            Debug.Log("[GameInitializer] 已记录同意：本次启动原生采集未开启，接下来的事件会落盘，下次启动补发。");
-        }
+        // 走到这里说明 SDK 本次会话已经初始化过：若当前未登录（如玩家取消过授权），当场补一次登录。
+        if (autoLoginOnStartup && !TapTapAuthService.IsLoggedIn)
+            _ = AutoLoginAsync();
     }
 
     private void OnPrivacyConsentGranted()
     {
         PrivacyConsentGate.Grant();
         ApplyConsentChange(true);
+        ContinueStartupAfterConsent();
     }
 
     private void OnPrivacyConsentRejected()
     {
-        // 不同意只是不采集数据：TapTap 登录、存档、游玩全都照常（弹窗两个按钮都能继续玩）。
+        // 不同意只是不采集数据，也不使用 TapTap 登录：存档与游玩全都照常（弹窗两个按钮都能继续玩）。
         PrivacyConsentGate.Decline();
         ApplyConsentChange(false);
+        ContinueStartupAfterConsent();
+    }
+
+    /// <summary>
+    /// 玩家作答后继续启动流程。同意时 <see cref="ApplyConsentChange"/> 内部已经启动过后端（此处幂等），
+    /// 但**拒绝时它不会启动**——所以这里必须补一次，否则拒绝的玩家既不初始化 SDK 也不登录。
+    /// </summary>
+    private void ContinueStartupAfterConsent()
+    {
+        StartBackendWithCurrentConsent();
     }
 
     private void Update()
@@ -263,7 +316,7 @@ public class GameInitializer : MonoBehaviour
             enableLog = Application.isEditor || Debug.isDebugBuild
         };
         // TapDB 的采集开关只在 Init 时生效：只有同意过（或本次已选择同意）才打开。
-        // 未同意时登录仍然照常（TapTap 平台默认账号），只是 TapDB 整个不启用。
+        // 未同意时整个 SDK 都不初始化（登录与采集一起关，见 StartBackendWithCurrentConsent）。
         TapTapEventOptions eventOptions = new TapTapEventOptions
         {
             channel = tapTapChannel,
@@ -278,7 +331,7 @@ public class GameInitializer : MonoBehaviour
         TapTapSDK.Init(coreOptions, new TapTapSdkBaseOptions[] { eventOptions });
     }
 
-    /// <summary>TapSDK 初始化成功：同意过则挂 TapDB 后端并上报设备属性；登录无论是否同意都发起。</summary>
+    /// <summary>TapSDK 初始化成功：挂 TapDB 后端并上报设备属性，随后按启动流程发起登录。</summary>
     private void OnTapTapInitSuccess()
     {
         ReleaseInitCallback();
@@ -290,7 +343,7 @@ public class GameInitializer : MonoBehaviour
         {
             AnalyticsService.AddSink(new TapAnalyticsSink(analyticsLogToConsole));
 
-            // 上次会话落盘的待发事件（首启同意后那一局、或开关重新打开后的数据）在这里补发。
+            // 上次会话落盘的待发事件（运行期从「关」重新打开后产生的数据）在这里补发。
             AnalyticsService.FlushPendingOnDisk();
 
             // TapDB 的设备注册在原生层也是异步的：首次设备属性上报可能撞上“设备初始化中”，
@@ -298,33 +351,39 @@ public class GameInitializer : MonoBehaviour
             _ = RepushDevicePropertiesAfterDelayAsync();
         }
 
-        // 登录与“是否同意采集数据”无关：登录始终尝试（TapPlay 默认账号），可取消。
+        // 走到这里说明本次启动已经取得采集同意（未同意时上面就已经 return，不会初始化 SDK），
+        // 因此登录与采集同进同出：能初始化就说明登录可用。
         TapTapAuthService.NotifySdkAvailable(true);
 
-        // 登录排在「测试数据收集」弹窗之前（首启时）：先走登录（静默/授权页/取消），再问采集。
+        // 登录跟着同意走：含“玩家在设置里重新打开开关、SDK 此时才被初始化”的情形，
+        // 所以这里不看是不是启动阶段。
         if (autoLoginOnStartup)
-            _ = AutoLoginThenMaybePromptAsync();
-        else
-            ShowConsentPromptIfNeeded();
+            _ = AutoLoginAsync();
     }
 
-    /// <summary>首启：先完成启动自动登录，再弹「测试数据收集」。</summary>
-    private async Task AutoLoginThenMaybePromptAsync()
+    /// <summary>自动登录：先延后一小会儿让设备注册稳定，再走一次静默/授权登录。每次会话只会尝试一次。</summary>
+    private async Task AutoLoginAsync()
     {
         if (autoLoginDelaySeconds > 0f)
             await Task.Delay(Mathf.RoundToInt(autoLoginDelaySeconds * 1000f));
 
-        await TapTapAuthService.TryAutoLoginAsync();
-        ShowConsentPromptIfNeeded();
-    }
-
-    /// <summary>需要时弹出一次「测试数据收集」（首启、且还没问过）。</summary>
-    private void ShowConsentPromptIfNeeded()
-    {
-        if (!pendingConsentPrompt)
+        // 延后期间玩家可能又把「测试数据收集」关掉了：那时不能再发起登录
+        // （关掉只取消数据传输，但不应反过来弹出登录授权界面）。
+        if (!PrivacyConsentGate.HasConsented)
             return;
 
+        await TapTapAuthService.TryAutoLoginAsync();
+    }
+
+    /// <summary>
+    /// 弹出一次「测试数据收集」。必须先于 SDK 初始化与登录调用。
+    /// 面板不可用（场景没绑定、兜底面板也关着）时 <see cref="PrivacyConsentPanel.Show"/> 只会报错，
+    /// 启动会停在这里等一个永远不会来的回答——这是有意的，让问题在联调时直接暴露，而不是静默放行。
+    /// </summary>
+    private void ShowConsentPrompt()
+    {
         pendingConsentPrompt = false;
+
         PrivacyConsentPanel panel = privacyConsentPanel != null
             ? privacyConsentPanel
             : PrivacyConsentPanel.CreateRuntimeFallback();
@@ -360,8 +419,9 @@ public class GameInitializer : MonoBehaviour
 
         Debug.LogError("[GameInitializer] TapSDK 初始化失败：code=" + errorCode + " msg=" + errorMsg + hint);
 
-        // SDK 挂了也把首启的询问弹出来（记录选择；下次启动若能初始化成功就按该选择生效）。
-        ShowConsentPromptIfNeeded();
+        // 放掉“已发起”标记：首启的「测试数据收集」现在问在初始化之前，这里不再补弹；
+        // 但初始化失败后仍应允许玩家通过设置里的开关重新打开采集（或重开游戏）再试一次。
+        backendStartRequested = false;
     }
 
     private void ReleaseInitCallback()
