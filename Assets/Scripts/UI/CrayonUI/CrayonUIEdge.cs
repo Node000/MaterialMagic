@@ -10,6 +10,9 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Graphic))]
 [AddComponentMenu("UI/Effects/Crayon UI Edge")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CrayonUIEdge")]
+#endif
 public sealed class CrayonUIEdge : BaseMeshEffect
 {
     [SerializeField, Min(1f)]

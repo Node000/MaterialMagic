@@ -9,6 +9,9 @@ public enum FloatingTextType
     Heal
 }
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "FloatingTextUI")]
+#endif
 public class FloatingTextUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text text;

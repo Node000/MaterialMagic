@@ -1912,8 +1912,8 @@
               "isExitOption": true,
               "effects": [
                 {
-                  "rewardType": 24,
-                  "amount": 2
+                  "rewardType": 3,
+                  "amount": 5
                 }
               ],
               "nextNodeId": "not_now"

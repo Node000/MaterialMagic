@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "FisheyeFallTestController")]
+#endif
 public sealed class FisheyeFallTestController : MonoBehaviour
 {
     [Header("Effect")]

@@ -2,6 +2,9 @@ using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(TMP_Text))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "LocalizedTMPText")]
+#endif
 public class LocalizedTMPText : MonoBehaviour
 {
     [SerializeField] private string key;

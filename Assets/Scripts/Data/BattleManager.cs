@@ -78,6 +78,8 @@ public readonly struct EnemyDeathEntry
 
 public class BattleManager
 {
+    // Every public synchronous instance call owns a short rule scope. Never extend these scopes
+    // across a host coroutine/await; nested calls restore the caller's ambient contexts exactly.
     private const string EnemySummonLayoutConfigPath = "Config/EnemySummonLayoutConfig";
 
     private readonly List<EnemyModel> enemies = new List<EnemyModel>();
@@ -102,6 +104,11 @@ public class BattleManager
     /// </summary>
     public bool EnqueueEnemyDeath(EnemyModel enemy, CombatantModel attacker, bool resolveOnDie)
     {
+        using (PlayerState?.Rules.Enter()) return EnqueueEnemyDeathCore(enemy, attacker, resolveOnDie);
+    }
+
+    private bool EnqueueEnemyDeathCore(EnemyModel enemy, CombatantModel attacker, bool resolveOnDie)
+    {
         if (enemy == null || enemy.DeathHandled || queuedDeaths.Contains(enemy))
             return false;
 
@@ -111,6 +118,11 @@ public class BattleManager
     }
 
     public bool TryDequeueEnemyDeath(out EnemyDeathEntry entry)
+    {
+        using (PlayerState?.Rules.Enter()) return TryDequeueEnemyDeathCore(out entry);
+    }
+
+    private bool TryDequeueEnemyDeathCore(out EnemyDeathEntry entry)
     {
         if (pendingDeaths.Count == 0)
         {
@@ -127,6 +139,11 @@ public class BattleManager
     /// <summary>结算一项死亡：先执行亡语，再标记为已处理。</summary>
     public void ResolveEnemyDeath(EnemyDeathEntry entry)
     {
+        using (PlayerState?.Rules.Enter()) ResolveEnemyDeathCore(entry);
+    }
+
+    private void ResolveEnemyDeathCore(EnemyDeathEntry entry)
+    {
         EnemyModel enemy = entry.Enemy;
         if (enemy == null)
             return;
@@ -142,6 +159,11 @@ public class BattleManager
     /// </summary>
     public int EnqueueUnhandledDeadEnemies()
     {
+        using (PlayerState?.Rules.Enter()) return EnqueueUnhandledDeadEnemiesCore();
+    }
+
+    private int EnqueueUnhandledDeadEnemiesCore()
+    {
         int count = 0;
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -153,6 +175,11 @@ public class BattleManager
     }
 
     public void ClearPendingDeaths()
+    {
+        using (PlayerState?.Rules.Enter()) ClearPendingDeathsCore();
+    }
+
+    private void ClearPendingDeathsCore()
     {
         pendingDeaths.Clear();
         queuedDeaths.Clear();
@@ -168,6 +195,8 @@ public class BattleManager
     public BattleManager(PlayerState playerState)
     {
         PlayerState = playerState;
+        if (playerState != null) playerState.Battle = this;
+        playerState?.Relics.BindBattle(this);
         Player = playerState is PlayerStatus status ? new PlayerModel(status) : null;
     }
 
@@ -182,9 +211,19 @@ public class BattleManager
     {
         if (ReferenceEquals(Instance, manager))
             Instance = null;
+        if (manager != null && ReferenceEquals(manager.PlayerState?.Relics.Battle, manager))
+        {
+            manager.PlayerState.Relics.BindBattle(null);
+            manager.PlayerState.Battle = null;
+        }
     }
 
     public void ConfigureLevelContext(LevelData level, int chapterNumericId, bool isBoss)
+    {
+        using (PlayerState?.Rules.Enter()) ConfigureLevelContextCore(level, chapterNumericId, isBoss);
+    }
+
+    private void ConfigureLevelContextCore(LevelData level, int chapterNumericId, bool isBoss)
     {
         CurrentLevel = level;
         CurrentChapterNumericId = chapterNumericId;
@@ -192,6 +231,11 @@ public class BattleManager
     }
 
     public DifficultyUpgradeContext CreateDifficultyContext()
+    {
+        using (PlayerState?.Rules.Enter()) return CreateDifficultyContextCore();
+    }
+
+    private DifficultyUpgradeContext CreateDifficultyContextCore()
     {
         return new DifficultyUpgradeContext
         {
@@ -203,6 +247,11 @@ public class BattleManager
 
     public void SetEnemies(IEnumerable<EnemyModel> enemyModels)
     {
+        using (PlayerState?.Rules.Enter()) SetEnemiesCore(enemyModels);
+    }
+
+    private void SetEnemiesCore(IEnumerable<EnemyModel> enemyModels)
+    {
         enemies.Clear();
         FocusTarget = null;
         if (enemyModels == null)
@@ -211,21 +260,40 @@ public class BattleManager
         foreach (EnemyModel enemy in enemyModels)
         {
             if (enemy != null)
+            {
+                enemy.Battle = this;
+                enemy.RelicRules = PlayerState?.Relics;
                 enemies.Add(enemy);
+            }
         }
     }
 
     public EnemyModel SpawnEnemy(int enemyId)
+    {
+        using (PlayerState?.Rules.Enter()) return SpawnEnemyCore(enemyId);
+    }
+
+    private EnemyModel SpawnEnemyCore(int enemyId)
     {
         return GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data) ? SpawnEnemy(data) : null;
     }
 
     public EnemyModel SpawnMinion(int enemyId)
     {
+        using (PlayerState?.Rules.Enter()) return SpawnMinionCore(enemyId);
+    }
+
+    private EnemyModel SpawnMinionCore(int enemyId)
+    {
         return SpawnMinion(enemyId, null, 0, 1);
     }
 
     public EnemyModel SpawnMinion(int enemyId, EnemyModel summoner, int summonIndex, int summonCount)
+    {
+        using (PlayerState?.Rules.Enter()) return SpawnMinionCore(enemyId, summoner, summonIndex, summonCount);
+    }
+
+    private EnemyModel SpawnMinionCore(int enemyId, EnemyModel summoner, int summonIndex, int summonCount)
     {
         if (!GameDataDatabase.TryGetEnemyData(enemyId, out EnemyData data))
             return null;
@@ -245,7 +313,12 @@ public class BattleManager
 
     public Vector2 GetAvailableSummonPosition(float centerX, float centerY, int summonIndex, int summonCount)
     {
-        EnemySummonLayoutConfig config = LoadSummonLayoutConfig();
+        using (PlayerState?.Rules.Enter()) return GetAvailableSummonPositionCore(centerX, centerY, summonIndex, summonCount);
+    }
+
+    private Vector2 GetAvailableSummonPositionCore(float centerX, float centerY, int summonIndex, int summonCount)
+    {
+        RuleSummonLayout config = LoadSummonLayoutConfig();
         int count = summonCount > 0 ? summonCount : 1;
         int index = summonIndex < 0 ? 0 : summonIndex;
         Vector2 fallback = GetSummonPosition(centerX, centerY, index, count, config);
@@ -266,7 +339,7 @@ public class BattleManager
         return GetSummonPosition(centerX, centerY, summonIndex, summonCount, LoadSummonLayoutConfig());
     }
 
-    private static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount, EnemySummonLayoutConfig config)
+    private static Vector2 GetSummonPosition(float centerX, float centerY, int summonIndex, int summonCount, RuleSummonLayout config)
     {
         int count = summonCount > 0 ? summonCount : 1;
         int index = summonIndex < 0 ? 0 : summonIndex;
@@ -310,16 +383,24 @@ public class BattleManager
         return false;
     }
 
-    private static EnemySummonLayoutConfig LoadSummonLayoutConfig()
+    private static RuleSummonLayout LoadSummonLayoutConfig()
     {
+        RuleSummonLayout configuration = (RuleExecutionScope.Current?.Content as IRuleConfigurationProvider)?.SummonLayout;
+        if (configuration != null) return configuration;
         if (summonLayoutConfig == null)
             summonLayoutConfig = Resources.Load<EnemySummonLayoutConfig>(EnemySummonLayoutConfigPath);
-        if (summonLayoutConfig == null)
-            summonLayoutConfig = ScriptableObject.CreateInstance<EnemySummonLayoutConfig>();
-        return summonLayoutConfig;
+        return summonLayoutConfig != null
+            ? new RuleSummonLayout(summonLayoutConfig.HorizontalSpacing, summonLayoutConfig.VerticalSpacing,
+                summonLayoutConfig.OccupiedRadius, summonLayoutConfig.SameRowSlotCount, summonLayoutConfig.MaxSearchAttempts)
+            : new RuleSummonLayout();
     }
 
     public EnemyModel SpawnEnemy(LevelEnemyData placement)
+    {
+        using (PlayerState?.Rules.Enter()) return SpawnEnemyCore(placement);
+    }
+
+    private EnemyModel SpawnEnemyCore(LevelEnemyData placement)
     {
         if (placement == null)
             return null;
@@ -329,10 +410,20 @@ public class BattleManager
 
     public EnemyModel SpawnEnemy(EnemyData data)
     {
+        using (PlayerState?.Rules.Enter()) return SpawnEnemyCore(data);
+    }
+
+    private EnemyModel SpawnEnemyCore(EnemyData data)
+    {
         return data != null ? SpawnEnemy(EnemyFactory.Create(data, CreateDifficultyContext())) : null;
     }
 
     public EnemyModel SpawnEnemy(EnemyData data, float x, float y)
+    {
+        using (PlayerState?.Rules.Enter()) return SpawnEnemyCore(data, x, y);
+    }
+
+    private EnemyModel SpawnEnemyCore(EnemyData data, float x, float y)
     {
         if (data == null)
             return null;
@@ -345,12 +436,19 @@ public class BattleManager
 
     public EnemyModel SpawnEnemy(EnemyModel enemy)
     {
+        using (PlayerState?.Rules.Enter()) return SpawnEnemyCore(enemy);
+    }
+
+    private EnemyModel SpawnEnemyCore(EnemyModel enemy)
+    {
         if (enemy == null)
             return null;
 
         if (!enemies.Contains(enemy))
         {
             enemies.Add(enemy);
+            enemy.Battle = this;
+            enemy.RelicRules = PlayerState?.Relics;
             if (CurrentPhase == BattlePhase.EnemyTurn)
             {
                 enemy.SetCanActThisEnemyTurn(false);
@@ -368,30 +466,58 @@ public class BattleManager
 
     public void AddEnemy(EnemyModel enemy)
     {
+        using (PlayerState?.Rules.Enter()) AddEnemyCore(enemy);
+    }
+
+    private void AddEnemyCore(EnemyModel enemy)
+    {
         SpawnEnemy(enemy);
     }
 
     public void ClearEnemies()
     {
+        using (PlayerState?.Rules.Enter()) ClearEnemiesCore();
+    }
+
+    private void ClearEnemiesCore()
+    {
+        foreach (var enemy in enemies)
+            if (enemy != null && ReferenceEquals(enemy.Battle, this)) { enemy.RelicRules = null; enemy.Battle = null; }
         enemies.Clear();
         ClearPendingDeaths();
         FocusTarget = null;
         CurrentCastTarget = null;
         ContinuousCastCount = 0;
         CurrentPhase = BattlePhase.None;
+        PlayerState?.Relics.ResetBattleLifecycle();
     }
 
     public void SetFocusTarget(EnemyModel enemy)
+    {
+        using (PlayerState?.Rules.Enter()) SetFocusTargetCore(enemy);
+    }
+
+    private void SetFocusTargetCore(EnemyModel enemy)
     {
         FocusTarget = enemy != null && enemies.Contains(enemy) && !enemy.IsDead ? enemy : null;
     }
 
     public void ClearFocusTarget()
     {
+        using (PlayerState?.Rules.Enter()) ClearFocusTargetCore();
+    }
+
+    private void ClearFocusTargetCore()
+    {
         FocusTarget = null;
     }
 
     public EnemyModel BeginCastTarget()
+    {
+        using (PlayerState?.Rules.Enter()) return BeginCastTargetCore();
+    }
+
+    private EnemyModel BeginCastTargetCore()
     {
         if (CurrentCastTarget != null && !CurrentCastTarget.IsDead)
             return CurrentCastTarget;
@@ -402,11 +528,21 @@ public class BattleManager
 
     public int RegisterMagicCast()
     {
+        using (PlayerState?.Rules.Enter()) return RegisterMagicCastCore();
+    }
+
+    private int RegisterMagicCastCore()
+    {
         ContinuousCastCount++;
         return ContinuousCastCount;
     }
 
     public int DamageRandomEnemy(int damage, PlayerState source)
+    {
+        using (PlayerState?.Rules.Enter()) return DamageRandomEnemyCore(damage, source);
+    }
+
+    private int DamageRandomEnemyCore(int damage, PlayerState source)
     {
         if (damage <= 0)
             return 0;
@@ -420,6 +556,11 @@ public class BattleManager
 
     public void AddBurningToRandomEnemy(int stack)
     {
+        using (PlayerState?.Rules.Enter()) AddBurningToRandomEnemyCore(stack);
+    }
+
+    private void AddBurningToRandomEnemyCore(int stack)
+    {
         if (stack <= 0)
             return;
 
@@ -429,6 +570,11 @@ public class BattleManager
     }
 
     public bool AddArcToRandomEnemy(int stack)
+    {
+        using (PlayerState?.Rules.Enter()) return AddArcToRandomEnemyCore(stack);
+    }
+
+    private bool AddArcToRandomEnemyCore(int stack)
     {
         if (stack <= 0)
             return false;
@@ -442,6 +588,11 @@ public class BattleManager
     }
 
     public bool AddRandomDebuffToRandomEnemy(int stack)
+    {
+        using (PlayerState?.Rules.Enter()) return AddRandomDebuffToRandomEnemyCore(stack);
+    }
+
+    private bool AddRandomDebuffToRandomEnemyCore(int stack)
     {
         if (stack <= 0)
             return false;
@@ -457,10 +608,20 @@ public class BattleManager
 
     public void ResetContinuousCastCount()
     {
+        using (PlayerState?.Rules.Enter()) ResetContinuousCastCountCore();
+    }
+
+    private void ResetContinuousCastCountCore()
+    {
         ContinuousCastCount = 0;
     }
 
     public void RestoreBattleState(BattlePhase phase, int continuousCastCount)
+    {
+        using (PlayerState?.Rules.Enter()) RestoreBattleStateCore(phase, continuousCastCount);
+    }
+
+    private void RestoreBattleStateCore(BattlePhase phase, int continuousCastCount)
     {
         CurrentPhase = phase;
         ContinuousCastCount = continuousCastCount < 0 ? 0 : continuousCastCount;
@@ -470,10 +631,20 @@ public class BattleManager
 
     public void EndCastTarget()
     {
+        using (PlayerState?.Rules.Enter()) EndCastTargetCore();
+    }
+
+    private void EndCastTargetCore()
+    {
         CurrentCastTarget = null;
     }
 
     public EnemyModel GetTargetEnemy()
+    {
+        using (PlayerState?.Rules.Enter()) return GetTargetEnemyCore();
+    }
+
+    private EnemyModel GetTargetEnemyCore()
     {
         if (CurrentCastTarget != null && !CurrentCastTarget.IsDead)
             return CurrentCastTarget;
@@ -482,6 +653,11 @@ public class BattleManager
     }
 
     public EnemyModel GetRandomAliveEnemy()
+    {
+        using (PlayerState?.Rules.Enter()) return GetRandomAliveEnemyCore();
+    }
+
+    private EnemyModel GetRandomAliveEnemyCore()
     {
         return SelectRandomEnemy();
     }
@@ -556,6 +732,11 @@ public class BattleManager
 
     public void CollectAliveEnemyCombatants(List<CombatantModel> results)
     {
+        using (PlayerState?.Rules.Enter()) CollectAliveEnemyCombatantsCore(results);
+    }
+
+    private void CollectAliveEnemyCombatantsCore(List<CombatantModel> results)
+    {
         if (results == null)
             return;
 
@@ -570,6 +751,11 @@ public class BattleManager
 
     public EnemyModel GetFirstAliveEnemy()
     {
+        using (PlayerState?.Rules.Enter()) return GetFirstAliveEnemyCore();
+    }
+
+    private EnemyModel GetFirstAliveEnemyCore()
+    {
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyModel enemy = enemies[i];
@@ -582,11 +768,24 @@ public class BattleManager
 
     public void BeginBattleRules()
     {
+        using (PlayerState?.Rules.Enter()) BeginBattleRulesCore();
+    }
+
+    private void BeginBattleRulesCore()
+    {
+        PlayerState?.PrepareBattleDrawOrder();
         TriggerMagicBattleStart();
+        PlayerState?.Relics.StartBattle();
     }
 
     public void FinishBattleRules(List<MaterialModel> removedTemporaryCards)
     {
+        using (PlayerState?.Rules.Enter()) FinishBattleRulesCore(removedTemporaryCards);
+    }
+
+    private void FinishBattleRulesCore(List<MaterialModel> removedTemporaryCards)
+    {
+        PlayerState?.Relics.EndBattle(PlayerState.CurrentHealth > 0 && AllEnemiesDead());
         TriggerMagicBattleEnd();
         ResetContinuousCastCount();
         FinishBattle();
@@ -598,6 +797,11 @@ public class BattleManager
 
     public void BeginPlayerResolveRules(bool afterPlayerDecide = true)
     {
+        using (PlayerState?.Rules.Enter()) BeginPlayerResolveRulesCore(afterPlayerDecide);
+    }
+
+    private void BeginPlayerResolveRulesCore(bool afterPlayerDecide)
+    {
         MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = PlayerState, BattleManager = this };
         if (afterPlayerDecide)
             PlayerState?.TriggerAfterPlayerDecide(new CombatantModel(GetFirstAliveEnemy()));
@@ -606,10 +810,20 @@ public class BattleManager
 
     public void EndPlayerResolveRules()
     {
+        using (PlayerState?.Rules.Enter()) EndPlayerResolveRulesCore();
+    }
+
+    private void EndPlayerResolveRulesCore()
+    {
         MaterialModifierModel.CurrentContext = null;
     }
 
     public BattleActionResult BeginPlayerTurnStartRules(int drawCount, Func<bool> tryApplyFixedTurnHand)
+    {
+        using (PlayerState?.Rules.Enter()) return BeginPlayerTurnStartRulesCore(drawCount, tryApplyFixedTurnHand);
+    }
+
+    private BattleActionResult BeginPlayerTurnStartRulesCore(int drawCount, Func<bool> tryApplyFixedTurnHand)
     {
         BattleActionResult result = new BattleActionResult();
         if (PlayerState == null)
@@ -628,12 +842,14 @@ public class BattleManager
             PlayerState.ClearShield();
         PlayerState.TriggerOnTurnStart(opponent);
         ArrowUpgradeSystem.TriggerTurnStart(PlayerState);
+        PlayerState.Relics.PrepareTurn();
         int handCountBeforeTurnDraw = PlayerState.Hand.Count;
         bool skipNormalDraw = tryApplyFixedTurnHand != null && tryApplyFixedTurnHand();
         DrawPlayerTurnCards(drawCount, skipNormalDraw);
         PlayerState.TriggerAfterTurnStartDraw(opponent, PlayerState.Hand.Count - handCountBeforeTurnDraw);
         PlayerState.TriggerAfterTurnStart(opponent);
         TriggerMagicTurnStart();
+        PlayerState.Relics.Publish(new RelicEvent(RelicEventKind.TurnStarted));
         result.CapturePlayerAfter(PlayerState);
         return result;
     }
@@ -660,19 +876,26 @@ public class BattleManager
 
     public BattleActionResult EndPlayerTurnRules(List<MaterialModel> removedTemporaryCards)
     {
+        using (PlayerState?.Rules.Enter()) return EndPlayerTurnRulesCore(removedTemporaryCards);
+    }
+
+    private BattleActionResult EndPlayerTurnRulesCore(List<MaterialModel> removedTemporaryCards)
+    {
         BattleActionResult result = new BattleActionResult();
         if (PlayerState == null)
             return result;
 
         result.CapturePlayerBefore(PlayerState);
+        PlayerState.Relics.Publish(new RelicEvent(RelicEventKind.TurnEnding));
         PlayerState.TriggerOnTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         TriggerEnemyPlayerTurnEndBuffs();
         TriggerMagicTurnEnd();
         PlayerState.RemoveTurnOnlyModifiers();
         ArrowUpgradeSystem.TriggerEndTurn(PlayerState);
-        PlayerState.EndTurn(removedTemporaryCards);
+        PlayerState.ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
         PlayerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         PlayerState.TriggerMaterialEnd();
+        PlayerState.Relics.Publish(new RelicEvent(RelicEventKind.TurnEnded));
         EndPlayerResolveRules();
         result.CapturePlayerAfter(PlayerState);
         result.AllEnemiesDead = AllEnemiesDead();
@@ -692,6 +915,11 @@ public class BattleManager
 
     public BattleActionResult BeginEnemyAction(EnemyModel enemy)
     {
+        using (PlayerState?.Rules.Enter()) return BeginEnemyActionCore(enemy);
+    }
+
+    private BattleActionResult BeginEnemyActionCore(EnemyModel enemy)
+    {
         BattleActionResult result = new BattleActionResult();
         if (enemy == null || PlayerState == null)
             return result;
@@ -710,6 +938,11 @@ public class BattleManager
 
     public BattleActionResult ResolveEnemyIntentAt(EnemyModel enemy, int intentIndex)
     {
+        using (PlayerState?.Rules.Enter()) return ResolveEnemyIntentAtCore(enemy, intentIndex);
+    }
+
+    private BattleActionResult ResolveEnemyIntentAtCore(EnemyModel enemy, int intentIndex)
+    {
         BattleActionResult result = new BattleActionResult();
         if (enemy == null || PlayerState == null)
             return result;
@@ -725,13 +958,18 @@ public class BattleManager
 
     public BattleActionResult ResolveEnemyIntentHitAt(EnemyModel enemy, int intentIndex, int hitIndex)
     {
-        BattleActionResult result = new BattleActionResult();
-        if (enemy == null || PlayerState == null)
-            return result;
+        using (PlayerState?.Rules.Enter()) return ResolveEnemyIntentHitAtCore(enemy, intentIndex, hitIndex);
+    }
 
+    private BattleActionResult ResolveEnemyIntentHitAtCore(EnemyModel enemy, int intentIndex, int hitIndex)
+    {
+        BattleActionResult result = new BattleActionResult();
+        if (enemy == null || PlayerState == null) return result;
         result.CapturePlayerBefore(PlayerState);
         result.CaptureEnemyShieldBefore(enemy);
-        enemy.ResolveCurrentIntentHitAt(intentIndex, hitIndex, PlayerState);
+        using (PlayerState.Relics.BeginOperation())
+        using (PlayerState.Relics.BeginDamage(RelicDamageKind.Attack))
+            enemy.ResolveCurrentIntentHitAt(intentIndex, hitIndex, PlayerState);
         result.CapturePlayerAfter(PlayerState);
         result.CaptureEnemyShieldAfter(enemy);
         result.AllEnemiesDead = AllEnemiesDead();
@@ -739,6 +977,11 @@ public class BattleManager
     }
 
     public BattleActionResult EndEnemyAction(EnemyModel enemy)
+    {
+        using (PlayerState?.Rules.Enter()) return EndEnemyActionCore(enemy);
+    }
+
+    private BattleActionResult EndEnemyActionCore(EnemyModel enemy)
     {
         BattleActionResult result = new BattleActionResult();
         if (enemy == null || PlayerState == null)
@@ -794,12 +1037,22 @@ public class BattleManager
 
     public void BeginPlayerTurn()
     {
+        using (PlayerState?.Rules.Enter()) BeginPlayerTurnCore();
+    }
+
+    private void BeginPlayerTurnCore()
+    {
         CurrentPhase = BattlePhase.PlayerTurn;
         for (int i = 0; i < enemies.Count; i++)
             enemies[i]?.SetCanActThisEnemyTurn(true);
     }
 
     public void BeginEnemyTurn()
+    {
+        using (PlayerState?.Rules.Enter()) BeginEnemyTurnCore();
+    }
+
+    private void BeginEnemyTurnCore()
     {
         CurrentPhase = BattlePhase.EnemyTurn;
         for (int i = 0; i < enemies.Count; i++)
@@ -808,6 +1061,11 @@ public class BattleManager
 
     public void EndEnemyTurn()
     {
+        using (PlayerState?.Rules.Enter()) EndEnemyTurnCore();
+    }
+
+    private void EndEnemyTurnCore()
+    {
         CurrentPhase = BattlePhase.PlayerTurn;
         for (int i = 0; i < enemies.Count; i++)
             enemies[i]?.SetCanActThisEnemyTurn(true);
@@ -815,10 +1073,20 @@ public class BattleManager
 
     public void FinishBattle()
     {
+        using (PlayerState?.Rules.Enter()) FinishBattleCore();
+    }
+
+    private void FinishBattleCore()
+    {
         CurrentPhase = BattlePhase.Finished;
     }
 
     public bool KillAliveMinionsForVictory()
+    {
+        using (PlayerState?.Rules.Enter()) return KillAliveMinionsForVictoryCore();
+    }
+
+    private bool KillAliveMinionsForVictoryCore()
     {
         bool killedAny = false;
         for (int i = 0; i < enemies.Count; i++)
@@ -837,6 +1105,11 @@ public class BattleManager
 
     public bool HasActingEnemyAfter(int index)
     {
+        using (PlayerState?.Rules.Enter()) return HasActingEnemyAfterCore(index);
+    }
+
+    private bool HasActingEnemyAfterCore(int index)
+    {
         for (int i = index + 1; i < enemies.Count; i++)
         {
             EnemyModel enemy = enemies[i];
@@ -849,6 +1122,11 @@ public class BattleManager
 
     public bool HasAliveEnemyAfter(int index)
     {
+        using (PlayerState?.Rules.Enter()) return HasAliveEnemyAfterCore(index);
+    }
+
+    private bool HasAliveEnemyAfterCore(int index)
+    {
         for (int i = index + 1; i < enemies.Count; i++)
         {
             EnemyModel enemy = enemies[i];
@@ -860,6 +1138,11 @@ public class BattleManager
     }
 
     public bool AllEnemiesDead()
+    {
+        using (PlayerState?.Rules.Enter()) return AllEnemiesDeadCore();
+    }
+
+    private bool AllEnemiesDeadCore()
     {
         if (enemies.Count == 0)
             return false;

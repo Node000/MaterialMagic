@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(GridLayoutGroup))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MagicBookAutoSpacing")]
+#endif
 public class MagicBookAutoSpacing : MonoBehaviour
 {
     [SerializeField] private float maxHeight = 545.1f;

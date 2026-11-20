@@ -17,6 +17,8 @@ public class RefreshLimitNextTurnBuffModel : BuffModel
 public class RandomNextDrawBuffModel : BuffModel
 {
     private bool pendingNextTurn = true;
+    public override System.Collections.Generic.Dictionary<string, int> ExportRuntimeState() => new System.Collections.Generic.Dictionary<string, int> { { "pending", pendingNextTurn ? 1 : 0 } };
+    public override void RestoreRuntimeState(System.Collections.Generic.IReadOnlyDictionary<string, int> values) => pendingNextTurn = ReadState(values, "pending", 1) != 0;
 
     public RandomNextDrawBuffModel(int stack) : base(BuffEnum.RandomNextDraw, stack)
     {
@@ -52,6 +54,8 @@ public class RandomNextDrawBuffModel : BuffModel
 public class TemporaryProliferatingNextDrawBuffModel : BuffModel
 {
     private bool pendingNextTurn = true;
+    public override System.Collections.Generic.Dictionary<string, int> ExportRuntimeState() => new System.Collections.Generic.Dictionary<string, int> { { "pending", pendingNextTurn ? 1 : 0 } };
+    public override void RestoreRuntimeState(System.Collections.Generic.IReadOnlyDictionary<string, int> values) => pendingNextTurn = ReadState(values, "pending", 1) != 0;
 
     public TemporaryProliferatingNextDrawBuffModel(int stack) : base(BuffEnum.TemporaryProliferatingNextDraw, stack)
     {

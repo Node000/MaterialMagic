@@ -10,6 +10,9 @@ using UnityEngine.UI;
 /// 溶解相关引用保留在 Inspector 里以便日后需要时手动启用（useDissolveMaterial 默认关闭）。
 /// </summary>
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BouncingTitleUI")]
+#endif
 public class BouncingTitleUI : MonoBehaviour
 {
     [SerializeField] private Vector2 floatAmplitude = new Vector2(24f, 14f);

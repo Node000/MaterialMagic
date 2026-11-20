@@ -2,6 +2,9 @@ using System;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "StripDungeonMapConfig", menuName = "Config/Second Floor Strip Dungeon Map")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StripDungeonMapConfig")]
+#endif
 public class StripDungeonMapConfig : ScriptableObject
 {
     [Header("地图尺寸")]

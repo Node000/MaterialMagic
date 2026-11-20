@@ -11,6 +11,8 @@ public class MaterialModifierData : IDataRecord
     public string descriptionKey;
     public string lineColor;
     public bool inArrowModifierRewardPool;
+    public int weight = 1;
+    public bool stackable;
     /// <summary>
     /// 商店价格差值：该附魔给箭头价格带来的增减，基准是「无附魔普通箭头价」。
     /// 0 = 不影响价格；负数 = 弱附魔更便宜。见 <see cref="MaterialModifierDefinition.price"/>。
@@ -92,13 +94,15 @@ public static class MaterialModifierDisplayDatabase
 
     private static bool TryGetData(object modifier, out MaterialModifierData data)
     {
-        EnsureLoaded();
         if (modifier == null)
         {
             data = null;
             return false;
         }
 
+        if (RuleExecutionScope.Current?.Content != null)
+            return MaterialModifierDatabase.TryGetDataByScript(modifier.GetType().Name, out data);
+        EnsureLoaded();
         return DataByScript.TryGetValue(modifier.GetType().Name, out data);
     }
 

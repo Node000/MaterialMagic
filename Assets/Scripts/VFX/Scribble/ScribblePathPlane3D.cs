@@ -5,6 +5,9 @@ using UnityEngine.Rendering;
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 [AddComponentMenu("Scribble/Scribble Path Plane 3D")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribblePathPlane3D")]
+#endif
 public class ScribblePathPlane3D : MonoBehaviour
 {
     public enum PlaneAxes

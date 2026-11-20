@@ -215,7 +215,7 @@ public static class LocalizationSystem
     private const string LocalizationRoot = "Data/Localization/";
     private const string DefaultLanguage = "zh-CN";
     private const string LanguagePrefsKey = "localization.language";
-    private static readonly string[] SupplementalLanguageTables = { "_UI", "_Tutorial", "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag" };
+    private static readonly string[] SupplementalLanguageTables = { "_UI", "_Tutorial", "_Buff", "_Material", "_Modifier", "_MagicModifier", "_Enemy", "_Event", "_Tag", "_Relic" };
     private static readonly string[] LanguageCodes = { "zh-CN", "en-US" };
     private static readonly string[] LanguageDisplayNames = { "简体中文", "English" };
     private static readonly Dictionary<string, string> TextByKey = new Dictionary<string, string>();

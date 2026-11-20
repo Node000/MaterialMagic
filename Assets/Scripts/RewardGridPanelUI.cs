@@ -5,12 +5,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RewardGridPanelUI")]
+#endif
 public class RewardGridPanelUI : MonoBehaviour
 {
     private class RewardCell
     {
-        public BonusRewardData Reward;
-        public bool Collected;
+        public int Index;
         public RectTransform Rect;
         public Image Background;
         public BonusRewardIconUI Icon;
@@ -49,20 +51,16 @@ public class RewardGridPanelUI : MonoBehaviour
     private RectTransform panelContentRoot;
     private Image panelContentBackground;
     private bool panelContentConfigured;
-    private BonusLevelData currentData;
+    private BonusGridSession session;
     private RectTransform rewardTooltip;
     private CanvasGroup rewardTooltipCanvasGroup;
     private TMP_Text rewardTooltipTitle;
     private TMP_Text rewardTooltipDescription;
-    private int gridSize = 5;
-    private int centerIndex = 2;
-    private int playerX = 2;
-    private int playerY = 2;
     private bool panelOpenStateCached;
     private Vector2 panelOriginalAnchoredPosition;
     private Vector4 panelOriginalPadding;
 
-    public int DrawCount => currentData != null && currentData.drawCount > 0 ? currentData.drawCount : 5;
+    public int DrawCount => session != null ? session.DrawCount : 5;
 
     public void Initialize(HandSystemUI owner)
     {
@@ -74,10 +72,8 @@ public class RewardGridPanelUI : MonoBehaviour
     public void ShowNewGrid(BonusLevelData bonusData, PlayerState playerState)
     {
         CacheReferences();
-        currentData = bonusData ?? CreateFallbackData();
+        session = new BonusGridSession(bonusData ?? CreateFallbackData(), NextRunRandomInt);
         BuildGrid();
-        playerX = centerIndex;
-        playerY = centerIndex;
         if (titleText != null)
             titleText.text = LocalizationSystem.GetText("ui.reward_grid.title", "奖励关卡");
         if (hintText != null)
@@ -144,7 +140,7 @@ public class RewardGridPanelUI : MonoBehaviour
 
     public IEnumerator ResolvePathRoutine(IReadOnlyList<MaterialModel> pathCards, PlayerState playerState)
     {
-        if (pathCards == null || playerState == null)
+        if (pathCards == null || playerState == null || session == null)
             yield break;
 
         if (resultText != null)
@@ -153,26 +149,26 @@ public class RewardGridPanelUI : MonoBehaviour
         for (int i = 0; i < pathCards.Count; i++)
         {
             MaterialModel card = pathCards[i];
-            Vector2Int direction = GetDirection(card != null ? card.material : MaterialEnum.None);
-            if (direction == Vector2Int.zero)
+            // Commit only this step, never the rest of the path. No rule executes in a tween callback.
+            BonusGridStepResult step = session.Step(card != null ? card.material : MaterialEnum.None);
+            if (!step.IsDirection)
                 continue;
 
-            int nextX = Mathf.Clamp(playerX + direction.x, 0, gridSize - 1);
-            int nextY = Mathf.Clamp(playerY + direction.y, 0, gridSize - 1);
-            if (nextX == playerX && nextY == playerY)
+            if (step.EdgeStopped)
             {
                 AppendResult(LocalizationSystem.GetText("ui.reward_grid.result.edge_stop", "边缘停步"));
                 yield return new WaitForSeconds(StepDelay);
                 continue;
             }
 
-            playerX = nextX;
-            playerY = nextY;
+            BonusGridRewardResult reward = BonusGridRewardRules.Apply(step, playerState, null, owner == null, owner == null);
+            // The existing save format has no bonus-grid position/collected snapshot. Preserve its
+            // node checkpoint policy until both reward state and grid progress can be restored together.
             Tween moveTween = MoveMarkerToCurrentCell(true);
             if (moveTween != null)
                 yield return moveTween.WaitForCompletion();
 
-            yield return ApplyCellRewardRoutine(playerX, playerY, playerState);
+            yield return PlayCellRewardRoutine(step, reward);
             yield return new WaitForSeconds(StepDelay);
         }
     }
@@ -302,15 +298,13 @@ public class RewardGridPanelUI : MonoBehaviour
 
     private void BuildGrid()
     {
-        if (gridRoot == null)
+        KillCellPopupTweens();
+        cells.Clear();
+        if (gridRoot == null || session == null)
             return;
 
-        KillCellPopupTweens();
         ClearGridChildren();
-        cells.Clear();
-        int radius = Mathf.Max(1, currentData.radius);
-        gridSize = radius * 2 + 1;
-        centerIndex = radius;
+        int gridSize = session.GridSize;
         float gridSide = gridRoot.rect.width > 1f ? gridRoot.rect.width : (gridRoot.sizeDelta.x > 1f ? gridRoot.sizeDelta.x : DefaultGridSide);
         float cellSize = Mathf.Max(24f, (gridSide - CellSpacing * (gridSize - 1)) / gridSize);
         float step = cellSize + CellSpacing;
@@ -319,14 +313,10 @@ public class RewardGridPanelUI : MonoBehaviour
         {
             for (int x = 0; x < gridSize; x++)
             {
-                int index = GetIndex(x, y);
-                RewardCell cell = CreateCell(index, new Vector2(first + x * step, first + y * step), cellSize);
-                if (x != centerIndex || y != centerIndex)
-                {
-                    cell.Reward = CreateRandomReward();
-                    if (cell.Reward != null)
-                        cell.Icon = CreateRewardIcon(cell.Rect, cell.Reward, cellSize);
-                }
+                BonusGridCellState state = session.GetCell(x, y);
+                RewardCell cell = CreateCell(state.Index, new Vector2(first + x * step, first + y * step), cellSize);
+                if (state.Reward != null)
+                    cell.Icon = CreateRewardIcon(cell.Rect, state.Reward.ToData(), cellSize);
                 cells.Add(cell);
             }
         }
@@ -344,7 +334,7 @@ public class RewardGridPanelUI : MonoBehaviour
         rect.sizeDelta = new Vector2(cellSize, cellSize);
         Image background = cellObject.GetComponent<Image>();
         background.raycastTarget = false;
-        return new RewardCell { Rect = rect, Background = background };
+        return new RewardCell { Index = index, Rect = rect, Background = background };
     }
 
     private BonusRewardIconUI CreateRewardIcon(RectTransform parent, BonusRewardData rewardData, float cellSize)
@@ -393,56 +383,34 @@ public class RewardGridPanelUI : MonoBehaviour
         }
     }
 
-    private BonusRewardData CreateRandomReward()
-    {
-        BonusRewardData[] rewards = currentData != null ? currentData.rewards : null;
-        if (rewards == null || rewards.Length == 0)
-            return null;
-
-        return rewards[NextRunRandomInt(0, rewards.Length)];
-    }
-
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
     {
         return owner != null && owner.RunManager != null ? owner.RunManager.NextRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
     }
 
-    private IEnumerator ApplyCellRewardRoutine(int x, int y, PlayerState playerState)
+    private IEnumerator PlayCellRewardRoutine(BonusGridStepResult step, BonusGridRewardResult reward)
     {
-        int index = GetIndex(x, y);
-        if (index < 0 || index >= cells.Count)
+        if (!step.CollectedNow)
             yield break;
 
-        RewardCell cell = cells[index];
-        if (cell.Collected || cell.Reward == null)
-            yield break;
-
-        cell.Collected = true;
-        yield return ApplyRewardRoutine(cell, playerState);
-        AppendResult(GetRewardSummary(cell.Reward));
-        RefreshCell(cell);
-        HideRewardTooltip();
-    }
-
-    private IEnumerator ApplyRewardRoutine(RewardCell cell, PlayerState playerState)
-    {
-        BonusRewardData rewardData = cell.Reward;
-        switch (rewardData.rewardType)
+        RewardCell cell = step.CellAfter.Index < cells.Count ? cells[step.CellAfter.Index] : null;
+        // These owner APIs present already committed before/after values; they never add gold or heal.
+        switch (step.CollectedReward.RewardType)
         {
             case BonusRewardType.Gold:
-                RectTransform sourceRect = cell.Icon != null ? cell.Icon.RectTransform : cell.Rect;
+                RectTransform sourceRect = cell != null ? (cell.Icon != null ? cell.Icon.RectTransform : cell.Rect) : null;
                 if (owner != null)
-                    yield return owner.GainGoldAnimated(rewardData.amount, sourceRect);
-                else
-                    playerState.AddGold(rewardData.amount);
+                    yield return owner.PlayCommittedGoldGain(reward.GoldBefore, reward.GoldAfter, sourceRect);
                 break;
             case BonusRewardType.Heal:
                 if (owner != null)
-                    owner.ApplyRewardHeal(rewardData.amount);
-                else
-                    playerState.Heal(rewardData.amount);
+                    owner.PlayCommittedRewardHeal(reward.HealthBefore, reward.HealthAfter);
                 break;
         }
+        AppendResult(GetRewardSummary(step.CollectedReward.ToData()));
+        if (cell != null)
+            RefreshCell(cell);
+        HideRewardTooltip();
     }
 
     private void RefreshAllCells()
@@ -564,9 +532,10 @@ public class RewardGridPanelUI : MonoBehaviour
     private void PlayCellPopupAnimation()
     {
         KillCellPopupTweens();
-        if (cells.Count == 0)
+        if (cells.Count == 0 || session == null)
             return;
 
+        int gridSize = session.GridSize;
         float duration = Mathf.Max(0.01f, cellPopupDuration);
         float firstStepDuration = duration * 0.64f;
         float secondStepDuration = duration - firstStepDuration;
@@ -616,20 +585,21 @@ public class RewardGridPanelUI : MonoBehaviour
         }
     }
 
-    private static void RefreshCell(RewardCell cell)
+    private void RefreshCell(RewardCell cell)
     {
+        bool collected = session != null && session.GetCell(cell.Index).Collected;
         if (cell.Background != null)
-            cell.Background.color = cell.Collected ? new Color(0.08f, 0.07f, 0.12f, 1f) : new Color(0.16f, 0.11f, 0.22f, 1f);
+            cell.Background.color = collected ? new Color(0.08f, 0.07f, 0.12f, 1f) : new Color(0.16f, 0.11f, 0.22f, 1f);
         if (cell.Icon != null)
-            cell.Icon.gameObject.SetActive(!cell.Collected);
+            cell.Icon.gameObject.SetActive(!collected);
     }
 
     private Tween MoveMarkerToCurrentCell(bool animate)
     {
-        if (playerMarker == null || gridRoot == null)
+        if (playerMarker == null || gridRoot == null || session == null)
             return null;
 
-        Vector2 target = GetCellAnchoredPosition(playerX, playerY);
+        Vector2 target = GetCellAnchoredPosition(session.Position.X, session.Position.Y);
         markerMoveTween?.Kill(false);
         markerMoveTween = null;
         if (!animate || !gameObject.activeInHierarchy)
@@ -644,7 +614,7 @@ public class RewardGridPanelUI : MonoBehaviour
 
     private Vector2 GetCellAnchoredPosition(int x, int y)
     {
-        int index = GetIndex(x, y);
+        int index = session != null ? session.GetIndex(x, y) : -1;
         if (index < 0 || index >= cells.Count || cells[index].Rect == null || playerMarker == null)
             return Vector2.zero;
 
@@ -730,23 +700,6 @@ public class RewardGridPanelUI : MonoBehaviour
             case BonusRewardType.Heal: return LocalizationSystem.GetText("ui.reward_grid.reward.heal.name", "生命值");
             default: return !string.IsNullOrEmpty(rewardData.rewardName) ? LocalizationSystem.GetText(rewardData.rewardName, rewardData.rewardName) : rewardData.rewardType.ToString();
         }
-    }
-
-    private static Vector2Int GetDirection(MaterialEnum material)
-    {
-        switch (material)
-        {
-            case MaterialEnum.Fire: return Vector2Int.up;
-            case MaterialEnum.Wind: return Vector2Int.left;
-            case MaterialEnum.Water: return Vector2Int.down;
-            case MaterialEnum.Earth: return Vector2Int.right;
-            default: return Vector2Int.zero;
-        }
-    }
-
-    private int GetIndex(int x, int y)
-    {
-        return y * gridSize + x;
     }
 
     private static BonusLevelData CreateFallbackData()

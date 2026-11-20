@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Scribble/Plane Style Preset", fileName = "ScribblePlaneStylePreset")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribblePlaneStylePreset")]
+#endif
 public class ScribblePlaneStylePreset : ScriptableObject
 {
     [SerializeField] private ScribblePlaneStyleSettings settings = ScribblePlaneStyleSettings.CreateDefault();

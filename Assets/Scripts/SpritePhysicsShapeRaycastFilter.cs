@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SpritePhysicsShapeRaycastFilter")]
+#endif
 public class SpritePhysicsShapeRaycastFilter : MonoBehaviour, ICanvasRaycastFilter
 {
     [SerializeField, Min(0f)] private float extraHitDistance = 0.08f;

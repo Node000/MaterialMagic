@@ -3,6 +3,7 @@ using UnityEngine;
 
 public static class MaterialModifierDatabase
 {
+    private static IRuleContentProvider Content => RuleContentProviderHost.IsCapturing ? null : RuleExecutionScope.Current?.Content;
     private const string ResourcePath = "EnchantConfig/MaterialModifiers";
 
     private static Dictionary<string, MaterialModifierDefinition> definitionsById;
@@ -15,6 +16,7 @@ public static class MaterialModifierDatabase
     {
         get
         {
+            if (Content != null) return new List<MaterialModifierData>(Content.Named<MaterialModifierData>().Values).AsReadOnly();
             EnsureLoaded();
             return runtimeData;
         }
@@ -22,6 +24,11 @@ public static class MaterialModifierDatabase
 
     public static bool TryGetData(string id, out MaterialModifierData data)
     {
+        if (Content != null)
+        {
+            if (string.IsNullOrEmpty(id)) { data = null; return false; }
+            return Content.Named<MaterialModifierData>().TryGetValue(id, out data);
+        }
         EnsureLoaded();
         if (!string.IsNullOrEmpty(id) && dataById.TryGetValue(id, out data))
             return true;
@@ -32,6 +39,13 @@ public static class MaterialModifierDatabase
 
     public static bool TryGetDataByScript(string script, out MaterialModifierData data)
     {
+        if (Content != null)
+        {
+            foreach (MaterialModifierData candidate in Content.Named<MaterialModifierData>().Values)
+                if (candidate != null && candidate.script == script) { data = candidate; return true; }
+            data = null;
+            return false;
+        }
         EnsureLoaded();
         if (!string.IsNullOrEmpty(script) && dataByScript.TryGetValue(script, out data))
             return true;

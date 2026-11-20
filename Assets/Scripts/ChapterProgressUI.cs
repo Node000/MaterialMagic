@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ChapterProgressUI")]
+#endif
 public class ChapterProgressUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text progressText;

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CastParticleEffectPlayer")]
+#endif
 public sealed class CastParticleEffectPlayer : CastParticleEffectBase, ISpellCastMultiTargetImpactEffect
 {
     public new void PlayMaterialFill(RectTransform from, RectTransform magicView, MaterialEnum material)

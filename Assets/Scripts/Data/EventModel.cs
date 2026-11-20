@@ -8,6 +8,7 @@ public class EventModel
     private readonly Dictionary<string, int> optionResolveCounts = new Dictionary<string, int>();
     private readonly Dictionary<string, string> lastRandomRecipeByNodeId = new Dictionary<string, string>();
     private EventOptionData defaultEndOption;
+    private readonly Func<int, int, int> nextRandomInt;
 
     public EventData Data { get; }
     public EventNodeData CurrentNode { get; private set; }
@@ -17,9 +18,12 @@ public class EventModel
     public string[] CurrentTexts => CurrentNode != null ? CurrentNode.textKeys : Array.Empty<string>();
     public EventOptionData[] CurrentOptions => CurrentNode != null && CurrentNode.options != null ? CurrentNode.options : Array.Empty<EventOptionData>();
 
-    public EventModel(EventData data)
+    public EventModel(EventData data, Func<int, int, int> nextRandomInt = null)
     {
-        Data = data;
+        this.nextRandomInt = nextRandomInt;
+        // Definitions are shared by the database. Recipes and restored progress belong to this run only.
+        Data = CloneData(data ?? throw new ArgumentNullException(nameof(data)));
+        data = Data;
         if (data.nodes != null)
         {
             for (int i = 0; i < data.nodes.Length; i++)
@@ -36,6 +40,51 @@ public class EventModel
             CurrentNode = data.nodes[0];
 
         RandomizeRecipes();
+    }
+
+    public static EventData CloneData(EventData source)
+    {
+        if (source == null) return null;
+        var result = new EventData
+        {
+            numericId = source.numericId, id = source.id, titleKey = source.titleKey,
+            startNodeId = source.startNodeId, defaultEndNodeId = source.defaultEndNodeId, drawCount = source.drawCount,
+            nodes = new EventNodeData[source.nodes != null ? source.nodes.Length : 0]
+        };
+        for (int n = 0; n < result.nodes.Length; n++)
+        {
+            EventNodeData node = source.nodes[n];
+            if (node == null) continue;
+            var copy = new EventNodeData { id = node.id, nextNodeId = node.nextNodeId,
+                textKeys = node.textKeys != null ? (string[])node.textKeys.Clone() : Array.Empty<string>(),
+                options = new EventOptionData[node.options != null ? node.options.Length : 0] };
+            result.nodes[n] = copy;
+            for (int o = 0; o < copy.options.Length; o++)
+            {
+                EventOptionData option = node.options[o];
+                if (option == null) continue;
+                var optionCopy = new EventOptionData
+                {
+                    id = option.id, titleKey = option.titleKey, iconName = option.iconName, recipe = option.recipe,
+                    randomRecipeLength = option.randomRecipeLength, ignoreOrder = option.ignoreOrder, resultId = option.resultId,
+                    isExitOption = option.isExitOption, nextNodeId = option.nextNodeId, choiceCount = option.choiceCount,
+                    tagIds = option.tagIds != null ? (string[])option.tagIds.Clone() : Array.Empty<string>(),
+                    effects = new EventEffectData[option.effects != null ? option.effects.Length : 0]
+                };
+                copy.options[o] = optionCopy;
+                for (int e = 0; e < optionCopy.effects.Length; e++)
+                {
+                    EventEffectData effect = option.effects[e];
+                    if (effect != null) optionCopy.effects[e] = new EventEffectData
+                    {
+                        rewardType = effect.rewardType, amount = effect.amount, count = effect.count, choiceCount = effect.choiceCount,
+                        escalatePerUse = effect.escalatePerUse, material = effect.material, modifierId = effect.modifierId, percent = effect.percent,
+                        magicIds = effect.magicIds != null ? (int[])effect.magicIds.Clone() : Array.Empty<int>()
+                    };
+                }
+            }
+        }
+        return result;
     }
 
     public static EventModel CreateTextOnly(string id, string titleKey, string[] textKeys)
@@ -318,14 +367,14 @@ public class EventModel
     {
         MaterialEnum[] materials = ParseRecipe(option != null ? option.recipe : null);
         if (materials.Length == 0)
-            return MaterialCardView.GetMaterialName(MaterialEnum.None);
+            return LocalizationKeys.GetMaterialName(MaterialEnum.None);
 
         string result = string.Empty;
         for (int i = 0; i < materials.Length; i++)
         {
             if (i > 0)
                 result += "+";
-            result += MaterialCardView.GetMaterialName(materials[i]);
+            result += LocalizationKeys.GetMaterialName(materials[i]);
         }
 
         return result;
@@ -371,7 +420,7 @@ public class EventModel
         }
     }
 
-    private static string CreateUniqueRandomRecipe(int length, bool ignoreOrder, List<EventOptionData> assignedOptions, string lastRecipe, out string selectedRecipe)
+    private string CreateUniqueRandomRecipe(int length, bool ignoreOrder, List<EventOptionData> assignedOptions, string lastRecipe, out string selectedRecipe)
     {
         selectedRecipe = null;
         List<string> candidates = new List<string>();
@@ -458,7 +507,7 @@ public class EventModel
         return new string(chars);
     }
 
-    private static string CreateRandomRecipe(int length)
+    private string CreateRandomRecipe(int length)
     {
         char[] recipe = new char[Math.Max(1, length)];
         for (int i = 0; i < recipe.Length; i++)
@@ -466,9 +515,10 @@ public class EventModel
         return new string(recipe);
     }
 
-    private static int NextRunRandomInt(int minInclusive, int maxExclusive)
+    private int NextRunRandomInt(int minInclusive, int maxExclusive)
     {
-        return RunManager.Current != null ? RunManager.Current.NextRandomInt(minInclusive, maxExclusive) : UnityEngine.Random.Range(minInclusive, maxExclusive);
+        if (nextRandomInt != null) return nextRandomInt(minInclusive, maxExclusive);
+        return ChoiceRuleRandom.Next(null, minInclusive, maxExclusive);
     }
 
     private string GetDefaultEndNodeId()

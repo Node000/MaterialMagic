@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartConfigSelectionUI")]
+#endif
 public class StartConfigSelectionUI : MonoBehaviour
 {
     [SerializeField] private RectTransform root;

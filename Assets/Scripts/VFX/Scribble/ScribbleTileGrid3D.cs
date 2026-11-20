@@ -5,6 +5,9 @@ using UnityEngine.Rendering;
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 [AddComponentMenu("Scribble/Scribble Tile Grid 3D")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribbleTileGrid3D")]
+#endif
 public class ScribbleTileGrid3D : MonoBehaviour
 {
     private const float TwoPi = 6.28318530718f;

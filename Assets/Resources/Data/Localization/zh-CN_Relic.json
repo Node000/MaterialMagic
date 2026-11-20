@@ -1,0 +1,12 @@
+{
+  "items": [
+    {"key": "relic.new_leaf.name", "text": "新叶"},
+    {"key": "relic.new_leaf.desc", "text": "每场战斗从第 1 回合起，每隔 2 回合在回合开始抽牌后，将 1 张【临时】右箭头加入手牌。"},
+    {"key": "relic.ember.name", "text": "火种"},
+    {"key": "relic.ember.desc", "text": "每场战斗从第 1 回合起，每隔 2 回合在回合开始抽牌后，将 1 张【临时】上箭头加入手牌。"},
+    {"key": "relic.wellspring.name", "text": "源泉"},
+    {"key": "relic.wellspring.desc", "text": "每场战斗从第 1 回合起，每隔 2 回合在回合开始抽牌后，将 1 张【临时】下箭头加入手牌。"},
+    {"key": "relic.nodule.name", "text": "结核"},
+    {"key": "relic.nodule.desc", "text": "每场战斗从第 1 回合起，每隔 2 回合在回合开始抽牌后，将 1 张【临时】左箭头加入手牌。"}
+  ]
+}

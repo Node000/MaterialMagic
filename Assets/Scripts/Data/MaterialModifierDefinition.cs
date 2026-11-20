@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "MaterialModifierDefinition", menuName = "Enchant/Material Modifier Definition")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MaterialModifierDefinition")]
+#endif
 public sealed class MaterialModifierDefinition : ScriptableObject
 {
     [SerializeField] private string id;
@@ -9,6 +12,10 @@ public sealed class MaterialModifierDefinition : ScriptableObject
     [SerializeField] private string descriptionKey;
     [SerializeField] private Color lineColor = Color.white;
     [SerializeField] private bool inArrowModifierRewardPool;
+    [Tooltip("随机附魔掉落的相对权重。0 = 不参与随机掉落；不影响指定发放或商店。")]
+    [SerializeField] private int weight = 1;
+    [Tooltip("同一箭头可获得多个独立实例。仅用于效果可以累加的附魔。")]
+    [SerializeField] private bool stackable;
     [Tooltip("商店价格差值：相对「无附魔普通箭头价」的增减（正数更贵、负数更便宜）。0 = 不影响价格。")]
     [SerializeField] private int price;
     [SerializeField] private Material visualMaterial;
@@ -28,6 +35,8 @@ public sealed class MaterialModifierDefinition : ScriptableObject
             descriptionKey = descriptionKey,
             lineColor = "#" + ColorUtility.ToHtmlStringRGB(lineColor),
             inArrowModifierRewardPool = inArrowModifierRewardPool,
+            weight = weight,
+            stackable = stackable,
             price = price
         };
     }
@@ -44,6 +53,8 @@ public sealed class MaterialModifierDefinition : ScriptableObject
         if (!ColorUtility.TryParseHtmlString(value.lineColor, out lineColor))
             lineColor = Color.white;
         inArrowModifierRewardPool = value.inArrowModifierRewardPool;
+        weight = value.weight;
+        stackable = value.stackable;
         price = value.price;
         visualMaterial = valueVisualMaterial;
     }

@@ -1,6 +1,8 @@
 public class CurseBuffModel : BuffModel
 {
     private int remainingCardsToCurse;
+    public override System.Collections.Generic.Dictionary<string, int> ExportRuntimeState() => new System.Collections.Generic.Dictionary<string, int> { { "remaining", remainingCardsToCurse } };
+    public override void RestoreRuntimeState(System.Collections.Generic.IReadOnlyDictionary<string, int> values) => remainingCardsToCurse = ReadState(values, "remaining");
 
     public CurseBuffModel(int stack) : base(BuffEnum.Curse, stack)
     {

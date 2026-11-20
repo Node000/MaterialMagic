@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MouseParallaxCamera")]
+#endif
 public class MouseParallaxCamera : MonoBehaviour
 {
     [Header("鼠标转动")]

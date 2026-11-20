@@ -65,6 +65,26 @@
       "text": "Settings"
     },
     {
+      "key": "ui.developer_unlock.button",
+      "text": "Developer Mode"
+    },
+    {
+      "key": "ui.developer_unlock.prompt",
+      "text": "Unlock all content for save slot {0}?\nThis saves immediately without changing your current run."
+    },
+    {
+      "key": "ui.developer_unlock.success",
+      "text": "Save slot {0} is fully unlocked"
+    },
+    {
+      "key": "ui.developer_unlock.unavailable",
+      "text": "Unlock unavailable. Reopen to confirm."
+    },
+    {
+      "key": "ui.developer_unlock.error",
+      "text": "Could not finish unlocking. Try again."
+    },
+    {
       "key": "ui.start_menu.exit",
       "text": "Exit Game"
     },
@@ -255,6 +275,10 @@
     {
       "key": "ui.run_history.detail.version",
       "text": "Version: {0} / Record v{1}"
+    },
+    {
+      "key": "ui.run_history.detail.character",
+      "text": "Character: {0}"
     },
     {
       "key": "ui.run_history.build.magic_prefix",

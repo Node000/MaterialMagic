@@ -10,6 +10,9 @@ using UnityEngine.UI;
 /// [ExecuteAlways]：Edit Mode 下也可即时预览调参；网格被关闭，AutoSpacing 仅在运行时关闭。
 /// </summary>
 [ExecuteAlways]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MagicBookCurveLayout")]
+#endif
 public class MagicBookCurveLayout : MonoBehaviour
 {
     [Header("槽位间距")]

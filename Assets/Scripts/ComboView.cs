@@ -4,6 +4,9 @@ using UnityEngine.UI;
 using TMPro;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ComboView")]
+#endif
 public class ComboView : MonoBehaviour
 {
     [SerializeField] private RectTransform targetRect;

@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "StripDungeonTheme", menuName = "Config/Second Floor Strip Dungeon Theme")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StripDungeonThemeDefinition")]
+#endif
 public class StripDungeonThemeDefinition : ScriptableObject
 {
     [SerializeField] private string themeId = "default";

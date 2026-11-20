@@ -15,6 +15,9 @@ public class ArrowUpgradeVisualProfile
 }
 
 [CreateAssetMenu(fileName = "ArrowUpgradeVisualConfig", menuName = "Material Magic/Arrow Upgrade Visual Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ArrowUpgradeVisualConfig")]
+#endif
 public class ArrowUpgradeVisualConfig : ScriptableObject
 {
     [SerializeField] private ArrowUpgradeVisualProfile[] profiles = Array.Empty<ArrowUpgradeVisualProfile>();

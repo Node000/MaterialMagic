@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CardWaveHoverConfig", menuName = "Config/Card Wave Hover Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CardWaveHoverConfig")]
+#endif
 public class CardWaveHoverConfig : ScriptableObject
 {
     [SerializeField] private float hoverYOffset = 32f;

@@ -305,6 +305,26 @@
       "text": "设置"
     },
     {
+      "key": "ui.developer_unlock.button",
+      "text": "开发者模式"
+    },
+    {
+      "key": "ui.developer_unlock.prompt",
+      "text": "将解锁存档 {0} 的全部内容并写入存档。\n不会更改进行中的一局。"
+    },
+    {
+      "key": "ui.developer_unlock.success",
+      "text": "存档 {0} 已全解锁"
+    },
+    {
+      "key": "ui.developer_unlock.unavailable",
+      "text": "当前无法解锁，请重新打开确认。"
+    },
+    {
+      "key": "ui.developer_unlock.error",
+      "text": "未能完成解锁，可重试。"
+    },
+    {
       "key": "ui.start_menu.exit",
       "text": "退出游戏"
     },
@@ -459,6 +479,10 @@
     {
       "key": "ui.run_history.detail.version",
       "text": "版本：{0} / 记录v{1}"
+    },
+    {
+      "key": "ui.run_history.detail.character",
+      "text": "角色：{0}"
     },
     {
       "key": "ui.run_history.build.magic_prefix",

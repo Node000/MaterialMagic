@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "GeneralThemeGenConfig", menuName = "Config/Second Floor/General Theme Gen Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "GeneralThemeGenConfig")]
+#endif
 public class GeneralThemeGenConfig : ScriptableObject
 {
     [Header("天花板")]
@@ -87,6 +90,9 @@ public class GeneralThemeGenConfig : ScriptableObject
 }
 
 [CreateAssetMenu(fileName = "ThemeUniqueGenConfig", menuName = "Config/Second Floor/Theme Unique Gen Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ThemeUniqueGenConfig")]
+#endif
 public class ThemeUniqueGenConfig : ScriptableObject
 {
     [Header("天花板")]

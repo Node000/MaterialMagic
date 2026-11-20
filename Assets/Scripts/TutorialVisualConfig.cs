@@ -6,6 +6,9 @@ using UnityEngine;
 /// 说明：只控制“教学”这一套界面，不改动 PopupDragonWindowBlank 等美术预制体。
 /// </summary>
 [CreateAssetMenu(fileName = "TutorialVisualConfig", menuName = "MaterialMagic/Tutorial Visual Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TutorialVisualConfig")]
+#endif
 public class TutorialVisualConfig : ScriptableObject
 {
     /// <summary>Resources 下的资产名（不含扩展名）。</summary>

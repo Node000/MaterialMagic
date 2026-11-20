@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "VerticalFloatUI")]
+#endif
 public sealed class VerticalFloatUI : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float amplitude = 20f;

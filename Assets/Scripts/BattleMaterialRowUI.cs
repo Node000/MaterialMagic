@@ -13,6 +13,9 @@ public struct BattleMaterialRowSortEntry
     public int OriginalIndex;
 }
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BattleMaterialRowUI")]
+#endif
 public class BattleMaterialRowUI : MonoBehaviour, IPointerUpHandler
 {
     [SerializeField] private TMP_Text titleText;

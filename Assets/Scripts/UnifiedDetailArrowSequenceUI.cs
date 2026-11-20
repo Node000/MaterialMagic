@@ -6,6 +6,9 @@ using UnityEngine.UI;
 /// 详情面板左下角的“箭头序列”弹簧小线框。
 /// 容器、线框与图标槽位都在场景里搭好；运行时只按道具的施法序列刷新图标与显隐。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnifiedDetailArrowSequenceUI")]
+#endif
 public class UnifiedDetailArrowSequenceUI : MonoBehaviour
 {
     [Tooltip("整体显示根（含弹簧线框）；无序列时整体隐藏。留空时使用本物体。")]

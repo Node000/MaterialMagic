@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CrayonScreenFilterRendererFeature")]
+#endif
 public class CrayonScreenFilterRendererFeature : ScriptableRendererFeature
 {
     [System.Serializable]

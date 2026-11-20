@@ -2,6 +2,9 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnlockPopupItemUI")]
+#endif
 public class UnlockPopupItemUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text titleText;

@@ -5,6 +5,9 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnemyIntentView")]
+#endif
 public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
@@ -34,6 +37,8 @@ public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
     private EnemyModel boundEnemy;
     private EnemyIntentData boundIntent;
     private PlayerState boundPlayerState;
+    private BattleIntentSnapshot boundSnapshot;
+    private UnifiedDetailContent frozenDetail;
     private Image hitImage;
     private bool hidden;
     private UnifiedDetailTriggerUI detailTrigger;
@@ -88,6 +93,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
     public void Bind(HandSystemUI owner, EnemyModel enemy, EnemyIntentData intent, PlayerState playerState, int phaseIndex, int phaseCount)
     {
         this.owner = owner;
+        boundSnapshot = null;
         boundEnemy = enemy;
         boundIntent = intent;
         boundPlayerState = playerState;
@@ -104,6 +110,18 @@ public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
                 intentDisplayValue = enemy.GetSpecialIntentDisplayValue(intent, playerState);
         }
         Bind(intent, phaseIndex, phaseCount, intentValue, intentDisplayValue);
+    }
+
+    public void BindSnapshot(HandSystemUI owner, EnemyModel enemy, BattleIntentSnapshot snapshot, int phaseIndex, int phaseCount)
+    {
+        this.owner = owner;
+        boundEnemy = enemy;
+        boundIntent = snapshot?.Intent;
+        boundPlayerState = null;
+        boundSnapshot = snapshot;
+        Bind(boundIntent, phaseIndex, phaseCount, snapshot != null ? snapshot.Value : 0, snapshot?.DisplayValue);
+        // Freeze the text while the live model is already at the next decision point.
+        frozenDetail = UnifiedDetailContentBuilder.Build(snapshot);
     }
 
     public void Bind(EnemyIntentData intent, int phaseIndex, int phaseCount)
@@ -377,6 +395,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
     // 多段攻击时返回逐段易损衰减后的总伤害，用于在主数值后追加 (XX)；单次结算返回 0 表示不显示。
     private int GetIntentTotalDamageValue(EnemyIntentData intent, int attackValue)
     {
+        if (boundSnapshot != null) return boundSnapshot.TotalDamage;
         if (boundEnemy == null || intent == null || attackValue <= 0)
             return 0;
         if (intent.actionType != EnemyActionType.Attack && intent.actionType != EnemyActionType.AttackAll)
@@ -427,7 +446,7 @@ public class EnemyIntentView : MonoBehaviour, IPointerClickHandler
         if (hidden || boundEnemy == null || boundIntent == null)
             return default;
 
-        return UnifiedDetailContentBuilder.Build(boundEnemy, boundIntent, boundPlayerState);
+        return boundSnapshot != null ? frozenDetail : UnifiedDetailContentBuilder.Build(boundEnemy, boundIntent, boundPlayerState);
     }
 
     /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>

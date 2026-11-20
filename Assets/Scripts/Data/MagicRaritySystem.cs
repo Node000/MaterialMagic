@@ -4,9 +4,11 @@ using UnityEngine;
 
 public static class MagicRaritySystem
 {
+    public const float DefaultOwnedMagicWeightMultiplier = 0.25f;
     private const int RandomPrecision = 1000000;
 
-    public static MagicData SelectWeightedMagic(IList<MagicData> candidates, Func<int, int, int> nextRandomInt)
+    public static MagicData SelectWeightedMagic(IList<MagicData> candidates, Func<int, int, int> nextRandomInt,
+        IReadOnlyList<MagicModel> ownedMagic = null, float ownedWeightMultiplier = DefaultOwnedMagicWeightMultiplier)
     {
         if (candidates == null || candidates.Count == 0)
             return null;
@@ -18,18 +20,18 @@ public static class MagicRaritySystem
         float totalWeight = commonWeight + rareWeight + epicWeight + legendaryWeight;
 
         if (totalWeight <= 0f)
-            return SelectUniformMagic(candidates, nextRandomInt);
+            return SelectMagic(candidates, null, nextRandomInt, ownedMagic, ownedWeightMultiplier);
 
         float roll = NextRandomInt(nextRandomInt, 0, RandomPrecision) / (float)RandomPrecision * totalWeight;
         if (roll < commonWeight)
-            return SelectUniformMagic(candidates, MagicRarity.Common, nextRandomInt);
+            return SelectMagicOfRarity(candidates, MagicRarity.Common, nextRandomInt, ownedMagic, ownedWeightMultiplier);
         roll -= commonWeight;
         if (roll < rareWeight)
-            return SelectUniformMagic(candidates, MagicRarity.Rare, nextRandomInt);
+            return SelectMagicOfRarity(candidates, MagicRarity.Rare, nextRandomInt, ownedMagic, ownedWeightMultiplier);
         roll -= rareWeight;
         if (roll < epicWeight)
-            return SelectUniformMagic(candidates, MagicRarity.Epic, nextRandomInt);
-        return SelectUniformMagic(candidates, MagicRarity.Legendary, nextRandomInt);
+            return SelectMagicOfRarity(candidates, MagicRarity.Epic, nextRandomInt, ownedMagic, ownedWeightMultiplier);
+        return SelectMagicOfRarity(candidates, MagicRarity.Legendary, nextRandomInt, ownedMagic, ownedWeightMultiplier);
     }
 
     public static Color GetBorderColor(MagicData magicData, Color fallback)
@@ -73,37 +75,85 @@ public static class MagicRaritySystem
         return false;
     }
 
-    private static MagicData SelectUniformMagic(IList<MagicData> candidates, MagicRarity rarity, Func<int, int, int> nextRandomInt)
+    /// <summary>保底也复用同品质内持有降权，不改变品质抽取概率。</summary>
+    public static MagicData SelectMagicOfRarity(IList<MagicData> candidates, MagicRarity rarity,
+        Func<int, int, int> nextRandomInt, IReadOnlyList<MagicModel> ownedMagic = null,
+        float ownedWeightMultiplier = DefaultOwnedMagicWeightMultiplier)
     {
-        int count = 0;
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            MagicData candidate = candidates[i];
-            if (candidate != null && candidate.rarity == rarity)
-                count++;
-        }
-
-        if (count <= 0)
-            return null;
-
-        int selectedIndex = NextRandomInt(nextRandomInt, 0, count);
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            MagicData candidate = candidates[i];
-            if (candidate == null || candidate.rarity != rarity)
-                continue;
-
-            if (selectedIndex == 0)
-                return candidate;
-            selectedIndex--;
-        }
-        return null;
+        return SelectMagic(candidates, rarity, nextRandomInt, ownedMagic, ownedWeightMultiplier);
     }
 
-    private static MagicData SelectUniformMagic(IList<MagicData> candidates, Func<int, int, int> nextRandomInt)
+    private static MagicData SelectMagic(IList<MagicData> candidates, MagicRarity? rarity,
+        Func<int, int, int> nextRandomInt, IReadOnlyList<MagicModel> ownedMagic, float ownedWeightMultiplier)
     {
-        int index = NextRandomInt(nextRandomInt, 0, candidates.Count);
-        return candidates[index];
+        if (candidates == null)
+            return null;
+
+        float multiplier = float.IsNaN(ownedWeightMultiplier) ? DefaultOwnedMagicWeightMultiplier : Mathf.Clamp01(ownedWeightMultiplier);
+        int count = 0;
+        int ownedCount = 0;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            MagicData candidate = candidates[i];
+            if (candidate == null || (rarity.HasValue && candidate.rarity != rarity.Value))
+                continue;
+            count++;
+            if (IsOwned(candidate, ownedMagic))
+                ownedCount++;
+        }
+        if (count == 0)
+            return null;
+
+        // 无持有、全持有或倍率为1时保留等概率抽取，也兼容全持有且倍率为0的空权重情况。
+        if (ownedCount == 0 || ownedCount == count || multiplier == 1f)
+        {
+            int selectedIndex = NextRandomInt(nextRandomInt, 0, count);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                MagicData candidate = candidates[i];
+                if (candidate == null || (rarity.HasValue && candidate.rarity != rarity.Value))
+                    continue;
+                if (selectedIndex-- == 0)
+                    return candidate;
+            }
+            return null;
+        }
+
+        float totalWeight = count - ownedCount + ownedCount * multiplier;
+        float roll = NextRandomInt(nextRandomInt, 0, RandomPrecision) / (float)RandomPrecision * totalWeight;
+        MagicData lastEligible = null;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            MagicData candidate = candidates[i];
+            if (candidate == null || (rarity.HasValue && candidate.rarity != rarity.Value))
+                continue;
+            float weight = IsOwned(candidate, ownedMagic) ? multiplier : 1f;
+            if (weight <= 0f)
+                continue;
+            lastEligible = candidate;
+            if (roll < weight)
+                return candidate;
+            roll -= weight;
+        }
+        return lastEligible;
+    }
+
+    private static bool IsOwned(MagicData candidate, IReadOnlyList<MagicModel> ownedMagic)
+    {
+        for (int i = 0; ownedMagic != null && i < ownedMagic.Count; i++)
+        {
+            MagicData data = ownedMagic[i]?.Data;
+            if (data == null)
+                continue;
+            if (candidate.numericId > 0 && data.numericId > 0)
+            {
+                if (candidate.numericId == data.numericId)
+                    return true;
+            }
+            else if (!string.IsNullOrEmpty(candidate.id) && candidate.id == data.id)
+                return true;
+        }
+        return false;
     }
 
     private static int NextRandomInt(Func<int, int, int> nextRandomInt, int minInclusive, int maxExclusive)

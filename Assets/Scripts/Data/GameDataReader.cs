@@ -148,6 +148,13 @@ public static class GameDataReader
 
 public static class GameDataDatabase
 {
+    private static IRuleContentProvider Content => RuleContentProviderHost.IsCapturing ? null : RuleExecutionScope.Current?.Content;
+    private static Dictionary<int, RelicData> relicData;
+    private static Dictionary<string, RelicPoolData> relicPoolData;
+    public static IReadOnlyDictionary<int, RelicData> RelicData => Content != null ? Content.Numeric<RelicData>() : (relicData ??= GameDataReader.LoadNumericDictionary<RelicData>("RelicData"));
+    public static IReadOnlyDictionary<string, RelicPoolData> RelicPoolData => Content != null ? Content.Named<RelicPoolData>() : (relicPoolData ??= GameDataReader.LoadDictionary<RelicPoolData>("RelicPoolData"));
+    public static bool TryGetRelicData(int id, out RelicData data) => RelicData.TryGetValue(id, out data);
+
     private static Dictionary<int, MagicData> magicData;
     private static Dictionary<MagicRarity, MagicRarityData> magicRarityData;
     private static Dictionary<int, EnemyData> enemyData;
@@ -165,22 +172,22 @@ public static class GameDataDatabase
     private static Dictionary<string, MagicModifierData> magicModifierData;
     private static Dictionary<string, PlayerStartConfigData> playerStartConfigData;
 
-    public static IReadOnlyDictionary<int, MagicData> MagicData => magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData");
-    public static IReadOnlyDictionary<MagicRarity, MagicRarityData> MagicRarityData => magicRarityData ??= LoadMagicRarityData();
-    public static IReadOnlyDictionary<int, EnemyData> EnemyData => enemyData ??= LoadEnemyData();
-    public static IReadOnlyDictionary<int, EventData> EventData => eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData");
-    public static IReadOnlyDictionary<int, LevelData> LevelData => levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData");
-    public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData");
-    public static IReadOnlyDictionary<int, BonusLevelData> BonusLevelData => bonusLevelData ??= GameDataReader.LoadNumericDictionary<BonusLevelData>("BonusLevelData");
-    public static IReadOnlyDictionary<int, ChapterData> ChapterData => chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData");
-    public static IReadOnlyDictionary<int, MapGenConfigData> MapGenConfigData => mapGenConfigData ??= GameDataReader.LoadNumericDictionary<MapGenConfigData>("MapGenConfig");
-    public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig");
-    public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData");
-    public static IReadOnlyDictionary<int, AscensionData> AscensionData => ascensionData ??= GameDataReader.LoadSignedNumericDictionary<AscensionData>("AscensionData");
-    public static IReadOnlyDictionary<string, DifficultyUpgradeData> DifficultyUpgradeData => difficultyUpgradeData ??= GameDataReader.LoadDictionary<DifficultyUpgradeData>("DifficultyUpgradeData");
-    public static IReadOnlyDictionary<string, TagData> TagData => tagData ??= GameDataReader.LoadDictionary<TagData>("TagData");
-    public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData");
-    public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig");
+    public static IReadOnlyDictionary<int, MagicData> MagicData => Content != null ? Content.Numeric<MagicData>() : (magicData ??= GameDataReader.LoadNumericDictionary<MagicData>("MagicData"));
+    public static IReadOnlyDictionary<MagicRarity, MagicRarityData> MagicRarityData => Content != null ? Content.Rarities : (magicRarityData ??= LoadMagicRarityData());
+    public static IReadOnlyDictionary<int, EnemyData> EnemyData => Content != null ? Content.Numeric<EnemyData>() : (enemyData ??= LoadEnemyData());
+    public static IReadOnlyDictionary<int, EventData> EventData => Content != null ? Content.Numeric<EventData>() : (eventData ??= GameDataReader.LoadNumericDictionary<EventData>("EventData"));
+    public static IReadOnlyDictionary<int, LevelData> LevelData => Content != null ? Content.Numeric<LevelData>() : (levelData ??= GameDataReader.LoadNumericDictionary<LevelData>("LevelData"));
+    public static IReadOnlyDictionary<int, RewardPoolData> RewardPoolData => Content != null ? Content.Numeric<RewardPoolData>() : (rewardPoolData ??= GameDataReader.LoadNumericDictionary<RewardPoolData>("RewardPoolData"));
+    public static IReadOnlyDictionary<int, BonusLevelData> BonusLevelData => Content != null ? Content.Numeric<BonusLevelData>() : (bonusLevelData ??= GameDataReader.LoadNumericDictionary<BonusLevelData>("BonusLevelData"));
+    public static IReadOnlyDictionary<int, ChapterData> ChapterData => Content != null ? Content.Numeric<ChapterData>() : (chapterData ??= GameDataReader.LoadNumericDictionary<ChapterData>("ChapterData"));
+    public static IReadOnlyDictionary<int, MapGenConfigData> MapGenConfigData => Content != null ? Content.Numeric<MapGenConfigData>() : (mapGenConfigData ??= GameDataReader.LoadNumericDictionary<MapGenConfigData>("MapGenConfig"));
+    public static IReadOnlyDictionary<int, EconomyConfigData> EconomyConfigData => Content != null ? Content.Numeric<EconomyConfigData>() : (economyConfigData ??= GameDataReader.LoadNumericDictionary<EconomyConfigData>("EconomyConfig"));
+    public static IReadOnlyDictionary<int, ShopProductPoolData> ShopProductPoolData => Content != null ? Content.Numeric<ShopProductPoolData>() : (shopProductPoolData ??= GameDataReader.LoadNumericDictionary<ShopProductPoolData>("ShopProductPoolData"));
+    public static IReadOnlyDictionary<int, AscensionData> AscensionData => Content != null ? Content.Numeric<AscensionData>() : (ascensionData ??= GameDataReader.LoadSignedNumericDictionary<AscensionData>("AscensionData"));
+    public static IReadOnlyDictionary<string, DifficultyUpgradeData> DifficultyUpgradeData => Content != null ? Content.Named<DifficultyUpgradeData>() : (difficultyUpgradeData ??= GameDataReader.LoadDictionary<DifficultyUpgradeData>("DifficultyUpgradeData"));
+    public static IReadOnlyDictionary<string, TagData> TagData => Content != null ? Content.Named<TagData>() : (tagData ??= GameDataReader.LoadDictionary<TagData>("TagData"));
+    public static IReadOnlyDictionary<string, MagicModifierData> MagicModifierData => Content != null ? Content.Named<MagicModifierData>() : (magicModifierData ??= GameDataReader.LoadDictionary<MagicModifierData>("MagicModifierData"));
+    public static IReadOnlyDictionary<string, PlayerStartConfigData> PlayerStartConfigData => Content != null ? Content.Named<PlayerStartConfigData>() : (playerStartConfigData ??= GameDataReader.LoadDictionary<PlayerStartConfigData>("StartConfig"));
 
     private static Dictionary<int, EnemyData> LoadEnemyData()
     {
@@ -304,6 +311,8 @@ public static class GameDataDatabase
 
     public static void ClearCache()
     {
+        relicData = null;
+        relicPoolData = null;
         magicData = null;
         magicRarityData = null;
         enemyData = null;

@@ -16,6 +16,9 @@ using UnityEngine.UI;
 /// * 不管开关怎么动，**TapTap 登录都不受影响**（不需要重新登录或登出）；
 /// * 首次启动的询问结果与这个开关共用同一份状态（`PrivacyConsentGate`），不会两处不一致。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AnalyticsConsentToggleUI")]
+#endif
 public class AnalyticsConsentToggleUI : MonoBehaviour
 {
     [Header("绑定（美术在设置面板里搭好后拖进来）")]

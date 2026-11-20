@@ -5,6 +5,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartMenuUI")]
+#endif
 public class StartMenuUI : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "SampleScene_PC";
@@ -45,6 +48,7 @@ public class StartMenuUI : MonoBehaviour
 
     private void Awake()
     {
+        RuleHostBootstrap.EnsureConfigured();
         ResolveReferences();
         CacheMenuPresentation();
         startConfigSelectionUI.Prewarm();
@@ -292,7 +296,9 @@ public class StartMenuUI : MonoBehaviour
             ShowStartConfigSelection();
     }
 
-    private void ConfirmStartGame()
+    private void ConfirmStartGame() => ConfirmStartGame(0);
+
+    public void ConfirmStartGame(int seed)
     {
         if (!selectingStartConfig || startConfigSelectionUI.IsSwitchingConfig)
             return;
@@ -313,7 +319,7 @@ public class StartMenuUI : MonoBehaviour
         if (startingTutorial)
             RunSaveSystem.BeginNewTutorialRun();
         else
-            RunSaveSystem.BeginNewRun();
+            RunSaveSystem.BeginNewRun(seed);
 
 
         if (SceneTransitionManager.Instance != null)

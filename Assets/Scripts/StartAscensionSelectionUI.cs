@@ -3,6 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartAscensionSelectionUI")]
+#endif
 public class StartAscensionSelectionUI : MonoBehaviour
 {
     [SerializeField] private Button toggleButton;

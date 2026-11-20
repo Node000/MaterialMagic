@@ -386,7 +386,7 @@
     },
     {
       "key": "magic.rain_banner.desc",
-      "text": "将5张【临时】下加入手牌"
+      "text": "将5张【临时】下逐张加入手牌。"
     },
     {
       "key": "magic.lighter.name",
@@ -507,6 +507,22 @@
     {
       "key": "magic.sticker.desc",
       "text": "本回合每有1张素材被消耗，下回合将1张【临时】左加入手牌"
+    },
+    {
+      "key": "magic.blueprint.name",
+      "text": "蓝图"
+    },
+    {
+      "key": "magic.blueprint.desc",
+      "text": "复制同一行紧邻右槽道具的触发要求与基础施放效果。"
+    },
+    {
+      "key": "magic.bar_chart.name",
+      "text": "柱状图"
+    },
+    {
+      "key": "magic.bar_chart.desc",
+      "text": "每进入一个新房间，当前售价随机变化 -2 到 +2 金。可累积，最低为 0 金。"
     },
     {
       "key": "chapter.tutorial.name",

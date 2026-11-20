@@ -2,6 +2,9 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayerFeedbackUI")]
+#endif
 public class PlayerFeedbackUI : MonoBehaviour
 {
     [SerializeField] private RectTransform playerVirtualTarget;
@@ -125,9 +128,10 @@ public class PlayerFeedbackUI : MonoBehaviour
         });
     }
 
-    public void PlayDamageFeedback(Color color, PlayerState playerState)
+    public void PlayDamageFeedback(Color color, PlayerState playerState, BattleStateSnapshot snapshot = null)
     {
-        UpdateVignetteRange(playerState);
+        if (snapshot != null) UpdateVignetteRange(snapshot.PlayerHealth, snapshot.PlayerMaxHealth);
+        else UpdateVignetteRange(playerState);
         PlayCornerFeedback(color, true);
         if (playerCastAnimator == null)
             CachePlayerCastAnimator(transform);
@@ -184,12 +188,17 @@ public class PlayerFeedbackUI : MonoBehaviour
 
     public void UpdateVignetteRange(PlayerState playerState)
     {
+        if (playerState != null) UpdateVignetteRange(playerState.CurrentHealth, playerState.MaxHealth);
+    }
+
+    public void UpdateVignetteRange(int health, int maxHealth)
+    {
         if (playerVignetteMaterial == null)
             CreateVignetteFeedback();
-        if (playerVignetteMaterial == null || playerState == null || playerState.MaxHealth <= 0)
+        if (playerVignetteMaterial == null || maxHealth <= 0)
             return;
 
-        float health01 = Mathf.Clamp01(playerState.CurrentHealth / (float)playerState.MaxHealth);
+        float health01 = Mathf.Clamp01(health / (float)maxHealth);
         currentVignetteInnerRadius = Mathf.Lerp(lowHealthInnerRadius, fullHealthInnerRadius, health01);
         ApplyVignetteShapeProperties(playerVignetteMaterial);
         ApplyVignetteShapeProperties(playerEternalVignetteMaterial);

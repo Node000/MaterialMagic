@@ -13,10 +13,4 @@ public class KeepHandBuffModel : BuffModel
     {
         return string.Empty;
     }
-
-    public override void OnTurnEnd(CombatantModel self, CombatantModel opponent)
-    {
-        self?.Player?.KeepHandOnEndTurnOnce();
-        stack = 0;
-    }
 }

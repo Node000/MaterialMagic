@@ -10,6 +10,9 @@ public class EnemyStatusBreakpointData
 }
 
 [CreateAssetMenu(fileName = "EnemyStatusConfig", menuName = "Config/Enemy Status Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnemyStatusConfig")]
+#endif
 public class EnemyStatusConfig : ScriptableObject
 {
     [SerializeField] private float defaultHealthBarWidth = 130f;

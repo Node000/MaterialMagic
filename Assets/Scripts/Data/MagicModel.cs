@@ -2,10 +2,10 @@ using System.Collections.Generic;
 
 public class MagicModel
 {
-    private static readonly List<CombatantModel> enemyTargets = new List<CombatantModel>();
-
     public MagicData Data { get; }
     public int SlotIndex { get; set; }
+    /// <summary>Persisted slot-policy rank applied by PlayerState; -1 retains legacy slot fallback.</summary>
+    public int ReadingRank { get; internal set; } = -1;
     public List<MagicModifierModel> Modifiers { get; } = new List<MagicModifierModel>();
 
     public string Id => Data.id;
@@ -18,6 +18,18 @@ public class MagicModel
     public virtual MagicEffectType EffectType => MagicEffectType.None;
     public virtual bool CastParticleTargetsAllEnemies => false;
     public virtual bool CastParticleTargetsPlayer => false;
+    protected virtual bool AllowsModifiers => true;
+
+    public int GetIndex() => SlotIndex;
+
+    protected virtual MagicMatchRule NativeMatchRule => Data?.matchRule ?? MagicMatchRule.NoTrigger;
+    internal MagicTrigger GetOwnTrigger() => new MagicTrigger(this, NativeMatchRule, GetEffectiveRecipe());
+    public virtual MagicTrigger GetCombatTrigger(PlayerState player = null) => GetOwnTrigger();
+
+    public virtual int ModifySellPrice(int basePrice) => basePrice;
+    public virtual void OnRoomEntered(PlayerStatus player) { }
+    internal virtual int ExportSellPriceState() => -1;
+    internal virtual void RestoreSellPriceState(int value) { }
 
     public MagicModel(MagicData data, int slotIndex = 0)
     {
@@ -27,7 +39,7 @@ public class MagicModel
 
     public bool CanAddModifier(MagicModifierModel modifier)
     {
-        return modifier != null && modifier.CanApplyTo(this);
+        return AllowsModifiers && modifier != null && modifier.CanApplyTo(this);
     }
 
     public bool AddModifier(MagicModifierModel modifier)
@@ -57,7 +69,7 @@ public class MagicModel
 
     public MagicCastResult Cast(PlayerState playerState, EnemyModel enemyModel)
     {
-        enemyTargets.Clear();
+        var enemyTargets = new List<CombatantModel>();
         if (enemyModel != null)
             enemyTargets.Add(new CombatantModel(enemyModel));
 
@@ -68,7 +80,10 @@ public class MagicModel
 
     public MagicCastResult Cast(PlayerState playerState, EnemyModel enemyModel, IReadOnlyList<CombatantModel> allEnemyTargets)
     {
+        BattleManager previousBattle = playerState?.Battle;
         BattleManager battleManager = new BattleManager(playerState);
+        try
+        {
         for (int i = 0; allEnemyTargets != null && i < allEnemyTargets.Count; i++)
         {
             CombatantModel target = allEnemyTargets[i];
@@ -77,14 +92,34 @@ public class MagicModel
         }
         battleManager.SetFocusTarget(enemyModel);
         return Cast(playerState, battleManager);
+        }
+        finally
+        {
+            if (playerState != null)
+            {
+                playerState.Battle = previousBattle;
+                playerState.Relics.BindBattle(previousBattle);
+            }
+            if (allEnemyTargets != null)
+                foreach (CombatantModel target in allEnemyTargets)
+                    if (target?.Enemy != null && ReferenceEquals(target.Enemy.Battle, battleManager))
+                    { target.Enemy.Battle = previousBattle; target.Enemy.RelicRules = previousBattle?.PlayerState?.Relics; }
+        }
     }
 
     public MagicCastResult Cast(PlayerState playerState, BattleManager battleManager)
+        => Cast(playerState, battleManager, GetCombatTrigger(playerState));
+
+    internal MagicCastResult Cast(PlayerState playerState, BattleManager battleManager, MagicTrigger trigger)
     {
         MagicCastResult result = new MagicCastResult();
-        if (playerState == null || battleManager == null)
+        if (playerState == null || battleManager == null || trigger.Length == 0)
             return result;
 
+        using (playerState.Rules.Enter())
+        {
+        // A copied effect runs on a fresh, unmodified model; lifecycle and source remain the caster's.
+        MagicModel effect = ReferenceEquals(trigger.Source, this) ? this : MagicFactory.Create(trigger.Source.Data, SlotIndex);
         MaterialModifierModel.CurrentContext = new MaterialModifierContext { PlayerState = playerState, BattleManager = battleManager };
         SetModifierContext(playerState, battleManager);
         int castCount = 1 + GetAdditionalCastCount(playerState);
@@ -94,16 +129,19 @@ public class MagicModel
             EnemyModel target = battleManager.BeginCastTarget();
             GameLog.Data($"Magic {Id} resolve index={castIndex + 1}/{castCount} target={(target != null ? target.Id : "none")}");
             SetModifierContext(playerState, battleManager);
+            playerState.Relics.Publish(new RelicEvent(RelicEventKind.MagicStarted, magic: this, isReplay: castIndex > 0));
             TriggerMagicBeforeCast();
             TriggerPlayerInvoke(playerState, target);
-            ResolveCast(playerState, battleManager, result);
+            effect.ResolveCast(playerState, battleManager, result);
             TriggerMagicAfterCast(result);
             TriggerEnemyArcAfterCast(battleManager, result);
+            playerState.Relics.Publish(new RelicEvent(RelicEventKind.MagicResolved, magic: this, isReplay: castIndex > 0));
             MagicModifierModel.CurrentContext = null;
             battleManager.EndCastTarget();
         }
 
         return result;
+        }
     }
 
     protected virtual void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
@@ -243,16 +281,18 @@ public class MagicModel
         return 1;
     }
 
-    public bool IsMatch(IReadOnlyList<MaterialModel> sequence, int startIndex)
+    public bool IsMatch(IReadOnlyList<MaterialModel> sequence, int startIndex, PlayerState player = null)
     {
-        if (Data.matchRule == MagicMatchRule.AnyTwoDifferentElements)
+        MagicTrigger trigger = GetCombatTrigger(player);
+        if (trigger.Length == 0) return false;
+        if (trigger.Rule == MagicMatchRule.AnyTwoDifferentElements)
             return IsAnyTwoDifferentElements(sequence, startIndex);
 
-        MaterialEnum[] recipe = GetEffectiveRecipe();
-        if (sequence == null || recipe == null || startIndex < 0 || startIndex + recipe.Length > sequence.Count)
+        IReadOnlyList<MaterialEnum> recipe = trigger.Recipe;
+        if (sequence == null || startIndex < 0 || startIndex > sequence.Count - trigger.Length)
             return false;
 
-        for (int i = 0; i < recipe.Length; i++)
+        for (int i = 0; i < trigger.Length; i++)
         {
             MaterialModel card = sequence[startIndex + i];
             if (card == null || !card.CanActAs(recipe[i]))
@@ -262,16 +302,20 @@ public class MagicModel
         return true;
     }
 
-    public bool IsMatch(IReadOnlyList<ArrowReadToken> sequence, int startIndex)
+    public bool IsMatch(IReadOnlyList<ArrowReadToken> sequence, int startIndex, PlayerState player = null)
+        => Matches(GetCombatTrigger(player), sequence, startIndex);
+
+    internal static bool Matches(MagicTrigger trigger, IReadOnlyList<ArrowReadToken> sequence, int startIndex)
     {
-        if (Data.matchRule == MagicMatchRule.AnyTwoDifferentElements)
+        if (trigger.Length == 0) return false;
+        if (trigger.Rule == MagicMatchRule.AnyTwoDifferentElements)
             return IsAnyTwoDifferentElements(sequence, startIndex);
 
-        MaterialEnum[] recipe = GetEffectiveRecipe();
-        if (sequence == null || recipe == null || startIndex < 0 || startIndex + recipe.Length > sequence.Count)
+        IReadOnlyList<MaterialEnum> recipe = trigger.Recipe;
+        if (sequence == null || startIndex < 0 || startIndex > sequence.Count - trigger.Length)
             return false;
 
-        for (int i = 0; i < recipe.Length; i++)
+        for (int i = 0; i < trigger.Length; i++)
         {
             ArrowReadToken token = sequence[startIndex + i];
             if (token == null || !token.CanActAs(recipe[i]))
@@ -288,6 +332,9 @@ public class MagicModel
 
     protected void Damage(PlayerState playerState, EnemyModel target, int damage, MagicCastResult result)
     {
+        using (playerState.Relics.BeginOperation())
+        using (playerState.Relics.BeginDamage(RelicDamageKind.Attack))
+        {
         if (target == null || damage <= 0)
             return;
 
@@ -296,12 +343,14 @@ public class MagicModel
         int attackValue = damage;
         TriggerMagicBeforeAttack(target, ref attackValue);
         playerState.TriggerOnAttack(targetCombatant, ref attackValue);
+        attackValue = playerState.Relics.ModifyMagicAttack(MagicModifierModel.CurrentContext?.Magic ?? this, attackValue);
         GameLog.Data($"Magic {Id} damage target={target.Id} value={attackValue}");
         CombatDamageResult damageResult = target.TakeDamageResult(attackValue, caster);
         int attackResult = damageResult.HealthDamage;
         playerState.TriggerAfterAttack(targetCombatant, ref attackResult);
         TriggerMagicAfterAttack(target, ref attackResult);
         result.AddEnemyDamageHit(target, attackResult, damageResult.ShieldDamage);
+        }
     }
 
     protected void DamageTarget(PlayerState playerState, BattleManager battleManager, int damage, MagicCastResult result)
@@ -467,7 +516,7 @@ public class MagicModel
 
     private static bool IsAnyTwoDifferentElements(IReadOnlyList<MaterialModel> sequence, int startIndex)
     {
-        if (sequence == null || startIndex < 0 || startIndex + 1 >= sequence.Count)
+        if (sequence == null || startIndex < 0 || startIndex >= sequence.Count - 1)
             return false;
 
         MaterialModel first = sequence[startIndex];
@@ -492,8 +541,13 @@ public class MagicModel
     }
 
     private static bool IsAnyTwoDifferentElements(IReadOnlyList<ArrowReadToken> sequence, int startIndex)
+        => TryGetDistinctTriggerElements(sequence, startIndex, out _, out _);
+
+    internal static bool TryGetDistinctTriggerElements(IReadOnlyList<ArrowReadToken> sequence, int startIndex,
+        out MaterialEnum firstElement, out MaterialEnum secondElement)
     {
-        if (sequence == null || startIndex < 0 || startIndex + 1 >= sequence.Count)
+        firstElement = secondElement = MaterialEnum.None;
+        if (sequence == null || startIndex < 0 || startIndex >= sequence.Count - 1)
             return false;
 
         ArrowReadToken first = sequence[startIndex];
@@ -511,7 +565,11 @@ public class MagicModel
             {
                 MaterialEnum secondMaterial = GetBasicElementByIndex(secondIndex);
                 if (firstMaterial != secondMaterial && second.CanActAs(secondMaterial))
+                {
+                    firstElement = firstMaterial;
+                    secondElement = secondMaterial;
                     return true;
+                }
             }
         }
         return false;
@@ -540,21 +598,30 @@ public class MagicDamageHitResult
     public int healthDamage;
     public int shieldDamage;
     public int stepIndex;
+    public int HealthAfter { get; }
+    public int ShieldAfter { get; }
+    public int MaxHealth { get; }
+    public BattleStateSnapshot StateAfter { get; internal set; }
+    public IReadOnlyList<System.Action> FeedbackCues { get; internal set; } = System.Array.Empty<System.Action>();
 
     public bool FullyBlocked => healthDamage <= 0 && shieldDamage > 0;
 
-    public MagicDamageHitResult(EnemyModel target, int healthDamage, int shieldDamage, int stepIndex)
+    public MagicDamageHitResult(EnemyModel target, int healthDamage, int shieldDamage, int stepIndex, int? healthAfter = null, int? shieldAfter = null)
     {
         this.target = target;
         this.healthDamage = healthDamage;
         this.shieldDamage = shieldDamage;
         this.stepIndex = stepIndex;
+        HealthAfter = healthAfter ?? (target != null ? target.CurrentHealth : 0);
+        ShieldAfter = shieldAfter ?? (target != null ? target.Shield : 0);
+        MaxHealth = target != null ? target.MaxHealth : 0;
     }
 }
 
 public class MagicCastResult
 {
     public readonly List<MagicDamageHitResult> enemyDamageHits = new List<MagicDamageHitResult>();
+    internal List<MaterialModel> CreatedHandCards { get; } = new List<MaterialModel>();
     public int playerHeal;
     public int playerShield;
     public int playerGoldGain;
@@ -564,7 +631,10 @@ public class MagicCastResult
 
     public void AddEnemyDamageHit(EnemyModel target, int healthDamage, int shieldDamage)
     {
-        enemyDamageHits.Add(new MagicDamageHitResult(target, healthDamage, shieldDamage, currentDamageStep));
+        var hit = new MagicDamageHitResult(target, healthDamage, shieldDamage, currentDamageStep)
+        { FeedbackCues = RuleExecutionScope.DrainFeedback() };
+        if (target?.Battle != null) hit.StateAfter = BattleStateSnapshot.Capture(target.Battle.PlayerState, target.Battle);
+        enemyDamageHits.Add(hit);
     }
 
     public void AdvanceDamageStep()

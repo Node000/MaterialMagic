@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MagicModifierSelectionPanelUI")]
+#endif
 public class MagicModifierSelectionPanelUI : MonoBehaviour
 {
     private readonly List<Button> optionButtons = new List<Button>();

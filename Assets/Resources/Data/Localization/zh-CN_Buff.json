@@ -318,7 +318,7 @@
     },
     {
       "key": "buff.keep_hand.desc",
-      "text": "本回合结束时保留手牌，生效后清除。"
+      "text": "下次确认打出时不弃手牌，生效后清除。"
     },
     {
       "key": "buff.lazy_next_draw.name",

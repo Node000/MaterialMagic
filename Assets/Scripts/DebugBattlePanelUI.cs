@@ -3,6 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "DebugBattlePanelUI")]
+#endif
 public class DebugBattlePanelUI : MonoBehaviour
 {
     [SerializeField] private HandSystemUI handSystem;

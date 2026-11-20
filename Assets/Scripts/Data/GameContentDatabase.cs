@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "GameContentDatabase", menuName = "Content/Game Content Database")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "GameContentDatabase")]
+#endif
 public sealed class GameContentDatabase : ScriptableObject
 {
     private const string ResourcePath = "Config/GameContentDatabase";

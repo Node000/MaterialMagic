@@ -5,6 +5,9 @@ using UnityEngine;
 /// 详情本身（PC 悬停显示、PE 长按看详情、短按放行按钮点击、强调色沿用面板上美术设的颜色）由同物体上的
 /// <see cref="UnifiedDetailTriggerUI"/> 负责，本脚本只把“用哪组本地化 key”传给它，不再自己接指针事件。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TopBarIconTooltipUI")]
+#endif
 public class TopBarIconTooltipUI : MonoBehaviour
 {
     [SerializeField] private string titleKey;

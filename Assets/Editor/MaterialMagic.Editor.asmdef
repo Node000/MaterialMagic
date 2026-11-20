@@ -1,0 +1,13 @@
+{
+  "name": "MaterialMagic.Editor",
+  "references": [
+    "MaterialMagic.Core",
+    "MaterialMagic.UnityAdapters",
+    "MaterialMagic.Presentation"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "overrideReferences": false,
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

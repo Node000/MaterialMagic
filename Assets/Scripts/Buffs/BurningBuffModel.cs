@@ -8,7 +8,7 @@ public class BurningBuffModel : BuffModel
     {
         int damage = self.IsEnemy ? self.Enemy.TakeDirectDamage(stack) : self.Player.TakeDirectDamage(stack);
         if (damage > 0 && self.IsEnemy)
-            BattleManager.Instance?.PlayerState?.TriggerAfterEnemyBurningDamage(self.Enemy, damage);
+            self.Enemy.Battle?.PlayerState?.TriggerAfterEnemyBurningDamage(self.Enemy, damage);
         HalveStack();
     }
 }

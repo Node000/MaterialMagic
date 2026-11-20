@@ -1,0 +1,12 @@
+{
+  "items": [
+    {"key": "relic.new_leaf.name", "text": "New Leaf"},
+    {"key": "relic.new_leaf.desc", "text": "Every other turn, starting on turn 1 of each battle, add 1 Temporary Right arrow to your hand after your opening draw for that turn."},
+    {"key": "relic.ember.name", "text": "Ember"},
+    {"key": "relic.ember.desc", "text": "Every other turn, starting on turn 1 of each battle, add 1 Temporary Up arrow to your hand after your opening draw for that turn."},
+    {"key": "relic.wellspring.name", "text": "Wellspring"},
+    {"key": "relic.wellspring.desc", "text": "Every other turn, starting on turn 1 of each battle, add 1 Temporary Down arrow to your hand after your opening draw for that turn."},
+    {"key": "relic.nodule.name", "text": "Nodule"},
+    {"key": "relic.nodule.desc", "text": "Every other turn, starting on turn 1 of each battle, add 1 Temporary Left arrow to your hand after your opening draw for that turn."}
+  ]
+}

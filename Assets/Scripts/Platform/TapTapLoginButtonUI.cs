@@ -6,6 +6,9 @@ using UnityEngine.UI;
 /// 这个组件只负责：把点击接到登录流程、按登录状态切换按钮可用性与状态对象的显隐。
 /// 不在运行时改写美术设置的文案与颜色。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TapTapLoginButtonUI")]
+#endif
 public class TapTapLoginButtonUI : MonoBehaviour
 {
     [SerializeField] private Button loginButton;

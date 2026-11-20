@@ -4,6 +4,9 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasRenderer))]
 [AddComponentMenu("UI/Spring Line Highlight")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SpringLineHighlightUI")]
+#endif
 public class SpringLineHighlightUI : MaskableGraphic
 {
     public enum HighlightShape

@@ -2,6 +2,9 @@ using System;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "SecondFloorPCMapConfig", menuName = "Config/Second Floor PC Map")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SecondFloorPCMapConfig")]
+#endif
 public class SecondFloorPCMapConfig : ScriptableObject
 {
     [Header("区域")]

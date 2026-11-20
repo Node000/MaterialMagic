@@ -59,6 +59,8 @@ public static class MagicFactory
             case nameof(FoamBoardMagicModel): return new FoamBoardMagicModel(data, slotIndex);
             case nameof(YoYoMagicModel): return new YoYoMagicModel(data, slotIndex);
             case nameof(StickerMagicModel): return new StickerMagicModel(data, slotIndex);
+            case nameof(BlueprintMagicModel): return new BlueprintMagicModel(data, slotIndex);
+            case nameof(BarChartMagicModel): return new BarChartMagicModel(data, slotIndex);
             default: return new MagicModel(data, slotIndex);
         }
     }

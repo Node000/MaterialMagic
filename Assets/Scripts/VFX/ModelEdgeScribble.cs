@@ -6,6 +6,9 @@ using UnityEngine.Rendering;
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 [AddComponentMenu("VFX/Model Edge Scribble")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ModelEdgeScribble")]
+#endif
 public class ModelEdgeScribble : MonoBehaviour
 {
     [SerializeField, Range(0f, 180f)] private float creaseAngle = 8f;

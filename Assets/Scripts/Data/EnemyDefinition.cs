@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "EnemyDefinition", menuName = "Content/Enemy Definition")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnemyDefinition")]
+#endif
 public sealed class EnemyDefinition : ScriptableObject
 {
     [SerializeField] private EnemyData data = new EnemyData();

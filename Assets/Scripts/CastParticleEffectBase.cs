@@ -5,6 +5,9 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CastParticleEffectBase")]
+#endif
 public abstract class CastParticleEffectBase : MonoBehaviour
 {
     [SerializeField] private RectTransform startPoint;

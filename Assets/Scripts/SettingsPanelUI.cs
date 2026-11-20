@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SettingsPanelUI")]
+#endif
 public class SettingsPanelUI : MonoBehaviour
 {
     [SerializeField] private string startSceneName = "StartScene";

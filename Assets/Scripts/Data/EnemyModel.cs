@@ -5,6 +5,8 @@ using UnityEngine;
 public class EnemyModel : UnitModel
 {
     private readonly Dictionary<BuffEnum, BuffModel> buffs = new Dictionary<BuffEnum, BuffModel>();
+    internal RelicInventory RelicRules { get; set; }
+    public BattleManager Battle { get; internal set; }
     private readonly HashSet<int> consumedOnlyOnceIntentIds = new HashSet<int>();
     private readonly EnemyIntentPlanState intentPlanState = new EnemyIntentPlanState();
     private EnemyRuntimeDefinition runtimeDefinition;
@@ -120,6 +122,19 @@ public class EnemyModel : UnitModel
                 buffs[buff.buffType] = BuffModel.Create(buff.buffType, buff.stack);
         }
         UpdateCurrentIntents();
+    }
+
+    public void RestoreBattleBuffs(IReadOnlyList<BuffRuntimeSaveData> saved)
+    {
+        if (saved == null) return;
+        buffs.Clear();
+        foreach (BuffRuntimeSaveData value in saved)
+        {
+            if (value == null || value.type == BuffEnum.None || value.stack <= 0) continue;
+            BuffModel buff = BuffModel.Create(value.type, value.stack);
+            buff.RestoreRuntimeState(value.values);
+            buffs[value.type] = buff;
+        }
     }
 
     public void Kill(CombatantModel attacker = null)
@@ -282,6 +297,8 @@ public class EnemyModel : UnitModel
 
     private CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker, BuffEnum ignoredBuff)
     {
+        using (RelicRules?.BeginOperation())
+        {
         CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
             return result;
@@ -307,22 +324,25 @@ public class EnemyModel : UnitModel
         int healthDamage = healthBefore - CurrentHealth;
         result.ShieldDamage = blockedDamage;
         result.HealthDamage = healthDamage;
-        if (healthDamage > 0)
-            RunAnalyticsLedger.AddDamageDealt(healthDamage);
+        (RelicRules?.Owner.Services ?? PlayerStateServices.UnityHost).OnDamageDealt(healthDamage);
         result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
         GameLog.Data($"Enemy {Id} take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
+        (RelicRules?.Owner.Services ?? PlayerStateServices.UnityHost).OnDamage(healthDamage, blockedDamage);
 
+        RelicRules?.Publish(new RelicEvent(RelicEventKind.DamageResolved, attacker, new CombatantModel(this),
+            result.HealthDamage, damageKind: RelicRules.DamageKind, shieldDamage: result.ShieldDamage, originRelicId: RelicRules.OriginRelicId,
+            rawDamage: result.RawDamage, finalDamage: result.FinalDamage, targetDied: result.TargetDied));
         TriggerAfterTakeDamage(attacker, result, ignoredBuff);
         if (result.TargetDied)
             QueueOrResolveDeath(attacker);
-
         return result;
+        }
     }
 
     public override int TakeDirectDamage(int damage)
     {
+        using (RelicRules?.BeginOperation())
+        {
         if (damage <= 0)
             return 0;
 
@@ -332,13 +352,15 @@ public class EnemyModel : UnitModel
             CurrentHealth = 0;
         int healthDamage = healthBefore - CurrentHealth;
         GameLog.Data($"Enemy {Id} take direct damage={damage} hp={CurrentHealth}/{MaxHealth}");
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
+        (RelicRules?.Owner.Services ?? PlayerStateServices.UnityHost).OnDamage(healthDamage, 0);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             QueueOrResolveDeath(null);
 
+        RelicRules?.Publish(new RelicEvent(RelicEventKind.HealthLost, target: new CombatantModel(this), amount: healthDamage,
+            damageKind: RelicDamageKind.HealthLoss, originRelicId: RelicRules.OriginRelicId));
         return healthDamage;
+        }
     }
 
     public override int GainShield(int amount)
@@ -381,6 +403,9 @@ public class EnemyModel : UnitModel
 
     public override void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
     {
+        using (RelicRules?.BeginOperation())
+        {
+        int before = GetBuffStack(buffType);
         if (buffType == BuffEnum.None || stack <= 0)
             return;
 
@@ -402,9 +427,13 @@ public class EnemyModel : UnitModel
         {
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
         }
+        int after = GetBuffStack(buffType);
+        RelicRules?.RecordBuffChange(self, buffs[buffType], before, after);
         GameLog.Data($"Enemy {Id} add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(this, buffType, stack);
         TriggerAfterGiveBuff(source, self, buffType, stack);
+        RelicRules?.Publish(new RelicEvent(RelicEventKind.BuffApplied, source, self, stack, before, after, buffType, originRelicId: RelicRules.OriginRelicId));
+        }
     }
 
     private void TriggerAfterGiveBuff(CombatantModel source, CombatantModel target, BuffEnum buffType, int stack)
@@ -433,6 +462,7 @@ public class EnemyModel : UnitModel
                 sourceBuffs[i].OnGiveBuff(source, self, buffType, ref stack);
         }
 
+        if (source?.Player != null) stack = source.Player.Relics.ModifyBuffGiven(buffType, stack);
         if (buffs.Count > 0)
         {
             List<BuffModel> targetBuffs = new List<BuffModel>(buffs.Values);
@@ -452,15 +482,20 @@ public class EnemyModel : UnitModel
 
     public override void ConsumeBuff(BuffEnum buffType, int amount)
     {
+        using (RelicRules?.BeginOperation())
+        {
         if (buffs.TryGetValue(buffType, out BuffModel buff))
         {
+            int before = buff.stack;
             buff.ConsumeStack(amount);
+            RelicRules?.RecordBuffChange(new CombatantModel(this), buff, before, buff.stack);
             if (buff.stack <= 0)
             {
                 buff.OnExpire(new CombatantModel(this), null);
                 buffs.Remove(buffType);
                 GameLog.Data($"Enemy {Id} buff expired {buffType}");
             }
+        }
         }
     }
 
@@ -529,7 +564,7 @@ public class EnemyModel : UnitModel
 
     protected int NextRandomInt(int minInclusive, int maxExclusive)
     {
-        PlayerState playerState = BattleManager.Instance?.PlayerState;
+        PlayerState playerState = Battle?.PlayerState;
         if (playerState is PlayerStatus status)
             return status.NextRunRandomInt(minInclusive, maxExclusive);
 
@@ -895,7 +930,7 @@ public class EnemyModel : UnitModel
             ApplyBurnOnAttack();
         }
 
-        IReadOnlyList<EnemyModel> targets = BattleManager.Instance?.Enemies;
+        IReadOnlyList<EnemyModel> targets = Battle?.Enemies;
         if (targets == null)
             return;
 
@@ -959,7 +994,7 @@ public class EnemyModel : UnitModel
         if (enemyId <= 0 || count <= 0)
             return;
 
-        BattleManager manager = BattleManager.Instance;
+        BattleManager manager = Battle;
         if (manager == null)
             return;
 
@@ -1033,7 +1068,13 @@ public class EnemyModel : UnitModel
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
-            snapshot[i].AfterAttack(self, attacker, ref attackResult);
+        {
+            var buff = snapshot[i];
+            int value = attackResult;
+            if (RelicRules != null) RelicRules.ObserveBuffHook(self, buff, () => buff.AfterAttack(self, attacker, ref value));
+            else buff.AfterAttack(self, attacker, ref value);
+            attackResult = value;
+        }
     }
 
     public void TriggerOnTakeDamage(CombatantModel attacker, ref int damage)
@@ -1072,7 +1113,9 @@ public class EnemyModel : UnitModel
         {
             if (snapshot[i].buffType == ignoredBuff)
                 continue;
-            snapshot[i].AfterTakeDamage(self, attacker, result);
+            var buff = snapshot[i];
+            if (RelicRules != null) RelicRules.ObserveBuffHook(self, buff, () => buff.AfterTakeDamage(self, attacker, result));
+            else buff.AfterTakeDamage(self, attacker, result);
         }
     }
 
@@ -1138,7 +1181,7 @@ public class EnemyModel : UnitModel
     /// </summary>
     private void QueueOrResolveDeath(CombatantModel attacker)
     {
-        BattleManager manager = BattleManager.Instance;
+        BattleManager manager = Battle;
         if (manager != null)
         {
             manager.EnqueueEnemyDeath(this, attacker, true);
@@ -1157,7 +1200,7 @@ public class EnemyModel : UnitModel
         if (damage <= 0)
             return;
 
-        BattleManager manager = BattleManager.Instance;
+        BattleManager manager = Battle;
         if (manager == null)
             return;
 
@@ -1182,6 +1225,8 @@ public class EnemyModel : UnitModel
 
     private void TriggerBuffs(CombatantModel opponent, BuffTrigger trigger)
     {
+        using (RelicRules?.BeginOperation())
+        {
         if (buffs.Count == 0)
             return;
 
@@ -1194,7 +1239,8 @@ public class EnemyModel : UnitModel
             if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
                 continue;
 
-            trigger(buff, self, opponent);
+            if (RelicRules != null) RelicRules.ObserveBuffHook(self, buff, () => trigger(buff, self, opponent));
+            else trigger(buff, self, opponent);
             if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out currentBuff) && ReferenceEquals(currentBuff, buff))
             {
                 if (expiredBuffs == null)
@@ -1212,6 +1258,7 @@ public class EnemyModel : UnitModel
                 if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) && ReferenceEquals(currentBuff, buff))
                     buffs.Remove(buff.buffType);
             }
+        }
         }
     }
 

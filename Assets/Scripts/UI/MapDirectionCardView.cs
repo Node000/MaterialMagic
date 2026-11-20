@@ -9,6 +9,9 @@ using UnityEngine.UI;
 /// 移出、被禁用或对象销毁时复位并收起浮框。
 /// 悬停参数只在本脚本暴露，不改动美术预制体上的既有数值。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MapDirectionCardView")]
+#endif
 public class MapDirectionCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("悬停表现")]

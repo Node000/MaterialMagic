@@ -6,6 +6,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MagicItemView")]
+#endif
 public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;
@@ -18,6 +21,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [SerializeField] private RectOffset recipeIconPadding = new RectOffset();
     [SerializeField] private Image modifierMarkerImage;
     [SerializeField] private SpringLineHighlightUI slotFrame;
+    [SerializeField] private MagicTriggerFeedbackUI triggerFeedback;
     [SerializeField] private Button sellButton;
     [SerializeField] private TMP_Text sellButtonText;
     [SerializeField] private CanvasGroup sellButtonCanvasGroup;
@@ -111,8 +115,13 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         sellButtonTween?.Kill(false);
     }
 
-    public void Bind(MagicModel magic)
+    private PlayerState magicBookOwner;
+
+    public void Bind(MagicModel magic, PlayerState owner = null)
     {
+        if (!ReferenceEquals(this.magic, magic))
+            triggerFeedback?.Clear();
+        magicBookOwner = owner;
         if (magic == null)
         {
             this.magic = null;
@@ -329,6 +338,12 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         recipeBlocks[slotIndex].transform.DOPunchScale(Vector3.one * recipeHighlightPunchScale, recipeHighlightDuration, recipeHighlightVibrato, recipeHighlightElasticity).SetTarget(this);
     }
 
+    public void PlayTriggerFeedback(IReadOnlyList<MaterialEnum> materials)
+    {
+        if (magic != null && triggerFeedback != null && triggerFeedback.isActiveAndEnabled)
+            triggerFeedback.Play(materials);
+    }
+
     /// <summary>
     /// 打出素材触发本道具时的“放大”反馈。
     /// 基准缩放不能写死 Vector3.one：道具栏的圆弧布局（MagicBookCurveLayout）会按槽位位置把槽根设成 0.88~1，
@@ -390,7 +405,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         if (localDetailTooltipRoot != null)
             return default;
 
-        return magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
+        return magic != null ? UnifiedDetailContentBuilder.Build(magic, magicBookOwner) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot();
     }
 
     /// <summary>没挂组件时兜底补上（美术资源漏挂也能正常工作）。</summary>
@@ -447,7 +462,7 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         UIManager uiManager = GetComponentInParent<UIManager>();
         if (uiManager != null)
-            uiManager.PinUnifiedDetailPopup(this, magic != null ? UnifiedDetailContentBuilder.Build(magic) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot());
+            uiManager.PinUnifiedDetailPopup(this, magic != null ? UnifiedDetailContentBuilder.Build(magic, magicBookOwner) : UnifiedDetailContentBuilder.BuildEmptyMagicSlot());
 
         ForwardClickToParentButton(eventData);
     }
@@ -676,8 +691,8 @@ public class MagicItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         recipeLayout.padding = recipeIconPadding;
 
         recipeBlocks.Clear();
-        MaterialEnum[] recipe = magic != null ? magic.GetEffectiveRecipe() : null;
-        int recipeCount = recipe != null ? recipe.Length : 0;
+        IReadOnlyList<MaterialEnum> recipe = magic?.GetCombatTrigger(magicBookOwner).Recipe;
+        int recipeCount = recipe?.Count ?? 0;
         for (int i = 0; i < recipeRoot.childCount; i++)
             recipeRoot.GetChild(i).gameObject.SetActive(i < recipeCount);
 

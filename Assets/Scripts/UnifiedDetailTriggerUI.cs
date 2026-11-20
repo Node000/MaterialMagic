@@ -18,6 +18,9 @@ using UnityEngine.UI;
 /// 内容来源两种：Inspector 里填的本地化文案（<see cref="ContentMode.LocalizedText"/>，挂上即用），或由业务代码注入
 /// <see cref="SetContentProvider"/>（<see cref="ContentMode.Provider"/>，用于内容随运行期状态变化的站点）。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnifiedDetailTriggerUI")]
+#endif
 public class UnifiedDetailTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
 {
     public enum ContentMode

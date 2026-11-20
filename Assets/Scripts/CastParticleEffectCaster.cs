@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CastParticleEffectCaster")]
+#endif
 public sealed class CastParticleEffectCaster : CastParticleEffectBase, ISpellCastImpactEffect
 {
     public void PlayCast(MagicModel magic, RectTransform from, RectTransform target, SpellEffectTarget targetType)

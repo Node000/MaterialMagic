@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RunHistoryArrowItemUI")]
+#endif
 public class RunHistoryArrowItemUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private RunHistoryArrowRowUI owner;

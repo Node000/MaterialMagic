@@ -10,6 +10,9 @@ public class BreakpointRateData
 }
 
 [CreateAssetMenu(fileName = "PlayerStatusConfig", menuName = "Config/Player Status Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayerStatusConfig")]
+#endif
 public class PlayerStatusConfig : ScriptableObject
 {
     [SerializeField] private float buffSlotSize = 64f;

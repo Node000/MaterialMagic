@@ -43,6 +43,9 @@ public class GameSfxClipEntry
     public float Gain => Mathf.Pow(10f, volumeDb / 20f);
 }
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AudioManager")]
+#endif
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }

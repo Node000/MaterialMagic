@@ -386,7 +386,7 @@
     },
     {
       "key": "magic.rain_banner.desc",
-      "text": "Add 5 Temporary Down arrows to your hand."
+      "text": "Add 5 Temporary Down arrows to your hand one at a time."
     },
     {
       "key": "magic.lighter.name",
@@ -507,6 +507,22 @@
     {
       "key": "magic.sticker.desc",
       "text": "This turn, whenever an arrow is consumed, add 1 Temporary Left arrow to your hand next turn."
+    },
+    {
+      "key": "magic.blueprint.name",
+      "text": "Blueprint"
+    },
+    {
+      "key": "magic.blueprint.desc",
+      "text": "Copy the trigger requirements and base cast effect of the item in the adjacent slot to the right, in the same row."
+    },
+    {
+      "key": "magic.bar_chart.name",
+      "text": "Bar Chart"
+    },
+    {
+      "key": "magic.bar_chart.desc",
+      "text": "On entering a new room, change this item's current sell price by a random amount from -2 to +2 Gold. Changes stack, but the price cannot fall below 0."
     },
     {
       "key": "chapter.tutorial.name",

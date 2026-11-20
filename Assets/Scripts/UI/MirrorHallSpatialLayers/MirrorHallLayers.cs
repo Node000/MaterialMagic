@@ -8,6 +8,9 @@ using UnityEngine.UI;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RectTransform))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MirrorHallLayers")]
+#endif
 public sealed class MirrorHallLayers : MonoBehaviour
 {
     [Header("Sources")]

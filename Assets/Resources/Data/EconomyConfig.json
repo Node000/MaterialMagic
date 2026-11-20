@@ -15,6 +15,7 @@
       "weakBattleGold": 1,
       "strongBattleGold": 4,
       "battleArrowRewardEnchantChance": 0.1,
+      "ownedMagicWeightMultiplier": 0.25,
       "shopMagicRewardPoolId": 1,
       "shopMaterialPool": [
         1,

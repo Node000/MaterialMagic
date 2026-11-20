@@ -101,7 +101,7 @@ public class DeerManEnemyModel : EnemyModel
     private static MaterialEnum SelectRandomBasicMaterial(PlayerState playerState, MaterialEnum excludeMaterial)
     {
         int materialCount = 4;
-        int first = playerState is PlayerStatus status ? status.NextRunRandomInt(1, materialCount + 1) : UnityEngine.Random.Range(1, materialCount + 1);
+        int first = playerState != null ? playerState.NextRelicRandomInt(1, materialCount + 1) : UnityEngine.Random.Range(1, materialCount + 1);
         MaterialEnum result = (MaterialEnum)first;
         if (excludeMaterial == MaterialEnum.None || materialCount <= 1 || result != excludeMaterial)
             return result;

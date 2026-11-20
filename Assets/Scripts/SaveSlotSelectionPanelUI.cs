@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SaveSlotSelectionPanelUI")]
+#endif
 public class SaveSlotSelectionPanelUI : MonoBehaviour
 {
     [SerializeField] private Button[] slotButtons = Array.Empty<Button>();

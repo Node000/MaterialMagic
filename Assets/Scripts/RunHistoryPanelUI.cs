@@ -6,6 +6,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RunHistoryPanelUI")]
+#endif
 public class RunHistoryPanelUI : MonoBehaviour
 {
     [SerializeField] private Button closeButton;
@@ -274,6 +277,8 @@ public class RunHistoryPanelUI : MonoBehaviour
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.date", "日期：{0}"), FormatDate(record.endedAtUtc)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.result", "结果：{0}"), GetResultText(record.resultType)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.time", "用时：{0}"), FormatPlayTime(record.playSeconds)));
+        if (!string.IsNullOrEmpty(record.startConfigId) && GameDataDatabase.TryGetPlayerStartConfigData(record.startConfigId, out PlayerStartConfigData config))
+            builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.character", "角色：{0}"), LocalizationSystem.GetText(config.displayNameKey, config.displayName)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.progress", "进度：{0}"), record.progressText));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.ascension", "进阶：{0}"), AscensionUIUtility.FormatLevel(record.ascensionLevel)));
         builder.AppendLine(string.Format(LocalizationSystem.GetText("ui.run_history.detail.health", "生命：{0}/{1}"), record.currentHealth, record.maxHealth));

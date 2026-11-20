@@ -6,7 +6,7 @@
     },
     {
       "key": "modifier.temporary.desc",
-      "text": "回合结束或离开手牌时消失，不会回到抽牌堆。不受打出数量限制。"
+      "text": "弃置或打出并结算后消失，不会回到抽牌堆。不受打出数量限制。"
     },
     {
       "key": "modifier.charge.name",
@@ -182,7 +182,7 @@
     },
     {
       "key": "modifier.retained_arrow.desc",
-      "text": "回合结束时，如果此箭头仍在手牌中，则保留在手牌。"
+      "text": "确认打出时，如果此箭头仍在手牌中，则保留它。"
     },
     {
       "key": "modifier.half_arrow.name",

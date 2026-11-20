@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayerStatusUI")]
+#endif
 public class PlayerStatusUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text healthText;
@@ -44,6 +47,18 @@ public class PlayerStatusUI : MonoBehaviour
         if (healthBar == null)
             Setup(playerState, true);
         healthBar.UpdateValue(playerState.CurrentHealth, playerState.MaxHealth, playerState.Shield, instant);
+    }
+
+    public void Refresh(BattleStateSnapshot snapshot, bool instant)
+    {
+        if (snapshot == null) return;
+        CacheReferences();
+        if (healthBar == null)
+        {
+            healthBar = gameObject.GetComponent<HealthBarUI>() ?? gameObject.AddComponent<HealthBarUI>();
+            healthBar.Initialize(healthText, healthFill, shieldText, snapshot.PlayerHealth);
+        }
+        healthBar.UpdateValue(snapshot.PlayerHealth, snapshot.PlayerMaxHealth, snapshot.PlayerShield, instant);
     }
 
     private void CacheReferences()

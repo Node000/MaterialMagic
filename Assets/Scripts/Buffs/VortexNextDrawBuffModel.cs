@@ -1,6 +1,8 @@
 public class VortexNextDrawBuffModel : BuffModel
 {
     private bool pendingNextTurn = true;
+    public override System.Collections.Generic.Dictionary<string, int> ExportRuntimeState() => new System.Collections.Generic.Dictionary<string, int> { { "pending", pendingNextTurn ? 1 : 0 } };
+    public override void RestoreRuntimeState(System.Collections.Generic.IReadOnlyDictionary<string, int> values) => pendingNextTurn = ReadState(values, "pending", 1) != 0;
 
     public VortexNextDrawBuffModel(int stack) : base(BuffEnum.VortexNextDraw, stack)
     {

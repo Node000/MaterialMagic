@@ -2,6 +2,9 @@ using UnityEngine;
 using TMPro;
 
 [CreateAssetMenu(fileName = "StartConfigBookmarkLayoutConfig", menuName = "Config/Start Config Bookmark Layout Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartConfigBookmarkLayoutConfig")]
+#endif
 public class StartConfigBookmarkLayoutConfig : ScriptableObject
 {
     [SerializeField] private float materialCardScale = 0.42f;

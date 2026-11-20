@@ -1,6 +1,8 @@
 public class ExtraDrawOnEnemyDamageBuffModel : BuffModel
 {
     private int damageTriggerCount;
+    public override System.Collections.Generic.Dictionary<string, int> ExportRuntimeState() => new System.Collections.Generic.Dictionary<string, int> { { "hits", damageTriggerCount } };
+    public override void RestoreRuntimeState(System.Collections.Generic.IReadOnlyDictionary<string, int> values) => damageTriggerCount = ReadState(values, "hits");
 
     public ExtraDrawOnEnemyDamageBuffModel(int stack) : base(BuffEnum.ExtraDrawOnEnemyDamage, stack)
     {

@@ -9,7 +9,7 @@ public class EggDeathExplosionBuffModel : BuffModel
         if (stack <= 0)
             return;
 
-        BattleManager manager = BattleManager.Instance;
+        BattleManager manager = self != null ? (self.IsEnemy ? self.Enemy.Battle : self.Player.Battle) : null;
         if (manager == null)
             return;
 

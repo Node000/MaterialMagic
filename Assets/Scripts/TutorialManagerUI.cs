@@ -4,28 +4,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public enum TutorialStep
-{
-    None,
-    BattleInfo,
-    BattleArrowBase,
-    BattleMagicBook,
-    BattlePlayLimit,
-    BattleEnemyInfo,
-    BattlePlay,
-    BattleRefresh,
-    MapPanel,
-    MapMovement,
-    MapStepLimit,
-    RewardClaim,
-    ShopBuyHint,
-    EventOptions,
-    Completed
-}
-
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TutorialManagerUI")]
+#endif
 public class TutorialManagerUI : MonoBehaviour
 {
-    public const int TutorialChapterNumericId = 100;
+    public const int TutorialChapterNumericId = TutorialPolicy.TutorialChapterNumericId;
     public const int TutorialBattleLevelId = 1001;
     public const int TutorialEventLevelId = 1002;
     public const int TutorialRestLevelId = 201;
@@ -41,12 +25,13 @@ public class TutorialManagerUI : MonoBehaviour
 
     private HandSystemUI owner;
     private readonly Dictionary<TutorialStep, GameObject> stepObjects = new Dictionary<TutorialStep, GameObject>();
-    private TutorialStep currentStep;
-    private bool mainTutorialRunning;
-    private bool tutorialBattleRunning;
-    private bool waitingForStepClick;
-    private int battleTurnIndex;
-    private bool tutorialBattleInputUnlocked;
+    public TutorialPolicy RulePolicy { get; } = new TutorialPolicy();
+    private TutorialStep currentStep => RulePolicy.State.CurrentStep;
+    private bool mainTutorialRunning => RulePolicy.State.MainTutorialRunning;
+    private bool tutorialBattleRunning => RulePolicy.State.TutorialBattleRunning;
+    private bool waitingForStepClick => RulePolicy.State.WaitingForContinue;
+    private int battleTurnIndex => RulePolicy.State.BattleTurnIndex;
+    private bool tutorialBattleInputUnlocked => RulePolicy.State.BattleInputUnlocked;
     private readonly List<RectTransform> cutoutTargets = new List<RectTransform>();
 
     /// <summary>页码的完整本地化正文（按步骤缓存，供段落拆分使用）。</summary>
@@ -58,13 +43,13 @@ public class TutorialManagerUI : MonoBehaviour
     /// <summary>正文段落分隔符（文案表里用空行分段）。</summary>
     private const string ParagraphSeparator = "\n\n";
 
-    private int stepParagraphIndex;
+    private int stepParagraphIndex => RulePolicy.State.ParagraphIndex;
 
     /// <summary>
     /// 当前步骤在看完最后一段后是否还需“点击推进”（阅读页 true，行为页 false）。
     /// 拆分步骤的中间段落总是靠点击推进。
     /// </summary>
-    private bool stepAdvanceByClick;
+    private bool stepAdvanceByClick => RulePolicy.State.ContinueAfterLastParagraph;
 
     /// <summary>
     /// 每步只使用一个高亮框：页面下名为 Cutout 的子对象。
@@ -75,10 +60,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     /// <summary>移动端战斗场景名（与 SceneTransitionManager.peGameSceneName 保持一致）。</summary>
     private const string MobileSceneName = "SampleScene_PE";
-    private bool mapTutorialShown;
-    private bool shopTutorialShown;
-    private bool tutorialCompleted;
-    private bool tutorialEventShown;
+    private bool tutorialCompleted => RulePolicy.State.IsCompleted;
     private bool consumedStepClickThisFrame;
 
     public TutorialStep CurrentStep => currentStep;
@@ -86,7 +68,7 @@ public class TutorialManagerUI : MonoBehaviour
     public bool TutorialBattleRunning => tutorialBattleRunning;
     public bool ShouldKillTutorialEnemyAfterPlayerTurn => tutorialBattleRunning && battleTurnIndex >= 2;
     public bool IsCompleted => tutorialCompleted;
-    public bool IsTutorialRun { get; private set; }
+    public bool IsTutorialRun => RulePolicy.State.IsTutorialRun;
     public bool IsMapTutorialBlockingInput => currentStep == TutorialStep.MapPanel || currentStep == TutorialStep.MapMovement || currentStep == TutorialStep.MapStepLimit;
 
     /// <summary>当前步骤是否允许“换牌”快捷键（R）。</summary>
@@ -110,14 +92,7 @@ public class TutorialManagerUI : MonoBehaviour
     /// <summary>无活动步骤、教学已解锁输入、或正处于允许该操作的页面时为 true。</summary>
     private bool StepAllowsShortcut(TutorialStep step)
     {
-        // 段落阅读中（拆分步骤的中间段落）不允许任何快捷键/按钮。
-        if (waitingForStepClick)
-            return false;
-
-        if (currentStep == TutorialStep.None || tutorialBattleInputUnlocked)
-            return true;
-
-        return currentStep == step;
+        return RulePolicy.StepAllowsAction(step);
     }
 
     public void Initialize(HandSystemUI owner)
@@ -127,10 +102,10 @@ public class TutorialManagerUI : MonoBehaviour
         CacheCutoutMask();
         CacheInputBlocker();
         LocalizeSteps();
-        HideAllSteps();
+        RulePolicy.Changed -= OnRulePolicyChanged;
+        RulePolicy.Changed += OnRulePolicyChanged;
+        RulePolicy.Initialize(owner != null && owner.ActiveChapterNumericId == TutorialChapterNumericId);
         SetMapTutorialInputLocked(false);
-        IsTutorialRun = owner != null && owner.ActiveChapterNumericId == TutorialChapterNumericId;
-        mainTutorialRunning = IsTutorialRun;
     }
 
     private void Update()
@@ -142,11 +117,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnLevelSelectShown(int nodeIndex)
     {
-        if (!mainTutorialRunning || mapTutorialShown || nodeIndex != 0)
-            return;
-
-        mapTutorialShown = true;
-        ShowStep(TutorialStep.MapPanel, true);
+        RulePolicy.OnLevelSelectShown(nodeIndex);
     }
 
     public bool ShouldUseTutorialBattle(LevelData level)
@@ -156,85 +127,32 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void BeginTutorialBattle()
     {
-        tutorialBattleRunning = true;
-        battleTurnIndex = 0;
-        tutorialBattleInputUnlocked = false;
-        HideAllSteps();
+        RulePolicy.BeginBattle();
     }
 
     public void EndTutorialBattle()
     {
-        tutorialBattleRunning = false;
-        tutorialBattleInputUnlocked = false;
-        battleTurnIndex = 0;
-        if (currentStep == TutorialStep.BattleInfo || currentStep == TutorialStep.BattleMagicBook || currentStep == TutorialStep.BattleEnemyInfo || currentStep == TutorialStep.BattlePlay || currentStep == TutorialStep.BattleRefresh)
-            HideAllSteps();
+        RulePolicy.EndBattle();
     }
 
     public bool TryApplyFixedTurnHand(PlayerState playerState)
     {
-        if (!tutorialBattleRunning || playerState == null)
-            return false;
-
-        battleTurnIndex++;
-        tutorialBattleInputUnlocked = false;
-        switch (battleTurnIndex)
-        {
-            case 1:
-                SetFixedHand(playerState, MaterialEnum.Fire, MaterialEnum.Fire);
-                ShowStep(TutorialStep.BattleInfo, true);
-                return true;
-            case 2:
-                SetFixedHand(playerState, MaterialEnum.Earth, MaterialEnum.Earth, MaterialEnum.Earth);
-                ShowStep(TutorialStep.BattleRefresh, false);
-                return true;
-        }
-
-        return false;
+        return RulePolicy.TryApplyFixedTurnHand(playerState);
     }
 
     public bool CanMoveCardToPlay(MaterialModel card, IReadOnlyList<MaterialModel> playZone)
     {
-        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
-            return true;
-        if (waitingForStepClick)
-            return false;
-
-        switch (currentStep)
-        {
-            case TutorialStep.BattlePlay:
-                // 教学不限制张数，放哪张都行。
-                return card != null;
-            case TutorialStep.BattleRefresh:
-                // 换牌页同样不限制：玩家可自行决定放入几张再去点换牌按钮。
-                return card != null;
-            default:
-                return false;
-        }
+        return RulePolicy.CanMoveCardToPlay(card, playZone);
     }
 
     public bool CanMovePlayCardToHand(MaterialModel card)
     {
-        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
-            return true;
-        if (waitingForStepClick)
-            return false;
-
-        if (currentStep == TutorialStep.BattlePlay || currentStep == TutorialStep.BattleRefresh)
-            return card != null;
-
-        return false;
+        return RulePolicy.CanMovePlayCardToHand(card);
     }
 
     public bool CanReplacePlayZone(int playZoneCount)
     {
-        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
-            return true;
-        if (waitingForStepClick)
-            return false;
-
-        // 只要求出牌区里有箭头；不限张数。
-        return currentStep == TutorialStep.BattleRefresh && playZoneCount > 0;
+        return RulePolicy.CanReplacePlayZone(playZoneCount);
     }
 
     /// <summary>
@@ -243,36 +161,17 @@ public class TutorialManagerUI : MonoBehaviour
     /// </summary>
     public bool TryGetForcedRefreshMaterialsForPlayZone(int playZoneCount, List<MaterialEnum> materials)
     {
-        if (materials == null)
-            return false;
-
-        materials.Clear();
-        if (!tutorialBattleRunning || currentStep != TutorialStep.BattleRefresh || playZoneCount <= 0)
-            return false;
-
-        MaterialEnum[] scripted = { MaterialEnum.Fire, MaterialEnum.Fire, MaterialEnum.Water };
-        for (int i = 0; i < playZoneCount; i++)
-            materials.Add(scripted[i % scripted.Length]);
-        return true;
+        return RulePolicy.TryGetForcedRefreshMaterialsForPlayZone(playZoneCount, materials);
     }
 
     public void OnRefreshCompleted(PlayerState playerState)
     {
-        if (tutorialBattleRunning && currentStep == TutorialStep.BattleRefresh)
-        {
-            tutorialBattleInputUnlocked = true;
-            HideAllSteps();
-        }
+        RulePolicy.OnRefreshCompleted();
     }
 
     public bool CanEndTurn(IReadOnlyList<MaterialModel> playZone)
     {
-        if (!tutorialBattleRunning || tutorialBattleInputUnlocked)
-            return true;
-        if (waitingForStepClick)
-            return false;
-
-        return currentStep == TutorialStep.BattlePlay;
+        return RulePolicy.CanEndTurn(playZone);
     }
 
     public void OnBattleCardsPlayed(IReadOnlyList<MaterialModel> playZone)
@@ -295,15 +194,12 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnBattleEndTurnStarted()
     {
-        if (!tutorialBattleRunning || currentStep != TutorialStep.BattlePlay)
-            return;
-
-        HideAllSteps();
+        RulePolicy.OnBattleEndTurnStarted();
     }
 
     public bool CanToggleFocus(EnemyModel enemy)
     {
-        return true;
+        return RulePolicy.CanToggleFocus(enemy);
     }
 
     public void OnFocusTargetChanged(EnemyModel enemy)
@@ -312,8 +208,7 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void OnRewardPanelShown()
     {
-        if (mainTutorialRunning && !tutorialCompleted)
-            ShowStep(TutorialStep.RewardClaim, true);
+        RulePolicy.OnRewardPanelShown();
     }
 
     /// <summary>选中奖励道具（钩子保留作语义显式：道具现在会自动进入第一位空槽）。</summary>
@@ -323,29 +218,17 @@ public class TutorialManagerUI : MonoBehaviour
 
     public void CompleteTutorial(PlayerState playerState, IReadOnlyList<RunMapNodeModel> mapNodes, int currentMapNodeIndex, ChapterData chapter, LevelData currentLevel)
     {
-        if (!IsTutorialRun)
-            return;
-
-        tutorialCompleted = true;
-        mainTutorialRunning = false;
-        tutorialBattleRunning = false;
-        ShowStep(TutorialStep.Completed, false);
-        HideAllSteps();
+        RulePolicy.Complete();
     }
 
     public void OnEventOptionsShown()
     {
-        if (IsTutorialRun && !tutorialEventShown)
-            ShowStep(TutorialStep.EventOptions, true);
+        RulePolicy.OnEventOptionsShown();
     }
 
     public void OnEventOptionResolved()
     {
-        if (currentStep != TutorialStep.EventOptions)
-            return;
-
-        tutorialEventShown = true;
-        HideAllSteps();
+        RulePolicy.OnEventOptionResolved();
     }
 
     public bool ShouldUseTutorialEventFixedDraw(EventData eventData)
@@ -356,11 +239,7 @@ public class TutorialManagerUI : MonoBehaviour
     /// <summary>商店面板显示时调用。教程只在**首次**打开商店时给一页购买提示（战后自动商店）。</summary>
     public void OnShopPanelShown()
     {
-        if (!IsTutorialRun || shopTutorialShown)
-            return;
-
-        shopTutorialShown = true;
-        ShowStep(TutorialStep.ShopBuyHint, true);
+        RulePolicy.OnShopPanelShown();
     }
 
     public bool ConsumeBlockingTutorialClick(PointerEventData eventData)
@@ -382,60 +261,10 @@ public class TutorialManagerUI : MonoBehaviour
 
     private void AdvanceStepByClick()
     {
-        if (!waitingForStepClick)
-            return;
-
-        // 拆分步骤：先逐段展示同一下面的正文，高亮框与页面对象保持不动，只换文本框。
-        if (stepParagraphIndex + 1 < stepParagraphs.Count)
-        {
-            stepParagraphIndex++;
-            ApplyParagraph();
-            return;
-        }
-
-        switch (currentStep)
-        {
-            // 教学战斗阅读页顺序：信息 → 敌人意图 → 手牌/出牌区与四方向 → 道具栏 → 出牌限制 → 出牌（行为）
-            case TutorialStep.BattleInfo:
-                ShowStep(TutorialStep.BattleEnemyInfo, true);
-                break;
-            case TutorialStep.BattleEnemyInfo:
-                ShowStep(TutorialStep.BattleArrowBase, true);
-                break;
-            case TutorialStep.BattleArrowBase:
-                ShowStep(TutorialStep.BattleMagicBook, true);
-                break;
-            case TutorialStep.BattleMagicBook:
-                ShowStep(TutorialStep.BattlePlayLimit, true);
-                break;
-            case TutorialStep.BattlePlayLimit:
-                ShowStep(TutorialStep.BattlePlay, false);
-                break;
-            case TutorialStep.MapPanel:
-                ShowStep(TutorialStep.MapMovement, true);
-                break;
-            case TutorialStep.MapMovement:
-                ShowStep(TutorialStep.MapStepLimit, true);
-                break;
-            case TutorialStep.MapStepLimit:
-                HideAllSteps();
-                break;
-            default:
-                HideAllSteps();
-                break;
-        }
+        RulePolicy.Continue();
     }
 
-    private void SetFixedHand(PlayerState playerState, params MaterialEnum[] materials)
-    {
-        if (playerState == null)
-            return;
-
-        List<MaterialModel> removedTemporaryCards = new List<MaterialModel>();
-        playerState.ReturnHandCardsToDiscardPile(new List<MaterialModel>(playerState.Hand), removedTemporaryCards);
-        playerState.ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
-        playerState.DrawSpecificMaterialsToHand(materials, true);
-    }
+    public bool ContinueTutorial() => RulePolicy.Continue();
 
     private void CacheSteps()
     {
@@ -506,7 +335,6 @@ public class TutorialManagerUI : MonoBehaviour
     private void PrepareParagraphs(TutorialStep step)
     {
         stepParagraphs.Clear();
-        stepParagraphIndex = 0;
 
         GameObject stepObject;
         if (!stepObjects.TryGetValue(step, out stepObject) || stepObject == null)
@@ -545,9 +373,6 @@ public class TutorialManagerUI : MonoBehaviour
     {
         string text = stepParagraphs.Count > 0 ? stepParagraphs[Mathf.Clamp(stepParagraphIndex, 0, stepParagraphs.Count - 1)] : string.Empty;
         SetStepBodyText(currentStep, text);
-
-        bool lastParagraph = stepParagraphIndex >= stepParagraphs.Count - 1;
-        waitingForStepClick = stepParagraphs.Count > 1 ? (!lastParagraph || stepAdvanceByClick) : stepAdvanceByClick;
 
         UpdateCutoutTarget(currentStep, stepParagraphIndex);
         UpdateInputBlocker(waitingForStepClick);
@@ -655,22 +480,39 @@ public class TutorialManagerUI : MonoBehaviour
         }
     }
 
-    private void ShowStep(TutorialStep step, bool waitForClick)
+    private int renderedStepRevision = -1;
+    private bool renderedMapLocked;
+
+    private void OnRulePolicyChanged()
     {
+        TutorialStep step = currentStep;
+        if (step == TutorialStep.None)
+        {
+            RenderHiddenSteps();
+            renderedStepRevision = RulePolicy.State.StepRevision;
+            return;
+        }
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
-
-        currentStep = step;
-        stepAdvanceByClick = waitForClick;
-        PrepareParagraphs(step);
-        foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
+        if (renderedStepRevision != RulePolicy.State.StepRevision)
         {
-            bool active = pair.Key == step;
-            pair.Value.SetActive(active);
-            SetStepRaycastTarget(pair.Value, active && waitForClick);
+            PrepareParagraphs(step);
+            RulePolicy.ConfigureParagraphCount(stepParagraphs.Count);
+            foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
+            {
+                bool active = pair.Key == step;
+                pair.Value.SetActive(active);
+                SetStepRaycastTarget(pair.Value, active && stepAdvanceByClick);
+            }
+            renderedStepRevision = RulePolicy.State.StepRevision;
         }
-        UpdateCutoutTarget(step, 0);
+        renderedMapLocked = IsMapTutorialBlockingInput;
         ApplyParagraph();
+    }
+
+    private void OnDestroy()
+    {
+        RulePolicy.Changed -= OnRulePolicyChanged;
     }
 
     /// <summary>
@@ -701,21 +543,17 @@ public class TutorialManagerUI : MonoBehaviour
             graphics[i].raycastTarget = raycastTarget;
     }
 
-    private void HideAllSteps()
+    private void RenderHiddenSteps()
     {
-        bool wasBlockingMapInput = IsMapTutorialBlockingInput;
-        currentStep = TutorialStep.None;
-        waitingForStepClick = false;
         stepParagraphs.Clear();
-        stepParagraphIndex = 0;
-        stepAdvanceByClick = false;
         foreach (KeyValuePair<TutorialStep, GameObject> pair in stepObjects)
             pair.Value.SetActive(false);
         if (cutoutMask != null)
             cutoutMask.gameObject.SetActive(false);
         SetInputBlockerActive(false);
-        if (wasBlockingMapInput)
+        if (renderedMapLocked)
             SetMapTutorialInputLocked(false);
+        renderedMapLocked = false;
         StepChanged?.Invoke();
     }
 

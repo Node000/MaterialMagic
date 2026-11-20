@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PvOnlyBossEndCinematicUI")]
+#endif
 public class PvOnlyBossEndCinematicUI : MonoBehaviour
 {
     private const string GridSpeedProperty = "_Speed";

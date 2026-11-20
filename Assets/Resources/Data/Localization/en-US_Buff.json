@@ -322,7 +322,7 @@
     },
     {
       "key": "buff.keep_hand.desc",
-      "text": "Keep your hand at the end of this turn, then clear this."
+      "text": "Keep your hand the next time you confirm your play, then clear this."
     },
     {
       "key": "buff.lazy_next_draw.name",

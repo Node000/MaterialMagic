@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayerCastAnimatorUI")]
+#endif
 public class PlayerCastAnimatorUI : MonoBehaviour
 {
     [SerializeField] private Animator animator;
@@ -305,6 +308,9 @@ public class PlayerCastAnimatorUI : MonoBehaviour
 }
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayerAnimationHoverRelayUI")]
+#endif
 public class PlayerAnimationHoverRelayUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private PlayerCastAnimatorUI target;

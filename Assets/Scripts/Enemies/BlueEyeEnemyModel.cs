@@ -37,7 +37,7 @@ public class BlueEyeEnemyModel : EnemyModel
         if (value != 1)
             return;
 
-        BattleManager manager = BattleManager.Instance;
+        BattleManager manager = Battle;
         if (manager != null)
         {
             for (int i = 0; i < summonCount; i++)

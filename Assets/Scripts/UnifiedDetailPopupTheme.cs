@@ -4,6 +4,9 @@ using DG.Tweening;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "UnifiedDetailPopupTheme", menuName = "Config/Unified Detail Popup Theme")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnifiedDetailPopupTheme")]
+#endif
 public class UnifiedDetailPopupTheme : ScriptableObject
 {
     [Header("Animation")]

@@ -3,6 +3,9 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RawImage))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CrayonUIAnimator")]
+#endif
 public sealed class CrayonUIAnimator : MonoBehaviour
 {
     [Tooltip("Keep the background animated when Time.timeScale is zero.")]

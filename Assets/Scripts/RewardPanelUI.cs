@@ -7,22 +7,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>结算三选一的内容：金币追加量、单件道具、单只箭头；某项为 0/null 表示不提供该选项。</summary>
-public class BattleRewardChoices
-{
-    public int GoldAmount;
-    public MagicData Magic;
-    public RewardArrowOption Arrow;
-}
-
-public class RewardArrowOption
-{
-    public MaterialEnum material;
-    public MaterialModifierData modifierData;
-
-    public bool HasModifier => modifierData != null;
-}
-
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RewardOptionView")]
+#endif
 public class RewardOptionView : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
@@ -57,6 +44,9 @@ public class RewardOptionView : MonoBehaviour
     }
 }
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RewardPanelUI")]
+#endif
 public class RewardPanelUI : MonoBehaviour
 {
     [SerializeField] private Vector2 choiceSlotSize = new Vector2(200f, 150f);
@@ -95,6 +85,9 @@ public class RewardPanelUI : MonoBehaviour
     private bool magicChoicesPrebound;
 
     // 结算三选一（战斗胜利）。
+    private IChoiceSession boundSession;
+    public IChoiceSession Session => boundSession;
+    public bool IsPresentationInProgress => claimInProgress;
     private BattleRewardChoices currentChoices;
     private bool settlementClaimed;
     private bool claimInProgress;
@@ -123,21 +116,20 @@ public class RewardPanelUI : MonoBehaviour
 
     public void Show()
     {
+        if (claimInProgress) return;
         if (owner == null)
             return;
 
+        boundSession = owner.EnsureBattleRewardSession();
+        if (boundSession.IsComplete)
+            return;
         magicOnlyMode = false;
         magicOnlyCompleted = null;
         magicClaimed = false;
         settlementClaimed = false;
         claimInProgress = false;
         currentMagicChoices = new List<MagicData>();
-        currentChoices = new BattleRewardChoices
-        {
-            GoldAmount = RollGoldChoiceAmount(),
-            Magic = owner.RollBattleRewardMagic(),
-            Arrow = owner.RollBattleRewardArrow()
-        };
+        currentChoices = ((RewardSession)boundSession).BattleChoices;
         selectedMagicView = null;
         hoveredMagicView = null;
         owner.SelectPendingRewardMagic(null);
@@ -234,15 +226,6 @@ public class RewardPanelUI : MonoBehaviour
         AnalyticsService.Track(AnalyticsEvent.RewardSkip, payload);
     }
 
-    private int RollGoldChoiceAmount()
-    {
-        // 进阶效果 13：累计 <=0 时结算不提供“更多金币”选项。
-        if (DifficultyUpgradeSystem.ModifyBattleRewardGoldChoiceCount(1) <= 0)
-            return 0;
-        // 基础金币已统一为固定值自动发放，金币选项改为沿用改造前的战斗结算金币数值。
-        return Mathf.Max(0, owner.PendingBattleGoldChoiceReward);
-    }
-
     private void SetTitle(string text)
     {
         TMP_Text title = UIManager.FindChildComponent<TMP_Text>(transform, "Title");
@@ -255,13 +238,27 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null)
             return;
 
+        // Reopening the same in-flight reward keeps its candidates. New effects call ShowSession explicitly.
+        IChoiceSession session = boundSession != null && !boundSession.IsComplete && boundSession.PendingChoice?.Kind == ChoiceKind.MagicReward
+            ? boundSession : RewardSession.MagicOnly(owner.PlayerState, owner.GetRewardMagicChoices(3), owner.RewardMagicSlotCapacity);
+        ShowSession(session, completed);
+    }
+
+    public void ShowSession(IChoiceSession session, Action completed)
+    {
+        if (claimInProgress) return;
+        if (owner == null || session?.PendingChoice == null || session.PendingChoice.Kind != ChoiceKind.MagicReward)
+            return;
+        boundSession = session;
         magicOnlyMode = true;
         magicOnlyCompleted = completed;
         magicClaimed = false;
         settlementClaimed = false;
         claimInProgress = false;
         currentChoices = null;
-        currentMagicChoices = owner.GetRewardMagicChoices(3);
+        currentMagicChoices = new List<MagicData>();
+        foreach (ChoiceCandidate candidate in session.PendingChoice.Candidates)
+            if (candidate.MagicData != null) currentMagicChoices.Add(candidate.MagicData);
         EmitMagicOffer(currentMagicChoices, "event");
         selectedMagicView = null;
         hoveredMagicView = null;
@@ -321,6 +318,22 @@ public class RewardPanelUI : MonoBehaviour
         CloseSettlementAndFinish();
     }
 
+    private ChoiceResult SubmitRewardCandidate(Predicate<ChoiceCandidate> predicate)
+    {
+        PendingChoice choice = boundSession?.PendingChoice;
+        if (choice == null) return new ChoiceResult(ChoiceFailure.NoPendingChoice);
+        foreach (ChoiceCandidate candidate in choice.Candidates)
+            if (predicate(candidate)) return boundSession.SubmitChoice(new ChoiceSubmission(choice.Id, candidate.Id));
+        return new ChoiceResult(ChoiceFailure.UnknownCandidate);
+    }
+
+    private void CancelMagicOnlyReward()
+    {
+        if (claimInProgress || boundSession?.PendingChoice == null) return;
+        ChoiceResult result = boundSession.SubmitChoice(ChoiceSubmission.CancelChoice(boundSession.PendingChoice.Id));
+        if (result.Accepted) CompleteMagicOnlyReward();
+    }
+
     private void CompleteMagicOnlyReward()
     {
         Action completed = magicOnlyCompleted;
@@ -371,7 +384,7 @@ public class RewardPanelUI : MonoBehaviour
 
         endButton.onClick.RemoveAllListeners();
         if (magicOnlyMode)
-            endButton.onClick.AddListener(CompleteMagicOnlyReward);
+            endButton.onClick.AddListener(CancelMagicOnlyReward);
         else
             endButton.onClick.AddListener(OnLeaveClicked);
         endButton.interactable = !claimInProgress;
@@ -384,6 +397,9 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         // 可以跳过：未领奖（或选了道具但未装备）时直接放弃本次奖励并进入商店。
+        ChoiceResult result = boundSession?.SubmitChoice(ChoiceSubmission.CancelChoice(boundSession.PendingChoice?.Id));
+        if (result == null || !result.Accepted)
+            return;
         owner?.SelectPendingRewardMagic(null);
         EmitRewardSkip();
         settlementClaimed = true;
@@ -559,9 +575,11 @@ public class RewardPanelUI : MonoBehaviour
 
     private IEnumerator ClaimGoldChoiceRoutine()
     {
+        ChoiceResult receipt = SubmitRewardCandidate(candidate => candidate.Amount > 0);
+        if (!receipt.Accepted) yield break;
         claimInProgress = true;
         RefreshChoiceSlots();
-        yield return owner.GainGoldAnimated(currentChoices.GoldAmount, goldChoiceSlot, false);
+        yield return owner.PresentCommittedChoiceResult(receipt, goldChoiceSlot);
         EmitRewardChoice("gold", -1, currentChoices.GoldAmount);
         settlementClaimed = true;
         claimInProgress = false;
@@ -578,21 +596,21 @@ public class RewardPanelUI : MonoBehaviour
         if (owner == null || owner.GetFreeMagicSlotIndex() < 0)
             return;
 
-        // 先竖起领取屏障，再从道具选项卡把道具飞进道具栏空槽；落地后由 SetRewardMagicAtSlot 通知面板收尾。
+        ChoiceResult receipt = SubmitRewardCandidate(candidate => candidate.MagicData == currentChoices.Magic);
+        if (!receipt.Accepted) return;
         claimInProgress = true;
         RefreshChoiceSlots();
-        StartCoroutine(ClaimItemChoiceRoutine(currentChoices.Magic));
+        StartCoroutine(ClaimItemChoiceRoutine(currentChoices.Magic, receipt));
     }
 
     /// <summary>结算道具选项：从选项卡飞入道具栏空槽，落地时 <see cref="HandSystemUI.SetRewardMagicAtSlot"/> 会回调完成领奖。</summary>
-    private IEnumerator ClaimItemChoiceRoutine(MagicData data)
+    private IEnumerator ClaimItemChoiceRoutine(MagicData data, ChoiceResult receipt)
     {
         RunAnalyticsLedger.SetAcquireContext("reward_choice", 0, data != null ? data.id : string.Empty, 0);
         EmitRewardChoice("magic", 0, 0);
         RectTransform sourceRect = itemChoiceCard != null ? itemChoiceCard.transform as RectTransform : itemChoiceSlot;
-        yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
-        if (!settlementClaimed)
-            claimInProgress = false;
+        yield return owner.PresentCommittedChoiceResult(receipt, sourceRect);
+        CompleteMagicRewardSelection();
     }
 
     private void ClaimArrowChoice()
@@ -605,11 +623,12 @@ public class RewardPanelUI : MonoBehaviour
 
     private IEnumerator ClaimArrowChoiceRoutine()
     {
-        RewardArrowOption option = currentChoices.Arrow;
+        ChoiceResult receipt = SubmitRewardCandidate(candidate => candidate.Arrow != null);
+        if (!receipt.Accepted) yield break;
         RectTransform sourceRect = arrowChoiceCard != null ? arrowChoiceCard : arrowChoiceSlot;
         claimInProgress = true;
         RefreshChoiceSlots();
-        yield return owner.GainRewardArrow(option, sourceRect);
+        yield return owner.PresentCommittedChoiceResult(receipt, sourceRect);
         EmitRewardChoice("arrow", -1, 0);
         settlementClaimed = true;
         claimInProgress = false;
@@ -957,24 +976,22 @@ public class RewardPanelUI : MonoBehaviour
             return;
 
         // 点中的选项卡就是飞入起点（hideSource 会在飞行期间把它隐藏）；飞行期间禁掉再次点击与关闭。
+        ChoiceResult receipt = SubmitRewardCandidate(candidate => candidate.MagicData == data);
+        if (!receipt.Accepted) return;
         selectedMagicView = view;
         claimInProgress = true;
         BindEndButton();
-        StartCoroutine(ClaimMagicOnlyRewardRoutine(data, view));
+        StartCoroutine(ClaimMagicOnlyRewardRoutine(data, view, receipt));
     }
 
     /// <summary>事件道具奖励：从点中的选项卡飞入空槽，落地后入槽并结束本次奖励。</summary>
-    private IEnumerator ClaimMagicOnlyRewardRoutine(MagicData data, MagicItemView view)
+    private IEnumerator ClaimMagicOnlyRewardRoutine(MagicData data, MagicItemView view, ChoiceResult receipt)
     {
         RectTransform sourceRect = view != null ? view.transform as RectTransform : null;
         RunAnalyticsLedger.SetAcquireContext("event", 0, AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(currentMagicChoices)), RunAnalyticsLedger.IndexOfMagic(currentMagicChoices, data));
-        yield return owner.GainRewardMagicAnimatedRoutine(data, sourceRect);
-        if (!magicClaimed)
-        {
-            claimInProgress = false;
-            selectedMagicView = null;
-            BindEndButton();
-        }
+        yield return owner.PresentCommittedChoiceResult(receipt, sourceRect);
+        claimInProgress = false;
+        CompleteMagicRewardSelection();
     }
 
     private void RefreshSelectedMagicVisuals()
@@ -1093,6 +1110,7 @@ public class RewardPanelUI : MonoBehaviour
 
     private void ReturnFromMagicChoices()
     {
+        if (claimInProgress) return;
         HideMagicChoices();
         selectedMagicView = null;
         hoveredMagicView = null;

@@ -6,7 +6,7 @@
     },
     {
       "key": "modifier.temporary.desc",
-      "text": "Disappears at turn end or when leaving your hand, and does not return to the draw pile. Not limited by the per-turn play limit."
+      "text": "Disappears when discarded or after being played and resolved. Does not return to the draw pile. Does not count toward the play limit."
     },
     {
       "key": "modifier.charge.name",
@@ -182,7 +182,7 @@
     },
     {
       "key": "modifier.retained_arrow.desc",
-      "text": "At turn end, if this arrow is still in your hand, keep it in your hand."
+      "text": "If this arrow is in your hand when you confirm your play, keep it."
     },
     {
       "key": "modifier.half_arrow.name",

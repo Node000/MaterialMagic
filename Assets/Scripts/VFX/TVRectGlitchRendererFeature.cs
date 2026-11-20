@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TVRectGlitchRendererFeature")]
+#endif
 public sealed class TVRectGlitchRendererFeature : ScriptableRendererFeature
 {
     [System.Serializable]

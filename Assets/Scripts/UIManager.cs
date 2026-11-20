@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UIManager")]
+#endif
 public class UIManager : MonoBehaviour
 {
     private static TMP_FontAsset cachedDefaultTMPFont;
@@ -497,23 +500,10 @@ public class UIManager : MonoBehaviour
 
     internal static Sprite LoadHiddenLevelSprite()
     {
-        return Resources.Load<Sprite>("Images/UI/question mark");
+        return StartMagicCodexPanelUI.LoadLockedPlaceholderIcon();
     }
 
-    internal static string GetLevelTypeName(LevelType type)
-    {
-        return type switch
-        {
-            LevelType.Shop => LocalizationSystem.GetText("ui.level_type.shop", "商店"),
-            LevelType.Event => LocalizationSystem.GetText("ui.level_type.event", "事件"),
-            LevelType.RemoveMaterial => LocalizationSystem.GetText("ui.level_type.remove_material", "删除"),
-            LevelType.AddMaterial => LocalizationSystem.GetText("ui.level_type.add_material", "新增"),
-            LevelType.Rest => LocalizationSystem.GetText("ui.level_type.rest", "休息"),
-            LevelType.Reward => LocalizationSystem.GetText("ui.level_type.reward", "奖励"),
-            LevelType.Elite => LocalizationSystem.GetText("ui.level_type.elite", "精英"),
-            _ => LocalizationSystem.GetText("ui.level_type.battle", "战斗"),
-        };
-    }
+    internal static string GetLevelTypeName(LevelType type) => LevelTypeText.GetName(type);
 
     public static void AddJuicyMotion(Transform target)
     {

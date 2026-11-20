@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "ArrowSelectionWaveHoverConfig", menuName = "Config/Arrow Selection Wave Hover Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ArrowSelectionWaveHoverConfig")]
+#endif
 public class ArrowSelectionWaveHoverConfig : ScriptableObject
 {
     [SerializeField] private float hoverYOffset = 32f;

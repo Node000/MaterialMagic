@@ -7,6 +7,6 @@ public class RainBannerMagicModel : MagicModel
     protected override void ResolveCast(PlayerState playerState, BattleManager battleManager, MagicCastResult result)
     {
         for (int i = 0; i < 5; i++)
-            playerState.AddTemporaryMaterialToHand(MaterialEnum.Water);
+            result.CreatedHandCards.Add(playerState.AddTemporaryMaterialToHand(MaterialEnum.Water));
     }
 }

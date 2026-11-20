@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "SecondFloorStripDungeonFirstPersonPrototype")]
+#endif
 public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
 {
     [Header("生成")]
@@ -48,8 +51,9 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private Transform environmentRoot;
     private Material bossMaterial;
     private StripDungeonMap currentMap;
-    private Vector2Int playerPosition;
-    private Vector2Int facing;
+    private FirstPersonGridExplorationSession exploration;
+    private Vector2Int playerPosition => exploration != null ? new Vector2Int(exploration.X, exploration.Y) : Vector2Int.zero;
+    private Vector2Int facing => exploration != null ? new Vector2Int(exploration.FacingX, exploration.FacingY) : Vector2Int.up;
     private TMP_Text statusText;
     private Button generateButton;
     private TMP_FontAsset fontAsset;
@@ -95,8 +99,11 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         }
 
         nextSeed = currentMap.seed + 1;
-        playerPosition = currentMap.startPosition;
-        facing = FindInitialFacing();
+        StripDungeonMap map = currentMap;
+        exploration = new FirstPersonGridExplorationSession(map.width, map.height,
+            map.startPosition.x, map.startPosition.y, map.bossPosition.x, map.bossPosition.y, map.IsBossVisible,
+            (x, y) => map.IsPathCell(new Vector2Int(x, y)),
+            (x, y) => map.GetCell(new Vector2Int(x, y))?.stripIds.Contains(map.bossHostStripId) == true);
         BuildMinimap();
         RebuildEnvironment();
         RefreshView();
@@ -108,16 +115,14 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         if (currentMap == null)
             return;
 
-        Vector2Int target = playerPosition + facing;
-        if (!IsWalkable(target))
+        bool wasBossVisible = exploration.BossVisible;
+        if (!exploration.MoveForward())
         {
             statusText.text = "前方是墙壁。";
             return;
         }
 
-        playerPosition = target;
-        bool wasBossVisible = currentMap.IsBossVisible;
-        currentMap.RevealBossIfOnHostStrip(playerPosition);
+        currentMap.bossRevealed = exploration.BossVisible;
         RefreshView();
         if (!wasBossVisible && currentMap.IsBossVisible)
         {
@@ -138,14 +143,16 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
 
     private void TurnLeft()
     {
-        facing = new Vector2Int(-facing.y, facing.x);
+        if (exploration == null) return;
+        exploration.Turn(-1);
         RefreshView();
         statusText.text = "左转。";
     }
 
     private void TurnRight()
     {
-        facing = new Vector2Int(facing.y, -facing.x);
+        if (exploration == null) return;
+        exploration.Turn(1);
         RefreshView();
         statusText.text = "右转。";
     }
@@ -222,10 +229,10 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
     private void RefreshVisiblePositions()
     {
         visiblePositions.Clear();
-        visiblePositions.Add(playerPosition);
-
-        for (Vector2Int position = playerPosition + facing; IsWalkable(position); position += facing)
-            visiblePositions.Add(position);
+        if (exploration == null) return;
+        exploration.RefreshVisibility();
+        foreach (ExplorationGridPosition position in exploration.VisiblePositions)
+            visiblePositions.Add(new Vector2Int(position.X, position.Y));
     }
 
     private void BuildMinimap()
@@ -637,21 +644,6 @@ public class SecondFloorStripDungeonFirstPersonPrototype : MonoBehaviour
         block.transform.position = position;
         block.transform.localScale = size;
         block.GetComponent<MeshRenderer>().sharedMaterial = material;
-    }
-
-    private bool IsWalkable(Vector2Int position)
-    {
-        return currentMap != null && (currentMap.IsPathCell(position) || currentMap.IsBossVisible && position == currentMap.bossPosition);
-    }
-
-    private Vector2Int FindInitialFacing()
-    {
-        for (int i = 0; i < directions.Length; i++)
-        {
-            if (currentMap.IsPathCell(currentMap.startPosition + directions[i]))
-                return directions[i];
-        }
-        return Vector2Int.up;
     }
 
     private void UpdatePlayerTransform()

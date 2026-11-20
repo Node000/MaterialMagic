@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "BattleInputConfig", menuName = "Config/Battle Input Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BattleInputConfig")]
+#endif
 public class BattleInputConfig : ScriptableObject
 {
     [SerializeField] private float handCardDoubleClickPlayInterval = 0.3f;

@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TutorialCutoutMaskUI")]
+#endif
 public class TutorialCutoutMaskUI : Graphic
 {
     [Tooltip("高亮洞的目标列表（支持 1–3 个，例如“出牌区 + 出手按钮”）。")]

@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnlockPopupQueueUI")]
+#endif
 public class UnlockPopupQueueUI : MonoBehaviour
 {
     [SerializeField] private RectTransform itemRoot;

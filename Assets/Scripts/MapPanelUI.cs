@@ -6,6 +6,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MapPanelUI")]
+#endif
 public class MapPanelUI : MonoBehaviour
 {
     [SerializeField] private float mapShowMove = 38f;

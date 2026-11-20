@@ -1,4 +1,7 @@
 using System;
+#if UNITY_EDITOR || (DEVELOPMENT_BUILD && MATERIALMAGIC_QA_UNLOCK)
+using System.Collections.Generic;
+#endif
 using System.IO;
 using UnityEngine;
 
@@ -6,7 +9,7 @@ public static class MagicCodexProgressSystem
 {
     private const int CurrentVersion = 1;
 
-    private static int cachedSlotIndex = -1;
+    private static string cachedSavePath;
     private static MagicCodexProgressData cachedCurrentProgress;
 
     public static bool IsMagicDiscovered(MagicData data)
@@ -56,24 +59,53 @@ public static class MagicCodexProgressSystem
         SaveCurrent(progress);
     }
 
+#if UNITY_EDITOR || (DEVELOPMENT_BUILD && MATERIALMAGIC_QA_UNLOCK)
+    internal static void DiscoverAllForQA(int slotIndex)
+    {
+        MagicCodexProgressData progress = Load(slotIndex);
+        var discovered = new List<string>(progress.discoveredMagicIds);
+        var seen = new List<string>(progress.seenNewMagicIds);
+        var known = new HashSet<string>(discovered, StringComparer.Ordinal);
+        var alreadySeen = new HashSet<string>(seen, StringComparer.Ordinal);
+        foreach (MagicData magic in GameDataDatabase.MagicData.Values)
+        {
+            string key = GetMagicKey(magic);
+            if (string.IsNullOrEmpty(key) || !known.Add(key))
+                continue;
+
+            discovered.Add(key);
+            if (alreadySeen.Add(key))
+                seen.Add(key);
+        }
+
+        if (discovered.Count == progress.discoveredMagicIds.Length)
+            return;
+
+        progress.discoveredMagicIds = discovered.ToArray();
+        progress.seenNewMagicIds = seen.ToArray();
+        Save(slotIndex, progress);
+    }
+#endif
+
     public static void Clear(int slotIndex)
     {
         int clampedSlotIndex = Mathf.Clamp(slotIndex, 1, 3);
         string path = GetSavePath(clampedSlotIndex);
         if (File.Exists(path))
             File.Delete(path);
-        if (cachedSlotIndex == clampedSlotIndex)
+        if (cachedSavePath == path)
             cachedCurrentProgress = CreateEmpty(clampedSlotIndex);
     }
 
     private static MagicCodexProgressData LoadCurrent()
     {
         int slotIndex = Mathf.Clamp(RunSaveSystem.CurrentSlotIndex, 1, 3);
-        if (cachedCurrentProgress != null && cachedSlotIndex == slotIndex)
+        string path = GetSavePath(slotIndex);
+        if (cachedCurrentProgress != null && cachedSavePath == path)
             return cachedCurrentProgress;
 
         cachedCurrentProgress = Load(slotIndex);
-        cachedSlotIndex = slotIndex;
+        cachedSavePath = path;
         return cachedCurrentProgress;
     }
 
@@ -116,9 +148,10 @@ public static class MagicCodexProgressSystem
         string tempPath = path + ".tmp";
         File.WriteAllText(tempPath, JsonUtility.ToJson(data, true));
         if (File.Exists(path))
-            File.Delete(path);
-        File.Move(tempPath, path);
-        cachedSlotIndex = clampedSlotIndex;
+            File.Replace(tempPath, path, null);
+        else
+            File.Move(tempPath, path);
+        cachedSavePath = path;
         cachedCurrentProgress = data;
     }
 

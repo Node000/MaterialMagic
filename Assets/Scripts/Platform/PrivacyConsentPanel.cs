@@ -17,6 +17,9 @@ using UnityEngine.UI;
 /// 2. **临时兜底面板**：没有绑定任何引用时，代码会生成一个纯功能性的弹窗，便于真机联调；
 ///    美术面板就绪后请关闭该开关。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PrivacyConsentPanel")]
+#endif
 public class PrivacyConsentPanel : MonoBehaviour
 {
     [Header("绑定美术面板（留空则使用临时兜底面板）")]

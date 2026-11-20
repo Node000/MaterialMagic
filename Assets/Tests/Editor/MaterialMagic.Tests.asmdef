@@ -1,0 +1,15 @@
+{
+  "name": "MaterialMagic.Tests",
+  "references": [
+    "MaterialMagic.Core",
+    "MaterialMagic.UnityAdapters",
+    "MaterialMagic.Presentation"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll", "Newtonsoft.Json.dll"],
+  "autoReferenced": false,
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}

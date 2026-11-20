@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ShaderEffectTestController")]
+#endif
 public sealed class ShaderEffectTestController : MonoBehaviour
 {
     public enum EffectType

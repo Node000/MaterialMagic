@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);MATERIALMAGIC_STANDALONE</DefineConstants>
+    <AssemblyName>MaterialMagic.Core</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <!-- One implementation: these are linked production sources, not copied models or effects. -->
+  <ItemGroup>
+    <Compile Include="Adapters/*.cs" />
+    <Compile Include="../Assets/Scripts/Simulation/*.cs" Link="Rules/Simulation/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Buffs/*.cs" Link="Rules/Buffs/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Enemies/*.cs" Link="Rules/Enemies/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Magics/*.cs" Link="Rules/Magics/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/MagicModifiers/*.cs" Link="Rules/MagicModifiers/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Modifiers/*.cs" Link="Rules/Modifiers/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Relics/*.cs" Link="Rules/Relics/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Data/ArrowReadSystem.cs;../Assets/Scripts/Data/BattleManager.cs;../Assets/Scripts/Data/BuffModel.cs;../Assets/Scripts/Data/EnemyModel.cs;../Assets/Scripts/Data/EnemyRuntimeDefinition.cs;../Assets/Scripts/Data/EnemyDefinition.cs;../Assets/Scripts/Data/EventModel.cs;../Assets/Scripts/Data/GameContentDatabase.cs;../Assets/Scripts/Data/GameDataReader.cs;../Assets/Scripts/Data/GameDataTypes.cs;../Assets/Scripts/Data/GameLog.cs;../Assets/Scripts/Data/LocalizationSystem.cs;../Assets/Scripts/Data/MagicModel.cs;../Assets/Scripts/Data/MagicRaritySystem.cs;../Assets/Scripts/Data/MapGenConfigData.cs;../Assets/Scripts/Data/MaterialModifierDatabase.cs;../Assets/Scripts/Data/MaterialModifierDefinition.cs;../Assets/Scripts/Data/MaterialModifierDisplayDatabase.cs;../Assets/Scripts/Data/PlayerModel.cs;../Assets/Scripts/Data/PlayerState.cs;../Assets/Scripts/Data/PlayerStatus.cs;../Assets/Scripts/Data/RunManager.cs;../Assets/Scripts/Data/RunRandom.cs;../Assets/Scripts/Data/UnitModel.cs;../Assets/Scripts/Data/UnlockDataTypes.cs" Link="Rules/Data/%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Data/ArrowUpgradeSystem.cs;../Assets/Scripts/Data/ArrowUpgradeConfig.cs;../Assets/Scripts/Data/DifficultyUpgradeSystem.cs;../Assets/Scripts/Data/EnemySummonLayoutConfig.cs;../Assets/Scripts/Data/MagicMatchOrderUtility.cs;../Assets/Scripts/Data/RunMapNodeModel.cs;../Assets/Scripts/Data/ShopLayer.cs;../Assets/Scripts/Data/UnlockSystem.cs;../Assets/Scripts/Data/RunSaveData.cs" Link="Rules/Data/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>../Library/PackageCache/com.unity.nuget.newtonsoft-json@3.2.1/Runtime/Newtonsoft.Json.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

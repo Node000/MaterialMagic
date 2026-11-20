@@ -6,6 +6,9 @@ using UnityEngine.Serialization;
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 [AddComponentMenu("Scribble/Scribble Plane 3D")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribblePlane3D")]
+#endif
 public class ScribblePlane3D : MonoBehaviour
 {
     public enum PlaneAxes

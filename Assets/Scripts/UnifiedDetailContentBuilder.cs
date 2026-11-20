@@ -28,6 +28,7 @@ public enum UnifiedDetailAddedDetailType
 
 public struct UnifiedDetailAddedDetail
 {
+    public int StackCount;
     public UnifiedDetailAddedDetailType Type;
     public string Title;
     public string Body;
@@ -65,7 +66,7 @@ public static class UnifiedDetailContentBuilder
             return cachedTextConfig;
         }
     }
-    public static UnifiedDetailContent Build(MagicModel magic)
+    public static UnifiedDetailContent Build(MagicModel magic, PlayerState player = null)
     {
         UnifiedDetailContent content = new UnifiedDetailContent
         {
@@ -75,7 +76,7 @@ public static class UnifiedDetailContentBuilder
             AccentColor = MagicRaritySystem.GetBorderColor(magic != null ? magic.Data : null, Color.white),
             Icon = LoadMagicIcon(magic),
             AddedDetails = BuildMagicAddedDetails(magic),
-            Recipe = magic != null ? magic.GetEffectiveRecipe() : null
+            Recipe = magic?.GetCombatTrigger(player).Recipe
         };
         return content;
     }
@@ -174,6 +175,17 @@ public static class UnifiedDetailContentBuilder
             AddedDetails = BuildIntentBuffDetails(enemy != null ? enemy.GetIntentTooltipBuffs(intent, playerState) : null)
         };
         return content;
+    }
+
+    public static UnifiedDetailContent Build(BattleIntentSnapshot snapshot)
+    {
+        if (snapshot == null) return default;
+        return new UnifiedDetailContent
+        {
+            SourceType = UnifiedDetailSourceType.EnemyIntent,
+            Title = snapshot.TooltipTitle, Body = snapshot.TooltipDescription,
+            Icon = LoadEnemyIntentIcon(snapshot.Intent), AddedDetails = BuildIntentBuffDetails(snapshot.TooltipBuffs)
+        };
     }
 
     private static string BuildEnemyIntentBody(EnemyModel enemy, EnemyIntentData intent, PlayerState playerState)
@@ -290,6 +302,7 @@ public static class UnifiedDetailContentBuilder
 
         if (material.modifiers != null)
         {
+            var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < material.modifiers.Count; i++)
             {
                 MaterialModifierModel modifier = material.modifiers[i];
@@ -297,7 +310,17 @@ public static class UnifiedDetailContentBuilder
                     continue;
 
                 string modifierId = MaterialModifierFactory.GetId(modifier);
+                if (!string.IsNullOrEmpty(modifierId) && indexById.TryGetValue(modifierId, out int index))
+                {
+                    UnifiedDetailAddedDetail detail = details[index];
+                    detail.StackCount++;
+                    details[index] = detail;
+                    continue;
+                }
+                int nextIndex = details.Count;
                 AddDetail(details, UnifiedDetailAddedDetailType.Modifier, LocalizationKeys.GetModifierName(modifier), LocalizationKeys.GetModifierDescription(modifier), modifierId);
+                if (!string.IsNullOrEmpty(modifierId) && details.Count > nextIndex)
+                    indexById.Add(modifierId, nextIndex);
             }
         }
         return details;
@@ -352,6 +375,7 @@ public static class UnifiedDetailContentBuilder
         details.Add(new UnifiedDetailAddedDetail
         {
             Type = type,
+            StackCount = 1,
             Title = title,
             Body = body,
             EnchantId = enchantId,

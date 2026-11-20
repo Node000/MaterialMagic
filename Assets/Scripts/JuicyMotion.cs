@@ -3,6 +3,9 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "JuicyMotion")]
+#endif
 public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("触发")]
@@ -268,6 +271,9 @@ public class JuicyMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 }
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "JuicyMotionHoverTargetRelay")]
+#endif
 public class JuicyMotionHoverTargetRelay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private readonly List<JuicyMotion> motions = new List<JuicyMotion>();

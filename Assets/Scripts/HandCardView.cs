@@ -5,6 +5,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "HandCardView")]
+#endif
 public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image frameImage;
@@ -263,7 +266,7 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
         if (card != null)
         {
-            content = UnifiedDetailContentBuilder.Build(card);
+            content = UnifiedDetailContentBuilder.Build(owner != null ? owner.GetPresentedCardDisplay(card) : card);
             return true;
         }
 
@@ -292,25 +295,27 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
 
     private void RefreshVisual()
     {
+        MaterialModel displayCard = owner != null ? owner.GetPresentedCardDisplay(card) : card;
+        if (displayCard == null) return;
         SetFrameTransparent();
 
         if (labelText != null)
-            labelText.text = MaterialCardView.GetMaterialName(card.material);
+            labelText.text = MaterialCardView.GetMaterialName(displayCard.material);
 
         RefreshSpringHighlight();
 
         if (iconImage != null)
         {
-            MaterialEnum displayMaterial = card != null ? card.GetArrowDisplayMaterial() : MaterialEnum.None;
+            MaterialEnum displayMaterial = displayCard.GetArrowDisplayMaterial();
             Sprite sprite = MaterialCardView.GetMaterialIcon(displayMaterial);
             iconImage.sprite = sprite;
             iconImage.color = sprite != null ? Color.white : MaterialCardView.GetMaterialColor(displayMaterial);
             iconImage.preserveAspect = true;
-            MaterialModifierVisualUtility.ApplyTo(iconImage, card);
+            MaterialModifierVisualUtility.ApplyTo(iconImage, displayCard);
         }
 
         CacheUpgradeOutline();
-        ArrowUpgradeVisualUtility.ApplyTo(upgradeOutlineImage, card, owner != null ? owner.PlayerState : null, iconImage != null ? iconImage.rectTransform.localScale : Vector3.one);
+        ArrowUpgradeVisualUtility.ApplyTo(upgradeOutlineImage, displayCard, owner != null ? owner.PlayerState : null, iconImage != null ? iconImage.rectTransform.localScale : Vector3.one);
         RefreshRaycastTargets();
     }
 

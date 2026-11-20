@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(CanvasGroup))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartMagicCodexItemUI")]
+#endif
 public class StartMagicCodexItemUI : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
 {
     [SerializeField] private MagicItemView magicItemView;

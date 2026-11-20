@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AscensionTopBarIndicatorUI")]
+#endif
 public class AscensionTopBarIndicatorUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text levelText;

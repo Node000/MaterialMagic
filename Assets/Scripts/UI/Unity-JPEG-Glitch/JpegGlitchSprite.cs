@@ -3,6 +3,9 @@ using System.IO;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "JpegGlitchSprite")]
+#endif
 public sealed class JpegGlitchSprite : MonoBehaviour
 {
     public enum GlitchMode { Coefficients, RawByteDamage }

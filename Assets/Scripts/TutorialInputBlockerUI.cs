@@ -11,6 +11,9 @@ using UnityEngine.UI;
 /// 不会看网格形状；所以“只挡框外”必须额外实现 <c>ICanvasRaycastFilter.IsRaycastLocationValid</c>，
 /// 否则全屏矩形会把框内的点击一起吞掉。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "TutorialInputBlockerUI")]
+#endif
 public class TutorialInputBlockerUI : TutorialCutoutMaskUI, ICanvasRaycastFilter
 {
     [Tooltip("勾选后阻挡全屏（阅读页）；取消则只阻挡高亮框以外（行为页）。")]

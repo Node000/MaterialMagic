@@ -22,6 +22,8 @@ public class MagicBookRowLayout : LayoutGroup
     [Tooltip("固定行数：一列从第 1 行排到第 N 行，再开新的一列。")]
     [SerializeField, Min(1)] private int rowCount = 4;
 
+    public int RowCount => Mathf.Max(1, rowCount);
+
     private readonly List<MagicItemView> orderedViews = new List<MagicItemView>();
 
     /// <summary>当前可见槽位按逻辑编号排好的顺序（只读用途）。</summary>
@@ -30,7 +32,7 @@ public class MagicBookRowLayout : LayoutGroup
     public override void CalculateLayoutInputHorizontal()
     {
         base.CalculateLayoutInputHorizontal();
-        int columns = Mathf.Max(1, Mathf.CeilToInt((float)CountVisibleViews() / Mathf.Max(1, rowCount)));
+        int columns = Mathf.Max(1, Mathf.CeilToInt((float)CountVisibleViews() / RowCount));
         float width = columns * cellSize.x + Mathf.Max(0, columns - 1) * spacing.x + padding.horizontal;
         SetLayoutInputForAxis(width, -1f, 0f, 0);
     }
@@ -38,7 +40,7 @@ public class MagicBookRowLayout : LayoutGroup
     public override void CalculateLayoutInputVertical()
     {
         int visible = Mathf.Max(1, CountVisibleViews());
-        int rows = Mathf.Min(visible, Mathf.Max(1, rowCount));
+        int rows = Mathf.Min(visible, RowCount);
         float height = rows * cellSize.y + Mathf.Max(0, rows - 1) * spacing.y + padding.vertical;
         SetLayoutInputForAxis(height, -1f, 0f, 1);
     }
@@ -78,7 +80,7 @@ public class MagicBookRowLayout : LayoutGroup
         if (count == 0)
             return;
 
-        int rows = Mathf.Max(1, rowCount);
+        int rows = RowCount;
         int columns = Mathf.Max(1, Mathf.CeilToInt((float)count / rows));
         float pitchX = cellSize.x + spacing.x;
         float pitchY = cellSize.y + spacing.y;

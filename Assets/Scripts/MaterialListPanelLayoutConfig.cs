@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "MaterialListPanelLayoutConfig", menuName = "Config/Material List Panel Layout Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MaterialListPanelLayoutConfig")]
+#endif
 public class MaterialListPanelLayoutConfig : ScriptableObject
 {
     [SerializeField] private float arrowRowTotalLength = 780f;

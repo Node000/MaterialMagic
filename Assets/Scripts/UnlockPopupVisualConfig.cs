@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "UnlockPopupVisualConfig", menuName = "Config/Unlock Popup Visual Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnlockPopupVisualConfig")]
+#endif
 public class UnlockPopupVisualConfig : ScriptableObject
 {
     [SerializeField] private Color startConfigTypeColor = new Color(0.95f, 0.72f, 0.28f, 1f);

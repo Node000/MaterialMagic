@@ -8,6 +8,9 @@ using UnityEngine.UI;
 /// 战斗界面牌堆按钮的 hover 预览：只显示当前 hover 的那一堆箭头（单行）。
 /// 与点击打开的 MaterialListPanelUI（三行“箭头牌堆”面板）互不影响：本面板不拦截射线、不参与选择流程。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PileHoverPanelUI")]
+#endif
 public class PileHoverPanelUI : MonoBehaviour
 {
     public enum PileKind

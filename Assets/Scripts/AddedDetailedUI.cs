@@ -3,10 +3,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "AddedDetailedUI")]
+#endif
 public class AddedDetailedUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text bodyText;
+    [SerializeField] private TMP_Text stackBadge;
+    [SerializeField, Min(0f)] private float stackBadgeWobble = 2.4f;
     [SerializeField] private Graphic frameGraphic;
     [SerializeField] private SpringLineHighlightUI springLine;
     [SerializeField] private GameObject bodyRoot;
@@ -47,7 +52,7 @@ public class AddedDetailedUI : MonoBehaviour
 
     public RectTransform RectTransform => transform as RectTransform;
 
-    public void Apply(string title, string body, Color lineColor, string enchantId = null, Sprite iconSprite = null)
+    public void Apply(string title, string body, Color lineColor, string enchantId = null, Sprite iconSprite = null, int stackCount = 1)
     {
         CacheReferences();
         if (titleText != null)
@@ -63,6 +68,18 @@ public class AddedDetailedUI : MonoBehaviour
             bodyText.text = InlineIconTextFormatter.Format(body);
         }
         ApplyBoxIcon(enchantId, iconSprite);
+        if (stackBadge != null)
+        {
+            stackBadge.gameObject.SetActive(stackCount > 1);
+            if (stackCount > 1)
+            {
+                stackBadge.OnPreRenderText -= WobbleStackBadge;
+                stackBadge.OnPreRenderText += WobbleStackBadge;
+                stackBadge.text = "<size=85%>x</size>" + stackCount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                if (titleText != null)
+                    titleText.rectTransform.sizeDelta -= new Vector2(stackBadge.rectTransform.rect.width, 0f);
+            }
+        }
         if (bodyRoot != null)
             bodyRoot.SetActive(!string.IsNullOrEmpty(body));
         if (frameGraphic != null)
@@ -101,6 +118,22 @@ public class AddedDetailedUI : MonoBehaviour
         }
 
         ApplyIconTitleLayout(hasEnchantIcon || hasSpriteIcon);
+    }
+
+    private void WobbleStackBadge(TMP_TextInfo info)
+    {
+        // Warp each glyph and its SDF outline without moving the badge or its input bounds.
+        for (int i = 0; i < info.characterCount; i++)
+        {
+            TMP_CharacterInfo character = info.characterInfo[i];
+            if (!character.isVisible) continue;
+            Vector3[] vertices = info.meshInfo[character.materialReferenceIndex].vertices;
+            for (int j = 0; j < 4; j++)
+            {
+                float phase = i * 2.1f + j * 1.7f;
+                vertices[character.vertexIndex + j] += new Vector3(Mathf.Cos(phase), Mathf.Sin(phase)) * stackBadgeWobble;
+            }
+        }
     }
 
     private void EnsureEnchantIcon()

@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "BuffPopupEffectSettings", menuName = "Config/Buff Popup Effect Settings")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BuffPopupEffectSettings")]
+#endif
 public class BuffPopupEffectSettings : ScriptableObject
 {
     [SerializeField] private float fadeInDuration = 0.12f;

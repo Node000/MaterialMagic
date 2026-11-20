@@ -5,6 +5,9 @@ using UnityEngine.Rendering;
 [ExecuteAlways]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 [AddComponentMenu("Scribble/Scribble Spotlight Lines")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribbleSpotlightLines")]
+#endif
 public class ScribbleSpotlightLines : MonoBehaviour
 {
     private const float TwoPi = 6.28318530718f;

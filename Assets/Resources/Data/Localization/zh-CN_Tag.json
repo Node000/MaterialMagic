@@ -30,7 +30,7 @@
     },
     {
       "key": "tag.temporary.desc",
-      "text": "回合结束或离开手牌时消失，不会回到抽牌堆。"
+      "text": "弃置或打出并结算后消失，不会回到抽牌堆。"
     },
     {
       "key": "tag.vortex.name",
@@ -174,7 +174,7 @@
     },
     {
       "key": "tag.keep_hand.desc",
-      "text": "本回合结束时保留手牌。"
+      "text": "下次确认打出时不弃手牌。"
     },
     {
       "key": "tag.remove_hand.name",

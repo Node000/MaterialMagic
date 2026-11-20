@@ -7,6 +7,9 @@ using UnityEngine;
 /// 文字内容与三段配色（正常 / 预警 / 打满）全部在 Inspector 上配置；
 /// 进出战斗的开关动画与商店面板一致：压成中心水平亮线 ↔ 竖向展开。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PlayLimitDisplayUI")]
+#endif
 public class PlayLimitDisplayUI : MonoBehaviour
 {
     private const string DefaultFormatKey = "ui.battle.play_limit_format";

@@ -30,6 +30,7 @@ public class RunManager
     private readonly List<int> combinedCandidateIndexes = new List<int>();
     private List<RunMapNodeModel> mapNodes;
     private RunMapGridModel mapGrid;
+    private SecondFloorExplorationSession exploration;
     private ChapterData chapterBossOwner;
     private LevelData chapterBossLevel;
     private int chapterBossGroupIndex = -1;
@@ -44,8 +45,23 @@ public class RunManager
     public int CurrentMapNodeIndex { get; private set; }
     public int BattleCount { get; private set; }
     public ChapterData ActiveChapter { get; private set; }
-    public LevelData CurrentLevel { get; private set; }
-    public RunFlowState State { get; private set; }
+    public LevelData CurrentLevel => Session.CurrentLevel;
+    public RunFlowState State => Session.State;
+
+    /// <summary>Stable across reloads; distinguishes repeated uses of a level definition.</summary>
+    public int GetShopSeed(LevelData level)
+    {
+        unchecked
+        {
+            uint hash = 2166136261u;
+            foreach (int value in new[] { PlayerStatus.RunRandomSeed, 0x53484F50, ActiveChapter?.numericId ?? 0,
+                CurrentMapNodeIndex, CurrentMapX, CurrentMapY, level?.numericId ?? 0 })
+                hash = (hash ^ (uint)value) * 16777619u;
+            return hash == 0 ? 1 : (int)hash;
+        }
+    }
+    public RunSession Session { get; }
+    public SecondFloorExplorationSession Exploration => exploration;
     public BattleManager CurrentBattle { get; private set; }
 
     /// <summary>本局在生成章节地图时确定的 Boss 关卡（未确定时为 null）。</summary>
@@ -59,7 +75,8 @@ public class RunManager
         PlayerStatus = playerStatus;
         mapNodes = new List<RunMapNodeModel>();
         mapGrid = new RunMapGridModel();
-        State = RunFlowState.MapSelection;
+        exploration = new SecondFloorExplorationSession(mapGrid);
+        Session = new RunSession(this);
     }
 
     public static RunManager Create(PlayerStatus playerStatus)
@@ -83,6 +100,7 @@ public class RunManager
     public void AttachMapGrid(RunMapGridModel grid)
     {
         mapGrid = grid ?? new RunMapGridModel();
+        exploration = new SecondFloorExplorationSession(mapGrid);
     }
 
     public void BuildMapGrid(ChapterData chapter, IList<LevelData> levels, int width, int height, int additionalTopBossCellCount = 0, LevelData bossLevel = null)
@@ -99,6 +117,7 @@ public class RunManager
         };
         mapGrid.ClampPosition(ref mapGrid.playerX, ref mapGrid.playerY);
 
+        exploration = new SecondFloorExplorationSession(mapGrid);
         int cellCount = width * height;
         for (int i = 0; i < cellCount; i++)
         {
@@ -149,32 +168,24 @@ public class RunManager
             return false;
 
         mapGrid = grid;
+        exploration = new SecondFloorExplorationSession(mapGrid);
         mapGrid.ClampPosition(ref mapGrid.playerX, ref mapGrid.playerY);
         return true;
     }
 
     public RunMapCellModel MoveMapPlayer(MaterialEnum material)
     {
-        if (mapGrid == null || mapGrid.width <= 0 || mapGrid.height <= 0)
-            return null;
+        return exploration != null ? exploration.Move(material) : null;
+    }
 
+    /// <summary>Returns the reachable destination without moving or revealing the map.</summary>
+    public RunMapCellModel PeekMapDestination(MaterialEnum material)
+    {
+        if (exploration == null || mapGrid.width <= 0 || mapGrid.height <= 0) return null;
         Vector2Int direction = GetMapDirection(material);
-        if (direction == Vector2Int.zero)
-            return mapGrid.GetCurrentCell();
-
-        int nextX = mapGrid.playerX + direction.x;
-        int nextY = mapGrid.playerY + direction.y;
-        if (nextX < 0 || nextX >= mapGrid.width || nextY < 0 || nextY >= mapGrid.height)
-            return null;
-
-        RunMapCellModel targetCell = mapGrid.GetCell(nextX, nextY);
-        if (!mapGrid.CanEnterCell(targetCell))
-            return null;
-
-        mapGrid.playerX = nextX;
-        mapGrid.playerY = nextY;
-        RevealCurrentMapNeighbors();
-        return targetCell;
+        if (direction == Vector2Int.zero) return mapGrid.GetCurrentCell();
+        return exploration.CanMove(direction.x, direction.y)
+            ? mapGrid.GetCell(mapGrid.playerX + direction.x, mapGrid.playerY + direction.y) : null;
     }
 
     public void ConsumeCurrentMapCellLevel()
@@ -200,21 +211,12 @@ public class RunManager
 
     public void RevealCurrentMapNeighbors()
     {
-        if (mapGrid == null)
-            return;
-
-        RevealMapCell(mapGrid.playerX, mapGrid.playerY);
-        RevealMapCell(mapGrid.playerX, mapGrid.playerY + 1);
-        RevealMapCell(mapGrid.playerX, mapGrid.playerY - 1);
-        RevealMapCell(mapGrid.playerX - 1, mapGrid.playerY);
-        RevealMapCell(mapGrid.playerX + 1, mapGrid.playerY);
+        exploration?.RevealCurrentNeighbors();
     }
 
     private void RevealMapCell(int x, int y)
     {
-        RunMapCellModel cell = mapGrid.GetCell(x, y);
-        if (cell != null && cell.isAvailable)
-            cell.isRevealed = true;
+        exploration?.Reveal(x, y);
     }
 
     public void ActivateBossMap()
@@ -269,16 +271,17 @@ public class RunManager
 
     public void SelectCurrentNodeLevel(LevelData level)
     {
-        CurrentLevel = level;
-        State = level != null ? RunFlowState.BeforeNode : RunFlowState.MapSelection;
-        if (mapNodes != null && CurrentMapNodeIndex >= 0 && CurrentMapNodeIndex < mapNodes.Count)
-            mapNodes[CurrentMapNodeIndex].selectedLevel = level;
+        if (level == null)
+            Session.ClearCurrentLevel();
+        else
+            Session.SelectNode(level);
     }
+
+    public void RestoreCurrentNodeLevel(LevelData level) => Session.RestoreNode(level);
 
     public void BeginLevel(LevelData level)
     {
-        CurrentLevel = level;
-        State = GetStateForLevel(level);
+        Session.BeginLevel(level);
     }
 
     public void SetBattle(BattleManager battleManager)
@@ -288,33 +291,57 @@ public class RunManager
 
     public void ClearCurrentLevel()
     {
-        CurrentLevel = null;
-        CurrentBattle = null;
-        State = RunFlowState.MapSelection;
+        Session.ClearCurrentLevel();
     }
 
     public void AdvanceMapNode()
     {
-        CurrentMapNodeIndex++;
-        CurrentLevel = null;
-        State = mapNodes != null && CurrentMapNodeIndex >= mapNodes.Count ? RunFlowState.Victory : RunFlowState.MapSelection;
+        Session.AdvanceMapNode();
     }
 
     public LevelData DrawNextBattleLevel(ChapterData chapter)
     {
         EnsureActiveChapter(chapter);
-        if (ActiveChapter == null)
+        if (ActiveChapter == null || !RunLevelRules.HasTieredBattlePools(ActiveChapter))
             return GetFallbackBattleLevel();
 
-        BattleCount++;
+        int nextBattle = BattleCount + 1;
+        string poolName;
+        int[] configured;
+        List<int> remaining;
+        if (nextBattle <= BeginPoolBattleLimit)
+        {
+            poolName = nameof(ChapterData.BeginPool);
+            configured = ActiveChapter.BeginPool;
+            remaining = remainingBeginPool;
+        }
+        else if (nextBattle <= MidPoolBattleLimit)
+        {
+            poolName = nameof(ChapterData.MidPool);
+            configured = ActiveChapter.MidPool;
+            remaining = remainingMidPool;
+        }
+        else
+        {
+            poolName = nameof(ChapterData.NormalPool);
+            configured = ActiveChapter.NormalPool;
+            remaining = remainingNormalPool;
+        }
 
-        if (BattleCount <= BeginPoolBattleLimit)
-            return DrawFromPool(remainingBeginPool, ActiveChapter.BeginPool, LevelType.Battle) ?? GetFallbackBattleLevel();
+        // Old saves can contain retired IDs or IDs that have moved to a different tier.
+        remaining.RemoveAll(id => configured == null || System.Array.IndexOf(configured, id) < 0);
+        LevelData level = DrawFromPool(remaining, configured, LevelType.Battle);
+        // A legacy save may contain invalid IDs in this tier; try its configured tier once.
+        if (level == null && configured != null && configured.Length > 0)
+            level = DrawFromPool(remaining, configured, LevelType.Battle);
+        if (level == null)
+        {
+            Debug.LogError($"Chapter {ActiveChapter.numericId}: no valid battle in {poolName} for encounter {nextBattle}.");
+            return null;
+        }
 
-        if (BattleCount <= MidPoolBattleLimit)
-            return DrawFromPool(remainingMidPool, ActiveChapter.MidPool, LevelType.Battle) ?? GetFallbackBattleLevel();
-
-        return DrawFromPool(remainingNormalPool, ActiveChapter.NormalPool, LevelType.Battle) ?? GetFallbackBattleLevel();
+        BattleCount = nextBattle;
+        return level;
     }
 
     public LevelData DrawEventLevel(ChapterData chapter)
@@ -545,28 +572,14 @@ public class RunManager
         return bossLevel;
     }
 
-    private static RunFlowState GetStateForLevel(LevelData level)
+    internal void RecordSelectedNode(LevelData level)
     {
-        if (level == null)
-            return RunFlowState.MapSelection;
+        if (mapNodes != null && CurrentMapNodeIndex >= 0 && CurrentMapNodeIndex < mapNodes.Count)
+            mapNodes[CurrentMapNodeIndex].selectedLevel = level;
+    }
 
-        switch (level.levelType)
-        {
-            case LevelType.Battle:
-            case LevelType.Elite:
-                return RunFlowState.Battle;
-            case LevelType.Event:
-            case LevelType.RemoveMaterial:
-            case LevelType.AddMaterial:
-                return RunFlowState.Event;
-            case LevelType.Rest:
-                return RunFlowState.Rest;
-            case LevelType.Shop:
-                return RunFlowState.Shop;
-            case LevelType.Reward:
-                return RunFlowState.Reward;
-            default:
-                return RunFlowState.BeforeNode;
-        }
+    internal void PublishNodeCompleted(LevelData level)
+    {
+        PlayerStatus?.Relics.Publish(new RelicEvent(RelicEventKind.NodeCompleted, amount: level.numericId));
     }
 }

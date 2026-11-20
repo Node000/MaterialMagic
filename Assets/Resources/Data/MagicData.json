@@ -955,6 +955,28 @@
       ],
       "playPlayerCastAnimation": false,
       "displayName": "贴纸"
+    },
+    {
+      "numericId": 53,
+      "id": "magic_blueprint",
+      "rarity": 2,
+      "script": "BlueprintMagicModel",
+      "nameKey": "magic.blueprint.name",
+      "descriptionKey": "magic.blueprint.desc",
+      "iconName": "unknown",
+      "recipe": [],
+      "matchRule": 2
+    },
+    {
+      "numericId": 54,
+      "id": "magic_bar_chart",
+      "rarity": 0,
+      "script": "BarChartMagicModel",
+      "nameKey": "magic.bar_chart.name",
+      "descriptionKey": "magic.bar_chart.desc",
+      "iconName": "unknown",
+      "recipe": [],
+      "matchRule": 2
     }
   ]
 }

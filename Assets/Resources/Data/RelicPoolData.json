@@ -1,0 +1,6 @@
+{
+  "items": [
+    {"id": "relic_test", "relicIds": [1, 2, 3, 4, 5, 6, 7, 8, 9], "weights": [1, 1, 1, 1, 1, 1, 1, 1, 1]},
+    {"id": "relic_temporary_arrows_test", "relicIds": [10, 11, 12, 13], "weights": [1, 1, 1, 1]}
+  ]
+}

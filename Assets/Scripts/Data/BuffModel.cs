@@ -131,6 +131,12 @@ public class BuffModel
     {
     }
 
+    /// <summary>Stable rule-state payload; never serializes CLR type names or restores through AddBuff hooks.</summary>
+    public virtual Dictionary<string, int> ExportRuntimeState() => new Dictionary<string, int>();
+    public virtual void RestoreRuntimeState(IReadOnlyDictionary<string, int> values) { }
+    protected static int ReadState(IReadOnlyDictionary<string, int> values, string key, int fallback = 0)
+        => values != null && values.TryGetValue(key, out int value) ? value : fallback;
+
     public void AddStack(int amount)
     {
         stack += amount;
@@ -398,10 +404,12 @@ public class CombatantModel
 
     public void TakeDamage(int damage)
     {
-        if (IsPlayer)
-            player.TakeDamage(damage);
-        else
-            enemy.TakeDamage(damage);
+        RelicInventory rules = IsPlayer ? player.Relics : enemy.RelicRules;
+        using (rules?.BeginDamage(RelicDamageKind.EffectDamage))
+        {
+            if (IsPlayer) player.TakeDamage(damage);
+            else enemy.TakeDamage(damage);
+        }
     }
 
     public void TakeDirectDamage(int damage)

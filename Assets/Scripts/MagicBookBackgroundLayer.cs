@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DefaultExecutionOrder(-100)]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MagicBookBackgroundLayer")]
+#endif
 public class MagicBookBackgroundLayer : MonoBehaviour
 {
     private sealed class BackgroundPair

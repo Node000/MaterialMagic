@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [AddComponentMenu("UI/Hover Highlight Target Relay")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "HoverHighlightTargetRelayUI")]
+#endif
 public class HoverHighlightTargetRelayUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private readonly List<GameObject> highlights = new List<GameObject>(2);

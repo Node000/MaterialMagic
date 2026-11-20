@@ -1,0 +1,17 @@
+{
+  "items": [
+    {"numericId": 1, "id": "opening_shield", "nameKey": "relic.opening_shield.name", "descriptionKey": "relic.opening_shield.desc", "script": "OpeningShieldRelicModel", "value": 5, "duplicateGold": 3, "price": 8},
+    {"numericId": 2, "id": "arrow_pulse", "nameKey": "relic.arrow_pulse.name", "descriptionKey": "relic.arrow_pulse.desc", "script": "ArrowPulseRelicModel", "value": 4, "threshold": 3, "duplicateGold": 3, "price": 8},
+    {"numericId": 3, "id": "first_draw", "nameKey": "relic.first_draw.name", "descriptionKey": "relic.first_draw.desc", "script": "FirstDrawRelicModel", "value": 1, "duplicateGold": 3, "price": 8},
+    {"numericId": 4, "id": "retaliation", "nameKey": "relic.retaliation.name", "descriptionKey": "relic.retaliation.desc", "script": "RetaliationRelicModel", "value": 3, "duplicateGold": 3, "price": 8},
+    {"numericId": 5, "id": "gold_bonus", "nameKey": "relic.gold_bonus.name", "descriptionKey": "relic.gold_bonus.desc", "script": "GoldBonusRelicModel", "value": 1, "duplicateGold": 3, "price": 8},
+    {"numericId": 6, "id": "turn_burn", "nameKey": "relic.turn_burn.name", "descriptionKey": "relic.turn_burn.desc", "script": "TurnBurnRelicModel", "value": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 7, "id": "buff_study", "nameKey": "relic.buff_study.name", "descriptionKey": "relic.buff_study.desc", "script": "BuffStudyRelicModel", "value": 1, "threshold": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 8, "id": "elite_healing", "nameKey": "relic.elite_healing.name", "descriptionKey": "relic.elite_healing.desc", "script": "EliteHealingRelicModel", "value": 3, "duplicateGold": 3, "price": 8},
+    {"numericId": 9, "id": "first_magic_power", "nameKey": "relic.first_magic_power.name", "descriptionKey": "relic.first_magic_power.desc", "script": "FirstMagicPowerRelicModel", "value": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 10, "id": "new_leaf", "nameKey": "relic.new_leaf.name", "descriptionKey": "relic.new_leaf.desc", "script": "PeriodicTemporaryArrowRelicModel", "material": 4, "value": 1, "threshold": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 11, "id": "ember", "nameKey": "relic.ember.name", "descriptionKey": "relic.ember.desc", "script": "PeriodicTemporaryArrowRelicModel", "material": 1, "value": 1, "threshold": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 12, "id": "wellspring", "nameKey": "relic.wellspring.name", "descriptionKey": "relic.wellspring.desc", "script": "PeriodicTemporaryArrowRelicModel", "material": 3, "value": 1, "threshold": 2, "duplicateGold": 3, "price": 8},
+    {"numericId": 13, "id": "nodule", "nameKey": "relic.nodule.name", "descriptionKey": "relic.nodule.desc", "script": "PeriodicTemporaryArrowRelicModel", "material": 2, "value": 1, "threshold": 2, "duplicateGold": 3, "price": 8}
+  ]
+}

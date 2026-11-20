@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "StartForumPanelUI")]
+#endif
 public class StartForumPanelUI : MonoBehaviour
 {
     [SerializeField] private Button closeButton;

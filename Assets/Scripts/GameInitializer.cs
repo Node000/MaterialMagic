@@ -12,6 +12,9 @@ public enum GameBackend
 }
 
 [DefaultExecutionOrder(-1000)]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "GameInitializer")]
+#endif
 public class GameInitializer : MonoBehaviour
 {
     private const string CredentialsResourcePath = "LocalSettings/GameBackendLocalCredentials";
@@ -89,6 +92,7 @@ public class GameInitializer : MonoBehaviour
 
     private void Awake()
     {
+        RuleHostBootstrap.EnsureConfigured();
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -130,8 +134,20 @@ public class GameInitializer : MonoBehaviour
     }
 
     /// <summary>首启（还没做过选择）才需要弹「测试数据收集」；弹出时机是启动最开始。</summary>
-    private bool NeedsConsentPrompt =>
-        EffectiveBackend != GameBackend.None && requirePrivacyConsent && !PrivacyConsentGate.HasDecided;
+    private PlatformPolicyOptions CreatePlatformPolicyOptions() => new PlatformPolicyOptions
+    {
+        Backend = EffectiveBackend == GameBackend.TapTap ? PlatformPolicyBackend.TapTap
+            : EffectiveBackend == GameBackend.Steam ? PlatformPolicyBackend.Steam : PlatformPolicyBackend.None,
+        RequireConsent = requirePrivacyConsent,
+        EnableAnalytics = enableAnalytics,
+        AutoLogin = autoLoginOnStartup
+    };
+
+    private static PlatformPolicyConsent CurrentPolicyConsent => PrivacyConsentGate.HasConsented
+        ? PlatformPolicyConsent.Agreed
+        : PrivacyConsentGate.HasDecided ? PlatformPolicyConsent.Declined : PlatformPolicyConsent.Undecided;
+
+    private bool NeedsConsentPrompt => PlatformPolicy.NeedsConsentPrompt(CreatePlatformPolicyOptions(), CurrentPolicyConsent);
 
     /// <summary>
     /// 按当前同意状态启动后端，并定下本次启动的采集开关。幂等：
@@ -148,14 +164,10 @@ public class GameInitializer : MonoBehaviour
         backendStartRequested = true;
 
         // TapDB 的采集开关只能在 Init 时决定；其它后端不受同意门控影响（开发/编辑器用）。
-        bool collected = EffectiveBackend != GameBackend.TapTap
-            || !requirePrivacyConsent
-            || PrivacyConsentGate.HasConsented;
+        bool collected = PlatformPolicy.CollectionAllowedAtInitialization(CreatePlatformPolicyOptions(), CurrentPolicyConsent);
 
         // 只针对 TapTap 后端、且在开启同意门控时才把整个 SDK 关掉。
-        bool blockedByConsent = EffectiveBackend == GameBackend.TapTap
-            && requirePrivacyConsent
-            && !PrivacyConsentGate.HasConsented;
+        bool blockedByConsent = !collected;
 
         collectionEnabledAtInit = collected;
         sessionCollectionEnabled = collected;
@@ -369,7 +381,7 @@ public class GameInitializer : MonoBehaviour
 
         // 延后期间玩家可能又把「测试数据收集」关掉了：那时不能再发起登录
         // （关掉只取消数据传输，但不应反过来弹出登录授权界面）。
-        if (!PrivacyConsentGate.HasConsented)
+        if (!PlatformPolicy.CanAutoLogin(CreatePlatformPolicyOptions(), CurrentPolicyConsent, IsInitialized, TapTapAuthService.IsLoggedIn))
             return;
 
         await TapTapAuthService.TryAutoLoginAsync();

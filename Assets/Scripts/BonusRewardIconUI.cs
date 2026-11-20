@@ -3,6 +3,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BonusRewardIconUI")]
+#endif
 public class BonusRewardIconUI : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;

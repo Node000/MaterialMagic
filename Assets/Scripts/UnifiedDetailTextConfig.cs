@@ -17,6 +17,9 @@ public struct UnifiedDetailLocalizedText
 }
 
 [CreateAssetMenu(fileName = "UnifiedDetailTextConfig", menuName = "Config/Unified Detail Text Config")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnifiedDetailTextConfig")]
+#endif
 public class UnifiedDetailTextConfig : ScriptableObject
 {
     [Header("Section Titles")]

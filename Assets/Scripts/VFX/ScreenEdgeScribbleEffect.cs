@@ -3,6 +3,9 @@ using UnityEngine;
 [ExecuteAlways]
 [RequireComponent(typeof(Renderer))]
 [AddComponentMenu("VFX/Screen Edge Scribble Effect")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScreenEdgeScribbleEffect")]
+#endif
 public class ScreenEdgeScribbleEffect : MonoBehaviour
 {
     [SerializeField] private Material edgeMaskMaterial;

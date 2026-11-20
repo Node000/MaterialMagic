@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BackgroundHalftoneSweepUI")]
+#endif
 public class BackgroundHalftoneSweepUI : MonoBehaviour
 {
     [SerializeField] private Image targetImage;

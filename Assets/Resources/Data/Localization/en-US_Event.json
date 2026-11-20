@@ -1054,7 +1054,7 @@
     },
     {
       "key": "event.input_setup.not_now.1",
-      "text": "You decide to set it up later, since your controller has not arrived yet."
+      "text": "Your controller has not arrived yet. You decide to set it up later and take the gold."
     }
   ]
 }

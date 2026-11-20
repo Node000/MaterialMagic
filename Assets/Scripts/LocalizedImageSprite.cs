@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Image))]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "LocalizedImageSprite")]
+#endif
 public class LocalizedImageSprite : MonoBehaviour
 {
     [Serializable]

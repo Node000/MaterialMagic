@@ -21,6 +21,9 @@ public struct ItemFallPieceSettings
 /// 自身不跑 Update、也不自行销毁：由 <see cref="ItemWaterfallEffect"/> 统一 Tick 驱动，并在回收时放回对象池复用。
 /// </summary>
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ItemFallingPiece")]
+#endif
 public class ItemFallingPiece : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;

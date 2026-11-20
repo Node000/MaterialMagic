@@ -15,6 +15,9 @@ using UnityEngine.UI;
 ///
 /// 预制体：<c>Assets/Prefabs/UI/EnchantIcon.prefab</c>。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnchantIconUI")]
+#endif
 public class EnchantIconUI : MonoBehaviour
 {
     [Tooltip("底色层（画在下层）")]

@@ -6,6 +6,9 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RunResultPanelUI")]
+#endif
 public class RunResultPanelUI : MonoBehaviour
 {
     [SerializeField] private string startSceneName = "StartScene";

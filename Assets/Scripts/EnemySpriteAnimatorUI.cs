@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnemySpriteAnimatorUI")]
+#endif
 public class EnemySpriteAnimatorUI : MonoBehaviour
 {
     private const string EnemyAnimatorRoot = "Animations/Enemies/";

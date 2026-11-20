@@ -4,6 +4,9 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "RunHistoryArrowRowUI")]
+#endif
 public class RunHistoryArrowRowUI : MonoBehaviour
 {
     [SerializeField] private RectTransform contentRoot;

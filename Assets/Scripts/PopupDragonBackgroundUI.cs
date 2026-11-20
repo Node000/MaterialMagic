@@ -6,6 +6,9 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PopupDragonBackgroundUI")]
+#endif
 public class PopupDragonBackgroundUI : MonoBehaviour
 {
     private const string WindowNamePrefix = "PopupDragonWindow_";

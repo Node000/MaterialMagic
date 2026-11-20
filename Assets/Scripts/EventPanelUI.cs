@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EventPanelUI")]
+#endif
 public class EventPanelUI : MonoBehaviour
 {
     private static readonly Vector2 PanelOpenPivot = new Vector2(0f, 1f);

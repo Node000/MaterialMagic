@@ -6,6 +6,9 @@ using UnityEngine;
 /// 布局与字号参考「道具强化选择面板」的选项（图标在上、名字在下），具体数值都在预制体上：
 /// <c>Assets/Prefabs/UI/EnchantEntry.prefab</c>；本脚本只负责按附魔 id 刷新显示。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnchantEntryUI")]
+#endif
 public class EnchantEntryUI : MonoBehaviour
 {
     [Tooltip("附魔图标层（Assets/Prefabs/UI/EnchantIcon.prefab）：颜色由 Enchant_Color 配置决定")]

@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Scribble/Path Style Preset", fileName = "ScribblePathStylePreset")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ScribblePathStylePreset")]
+#endif
 public class ScribblePathStylePreset : ScriptableObject
 {
     [SerializeField] private ScribblePathStyleSettings settings = ScribblePathStyleSettings.CreateDefault();

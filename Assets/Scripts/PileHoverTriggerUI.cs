@@ -5,6 +5,9 @@ using UnityEngine.EventSystems;
 /// 挂在战斗界面的抽牌/弃牌/已消耗堆图标上，把 hover 转成 PileHoverPanelUI 的显示请求。
 /// 与 TopBarIconTooltipUI（详情浮窗）并存，两者互不干扰。
 /// </summary>
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "PileHoverTriggerUI")]
+#endif
 public class PileHoverTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private PileHoverPanelUI.PileKind pileKind = PileHoverPanelUI.PileKind.Draw;

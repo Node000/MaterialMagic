@@ -10,6 +10,9 @@ public enum JaggedWaveHighlightMode
 }
 
 [AddComponentMenu("UI/Jagged Wave Highlight")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "JaggedWaveHighlightUI")]
+#endif
 public class JaggedWaveHighlightUI : MaskableGraphic
 {
 

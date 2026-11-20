@@ -8,6 +8,9 @@ using UnityEngine;
 /// 区域矩形的具体位置完全由 <see cref="area"/>（RectTransform）在场景里手摆，脚本不会改它；墙面与地面碰撞体按矩形尺寸自动贴合。
 /// </summary>
 [DisallowMultipleComponent]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "ItemWaterfallEffect")]
+#endif
 public class ItemWaterfallEffect : MonoBehaviour
 {
     [Header("区域（矩形）")]

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class PlayerState
 {
+    // Public synchronous rule calls bind this owner only for the call. Do not retain a rule scope
+    // across host yields/awaits; nested calls preserve their current per-token modifier context.
     /// <summary>占位符（进阶负担）素材卡的 instanceId 前缀；占位符只用于占用卡组，不可被任何删牌流程移除。</summary>
     public const string DeckPlaceholderInstanceIdPrefix = "deck_placeholder_";
 
@@ -24,6 +26,8 @@ public class PlayerState
     public event System.Action PlayZoneShuffled;
 
     private int temporaryMaterialIndex;
+    internal int TemporaryMaterialIndex => temporaryMaterialIndex;
+    internal void RestoreTemporaryMaterialIndex(int value) { temporaryMaterialIndex = Mathf.Max(0, value); }
     private int extraRefreshChancesThisTurn;
     private int permanentRefreshChancesUsedThisTurn;
 
@@ -36,6 +40,31 @@ public class PlayerState
     public int MaxHealth { get; private set; }
     public int CurrentHealth { get; private set; }
     public int Gold { get; private set; }
+    public int DrawOrderVersion { get; set; }
+    internal int BattleDrawSeed { get; private set; }
+    internal int BattleDrawStep { get; private set; }
+
+    internal void RestoreBattleDrawOrder(int seed, int step)
+    {
+        BattleDrawSeed = seed;
+        BattleDrawStep = step;
+    }
+
+    internal void PrepareBattleDrawOrder()
+    {
+        if (DrawOrderVersion != 1) return;
+        RestoreBattleDrawOrder(NextRunRandomInt(1, int.MaxValue), 0);
+        ShuffleBattleDrawCards(DrawPile);
+    }
+
+    private void ShuffleBattleDrawCards(List<MaterialModel> cards)
+    {
+        for (int i = cards.Count - 1; i > 0; i--)
+        {
+            int j = RunRandom.Range(BattleDrawSeed, BattleDrawStep++, 0, i + 1);
+            (cards[i], cards[j]) = (cards[j], cards[i]);
+        }
+    }
     public int Shield { get; private set; }
     public int DrawCount { get; set; } = 5;
     /// <summary>每回合玩家主动打出箭头的上限，来自开局配置 maxPlayCount；默认 8。</summary>
@@ -50,7 +79,39 @@ public class PlayerState
     public int ExtraRefreshChancesThisTurn => extraRefreshChancesThisTurn;
     public int PermanentRefreshChances { get; private set; }
     public int RemainingPermanentRefreshChancesThisTurn => Mathf.Max(0, PermanentRefreshChances - permanentRefreshChancesUsedThisTurn);
+    public int PermanentRefreshChancesUsedThisTurn => permanentRefreshChancesUsedThisTurn;
+
+    public void RestoreRefreshTurnState(int permanentUsed, int reduction, int handLimit)
+    {
+        using (Rules.Enter()) RestoreRefreshTurnStateCore(permanentUsed, reduction, handLimit);
+    }
+
+    private void RestoreRefreshTurnStateCore(int permanentUsed, int reduction, int handLimit)
+    {
+        permanentRefreshChancesUsedThisTurn = Mathf.Clamp(permanentUsed, 0, PermanentRefreshChances);
+        RefreshLimitReductionThisTurn = Mathf.Max(0, reduction);
+        HandLimitThisTurn = Mathf.Max(0, handLimit);
+    }
     public ArrowUpgradeState ArrowUpgrades { get; } = new ArrowUpgradeState();
+    public RelicInventory Relics { get; }
+    public PlayerStateServices Services { get; }
+    public BattleManager Battle { get; internal set; }
+    public RuleExecutionContext Rules { get; }
+    public ShopSession CurrentShop { get; set; }
+    /// <summary>本局已保留的商店付费删箭交易次数；免费删除不计入，换店/换层不重置。</summary>
+    public int PaidShopArrowRemovalCount { get; private set; }
+
+    internal void RestorePaidShopArrowRemovalCount(int count)
+    {
+        PaidShopArrowRemovalCount = Mathf.Max(0, count);
+    }
+    public RelicOfferSaveData PendingRelicOffer { get; set; }
+    public RelicAcquireResult TryAcquireRelic(int id)
+    {
+        using (Rules.Enter()) return TryAcquireRelicCore(id);
+    }
+
+    private RelicAcquireResult TryAcquireRelicCore(int id) => Relics.TryAcquire(id);
     public bool KeepHandOnEndTurn { get; private set; }
     public readonly List<MaterialModel> TemporaryMaterialsNextTurn = new List<MaterialModel>();
     public List<MaterialModel> Deck { get; } = new List<MaterialModel>();
@@ -60,23 +121,71 @@ public class PlayerState
     public List<MaterialModel> Hand { get; } = new List<MaterialModel>();
     public List<MaterialModel> PlayZone { get; } = new List<MaterialModel>();
     public List<MagicModel> MagicBook { get; } = new List<MagicModel>();
+    public MagicReadingOrder MagicReadingOrder { get; } = new MagicReadingOrder();
+    public int MagicRightNeighborStep { get; private set; }
+    public int MagicLayoutSlotCount { get; private set; }
+
+    // Main PC uses a single row; PE slots are column-major with a step equal to the row count.
+    public void SetMagicSlotLayout(int slotCount, int rightNeighborStep)
+    {
+        MagicLayoutSlotCount = Mathf.Max(0, slotCount);
+        MagicRightNeighborStep = Mathf.Max(0, rightNeighborStep);
+    }
+
+    public int GetRightNeighborIndex(int index)
+        => MagicRightNeighborStep > 0 && index >= 0 && index < MagicLayoutSlotCount - MagicRightNeighborStep
+            ? index + MagicRightNeighborStep : -1;
+
+    public MagicModel GetItemByIndex(int index) => index >= 0 ? GetMagicAtSlot(index) : null;
+
+    public void SetMagicReadingOrder(IReadOnlyList<SlotReadingRank> slots)
+    {
+        using (Rules.Enter()) SetMagicReadingOrderCore(slots);
+    }
+
+    private void SetMagicReadingOrderCore(IReadOnlyList<SlotReadingRank> slots)
+    {
+        MagicReadingOrder.Set(slots);
+        MagicReadingOrder.ApplyTo(MagicBook);
+    }
+
+    public IReadOnlyList<int> CaptureMagicReadingRanks(IReadOnlyList<MagicModel> magics)
+    {
+        using (Rules.Enter()) return CaptureMagicReadingRanksCore(magics);
+    }
+
+    private IReadOnlyList<int> CaptureMagicReadingRanksCore(IReadOnlyList<MagicModel> magics)
+        => MagicReadingOrder.Capture(magics);
     public IReadOnlyDictionary<BuffEnum, BuffModel> Buffs => buffs;
     public EnemyModel LastDamageSourceEnemy { get; private set; }
     public bool IsEndingTurn { get; private set; }
 
-    public PlayerState(int maxHealth = 50, int gold = 0)
+    public PlayerState(int maxHealth = 50, int gold = 0, PlayerStateServices services = null, RunDifficultySaveData difficulty = null, IRuleContentProvider content = null, RuleProfilePolicy profilePolicy = null)
     {
+        Services = services ?? PlayerStateServices.UnityHost;
+        Rules = new RuleExecutionContext(this, difficulty ?? DifficultyUpgradeSystem.ExportCurrentState(), content, profilePolicy);
         MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
         Gold = gold;
+        Relics = new RelicInventory(this);
     }
 
     public void ResetKeepHandOnEndTurn()
+    {
+        using (Rules.Enter()) ResetKeepHandOnEndTurnCore();
+    }
+
+    private void ResetKeepHandOnEndTurnCore()
     {
         KeepHandOnEndTurn = false;
     }
 
     public void KeepHandOnEndTurnOnce()
+    {
+        using (Rules.Enter()) KeepHandOnEndTurnOnceCore();
+    }
+
+    private void KeepHandOnEndTurnOnceCore()
     {
         KeepHandOnEndTurn = true;
     }
@@ -94,10 +203,19 @@ public class PlayerState
 
         PlayerState state = new PlayerStatus(config != null ? config.maxHealth : 50, config != null ? config.gold : 0);
         GameLog.Data($"Create player config={configId} maxHealth={state.MaxHealth} gold={state.Gold}");
+        ApplyStartConfig(state, config);
+        return state;
+    }
+
+    public static void ApplyStartConfig(PlayerState state, PlayerStartConfigData config)
+    {
+        if (state == null) throw new System.ArgumentNullException(nameof(state));
+        using (state.Rules.Enter())
+        {
         if (config == null)
         {
             state.DrawPile.AddRange(state.Deck);
-            return state;
+            return;
         }
 
         state.DrawCount = config.drawCount;
@@ -118,7 +236,7 @@ public class PlayerState
         }
 
         state.DrawPile.AddRange(state.Deck);
-        return state;
+        }
     }
 
     /// <summary>开局配置里的每回合打出上限（叠加进阶“打出上限”词条）；配置缺失或值非法时回落到默认值（8）。</summary>
@@ -130,26 +248,53 @@ public class PlayerState
 
     public int DrawCards(int count)
     {
+        using (Rules.Enter()) return DrawCardsCore(count);
+    }
+
+    private int DrawCardsCore(int count)
+    {
         return DrawCardsToHand(count, true);
     }
 
     public int DrawCardsForRefresh(int count)
+    {
+        using (Rules.Enter()) return DrawCardsForRefreshCore(count);
+    }
+
+    private int DrawCardsForRefreshCore(int count)
     {
         return DrawCardsToHand(count, false);
     }
 
     public int DrawBasicMaterialCards(int count)
     {
+        using (Rules.Enter()) return DrawBasicMaterialCardsCore(count);
+    }
+
+    private int DrawBasicMaterialCardsCore(int count)
+    {
         return DrawCardsToHand(count, true, IsBasicMaterialCard);
     }
 
     public MaterialModel DrawCardToHand(bool triggerAfterDraw)
+    {
+        using (Rules.Enter()) return DrawCardToHandCore(triggerAfterDraw);
+    }
+
+    private MaterialModel DrawCardToHandCore(bool triggerAfterDraw)
     {
         return DrawCardToHand(triggerAfterDraw, null);
     }
 
     public MaterialModel DrawCardToHand(bool triggerAfterDraw, System.Predicate<MaterialModel> canDraw)
     {
+        using (Rules.Enter()) return DrawCardToHandCore(triggerAfterDraw, canDraw);
+    }
+
+    private MaterialModel DrawCardToHandCore(bool triggerAfterDraw, System.Predicate<MaterialModel> canDraw)
+    {
+        using (Relics.BeginOperation())
+        {
         if (Hand.Count >= HandLimitThisTurn)
             return null;
 
@@ -169,6 +314,7 @@ public class PlayerState
             TriggerAfterDraw(card);
         GameLog.Data($"Draw card {DescribeMaterial(card)} to hand. hand={Hand.Count} drawPile={DrawPile.Count} discardPile={DiscardPile.Count}");
         return card;
+        }
     }
 
     private static MaterialModel TakeMaterialFromPile(List<MaterialModel> pile, MaterialEnum material)
@@ -189,6 +335,11 @@ public class PlayerState
     }
 
     public int DrawSpecificMaterialsToHand(IReadOnlyList<MaterialEnum> materials, bool createTemporaryIfMissing)
+    {
+        using (Rules.Enter()) return DrawSpecificMaterialsToHandCore(materials, createTemporaryIfMissing);
+    }
+
+    private int DrawSpecificMaterialsToHandCore(IReadOnlyList<MaterialEnum> materials, bool createTemporaryIfMissing)
     {
         if (materials == null)
             return 0;
@@ -227,6 +378,11 @@ public class PlayerState
 
     public RefreshHandResult RefreshBasicMaterialHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
+        using (Rules.Enter()) return RefreshBasicMaterialHandCardsCore(cards, removedTemporaryCards);
+    }
+
+    private RefreshHandResult RefreshBasicMaterialHandCardsCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
         return RefreshHandCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);
     }
 
@@ -249,6 +405,11 @@ public class PlayerState
     }
 
     public bool ApplyArrowReadAfterAction(MaterialModel card, ArrowReadAfterReadAction action)
+    {
+        using (Rules.Enter()) return ApplyArrowReadAfterActionCore(card, action);
+    }
+
+    private bool ApplyArrowReadAfterActionCore(MaterialModel card, ArrowReadAfterReadAction action)
     {
         if (card == null || action == ArrowReadAfterReadAction.None)
             return false;
@@ -325,13 +486,18 @@ public class PlayerState
 
     public int DrawCardsToPlayZoneTail(int count)
     {
+        using (Rules.Enter()) return DrawCardsToPlayZoneTailCore(count);
+    }
+
+    private int DrawCardsToPlayZoneTailCore(int count)
+    {
         int drawnCount = 0;
         for (int i = 0; i < count; i++)
         {
             if (!EnsureDrawPileHasCards())
                 break;
 
-            int randomIndex = NextRunRandomInt(0, DrawPile.Count);
+            int randomIndex = GetRandomDrawableDrawPileIndex(null);
             MaterialModel card = DrawPile[randomIndex];
             DrawPile.RemoveAt(randomIndex);
             PlayZone.Add(card);
@@ -344,6 +510,8 @@ public class PlayerState
 
         return drawnCount;
     }
+
+    internal int NextRelicRandomInt(int minInclusive, int maxExclusive) => NextRunRandomInt(minInclusive, maxExclusive);
 
     private int NextRunRandomInt(int minInclusive, int maxExclusive)
     {
@@ -369,6 +537,7 @@ public class PlayerState
             return false;
 
         List<MaterialModel> shuffledCards = new List<MaterialModel>(DiscardPile);
+        if (BattleDrawSeed != 0) ShuffleBattleDrawCards(shuffledCards);
         DrawPile.AddRange(shuffledCards);
         DiscardPile.Clear();
         DiscardPileShuffledIntoDrawPile?.Invoke(shuffledCards);
@@ -391,6 +560,12 @@ public class PlayerState
 
     private int GetRandomDrawableDrawPileIndex(System.Predicate<MaterialModel> canDraw)
     {
+        if (BattleDrawSeed != 0)
+        {
+            for (int i = 0; i < DrawPile.Count; i++)
+                if (canDraw == null || canDraw(DrawPile[i])) return i;
+            return -1;
+        }
         if (canDraw == null)
             return DrawPile.Count > 0 ? NextRunRandomInt(0, DrawPile.Count) : -1;
 
@@ -424,6 +599,11 @@ public class PlayerState
 
     public bool ConsumeCardForBattle(MaterialModel card)
     {
+        using (Rules.Enter()) return ConsumeCardForBattleCore(card);
+    }
+
+    private bool ConsumeCardForBattleCore(MaterialModel card)
+    {
         if (card == null)
             return false;
 
@@ -439,6 +619,11 @@ public class PlayerState
 
     public void AddConsumedCard(MaterialModel card)
     {
+        using (Rules.Enter()) AddConsumedCardCore(card);
+    }
+
+    private void AddConsumedCardCore(MaterialModel card)
+    {
         if (card == null || ConsumedPile.Contains(card))
             return;
 
@@ -450,15 +635,30 @@ public class PlayerState
 
     public bool TryMoveHandCardToPlay(MaterialModel card)
     {
+        using (Rules.Enter()) return TryMoveHandCardToPlayCore(card);
+    }
+
+    private bool TryMoveHandCardToPlayCore(MaterialModel card)
+    {
         return TryMoveHandCardToPlay(card, PlayZone.Count);
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex)
     {
+        using (Rules.Enter()) return TryMoveHandCardToPlayCore(card, playZoneIndex);
+    }
+
+    private bool TryMoveHandCardToPlayCore(MaterialModel card, int playZoneIndex)
+    {
         return TryMoveHandCardToPlay(card, playZoneIndex, false);
     }
 
     public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex, bool allowDisabled)
+    {
+        using (Rules.Enter()) return TryMoveHandCardToPlayCore(card, playZoneIndex, allowDisabled);
+    }
+
+    private bool TryMoveHandCardToPlayCore(MaterialModel card, int playZoneIndex, bool allowDisabled)
     {
         return TryMoveHandCardToPlay(card, playZoneIndex, allowDisabled, false);
     }
@@ -468,6 +668,11 @@ public class PlayerState
     /// 事件/奖励等非战斗选择与效果类入区传 false）。带【临时】等豁免附魔的箭头不受上限拦截，也不占用额度。
     /// </summary>
     public bool TryMoveHandCardToPlay(MaterialModel card, int playZoneIndex, bool allowDisabled, bool countPlayLimit)
+    {
+        using (Rules.Enter()) return TryMoveHandCardToPlayCore(card, playZoneIndex, allowDisabled, countPlayLimit);
+    }
+
+    private bool TryMoveHandCardToPlayCore(MaterialModel card, int playZoneIndex, bool allowDisabled, bool countPlayLimit)
     {
         if (card == null)
             return false;
@@ -503,6 +708,11 @@ public class PlayerState
     /// <summary>本回合是否还能从手牌打出该箭头；带【临时】等豁免附魔的箭头不受上限限制。</summary>
     public bool CanPlayCardFromHand(MaterialModel card)
     {
+        using (Rules.Enter()) return CanPlayCardFromHandCore(card);
+    }
+
+    private bool CanPlayCardFromHandCore(MaterialModel card)
+    {
         if (card == null)
             return false;
 
@@ -513,6 +723,11 @@ public class PlayerState
     }
 
     public void ResetPlayedCardCountThisTurn()
+    {
+        using (Rules.Enter()) ResetPlayedCardCountThisTurnCore();
+    }
+
+    private void ResetPlayedCardCountThisTurnCore()
     {
         PlayedCardCountThisTurn = 0;
         playLimitChargedCards.Clear();
@@ -531,6 +746,11 @@ public class PlayerState
     /// <summary>被附魔禁用的箭头无法从手牌置入出牌区（旧 AttributeDisabled Buff 的直接判定已改为附魔效果）。</summary>
     public bool IsMaterialDisabled(MaterialModel card)
     {
+        using (Rules.Enter()) return IsMaterialDisabledCore(card);
+    }
+
+    private bool IsMaterialDisabledCore(MaterialModel card)
+    {
         if (card == null)
             return false;
 
@@ -545,7 +765,7 @@ public class PlayerState
 
     private bool HasMaterialOverplayDebuffSource()
     {
-        IReadOnlyList<EnemyModel> enemies = BattleManager.Instance?.Enemies;
+        IReadOnlyList<EnemyModel> enemies = Battle?.Enemies;
         if (enemies == null)
             return false;
 
@@ -561,10 +781,20 @@ public class PlayerState
 
     public bool TryMovePlayCardToHand(MaterialModel card)
     {
+        using (Rules.Enter()) return TryMovePlayCardToHandCore(card);
+    }
+
+    private bool TryMovePlayCardToHandCore(MaterialModel card)
+    {
         return TryMovePlayCardToHand(card, Hand.Count);
     }
 
     public bool TryMovePlayCardToHand(MaterialModel card, int handIndex)
+    {
+        using (Rules.Enter()) return TryMovePlayCardToHandCore(card, handIndex);
+    }
+
+    private bool TryMovePlayCardToHandCore(MaterialModel card, int handIndex)
     {
         if (card == null)
             return false;
@@ -585,10 +815,20 @@ public class PlayerState
 
     public bool ReorderHandCard(MaterialModel card, int targetIndex)
     {
+        using (Rules.Enter()) return ReorderHandCardCore(card, targetIndex);
+    }
+
+    private bool ReorderHandCardCore(MaterialModel card, int targetIndex)
+    {
         return ReorderCard(Hand, card, targetIndex, "hand");
     }
 
     public bool ReorderPlayCard(MaterialModel card, int targetIndex)
+    {
+        using (Rules.Enter()) return ReorderPlayCardCore(card, targetIndex);
+    }
+
+    private bool ReorderPlayCardCore(MaterialModel card, int targetIndex)
     {
         return ReorderCard(PlayZone, card, targetIndex, "playZone");
     }
@@ -637,10 +877,20 @@ public class PlayerState
 
     public RefreshHandResult RefreshBasicCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
+        using (Rules.Enter()) return RefreshBasicCombatCardsCore(cards, removedTemporaryCards);
+    }
+
+    private RefreshHandResult RefreshBasicCombatCardsCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
         return RefreshCombatCards(cards, removedTemporaryCards, null, IsBasicMaterialCard);
     }
 
     public RefreshHandResult RefreshPlayZoneCardsToHand(List<MaterialModel> removedTemporaryCards, BattleManager battleManager, IReadOnlyList<MaterialEnum> forcedMaterials = null)
+    {
+        using (Rules.Enter()) return RefreshPlayZoneCardsToHandCore(removedTemporaryCards, battleManager, forcedMaterials);
+    }
+
+    private RefreshHandResult RefreshPlayZoneCardsToHandCore(List<MaterialModel> removedTemporaryCards, BattleManager battleManager, IReadOnlyList<MaterialEnum> forcedMaterials)
     {
         if (PlayZone.Count == 0)
             return new RefreshHandResult(0, 0);
@@ -708,6 +958,11 @@ public class PlayerState
     }
 
     public RefreshHandResult RefreshCombatCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
+    {
+        using (Rules.Enter()) return RefreshCombatCardsCore(cards, removedTemporaryCards, battleManager);
+    }
+
+    private RefreshHandResult RefreshCombatCardsCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
     {
         return RefreshCombatCards(cards, removedTemporaryCards, battleManager, null);
     }
@@ -824,20 +1079,40 @@ public class PlayerState
 
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards)
     {
+        using (Rules.Enter()) return ReturnHandCardsToDrawPileCore(cards);
+    }
+
+    private int ReturnHandCardsToDrawPileCore(IReadOnlyList<MaterialModel> cards)
+    {
         return ReturnHandCardsToDiscardPile(cards, null);
     }
 
     public int ReturnHandCardsToDrawPile(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) return ReturnHandCardsToDrawPileCore(cards, removedTemporaryCards);
+    }
+
+    private int ReturnHandCardsToDrawPileCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
         return ReturnHandCardsToDiscardPile(cards, removedTemporaryCards);
     }
 
     public int ReturnHandCardsToDiscardPile(IReadOnlyList<MaterialModel> cards)
     {
+        using (Rules.Enter()) return ReturnHandCardsToDiscardPileCore(cards);
+    }
+
+    private int ReturnHandCardsToDiscardPileCore(IReadOnlyList<MaterialModel> cards)
+    {
         return ReturnHandCardsToDiscardPile(cards, null);
     }
 
     public int ReturnHandCardsToDiscardPile(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) return ReturnHandCardsToDiscardPileCore(cards, removedTemporaryCards);
+    }
+
+    private int ReturnHandCardsToDiscardPileCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
         if (cards == null)
             return 0;
@@ -874,10 +1149,20 @@ public class PlayerState
 
     public RefreshHandResult RefreshHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
     {
+        using (Rules.Enter()) return RefreshHandCardsCore(cards, removedTemporaryCards);
+    }
+
+    private RefreshHandResult RefreshHandCardsCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards)
+    {
         return RefreshHandCards(cards, removedTemporaryCards, null);
     }
 
     public RefreshHandResult RefreshHandCards(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
+    {
+        using (Rules.Enter()) return RefreshHandCardsCore(cards, removedTemporaryCards, battleManager);
+    }
+
+    private RefreshHandResult RefreshHandCardsCore(IReadOnlyList<MaterialModel> cards, List<MaterialModel> removedTemporaryCards, BattleManager battleManager)
     {
         return RefreshHandCards(cards, removedTemporaryCards, battleManager, null);
     }
@@ -910,10 +1195,20 @@ public class PlayerState
 
     public void ReturnPlayZoneCardsToDrawPile()
     {
+        using (Rules.Enter()) ReturnPlayZoneCardsToDrawPileCore();
+    }
+
+    private void ReturnPlayZoneCardsToDrawPileCore()
+    {
         ReturnPlayZoneCardsToDrawPile(null);
     }
 
     public void ReturnPlayZoneCardsToDrawPile(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) ReturnPlayZoneCardsToDrawPileCore(removedTemporaryCards);
+    }
+
+    private void ReturnPlayZoneCardsToDrawPileCore(List<MaterialModel> removedTemporaryCards)
     {
         if (PlayZone.Count == 0)
             return;
@@ -942,6 +1237,11 @@ public class PlayerState
 
     public bool ShufflePlayZone()
     {
+        using (Rules.Enter()) return ShufflePlayZoneCore();
+    }
+
+    private bool ShufflePlayZoneCore()
+    {
         if (PlayZone.Count <= 1)
             return false;
 
@@ -959,6 +1259,11 @@ public class PlayerState
     }
 
     public void ReturnPlayZoneCardsToDiscardPile(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) ReturnPlayZoneCardsToDiscardPileCore(removedTemporaryCards);
+    }
+
+    private void ReturnPlayZoneCardsToDiscardPileCore(List<MaterialModel> removedTemporaryCards)
     {
         if (PlayZone.Count == 0)
             return;
@@ -987,15 +1292,30 @@ public class PlayerState
 
     public void EndTurn()
     {
+        using (Rules.Enter()) EndTurnCore();
+    }
+
+    private void EndTurnCore()
+    {
         EndTurn(null);
     }
 
     public void EndBattle()
     {
+        using (Rules.Enter()) EndBattleCore();
+    }
+
+    private void EndBattleCore()
+    {
         EndBattle(null);
     }
 
     public void EndBattle(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) EndBattleCore(removedTemporaryCards);
+    }
+
+    private void EndBattleCore(List<MaterialModel> removedTemporaryCards)
     {
         // 战斗结束进入结算/地图阶段：所有手牌强制弃掉，不保留任何【保留】/【保留手牌】手牌。
         ForceDiscardAll(removedTemporaryCards);
@@ -1007,78 +1327,104 @@ public class PlayerState
     /// </summary>
     public void ForceDiscardAll(List<MaterialModel> removedTemporaryCards = null)
     {
+        using (Rules.Enter()) ForceDiscardAllCore(removedTemporaryCards);
+    }
+
+    private void ForceDiscardAllCore(List<MaterialModel> removedTemporaryCards)
+    {
         EndTurnInternal(removedTemporaryCards, force: true);
     }
 
     public void EndTurn(List<MaterialModel> removedTemporaryCards)
     {
+        using (Rules.Enter()) EndTurnCore(removedTemporaryCards);
+    }
+
+    private void EndTurnCore(List<MaterialModel> removedTemporaryCards)
+    {
         EndTurnInternal(removedTemporaryCards, force: false);
+    }
+
+    internal void DiscardHandOnConfirm(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) DiscardHand(removedTemporaryCards, force: false);
     }
 
     private void EndTurnInternal(List<MaterialModel> removedTemporaryCards, bool force)
     {
+        DiscardHand(removedTemporaryCards, force);
+        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+    }
+
+    private void DiscardHand(List<MaterialModel> removedTemporaryCards, bool force)
+    {
+        // Only the cards present at confirmation are candidates. Discard hooks can create new cards.
+        var candidates = new List<MaterialModel>(Hand);
+        int keepHand = force ? 0 : GetBuffStack(BuffEnum.KeepHand);
+        bool keepAll = !force && (KeepHandOnEndTurn || keepHand > 0);
+        KeepHandOnEndTurn = false;
+        if (keepHand > 0)
+            ConsumeBuff(BuffEnum.KeepHand, keepHand);
+        if (keepAll)
+            return;
+
         IsEndingTurn = true;
-        if (Hand.Count > 0)
+        try
         {
-            if (!force && KeepHandOnEndTurn)
+            for (int i = candidates.Count - 1; i >= 0; i--)
             {
-                GameLog.Data("End turn keeps hand cards.");
-            }
-            else
-            {
-                for (int i = Hand.Count - 1; i >= 0; i--)
+                MaterialModel card = candidates[i];
+                if ((!force && card != null && card.isRetained) || !Hand.Remove(card) || card == null)
+                    continue;
+
+                card.TriggerOnDiscard();
+                TriggerAfterDiscard(card);
+                if (card.isTemporary)
                 {
-                    MaterialModel card = Hand[i];
-                    if (card == null)
-                    {
-                        Hand.RemoveAt(i);
-                        continue;
-                    }
-
-                    if (!force && card.isRetained)
-                    {
-                        GameLog.Data($"End turn retains hand card {DescribeMaterial(card)}.");
-                        continue;
-                    }
-
-                    Hand.RemoveAt(i);
-                    card.TriggerOnDiscard();
-                    TriggerAfterDiscard(card);
-                    if (card.isTemporary)
-                    {
-                        removedTemporaryCards?.Add(card);
-                        AddConsumedCard(card);
-                        GameLog.Data($"End turn removes temporary hand card {DescribeMaterial(card)}.");
-                    }
-                    else
-                    {
-                        AddCardToDiscardPile(card);
-                        GameLog.Data($"End turn discards hand card {DescribeMaterial(card)}. discardPile={DiscardPile.Count}");
-                    }
+                    removedTemporaryCards?.Add(card);
+                    AddConsumedCard(card);
+                }
+                else
+                {
+                    AddCardToDiscardPile(card);
                 }
             }
-
-            if (force)
-                GameLog.Data($"Force discard all hand cards. hand={Hand.Count} discardPile={DiscardPile.Count}");
         }
-        IsEndingTurn = false;
-
-        ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
-        KeepHandOnEndTurn = false;
+        finally
+        {
+            IsEndingTurn = false;
+        }
     }
 
     public void TakeDamage(int damage)
+    {
+        using (Rules.Enter()) TakeDamageCore(damage);
+    }
+
+    private void TakeDamageCore(int damage)
     {
         TakeDamage(damage, null);
     }
 
     public int TakeDamage(int damage, CombatantModel attacker)
     {
+        using (Rules.Enter()) return TakeDamageCore(damage, attacker);
+    }
+
+    private int TakeDamageCore(int damage, CombatantModel attacker)
+    {
         return TakeDamageResult(damage, attacker).HealthDamage;
     }
 
     public CombatDamageResult TakeDamageResult(int damage, CombatantModel attacker)
     {
+        using (Rules.Enter()) return TakeDamageResultCore(damage, attacker);
+    }
+
+    private CombatDamageResult TakeDamageResultCore(int damage, CombatantModel attacker)
+    {
+        using (Relics.BeginOperation())
+        {
         CombatDamageResult result = new CombatDamageResult { RawDamage = damage };
         if (damage <= 0)
             return result;
@@ -1106,27 +1452,40 @@ public class PlayerState
             LastDamageSourceEnemy = attacker != null && attacker.IsEnemy ? attacker.Enemy : null;
         result.ShieldDamage = blockedDamage;
         result.HealthDamage = healthDamage;
-        if (healthDamage > 0)
-            RunAnalyticsLedger.AddDamageTaken(healthDamage);
+        Services.OnDamageTaken(healthDamage);
         result.TargetDied = healthBefore > 0 && CurrentHealth <= 0;
         GameLog.Data($"Player take damage raw={damage} final={result.FinalDamage} finalHealthDamage={healthDamage} shieldNow={Shield} hp={CurrentHealth}/{MaxHealth}");
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayDamageResultSfx(healthDamage, blockedDamage);
+        Services.OnDamage(healthDamage, blockedDamage);
 
+        Relics.Publish(new RelicEvent(RelicEventKind.DamageResolved, attacker, new CombatantModel(this),
+            result.HealthDamage, damageKind: Relics.DamageKind, shieldDamage: result.ShieldDamage, originRelicId: Relics.OriginRelicId,
+            rawDamage: result.RawDamage, finalDamage: result.FinalDamage, targetDied: result.TargetDied));
         TriggerAfterTakeDamage(attacker, result);
         if (result.TargetDied)
             TriggerOnDie(attacker);
-
         return result;
+        }
     }
 
     public void RestoreCurrentHealth(int currentHealth)
+    {
+        using (Rules.Enter()) RestoreCurrentHealthCore(currentHealth);
+    }
+
+    private void RestoreCurrentHealthCore(int currentHealth)
     {
         CurrentHealth = Mathf.Clamp(currentHealth, 0, MaxHealth);
     }
 
     public int TakeDirectDamage(int damage)
     {
+        using (Rules.Enter()) return TakeDirectDamageCore(damage);
+    }
+
+    private int TakeDirectDamageCore(int damage)
+    {
+        using (Relics.BeginOperation())
+        {
         if (damage <= 0)
             return 0;
 
@@ -1138,27 +1497,42 @@ public class PlayerState
         if (healthDamage > 0)
             LastDamageSourceEnemy = null;
         GameLog.Data($"Player take direct damage={damage} hp={CurrentHealth}/{MaxHealth}");
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayDamageResultSfx(healthDamage, 0);
+        Services.OnDamage(healthDamage, 0);
 
         if (healthBefore > 0 && CurrentHealth <= 0)
             TriggerOnDie(null);
 
+        Relics.Publish(new RelicEvent(RelicEventKind.HealthLost, target: new CombatantModel(this), amount: healthDamage,
+            damageKind: RelicDamageKind.HealthLoss, originRelicId: Relics.OriginRelicId));
         return healthDamage;
+        }
     }
 
     public void Heal(int amount)
     {
+        using (Rules.Enter()) HealCore(amount);
+    }
+
+    private void HealCore(int amount)
+    {
         if (amount <= 0)
             return;
 
+        int before = CurrentHealth;
         CurrentHealth += amount;
         if (CurrentHealth > MaxHealth)
             CurrentHealth = MaxHealth;
         GameLog.Data($"Player heal amount={amount} hp={CurrentHealth}/{MaxHealth}");
+        if (CurrentHealth > before)
+            Relics.Publish(new RelicEvent(RelicEventKind.Healed, target: new CombatantModel(this), amount: CurrentHealth - before, originRelicId: Relics.OriginRelicId));
     }
 
     public void IncreaseMaxHealth(int amount)
+    {
+        using (Rules.Enter()) IncreaseMaxHealthCore(amount);
+    }
+
+    private void IncreaseMaxHealthCore(int amount)
     {
         if (amount <= 0)
             return;
@@ -1172,6 +1546,11 @@ public class PlayerState
 
     public void IncreaseMaxHealthOnly(int amount)
     {
+        using (Rules.Enter()) IncreaseMaxHealthOnlyCore(amount);
+    }
+
+    private void IncreaseMaxHealthOnlyCore(int amount)
+    {
         if (amount <= 0)
             return;
 
@@ -1182,6 +1561,11 @@ public class PlayerState
     }
 
     public void AdjustMaxHealthOnly(int amount)
+    {
+        using (Rules.Enter()) AdjustMaxHealthOnlyCore(amount);
+    }
+
+    private void AdjustMaxHealthOnlyCore(int amount)
     {
         if (amount == 0)
             return;
@@ -1194,6 +1578,13 @@ public class PlayerState
 
     public int GainShield(int amount)
     {
+        using (Rules.Enter()) return GainShieldCore(amount);
+    }
+
+    private int GainShieldCore(int amount)
+    {
+        using (Relics.BeginOperation())
+        {
         if (amount <= 0)
             return 0;
 
@@ -1210,10 +1601,17 @@ public class PlayerState
         if (slowReduction > 0)
             ConsumeBuff(BuffEnum.Slow, slowReduction);
         GameLog.Data($"Player gain shield={shieldValue} shield={Shield}");
+        Relics.Publish(new RelicEvent(RelicEventKind.ShieldGained, target: new CombatantModel(this), amount: shieldValue, originRelicId: Relics.OriginRelicId));
         return shieldValue;
+        }
     }
 
     public int ConsumeShield(int amount)
+    {
+        using (Rules.Enter()) return ConsumeShieldCore(amount);
+    }
+
+    private int ConsumeShieldCore(int amount)
     {
         if (amount <= 0 || Shield <= 0)
             return 0;
@@ -1226,11 +1624,36 @@ public class PlayerState
 
     public void ClearShield()
     {
+        using (Rules.Enter()) ClearShieldCore();
+    }
+
+    private void ClearShieldCore()
+    {
         Shield = 0;
         GameLog.Data("Player clear shield");
     }
 
+    public IReadOnlyCollection<MaterialModel> PlayLimitChargedCards => new List<MaterialModel>(playLimitChargedCards).AsReadOnly();
+
+    public void RestorePlayLimitChargedCards(IEnumerable<MaterialModel> cards)
+    {
+        using (Rules.Enter()) RestorePlayLimitChargedCardsCore(cards);
+    }
+
+    private void RestorePlayLimitChargedCardsCore(IEnumerable<MaterialModel> cards)
+    {
+        playLimitChargedCards.Clear();
+        if (cards != null)
+            foreach (MaterialModel card in cards)
+                if (card != null && PlayZone.Contains(card)) playLimitChargedCards.Add(card);
+    }
+
     public void RestoreCombatSnapshot(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn, int extraRefreshChancesThisTurn = 0, int playedCardCountThisTurn = 0)
+    {
+        using (Rules.Enter()) RestoreCombatSnapshotCore(shield, hand, drawPile, discardPile, playZone, consumedPile, temporaryMaterialsNextTurn, extraRefreshChancesThisTurn, playedCardCountThisTurn);
+    }
+
+    private void RestoreCombatSnapshotCore(int shield, IReadOnlyList<MaterialModel> hand, IReadOnlyList<MaterialModel> drawPile, IReadOnlyList<MaterialModel> discardPile, IReadOnlyList<MaterialModel> playZone, IReadOnlyList<MaterialModel> consumedPile, IReadOnlyList<MaterialModel> temporaryMaterialsNextTurn, int extraRefreshChancesThisTurn, int playedCardCountThisTurn)
     {
         Shield = Mathf.Max(0, shield);
         this.extraRefreshChancesThisTurn = Mathf.Max(0, extraRefreshChancesThisTurn);
@@ -1270,7 +1693,30 @@ public class PlayerState
         }
     }
 
+    public void RestoreBattleBuffs(BuffRuntimeSaveData[] saved)
+    {
+        using (Rules.Enter()) RestoreBattleBuffsCore(saved);
+    }
+
+    private void RestoreBattleBuffsCore(BuffRuntimeSaveData[] saved)
+    {
+        if (saved == null) return; // v3: retain legacy prepared-state fallback.
+        buffs.Clear();
+        foreach (var value in saved)
+        {
+            if (value == null || value.type == BuffEnum.None || value.stack <= 0) continue;
+            var buff = BuffModel.Create(value.type, value.stack);
+            buff.RestoreRuntimeState(value.values);
+            buffs[value.type] = buff;
+        }
+    }
+
     public void ClearBuffs()
+    {
+        using (Rules.Enter()) ClearBuffsCore();
+    }
+
+    private void ClearBuffsCore()
     {
         buffs.Clear();
         GameLog.Data("Player clear buffs");
@@ -1278,6 +1724,12 @@ public class PlayerState
 
     public void ClearCombatState()
     {
+        using (Rules.Enter()) ClearCombatStateCore();
+    }
+
+    private void ClearCombatStateCore()
+    {
+        RestoreBattleDrawOrder(0, 0);
         ClearShield();
         ClearBuffs();
         RemoveBattleOnlyArrowState();
@@ -1290,6 +1742,11 @@ public class PlayerState
     }
 
     public void RemoveBattleOnlyArrowState()
+    {
+        using (Rules.Enter()) RemoveBattleOnlyArrowStateCore();
+    }
+
+    private void RemoveBattleOnlyArrowStateCore()
     {
         RemoveBattleOnlyArrowState(Hand);
         RemoveBattleOnlyArrowState(PlayZone);
@@ -1321,6 +1778,11 @@ public class PlayerState
 
     public void ApplySturdyToHand()
     {
+        using (Rules.Enter()) ApplySturdyToHandCore();
+    }
+
+    private void ApplySturdyToHandCore()
+    {
         for (int i = 0; i < Hand.Count; i++)
         {
             MaterialModel card = Hand[i];
@@ -1344,17 +1806,32 @@ public class PlayerState
 
     public void TriggerMaterialBegin()
     {
+        using (Rules.Enter()) TriggerMaterialBeginCore();
+    }
+
+    private void TriggerMaterialBeginCore()
+    {
         for (int i = 0; i < PlayZone.Count; i++)
             PlayZone[i].TriggerOnBegin();
     }
 
     public void TriggerMaterialEnd()
     {
+        using (Rules.Enter()) TriggerMaterialEndCore();
+    }
+
+    private void TriggerMaterialEndCore()
+    {
         for (int i = 0; i < PlayZone.Count; i++)
             PlayZone[i].TriggerOnEnd();
     }
 
     public void RemoveTurnOnlyModifiers()
+    {
+        using (Rules.Enter()) RemoveTurnOnlyModifiersCore();
+    }
+
+    private void RemoveTurnOnlyModifiersCore()
     {
         RemoveTurnOnlyModifiers(Hand);
         RemoveTurnOnlyModifiers(PlayZone);
@@ -1369,6 +1846,11 @@ public class PlayerState
     /// 用于属性禁用 Buff 被覆盖或提前移除时，使 Buff 显示与实际情况保持一致。
     /// </summary>
     public void ClearDisabledArrowModifiers(MaterialEnum material)
+    {
+        using (Rules.Enter()) ClearDisabledArrowModifiersCore(material);
+    }
+
+    private void ClearDisabledArrowModifiersCore(MaterialEnum material)
     {
         ClearDisabledArrowModifiersIn(Hand, material);
         ClearDisabledArrowModifiersIn(PlayZone, material);
@@ -1408,14 +1890,27 @@ public class PlayerState
     /// </summary>
     public void SetStartingGold(int gold)
     {
+        using (Rules.Enter()) SetStartingGoldCore(gold);
+    }
+
+    private void SetStartingGoldCore(int gold)
+    {
         Gold = Mathf.Max(0, gold);
         GameLog.Data($"Player starting gold set to {Gold}");
     }
 
-    public void AddGold(int amount, bool applyDifficulty = true)
+    public void AddGold(int amount, bool applyDifficulty = true, RelicGoldReason reason = RelicGoldReason.Reward, bool playFeedback = true)
     {
+        using (Rules.Enter()) AddGoldCore(amount, applyDifficulty, reason, playFeedback);
+    }
+
+    private void AddGoldCore(int amount, bool applyDifficulty, RelicGoldReason reason, bool playFeedback)
+    {
+        int goldBefore = Gold;
         if (amount > 0 && applyDifficulty)
             amount = DifficultyUpgradeSystem.ModifyGoldGain(amount);
+        if (amount > 0 && reason == RelicGoldReason.Reward)
+            amount = Relics.ModifyGoldGain(amount);
         if (amount == 0)
             return;
 
@@ -1423,17 +1918,31 @@ public class PlayerState
         if (Gold < 0)
             Gold = 0;
         GameLog.Data($"Player gold change={amount} gold={Gold}");
-        if (amount > 0 && AudioManager.Instance != null)
-            AudioManager.Instance.PlaySfx(GameSfxId.GetCoin);
+        if (amount > 0 && playFeedback)
+            Services.OnGoldGained();
+        Relics.Publish(new RelicEvent(RelicEventKind.GoldChanged, amount: Gold - goldBefore, before: goldBefore, after: Gold, originRelicId: Relics.OriginRelicId));
     }
 
     public void AddBuff(BuffEnum buffType, int stack)
+    {
+        using (Rules.Enter()) AddBuffCore(buffType, stack);
+    }
+
+    private void AddBuffCore(BuffEnum buffType, int stack)
     {
         AddBuff(buffType, stack, null);
     }
 
     public void AddBuff(BuffEnum buffType, int stack, CombatantModel source)
     {
+        using (Rules.Enter()) AddBuffCore(buffType, stack, source);
+    }
+
+    private void AddBuffCore(BuffEnum buffType, int stack, CombatantModel source)
+    {
+        using (Relics.BeginOperation())
+        {
+        int before = GetBuffStack(buffType);
         if (buffType == BuffEnum.None || stack <= 0)
             return;
 
@@ -1459,9 +1968,12 @@ public class PlayerState
             if (previousMaterial > 0 && previousMaterial != stack)
                 ClearDisabledArrowModifiers((MaterialEnum)previousMaterial);
 
+            int appliedAfter = GetBuffStack(buffType);
+            Relics.RecordBuffChange(self, buffs[buffType], before, appliedAfter);
             GameLog.Data($"Player add buff {buffType} material={stack} now={GetBuffStack(buffType)}");
             BuffAdded?.Invoke(buffType, stack);
             TriggerAfterGiveBuff(source, self, buffType, stack);
+            Relics.Publish(new RelicEvent(RelicEventKind.BuffApplied, source, self, stack, before, appliedAfter, buffType, originRelicId: Relics.OriginRelicId));
             return;
         }
 
@@ -1469,9 +1981,13 @@ public class PlayerState
             buff.AddStack(stack);
         else
             buffs.Add(buffType, BuffModel.Create(buffType, stack));
+        int after = GetBuffStack(buffType);
+        Relics.RecordBuffChange(self, buffs[buffType], before, after);
         GameLog.Data($"Player add buff {buffType} stack+={stack} now={GetBuffStack(buffType)}");
         BuffAdded?.Invoke(buffType, stack);
         TriggerAfterGiveBuff(source, self, buffType, stack);
+        Relics.Publish(new RelicEvent(RelicEventKind.BuffApplied, source, self, stack, before, after, buffType, originRelicId: Relics.OriginRelicId));
+        }
     }
 
     private void TriggerAfterGiveBuff(CombatantModel source, CombatantModel target, BuffEnum buffType, int stack)
@@ -1495,6 +2011,7 @@ public class PlayerState
                 sourceBuffs[i].OnGiveBuff(source, self, buffType, ref stack);
         }
 
+        if (source?.Player != null) stack = source.Player.Relics.ModifyBuffGiven(buffType, stack);
         if (buffs.Count > 0)
         {
             List<BuffModel> targetBuffs = new List<BuffModel>(buffs.Values);
@@ -1502,9 +2019,15 @@ public class PlayerState
             for (int i = 0; i < targetBuffs.Count; i++)
                 targetBuffs[i].OnReceiveBuff(self, source, buffType, ref stack);
         }
+        stack = Relics.ModifyBuffReceived(buffType, stack);
     }
 
     public int GetBuffStack(BuffEnum buffType)
+    {
+        using (Rules.Enter()) return GetBuffStackCore(buffType);
+    }
+
+    private int GetBuffStackCore(BuffEnum buffType)
     {
         if (buffs.TryGetValue(buffType, out BuffModel buff))
             return buff.stack;
@@ -1514,9 +2037,18 @@ public class PlayerState
 
     public void ConsumeBuff(BuffEnum buffType, int amount)
     {
+        using (Rules.Enter()) ConsumeBuffCore(buffType, amount);
+    }
+
+    private void ConsumeBuffCore(BuffEnum buffType, int amount)
+    {
+        using (Relics.BeginOperation())
+        {
         if (buffs.TryGetValue(buffType, out BuffModel buff))
         {
+            int before = buff.stack;
             buff.ConsumeStack(amount);
+            Relics.RecordBuffChange(new CombatantModel(this), buff, before, buff.stack);
             if (buff.stack <= 0)
             {
                 buff.OnExpire(new CombatantModel(this), null);
@@ -1524,9 +2056,15 @@ public class PlayerState
                 GameLog.Data($"Player buff expired {buffType}");
             }
         }
+        }
     }
 
     public void TriggerOnTurnStart(CombatantModel opponent)
+    {
+        using (Rules.Enter()) TriggerOnTurnStartCore(opponent);
+    }
+
+    private void TriggerOnTurnStartCore(CombatantModel opponent)
     {
         ResetKeepHandOnEndTurn();
         TriggerBuffs(opponent, (buff, self, target) => buff.OnTurnStart(self, target));
@@ -1534,27 +2072,54 @@ public class PlayerState
 
     public void TriggerAfterTurnStart(CombatantModel opponent)
     {
+        using (Rules.Enter()) TriggerAfterTurnStartCore(opponent);
+    }
+
+    private void TriggerAfterTurnStartCore(CombatantModel opponent)
+    {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnStart(self, target));
     }
 
     public void TriggerAfterTurnStartDraw(CombatantModel opponent, int drawCount)
+    {
+        using (Rules.Enter()) TriggerAfterTurnStartDrawCore(opponent, drawCount);
+    }
+
+    private void TriggerAfterTurnStartDrawCore(CombatantModel opponent, int drawCount)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnStartDraw(self, target, drawCount));
     }
 
     public void TriggerAfterDraw(MaterialModel card)
     {
+        using (Rules.Enter()) TriggerAfterDrawCore(card);
+    }
+
+    private void TriggerAfterDrawCore(MaterialModel card)
+    {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDraw(self, card));
-        ArrowUpgradeSystem.TriggerOnDraw(this, card, BattleManager.Instance);
+        ArrowUpgradeSystem.TriggerOnDraw(this, card, Battle);
+        Relics.Publish(new RelicEvent(RelicEventKind.CardDrawn, card: card, originRelicId: Relics.OriginRelicId));
     }
 
     /// <summary>箭头进入手牌的统一切点，用于由 Buff 给新手牌补打附魔。</summary>
     public void TriggerAfterEnterHand(MaterialModel card)
     {
+        using (Rules.Enter()) TriggerAfterEnterHandCore(card);
+    }
+
+    private void TriggerAfterEnterHandCore(MaterialModel card)
+    {
         TriggerBuffs(null, (buff, self, target) => buff.AfterEnterHand(self, card));
+        Relics.Publish(new RelicEvent(RelicEventKind.CardEnteredHand, card: card, originRelicId: Relics.OriginRelicId));
     }
 
     public int DrawArrowUpgradeBonusCard(int count = 1)
+    {
+        using (Rules.Enter()) return DrawArrowUpgradeBonusCardCore(count);
+    }
+
+    private int DrawArrowUpgradeBonusCardCore(int count)
     {
         int drawn = 0;
         for (int i = 0; i < count; i++)
@@ -1567,29 +2132,55 @@ public class PlayerState
 
     public void TriggerAfterDiscard(MaterialModel card)
     {
+        using (Rules.Enter()) TriggerAfterDiscardCore(card);
+    }
+
+    private void TriggerAfterDiscardCore(MaterialModel card)
+    {
         TriggerBuffs(null, (buff, self, target) => buff.AfterDiscard(self, card));
     }
 
     public void AddCardToDiscardPile(MaterialModel card)
     {
+        using (Rules.Enter()) AddCardToDiscardPileCore(card);
+    }
+
+    private void AddCardToDiscardPileCore(MaterialModel card)
+    {
         if (card == null)
             return;
 
         DiscardPile.Add(card);
-        ArrowUpgradeSystem.TriggerOnDiscard(this, card, BattleManager.Instance);
+        ArrowUpgradeSystem.TriggerOnDiscard(this, card, Battle);
     }
 
     public void TriggerAfterMaterialConsumed(MaterialModel card)
+    {
+        using (Rules.Enter()) TriggerAfterMaterialConsumedCore(card);
+    }
+
+    private void TriggerAfterMaterialConsumedCore(MaterialModel card)
     {
         TriggerBuffs(null, (buff, self, target) => buff.AfterMaterialConsumed(self, card));
     }
 
     public void TriggerAfterArrowConsumed(MaterialModel card)
     {
+        using (Rules.Enter()) TriggerAfterArrowConsumedCore(card);
+    }
+
+    private void TriggerAfterArrowConsumedCore(MaterialModel card)
+    {
         TriggerBuffs(null, (buff, self, target) => buff.AfterArrowConsumed(self, card));
+        Relics.Publish(new RelicEvent(RelicEventKind.ArrowConsumed, card: card, originRelicId: Relics.OriginRelicId));
     }
 
     public void TriggerAfterEnemyBurningDamage(EnemyModel enemy, int damage)
+    {
+        using (Rules.Enter()) TriggerAfterEnemyBurningDamageCore(enemy, damage);
+    }
+
+    private void TriggerAfterEnemyBurningDamageCore(EnemyModel enemy, int damage)
     {
         if (damage > 0)
             TriggerBuffs(enemy != null ? new CombatantModel(enemy) : null, (buff, self, target) => buff.AfterEnemyBurningDamage(self, enemy, damage));
@@ -1597,36 +2188,65 @@ public class PlayerState
 
     public void TriggerOnInvoke(CombatantModel target)
     {
+        using (Rules.Enter()) TriggerOnInvokeCore(target);
+    }
+
+    private void TriggerOnInvokeCore(CombatantModel target)
+    {
         TriggerBuffs(target, (buff, self, opponent) => buff.OnInvoke(self, opponent));
     }
 
     public void TriggerAfterPlayerDecide(CombatantModel opponent)
+    {
+        using (Rules.Enter()) TriggerAfterPlayerDecideCore(opponent);
+    }
+
+    private void TriggerAfterPlayerDecideCore(CombatantModel opponent)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterPlayerDecide(self, target));
     }
 
     public void TriggerOnGetAction(CombatantModel opponent)
     {
+        using (Rules.Enter()) TriggerOnGetActionCore(opponent);
+    }
+
+    private void TriggerOnGetActionCore(CombatantModel opponent)
+    {
         TriggerBuffs(opponent, (buff, self, target) => buff.OnGetAction(self, target));
     }
 
     public void TriggerAfterGetAction(CombatantModel opponent)
+    {
+        using (Rules.Enter()) TriggerAfterGetActionCore(opponent);
+    }
+
+    private void TriggerAfterGetActionCore(CombatantModel opponent)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterGetAction(self, target));
     }
 
     public void TriggerOnAttack(CombatantModel target, ref int attackValue)
     {
-        if (buffs.Count == 0)
-            return;
+        using (Rules.Enter()) TriggerOnAttackCore(target, ref attackValue);
+    }
+
+    private void TriggerOnAttackCore(CombatantModel target, ref int attackValue)
+    {
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
             snapshot[i].OnAttack(self, target, ref attackValue);
+        attackValue = Relics.ModifyAttack(attackValue);
     }
 
     public void TriggerAfterAttack(CombatantModel attacker, ref int attackResult)
+    {
+        using (Rules.Enter()) TriggerAfterAttackCore(attacker, ref attackResult);
+    }
+
+    private void TriggerAfterAttackCore(CombatantModel attacker, ref int attackResult)
     {
         if (buffs.Count == 0)
             return;
@@ -1634,21 +2254,35 @@ public class PlayerState
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
-            snapshot[i].AfterAttack(self, attacker, ref attackResult);
+        {
+            var buff = snapshot[i];
+            int value = attackResult;
+            Relics.ObserveBuffHook(self, buff, () => buff.AfterAttack(self, attacker, ref value));
+            attackResult = value;
+        }
     }
 
     public void TriggerOnTakeDamage(CombatantModel attacker, ref int damage)
     {
-        if (buffs.Count == 0)
-            return;
+        using (Rules.Enter()) TriggerOnTakeDamageCore(attacker, ref damage);
+    }
+
+    private void TriggerOnTakeDamageCore(CombatantModel attacker, ref int damage)
+    {
 
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
             snapshot[i].OnTakeDamage(self, attacker, ref damage);
+        damage = Relics.ModifyDamageTaken(damage);
     }
 
     public void TriggerAfterTakeDamage(CombatantModel attacker, CombatDamageResult result)
+    {
+        using (Rules.Enter()) TriggerAfterTakeDamageCore(attacker, result);
+    }
+
+    private void TriggerAfterTakeDamageCore(CombatantModel attacker, CombatDamageResult result)
     {
         if (buffs.Count == 0)
             return;
@@ -1656,19 +2290,24 @@ public class PlayerState
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         for (int i = 0; i < snapshot.Count; i++)
-            snapshot[i].AfterTakeDamage(self, attacker, result);
+        {
+            var buff = snapshot[i];
+            Relics.ObserveBuffHook(self, buff, () => buff.AfterTakeDamage(self, attacker, result));
+        }
     }
 
     public void TriggerOnGainShield(ref int shieldValue)
+    {
+        using (Rules.Enter()) TriggerOnGainShieldCore(ref shieldValue);
+    }
+
+    private void TriggerOnGainShieldCore(ref int shieldValue)
     {
         ApplyGainShieldModifiers(ref shieldValue);
     }
 
     private int ApplyGainShieldModifiers(ref int shieldValue)
     {
-        if (buffs.Count == 0)
-            return 0;
-
         CombatantModel self = new CombatantModel(this);
         List<BuffModel> snapshot = new List<BuffModel>(buffs.Values);
         BuffModel slowBuff = null;
@@ -1686,6 +2325,7 @@ public class PlayerState
             buff.OnGainShield(self, ref shieldValue);
         }
 
+        shieldValue = Relics.ModifyShieldGain(shieldValue);
         int beforeSlow = shieldValue;
         if (slowBuff != null && buffs.TryGetValue(slowBuff.buffType, out BuffModel currentSlow) && ReferenceEquals(currentSlow, slowBuff))
             slowBuff.OnGainShield(self, ref shieldValue);
@@ -1696,21 +2336,38 @@ public class PlayerState
 
     public void TriggerOnTurnEnd(CombatantModel opponent)
     {
+        using (Rules.Enter()) TriggerOnTurnEndCore(opponent);
+    }
+
+    private void TriggerOnTurnEndCore(CombatantModel opponent)
+    {
         TriggerBuffs(opponent, (buff, self, target) => buff.OnTurnEnd(self, target));
     }
 
     public void TriggerAfterTurnEnd(CombatantModel opponent)
+    {
+        using (Rules.Enter()) TriggerAfterTurnEndCore(opponent);
+    }
+
+    private void TriggerAfterTurnEndCore(CombatantModel opponent)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnEnd(self, target));
     }
 
     public void TriggerOnDie(CombatantModel opponent)
     {
+        using (Rules.Enter()) TriggerOnDieCore(opponent);
+    }
+
+    private void TriggerOnDieCore(CombatantModel opponent)
+    {
         TriggerBuffs(opponent, (buff, self, target) => buff.OnDie(self, target));
     }
 
     private void TriggerBuffs(CombatantModel opponent, BuffTrigger trigger)
     {
+        using (Relics.BeginOperation())
+        {
         if (buffs.Count == 0)
             return;
 
@@ -1723,7 +2380,7 @@ public class PlayerState
             if (!buffs.TryGetValue(buff.buffType, out BuffModel currentBuff) || !ReferenceEquals(currentBuff, buff))
                 continue;
 
-            trigger(buff, self, opponent);
+            Relics.ObserveBuffHook(self, buff, () => trigger(buff, self, opponent));
             if (buff.stack <= 0 && buffs.TryGetValue(buff.buffType, out currentBuff) && ReferenceEquals(currentBuff, buff))
             {
                 if (expiredBuffs == null)
@@ -1742,26 +2399,47 @@ public class PlayerState
                     buffs.Remove(buff.buffType);
             }
         }
+        }
     }
 
     private delegate void BuffTrigger(BuffModel buff, CombatantModel self, CombatantModel opponent);
 
     public bool ReturnLeftmostHandCardToDrawPile()
     {
+        using (Rules.Enter()) return ReturnLeftmostHandCardToDrawPileCore();
+    }
+
+    private bool ReturnLeftmostHandCardToDrawPileCore()
+    {
         return ReturnLeftmostHandCardToDiscardPile(null);
     }
 
     public bool ReturnLeftmostHandCardToDrawPile(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) return ReturnLeftmostHandCardToDrawPileCore(removedTemporaryCards);
+    }
+
+    private bool ReturnLeftmostHandCardToDrawPileCore(List<MaterialModel> removedTemporaryCards)
     {
         return ReturnLeftmostHandCardToDiscardPile(removedTemporaryCards);
     }
 
     public bool ReturnLeftmostHandCardToDiscardPile()
     {
+        using (Rules.Enter()) return ReturnLeftmostHandCardToDiscardPileCore();
+    }
+
+    private bool ReturnLeftmostHandCardToDiscardPileCore()
+    {
         return ReturnLeftmostHandCardToDiscardPile(null);
     }
 
     public bool ReturnLeftmostHandCardToDiscardPile(List<MaterialModel> removedTemporaryCards)
+    {
+        using (Rules.Enter()) return ReturnLeftmostHandCardToDiscardPileCore(removedTemporaryCards);
+    }
+
+    private bool ReturnLeftmostHandCardToDiscardPileCore(List<MaterialModel> removedTemporaryCards)
     {
         if (Hand.Count == 0)
             return false;
@@ -1786,6 +2464,11 @@ public class PlayerState
 
     public List<MaterialModel> ConsumeTemporaryMaterialsNextTurn()
     {
+        using (Rules.Enter()) return ConsumeTemporaryMaterialsNextTurnCore();
+    }
+
+    private List<MaterialModel> ConsumeTemporaryMaterialsNextTurnCore()
+    {
         List<MaterialModel> addedCards = new List<MaterialModel>();
         for (int i = 0; i < TemporaryMaterialsNextTurn.Count; i++)
         {
@@ -1809,6 +2492,11 @@ public class PlayerState
 
     public MaterialModel AddMaterialNextTurn(MaterialEnum material, MaterialModifierModel modifier)
     {
+        using (Rules.Enter()) return AddMaterialNextTurnCore(material, modifier);
+    }
+
+    private MaterialModel AddMaterialNextTurnCore(MaterialEnum material, MaterialModifierModel modifier)
+    {
         if (material == MaterialEnum.None)
             return null;
 
@@ -1821,6 +2509,11 @@ public class PlayerState
     }
 
     public MaterialModel AddTemporaryMaterialNextTurn(MaterialEnum material, bool temporary)
+    {
+        using (Rules.Enter()) return AddTemporaryMaterialNextTurnCore(material, temporary);
+    }
+
+    private MaterialModel AddTemporaryMaterialNextTurnCore(MaterialEnum material, bool temporary)
     {
         if (material == MaterialEnum.None)
             return null;
@@ -1835,10 +2528,31 @@ public class PlayerState
 
     public void AddTemporaryMaterialNextTurn(MaterialEnum material)
     {
+        using (Rules.Enter()) AddTemporaryMaterialNextTurnCore(material);
+    }
+
+    private void AddTemporaryMaterialNextTurnCore(MaterialEnum material)
+    {
         AddTemporaryMaterialNextTurn(material, true);
     }
 
     public MaterialModel AddTemporaryMaterialToHand(MaterialEnum material)
+    {
+        using (Rules.Enter()) return AddTemporaryMaterialToHandCore(material);
+    }
+
+    // A grant respects the hand limit and enters the hand without counting as a draw.
+    internal MaterialModel GrantTemporaryMaterialToHand(MaterialEnum material)
+    {
+        using (Rules.Enter())
+        {
+            if (Hand.Count >= HandLimitThisTurn)
+                return null;
+            return AddTemporaryMaterialToHandCore(material, isDraw: false);
+        }
+    }
+
+    private MaterialModel AddTemporaryMaterialToHandCore(MaterialEnum material, bool isDraw = true)
     {
         if (material == MaterialEnum.None)
             return null;
@@ -1846,19 +2560,31 @@ public class PlayerState
         MaterialModel card = new MaterialModel("temporary_" + material + "_" + temporaryMaterialIndex++, material);
         card.AddModifier(new TemporaryModifier());
         Hand.Add(card);
-        card.TriggerOnDraw();
+        if (isDraw)
+            card.TriggerOnDraw();
         TriggerAfterEnterHand(card);
-        TriggerAfterDraw(card);
+        if (isDraw)
+            TriggerAfterDraw(card);
         GameLog.Data($"Add temporary material to hand {DescribeMaterial(card)}");
         return card;
     }
 
     public MaterialModel AddDeckMaterial(MaterialEnum material)
     {
+        using (Rules.Enter()) return AddDeckMaterialCore(material);
+    }
+
+    private MaterialModel AddDeckMaterialCore(MaterialEnum material)
+    {
         return AddDeckMaterial(material, null);
     }
 
     public MaterialModel AddDeckMaterial(MaterialEnum material, MaterialModifierModel modifier)
+    {
+        using (Rules.Enter()) return AddDeckMaterialCore(material, modifier);
+    }
+
+    private MaterialModel AddDeckMaterialCore(MaterialEnum material, MaterialModifierModel modifier)
     {
         if (material == MaterialEnum.None)
             return null;
@@ -1873,6 +2599,11 @@ public class PlayerState
     }
 
     public MaterialModel AddDeckPlaceholderMaterial()
+    {
+        using (Rules.Enter()) return AddDeckPlaceholderMaterialCore();
+    }
+
+    private MaterialModel AddDeckPlaceholderMaterialCore()
     {
         MaterialModel card = new MaterialModel(DeckPlaceholderInstanceIdPrefix + temporaryMaterialIndex++, MaterialEnum.None);
         Deck.Add(card);
@@ -1895,6 +2626,11 @@ public class PlayerState
 
     public bool RemoveCardEverywhere(MaterialModel card)
     {
+        using (Rules.Enter()) return RemoveCardEverywhereCore(card);
+    }
+
+    private bool RemoveCardEverywhereCore(MaterialModel card)
+    {
         if (card == null || IsDeckPlaceholderMaterial(card))
             return false;
 
@@ -1913,6 +2649,11 @@ public class PlayerState
 
     public MagicModel GetMagicAtSlot(int slotIndex)
     {
+        using (Rules.Enter()) return GetMagicAtSlotCore(slotIndex);
+    }
+
+    private MagicModel GetMagicAtSlotCore(int slotIndex)
+    {
         for (int i = 0; i < MagicBook.Count; i++)
         {
             if (MagicBook[i] != null && MagicBook[i].SlotIndex == slotIndex)
@@ -1924,6 +2665,11 @@ public class PlayerState
 
     public void ResetExtraRefreshChancesThisTurn()
     {
+        using (Rules.Enter()) ResetExtraRefreshChancesThisTurnCore();
+    }
+
+    private void ResetExtraRefreshChancesThisTurnCore()
+    {
         extraRefreshChancesThisTurn = 0;
         permanentRefreshChancesUsedThisTurn = 0;
         RefreshLimitReductionThisTurn = 0;
@@ -1932,17 +2678,32 @@ public class PlayerState
 
     public void SetRefreshLimitReductionThisTurn(int amount)
     {
+        using (Rules.Enter()) SetRefreshLimitReductionThisTurnCore(amount);
+    }
+
+    private void SetRefreshLimitReductionThisTurnCore(int amount)
+    {
         if (amount > RefreshLimitReductionThisTurn)
             RefreshLimitReductionThisTurn = amount;
     }
 
     public void SetHandLimitThisTurn(int limit)
     {
+        using (Rules.Enter()) SetHandLimitThisTurnCore(limit);
+    }
+
+    private void SetHandLimitThisTurnCore(int limit)
+    {
         if (limit > 0 && limit < HandLimitThisTurn)
             HandLimitThisTurn = limit;
     }
 
     public void AddPermanentRefreshChance(int amount)
+    {
+        using (Rules.Enter()) AddPermanentRefreshChanceCore(amount);
+    }
+
+    private void AddPermanentRefreshChanceCore(int amount)
     {
         if (amount <= 0)
             return;
@@ -1952,6 +2713,11 @@ public class PlayerState
     }
 
     public bool UsePermanentRefreshChance()
+    {
+        using (Rules.Enter()) return UsePermanentRefreshChanceCore();
+    }
+
+    private bool UsePermanentRefreshChanceCore()
     {
         if (RemainingPermanentRefreshChancesThisTurn <= 0)
             return false;
@@ -1963,15 +2729,30 @@ public class PlayerState
 
     public bool HasAdditionalRefreshChance()
     {
+        using (Rules.Enter()) return HasAdditionalRefreshChanceCore();
+    }
+
+    private bool HasAdditionalRefreshChanceCore()
+    {
         return RemainingPermanentRefreshChancesThisTurn > 0 || ExtraRefreshChancesThisTurn > 0;
     }
 
     public bool UseAdditionalRefreshChance()
     {
+        using (Rules.Enter()) return UseAdditionalRefreshChanceCore();
+    }
+
+    private bool UseAdditionalRefreshChanceCore()
+    {
         return UsePermanentRefreshChance() || UseExtraRefreshChance();
     }
 
     public void AddExtraRefreshChances(int amount)
+    {
+        using (Rules.Enter()) AddExtraRefreshChancesCore(amount);
+    }
+
+    private void AddExtraRefreshChancesCore(int amount)
     {
         if (amount <= 0)
             return;
@@ -1982,6 +2763,11 @@ public class PlayerState
 
     public bool UseExtraRefreshChance()
     {
+        using (Rules.Enter()) return UseExtraRefreshChanceCore();
+    }
+
+    private bool UseExtraRefreshChanceCore()
+    {
         if (extraRefreshChancesThisTurn <= 0)
             return false;
 
@@ -1991,6 +2777,11 @@ public class PlayerState
     }
 
     public bool CanConsumeArrowUpgradeMagics(IReadOnlyList<MagicModel> selectedMagics)
+    {
+        using (Rules.Enter()) return CanConsumeArrowUpgradeMagicsCore(selectedMagics);
+    }
+
+    private bool CanConsumeArrowUpgradeMagicsCore(IReadOnlyList<MagicModel> selectedMagics)
     {
         if (selectedMagics == null || selectedMagics.Count == 0)
             return false;
@@ -2007,11 +2798,21 @@ public class PlayerState
 
     public void ConsumeArrowUpgradeMagics(IReadOnlyList<MagicModel> selectedMagics)
     {
+        using (Rules.Enter()) ConsumeArrowUpgradeMagicsCore(selectedMagics);
+    }
+
+    private void ConsumeArrowUpgradeMagicsCore(IReadOnlyList<MagicModel> selectedMagics)
+    {
         for (int i = 0; selectedMagics != null && i < selectedMagics.Count; i++)
             ClearMagicSlot(selectedMagics[i].SlotIndex);
     }
 
     public void RestoreArrowUpgradeState(IEnumerable<string> unlockedNodeIds, int pendingNextTurnShield, int permanentRefreshChanceCount)
+    {
+        using (Rules.Enter()) RestoreArrowUpgradeStateCore(unlockedNodeIds, pendingNextTurnShield, permanentRefreshChanceCount);
+    }
+
+    private void RestoreArrowUpgradeStateCore(IEnumerable<string> unlockedNodeIds, int pendingNextTurnShield, int permanentRefreshChanceCount)
     {
         ArrowUpgrades.Restore(unlockedNodeIds, pendingNextTurnShield);
         PermanentRefreshChances = Mathf.Max(0, permanentRefreshChanceCount);
@@ -2019,6 +2820,11 @@ public class PlayerState
     }
 
     public void ClearMagicSlot(int slotIndex)
+    {
+        using (Rules.Enter()) ClearMagicSlotCore(slotIndex);
+    }
+
+    private void ClearMagicSlotCore(int slotIndex)
     {
         for (int i = MagicBook.Count - 1; i >= 0; i--)
         {
@@ -2028,6 +2834,11 @@ public class PlayerState
     }
 
     public void SetMagicAtSlot(MagicModel magic, int slotIndex)
+    {
+        using (Rules.Enter()) SetMagicAtSlotCore(magic, slotIndex);
+    }
+
+    private void SetMagicAtSlotCore(MagicModel magic, int slotIndex)
     {
         if (magic == null || slotIndex < 0)
             return;
@@ -2045,14 +2856,20 @@ public class PlayerState
             insertIndex++;
 
         MagicBook.Insert(insertIndex, magic);
-        MagicCodexProgressSystem.MarkMagicDiscovered(magic.Data);
+        MagicReadingOrder.ApplyTo(MagicBook);
+        Services.OnMagicDiscovered(magic.Data);
     }
 
     /// <summary>
     /// 按道具栏的视觉序列（含空格）移动一个道具并让其余槽位向目标挤压，
     /// 之后槽位索引即触发顺序，与视图布局保持一致。
     /// </summary>
-    public void RearrangeMagicSlotsByVisualOrder(int fromIndex, int toIndex, int visualCount)
+    public void RearrangeMagicSlotsByVisualOrder(int fromIndex, int toIndex, int visualCount, bool preserveEmptySlots = false)
+    {
+        using (Rules.Enter()) RearrangeMagicSlotsByVisualOrderCore(fromIndex, toIndex, visualCount, preserveEmptySlots);
+    }
+
+    private void RearrangeMagicSlotsByVisualOrderCore(int fromIndex, int toIndex, int visualCount, bool preserveEmptySlots)
     {
         if (visualCount <= 0 || fromIndex == toIndex || fromIndex < 0 || fromIndex >= visualCount || toIndex < 0 || toIndex >= visualCount)
             return;
@@ -2065,8 +2882,34 @@ public class PlayerState
         for (int i = 0; i < visualCount; i++)
             content.Add(GetMagicAtSlot(i));
 
-        content.RemoveAt(fromIndex);
-        content.Insert(toIndex, moved);
+        if (preserveEmptySlots && content[toIndex] == null)
+        {
+            content[fromIndex] = null;
+            content[toIndex] = moved;
+        }
+        else if (preserveEmptySlots)
+        {
+            // Insert along the occupied visual reading order. Slot indices can be column-major.
+            var slots = new List<int>();
+            for (int i = 0; i < content.Count; i++)
+                if (content[i] != null) slots.Add(i);
+            slots.Sort((a, b) =>
+            {
+                int rank = MagicReadingOrder.GetRank(a).CompareTo(MagicReadingOrder.GetRank(b));
+                return rank != 0 ? rank : a.CompareTo(b);
+            });
+            int from = slots.IndexOf(fromIndex);
+            int to = slots.IndexOf(toIndex);
+            int step = from < to ? 1 : -1;
+            for (int i = from; i != to; i += step)
+                content[slots[i]] = content[slots[i + step]];
+            content[toIndex] = moved;
+        }
+        else
+        {
+            content.RemoveAt(fromIndex);
+            content.Insert(toIndex, moved);
+        }
 
         MagicBook.Clear();
         for (int i = 0; i < content.Count; i++)
@@ -2078,6 +2921,7 @@ public class PlayerState
             model.SlotIndex = i;
             MagicBook.Add(model);
         }
+        MagicReadingOrder.ApplyTo(MagicBook);
         GameLog.Data($"Rearrange magic slot from={fromIndex} to={toIndex} count={MagicBook.Count}");
     }
 
@@ -2086,6 +2930,11 @@ public class PlayerState
     /// 道具栏从此只显示已占用道具，slotIndex 即从左到右的触发顺序。
     /// </summary>
     public void NormalizeMagicSlots(int slotLimit)
+    {
+        using (Rules.Enter()) NormalizeMagicSlotsCore(slotLimit);
+    }
+
+    private void NormalizeMagicSlotsCore(int slotLimit)
     {
         if (MagicBook.Count == 0)
             return;
@@ -2105,6 +2954,7 @@ public class PlayerState
             if (MagicBook[i] != null)
                 MagicBook[i].SlotIndex = i;
         }
+        MagicReadingOrder.ApplyTo(MagicBook);
     }
 
     public static MagicModel CreateMagicFromData(int magicId, int slotIndex)

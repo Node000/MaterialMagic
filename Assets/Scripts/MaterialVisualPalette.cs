@@ -1,6 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "MaterialVisualPalette", menuName = "Config/Material Visual Palette")]
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "MaterialVisualPalette")]
+#endif
 public class MaterialVisualPalette : ScriptableObject
 {
     private const string ResourcePath = "Config/MaterialVisualPalette";

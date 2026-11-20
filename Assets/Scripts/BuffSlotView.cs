@@ -5,6 +5,9 @@ using DG.Tweening;
 using System;
 using TMPro;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "EnemyViewClickHandler")]
+#endif
 public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
 {
     private HandSystemUI owner;
@@ -23,6 +26,9 @@ public class EnemyViewClickHandler : MonoBehaviour, IPointerClickHandler
     }
 }
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "BuffSlotView")]
+#endif
 public class BuffSlotView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image iconImage;

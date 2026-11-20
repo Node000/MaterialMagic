@@ -32,6 +32,8 @@ public class EconomyConfigData : INumericDataRecord
     public int weakBattleGold = 1;
     public int strongBattleGold = 4;
     public float battleArrowRewardEnchantChance = 0.1f;
+    // 同品质内已持有道具的相对权重；1=不降权，0=优先未持有（全持有时仍正常抽取）。
+    public float ownedMagicWeightMultiplier = MagicRaritySystem.DefaultOwnedMagicWeightMultiplier;
     public int shopMagicRewardPoolId = 1;
     public MaterialEnum[] shopMaterialPool = Array.Empty<MaterialEnum>();
 
@@ -151,7 +153,8 @@ public class BuffStackData
 public enum MagicMatchRule
 {
     ExactRecipe = 0,
-    AnyTwoDifferentElements = 1
+    AnyTwoDifferentElements = 1,
+    NoTrigger = 2
 }
 
 public enum MagicEffectType
@@ -942,21 +945,30 @@ public class MaterialModel
         return false;
     }
 
-    public void AddModifier(MaterialModifierModel modifier)
+    public bool CanAddModifier(MaterialModifierModel modifier)
     {
         if (modifier == null || modifiers.Contains(modifier))
-            return;
+            return false;
 
         Type modifierType = modifier.GetType();
         for (int i = 0; i < modifiers.Count; i++)
         {
             if (modifiers[i] != null && modifiers[i].GetType() == modifierType)
-                return;
+                return MaterialModifierDatabase.TryGetDataByScript(modifierType.Name, out MaterialModifierData data) && data.stackable;
         }
+        return true;
+    }
 
+    public void AddModifier(MaterialModifierModel modifier) => TryAddModifier(modifier);
+
+    public bool TryAddModifier(MaterialModifierModel modifier)
+    {
+        if (!CanAddModifier(modifier))
+            return false;
         modifier.model = this;
         modifiers.Add(modifier);
         RebuildModifierFlags();
+        return true;
     }
 
     private void RebuildModifierFlags()

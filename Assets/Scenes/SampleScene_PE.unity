@@ -24743,7 +24743,7 @@ MonoBehaviour:
   materialCardPunchVibrato: 6
   materialCardPunchElasticity: 0.6
   postMagicResolveDelay: 0.11
-  resolveSpeedMultiplier: 1.1
+  resolveSpeedMultiplier: 1.35
   comboSpeedStartLayer: 5
   comboSpeedStep: 0.05
   magicDamageHitInterval: 0.15

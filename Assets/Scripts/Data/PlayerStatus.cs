@@ -3,7 +3,7 @@ public class PlayerStatus : PlayerState
     public int RunRandomSeed { get; private set; }
     public int RunRandomStep { get; private set; }
 
-    public PlayerStatus(int maxHealth = 50, int gold = 0) : base(maxHealth, gold)
+    public PlayerStatus(int maxHealth = 50, int gold = 0, PlayerStateServices services = null, RunDifficultySaveData difficulty = null, IRuleContentProvider content = null, RuleProfilePolicy profilePolicy = null) : base(maxHealth, gold, services, difficulty, content, profilePolicy)
     {
         ResetRunRandom();
     }

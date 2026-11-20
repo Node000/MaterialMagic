@@ -6,6 +6,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if !MATERIALMAGIC_STANDALONE
+[UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "UnifiedDetailPopupUI")]
+#endif
 public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IScrollHandler, IPointerDownHandler
 {
     [SerializeField] private UnifiedDetailPopupTheme theme;
@@ -372,7 +375,7 @@ public class UnifiedDetailPopupUI : MonoBehaviour, IBeginDragHandler, IEndDragHa
                 itemRect.anchoredPosition = new Vector2(itemRect.anchoredPosition.x, firstYOffset + i * ySpacing);
             item.gameObject.SetActive(true);
             UnifiedDetailAddedDetail detail = details[i];
-            item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type), detail.EnchantId, detail.Icon);
+            item.Apply(detail.Title, detail.Body, GetAddedDetailColor(detail.Type), detail.EnchantId, detail.Icon, detail.StackCount);
             item.SetScrollInteractionEnabled(pinned);
         }
     }
