@@ -1,25 +1,31 @@
-# ── Unity generated ──
+# Unity caches, builds and local diagnostics
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
+/[Bb]in/
 /[Bb]uild/
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+sysinfo.txt
+crashlytics-build.properties
 
-# ── IDE ──
+# Unity-generated IDE projects (root only; Standalone projects are hand-written)
+/*.csproj
+/*.unityproj
+/*.sln
+/*.slnx
+*.booproj
 /.idea/
 /.vs/
 /.vscode/
-*.csproj
-*.unityproj
-*.sln
 *.suo
 *.tmp
 *.user
 *.userprefs
 *.pidb
-*.booproj
 *.svd
 *.pdb
 *.mdb
@@ -27,30 +33,36 @@
 *.opendb
 *.VC.db
 
-# ── OS ──
+# Standalone .NET build intermediates and outputs, not source
+/Standalone/**/[Bb]in/
+/Standalone/**/[Oo]bj/
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# ── Gradle (Android build) ──
+# Build/export artifacts (keep Android templates and plugin binaries)
 ExportedObj/
 *.apk
 *.aab
 *.unitypackage
-*.app
+*.app/
 
-# ── Crash reports ──
-sysinfo.txt
-crashlytics-build.properties
-
-# ── Local SDK credentials ──
-/Assets/Resources/LocalSettings/
-
-# ── 本地敏感信息（TapDB MCP Key 等，绝不提交）──
-/LocalSafe/
-
-# ── Recordings / Profiling ──
+# Generated Addressables build data; keep other StreamingAssets and their metadata
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/
 
+# Local SDK credentials and Android signing keys.
+# Keep the tracked LocalSettings.meta folder GUID; ignore the payload inside.
+/Assets/Resources/LocalSettings/
+/LocalSafe/
+*.keystore
+*.jks
+
+# Local Locus integration and generated analyzer config with machine-specific paths
 /Packages/com.farlocus.locus/
-/Locus/
+/Directory.Build.props
+
+# Share project knowledge (including .locus-meta); keep other Locus data local
+/Locus/*
+!/Locus/knowledge/
