@@ -963,7 +963,7 @@
       "script": "BlueprintMagicModel",
       "nameKey": "magic.blueprint.name",
       "descriptionKey": "magic.blueprint.desc",
-      "iconName": "unknown",
+      "iconName": "蓝图",
       "recipe": [],
       "matchRule": 2
     },
@@ -974,7 +974,7 @@
       "script": "BarChartMagicModel",
       "nameKey": "magic.bar_chart.name",
       "descriptionKey": "magic.bar_chart.desc",
-      "iconName": "unknown",
+      "iconName": "柱状图",
       "recipe": [],
       "matchRule": 2
     }
