@@ -1,0 +1,15 @@
+version: 4
+summary: 用户确认的方向、需求和当前规则；历史方案移出活动知识
+inheritInjectMode: true
+aiMaintained: true
+explicitMaintenanceRules: true
+inheritToChildren: true
+allowCreateDocuments: true
+allowCreateDirectories: true
+allowMoveDocuments: true
+allowMoveDirectories: true
+maintenanceRules: |-
+  - 维护用户确认的方向、需求与现行规则；用户已授权本项目事实纠正、合并与归档，无需逐项审阅
+  - 新产品方向、玩法目标与方案决策按当前任务授权；事实整理不自动授权实现新玩法
+  - 优先保留仍会影响后续实现与判断的结论，合并重复内容
+  - 删除已废弃、已被替代或缺少依据的设计记录
