@@ -1020,6 +1020,11 @@ public class EnemyModel : UnitModel
         TriggerBuffs(opponent, (buff, self, target) => buff.OnTurnStart(self, target));
     }
 
+    internal void TriggerOnEnemyTurnStart(CombatantModel opponent)
+    {
+        TriggerBuffs(opponent, (buff, self, target) => buff.OnEnemyTurnStart(self, target));
+    }
+
     public void TriggerAfterTurnStart(CombatantModel opponent)
     {
         TriggerBuffs(opponent, (buff, self, target) => buff.AfterTurnStart(self, target));

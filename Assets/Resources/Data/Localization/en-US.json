@@ -386,7 +386,7 @@
     },
     {
       "key": "magic.rain_banner.desc",
-      "text": "Add 5 Temporary Down arrows to your hand one at a time."
+      "text": "Immediately add 3 Temporary Down arrows to your hand. After drawing next turn, add 2 Temporary Down arrows to your hand. Both grants respect your hand limit."
     },
     {
       "key": "magic.lighter.name",

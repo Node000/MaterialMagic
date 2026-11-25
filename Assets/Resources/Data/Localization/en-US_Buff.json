@@ -14,7 +14,7 @@
     },
     {
       "key": "buff.burning.desc",
-      "text": "At turn start, take damage equal to the stack count, then halve the stacks. This damage ignores Shield and is not affected by Vulnerable."
+      "text": "Enemies take Burning damage at the start of the enemy turn, before any enemy acts. The player takes it at the start of their turn. Take damage equal to the stack count, then halve the stacks. This damage ignores Shield and Vulnerable."
     },
     {
       "key": "buff.weak.name",
@@ -322,7 +322,7 @@
     },
     {
       "key": "buff.keep_hand.desc",
-      "text": "Keep your hand the next time you confirm your play, then clear this."
+      "text": "Keep your hand at the end of your next player turn, then clear this."
     },
     {
       "key": "buff.lazy_next_draw.name",
@@ -491,6 +491,14 @@
     {
       "key": "buff.hand_limit_next_turn.desc",
       "text": "Your hand limit is {0} next turn."
+    },
+    {
+      "key": "buff.rain_banner.name",
+      "text": "Rain Banner"
+    },
+    {
+      "key": "buff.rain_banner.desc",
+      "text": "After drawing next turn, add {0} Temporary Down arrows to your hand, up to your hand limit."
     }
   ]
 }

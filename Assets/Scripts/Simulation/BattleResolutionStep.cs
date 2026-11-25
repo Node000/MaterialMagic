@@ -23,8 +23,7 @@ public enum BattleResolutionStepKind
     PlayerTurnStarted,
     BattleFinished,
     PlayerResolveStarted,
-    Completed,
-    HandDiscardedOnConfirm
+    Completed
 }
 
 /// <summary>A value snapshot; model references identify units but numeric values do not change later.</summary>
@@ -66,7 +65,8 @@ public sealed class BattleStateSnapshot
     public BattlePhase Phase { get; }
     public int DrawPileCount { get; }
     public int DiscardPileCount { get; }
-    public int ConsumedPileCount { get; }
+    public int ConsumedPileCount => ConsumedPile.Count;
+    public IReadOnlyList<MaterialModel> ConsumedPile { get; }
     public IReadOnlyList<MaterialModel> Hand { get; }
     public IReadOnlyList<MaterialModel> PlayZone { get; }
     private readonly IReadOnlyDictionary<BuffEnum, BuffModel> playerBuffs;
@@ -93,7 +93,7 @@ public sealed class BattleStateSnapshot
         FocusTarget = battle?.FocusTarget;
         DrawPileCount = player != null ? player.DrawPile.Count : 0;
         DiscardPileCount = player != null ? player.DiscardPile.Count : 0;
-        ConsumedPileCount = player != null ? player.ConsumedPile.Count : 0;
+        ConsumedPile = new List<MaterialModel>(player != null ? player.ConsumedPile : new List<MaterialModel>()).AsReadOnly();
         Hand = new List<MaterialModel>(player != null ? player.Hand : new List<MaterialModel>()).AsReadOnly();
         PlayZone = new List<MaterialModel>(player != null ? player.PlayZone : new List<MaterialModel>()).AsReadOnly();
         if (player != null)

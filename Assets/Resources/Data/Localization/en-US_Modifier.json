@@ -182,7 +182,7 @@
     },
     {
       "key": "modifier.retained_arrow.desc",
-      "text": "If this arrow is in your hand when you confirm your play, keep it."
+      "text": "If this arrow is in your hand at the end of your turn, keep it."
     },
     {
       "key": "modifier.half_arrow.name",

@@ -14,7 +14,7 @@
     },
     {
       "key": "buff.burning.desc",
-      "text": "回合开始时造成等同层数的伤害，然后层数减半。该伤害无视护盾，且不受易损影响。"
+      "text": "敌方回合开始、任何敌人行动前结算敌人的燃烧；玩家的燃烧在玩家回合开始时结算。造成等同层数的伤害，然后层数减半。无视护盾，不受易损影响。"
     },
     {
       "key": "buff.weak.name",
@@ -318,7 +318,7 @@
     },
     {
       "key": "buff.keep_hand.desc",
-      "text": "下次确认打出时不弃手牌，生效后清除。"
+      "text": "下次玩家回合结束时不弃手牌，生效后清除。"
     },
     {
       "key": "buff.lazy_next_draw.name",
@@ -491,6 +491,14 @@
     {
       "key": "buff.hand_limit_next_turn.desc",
       "text": "下回合手牌上限为{0}。"
+    },
+    {
+      "key": "buff.rain_banner.name",
+      "text": "雨幡"
+    },
+    {
+      "key": "buff.rain_banner.desc",
+      "text": "下回合抽牌后，将{0}张【临时】下箭头加入手牌，受手牌上限限制。"
     }
   ]
 }

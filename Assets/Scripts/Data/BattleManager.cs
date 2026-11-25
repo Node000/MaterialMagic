@@ -892,7 +892,7 @@ public class BattleManager
         TriggerMagicTurnEnd();
         PlayerState.RemoveTurnOnlyModifiers();
         ArrowUpgradeSystem.TriggerEndTurn(PlayerState);
-        PlayerState.ReturnPlayZoneCardsToDiscardPile(removedTemporaryCards);
+        PlayerState.EndTurn(removedTemporaryCards);
         PlayerState.TriggerAfterTurnEnd(new CombatantModel(GetFirstAliveEnemy()));
         PlayerState.TriggerMaterialEnd();
         PlayerState.Relics.Publish(new RelicEvent(RelicEventKind.TurnEnded));
@@ -1054,9 +1054,22 @@ public class BattleManager
 
     private void BeginEnemyTurnCore()
     {
+        if (CurrentPhase == BattlePhase.EnemyTurn)
+            return;
+
         CurrentPhase = BattlePhase.EnemyTurn;
-        for (int i = 0; i < enemies.Count; i++)
+        // Keep summons from joining this opening batch or acting during this enemy turn.
+        int openingEnemyCount = enemies.Count;
+        for (int i = 0; i < openingEnemyCount; i++)
             enemies[i]?.SetCanActThisEnemyTurn(true);
+
+        CombatantModel opponent = new CombatantModel(PlayerState);
+        for (int i = 0; i < openingEnemyCount; i++)
+        {
+            EnemyModel enemy = enemies[i];
+            if (enemy != null && !enemy.IsDead)
+                enemy.TriggerOnEnemyTurnStart(opponent);
+        }
     }
 
     public void EndEnemyTurn()

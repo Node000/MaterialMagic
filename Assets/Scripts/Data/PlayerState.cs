@@ -1345,11 +1345,6 @@ public class PlayerState
         EndTurnInternal(removedTemporaryCards, force: false);
     }
 
-    internal void DiscardHandOnConfirm(List<MaterialModel> removedTemporaryCards)
-    {
-        using (Rules.Enter()) DiscardHand(removedTemporaryCards, force: false);
-    }
-
     private void EndTurnInternal(List<MaterialModel> removedTemporaryCards, bool force)
     {
         DiscardHand(removedTemporaryCards, force);
@@ -1358,7 +1353,7 @@ public class PlayerState
 
     private void DiscardHand(List<MaterialModel> removedTemporaryCards, bool force)
     {
-        // Only the cards present at confirmation are candidates. Discard hooks can create new cards.
+        // Discard hooks can create new cards; only the hand present at cleanup is eligible.
         var candidates = new List<MaterialModel>(Hand);
         int keepHand = force ? 0 : GetBuffStack(BuffEnum.KeepHand);
         bool keepAll = !force && (KeepHandOnEndTurn || keepHand > 0);

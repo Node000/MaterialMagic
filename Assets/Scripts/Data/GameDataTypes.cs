@@ -133,7 +133,8 @@ public enum BuffEnum
     RefreshLimitNextTurn = 60,
     RandomNextDraw = 61,
     TemporaryProliferatingNextDraw = 62,
-    HandLimitNextTurn = 63
+    HandLimitNextTurn = 63,
+    RainBanner = 64
 }
 
 public enum BuffKindEnum

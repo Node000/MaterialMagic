@@ -26,6 +26,11 @@ public class BuffModel
     {
     }
 
+    /// <summary>敌方回合开场、任何敌人行动之前触发。</summary>
+    public virtual void OnEnemyTurnStart(CombatantModel self, CombatantModel opponent)
+    {
+    }
+
     public virtual void AfterTurnStart(CombatantModel self, CombatantModel opponent)
     {
     }
@@ -272,6 +277,8 @@ public class BuffModel
                 return new TemporaryProliferatingNextDrawBuffModel(stack);
             case BuffEnum.HandLimitNextTurn:
                 return new HandLimitNextTurnBuffModel(stack);
+            case BuffEnum.RainBanner:
+                return new RainBannerBuffModel(stack);
             case BuffEnum.LazyNextDraw:
                 return new LazyNextDrawBuffModel(stack);
             case BuffEnum.ChargeNextDraw:
@@ -359,6 +366,7 @@ public class BuffModel
             case BuffEnum.EggDeathExplosion:
             case BuffEnum.FoamShield:
             case BuffEnum.ShieldOnNextDraw:
+            case BuffEnum.RainBanner:
                 return BuffKindEnum.Buff;
             case BuffEnum.RefreshLimitNextTurn:
             case BuffEnum.RandomNextDraw:

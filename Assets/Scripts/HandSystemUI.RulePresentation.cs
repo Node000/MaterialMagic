@@ -252,27 +252,11 @@ public partial class HandSystemUI
         var deaths = new DeathPlaybackState();
         try
         {
-            bool enemyBannerShown = false;
             nextEnemyRuleResolveIndex = 0;
             nextEnemyPresentationIndex = 0;
             for (int traceIndex = 0; traceIndex < steps.Count; traceIndex++)
             {
                 BattleResolutionStep step = steps[traceIndex];
-                if (step.Kind == BattleResolutionStepKind.EnemyActionStarted)
-                {
-                    suppressEnemyIntentRefresh = true;
-                    if (!enemyBannerShown)
-                    {
-                        enemyBannerShown = true;
-                        GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.enemy", "敌方回合"));
-                    }
-                    var group = new List<BattleResolutionStep> { step };
-                    while (traceIndex + 1 < steps.Count && steps[traceIndex + 1].Kind != BattleResolutionStepKind.EnemyActionStarted &&
-                        steps[traceIndex + 1].Kind != BattleResolutionStepKind.EnemyTurnEnded)
-                        group.Add(steps[++traceIndex]);
-                    EnemyActionPresentationRunner.Start(PlayCommittedEnemyGroup(group, step.EnemyActionIndex));
-                    continue;
-                }
                 if (step.Kind == BattleResolutionStepKind.EnemyTurnEnded)
                     yield return EnemyActionPresentationRunner.WaitForAll();
 
@@ -292,6 +276,16 @@ public partial class HandSystemUI
                         if (pendingFeedback == BattleResolutionStepKind.AfterMagic) ResetMagicHighlights();
                         pendingFeedback = BattleResolutionStepKind.Completed;
                     }
+                }
+
+                if (step.Kind == BattleResolutionStepKind.EnemyActionStarted)
+                {
+                    var group = new List<BattleResolutionStep> { step };
+                    while (traceIndex + 1 < steps.Count && steps[traceIndex + 1].Kind != BattleResolutionStepKind.EnemyActionStarted &&
+                        steps[traceIndex + 1].Kind != BattleResolutionStepKind.EnemyTurnEnded)
+                        group.Add(steps[++traceIndex]);
+                    EnemyActionPresentationRunner.Start(PlayCommittedEnemyGroup(group, step.EnemyActionIndex));
+                    continue;
                 }
 
                 if (step.Kind != BattleResolutionStepKind.AfterArrow && step.Kind != BattleResolutionStepKind.AfterMagic &&
@@ -352,6 +346,7 @@ public partial class HandSystemUI
                             source?.PlayTriggerFeedback(step.TriggerMaterials);
                             UpdateContinuousCastCounter(step.ContinuousCastCount, false);
                             yield return PlayCommittedCastFeedback(step, source != null ? source.transform as RectTransform : null);
+                            yield return PlayCommittedConsumedHandExits(step);
                             // Card arrivals use the existing stagger. Trigger rings never take part in this wait.
                             if (step.CreatedHandCards.Count > 0)
                             {
@@ -374,18 +369,23 @@ public partial class HandSystemUI
                         RefreshStaticUI(); RefreshEnemyUI();
                         yield return WaitResolveTransitionLocks();
                         break;
-                    case BattleResolutionStepKind.HandDiscardedOnConfirm:
-                        yield return PlayTurnCardExits(step.Before.Hand, step);
-                        break;
                     case BattleResolutionStepKind.PlayerTurnEnded:
                         GetUIManager().PlayArea?.HideResolveIndicator();
                         HideContinuousCastCounterUI();
-                        yield return PlayTurnCardExits(step.Before.PlayZone, step);
+                        yield return PlayTurnCardExits(step);
                         break;
-                    case BattleResolutionStepKind.EnemyActionStarted:
+                    case BattleResolutionStepKind.EnemyTurnStarted:
+                    {
                         suppressEnemyIntentRefresh = true;
                         GetUIManager().TurnBanner?.Show(LocalizationSystem.GetText("ui.battle.turn_banner.enemy", "敌方回合"));
+                        PlayPlayerDamageFeedbackIfNeeded(step.Before.PlayerHealth, step.Before.PlayerShield);
+                        var openingDamage = BuildEnemyDamageFeedback(step.Before);
+                        if (openingDamage.Count > 0)
+                            yield return PlayEnemyDamageFeedbackSequence(openingDamage);
+                        RefreshStaticUI();
+                        RefreshEnemyUI();
                         break;
+                    }
                     case BattleResolutionStepKind.BeforeEnemyIntent:
                     {
                         EnemyViewState state = FindEnemyViewState(step.ActingEnemy);
@@ -499,10 +499,39 @@ public partial class HandSystemUI
         nextEnemyRuleResolveIndex++;
     }
 
-    private IEnumerator PlayTurnCardExits(IReadOnlyList<MaterialModel> candidates, BattleResolutionStep step)
+    private IEnumerator PlayCommittedConsumedHandExits(BattleResolutionStep step)
+    {
+        if (step.Before.Hand.Count == 0 || step.After.ConsumedPileCount <= step.Before.ConsumedPileCount)
+            yield break;
+
+        var consumed = new HashSet<MaterialModel>(step.After.ConsumedPile);
+        consumed.ExceptWith(step.Before.ConsumedPile);
+        var exits = new List<HandCardView>();
+        foreach (MaterialModel card in step.Before.Hand)
+        {
+            if (!consumed.Contains(card))
+                continue;
+            if (playerState.Deck.Contains(card))
+                consumedBattleDeckCards.Add(card);
+            HandCardView view = FindView(card);
+            if (view != null)
+                exits.Add(view);
+        }
+
+        if (consumed.Count > 0)
+            RefreshMaterialListPanel();
+        if (exits.Count == 0)
+            yield break;
+        yield return AnimateRemovedReadViews(exits, GetConsumedPileArea());
+        UpdateLayout();
+    }
+
+    private IEnumerator PlayTurnCardExits(BattleResolutionStep step)
     {
         var remaining = new HashSet<MaterialModel>(step.After.Hand);
         remaining.UnionWith(step.After.PlayZone);
+        var candidates = new HashSet<MaterialModel>(step.Before.Hand);
+        candidates.UnionWith(step.Before.PlayZone);
         var exits = new List<HandCardView>();
         foreach (MaterialModel card in candidates)
             if (card != null && !remaining.Contains(card) && FindView(card) is HandCardView view && view != null)

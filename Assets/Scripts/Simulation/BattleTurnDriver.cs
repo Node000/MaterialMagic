@@ -45,7 +45,7 @@ public sealed class BattleTurnResult
 /// next player turn or terminal battle. No scene, animation, frame, or time dependency.
 /// Every rule call runs in the owning player's synchronous context. The returned trace is fully
 /// committed before playback starts; model references in it are identity handles, not display values.
-/// Confirming discards the old hand before reading arrows; turn end clears only the play zone.
+/// Both card areas clean up at player turn end, after all play-zone resolution.
 /// Death barriers precede terminal decisions.
 /// </summary>
 public static class BattleTurnDriver
@@ -86,13 +86,6 @@ public static class BattleTurnDriver
         bool hadPlayZoneCards = player.PlayZone.Count > 0;
         try
         {
-            BattleStateSnapshot discardBefore = BattleStateSnapshot.Capture(player, battle);
-            player.DiscardHandOnConfirm(removed);
-            record(new BattleResolutionStep
-            {
-                Kind = BattleResolutionStepKind.HandDiscardedOnConfirm, Before = discardBefore,
-                RemovedTemporaryCards = new List<MaterialModel>(removed).AsReadOnly()
-            });
             BattleDeathResolution.Drain(player, battle, record);
 
             if (hadPlayZoneCards && player.CurrentHealth > 0 && !battle.AllEnemiesDead())
@@ -143,12 +136,14 @@ public static class BattleTurnDriver
                 }
                 else
                 {
+                BattleStateSnapshot enemyTurnStartBefore = BattleStateSnapshot.Capture(player, battle);
                 battle.BeginEnemyTurn();
-                record(new BattleResolutionStep { Kind = BattleResolutionStepKind.EnemyTurnStarted });
+                record(new BattleResolutionStep { Kind = BattleResolutionStepKind.EnemyTurnStarted, Before = enemyTurnStartBefore });
+                BattleDeathResolution.Drain(player, battle, record);
                 int actionIndex = 0;
                 // Keep the UI rule schedule: a started enemy completes its entire group before deaths
                 // are drained, even if a hit kills it or the player. Summons are visited but cannot act.
-                for (int enemyIndex = 0; enemyIndex < battle.Enemies.Count; enemyIndex++)
+                for (int enemyIndex = 0; enemyIndex < battle.Enemies.Count && player.CurrentHealth > 0 && !battle.AllEnemiesDead(); enemyIndex++)
                 {
                     EnemyModel enemy = battle.Enemies[enemyIndex];
                     if (enemy == null || enemy.IsDead || !enemy.CanActThisEnemyTurn)
@@ -184,8 +179,6 @@ public static class BattleTurnDriver
                     record(new BattleResolutionStep { Kind = BattleResolutionStepKind.EnemyActionEnded,
                         ActingEnemy = enemy, EnemyActionIndex = actionIndex++, Before = actionEndBefore });
                     BattleDeathResolution.Drain(player, battle, record);
-                    if (player.CurrentHealth <= 0)
-                        break;
                 }
                 BattleStateSnapshot enemyTurnEndBefore = BattleStateSnapshot.Capture(player, battle);
                 battle.EndEnemyTurn();

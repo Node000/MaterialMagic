@@ -254,6 +254,11 @@
       "buffType": 57,
       "iconName": "magic/泡泡糖",
       "displayName": "抽牌护盾"
+    },
+    {
+      "buffType": 64,
+      "iconName": "magic/雨幡",
+      "displayName": "雨幡"
     }
   ]
 }

@@ -6,9 +6,22 @@ public class BurningBuffModel : BuffModel
 
     public override void OnTurnStart(CombatantModel self, CombatantModel opponent)
     {
-        int damage = self.IsEnemy ? self.Enemy.TakeDirectDamage(stack) : self.Player.TakeDirectDamage(stack);
-        if (damage > 0 && self.IsEnemy)
-            self.Enemy.Battle?.PlayerState?.TriggerAfterEnemyBurningDamage(self.Enemy, damage);
+        if (self?.Player != null)
+        {
+            self.Player.TakeDirectDamage(stack);
+            HalveStack();
+        }
+    }
+
+    public override void OnEnemyTurnStart(CombatantModel self, CombatantModel opponent)
+    {
+        EnemyModel enemy = self?.Enemy;
+        if (enemy == null || enemy.IsDead)
+            return;
+
+        int damage = enemy.TakeDirectDamage(stack);
+        if (damage > 0)
+            enemy.Battle?.PlayerState?.TriggerAfterEnemyBurningDamage(enemy, damage);
         HalveStack();
     }
 }

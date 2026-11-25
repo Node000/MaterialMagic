@@ -6,7 +6,7 @@
     },
     {
       "key": "tag.burning.desc",
-      "text": "At turn start, take damage equal to the stack count, then halve the stacks. This damage ignores Shield and is not affected by Vulnerable."
+      "text": "Resolve enemy Burning before any enemy acts and player Burning at the start of the player turn. Take damage equal to the stack count, then halve the stacks. This damage ignores Shield and Vulnerable."
     },
     {
       "key": "tag.arc.name",
@@ -174,7 +174,7 @@
     },
     {
       "key": "tag.keep_hand.desc",
-      "text": "Keep your hand the next time you confirm your play."
+      "text": "Keep your hand at the end of your next player turn."
     },
     {
       "key": "tag.remove_hand.name",
@@ -198,7 +198,7 @@
     },
     {
       "key": "modifier.retained_arrow.desc",
-      "text": "If this arrow is in your hand when you confirm your play, keep it."
+      "text": "If this arrow is in your hand at the end of your turn, keep it."
     },
     {
       "key": "tag.extra_enemy_debuff.name",

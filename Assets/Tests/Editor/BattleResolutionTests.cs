@@ -235,6 +235,71 @@ public class BattleResolutionTests
     }
 
     [Test]
+    public void FullTurn_EnemyBurningAndDeathEffectsFinishBeforeFirstIntent()
+    {
+        PlayerState player = CreatePlayer();
+        EnemyModel survivor = AddEnemy(30);
+        var dying = new DeathProbe(EnemyData(2));
+        var summoned = new EnemyModel(EnemyData(20));
+        battle.AddEnemy(dying); // The earlier enemy must not act before the later enemy burns.
+        dying.OnDeath = () => battle.SpawnEnemy(summoned);
+        SetIntents(survivor, new EnemyIntentData { actionType = EnemyActionType.Attack, value = 4 });
+        SetIntents(dying, new EnemyIntentData { actionType = EnemyActionType.Attack, value = 20 });
+        survivor.GainShield(10);
+        survivor.AddBuff(BuffEnum.Vulnerable, 2);
+        survivor.AddBuff(BuffEnum.Burning, 5);
+        dying.AddBuff(BuffEnum.Burning, 3);
+        summoned.AddBuff(BuffEnum.Burning, 4);
+        player.AddBuff(BuffEnum.Burning, 3);
+        player.AddBuff(BuffEnum.BurningDamageShieldNextTurn, 1);
+
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
+
+        var steps = new List<BattleResolutionStep>(result.Steps);
+        int startIndex = steps.FindIndex(step => step.Kind == BattleResolutionStepKind.EnemyTurnStarted);
+        int deathIndex = steps.FindIndex(step => step.Kind == BattleResolutionStepKind.DeathResolved);
+        int actionIndex = steps.FindIndex(step => step.Kind == BattleResolutionStepKind.EnemyActionStarted);
+        Assert.That(startIndex, Is.GreaterThanOrEqualTo(0));
+        Assert.That(deathIndex, Is.GreaterThan(startIndex));
+        Assert.That(actionIndex, Is.GreaterThan(deathIndex));
+        BattleResolutionStep opening = steps[startIndex];
+        Assert.That(opening.Before.FindEnemy(survivor).Health, Is.EqualTo(30));
+        Assert.That(opening.After.FindEnemy(survivor).Health, Is.EqualTo(25));
+        Assert.That(opening.After.FindEnemy(survivor).Shield, Is.EqualTo(10));
+        Assert.That(opening.After.FindEnemy(survivor).Buffs[BuffEnum.Burning].stack, Is.EqualTo(2));
+        Assert.That(opening.After.FindEnemy(survivor).Buffs[BuffEnum.Vulnerable].stack, Is.EqualTo(2));
+        Assert.That(opening.After.FindEnemy(dying).Health, Is.Zero);
+        Assert.That(opening.After.PlayerHealth, Is.EqualTo(50));
+        Assert.That(steps[actionIndex].Before.FindEnemy(dying).DeathHandled, Is.True);
+        Assert.That(result.EnemyIntents.Count, Is.EqualTo(1));
+        Assert.That(steps[actionIndex].ActingEnemy, Is.SameAs(survivor));
+        Assert.That(dying.ActionIndex, Is.Zero);
+        Assert.That(summoned.ActionIndex, Is.Zero);
+        Assert.That(summoned.CurrentHealth, Is.EqualTo(20));
+        Assert.That(dying.DeathCount, Is.EqualTo(1));
+        Assert.That(player.CurrentHealth, Is.EqualTo(43)); // One enemy hit, then player's own Burning.
+        Assert.That(player.Shield, Is.EqualTo(7)); // Can: actual enemy HP lost (5 + 2).
+    }
+
+    [Test]
+    public void FullTurn_OpeningBurningVictoryDoesNotExecuteAnyIntent()
+    {
+        PlayerState player = CreatePlayer();
+        EnemyModel enemy = AddEnemy(2);
+        enemy.AddBuff(BuffEnum.Burning, 3);
+        SetIntents(enemy, new EnemyIntentData { actionType = EnemyActionType.Attack, value = 7 });
+
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
+
+        Assert.That(result.Outcome, Is.EqualTo(BattleTurnOutcome.Victory));
+        Assert.That(result.EnemyIntents, Is.Empty);
+        Assert.That(result.NextPlayerTurnStart, Is.Null);
+        Assert.That(enemy.ActionIndex, Is.Zero);
+        Assert.That(enemy.DeathHandled, Is.True);
+        Assert.That(player.CurrentHealth, Is.EqualTo(50));
+    }
+
+    [Test]
     public void FullTurn_DeathBarrierWaitsForWholeEnemyGroup_ThenSkipsEnemyKilledByDeathChain()
     {
         PlayerState player = CreatePlayer();
@@ -307,71 +372,90 @@ public class BattleResolutionTests
         Assert.That(MaterialModifierModel.CurrentContext, Is.Null);
     }
 
-    [Test]
-    public void FullTurn_ConfirmDiscardsOldHand_RainBannerCastsBeforePlayZoneCleanup()
+    [TestCase(1, 2)]
+    [TestCase(2, 4)]
+    public void FullTurn_RainBannerGrantsThreeNowAndTwoPerCastNextTurn(int matches, int expectedNextTurnArrows)
     {
         PlayerState player = CreatePlayer();
         AddEnemy(100);
-        var rain = new RainBannerMagicModel(new MagicData
-        {
-            id = "magic_rain_banner",
-            recipe = new[] { MaterialEnum.Fire, MaterialEnum.Water, MaterialEnum.Earth }
-        });
+        var recipe = new[] { MaterialEnum.Fire, MaterialEnum.Water, MaterialEnum.Earth };
+        var rain = new RainBannerMagicModel(new MagicData { id = "magic_rain_banner", recipe = recipe });
         player.SetMagicAtSlot(rain, 0);
-        var oldHand = new MaterialModel("old_hand", MaterialEnum.Wind);
-        player.Hand.Add(oldHand);
-        AddCard(player, MaterialEnum.Fire);
-        AddCard(player, MaterialEnum.Water);
-        AddCard(player, MaterialEnum.Earth);
-        bool discarded = false;
-        bool cleanedUp = false;
-        BattleResolutionStep effect = null;
-        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0, onStep: step =>
+        for (int i = 0; i < matches; i++)
+            foreach (MaterialEnum material in recipe)
+                AddCard(player, material);
+
+        var normalDraw = new MaterialModel("normal_draw", MaterialEnum.Earth);
+        player.DrawPile.Add(normalDraw);
+        player.AddBuff(BuffEnum.RetainedNextDraw, expectedNextTurnArrows + 1);
+        var immediateArrows = new List<MaterialModel>();
+        int casts = 0;
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 1, onStep: step =>
         {
-            if (step.Kind == BattleResolutionStepKind.HandDiscardedOnConfirm)
-            {
-                discarded = true;
-                Assert.That(step.Before.Hand, Does.Contain(oldHand));
-                Assert.That(step.After.Hand, Is.Empty);
-                Assert.That(step.After.PlayZone.Count, Is.EqualTo(3));
-                Assert.That(player.DiscardPile, Does.Contain(oldHand));
-            }
-            if (step.Kind == BattleResolutionStepKind.BeforeArrow)
-                Assert.That(discarded, Is.True);
             if (step.Kind == BattleResolutionStepKind.AfterMagic && step.CastPerformed)
             {
-                Assert.That(discarded, Is.True);
-                Assert.That(cleanedUp, Is.False);
-                Assert.That(step.Before.Hand, Is.Empty);
-                Assert.That(step.Before.PlayZone.Count, Is.EqualTo(3));
+                casts++;
                 Assert.That(step.Magic, Is.SameAs(rain));
-                Assert.That(step.TriggerMaterials, Is.EqualTo(new[] { MaterialEnum.Fire, MaterialEnum.Water, MaterialEnum.Earth }));
-                Assert.That(step.After.Hand, Is.EqualTo(step.CreatedHandCards));
-                Assert.That(effect, Is.Null, "Match must cast exactly once.");
-                effect = step;
+                Assert.That(step.CreatedHandCards.Count, Is.EqualTo(3));
+                foreach (MaterialModel card in step.CreatedHandCards)
+                {
+                    Assert.That(card.material, Is.EqualTo(MaterialEnum.Water));
+                    Assert.That(card.isTemporary, Is.True);
+                    Assert.That(card.isRetained, Is.False);
+                    Assert.That(player.Deck.Contains(card), Is.False);
+                }
+                immediateArrows.AddRange(step.CreatedHandCards);
+                Assert.That(step.After.Hand, Is.EqualTo(immediateArrows));
+                Assert.That(step.After.PlayerBuffs[BuffEnum.RainBanner].stack, Is.EqualTo(casts));
             }
             if (step.Kind == BattleResolutionStepKind.PlayerTurnEnded)
             {
-                cleanedUp = true;
-                Assert.That(effect, Is.Not.Null);
-                Assert.That(step.After.Hand, Is.EqualTo(effect.CreatedHandCards));
-                Assert.That(step.After.PlayZone, Is.Empty);
+                Assert.That(step.Before.Hand, Is.EqualTo(immediateArrows));
+                Assert.That(step.After.Hand, Is.Empty);
+                Assert.That(step.RemovedTemporaryCards, Is.EquivalentTo(immediateArrows));
+            }
+            if (step.Kind == BattleResolutionStepKind.EnemyTurnEnded)
+            {
+                Assert.That(step.After.Hand, Is.Empty);
+                Assert.That(step.After.PlayerBuffs[BuffEnum.RainBanner].stack, Is.EqualTo(matches));
             }
         });
 
         Assert.That(result.Outcome, Is.EqualTo(BattleTurnOutcome.NextPlayerTurn));
-        Assert.That(effect, Is.Not.Null);
-        Assert.That(effect.CreatedHandCards.Count, Is.EqualTo(5));
-        Assert.That(new HashSet<MaterialModel>(effect.CreatedHandCards).Count, Is.EqualTo(5));
-        Assert.That(player.Hand, Is.EqualTo(effect.CreatedHandCards));
-        foreach (MaterialModel card in player.Hand)
+        Assert.That(casts, Is.EqualTo(matches));
+        Assert.That(player.Buffs.ContainsKey(BuffEnum.RainBanner), Is.False);
+        Assert.That(player.Hand.Count, Is.EqualTo(expectedNextTurnArrows + 1));
+        Assert.That(player.Hand[0], Is.SameAs(normalDraw));
+        Assert.That(normalDraw.isRetained, Is.True);
+        for (int i = 1; i < player.Hand.Count; i++)
         {
+            MaterialModel card = player.Hand[i];
             Assert.That(card.material, Is.EqualTo(MaterialEnum.Water));
             Assert.That(card.isTemporary, Is.True);
+            Assert.That(card.isRetained, Is.False);
             Assert.That(player.Deck.Contains(card), Is.False);
+            Assert.That(immediateArrows, Has.No.Member(card));
         }
         BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
-        Assert.That(player.Hand, Is.Empty, "Unplayed rain arrows expire at the next normal cleanup.");
+        Assert.That(player.Hand, Is.EqualTo(new[] { normalDraw }), "Rain arrows expire without being granted again.");
+    }
+
+    [Test]
+    public void FullTurn_RainBannerRespectsHandLimitAndClearsAllStacks()
+    {
+        PlayerState player = CreatePlayer();
+        AddEnemy(100);
+        player.SetHandLimitThisTurn(1);
+        player.AddBuff(BuffEnum.HandLimitNextTurn, 2);
+        player.AddBuff(BuffEnum.RainBanner, 1);
+        var rain = new RainBannerMagicModel(new MagicData { recipe = new[] { MaterialEnum.Earth } });
+        AddCard(player, MaterialEnum.Earth);
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, new[] { rain }, nextTurnDrawCount: 0);
+
+        var cast = new List<BattleResolutionStep>(result.Steps).Find(step => step.Kind == BattleResolutionStepKind.AfterMagic);
+        Assert.That(cast.CreatedHandCards.Count, Is.EqualTo(1));
+        Assert.That(player.Hand.Count, Is.EqualTo(2));
+        Assert.That(player.Buffs.ContainsKey(BuffEnum.RainBanner), Is.False);
     }
 
     [Test]
@@ -389,12 +473,13 @@ public class BattleResolutionTests
 
         BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
         Assert.That(player.Hand, Is.Empty);
+        Assert.That(player.Buffs.ContainsKey(BuffEnum.RainBanner), Is.False);
         foreach (BattleResolutionStep step in result.Steps)
             Assert.That(step.Kind, Is.Not.EqualTo(BattleResolutionStepKind.AfterMagic));
     }
 
     [Test]
-    public void FullTurn_KeepHandAppliesToNextConfirmationAndRetainedStillSurvives()
+    public void FullTurn_WingsKeepsHandAtCleanupOfTheTurnItCasts()
     {
         PlayerState player = CreatePlayer();
         AddEnemy(100);
@@ -407,19 +492,93 @@ public class BattleResolutionTests
         var floating = new FloatingMagicModel(new MagicData { recipe = new[] { MaterialEnum.Earth } });
 
         BattleTurnDriver.ResolveTurn(battle, new[] { floating }, nextTurnDrawCount: 0);
-        Assert.That(player.Hand, Is.EqualTo(new[] { retained }));
-        Assert.That(player.DiscardPile, Does.Contain(unsecured));
-        Assert.That(player.GetBuffStack(BuffEnum.KeepHand), Is.EqualTo(1));
-
-        var protectedCard = new MaterialModel("protected", MaterialEnum.Wind);
-        player.Hand.Add(protectedCard);
-        BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
-        Assert.That(player.Hand, Is.EqualTo(new[] { retained, protectedCard }));
+        Assert.That(player.Hand, Is.EqualTo(new[] { retained, unsecured }));
+        Assert.That(player.PlayZone, Is.Empty);
         Assert.That(player.GetBuffStack(BuffEnum.KeepHand), Is.Zero);
 
-        BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
-        Assert.That(player.Hand, Is.EqualTo(new[] { retained }));
-        Assert.That(player.DiscardPile, Does.Contain(protectedCard));
+        BattleTurnResult emptyPlay = BattleTurnDriver.ResolveTurn(battle, nextTurnDrawCount: 0);
+        var cleanup = new List<BattleResolutionStep>(emptyPlay.Steps).Find(step => step.Kind == BattleResolutionStepKind.PlayerTurnEnded);
+        Assert.That(cleanup.Before.Hand, Does.Contain(unsecured));
+        Assert.That(cleanup.After.Hand, Is.EqualTo(new[] { retained }));
+        Assert.That(player.DiscardPile, Does.Contain(unsecured));
+    }
+
+    [Test]
+    public void FullTurn_HandCountEffectsReadLiveHandAndBothZonesExitAfterRead()
+    {
+        PlayerState player = CreatePlayer();
+        EnemyModel enemy = AddEnemy(100);
+        var normal = new MaterialModel("hand_normal", MaterialEnum.Water);
+        var temporary = new MaterialModel("hand_temp", MaterialEnum.Wind);
+        temporary.AddModifier(new TemporaryModifier());
+        player.Hand.Add(normal);
+        player.Hand.Add(temporary);
+        MaterialModel played = AddCard(player, MaterialEnum.Earth);
+        var wave = new HarmfulWaveMagicModel(new MagicData { recipe = new[] { MaterialEnum.Earth } });
+        var camouflage = new CamouflageMagicModel(new MagicData { recipe = new[] { MaterialEnum.Earth } });
+
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, new MagicModel[] { wave, camouflage }, nextTurnDrawCount: 0);
+
+        var steps = new List<BattleResolutionStep>(result.Steps);
+        var waveCast = steps.Find(step => step.Kind == BattleResolutionStepKind.AfterMagic && step.Magic == wave);
+        var camouflageCast = steps.Find(step => step.Kind == BattleResolutionStepKind.AfterMagic && step.Magic == camouflage);
+        Assert.That(waveCast.After.FindEnemy(enemy).Health, Is.EqualTo(94));
+        Assert.That(camouflageCast.After.PlayerShield - camouflageCast.Before.PlayerShield, Is.EqualTo(6));
+        int afterReadIndex = steps.FindIndex(step => step.Kind == BattleResolutionStepKind.AfterRead);
+        int cleanupIndex = steps.FindIndex(step => step.Kind == BattleResolutionStepKind.PlayerTurnEnded);
+        Assert.That(cleanupIndex, Is.GreaterThan(afterReadIndex));
+        var cleanup = steps[cleanupIndex];
+        Assert.That(cleanup.Before.Hand, Is.EqualTo(new[] { normal, temporary }));
+        Assert.That(cleanup.Before.PlayZone, Is.EqualTo(new[] { played }));
+        Assert.That(cleanup.After.Hand, Is.Empty);
+        Assert.That(cleanup.After.PlayZone, Is.Empty);
+        Assert.That(cleanup.RemovedTemporaryCards, Is.EqualTo(new[] { temporary }));
+        Assert.That(player.DiscardPile, Is.EquivalentTo(new[] { normal, played }));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void FullTurn_StickerSeesConsumptionAtCleanupOrDuringRefine(bool refine)
+    {
+        PlayerState player = CreatePlayer();
+        AddEnemy(100);
+        var temporary = new MaterialModel("hand_temp", MaterialEnum.Water);
+        temporary.AddModifier(new TemporaryModifier());
+        var retained = new MaterialModel("retained", MaterialEnum.Wind);
+        retained.AddModifier(new RetainedArrowModifier());
+        player.Hand.Add(temporary);
+        player.Hand.Add(retained);
+        var sticker = new StickerMagicModel(new MagicData { recipe = new[] { MaterialEnum.Earth } });
+        var diamond = new RefineMagicModel(new MagicData { recipe = new[] { MaterialEnum.Wind } });
+        AddCard(player, MaterialEnum.Earth);
+        if (refine) AddCard(player, MaterialEnum.Wind);
+
+        BattleTurnResult result = BattleTurnDriver.ResolveTurn(battle, new MagicModel[] { sticker, diamond }, nextTurnDrawCount: 0);
+
+        var steps = new List<BattleResolutionStep>(result.Steps);
+        var cleanup = steps.Find(step => step.Kind == BattleResolutionStepKind.PlayerTurnEnded);
+        if (refine)
+        {
+            var cast = steps.Find(step => step.Kind == BattleResolutionStepKind.AfterMagic && step.Magic == diamond);
+            Assert.That(cast.Before.Hand, Is.EqualTo(new[] { temporary, retained }));
+            Assert.That(cast.After.Hand, Is.Empty);
+            Assert.That(cast.After.ConsumedPile, Is.EquivalentTo(new[] { temporary, retained }));
+            Assert.That(cleanup.Before.Hand, Is.Empty);
+            Assert.That(cleanup.RemovedTemporaryCards, Is.Empty);
+        }
+        else
+        {
+            Assert.That(cleanup.Before.Hand, Does.Contain(temporary));
+            Assert.That(cleanup.After.Hand, Is.EqualTo(new[] { retained }));
+            Assert.That(cleanup.RemovedTemporaryCards, Is.EqualTo(new[] { temporary }));
+        }
+        // The played Wind arrow also gives one normal draw in the Refine case.
+        Assert.That(player.Hand.Count, Is.EqualTo(refine ? 3 : 2));
+        var scheduled = player.Hand.FindAll(arrow => arrow.isTemporary);
+        Assert.That(scheduled.Count, Is.EqualTo(refine ? 2 : 1));
+        foreach (MaterialModel arrow in scheduled)
+            Assert.That(arrow.material, Is.EqualTo(MaterialEnum.Wind));
+        Assert.That(player.TemporaryMaterialsNextTurn, Is.Empty);
     }
 
     [TestCase(true, true)]

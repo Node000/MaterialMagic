@@ -140,6 +140,7 @@ public static class LocalizationKeys
             case BuffEnum.RandomNextDraw: return "random_next_draw";
             case BuffEnum.TemporaryProliferatingNextDraw: return "temporary_proliferating_next_draw";
             case BuffEnum.HandLimitNextTurn: return "hand_limit_next_turn";
+            case BuffEnum.RainBanner: return "rain_banner";
             case BuffEnum.TutorialDeath: return "tutorial_death";
             case BuffEnum.Claw: return "claw";
             default: return buffType.ToString().ToLowerInvariant();

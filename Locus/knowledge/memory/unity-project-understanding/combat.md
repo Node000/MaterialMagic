@@ -23,6 +23,7 @@ MagicModel.Cast每次施法：BeginCastTarget → 遗物MagicStarted → 强化B
 - 电弧：Magic.ResolveCast之后对存活敌人结算；`ArcBuffModel.ResolveAfterMagic`走TakeDamageIgnoringVulnerableResult，无攻击者、跳过易损增伤与易损受击衰减，保留护盾和其他受击链，回合结束清零。
 - 虚弱：OnAttack减值，实际AfterAttack减半，回合结束也减半；预览不得消耗。
 - 易损：OnTakeDamage加层数，FinalDamage>0时AfterTakeDamage减半，无普通回合衰减。
+- 自然燃烧无视护盾和易损，造成层数伤害后减半。玩家仍在玩家回合开始结算；敌人在`BeginEnemyTurn`通过独立钩子统一结算。driver先记录开场伤害并排空死亡/亡语，再执行存活敌人意图；单个敌人的其他回合开始钩子仍在其行动前。
 - 迟缓：OnGainShield减值，实际GainShield中的ApplyGainShieldModifiers管理消耗，预览不消耗；回合末减半。
 - Buff施加有来源OnGiveBuff、目标OnReceiveBuff、实际加入、来源AfterGiveBuff。新规则不要丢source，否则放大/反馈链失效。
 
@@ -40,7 +41,7 @@ BattleManager.BeginPlayerTurnStartRules/EndPlayerTurnRules、BeginEnemyAction/Re
 
 PlayerState当前有Deck、DrawPile、DiscardPile、ConsumedPile、Hand、PlayZone；旧“没有弃牌堆”说法失效。通常弃牌入DiscardPile，抽牌不够再洗回；消耗与临时牌有独立去向。
 
-战斗确认打出后、读箭头前单独弃旧手牌，保留箭头不弃；已有KeepHand Buff在这次确认消费，读牌中获得的KeepHand留待下一次确认。`HandDiscardedOnConfirm`与`PlayerTurnEnded`分别驱动手牌和出牌区退场。雨幡匹配即将临时牌加入手牌，正常回合末不再次清手；回合临时附魔仍到回合末清。战斗/节点清场仍可强制ForceDiscardAll/ClearCombatState。
+战斗确认时不弃手牌；读箭头、施放、读后处理完成后，`EndPlayerTurnRules`清理两区，UI由同一个`PlayerTurnEnded`的前后差量播放退场。保留箭头不弃，羽翼获得的KeepHand在当轮清理时消费且只保护手牌；假钻石是施放时主动消耗，不等回合末。雨幡每次施放直接发3张临时下箭头，并叠加同名Buff。下一回合正常抽牌后每层再发2张，随后清除层数。两批都受手牌上限约束，发放不触发抽牌钩子。战斗/节点清场仍可强制ForceDiscardAll/ClearCombatState。
 
 ## 遗物逻辑接入
 
