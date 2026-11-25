@@ -1,0 +1,3070 @@
+{
+  "app": "plotweave",
+  "kind": "plotweave-bundle",
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-21T11:02:41.727Z",
+  "projectFingerprint": "pw_93452eb1",
+  "project": {
+    "app": "plotweave",
+    "schemaVersion": 1,
+    "meta": {
+      "name": "静默层",
+      "author": "PlotWeave",
+      "description": "一个用于验证「区域 — 地块 — 子房间」三层结构的示例工程。四个区域通过少量门相连。",
+      "createdAt": "2026-11-21T00:00:00.000Z",
+      "updatedAt": "2026-11-21T00:00:00.000Z"
+    },
+    "settings": {
+      "grid": {
+        "width": 44,
+        "height": 32
+      }
+    },
+    "regions": [
+      {
+        "id": "atrium",
+        "name": "前厅",
+        "shortName": "前厅",
+        "color": "#d9a441",
+        "description": "最接近入口的公共层。门厅、回廊与中庭构成了初入者的第一印象。",
+        "tags": [
+          "public",
+          "start"
+        ],
+        "generation": {
+          "min": 4,
+          "max": 8,
+          "weight": 1.3,
+          "order": 0
+        },
+        "hidden": false
+      },
+      {
+        "id": "archive",
+        "name": "档案层",
+        "shortName": "档案",
+        "color": "#6aa9c9",
+        "description": "被书架与索引包围的静默层。这里的门很少，但每一扇都通向更深的记录。",
+        "tags": [
+          "archive",
+          "knowledge"
+        ],
+        "generation": {
+          "min": 3,
+          "max": 7,
+          "weight": 1.05,
+          "order": 1
+        },
+        "hidden": false
+      },
+      {
+        "id": "hollow",
+        "name": "空洞层",
+        "shortName": "空洞",
+        "color": "#a78bfa",
+        "description": "结构开始失效的区域。湿廊与裂口会自行改变形状，菌室在墙角呼吸。",
+        "tags": [
+          "organic",
+          "unstable"
+        ],
+        "generation": {
+          "min": 3,
+          "max": 6,
+          "weight": 0.95,
+          "order": 2
+        },
+        "hidden": false
+      },
+      {
+        "id": "engine",
+        "name": "引擎层",
+        "shortName": "引擎",
+        "color": "#7fb685",
+        "description": "维持整层运转的工业区。管道、阀室与锅炉房组成一套缓慢搏动的循环。",
+        "tags": [
+          "industrial",
+          "utility"
+        ],
+        "generation": {
+          "min": 2,
+          "max": 5,
+          "weight": 0.85,
+          "order": 3
+        },
+        "hidden": false
+      }
+    ],
+    "plotKinds": [
+      {
+        "id": "atrium_foyer",
+        "name": "门厅",
+        "shortName": "门厅",
+        "regionId": "atrium",
+        "description": "入口后的第一段廊道，连接数高，常有监控室与储藏间。",
+        "tags": [
+          "public",
+          "start",
+          "hub"
+        ],
+        "length": {
+          "min": 2,
+          "max": 3
+        },
+        "connections": {
+          "max": 4,
+          "anchors": "both",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 2,
+          "pool": [
+            "store",
+            "watch"
+          ]
+        },
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "generation": {
+          "weight": 1.25,
+          "max": 6,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▣"
+        },
+        "spawnEligible": true,
+        "groupId": ""
+      },
+      {
+        "id": "atrium_gallery",
+        "name": "回廊",
+        "shortName": "回廊",
+        "regionId": "atrium",
+        "description": "细长的观景廊道，只在两端开口，是最稳定的骨架。",
+        "tags": [
+          "public",
+          "spine"
+        ],
+        "length": {
+          "min": 4,
+          "max": 5
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "ends",
+          "allowCrossing": false,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 0,
+          "max": 1,
+          "pool": [
+            "store"
+          ]
+        },
+        "contents": {
+          "props": [
+            "canteen"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.4,
+          "max": 5,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▭"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "atrium_side",
+        "name": "侧厅",
+        "shortName": "侧厅",
+        "regionId": "atrium",
+        "description": "从主廊分出的短支路，适合挂接小房间与岔路。",
+        "tags": [
+          "public",
+          "branch"
+        ],
+        "length": {
+          "min": 2,
+          "max": 3
+        },
+        "connections": {
+          "max": 3,
+          "anchors": "both",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 0,
+          "max": 1,
+          "pool": [
+            "store",
+            "watch"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "generation": {
+          "weight": 1.1,
+          "max": 5,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▭"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "atrium_court",
+        "name": "中庭",
+        "shortName": "中庭",
+        "regionId": "atrium",
+        "description": "短而宽的中庭，四个方向都可能开口，是天然的交叉枢纽。",
+        "tags": [
+          "public",
+          "hub",
+          "ritual"
+        ],
+        "length": {
+          "min": 1,
+          "max": 2
+        },
+        "connections": {
+          "max": 4,
+          "anchors": "any",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 1,
+          "pool": [
+            "shrine"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [
+            "mirror_shard"
+          ],
+          "events": [
+            "lights_out"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.65,
+          "max": 3,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "◈"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "archive_stack",
+        "name": "书架廊",
+        "shortName": "书架廊",
+        "regionId": "archive",
+        "description": "两侧全是书架的窄廊，穿过时需要侧身。只在两端连接。",
+        "tags": [
+          "archive",
+          "spine"
+        ],
+        "length": {
+          "min": 4,
+          "max": 5
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "ends",
+          "allowCrossing": false,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 0,
+          "max": 1,
+          "pool": [
+            "hidden",
+            "store"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [
+            "brass_bell"
+          ],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.25,
+          "max": 4,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▭"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "archive_index",
+        "name": "索引厅",
+        "shortName": "索引厅",
+        "regionId": "archive",
+        "description": "档案层的分拣中心，长桌与卡片柜之间有很多门。",
+        "tags": [
+          "archive",
+          "hub"
+        ],
+        "length": {
+          "min": 3,
+          "max": 4
+        },
+        "connections": {
+          "max": 4,
+          "anchors": "both",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 2,
+          "pool": [
+            "hidden",
+            "watch"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": [
+            "archivist"
+          ]
+        },
+        "generation": {
+          "weight": 1,
+          "max": 4,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▣"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "archive_vault",
+        "name": "禁书库",
+        "shortName": "禁书库",
+        "regionId": "archive",
+        "description": "尽头的小房间，只和档案层内部相连。门后有什么，索引里没有写。",
+        "tags": [
+          "archive",
+          "secret"
+        ],
+        "length": {
+          "min": 1,
+          "max": 2
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "ends",
+          "allowCrossing": false,
+          "allowedKinds": [
+            "archive_stack",
+            "archive_index",
+            "archive_vault"
+          ],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 1,
+          "pool": [
+            "hidden"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [
+            "lead_seal"
+          ],
+          "events": [],
+          "enemies": [
+            "listener"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.55,
+          "max": 2,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "◆"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "hollow_wet",
+        "name": "湿廊",
+        "shortName": "湿廊",
+        "regionId": "hollow",
+        "description": "地面永远积着一层水，回声比脚步更早到达。",
+        "tags": [
+          "organic",
+          "spine"
+        ],
+        "length": {
+          "min": 4,
+          "max": 5
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "ends",
+          "allowCrossing": false,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 0,
+          "max": 1,
+          "pool": [
+            "spore"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "mold"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.2,
+          "max": 4,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▭"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "hollow_rift",
+        "name": "裂口",
+        "shortName": "裂口",
+        "regionId": "hollow",
+        "description": "结构断裂后留下的不规则空间，容易和别的条带发生交叉。",
+        "tags": [
+          "organic",
+          "hub",
+          "unstable"
+        ],
+        "length": {
+          "min": 2,
+          "max": 4
+        },
+        "connections": {
+          "max": 3,
+          "anchors": "both",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 2,
+          "pool": [
+            "shrine",
+            "spore"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "static"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.15,
+          "max": 4,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "✦"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "hollow_nest",
+        "name": "巢室",
+        "shortName": "巢室",
+        "regionId": "hollow",
+        "description": "被菌丝覆盖的死角。空间很小，却可能有很多出口。",
+        "tags": [
+          "organic",
+          "nest"
+        ],
+        "length": {
+          "min": 1,
+          "max": 2
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "any",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 1,
+          "pool": [
+            "spore"
+          ]
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "crawler"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.8,
+          "max": 3,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "●"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "engine_pipe",
+        "name": "管道",
+        "shortName": "管道",
+        "regionId": "engine",
+        "description": "笔直的压力管道，只在两端接入阀室。",
+        "tags": [
+          "industrial",
+          "spine"
+        ],
+        "length": {
+          "min": 4,
+          "max": 5
+        },
+        "connections": {
+          "max": 2,
+          "anchors": "ends",
+          "allowCrossing": false,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": false,
+          "min": 0,
+          "max": 0,
+          "pool": []
+        },
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "pressure"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.05,
+          "max": 3,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▭"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "engine_valve",
+        "name": "阀室",
+        "shortName": "阀室",
+        "regionId": "engine",
+        "description": "管网的换向节点，阀门背后是配电间和检修工具。",
+        "tags": [
+          "industrial",
+          "hub",
+          "utility"
+        ],
+        "length": {
+          "min": 2,
+          "max": 3
+        },
+        "connections": {
+          "max": 4,
+          "anchors": "both",
+          "allowCrossing": true,
+          "allowedKinds": [],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 1,
+          "pool": [
+            "power"
+          ]
+        },
+        "contents": {
+          "props": [
+            "fuse",
+            "keycard"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": [
+            "engineer"
+          ]
+        },
+        "generation": {
+          "weight": 1,
+          "max": 3,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▣"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      },
+      {
+        "id": "engine_boiler",
+        "name": "锅炉房",
+        "shortName": "锅炉房",
+        "regionId": "engine",
+        "description": "整层最热的地方。只和引擎层的管道、阀室互通，出口很少。",
+        "tags": [
+          "industrial",
+          "heat"
+        ],
+        "length": {
+          "min": 2,
+          "max": 3
+        },
+        "connections": {
+          "max": 3,
+          "anchors": "both",
+          "allowCrossing": false,
+          "allowedKinds": [
+            "engine_pipe",
+            "engine_valve",
+            "engine_boiler"
+          ],
+          "allowedTags": []
+        },
+        "subRooms": {
+          "enabled": true,
+          "min": 1,
+          "max": 2,
+          "pool": [
+            "power",
+            "store"
+          ]
+        },
+        "contents": {
+          "props": [
+            "fuse"
+          ],
+          "relics": [],
+          "events": [
+            "pressure"
+          ],
+          "enemies": [
+            "ash"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.6,
+          "max": 2,
+          "unique": false
+        },
+        "visual": {
+          "color": "",
+          "icon": "▲"
+        },
+        "spawnEligible": false,
+        "groupId": ""
+      }
+    ],
+    "subRoomKinds": [
+      {
+        "id": "store",
+        "name": "储藏间",
+        "description": "堆着上一批探索者留下的物资。",
+        "color": "#c9a227",
+        "tags": [
+          "storage"
+        ],
+        "contents": {
+          "props": [
+            "rope",
+            "canteen"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 1.2
+        }
+      },
+      {
+        "id": "shrine",
+        "name": "祭坛",
+        "description": "墙面上有反复描摹的符号，中央摆着一件不该在这里的东西。",
+        "color": "#b07bd8",
+        "tags": [
+          "ritual"
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "brass_bell",
+            "mirror_shard"
+          ],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.8
+        }
+      },
+      {
+        "id": "watch",
+        "name": "监控室",
+        "description": "屏幕仍然亮着，画面里是别的走廊。",
+        "color": "#6aa9c9",
+        "tags": [
+          "surveillance"
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "lights_out"
+          ],
+          "enemies": [
+            "listener"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.9
+        }
+      },
+      {
+        "id": "spore",
+        "name": "菌室",
+        "description": "温热的孢子云让灯光变得浑浊。",
+        "color": "#7fb685",
+        "tags": [
+          "organic"
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "mold"
+          ],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.85
+        }
+      },
+      {
+        "id": "power",
+        "name": "配电间",
+        "description": "保险丝盒与备用电池，空气里有臭氧味。",
+        "color": "#d98c6a",
+        "tags": [
+          "utility"
+        ],
+        "contents": {
+          "props": [
+            "fuse"
+          ],
+          "relics": [],
+          "events": [
+            "pressure"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.8
+        }
+      },
+      {
+        "id": "hidden",
+        "name": "密室",
+        "description": "地图上不存在的房间。",
+        "color": "#9aa7b8",
+        "tags": [
+          "secret"
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "cassette",
+            "lead_seal"
+          ],
+          "events": [],
+          "enemies": [],
+          "npcs": []
+        },
+        "generation": {
+          "weight": 0.55
+        }
+      }
+    ],
+    "catalogs": {
+      "props": [
+        {
+          "id": "flashlight",
+          "name": "手电筒",
+          "description": "还能亮多久，没人知道。",
+          "tags": [
+            "light"
+          ],
+          "rarity": "common",
+          "icon": "◆"
+        },
+        {
+          "id": "keycard",
+          "name": "门禁卡",
+          "description": "一张没有照片的权限卡。",
+          "tags": [
+            "access"
+          ],
+          "rarity": "uncommon",
+          "icon": "▣"
+        },
+        {
+          "id": "rope",
+          "name": "绳索",
+          "description": "足够长，也足够旧。",
+          "tags": [
+            "utility"
+          ],
+          "rarity": "common",
+          "icon": "⌁"
+        },
+        {
+          "id": "canteen",
+          "name": "水壶",
+          "description": "壶底刻着别人的名字。",
+          "tags": [
+            "survival"
+          ],
+          "rarity": "common",
+          "icon": "◒"
+        },
+        {
+          "id": "fuse",
+          "name": "保险丝",
+          "description": "引擎层最常用的消耗品。",
+          "tags": [
+            "utility",
+            "engine"
+          ],
+          "rarity": "uncommon",
+          "icon": "⌇"
+        }
+      ],
+      "relics": [
+        {
+          "id": "brass_bell",
+          "name": "铜铃",
+          "description": "摇动时没有声音，但走廊会改变方向。",
+          "tags": [
+            "ritual"
+          ],
+          "rarity": "rare",
+          "icon": "◈"
+        },
+        {
+          "id": "cassette",
+          "name": "磁带",
+          "description": "标签上写着一个不存在的日期。",
+          "tags": [
+            "record"
+          ],
+          "rarity": "uncommon",
+          "icon": "▤"
+        },
+        {
+          "id": "mirror_shard",
+          "name": "镜片",
+          "description": "映出的房间比现实中多一扇门。",
+          "tags": [
+            "ritual"
+          ],
+          "rarity": "rare",
+          "icon": "◇"
+        },
+        {
+          "id": "lead_seal",
+          "name": "铅封",
+          "description": "很重。靠近时能听见低频的震动。",
+          "tags": [
+            "containment"
+          ],
+          "rarity": "rare",
+          "icon": "⬡"
+        }
+      ],
+      "events": [
+        {
+          "id": "lights_out",
+          "name": "停电",
+          "description": "照明熄灭，应急灯亮起。",
+          "tags": [
+            "environment"
+          ],
+          "rarity": "common",
+          "icon": "◈"
+        },
+        {
+          "id": "whisper",
+          "name": "低语",
+          "description": "声音从书架背后传来。",
+          "tags": [
+            "psychic"
+          ],
+          "rarity": "uncommon",
+          "icon": "◈"
+        },
+        {
+          "id": "pressure",
+          "name": "压力失衡",
+          "description": "管道开始发出有节奏的敲击。",
+          "tags": [
+            "engine"
+          ],
+          "rarity": "common",
+          "icon": "◈"
+        },
+        {
+          "id": "static",
+          "name": "静电潮",
+          "description": "空气里的尘埃同时立了起来。",
+          "tags": [
+            "unstable"
+          ],
+          "rarity": "uncommon",
+          "icon": "◈"
+        },
+        {
+          "id": "footsteps",
+          "name": "脚步声",
+          "description": "比你慢半拍，但一直跟着。",
+          "tags": [
+            "psychic"
+          ],
+          "rarity": "common",
+          "icon": "◈"
+        }
+      ],
+      "enemies": [
+        {
+          "id": "crawler",
+          "name": "爬行者",
+          "description": "贴着墙移动，厌恶强光。",
+          "tags": [
+            "hollow"
+          ],
+          "rarity": "common",
+          "icon": "▲"
+        },
+        {
+          "id": "mold",
+          "name": "霉团",
+          "description": "从积水里缓慢聚拢。",
+          "tags": [
+            "organic"
+          ],
+          "rarity": "common",
+          "icon": "▲"
+        },
+        {
+          "id": "ash",
+          "name": "灰烬客",
+          "description": "在锅炉房的高温里成形。",
+          "tags": [
+            "engine"
+          ],
+          "rarity": "uncommon",
+          "icon": "▲"
+        },
+        {
+          "id": "listener",
+          "name": "倾听者",
+          "description": "没有眼睛，但对声音极其敏感。",
+          "tags": [
+            "archive"
+          ],
+          "rarity": "rare",
+          "icon": "▲"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "wanderer",
+          "name": "流浪者",
+          "description": "不记得自己从哪里进来。",
+          "tags": [
+            "neutral"
+          ],
+          "rarity": "uncommon",
+          "icon": "●"
+        },
+        {
+          "id": "archivist",
+          "name": "档案员",
+          "description": "愿意用情报交换未记录的故事。",
+          "tags": [
+            "archive"
+          ],
+          "rarity": "uncommon",
+          "icon": "●"
+        },
+        {
+          "id": "engineer",
+          "name": "检修员",
+          "description": "仍在按一张过期图纸工作。",
+          "tags": [
+            "engine"
+          ],
+          "rarity": "rare",
+          "icon": "●"
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "id": "standard",
+        "name": "标准漫游",
+        "description": "24 块，四个区域通过少量跨区门连接。",
+        "plotTarget": 24,
+        "startRegionId": "atrium",
+        "startKindId": "atrium_foyer",
+        "regionIds": [],
+        "allowCrossRegion": true,
+        "crossRegionRatio": 0.18,
+        "maxCrossRegionPerPair": 2,
+        "allowCrossing": true,
+        "subRoomDensity": 1,
+        "generator": "standard"
+      },
+      {
+        "id": "compact",
+        "name": "紧凑勘探",
+        "description": "12 块，只使用前厅、档案层与空洞层。",
+        "plotTarget": 12,
+        "startRegionId": "atrium",
+        "startKindId": "atrium_foyer",
+        "regionIds": [
+          "atrium",
+          "archive",
+          "hollow"
+        ],
+        "allowCrossRegion": true,
+        "crossRegionRatio": 0.25,
+        "maxCrossRegionPerPair": 1,
+        "allowCrossing": true,
+        "subRoomDensity": 0.8,
+        "generator": "standard"
+      },
+      {
+        "id": "quiet",
+        "name": "封闭前厅",
+        "description": "8 块，仅前厅，无跨区连接。",
+        "plotTarget": 8,
+        "startRegionId": "atrium",
+        "startKindId": "atrium_foyer",
+        "regionIds": [
+          "atrium"
+        ],
+        "allowCrossRegion": false,
+        "crossRegionRatio": 0,
+        "maxCrossRegionPerPair": 0,
+        "allowCrossing": true,
+        "subRoomDensity": 1,
+        "generator": "standard"
+      }
+    ],
+    "extensions": {},
+    "plotGroups": []
+  },
+  "map": {
+    "id": "map_EXAMPLE-0001",
+    "seed": "EXAMPLE-0001",
+    "profileId": "standard",
+    "generator": "standard",
+    "generatorVersion": 1,
+    "createdAt": "2026-11-21T11:02:41.724Z",
+    "settings": {
+      "grid": {
+        "width": 44,
+        "height": 32
+      }
+    },
+    "plots": [
+      {
+        "id": "p1",
+        "kindId": "atrium_foyer",
+        "regionId": "atrium",
+        "axis": "v",
+        "origin": {
+          "x": 22,
+          "y": 16
+        },
+        "length": 2,
+        "cells": [
+          {
+            "x": 22,
+            "y": 16,
+            "index": 0
+          },
+          {
+            "x": 22,
+            "y": 17,
+            "index": 1
+          }
+        ],
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s1",
+            "kindId": "store",
+            "cellIndex": 1,
+            "x": 22,
+            "y": 17,
+            "contents": {
+              "props": [
+                "rope",
+                "canteen"
+              ],
+              "relics": [],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "kindId": "engine_valve",
+        "regionId": "engine",
+        "axis": "v",
+        "origin": {
+          "x": 21,
+          "y": 16
+        },
+        "length": 2,
+        "cells": [
+          {
+            "x": 21,
+            "y": 16,
+            "index": 0
+          },
+          {
+            "x": 21,
+            "y": 17,
+            "index": 1
+          }
+        ],
+        "contents": {
+          "props": [
+            "fuse",
+            "keycard"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": [
+            "engineer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s2",
+            "kindId": "power",
+            "cellIndex": 0,
+            "x": 21,
+            "y": 16,
+            "contents": {
+              "props": [
+                "fuse"
+              ],
+              "relics": [],
+              "events": [
+                "pressure"
+              ],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p3",
+        "kindId": "archive_index",
+        "regionId": "archive",
+        "axis": "h",
+        "origin": {
+          "x": 21,
+          "y": 15
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 21,
+            "y": 15,
+            "index": 0
+          },
+          {
+            "x": 22,
+            "y": 15,
+            "index": 1
+          },
+          {
+            "x": 23,
+            "y": 15,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": [
+            "archivist"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s3",
+            "kindId": "watch",
+            "cellIndex": 2,
+            "x": 23,
+            "y": 15,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s4",
+            "kindId": "watch",
+            "cellIndex": 0,
+            "x": 21,
+            "y": 15,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p4",
+        "kindId": "hollow_wet",
+        "regionId": "hollow",
+        "axis": "h",
+        "origin": {
+          "x": 23,
+          "y": 17
+        },
+        "length": 5,
+        "cells": [
+          {
+            "x": 23,
+            "y": 17,
+            "index": 0
+          },
+          {
+            "x": 24,
+            "y": 17,
+            "index": 1
+          },
+          {
+            "x": 25,
+            "y": 17,
+            "index": 2
+          },
+          {
+            "x": 26,
+            "y": 17,
+            "index": 3
+          },
+          {
+            "x": 27,
+            "y": 17,
+            "index": 4
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "mold"
+          ],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s5",
+            "kindId": "spore",
+            "cellIndex": 2,
+            "x": 25,
+            "y": 17,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p5",
+        "kindId": "atrium_foyer",
+        "regionId": "atrium",
+        "axis": "h",
+        "origin": {
+          "x": 20,
+          "y": 18
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 20,
+            "y": 18,
+            "index": 0
+          },
+          {
+            "x": 21,
+            "y": 18,
+            "index": 1
+          },
+          {
+            "x": 22,
+            "y": 18,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s6",
+            "kindId": "watch",
+            "cellIndex": 0,
+            "x": 20,
+            "y": 18,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p6",
+        "kindId": "hollow_rift",
+        "regionId": "hollow",
+        "axis": "v",
+        "origin": {
+          "x": 28,
+          "y": 16
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 28,
+            "y": 16,
+            "index": 0
+          },
+          {
+            "x": 28,
+            "y": 17,
+            "index": 1
+          },
+          {
+            "x": 28,
+            "y": 18,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "static"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s7",
+            "kindId": "spore",
+            "cellIndex": 1,
+            "x": 28,
+            "y": 17,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s8",
+            "kindId": "spore",
+            "cellIndex": 2,
+            "x": 28,
+            "y": 18,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p7",
+        "kindId": "archive_vault",
+        "regionId": "archive",
+        "axis": "h",
+        "origin": {
+          "x": 21,
+          "y": 14
+        },
+        "length": 2,
+        "cells": [
+          {
+            "x": 21,
+            "y": 14,
+            "index": 0
+          },
+          {
+            "x": 22,
+            "y": 14,
+            "index": 1
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "lead_seal"
+          ],
+          "events": [],
+          "enemies": [
+            "listener"
+          ],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s9",
+            "kindId": "hidden",
+            "cellIndex": 1,
+            "x": 22,
+            "y": 14,
+            "contents": {
+              "props": [],
+              "relics": [
+                "cassette",
+                "lead_seal"
+              ],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p8",
+        "kindId": "archive_vault",
+        "regionId": "archive",
+        "axis": "h",
+        "origin": {
+          "x": 23,
+          "y": 14
+        },
+        "length": 1,
+        "cells": [
+          {
+            "x": 23,
+            "y": 14,
+            "index": 0
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "lead_seal"
+          ],
+          "events": [],
+          "enemies": [
+            "listener"
+          ],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s10",
+            "kindId": "hidden",
+            "cellIndex": 0,
+            "x": 23,
+            "y": 14,
+            "contents": {
+              "props": [],
+              "relics": [
+                "cassette",
+                "lead_seal"
+              ],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p9",
+        "kindId": "atrium_side",
+        "regionId": "atrium",
+        "axis": "h",
+        "origin": {
+          "x": 22,
+          "y": 19
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 22,
+            "y": 19,
+            "index": 0
+          },
+          {
+            "x": 23,
+            "y": 19,
+            "index": 1
+          },
+          {
+            "x": 24,
+            "y": 19,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p10",
+        "kindId": "archive_index",
+        "regionId": "archive",
+        "axis": "v",
+        "origin": {
+          "x": 20,
+          "y": 14
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 20,
+            "y": 14,
+            "index": 0
+          },
+          {
+            "x": 20,
+            "y": 15,
+            "index": 1
+          },
+          {
+            "x": 20,
+            "y": 16,
+            "index": 2
+          },
+          {
+            "x": 20,
+            "y": 17,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": [
+            "archivist"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s11",
+            "kindId": "watch",
+            "cellIndex": 1,
+            "x": 20,
+            "y": 15,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p11",
+        "kindId": "hollow_wet",
+        "regionId": "hollow",
+        "axis": "h",
+        "origin": {
+          "x": 29,
+          "y": 17
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 29,
+            "y": 17,
+            "index": 0
+          },
+          {
+            "x": 30,
+            "y": 17,
+            "index": 1
+          },
+          {
+            "x": 31,
+            "y": 17,
+            "index": 2
+          },
+          {
+            "x": 32,
+            "y": 17,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "mold"
+          ],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p12",
+        "kindId": "engine_pipe",
+        "regionId": "engine",
+        "axis": "h",
+        "origin": {
+          "x": 25,
+          "y": 19
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 25,
+            "y": 19,
+            "index": 0
+          },
+          {
+            "x": 26,
+            "y": 19,
+            "index": 1
+          },
+          {
+            "x": 27,
+            "y": 19,
+            "index": 2
+          },
+          {
+            "x": 28,
+            "y": 19,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "pressure"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p13",
+        "kindId": "archive_stack",
+        "regionId": "archive",
+        "axis": "v",
+        "origin": {
+          "x": 19,
+          "y": 11
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 19,
+            "y": 11,
+            "index": 0
+          },
+          {
+            "x": 19,
+            "y": 12,
+            "index": 1
+          },
+          {
+            "x": 19,
+            "y": 13,
+            "index": 2
+          },
+          {
+            "x": 19,
+            "y": 14,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "brass_bell"
+          ],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p14",
+        "kindId": "archive_index",
+        "regionId": "archive",
+        "axis": "h",
+        "origin": {
+          "x": 20,
+          "y": 13
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 20,
+            "y": 13,
+            "index": 0
+          },
+          {
+            "x": 21,
+            "y": 13,
+            "index": 1
+          },
+          {
+            "x": 22,
+            "y": 13,
+            "index": 2
+          },
+          {
+            "x": 23,
+            "y": 13,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": [
+            "archivist"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s12",
+            "kindId": "watch",
+            "cellIndex": 2,
+            "x": 22,
+            "y": 13,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s13",
+            "kindId": "hidden",
+            "cellIndex": 0,
+            "x": 20,
+            "y": 13,
+            "contents": {
+              "props": [],
+              "relics": [
+                "cassette",
+                "lead_seal"
+              ],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p15",
+        "kindId": "atrium_foyer",
+        "regionId": "atrium",
+        "axis": "h",
+        "origin": {
+          "x": 24,
+          "y": 20
+        },
+        "length": 2,
+        "cells": [
+          {
+            "x": 24,
+            "y": 20,
+            "index": 0
+          },
+          {
+            "x": 25,
+            "y": 20,
+            "index": 1
+          }
+        ],
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s14",
+            "kindId": "store",
+            "cellIndex": 1,
+            "x": 25,
+            "y": 20,
+            "contents": {
+              "props": [
+                "rope",
+                "canteen"
+              ],
+              "relics": [],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p16",
+        "kindId": "engine_pipe",
+        "regionId": "engine",
+        "axis": "v",
+        "origin": {
+          "x": 29,
+          "y": 19
+        },
+        "length": 5,
+        "cells": [
+          {
+            "x": 29,
+            "y": 19,
+            "index": 0
+          },
+          {
+            "x": 29,
+            "y": 20,
+            "index": 1
+          },
+          {
+            "x": 29,
+            "y": 21,
+            "index": 2
+          },
+          {
+            "x": 29,
+            "y": 22,
+            "index": 3
+          },
+          {
+            "x": 29,
+            "y": 23,
+            "index": 4
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "pressure"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p17",
+        "kindId": "atrium_court",
+        "regionId": "atrium",
+        "axis": "v",
+        "origin": {
+          "x": 23,
+          "y": 18
+        },
+        "length": 1,
+        "cells": [
+          {
+            "x": 23,
+            "y": 18,
+            "index": 0
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "mirror_shard"
+          ],
+          "events": [
+            "lights_out"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s15",
+            "kindId": "shrine",
+            "cellIndex": 0,
+            "x": 23,
+            "y": 18,
+            "contents": {
+              "props": [],
+              "relics": [
+                "brass_bell",
+                "mirror_shard"
+              ],
+              "events": [
+                "whisper"
+              ],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p18",
+        "kindId": "atrium_gallery",
+        "regionId": "atrium",
+        "axis": "h",
+        "origin": {
+          "x": 25,
+          "y": 21
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 25,
+            "y": 21,
+            "index": 0
+          },
+          {
+            "x": 26,
+            "y": 21,
+            "index": 1
+          },
+          {
+            "x": 27,
+            "y": 21,
+            "index": 2
+          },
+          {
+            "x": 28,
+            "y": 21,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [
+            "canteen"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p19",
+        "kindId": "engine_valve",
+        "regionId": "engine",
+        "axis": "h",
+        "origin": {
+          "x": 29,
+          "y": 18
+        },
+        "length": 2,
+        "cells": [
+          {
+            "x": 29,
+            "y": 18,
+            "index": 0
+          },
+          {
+            "x": 30,
+            "y": 18,
+            "index": 1
+          }
+        ],
+        "contents": {
+          "props": [
+            "fuse",
+            "keycard"
+          ],
+          "relics": [],
+          "events": [],
+          "enemies": [],
+          "npcs": [
+            "engineer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s16",
+            "kindId": "power",
+            "cellIndex": 0,
+            "x": 29,
+            "y": 18,
+            "contents": {
+              "props": [
+                "fuse"
+              ],
+              "relics": [],
+              "events": [
+                "pressure"
+              ],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p20",
+        "kindId": "atrium_foyer",
+        "regionId": "atrium",
+        "axis": "v",
+        "origin": {
+          "x": 28,
+          "y": 22
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 28,
+            "y": 22,
+            "index": 0
+          },
+          {
+            "x": 28,
+            "y": 23,
+            "index": 1
+          },
+          {
+            "x": 28,
+            "y": 24,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s17",
+            "kindId": "watch",
+            "cellIndex": 2,
+            "x": 28,
+            "y": 24,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [
+                "lights_out"
+              ],
+              "enemies": [
+                "listener"
+              ],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s18",
+            "kindId": "store",
+            "cellIndex": 1,
+            "x": 28,
+            "y": 23,
+            "contents": {
+              "props": [
+                "rope",
+                "canteen"
+              ],
+              "relics": [],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p21",
+        "kindId": "archive_stack",
+        "regionId": "archive",
+        "axis": "v",
+        "origin": {
+          "x": 18,
+          "y": 11
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 18,
+            "y": 11,
+            "index": 0
+          },
+          {
+            "x": 18,
+            "y": 12,
+            "index": 1
+          },
+          {
+            "x": 18,
+            "y": 13,
+            "index": 2
+          },
+          {
+            "x": 18,
+            "y": 14,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [
+            "brass_bell"
+          ],
+          "events": [
+            "whisper"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": []
+      },
+      {
+        "id": "p22",
+        "kindId": "hollow_wet",
+        "regionId": "hollow",
+        "axis": "v",
+        "origin": {
+          "x": 29,
+          "y": 12
+        },
+        "length": 5,
+        "cells": [
+          {
+            "x": 29,
+            "y": 12,
+            "index": 0
+          },
+          {
+            "x": 29,
+            "y": 13,
+            "index": 1
+          },
+          {
+            "x": 29,
+            "y": 14,
+            "index": 2
+          },
+          {
+            "x": 29,
+            "y": 15,
+            "index": 3
+          },
+          {
+            "x": 29,
+            "y": 16,
+            "index": 4
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [],
+          "enemies": [
+            "mold"
+          ],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s19",
+            "kindId": "spore",
+            "cellIndex": 0,
+            "x": 29,
+            "y": 12,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p23",
+        "kindId": "hollow_rift",
+        "regionId": "hollow",
+        "axis": "v",
+        "origin": {
+          "x": 30,
+          "y": 11
+        },
+        "length": 4,
+        "cells": [
+          {
+            "x": 30,
+            "y": 11,
+            "index": 0
+          },
+          {
+            "x": 30,
+            "y": 12,
+            "index": 1
+          },
+          {
+            "x": 30,
+            "y": 13,
+            "index": 2
+          },
+          {
+            "x": 30,
+            "y": 14,
+            "index": 3
+          }
+        ],
+        "contents": {
+          "props": [],
+          "relics": [],
+          "events": [
+            "static"
+          ],
+          "enemies": [],
+          "npcs": []
+        },
+        "subRooms": [
+          {
+            "id": "s20",
+            "kindId": "spore",
+            "cellIndex": 2,
+            "x": 30,
+            "y": 13,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s21",
+            "kindId": "spore",
+            "cellIndex": 0,
+            "x": 30,
+            "y": 11,
+            "contents": {
+              "props": [],
+              "relics": [],
+              "events": [],
+              "enemies": [
+                "mold"
+              ],
+              "npcs": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "p24",
+        "kindId": "atrium_foyer",
+        "regionId": "atrium",
+        "axis": "h",
+        "origin": {
+          "x": 26,
+          "y": 24
+        },
+        "length": 3,
+        "cells": [
+          {
+            "x": 26,
+            "y": 24,
+            "index": 0
+          },
+          {
+            "x": 27,
+            "y": 24,
+            "index": 1
+          },
+          {
+            "x": 28,
+            "y": 24,
+            "index": 2
+          }
+        ],
+        "contents": {
+          "props": [
+            "flashlight"
+          ],
+          "relics": [],
+          "events": [
+            "footsteps"
+          ],
+          "enemies": [],
+          "npcs": [
+            "wanderer"
+          ]
+        },
+        "subRooms": [
+          {
+            "id": "s22",
+            "kindId": "store",
+            "cellIndex": 2,
+            "x": 28,
+            "y": 24,
+            "contents": {
+              "props": [
+                "rope",
+                "canteen"
+              ],
+              "relics": [],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          },
+          {
+            "id": "s23",
+            "kindId": "store",
+            "cellIndex": 1,
+            "x": 27,
+            "y": 24,
+            "contents": {
+              "props": [
+                "rope",
+                "canteen"
+              ],
+              "relics": [],
+              "events": [],
+              "enemies": [],
+              "npcs": []
+            }
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "id": "l1",
+        "type": "door",
+        "a": {
+          "plotId": "p1",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p2",
+          "cellIndex": 0
+        },
+        "dir": "W"
+      },
+      {
+        "id": "l2",
+        "type": "door",
+        "a": {
+          "plotId": "p1",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p3",
+          "cellIndex": 1
+        },
+        "dir": "N"
+      },
+      {
+        "id": "l3",
+        "type": "door",
+        "a": {
+          "plotId": "p1",
+          "cellIndex": 1
+        },
+        "b": {
+          "plotId": "p4",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l4",
+        "type": "door",
+        "a": {
+          "plotId": "p1",
+          "cellIndex": 1
+        },
+        "b": {
+          "plotId": "p5",
+          "cellIndex": 2
+        },
+        "dir": "S"
+      },
+      {
+        "id": "l5",
+        "type": "door",
+        "a": {
+          "plotId": "p4",
+          "cellIndex": 4
+        },
+        "b": {
+          "plotId": "p6",
+          "cellIndex": 1
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l6",
+        "type": "door",
+        "a": {
+          "plotId": "p3",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p7",
+          "cellIndex": 0
+        },
+        "dir": "N"
+      },
+      {
+        "id": "l7",
+        "type": "door",
+        "a": {
+          "plotId": "p7",
+          "cellIndex": 1
+        },
+        "b": {
+          "plotId": "p8",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l8",
+        "type": "door",
+        "a": {
+          "plotId": "p5",
+          "cellIndex": 2
+        },
+        "b": {
+          "plotId": "p9",
+          "cellIndex": 0
+        },
+        "dir": "S"
+      },
+      {
+        "id": "l9",
+        "type": "door",
+        "a": {
+          "plotId": "p3",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p10",
+          "cellIndex": 1
+        },
+        "dir": "W"
+      },
+      {
+        "id": "l10",
+        "type": "door",
+        "a": {
+          "plotId": "p6",
+          "cellIndex": 1
+        },
+        "b": {
+          "plotId": "p11",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l11",
+        "type": "door",
+        "a": {
+          "plotId": "p9",
+          "cellIndex": 2
+        },
+        "b": {
+          "plotId": "p12",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l12",
+        "type": "door",
+        "a": {
+          "plotId": "p10",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p13",
+          "cellIndex": 3
+        },
+        "dir": "W"
+      },
+      {
+        "id": "l13",
+        "type": "door",
+        "a": {
+          "plotId": "p10",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p14",
+          "cellIndex": 0
+        },
+        "dir": "N"
+      },
+      {
+        "id": "l14",
+        "type": "door",
+        "a": {
+          "plotId": "p9",
+          "cellIndex": 2
+        },
+        "b": {
+          "plotId": "p15",
+          "cellIndex": 0
+        },
+        "dir": "S"
+      },
+      {
+        "id": "l15",
+        "type": "door",
+        "a": {
+          "plotId": "p12",
+          "cellIndex": 3
+        },
+        "b": {
+          "plotId": "p16",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l16",
+        "type": "door",
+        "a": {
+          "plotId": "p5",
+          "cellIndex": 2
+        },
+        "b": {
+          "plotId": "p17",
+          "cellIndex": 0
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l17",
+        "type": "door",
+        "a": {
+          "plotId": "p15",
+          "cellIndex": 1
+        },
+        "b": {
+          "plotId": "p18",
+          "cellIndex": 0
+        },
+        "dir": "S"
+      },
+      {
+        "id": "l18",
+        "type": "door",
+        "a": {
+          "plotId": "p16",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p19",
+          "cellIndex": 0
+        },
+        "dir": "N"
+      },
+      {
+        "id": "l19",
+        "type": "door",
+        "a": {
+          "plotId": "p18",
+          "cellIndex": 3
+        },
+        "b": {
+          "plotId": "p20",
+          "cellIndex": 0
+        },
+        "dir": "S"
+      },
+      {
+        "id": "l20",
+        "type": "door",
+        "a": {
+          "plotId": "p13",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p21",
+          "cellIndex": 0
+        },
+        "dir": "W"
+      },
+      {
+        "id": "l21",
+        "type": "door",
+        "a": {
+          "plotId": "p6",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p22",
+          "cellIndex": 4
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l22",
+        "type": "door",
+        "a": {
+          "plotId": "p22",
+          "cellIndex": 0
+        },
+        "b": {
+          "plotId": "p23",
+          "cellIndex": 1
+        },
+        "dir": "E"
+      },
+      {
+        "id": "l23",
+        "type": "cross",
+        "a": {
+          "plotId": "p20",
+          "cellIndex": 2
+        },
+        "b": {
+          "plotId": "p24",
+          "cellIndex": 2
+        },
+        "cell": {
+          "x": 28,
+          "y": 24
+        }
+      }
+    ],
+    "spawn": {
+      "plotId": "p1",
+      "cellIndex": 0,
+      "x": 22,
+      "y": 16
+    },
+    "stats": {
+      "plots": 24,
+      "links": 23,
+      "doors": 22,
+      "crossings": 1,
+      "cells": 76,
+      "subRooms": 23,
+      "regions": [
+        {
+          "regionId": "atrium",
+          "plots": 8,
+          "cells": 21,
+          "subRooms": 8
+        },
+        {
+          "regionId": "engine",
+          "plots": 4,
+          "cells": 13,
+          "subRooms": 2
+        },
+        {
+          "regionId": "archive",
+          "plots": 7,
+          "cells": 22,
+          "subRooms": 7
+        },
+        {
+          "regionId": "hollow",
+          "plots": 5,
+          "cells": 21,
+          "subRooms": 6
+        }
+      ],
+      "kinds": [
+        {
+          "kindId": "atrium_foyer",
+          "regionId": "atrium",
+          "plots": 5,
+          "cells": 13
+        },
+        {
+          "kindId": "engine_valve",
+          "regionId": "engine",
+          "plots": 2,
+          "cells": 4
+        },
+        {
+          "kindId": "archive_index",
+          "regionId": "archive",
+          "plots": 3,
+          "cells": 11
+        },
+        {
+          "kindId": "hollow_wet",
+          "regionId": "hollow",
+          "plots": 3,
+          "cells": 14
+        },
+        {
+          "kindId": "hollow_rift",
+          "regionId": "hollow",
+          "plots": 2,
+          "cells": 7
+        },
+        {
+          "kindId": "archive_vault",
+          "regionId": "archive",
+          "plots": 2,
+          "cells": 3
+        },
+        {
+          "kindId": "atrium_side",
+          "regionId": "atrium",
+          "plots": 1,
+          "cells": 3
+        },
+        {
+          "kindId": "engine_pipe",
+          "regionId": "engine",
+          "plots": 2,
+          "cells": 9
+        },
+        {
+          "kindId": "archive_stack",
+          "regionId": "archive",
+          "plots": 2,
+          "cells": 8
+        },
+        {
+          "kindId": "atrium_court",
+          "regionId": "atrium",
+          "plots": 1,
+          "cells": 1
+        },
+        {
+          "kindId": "atrium_gallery",
+          "regionId": "atrium",
+          "plots": 1,
+          "cells": 4
+        }
+      ],
+      "contents": {
+        "props": 22,
+        "relics": 13,
+        "events": 24,
+        "enemies": 17,
+        "npcs": 11
+      },
+      "degrees": {
+        "max": 4,
+        "average": 1.9166666666666667,
+        "isolated": 0
+      },
+      "bounds": {
+        "minX": 18,
+        "minY": 11,
+        "maxX": 32,
+        "maxY": 24,
+        "width": 15,
+        "height": 14
+      },
+      "grid": {
+        "width": 44,
+        "height": 32
+      },
+      "fillRatio": 0.05397727272727273,
+      "reachable": 24,
+      "maxHops": 6,
+      "crossRegionLinks": 4
+    },
+    "issues": [],
+    "warnings": [],
+    "errors": [],
+    "generation": {
+      "attempt": 0,
+      "target": 24,
+      "actual": 24,
+      "attempts": 23,
+      "quotas": {
+        "atrium": 8,
+        "archive": 7,
+        "hollow": 5,
+        "engine": 4
+      },
+      "counts": {
+        "atrium": 8,
+        "engine": 4,
+        "archive": 7,
+        "hollow": 5
+      },
+      "crossLinks": 4
+    },
+    "attempt": 0
+  }
+}

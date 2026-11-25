@@ -1,0 +1,133 @@
+#workspace-pools.dungeon-workspace { grid-template-columns: minmax(0, 1fr); }
+
+.map-pools-editor {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: clamp(12px, 2vw, 24px);
+}
+
+.map-pools-editor h2,
+.map-pools-editor h3,
+.map-pools-editor h4,
+.map-pools-editor p {
+  margin: 0;
+}
+
+.map-pools-editor h2,
+.map-pools-editor h3,
+.map-pools-editor h4 { color: var(--text-strong); }
+.map-pools-editor h2 { font-size: 21px; }
+.map-pools-editor h3 { font-size: 15px; }
+.map-pools-editor h4 { margin-top: 6px; }
+
+.map-pools-editor .pools-header,
+.map-pools-editor .pools-actions,
+.map-pools-editor .pools-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.map-pools-editor .pools-header { align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.map-pools-editor .pools-row { align-items: flex-end; }
+.map-pools-editor .pools-row > .pools-field { flex: 1 1 108px; }
+.map-pools-editor .pools-field { display: grid; gap: 4px; min-width: 0; }
+.map-pools-editor .pools-field > span { color: var(--muted); }
+.map-pools-editor .pools-field .input { width: 100%; min-width: 0; }
+.map-pools-editor .pools-subtle { color: var(--muted); overflow-wrap: anywhere; }
+
+.map-pools-editor .pools-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: start;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.map-pools-editor .pools-settings-column,
+.map-pools-editor .pools-card,
+.map-pools-editor .pools-preview,
+.map-pools-editor .pools-notices {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.map-pools-editor .pools-card,
+.map-pools-editor .pools-stat {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.map-pools-editor .pools-preview-card { position: sticky; top: 0; }
+.map-pools-editor .pools-preview-header { align-items: center; justify-content: space-between; }
+.map-pools-editor .pools-preview-empty {
+  display: grid;
+  place-items: center;
+  min-height: 174px;
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+}
+
+.map-pools-editor .pools-region {
+  margin: 0;
+  padding: 7px 9px 9px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.map-pools-editor .pools-region legend { padding: 0 4px; color: var(--amber); }
+.map-pools-editor .pools-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.map-pools-editor .pools-stat { padding: 7px 9px; background: var(--bg-soft); overflow-wrap: anywhere; }
+.map-pools-editor .pools-stat dt,
+.map-pools-editor .pools-stat small { color: var(--muted); }
+.map-pools-editor .pools-stat dd { margin: 0; color: var(--text-strong); font: 600 17px var(--mono); }
+.map-pools-editor .pools-stat.pools-hit small { color: var(--green); }
+.map-pools-editor .pools-stat.pools-miss small { color: var(--red); }
+
+.map-pools-editor .pools-map {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 44vh, 560px);
+  color: var(--text-strong);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.map-pools-editor .pools-map-cell-floor { fill: var(--blue); fill-opacity: .36; }
+.map-pools-editor .pools-map-cell-enemy { fill: var(--red); fill-opacity: .68; }
+.map-pools-editor .pools-map-cell-resource,
+.map-pools-editor .pools-map-cell-treasure { fill: var(--violet); fill-opacity: .65; }
+.map-pools-editor .pools-map-walls { fill: none; stroke: currentColor; stroke-opacity: .8; stroke-width: .06; }
+.map-pools-editor .pools-map-doors { fill: none; stroke: var(--amber); stroke-width: .13; }
+.map-pools-editor .pools-map-spawn { fill: var(--green); stroke: var(--bg); stroke-width: .1; }
+
+.map-pools-editor .pools-notices:not(:empty) { margin-top: 8px; }
+.map-pools-editor .pools-notice {
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.map-pools-editor .pools-notice ul { margin: 4px 0 0; }
+.map-pools-editor .pools-notice.pools-error { border-left-color: var(--danger); color: var(--danger); }
+.map-pools-editor .pools-notice.pools-success { border-left-color: var(--green); color: var(--green); }
+
+@media (max-width: 860px) {
+  .map-pools-editor .pools-columns { grid-template-columns: minmax(0, 1fr); }
+  .map-pools-editor .pools-preview-card { position: static; }
+}

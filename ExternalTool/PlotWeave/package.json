@@ -1,0 +1,18 @@
+{
+  "name": "plotweave",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PlotWeave · 地块织图 —— 区域 / 地块 / 子房间的平面地图设计与生成工具",
+  "scripts": {
+    "start": "node tools/serve.mjs --open",
+    "serve": "node tools/serve.mjs",
+    "mobile": "node tools/serve.mjs --host 0.0.0.0",
+    "test": "node tests/run.mjs",
+    "example": "node tools/export-example.mjs",
+    "test:smoke": "node tools/ui-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

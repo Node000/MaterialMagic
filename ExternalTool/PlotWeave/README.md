@@ -1,0 +1,224 @@
+# PlotWeave · 地块织图
+
+一个独立的、浏览器内运行的**区域 / 地块 / 子房间**平面地图设计与生成工具。
+
+![PlotWeave 界面](docs/screenshot.png)
+
+它把「后室层级」式的空间拆成三层概念：
+
+```text
+区域 Region          例：前厅、档案层、空洞层
+└─ 地块 Plot         1–5 格长的直线条带，是地图的最小结构单位
+   └─ 子房间 SubRoom 挂在地块某一格上的特殊区域，是地块的组成部分
+```
+
+最终地图只由**地块网络**构成。区域负责分类和生成配额，子房间负责地点内部的细节；两者都不会取代地块。
+
+## 快速开始
+
+需要 Node.js 18+ 与一个现代浏览器。**没有构建步骤，也没有运行时依赖。**
+
+```bash
+cd PlotWeave
+npm start          # 启动静态服务器并打开 http://127.0.0.1:4173
+```
+
+也可以直接双击：
+
+- Windows：`start.bat`（桌面）；手机 / 局域网用 `start-mobile.bat`
+- macOS / Linux：`./start.sh`
+
+或者不打开浏览器，只启动服务：
+
+```bash
+npm run serve -- --port 4173
+```
+
+网页主体使用静态 ES Modules。普通编辑可在静态服务器运行；第二页的 Unity 预览与发布必须用工程内的本机 Node 服务。不要用 `file://` 打开 `index.html`。
+
+### 手机 / 局域网
+
+窄屏下会自动切换为移动端布局：画布占满主区域，底部是「结构 / 内容 / 方案 / 属性」导航，侧栏和检视器变成上拉抽屉。画布支持单指拖动、双指捏合缩放、轻点选择和双击聚焦。
+
+让电脑和手机连接同一个 Wi-Fi，在电脑上运行：
+
+```bash
+npm run mobile
+```
+
+终端会列出本机局域网地址，例如 `http://192.168.0.191:4173/`。在手机浏览器打开对应地址即可；如果打不开，检查 Windows 防火墙是否允许 Node.js 的专用网络访问。这个方式需要电脑上的服务持续运行，不是离线 App。
+
+![手机版界面](docs/screenshot-mobile.png)
+
+## 二层条带与工作目录
+
+桌面 Chrome / Edge 通过 `npm start` 打开后，点「工作目录 → 选择目录」，选 Unity 工程内的 `Assets/Resources/Data/Maps/Patterns`。再次进入时浏览器可能要求重新授权。未连接目录时仍可使用 JSON 导入和下载。
+
+- 在「条带模板」中，添加新格只会打开与放置最晚的相邻格之间的一面墙。使用「墙体工具」点击两格间的共享边可添加或拆墙。半透明线显示直接通行。编辑不能切断条带。跨区桥的开放通路需要保留单链。
+- 条带模式中 `Ctrl+S` 保存当前模板和 `project.json`。其中每个模板的 `openEdges` 用相对坐标 `x/y` 和 `E/S` 各记录一次内部开放边。`placedOrder` 用于以后继续放置格子。旧模板打开时会恢复原有相邻通路。
+- 「地图生成池」中 `Ctrl+S` 保存草稿到 `project.json`，不发布。旧单层地图工具仍在工程菜单，那里 `Ctrl+S` 保存 `Preview.floor.json` 快照。外部编辑后用「工作目录 → 重新读取」载入；保存遇到外部改动会拒绝覆盖。
+
+地图的 `kind` 为 `plotweave-floor-map`，`schemaVersion` 为 `1`。`cells` 记录地板，`edges` 只记录 `open` 和 `door`。`E` 连到 `(x+1,y)`，`S` 连到 `(x,y+1)`，每条边双向且只出现一次。没写的边是墙。`spawn` 必须在地板上，所有地板都要能通过列出的边到达。生成器版本独立于读图版本。Unity 读取快照时以 `(x,-y)` 转换到其 X/Z 网格。
+
+## 地图生成池：预览与发布
+
+1. 用 `npm start` 开本机网页；同一 Unity 工程保持在 **Edit Mode**。手机/局域网服务不启用游戏配置预览和发布。
+2. 从「条带模板 → 导出 → 条带模板库 JSON」下载 v3 文件，放到 `Assets/Resources/Data/Maps/Patterns/<库ID>.patterns.json`。库 ID 只用字母、数字、下划线和连字符；示例是 `Sample`。游戏读取这份模板库，不读编辑器草稿。
+3. 在第二页编辑等级池及其加权候选。A/B/C 是三个拓扑槽，区域类型可重复；A 是出生区。条带数范围决定大小，预览另列实际格数与包围盒。资源/难度区间是软目标，留空表示不限；生成器在有限搜索内优先选更接近区间的有效布局。
+4. 为每个当前候选用整数种子生成预览。网页调用 Unity 同一套 C# 生成器，显示真实地板、墙门、出生点、资源/难度结果。预览只覆盖所选种子，不保证其他种子全部命中预算或成功生成。
+5. 「保存草稿」只写 `project.json`；「发布到游戏配置」才写 `Assets/Resources/Data/Maps/SecondFloor.map-pools.json`。发布前需要预览所有当前候选，改配方或更换 Pattern 内容后要重新预览；发布会锁定模板库内容的摘要。外部改过游戏配置时，先用「读取已发布」确认新版本，再编辑并重新预览。
+
+## 核心规则
+
+### 地块是条带，不是方块
+
+每块地块有：
+
+- `axis`：`h` 横 / `v` 纵；
+- `origin`：起点格；
+- `length`：1–5 格；
+- 每格都可能被其他地块**穿过**（交叉），也可能与相邻格建立**门**。
+
+```
+门 door      两块地在相邻格之间开门，显式记录 link
+交叉 cross   两块地垂直共享同一格，显式记录 link
+相邻但无 link 的两格 = 墙，不连通
+```
+
+### 接口由「锚点模式」决定
+
+地块种类可以规定连接从哪些位置长出来：
+
+| 模式 | 含义 |
+| --- | --- |
+| `ends` | 仅端部格；端部格三个外侧可开口 |
+| `middle` | 仅内部格；只开垂直于条带轴的两侧 |
+| `both` | 端部按轴向开口，内部格按垂直方向开口 |
+| `any` | 任意格、任意外侧都可以开口 |
+
+每格的每一侧最多一扇门。交叉不占用侧面，但会计入地块的连接度数。`connections.max` 同时限制门和交叉。
+
+### 区域是分类与配额
+
+区域（`regions`）只是地块种类的归属，不直接占有格子。生成时：
+
+1. 按每个区域的 `generation.min / max / weight` 分配目标地块数；
+2. 从起始地块开始，每次从现有地块的可用接口长出新地块；
+3. 优先同区域生长；需要进入未进入的区域时，用少量跨区门/交叉作为种子；
+4. 跨区连接受 `allowCrossRegion`、`crossRegionRatio`、`maxCrossRegionPerPair` 限制。
+
+因此地图天然是连通的，且跨区连接始终是少数。
+
+### 种子确定性
+
+同一个工程 + 同一个生成方案 + 同一个种子 = 同一张地图。
+
+生成过程使用 `xmur3 + mulberry32`，不使用 `Math.random`。地图的 `seed` 与 `id` 会保留原始种子，即使内部做了多次重试。
+
+## 界面
+
+- **结构**：按区域分组的地块种类；区域和折叠组都可折叠，折叠组可以继续嵌套。区域标题旁的 `+` 新建根级组，组行的文件夹图标新建子组，普通 `+` 在组内新建地块；折叠状态保存在浏览器本地。
+- **内容**：五类目录——道具、遗物、事件链、敌人、NPC。它们只是 ID 引用，不参与生成算法。
+- **方案**：生成目标、区域配额、起始区域/地块、跨区策略、子房间密度、生成器选择。
+- **画布**：顶视角；滚轮缩放、拖拽平移、点击选择、双击聚焦；`出生点` 工具可直接把出生点放到允许的格子。
+- **检视器**：随选择切换，编辑工程、区域、地块种类、子房间、目录条目、生成方案、地图与地图内的具体地块。
+- **主题**：顶栏右侧的太阳/月亮按钮在暗色与亮色之间切换；偏好单独保存在浏览器本地，不写入工程或导出文件。
+- **导出**：工程 JSON、工程 + 地图 Bundle、当前地图 JSON、2x PNG；插件可以追加自定义导出器。
+
+生成地图后，画布会显示区域底色、地块条带、门、交叉、子房间、内容点、出生点与地块名。工具栏可分别开关网格、标签、内容点和区域色。
+
+亮色主题使用同一套画布语义，导出 PNG 时也会沿用当前主题：
+
+![PlotWeave 亮色主题](docs/screenshot-light.png)
+
+## 示例工程
+
+内置示例包含 4 个区域、13 种地块、6 种子房间、21 个内容条目和 3 个生成方案：
+
+| 方案 | 目标地块 | 区域 |
+| --- | --- | --- |
+| 标准漫游 `standard` | 24 | 全部四个区域 |
+| 紧凑层 `compact` | 12 | 前厅、档案层、空洞层 |
+| 静默层 `quiet` | 8 | 仅前厅 |
+
+打开工程菜单可以新建空白工程或恢复示例工程。
+
+## 目录结构
+
+```text
+PlotWeave/
+├─ index.html              浏览器入口
+├─ src/
+│  ├─ core/                纯逻辑，不依赖 DOM
+│  │  ├─ constants.js      常量、方向、内容类型、调色板
+│  │  ├─ rng.js            种子随机数
+│  │  ├─ geometry.js       格坐标、条带、包围盒、布局
+│  │  ├─ ports.js          锚点与可用接口
+│  │  ├─ rules.js          区域/种类/连接规则
+│  │  ├─ project.js        规范化、校验、工厂、指纹
+│  │  ├─ generator.js      标准生成器
+│  │  ├─ validate-map.js   地图不变量与统计
+│  │  ├─ serialization.js  工程 / Bundle 导入导出
+│  │  ├─ events.js         轻量事件总线
+│  │  └─ registry.js       生成器/图层/导出器/校验器注册表
+│  ├─ data/sample-project.js
+│  └─ ui/                  Canvas、移动端外壳、侧栏、检视器、弹窗、字段
+├─ plugins/example-plugin.js
+├─ tests/                  node:test 测试
+├─ tools/                  静态服务器、示例导出、CDP 冒烟
+├─ examples/               示例工程与地图
+└─ docs/                   架构、数据格式、扩展与移植
+```
+
+核心层不读取 DOM、不读 localStorage，可以在 Node 中单独测试，也可以被其他前端或编辑器复用。
+
+## 扩展
+
+`src/core/registry.js` 暴露一个注册表：
+
+```js
+import { registry } from './src/core/registry.js';
+
+registry.registerGenerator(id, { label, version, description }, (project, options) => map);
+registry.registerCanvasLayer(id, { label, order, draw(ctx, frame) {} });
+registry.registerExporter(id, { label, extension, mime, export({ project, map }) {} });
+registry.registerValidator(id, 'map', (map, context) => [issue]);
+```
+
+示例插件：
+
+```text
+http://127.0.0.1:4173/?plugin=example
+```
+
+它会追加一个生成器、一个只在 PNG 导出时出现的编号图层、一个纯文本地块清单导出器，以及一个子房间上限校验器。详见 [扩展指南](docs/EXTENDING.md)。
+
+## 测试
+
+```bash
+npm test                 # 34 个单元/集成测试
+npm run example          # 重新生成 examples/
+```
+
+浏览器冒烟测试需要先启动 Chrome 的 CDP 端口，再运行：
+
+```bash
+node tools/serve.mjs --port 4173
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --remote-debugging-port=9222 --user-data-dir=.chrome-tmp --no-first-run http://127.0.0.1:4173/
+npm run test:smoke
+```
+
+`tools/ui-smoke.mjs` 会生成截图并收集控制台错误；它不是 `npm test` 的一部分，因为需要真实的 Chrome。
+
+## 边界
+
+- 不修改、不依赖当前 MaterialMagic Unity 工程；工具目录可以整体复制到其他项目或独立仓库。
+- 不在工具里实现道具、遗物、事件链、敌人、NPC 的玩法逻辑；它们只是目录 ID 引用。
+- 没有后端、没有数据库、没有 npm 运行时依赖。工作区保存在浏览器 `localStorage`，跨设备请用 Bundle 导入导出。
+- 地图是二维顶视角设计图，不是 3D 场景或可直接运行的关卡。
+
+## 文档
+
+- [架构与移植](docs/ARCHITECTURE.md)
+- [数据格式](docs/SCHEMA.md)
+- [扩展指南](docs/EXTENDING.md)

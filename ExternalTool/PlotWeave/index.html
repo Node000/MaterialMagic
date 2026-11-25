@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      // 在样式加载前恢复主题，避免刷新时先闪一帧暗色。
+      (() => {
+        try {
+          const stored = localStorage.getItem('plotweave:theme:v1');
+          const theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme;
+        } catch {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+    <title>PlotWeave · 类银河城地牢地图编辑器</title>
+    <meta
+      name="description"
+      content="PlotWeave：类银河城地牢地图编辑器——多格条带模板、三区域三角单层生成与节点图等级可视化。"
+    />
+    <link rel="stylesheet" href="./src/ui/styles.css" />
+  <link rel="stylesheet" href="./src/ui/map-pools-editor.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header id="topbar" class="topbar"></header>
+      <main id="workspace-templates" class="workspace dungeon-workspace" aria-label="条带模板编辑器" hidden></main>
+      <main id="workspace-pools" class="workspace dungeon-workspace" aria-label="地图生成池" hidden></main>
+  <main id="workspace-floor" class="workspace dungeon-workspace" aria-label="旧单层地图工具" hidden></main>
+      <main id="workspace-world" class="workspace dungeon-workspace world-workspace" aria-label="完整地图生成器" hidden></main>
+      <main id="workspace-legacy" class="workspace" hidden>
+        <aside id="sidebar" class="panel sidebar" aria-label="工程结构"></aside>
+        <section class="stage">
+          <div id="stage-toolbar" class="stage-toolbar"></div>
+          <div id="canvas-host" class="canvas-host">
+            <canvas id="map-canvas"></canvas>
+            <div id="canvas-empty" class="canvas-empty" hidden></div>
+            <div id="hover-card" class="hover-card" hidden></div>
+          </div>
+          <footer id="statusbar" class="statusbar"></footer>
+        </section>
+        <aside id="inspector" class="panel inspector" aria-label="属性检查器"></aside>
+      </main>
+      <nav id="mobile-nav" class="mobile-nav" aria-label="移动端面板" hidden></nav>
+    </div>
+    <div id="mobile-scrim" class="mobile-scrim" hidden></div>
+    <div id="modal-root"></div>
+    <div id="toast-root" class="toast-root" aria-live="polite"></div>
+    <script type="module" src="./src/ui/app.js"></script>
+  </body>
+</html>

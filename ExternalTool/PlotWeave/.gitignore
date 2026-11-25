@@ -1,0 +1,11 @@
+# 运行时/调试产物
+node_modules/
+.smoke/
+.chrome-tmp/
+.chrome-*/
+*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini

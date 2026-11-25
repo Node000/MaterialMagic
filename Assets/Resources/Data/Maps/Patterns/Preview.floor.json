@@ -1,0 +1,19 @@
+{
+  "kind": "plotweave-floor-map",
+  "schemaVersion": 1,
+  "id": "preview-wall-and-door",
+  "spawn": { "x": 0, "y": 0 },
+  "cells": [
+    { "x": 0, "y": 0, "type": "spawn", "stripIds": ["bend"] },
+    { "x": 1, "y": 0, "type": "empty", "stripIds": ["bend"] },
+    { "x": 0, "y": 1, "type": "empty", "stripIds": ["bend"] },
+    { "x": 1, "y": 1, "type": "empty", "stripIds": ["bend"] },
+    { "x": 2, "y": 1, "type": "reward", "stripIds": ["annex"] }
+  ],
+  "edges": [
+    { "x": 0, "y": 0, "dir": "E", "type": "open" },
+    { "x": 1, "y": 0, "dir": "S", "type": "open" },
+    { "x": 0, "y": 1, "dir": "E", "type": "open" },
+    { "x": 1, "y": 1, "dir": "E", "type": "door" }
+  ]
+}
