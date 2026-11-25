@@ -1,10 +1,21 @@
+using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Draws only the current board and its explicit walking connections.</summary>
+/// <summary>Draws the legacy strip board or the heading-up fixed floor grid.</summary>
 public sealed class SecondFloorMinimapGraphic : MaskableGraphic
 {
+    private const float PathTileSize = 0.58f;
+    private const float FloorTileSize = 0.94f;
+    private const float FloorMarkerSize = 0.72f;
+    private const float FloorEdgeThickness = 0.08f;
+    // Seven cell centers per axis, cropped through the centers of the outer cells.
+    private const int FloorWindowRadius = 3;
+    private static readonly Vector2Int[] FloorDirections =
+        { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
+
     [SerializeField] private Color connectorColor;
     [SerializeField] private Color roomColor;
     [SerializeField] private Color bossColor;
@@ -15,13 +26,27 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
     [SerializeField] private TMP_Text areaB;
     [SerializeField] private TMP_Text areaC;
     [SerializeField] private TMP_Text areaU;
+    [SerializeField, Range(0f, 1f)] private float discoveredOpacity = 0.45f;
+    [SerializeField] private Color wallColor;
+
     private SecondFloorMinimapSession session;
+    private SecondFloorFloorMap floor;
+    private readonly HashSet<Vector2Int> discoveredFloor = new HashSet<Vector2Int>();
+    private readonly HashSet<Vector2Int> visibleFloor = new HashSet<Vector2Int>();
+    private Image floorPlayerMarker;
+    private Vector2Int floorPlayer;
+    private Vector2Int floorFacing;
+    private bool hasFloorPlayer;
+    private bool showFloorAll;
     private Vector2 min;
     private Vector2 max;
     private SecondFloorMinimapBoard drawnBoard;
 
     public void Refresh(SecondFloorMinimapSession value)
     {
+        floor = null;
+        if (floorPlayerMarker != null) floorPlayerMarker.enabled = false;
+        floorPlayerMarker = null;
         session = value;
         if (drawnBoard != value.CurrentBoard)
         {
@@ -39,24 +64,102 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         SetVerticesDirty();
     }
 
+    internal void RebuildFloor(SecondFloorFloorMap map, bool showAll, Image playerMarker)
+    {
+        floor = map ?? throw new ArgumentNullException(nameof(map));
+        floorPlayerMarker = playerMarker;
+        if (session != null)
+        {
+            if (areaA != null) areaA.gameObject.SetActive(false);
+            if (areaB != null) areaB.gameObject.SetActive(false);
+            if (areaC != null) areaC.gameObject.SetActive(false);
+            if (areaU != null) areaU.gameObject.SetActive(false);
+        }
+        session = null;
+        drawnBoard = null;
+        showFloorAll = showAll;
+        hasFloorPlayer = false;
+        floorFacing = Vector2Int.up;
+        discoveredFloor.Clear();
+        visibleFloor.Clear();
+        LayoutFloorPlayerMarker();
+        SetVerticesDirty();
+    }
+
+    internal void RefreshFloor(Vector2Int playerCell, Vector2Int facingDirection,
+        IReadOnlyCollection<Vector2Int> discovered, IReadOnlyCollection<Vector2Int> visible)
+    {
+        if (floor == null) throw new InvalidOperationException("Rebuild the fixed floor minimap before refreshing it.");
+        if (!floor.HasTile(playerCell)) throw new ArgumentOutOfRangeException(nameof(playerCell));
+        if (facingDirection != Vector2Int.up && facingDirection != Vector2Int.right &&
+            facingDirection != Vector2Int.down && facingDirection != Vector2Int.left)
+            throw new ArgumentOutOfRangeException(nameof(facingDirection), "Expected a cardinal facing direction.");
+        if (discovered == null) throw new ArgumentNullException(nameof(discovered));
+        if (visible == null) throw new ArgumentNullException(nameof(visible));
+        discoveredFloor.Clear();
+        discoveredFloor.UnionWith(discovered);
+        visibleFloor.Clear();
+        visibleFloor.UnionWith(visible);
+        floorPlayer = playerCell;
+        floorFacing = facingDirection;
+        hasFloorPlayer = true;
+        LayoutFloorPlayerMarker();
+        SetVerticesDirty();
+    }
+
+    internal void SetShowFloorAll(bool value)
+    {
+        showFloorAll = value;
+        if (floor != null) SetVerticesDirty();
+    }
+
     private Vector2 Project(Vector2Int point) => new Vector2(point.x,
         point.y * (session.Part == SecondFloorPart.Lower ? session.Map.LowerYScale : 1f));
+
+    // Cardinal basis: the player's world-facing direction is exactly UI up; no angle interpolation.
+    private Vector2 RotateFloor(Vector2 point) => new Vector2(
+        point.x * floorFacing.y - point.y * floorFacing.x,
+        point.x * floorFacing.x + point.y * floorFacing.y);
+
+    private float FloorCellSize
+    {
+        get
+        {
+            Rect rect = rectTransform.rect;
+            return Mathf.Max(0f, Mathf.Min(rect.width, rect.height) / (2 * FloorWindowRadius));
+        }
+    }
 
     private float CellSize
     {
         get
         {
             Vector2 span = max - min + new Vector2(3f, 5f);
-            return Mathf.Max(0f, Mathf.Min(maximumCellSize, rectTransform.rect.width / span.x, rectTransform.rect.height / span.y));
+            Rect rect = rectTransform.rect;
+            float fit = Mathf.Min(rect.width / span.x, rect.height / span.y);
+            return Mathf.Max(0f, Mathf.Min(maximumCellSize, fit));
         }
     }
 
     private Vector2 ToLocal(Vector2 position, float scale) => rectTransform.rect.center + (position - (min + max) * 0.5f) * scale;
 
+    private void LayoutFloorPlayerMarker()
+    {
+        if (floorPlayerMarker == null) return;
+        float scale = FloorCellSize;
+        floorPlayerMarker.enabled = hasFloorPlayer && scale > 0f;
+        if (!floorPlayerMarker.enabled) return;
+        RectTransform marker = floorPlayerMarker.rectTransform;
+        // A centered child anchor shares the same origin as the grid's rect center.
+        marker.anchoredPosition = Vector2.zero;
+        marker.sizeDelta = Vector2.one * (scale * FloorMarkerSize);
+    }
+
     protected override void OnRectTransformDimensionsChange()
     {
         base.OnRectTransformDimensionsChange();
         if (session != null) LayoutLabels();
+        else if (floor != null) LayoutFloorPlayerMarker();
     }
 
     private void LayoutLabels()
@@ -80,6 +183,11 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper mesh)
     {
         mesh.Clear();
+        if (floor != null)
+        {
+            DrawFloor(mesh, FloorCellSize);
+            return;
+        }
         if (session == null) return;
         float scale = CellSize;
         var board = session.CurrentBoard;
@@ -94,10 +202,70 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         foreach (var tile in board.Tiles)
         {
             Vector2 center = ToLocal(Project(tile.Position), scale);
-            float size = scale * (tile.Kind == MinimapTileKind.Path || tile.Kind == MinimapTileKind.Connector ? 0.58f : 0.83f);
+            float size = scale * (tile.Kind == MinimapTileKind.Path || tile.Kind == MinimapTileKind.Connector ? PathTileSize : 0.83f);
             AddRect(mesh, center, Vector2.one * size, TileColor(tile.Kind));
         }
-        DrawPlayer(mesh, scale);
+        DrawPlayer(mesh, ToLocal(Project(session.Position), scale), session.Direction, scale);
+    }
+
+    private void DrawFloor(VertexHelper mesh, float scale)
+    {
+        if (!hasFloorPlayer || scale <= 0f) return;
+        Vector2 mapCenter = rectTransform.rect.center;
+        Vector2 halfWindow = Vector2.one * (scale * FloorWindowRadius);
+        Rect window = Rect.MinMaxRect(mapCenter.x - halfWindow.x, mapCenter.y - halfWindow.y,
+            mapCenter.x + halfWindow.x, mapCenter.y + halfWindow.y);
+        Vector2 tileSize = Vector2.one * (scale * FloorTileSize);
+        // A square around the player covers the same world cells for all cardinal headings.
+        for (int y = -FloorWindowRadius; y <= FloorWindowRadius; y++)
+        for (int x = -FloorWindowRadius; x <= FloorWindowRadius; x++)
+        {
+            var offset = new Vector2Int(x, y);
+            var cell = floorPlayer + offset;
+            float opacity = FloorOpacity(cell);
+            if (opacity <= 0f || !floor.HasTile(cell)) continue;
+            Vector2 center = mapCenter + RotateFloor(offset) * scale;
+            AddClippedRect(mesh, window, center, tileSize, WithOpacity(color, opacity));
+            foreach (var direction in FloorDirections)
+                DrawFloorEdge(mesh, window, cell, center, direction, scale, opacity);
+        }
+    }
+
+    private float FloorOpacity(Vector2Int cell) => showFloorAll || visibleFloor.Contains(cell) ? 1f :
+        discoveredFloor.Contains(cell) ? discoveredOpacity : 0f;
+
+    private void DrawFloorEdge(VertexHelper mesh, Rect window, Vector2Int cell, Vector2 center, Vector2Int direction, float scale, float opacity)
+    {
+        Vector2Int neighbor = cell + direction;
+        if (!floor.HasTile(neighbor)) return;
+        var edge = floor.GetEdge(cell, neighbor);
+        if (edge == SecondFloorEdgeKind.Open) return;
+        opacity = Mathf.Min(opacity, FloorOpacity(neighbor));
+        if (opacity <= 0f) return;
+
+        // Wall and door strips sit just inside the cell edge. Nothing spans the grid gap.
+        Vector2 normal = RotateFloor(direction);
+        float length = edge == SecondFloorEdgeKind.Wall ? 0.84f : 0.48f;
+        Vector2 size = normal.x != 0f ? new Vector2(FloorEdgeThickness, length) : new Vector2(length, FloorEdgeThickness);
+        Vector2 inset = normal * ((FloorTileSize - FloorEdgeThickness) * 0.5f * scale);
+        Color tint = edge == SecondFloorEdgeKind.Wall ? wallColor : connectorColor;
+        AddClippedRect(mesh, window, center + inset, size * scale, WithOpacity(tint, opacity));
+    }
+
+    private static void AddClippedRect(VertexHelper mesh, Rect window, Vector2 center, Vector2 size, Color tint)
+    {
+        Vector2 half = size * 0.5f;
+        Vector2 bottomLeft = Vector2.Max(center - half, window.min);
+        Vector2 topRight = Vector2.Min(center + half, window.max);
+        Vector2 clippedSize = topRight - bottomLeft;
+        if (clippedSize.x > 0f && clippedSize.y > 0f)
+            AddRect(mesh, (bottomLeft + topRight) * 0.5f, clippedSize, tint);
+    }
+
+    private static Color WithOpacity(Color tint, float opacity)
+    {
+        tint.a *= opacity;
+        return tint;
     }
 
     private Color TileColor(MinimapTileKind kind) => kind switch
@@ -113,16 +281,19 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
     {
         var neighbor = session.CurrentBoard.GetTile(tile.Position + direction);
         Vector2 to = ToLocal(Project(neighbor.Position), scale);
-        float thickness = scale * 0.26f;
-        var size = direction.x != 0 ? new Vector2(to.x - from.x, thickness) : new Vector2(thickness, to.y - from.y);
-        AddRect(mesh, (from + to) * 0.5f, size,
+        AddBridge(mesh, from, to, direction.x != 0, scale,
             tile.Kind == MinimapTileKind.Connector || neighbor.Kind == MinimapTileKind.Connector ? connectorColor : color);
     }
 
-    private void DrawPlayer(VertexHelper mesh, float scale)
+    private static void AddBridge(VertexHelper mesh, Vector2 from, Vector2 to, bool horizontal, float scale, Color tint)
     {
-        Vector2 center = ToLocal(Project(session.Position), scale);
-        Vector2 forward = session.Direction;
+        float thickness = scale * 0.26f;
+        var size = horizontal ? new Vector2(to.x - from.x, thickness) : new Vector2(thickness, to.y - from.y);
+        AddRect(mesh, (from + to) * 0.5f, size, tint);
+    }
+
+    private void DrawPlayer(VertexHelper mesh, Vector2 center, Vector2 forward, float scale)
+    {
         Vector2 side = new Vector2(forward.y, -forward.x);
         int index = mesh.currentVertCount;
         mesh.AddVert(center + forward * (scale * 0.78f), playerColor, Vector2.zero);

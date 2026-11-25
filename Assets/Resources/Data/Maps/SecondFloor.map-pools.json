@@ -1,0 +1,50 @@
+{
+  "kind": "plotweave-map-pools",
+  "schemaVersion": 1,
+  "pools": [
+    {
+      "id": "level-1",
+      "name": "等级 1",
+      "entries": [
+        {
+          "id": "standard-triangle",
+          "name": "标准三角地图",
+          "weight": 1,
+          "patternLibraryId": "Sample",
+          "regions": [
+            {
+              "regionTypeId": "city",
+              "stripMin": 5,
+              "stripMax": 6,
+              "maxNoLoop": 1
+            },
+            {
+              "regionTypeId": "city",
+              "stripMin": 5,
+              "stripMax": 6,
+              "maxNoLoop": 1
+            },
+            {
+              "regionTypeId": "suburb",
+              "stripMin": 5,
+              "stripMax": 6,
+              "maxNoLoop": 1
+            }
+          ],
+          "budget": {
+            "resourceMin": null,
+            "resourceMax": null,
+            "difficultyMin": null,
+            "difficultyMax": null
+          },
+          "progression": {
+            "baseLevel": 1,
+            "levelPerHop": 0.75,
+            "maxLevel": 20
+          },
+          "patternSha256": "af27e2d78873c8cb4dadae0538be6e1187c216e44751675ce5199a4d31233d3f"
+        }
+      ]
+    }
+  ]
+}

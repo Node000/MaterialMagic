@@ -1,0 +1,1999 @@
+{
+  "app": "plotweave",
+  "kind": "plotweave-strip-templates",
+  "schemaVersion": 3,
+  "exportedAt": "2026-11-25T18:12:14.601Z",
+  "cellTypes": [
+    {
+      "id": "empty",
+      "name": "通道 / 空",
+      "short": "空",
+      "icon": "·",
+      "color": "#6e7f91",
+      "resource": 0,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "combat",
+      "name": "战斗",
+      "short": "战斗",
+      "icon": "🗡",
+      "color": "#d97b6c",
+      "resource": 5,
+      "difficulty": 10,
+      "supportsOffset": true,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "elite",
+      "name": "精英",
+      "short": "精英",
+      "icon": "⚔",
+      "color": "#c95c78",
+      "resource": 15,
+      "difficulty": 25,
+      "supportsOffset": true,
+      "defaultOffset": 2,
+      "builtin": true
+    },
+    {
+      "id": "shop",
+      "name": "商店",
+      "short": "商店",
+      "icon": "⚖",
+      "color": "#d9a441",
+      "resource": 20,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "reward",
+      "name": "奖励",
+      "short": "奖励",
+      "icon": "◆",
+      "color": "#7fb685",
+      "resource": 25,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "event",
+      "name": "事件",
+      "short": "事件",
+      "icon": "?",
+      "color": "#6aa9c9",
+      "resource": 10,
+      "difficulty": 5,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "spawn",
+      "name": "出生点",
+      "short": "出生点",
+      "icon": "⚑",
+      "color": "#f4c568",
+      "resource": 0,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "rest",
+      "name": "休整",
+      "short": "休整",
+      "icon": "✚",
+      "color": "#89b8a5",
+      "resource": 15,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    }
+  ],
+  "stripTemplates": [
+    {
+      "id": "tpl_spawn_street5",
+      "name": "霓虹启程街",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": true,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "spawn",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "combat",
+          "difficultyOffset": -1,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.2,
+        "max": 1,
+        "unique": true
+      },
+      "tags": [
+        "出生",
+        "折线",
+        "5格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_spawn_concourse5",
+      "name": "轨道出发廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": true,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "spawn",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": -1,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 1,
+        "unique": true
+      },
+      "tags": [
+        "出生",
+        "直线",
+        "5格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_bridge_airlock4",
+      "name": "失压气闸桥",
+      "description": "",
+      "role": "bridge",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 3,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.9,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "桥接",
+        "直线",
+        "4格",
+        "双口"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_bridge_overpass5",
+      "name": "跨区高架桥",
+      "description": "",
+      "role": "bridge",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "elite",
+          "difficultyOffset": 2,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.2,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "桥接",
+        "折线",
+        "5格",
+        "双口"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_bridge_cargo5",
+      "name": "重轨货运桥",
+      "description": "",
+      "role": "bridge",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.1,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [
+        "桥接",
+        "直线",
+        "5格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_line4_market",
+      "name": "中转补给廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "shop",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.75,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "直线",
+        "4格",
+        "补给"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_noloop_vault4",
+      "name": "封存密库",
+      "description": "",
+      "role": "normal",
+      "noLoop": true,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "elite",
+          "difficultyOffset": 2,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.85,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "4格",
+        "非环",
+        "单口"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_line5_patrol",
+      "name": "警戒直廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.3,
+        "max": 5,
+        "unique": false
+      },
+      "tags": [
+        "直线",
+        "5格",
+        "战斗"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_line5_bazaar",
+      "name": "地下商业道",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "shop",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "rest",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.85,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "直线",
+        "5格",
+        "补给"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_l5_ambush",
+      "name": "拐角伏击巷",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.3,
+        "max": 5,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "L型",
+        "5格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_l5_camp",
+      "name": "荒郊休整道",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "rest",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "L型",
+        "5格",
+        "休整"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_z5_conduit",
+      "name": "电缆折管廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.25,
+        "max": 5,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "Z型",
+        "5格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_noloop_nest5",
+      "name": "单口精英巢",
+      "description": "",
+      "role": "normal",
+      "noLoop": true,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "elite",
+          "difficultyOffset": 2,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.95,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "5格",
+        "非环",
+        "单口"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_z6_assembly",
+      "name": "流水装配线",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "elite",
+          "difficultyOffset": 2,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.15,
+        "max": 4,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "Z型",
+        "6格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_u6_dock",
+      "name": "环轨停泊湾",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 1,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.05,
+        "max": 4,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "U型",
+        "6格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_s6_tunnel",
+      "name": "地下检修渠",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1.15,
+        "max": 4,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "S型",
+        "6格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_l6_gauntlet",
+      "name": "双闸试炼廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "elite",
+          "difficultyOffset": 2,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 1,
+          "type": "rest",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.9,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "L型",
+        "6格",
+        "双口"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_line6_express",
+      "name": "高速磁浮廊",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 1,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        },
+        {
+          "rx": 5,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [
+        "直线",
+        "6格"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_noloop_blackmarket6",
+      "name": "隐秘黑市尽头",
+      "description": "",
+      "role": "normal",
+      "noLoop": true,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "event",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 1,
+          "type": "shop",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 2,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.85,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [
+        "折线",
+        "6格",
+        "非环",
+        "单口",
+        "补给"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_sample_city_courtyard",
+      "name": "城市折返庭院",
+      "description": "示例：城市专属 2×2 折返条带，保留一条内墙。",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [
+        "city"
+      ],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "combat",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "reward",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 3,
+        "max": 2,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    }
+  ]
+}

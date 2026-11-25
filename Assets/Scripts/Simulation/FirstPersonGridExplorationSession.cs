@@ -13,9 +13,8 @@ public readonly struct ExplorationGridPosition : IEquatable<ExplorationGridPosit
 }
 
 /// <summary>
-/// The strip first-person prototype's actual movement/reveal rules. Visibility is the current cell
-/// plus the straight walkable ray ahead, not accumulated fog or the RunMap cross. Moving onto the
-/// boss host strip reveals the boss BEFORE refreshing the ray. Turns never reveal the boss.
+/// Cardinal movement and a straight walkable ray ahead. The legacy strip constructor preserves
+/// its bounds and boss reveal rules; fixed floor maps supply their own directed step query.
 /// </summary>
 public sealed class FirstPersonGridExplorationSession
 {
@@ -25,6 +24,7 @@ public sealed class FirstPersonGridExplorationSession
     private readonly int bossY;
     private readonly Func<int, int, bool> isPath;
     private readonly Func<int, int, bool> isBossHostStrip;
+    private readonly Func<ExplorationGridPosition, ExplorationGridPosition, bool> canStep;
     private readonly List<ExplorationGridPosition> visible = new List<ExplorationGridPosition>();
     public int X { get; private set; }
     public int Y { get; private set; }
@@ -41,22 +41,36 @@ public sealed class FirstPersonGridExplorationSession
         this.bossX = bossX; this.bossY = bossY; BossVisible = bossVisible;
         this.isPath = isPath ?? throw new ArgumentNullException(nameof(isPath));
         this.isBossHostStrip = isBossHostStrip ?? throw new ArgumentNullException(nameof(isBossHostStrip));
-        Facing = SecondFloorFacing.North;
-        // Preserve North/East/South/West preference and path-only initial-facing selection.
+        canStep = (_, to) => IsWalkable(to.X, to.Y);
+        // Legacy spawn facing checks paths only, even when the boss is already visible.
+        InitializeFacing((_, to) => isPath(to.X, to.Y));
+    }
+
+    public FirstPersonGridExplorationSession(int startX, int startY, Func<int, int, bool> hasTile,
+        Func<ExplorationGridPosition, ExplorationGridPosition, bool> canStep)
+    {
+        X = startX;
+        Y = startY;
+        isPath = hasTile ?? throw new ArgumentNullException(nameof(hasTile));
+        this.canStep = canStep ?? throw new ArgumentNullException(nameof(canStep));
+        if (!isPath(X, Y)) throw new ArgumentException("Exploration must begin on a floor tile.", nameof(hasTile));
+        InitializeFacing(canStep);
+    }
+
+    private void InitializeFacing(Func<ExplorationGridPosition, ExplorationGridPosition, bool> initialStep)
+    {
+        var start = new ExplorationGridPosition(X, Y);
         for (int i = 0; i < 4; i++)
         {
-            var candidate = (SecondFloorFacing)i;
-            int dx = candidate == SecondFloorFacing.East ? 1 : candidate == SecondFloorFacing.West ? -1 : 0;
-            int dy = candidate == SecondFloorFacing.North ? 1 : candidate == SecondFloorFacing.South ? -1 : 0;
-            if (!isPath(X + dx, Y + dy)) continue;
-            Facing = candidate;
-            break;
+            Facing = (SecondFloorFacing)i;
+            if (initialStep(start, new ExplorationGridPosition(X + FacingX, Y + FacingY))) break;
+            Facing = SecondFloorFacing.North;
         }
         RefreshVisibility();
     }
 
-    public bool IsWalkable(int x, int y) => x >= 0 && y >= 0 && x < width && y < height
-        && (isPath(x, y) || BossVisible && x == bossX && y == bossY);
+    public bool IsWalkable(int x, int y) => isBossHostStrip == null ? isPath(x, y) :
+        x >= 0 && y >= 0 && x < width && y < height && (isPath(x, y) || BossVisible && x == bossX && y == bossY);
 
     public void Turn(int clockwiseQuarterTurns)
     {
@@ -67,9 +81,9 @@ public sealed class FirstPersonGridExplorationSession
     public bool MoveForward()
     {
         int x = X + FacingX, y = Y + FacingY;
-        if (!IsWalkable(x, y)) return false;
+        if (!canStep(new ExplorationGridPosition(X, Y), new ExplorationGridPosition(x, y))) return false;
         X = x; Y = y;
-        if (isBossHostStrip(x, y)) BossVisible = true;
+        if (isBossHostStrip?.Invoke(x, y) == true) BossVisible = true;
         RefreshVisibility();
         return true;
     }
@@ -77,8 +91,14 @@ public sealed class FirstPersonGridExplorationSession
     public void RefreshVisibility()
     {
         visible.Clear();
-        visible.Add(new ExplorationGridPosition(X, Y));
-        for (int x = X + FacingX, y = Y + FacingY; IsWalkable(x, y); x += FacingX, y += FacingY)
-            visible.Add(new ExplorationGridPosition(x, y));
+        var from = new ExplorationGridPosition(X, Y);
+        visible.Add(from);
+        while (true)
+        {
+            var to = new ExplorationGridPosition(from.X + FacingX, from.Y + FacingY);
+            if (!canStep(from, to)) break;
+            visible.Add(to);
+            from = to;
+        }
     }
 }
