@@ -13,10 +13,12 @@ import {
   validateProject,
 } from './project.js';
 import { validateMap } from './validate-map.js';
-import { templateToFile } from './strip-templates.js';
+import { templateToFile, validateTemplateFamilies } from './strip-templates.js';
 
 function projectToFile(project) {
   if (!project.dungeon?.stripTemplates) return project;
+  const [issue] = validateTemplateFamilies(project.dungeon.stripTemplates);
+  if (issue) throw Error(issue.message);
   return { ...project, dungeon: { ...project.dungeon, stripTemplates: project.dungeon.stripTemplates.map(templateToFile) } };
 }
 
@@ -115,7 +117,8 @@ export function parseProject(text) {
   const validation = validateProject(project);
   return {
     ok: validation.ok,
-    project,
+    // A malformed family cannot be installed by the bundle's project-only recovery action.
+    project: validation.errors.some((issue) => issue.code.startsWith('template.family.')) ? null : project,
     errors: validation.errors,
     warnings: validation.warnings,
     migrated,

@@ -123,7 +123,7 @@ internal static partial class SecondFloorPatternGenerator
     }
 
     private static bool TryAssemble(Region[] regions, IReadOnlyList<Template> templates,
-        Dictionary<string, int> counts, Random random, out List<Strip> strips, out List<Join> joins)
+        Dictionary<string, int> counts, Random random, Random versionRandom, out List<Strip> strips, out List<Join> joins)
     {
         strips = null;
         joins = null;
@@ -133,7 +133,13 @@ internal static partial class SecondFloorPatternGenerator
         if (a.Ports.Count == 0 || b.Ports.Count == 0 || c.Ports.Count < 2)
             return false;
 
-        var options = TriangleBridgeOptions(templates, counts, random);
+        var options = TriangleBridgeOptions(templates, counts);
+        // Existing libraries used an unweighted shuffle of bridge placements. Keep their seeded results.
+        bool weightedFamilies = false;
+        foreach (var root in templates)
+            weightedFamilies |= root.FamilyVersions.Count > 1;
+        if (!weightedFamilies)
+            TriangleShuffle(options, random);
         var optionsAB = TriangleOptionsForPair(options, regions[0].TypeId, regions[1].TypeId);
         var optionsBC = TriangleOptionsForPair(options, regions[1].TypeId, regions[2].TypeId);
         var optionsCA = TriangleOptionsForPair(options, regions[2].TypeId, regions[0].TypeId);
@@ -143,7 +149,7 @@ internal static partial class SecondFloorPatternGenerator
         // Leave A fixed. Translate B onto the first bridge, then use the remaining two bridges to locate C.
         // The local template variants are never rotated as part of moving a region.
         var cPairs = TrianglePortPairs(c.Ports);
-        var candidatesAB = TriangleBridgeCandidates(a, Vector2Int.zero, optionsAB, null, Vector2Int.zero, null, random);
+        var candidatesAB = TriangleBridgeCandidates(a, Vector2Int.zero, optionsAB, null, Vector2Int.zero, null, random, weightedFamilies);
         int layouts = 0;
         foreach (var ab in candidatesAB)
         {
@@ -162,7 +168,7 @@ internal static partial class SecondFloorPatternGenerator
                     if (++layouts > TriangleABLayouts)
                         return false;
 
-                    if (TryCloseTriangle(a, b, c, bOffset, ab, optionsBC, optionsCA, cPairs, counts, random,
+                    if (TryCloseTriangle(a, b, c, bOffset, ab, optionsBC, optionsCA, cPairs, counts, random, weightedFamilies,
                         out var bc, out var ca, out var cOffset))
                     {
                         strips = new List<Strip>();
@@ -170,9 +176,9 @@ internal static partial class SecondFloorPatternGenerator
                         TriangleAppendRegion(regions[0], Vector2Int.zero, strips, joins);
                         TriangleAppendRegion(regions[1], bOffset, strips, joins);
                         TriangleAppendRegion(regions[2], cOffset, strips, joins);
-                        TriangleAppendBridge(new TriangleLanding(ab, exitAB, portB.Move(bOffset)), strips, joins);
-                        TriangleAppendBridge(bc, strips, joins);
-                        TriangleAppendBridge(ca, strips, joins);
+                        TriangleAppendBridge(new TriangleLanding(ab, exitAB, portB.Move(bOffset)), strips, joins, versionRandom);
+                        TriangleAppendBridge(bc, strips, joins, versionRandom);
+                        TriangleAppendBridge(ca, strips, joins, versionRandom);
                         return true;
                     }
 
@@ -189,14 +195,14 @@ internal static partial class SecondFloorPatternGenerator
     private static bool TryCloseTriangle(TriangleRegion a, TriangleRegion b, TriangleRegion c, Vector2Int bOffset,
         TriangleBridge ab, List<TriangleBridgeOption> optionsBC, List<TriangleBridgeOption> optionsCA,
         Dictionary<(Vector2Int, Vector2Int, Vector2Int), List<(TrianglePort, TrianglePort)>> cPairs,
-        Dictionary<string, int> counts, Random random, out TriangleLanding landingBC, out TriangleLanding landingCA,
+        Dictionary<string, int> counts, Random random, bool weightedFamilies, out TriangleLanding landingBC, out TriangleLanding landingCA,
         out Vector2Int cOffset)
     {
         landingBC = landingCA = default;
         cOffset = default;
 
-        var candidatesCA = TriangleBridgeCandidates(a, Vector2Int.zero, optionsCA, b.Halo, bOffset, ab.Halo, random);
-        var candidatesBC = TriangleBridgeCandidates(b, bOffset, optionsBC, a.Halo, Vector2Int.zero, ab.Halo, random);
+        var candidatesCA = TriangleBridgeCandidates(a, Vector2Int.zero, optionsCA, b.Halo, bOffset, ab.Halo, random, weightedFamilies);
+        var candidatesBC = TriangleBridgeCandidates(b, bOffset, optionsBC, a.Halo, Vector2Int.zero, ab.Halo, random, weightedFamilies);
         int probes = 0;
         foreach (var ca in candidatesCA)
         {
@@ -239,7 +245,7 @@ internal static partial class SecondFloorPatternGenerator
     }
 
     private static List<TriangleBridgeOption> TriangleBridgeOptions(IReadOnlyList<Template> templates,
-        Dictionary<string, int> counts, Random random)
+        Dictionary<string, int> counts)
     {
         var options = new List<TriangleBridgeOption>();
         foreach (var template in templates)
@@ -289,7 +295,6 @@ internal static partial class SecondFloorPatternGenerator
                 }
             }
         }
-        TriangleShuffle(options, random);
         return options;
     }
 
@@ -305,17 +310,41 @@ internal static partial class SecondFloorPatternGenerator
 
     private static List<TriangleBridge> TriangleBridgeCandidates(TriangleRegion host, Vector2Int hostOffset,
         List<TriangleBridgeOption> options, HashSet<Vector2Int> thirdRegionHalo, Vector2Int thirdRegionOffset,
-        HashSet<Vector2Int> otherBridgeHalo, Random random)
+        HashSet<Vector2Int> otherBridgeHalo, Random random, bool weightedFamilies)
     {
         var result = new List<TriangleBridge>();
         var optionOrder = new List<TriangleBridgeOption>(options);
+        var byRoot = new Dictionary<Template, List<TriangleBridgeOption>>();
+        var roots = new List<Template>();
+        if (weightedFamilies)
+            foreach (var option in options)
+            {
+                if (!byRoot.TryGetValue(option.Template, out var familyOptions))
+                {
+                    byRoot.Add(option.Template, familyOptions = new List<TriangleBridgeOption>());
+                    roots.Add(option.Template);
+                }
+                familyOptions.Add(option);
+            }
         for (int p = 0; p < host.Ports.Count && p < TrianglePortsPerSearch; p++)
         {
             var port = host.Ports[p].Move(hostOffset);
             if (TriangleBridgeBlocked(port.Outside, host, hostOffset, thirdRegionHalo, thirdRegionOffset, otherBridgeHalo))
                 continue;
 
-            TriangleShuffle(optionOrder, random);
+            if (weightedFamilies)
+            {
+                optionOrder.Clear();
+                var rootOrder = new List<Template>(WeightedOrder(roots, random));
+                foreach (var root in rootOrder)
+                    TriangleShuffle(byRoot[root], random);
+                // Give every family its weighted turn before considering extra rotations/anchors of any family.
+                for (int rotationOrAnchor = 0; optionOrder.Count < options.Count; rotationOrAnchor++)
+                    foreach (var root in rootOrder)
+                        if (rotationOrAnchor < byRoot[root].Count)
+                            optionOrder.Add(byRoot[root][rotationOrAnchor]);
+            }
+            else TriangleShuffle(optionOrder, random);
             int placedForPort = 0;
             for (int i = 0; i < optionOrder.Count && i < TriangleOptionProbesPerPort; i++)
             {
@@ -416,16 +445,16 @@ internal static partial class SecondFloorPatternGenerator
 
     private static bool TriangleHasCapacity(Template template, int requested, Dictionary<string, int> counts)
     {
-        counts.TryGetValue(template.Id, out int used);
-        return requested <= (long)template.InstanceLimit - used;
+        return requested <= (long)Capacity(template) - Used(counts, template);
     }
 
     private static bool TriangleBridgeCapacity(Template ab, Template bc, Template ca, Dictionary<string, int> counts)
     {
-        int abUses = 1 + (ab.Id == bc.Id ? 1 : 0) + (ab.Id == ca.Id ? 1 : 0);
-        // A distinct CA template's single-use capacity was already checked when collecting options.
+        string familyAB = ab.FamilyId, familyBC = bc.FamilyId, familyCA = ca.FamilyId;
+        int abUses = 1 + (familyAB == familyBC ? 1 : 0) + (familyAB == familyCA ? 1 : 0);
+        // A distinct CA family's single-use capacity was already checked when collecting options.
         return TriangleHasCapacity(ab, abUses, counts) &&
-            (bc.Id == ab.Id || TriangleHasCapacity(bc, bc.Id == ca.Id ? 2 : 1, counts));
+            (familyBC == familyAB || TriangleHasCapacity(bc, familyBC == familyCA ? 2 : 1, counts));
     }
 
     private static void TriangleAppendRegion(Region region, Vector2Int offset, List<Strip> strips, List<Join> joins)
@@ -436,11 +465,20 @@ internal static partial class SecondFloorPatternGenerator
             joins.Add(join.Move(offset));
     }
 
-    private static void TriangleAppendBridge(TriangleLanding landing, List<Strip> strips, List<Join> joins)
+    private static void TriangleAppendBridge(TriangleLanding landing, List<Strip> strips, List<Join> joins, Random versionRandom)
     {
         var bridge = landing.Bridge;
+        var template = SelectVersion(bridge.Option.Template, versionRandom);
+        var variant = bridge.Option.Variant;
+        if (template != bridge.Option.Template)
+            foreach (var placement in PlacementVariants(template))
+                if (placement.QuarterTurns == variant.QuarterTurns)
+                {
+                    variant = placement;
+                    break;
+                }
         int index = strips.Count;
-        strips.Add(new Strip(index, -1, bridge.Option.Template, bridge.Option.Variant, bridge.Origin));
+        strips.Add(new Strip(index, -1, template, variant, bridge.Origin));
         joins.Add(new Join(bridge.Host.StripIndex, index, bridge.Host.Cell, bridge.Host.Outside));
         joins.Add(new Join(index, landing.Target.StripIndex, landing.Exit.Cell, landing.Target.Cell));
     }

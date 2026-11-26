@@ -1,133 +1,309 @@
-#workspace-pools.dungeon-workspace { grid-template-columns: minmax(0, 1fr); }
+/* 地图生成池工作区：复用 PlotWeave 三栏制图 IDE 布局与视觉体系 */
 
-.map-pools-editor {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto;
-  padding: clamp(12px, 2vw, 24px);
+#workspace-pools.dungeon-workspace {
+  position: relative;
 }
 
-.map-pools-editor h2,
-.map-pools-editor h3,
-.map-pools-editor h4,
-.map-pools-editor p {
-  margin: 0;
+@media (max-width: 950px) {
+  #workspace-pools.dungeon-workspace {
+    grid-template-columns: 27% minmax(0, 1fr) 29%;
+  }
 }
 
-.map-pools-editor h2,
-.map-pools-editor h3,
-.map-pools-editor h4 { color: var(--text-strong); }
-.map-pools-editor h2 { font-size: 21px; }
-.map-pools-editor h3 { font-size: 15px; }
-.map-pools-editor h4 { margin-top: 6px; }
+#workspace-pools.is-exploring > .pools-sidebar,
+#workspace-pools.is-exploring > .pools-stage,
+#workspace-pools.is-exploring > .pools-inspector {
+  visibility: hidden;
+}
 
-.map-pools-editor .pools-header,
-.map-pools-editor .pools-actions,
-.map-pools-editor .pools-row {
+.pools-field-head {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
-.map-pools-editor .pools-header { align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.map-pools-editor .pools-row { align-items: flex-end; }
-.map-pools-editor .pools-row > .pools-field { flex: 1 1 108px; }
-.map-pools-editor .pools-field { display: grid; gap: 4px; min-width: 0; }
-.map-pools-editor .pools-field > span { color: var(--muted); }
-.map-pools-editor .pools-field .input { width: 100%; min-width: 0; }
-.map-pools-editor .pools-subtle { color: var(--muted); overflow-wrap: anywhere; }
-
-.map-pools-editor .pools-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  align-items: start;
-  gap: 14px;
-  margin-top: 10px;
-}
-
-.map-pools-editor .pools-settings-column,
-.map-pools-editor .pools-card,
-.map-pools-editor .pools-preview,
-.map-pools-editor .pools-notices {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.map-pools-editor .pools-card,
-.map-pools-editor .pools-stat {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
-}
-
-.map-pools-editor .pools-preview-card { position: sticky; top: 0; }
-.map-pools-editor .pools-preview-header { align-items: center; justify-content: space-between; }
-.map-pools-editor .pools-preview-empty {
-  display: grid;
-  place-items: center;
-  min-height: 174px;
-  padding: 12px;
-  text-align: center;
+.pools-icon-danger {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--line-soft);
+  background: var(--panel-2);
   color: var(--muted);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg-soft);
 }
 
-.map-pools-editor .pools-region {
-  margin: 0;
-  padding: 7px 9px 9px;
+.pools-icon-danger:hover:not(:disabled) {
+  border-color: rgba(224, 108, 95, 0.55);
+  color: var(--danger);
+  background: rgba(224, 108, 95, 0.12);
+}
+
+.pools-contact-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-soft);
+  background: var(--panel-2);
+  font-size: 12px;
+}
+
+.pools-issue-details {
+  margin: 5px 0 0;
+  padding-left: 16px;
+}
+
+.health-badge.neutral {
+  background: var(--panel-2);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.issue.ok {
+  border-left-color: var(--green);
+  color: var(--green);
+  background: rgba(127, 182, 133, 0.1);
+}
+
+.issue.info {
+  border-left-color: var(--blue);
+  color: var(--text);
+  background: rgba(106, 169, 201, 0.1);
+}
+
+/* ---------------- 探索测试模式（全幅制图视口） ---------------- */
+
+.btn.pools-explore-btn {
+  flex: 0 0 auto;
+  height: 36px;
+  min-width: 112px;
+  padding: 0 13px;
+  gap: 7px;
+  border-color: #76d8c3;
+  background: #59c6ae;
+  color: #0c2924;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn.pools-explore-btn:hover:not(:disabled) {
+  background: #82dfcc;
+}
+
+.btn.pools-explore-btn:focus-visible {
+  outline: 2px solid var(--text-strong);
+  outline-offset: 2px;
+}
+
+.btn.pools-explore-btn:disabled {
+  opacity: 1;
+  border-color: var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+}
+
+.pools-walk-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.pools-walk-overlay[hidden] {
+  display: none !important;
+}
+
+.pools-walk-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pools-walk-host {
+  display: grid;
+  grid-template: minmax(0, 1fr) auto / minmax(0, 1fr);
+  gap: 8px;
+  background: #080c10;
+  padding: 14px 20px;
+}
+
+.pools-walk-host .pools-walk-help-chip {
+  position: static;
+  justify-self: start;
+  max-width: 100%;
+}
+
+html[data-theme="light"] .pools-walk-host {
+  background: #f4f0e7;
+}
+
+.pools-walk-panel {
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  min-height: 0;
+  border-radius: var(--radius);
+  outline: none;
 }
 
-.map-pools-editor .pools-region legend { padding: 0 4px; color: var(--amber); }
-.map-pools-editor .pools-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
-.map-pools-editor .pools-stat { padding: 7px 9px; background: var(--bg-soft); overflow-wrap: anywhere; }
-.map-pools-editor .pools-stat dt,
-.map-pools-editor .pools-stat small { color: var(--muted); }
-.map-pools-editor .pools-stat dd { margin: 0; color: var(--text-strong); font: 600 17px var(--mono); }
-.map-pools-editor .pools-stat.pools-hit small { color: var(--green); }
-.map-pools-editor .pools-stat.pools-miss small { color: var(--red); }
+.pools-walk-panel:focus-visible {
+  box-shadow: 0 0 0 2px var(--amber);
+}
 
-.map-pools-editor .pools-map {
+.pools-walk-svg {
   display: block;
   width: 100%;
-  height: clamp(220px, 44vh, 560px);
+  height: 100%;
+}
+
+.pools-walk-grid {
+  fill: none;
+  stroke: rgba(100, 124, 144, 0.12);
+  stroke-width: 0.02;
+}
+
+.pools-walk-cell {
+  fill-opacity: 0.56;
+}
+
+.pools-walk-cell.is-empty {
+  fill: rgba(62, 74, 88, 0.42);
+  fill-opacity: 1;
+}
+
+.pools-walk-fog-fill {
+  fill: #171f29;
+}
+
+.pools-walk-outline {
+  fill: none;
+  stroke: #607285;
+  stroke-width: 0.055;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pools-walk-walls-backer {
+  fill: none;
+  stroke: rgba(6, 10, 15, 0.85);
+  stroke-width: 0.12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pools-walk-walls {
+  fill: none;
+  stroke: #d5e2ef;
+  stroke-width: 0.065;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pools-walk-doors {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 0.13;
+  stroke-linecap: round;
+}
+
+.pools-walk-fog-edge {
+  fill: none;
+  stroke: rgba(160, 184, 208, 0.42);
+  stroke-width: 0.04;
+  stroke-dasharray: 0.1 0.09;
+}
+
+.pools-walk-player-ring {
+  fill: none;
+  stroke: #ffd878;
+  stroke-width: 0.075;
+}
+
+.pools-walk-icon {
+  fill: #f7fbff;
+  font-size: 0.36px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.pools-walk-label {
+  fill: #eef4fa;
+  font-size: 0.19px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.pools-walk-enemy-bg {
+  fill: rgba(14, 18, 26, 0.86);
+}
+
+.pools-walk-enemy-text {
+  fill: #ffe2dc;
+  font-family: var(--mono);
+  font-size: 0.2px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  user-select: none;
+}
+
+.pools-walk-status {
+  color: var(--amber);
+}
+
+.pools-walk-pos {
   color: var(--text-strong);
-  background: var(--bg-soft);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  font-weight: 600;
 }
 
-.map-pools-editor .pools-map-cell-floor { fill: var(--blue); fill-opacity: .36; }
-.map-pools-editor .pools-map-cell-enemy { fill: var(--red); fill-opacity: .68; }
-.map-pools-editor .pools-map-cell-resource,
-.map-pools-editor .pools-map-cell-treasure { fill: var(--violet); fill-opacity: .65; }
-.map-pools-editor .pools-map-walls { fill: none; stroke: currentColor; stroke-opacity: .8; stroke-width: .06; }
-.map-pools-editor .pools-map-doors { fill: none; stroke: var(--amber); stroke-width: .13; }
-.map-pools-editor .pools-map-spawn { fill: var(--green); stroke: var(--bg); stroke-width: .1; }
-
-.map-pools-editor .pools-notices:not(:empty) { margin-top: 8px; }
-.map-pools-editor .pools-notice {
-  padding: 8px 11px;
-  border: 1px solid var(--line);
-  border-left-width: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--panel);
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
+/* 亮色主题探索适配 */
+html[data-theme="light"] .pools-walk-grid {
+  stroke: rgba(90, 80, 65, 0.14);
 }
 
-.map-pools-editor .pools-notice ul { margin: 4px 0 0; }
-.map-pools-editor .pools-notice.pools-error { border-left-color: var(--danger); color: var(--danger); }
-.map-pools-editor .pools-notice.pools-success { border-left-color: var(--green); color: var(--green); }
+html[data-theme="light"] .pools-walk-cell {
+  fill-opacity: 0.44;
+}
 
-@media (max-width: 860px) {
-  .map-pools-editor .pools-columns { grid-template-columns: minmax(0, 1fr); }
-  .map-pools-editor .pools-preview-card { position: static; }
+html[data-theme="light"] .pools-walk-cell.is-empty {
+  fill: rgba(160, 150, 136, 0.28);
+}
+
+html[data-theme="light"] .pools-walk-fog-fill {
+  fill: #e4ddd0;
+}
+
+html[data-theme="light"] .pools-walk-outline {
+  stroke: #897b69;
+}
+
+html[data-theme="light"] .pools-walk-walls-backer {
+  stroke: rgba(248, 244, 235, 0.92);
+}
+
+html[data-theme="light"] .pools-walk-walls {
+  stroke: #2a251d;
+}
+
+html[data-theme="light"] .pools-walk-fog-edge {
+  stroke: rgba(90, 80, 65, 0.42);
+}
+
+html[data-theme="light"] .pools-walk-player-ring {
+  stroke: #b07408;
+}
+
+html[data-theme="light"] .pools-walk-icon,
+html[data-theme="light"] .pools-walk-label {
+  fill: #1e1812;
+}
+
+html[data-theme="light"] .pools-walk-enemy-bg {
+  fill: rgba(255, 251, 243, 0.92);
+}
+
+html[data-theme="light"] .pools-walk-enemy-text {
+  fill: #9c2028;
 }

@@ -265,6 +265,7 @@ function boot() {
   function syncModeViews() {
     const mode = store.mode;
     wsPools.hidden = mode !== 'pools';
+    if (previousMode === 'pools' && mode !== 'pools') poolsEditor.leave();
     if (mode === 'pools' && previousMode !== mode) void poolsEditor.refresh();
     previousMode = mode;
     wsTemplates.hidden = mode !== 'templates';
@@ -281,6 +282,10 @@ function boot() {
         if (!floorEditor.canvas.lastMapId && store.currentFloorMap) {
           floorEditor.fit();
         }
+      });
+    } else if (mode === 'pools') {
+      window.requestAnimationFrame(() => {
+        poolsEditor.resize();
       });
     }
   }
@@ -313,11 +318,11 @@ function boot() {
   const directory = new WorkDirectory();
   let publishedRevision;
   let poolSession;
-  async function poolApi(route, body) {
+  async function poolApi(route, body, signal) {
     if (body !== undefined) poolSession ??= crypto.randomUUID();
     const response = await fetch(`/api/map-pools/${route}`, body === undefined ? {} : {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-plotweave-session': poolSession },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body), signal,
     });
     if (!response.headers.get('content-type')?.includes('application/json')) throw Error('请用 npm start 启动本机 PlotWeave，再使用地图池预览和发布。');
     const data = await response.json();
@@ -325,6 +330,7 @@ function boot() {
     return data;
   }
   const poolsEditor = new MapPoolsEditor(wsPools, {
+    store,
     getPools: () => store.dungeon.mapPools,
     updatePools: config => store.commitProject(project => { project.dungeon.mapPools = config; }, { label: '编辑地图生成池' }),
     saveDraft: async () => {
@@ -342,6 +348,7 @@ function boot() {
       return config;
     },
     preview: args => poolApi('preview', args),
+    explorePreview: (args, signal) => poolApi('explore', args, signal),
     publish: async ({ config }) => {
       if (publishedRevision === undefined) throw Error('请先刷新已发布状态，再发布。');
       const result = await poolApi('publish', { config, revision: publishedRevision });
@@ -466,6 +473,7 @@ function boot() {
       const theme = toggleTheme();
       canvas.setTheme(theme);
       floorEditor.setTheme(theme);
+      poolsEditor.setTheme(theme);
       syncThemeButton(theme);
       toast(`已切换到${theme === 'light' ? '亮色' : '暗色'}主题`, { type: 'info' });
     },
@@ -542,6 +550,8 @@ function boot() {
           () => {
             const theme = toggleTheme();
             canvas.setTheme(theme);
+            floorEditor.setTheme(theme);
+            poolsEditor.setTheme(theme);
             syncThemeButton(theme);
             toast(`已切换到${theme === 'light' ? '亮色' : '暗色'}主题`, { type: 'info' });
           },
@@ -1111,11 +1121,12 @@ function boot() {
     }
     if (key === 'f') {
       if (store.mode === 'floor') floorEditor.fit();
+      else if (store.mode === 'pools') poolsEditor.fit();
       else canvas.fit();
       return;
     }
     if (key === 'g') {
-      if (store.mode === 'floor') store.toggleUi('floorShowGrid');
+      if (store.mode === 'floor' || store.mode === 'pools') store.toggleUi('floorShowGrid');
       else store.toggleUi('showGrid');
       return;
     }
@@ -1125,7 +1136,14 @@ function boot() {
     else if (key === '3') store.setMode('world');
     else if (key === 'escape') {
       if (store.mode === 'floor') store.selectFloorStrip(null);
-      else store.select({ type: 'project' });
+      else if (store.mode === 'pools') {
+        if (poolsEditor.exploration) poolsEditor.leave({ focus: true });
+        else if (poolsEditor.selectedStripId) {
+          poolsEditor.selectedStripId = null;
+          poolsEditor.renderInspector();
+          poolsEditor.canvas?.render();
+        }
+      } else store.select({ type: 'project' });
     }
   });
 

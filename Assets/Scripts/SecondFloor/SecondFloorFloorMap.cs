@@ -28,6 +28,7 @@ public sealed class SecondFloorFloorMap
 
     private static readonly Vector2Int[] Directions = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
     private readonly Dictionary<Vector2Int, Tile> tiles = new Dictionary<Vector2Int, Tile>();
+    private readonly Dictionary<string, string> stripVisualTypes = new Dictionary<string, string>(StringComparer.Ordinal);
     private readonly Dictionary<(Vector2Int, Vector2Int), SecondFloorEdgeKind> edges =
         new Dictionary<(Vector2Int, Vector2Int), SecondFloorEdgeKind>();
 
@@ -37,6 +38,7 @@ public sealed class SecondFloorFloorMap
     public Vector2Int Spawn { get; private set; }
     public IEnumerable<Tile> Tiles => tiles.Values;
     public bool HasTile(Vector2Int position) => tiles.ContainsKey(position);
+    public string GetStripVisualType(string stripId) => stripId != null && stripVisualTypes.TryGetValue(stripId, out var type) ? type : "default";
 
     public SecondFloorEdgeKind GetEdge(Vector2Int from, Vector2Int to) =>
         edges.TryGetValue(EdgeKey(from, to), out var kind) ? kind : SecondFloorEdgeKind.Wall;
@@ -58,6 +60,10 @@ public sealed class SecondFloorFloorMap
             throw new FormatException("Floor map requires id, spawn, cells and edges.");
 
         var map = new SecondFloorFloorMap { Id = document.Id, Spawn = document.Spawn.ToGridPosition() };
+        if (document.Strips != null)
+            foreach (var strip in document.Strips)
+                if (strip != null && !string.IsNullOrWhiteSpace(strip.Id) && !string.IsNullOrWhiteSpace(strip.VisualTypeId))
+                    map.stripVisualTypes.Add(strip.Id, strip.VisualTypeId);
         foreach (var cell in document.Cells)
         {
             if (cell == null) throw new FormatException("Null floor tile.");
@@ -95,9 +101,11 @@ public sealed class SecondFloorFloorMap
     }
 
     internal static SecondFloorFloorMap FromLayout(string id, Vector2Int spawn, IEnumerable<Tile> layoutTiles,
-        IEnumerable<(Vector2Int From, Vector2Int To, SecondFloorEdgeKind Kind)> layoutEdges)
+        IEnumerable<(Vector2Int From, Vector2Int To, SecondFloorEdgeKind Kind)> layoutEdges,
+        IEnumerable<(string Id, string VisualTypeId)> visualTypes)
     {
         var map = new SecondFloorFloorMap { Id = id, Spawn = spawn };
+        foreach (var (stripId, visualTypeId) in visualTypes) map.stripVisualTypes.Add(stripId, visualTypeId);
         foreach (var tile in layoutTiles) map.tiles.Add(tile.Position, tile);
         if (!map.HasTile(spawn)) throw new InvalidOperationException("Generated floor has no spawn tile.");
         foreach (var (from, to, kind) in layoutEdges)
@@ -140,6 +148,13 @@ public sealed class SecondFloorFloorMap
         [JsonProperty("spawn")] public Position Spawn { get; set; }
         [JsonProperty("cells")] public Cell[] Cells { get; set; }
         [JsonProperty("edges")] public Edge[] Edges { get; set; }
+        [JsonProperty("strips")] public StripMetadata[] Strips { get; set; }
+    }
+
+    private sealed class StripMetadata
+    {
+        [JsonProperty("id")] public string Id { get; set; }
+        [JsonProperty("visualTypeId")] public string VisualTypeId { get; set; }
     }
 
     private class Position

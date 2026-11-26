@@ -28,7 +28,7 @@ import { appendStripCell, removeStripCell, toggleStripEdge } from '../core/strip
 import {
   cellTypeMap,
   computeTemplateMetrics,
-  createDefaultStripTemplates,
+  createChildStripTemplate,
   defaultRandomDraftConfig,
   generateRandomStripDraft,
   normalizeStripTemplate,
@@ -50,6 +50,7 @@ import { confirmDialog, openModal, toast } from './modals.js';
 
 const GRID_SIZE = 9;
 const clone = (v) => JSON.parse(JSON.stringify(v));
+const parseTags = (text) => [...new Set(text.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean))];
 
 const PORTAL_MODES = [
   { id: 'none', label: '无（全格随机相连）' },
@@ -98,13 +99,10 @@ function renderMiniPolyominoSvg(cells, tMap, size = 40) {
 function centerCellsOnGrid(cells) {
   const norm = normalizeCells(cells);
   const b = boundsOfCells(norm);
-  const offsetX = Math.floor((GRID_SIZE - b.width) / 2);
-  const offsetY = Math.floor((GRID_SIZE - b.height) / 2);
-  return norm.map((c) => ({
-    ...c,
-    gx: clamp(c.rx + offsetX, 0, GRID_SIZE - 1),
-    gy: clamp(c.ry + offsetY, 0, GRID_SIZE - 1),
-  }));
+  const size = Math.max(GRID_SIZE, b.width, b.height);
+  const offsetX = Math.floor((size - b.width) / 2);
+  const offsetY = Math.floor((size - b.height) / 2);
+  return norm.map((c) => ({ ...c, gx: c.rx + offsetX, gy: c.ry + offsetY }));
 }
 
 export class TemplateEditorView {
@@ -113,6 +111,7 @@ export class TemplateEditorView {
     this.store = store;
     this.filterText = '';
     this.filterRole = 'all';
+    this.expandedFamilies = new Set();
     this.brushType = 'combat';
     this.toolMode = 'paint'; // 'paint' | 'select' | 'erase'
     this.selectedCellCoord = null;
@@ -167,12 +166,47 @@ export class TemplateEditorView {
       this.draft = clone(normalizeStripTemplate(template, this.store.dungeon.cellTypes));
       this.draftIsNew = isNew;
       this.dirty = dirty;
+      if (this.draft.parentTemplateId) this.expandedFamilies.add(this.draft.parentTemplateId);
     }
+    if (this.structureLocked && ['erase', 'wall'].includes(this.toolMode)) this.toolMode = 'select';
     this.gridCells = centerCellsOnGrid(this.draft.cells);
     const tMap = cellTypeMap(this.store.dungeon.cellTypes);
     const firstCombat = this.gridCells.find((c) => tMap.get(c.type)?.supportsOffset);
     const first = firstCombat || this.gridCells[0];
     this.selectedCellCoord = first ? coordKey(first.gx, first.gy) : null;
+  }
+
+  get structureLocked() {
+    return Boolean(this.draft?.parentTemplateId || (!this.draftIsNew
+      && this.store.dungeon.stripTemplates.some((t) => t.parentTemplateId === this.draft?.id)));
+  }
+
+  async confirmDiscardDraft() {
+    if (!this.dirty) return true;
+    return confirmDialog({
+      title: '放弃未保存的草稿？',
+      message: '当前草稿的修改尚未保存。继续将放弃这些修改。',
+      confirmText: '放弃修改',
+    });
+  }
+
+  async startChildDraft(source) {
+    if (!(await this.confirmDiscardDraft())) return;
+    const rootId = source.parentTemplateId || source.id;
+    const list = this.store.dungeon.stripTemplates;
+    const root = list.find((t) => t.id === rootId && !t.parentTemplateId);
+    if (!root || !list.some((t) => t.id === source.id)) return;
+    const names = new Set(list.filter((t) => t.parentTemplateId === rootId).map((t) => t.name));
+    let n = 1;
+    while (names.has(`${root.name} · 子模板 ${n}`)) n += 1;
+    const child = createChildStripTemplate(source, `${root.name} · 子模板 ${n}`);
+    this.expandedFamilies.add(rootId);
+    this.loadTemplate(child, { isNew: true, dirty: true });
+    this.renderAll();
+  }
+
+  canChangeGridType(cell, nextType) {
+    return !this.structureLocked || ((cell.type === 'spawn') === (nextType === 'spawn'));
   }
 
   syncGridToDraft() {
@@ -189,7 +223,7 @@ export class TemplateEditorView {
       })),
     );
     this.draft.cells = normalized;
-    if (normalized.some((c) => c.type === 'spawn') && this.draft.role !== 'bridge') {
+    if (!this.structureLocked && normalized.some((c) => c.type === 'spawn') && this.draft.role !== 'bridge') {
       this.draft.spawnEligible = true;
       this.draft.noLoop = false;
     }
@@ -258,7 +292,8 @@ export class TemplateEditorView {
         {
           class: 'btn primary',
           type: 'button',
-          onclick: () => {
+          onclick: async () => {
+            if (!(await this.confirmDiscardDraft())) return;
             this.loadTemplate(null);
             this.renderAll();
             toast('已新建 5 格链式草稿，可在画布精修后保存', { type: 'info' });
@@ -317,17 +352,32 @@ export class TemplateEditorView {
     const regionName = regionNameArg || new Map(DUNGEON_REGION_PRESETS.map((r) => [r.id, r.shortName || r.name]));
     const q = this.filterText.trim().toLowerCase();
 
-    const filtered = stripTemplates.filter((tpl) => {
+    const matches = (tpl) => {
       if (this.filterRole === 'normal' && tpl.role !== 'normal') return false;
       if (this.filterRole === 'bridge' && tpl.role !== 'bridge') return false;
       if (this.filterRole === 'noloop' && !tpl.noLoop) return false;
       if (this.filterRole === 'portal' && !tpl.cells.some((c) => c.isPortal)) return false;
       if (q) {
-        const hay = `${tpl.name} ${tpl.id} ${(tpl.tags || []).join(' ')}`.toLowerCase();
+        const hay = `${tpl.name} ${tpl.id} ${tpl.description} ${(tpl.tags || []).join(' ')}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
-    });
+    };
+
+    const childrenByParent = new Map();
+    for (const tpl of stripTemplates) {
+      if (!tpl.parentTemplateId) continue;
+      if (!childrenByParent.has(tpl.parentTemplateId)) childrenByParent.set(tpl.parentTemplateId, []);
+      childrenByParent.get(tpl.parentTemplateId).push(tpl);
+    }
+    const filtered = stripTemplates.filter((tpl) => !tpl.parentTemplateId)
+      .map((tpl) => {
+        const children = childrenByParent.get(tpl.id) || [];
+        const rootMatches = matches(tpl);
+        const matchingChildren = q && rootMatches ? children : children.filter(matches);
+        return { tpl, children, rootMatches, matchingChildren };
+      })
+      .filter(({ rootMatches, matchingChildren }) => rootMatches || matchingChildren.length > 0);
 
     clear(this.leftListEl);
     if (!filtered.length) {
@@ -335,7 +385,7 @@ export class TemplateEditorView {
       return;
     }
 
-    for (const tpl of filtered) {
+    const renderCard = (tpl, { childCount = 0, expanded = false } = {}) => {
       const m = computeTemplateMetrics(tpl, cellTypes);
       const isActive = !this.draftIsNew && this.draft?.id === tpl.id;
       const scopeLabel =
@@ -345,25 +395,44 @@ export class TemplateEditorView {
             ? '四区通用'
             : tpl.regionIds.map((id) => regionName.get(id) || id).join('/');
 
-      const card = h(
+      const select = async () => {
+        if (!isActive && !(await this.confirmDiscardDraft())) return;
+        if (childCount) this.expandedFamilies.add(tpl.id);
+        if (!isActive) this.loadTemplate(tpl);
+        this.renderAll();
+      };
+      return h(
         'div',
         {
-          class: `tpl-card${isActive ? ' active' : ''}`,
-          role: 'button',
-          tabindex: '0',
-          onclick: () => {
-            this.loadTemplate(tpl);
-            this.renderAll();
-          },
+          class: `tpl-card${isActive ? ' active' : ''}${tpl.parentTemplateId ? ' tpl-card-child' : ''}`,
+          dataset: { templateId: tpl.id },
+          onclick: select,
         },
-        renderMiniPolyominoSvg(tpl.cells, tMap, 40),
+        childCount ? h('button', {
+          class: `tree-action tpl-family-toggle${expanded ? ' expanded' : ''}`,
+          type: 'button',
+          title: expanded ? '折叠子模板' : '展开子模板',
+          'aria-label': `${tpl.name}：${expanded ? '折叠' : '展开'}子模板`,
+          'aria-expanded': String(expanded),
+          onclick: (event) => {
+            event.stopPropagation();
+            if (expanded && !q) this.expandedFamilies.delete(tpl.id);
+            else this.expandedFamilies.add(tpl.id);
+            this.renderLeftList();
+            this.leftListEl.querySelector(`.tpl-family-toggle[data-family-index="${filtered.findIndex((row) => row.tpl.id === tpl.id)}"]`)?.focus();
+          },
+          dataset: { familyIndex: filtered.findIndex((row) => row.tpl.id === tpl.id) },
+          disabled: Boolean(q),
+        }, icon('chevron', 13)) : null,
+        renderMiniPolyominoSvg(tpl.cells, tMap, tpl.parentTemplateId ? 34 : 40),
         h(
           'div',
           { class: 'tpl-card-main' },
           h(
             'div',
             { class: 'tpl-card-title' },
-            h('span', { class: 'tpl-card-name' }, tpl.name),
+            h('button', { type: 'button', class: 'tpl-card-name tpl-card-select', title: tpl.name }, tpl.name),
+            childCount ? h('span', { class: 'pill', title: '子模板数量' }, `${childCount} 子`) : null,
             tpl.role === 'bridge' ? h('span', { class: 'pill bridge' }, '桥') : null,
             tpl.spawnEligible ? h('span', { class: 'pill spawn' }, '起') : null,
             tpl.noLoop ? h('span', { class: 'pill noloop' }, '非环') : null,
@@ -380,17 +449,26 @@ export class TemplateEditorView {
         h(
           'div',
           { class: 'tpl-card-ops' },
+          h('button', {
+            class: 'tree-action', type: 'button', title: '创建子模板', 'aria-label': `从${tpl.name}创建子模板`,
+            onclick: (event) => {
+              event.stopPropagation();
+              this.startChildDraft(tpl);
+            },
+          }, icon('plus', 13)),
           h(
             'button',
             {
               class: 'tree-action',
               type: 'button',
-              title: '复制模板',
-              onclick: (event) => {
+              title: '复制为独立模板',
+              onclick: async (event) => {
                 event.stopPropagation();
+                if (!(await this.confirmDiscardDraft())) return;
                 const copy = clone(tpl);
                 copy.name = `${tpl.name} 副本`;
                 const saved = this.store.saveStripTemplate(copy, { asNew: true });
+                if (!saved) return;
                 this.loadTemplate(saved);
                 this.renderAll();
                 toast(`已复制「${saved.name}」`, { type: 'success' });
@@ -403,9 +481,14 @@ export class TemplateEditorView {
             {
               class: 'tree-action',
               type: 'button',
-              title: '删除模板',
+              title: childCount ? '请先删除全部子模板' : '删除模板',
+              'aria-disabled': childCount ? 'true' : undefined,
               onclick: async (event) => {
                 event.stopPropagation();
+                if (childCount) {
+                  toast('请先删除此家族中的所有子模板。', { type: 'warning' });
+                  return;
+                }
                 if (stripTemplates.length <= 1) {
                   toast('至少需要保留 1 个条带模板', { type: 'warning' });
                   return;
@@ -417,9 +500,13 @@ export class TemplateEditorView {
                   danger: true,
                 });
                 if (!ok) return;
-                this.store.deleteStripTemplate(tpl.id);
-                if (this.draft?.id === tpl.id) {
-                  this.loadTemplate(this.store.dungeon.stripTemplates[0] || null);
+                if (!this.store.deleteStripTemplate(tpl.id)) {
+                  toast('模板未删除；请确认没有子模板且库中仍有其他模板。', { type: 'warning' });
+                  return;
+                }
+                if (!this.draftIsNew && this.draft?.id === tpl.id) {
+                  this.loadTemplate(this.store.dungeon.stripTemplates.find((t) => t.id === tpl.parentTemplateId)
+                    || this.store.dungeon.stripTemplates[0] || null);
                 }
                 this.renderAll();
                 toast('条带模板已删除', { type: 'success' });
@@ -429,7 +516,12 @@ export class TemplateEditorView {
           ),
         ),
       );
-      this.leftListEl.append(card);
+    };
+
+    for (const { tpl, children, matchingChildren } of filtered) {
+      const expanded = Boolean(q) || this.expandedFamilies.has(tpl.id);
+      this.leftListEl.append(renderCard(tpl, { childCount: children.length, expanded }));
+      if (expanded) for (const child of matchingChildren) this.leftListEl.append(renderCard(child));
     }
   }
 
@@ -440,6 +532,8 @@ export class TemplateEditorView {
     const tMap = cellTypeMap(cellTypes);
     const metrics = computeTemplateMetrics(this.draft, cellTypes);
     const check = validateStripTemplate(this.draft, cellTypes);
+    const locked = this.structureLocked;
+    const gridSize = Math.max(GRID_SIZE, ...this.gridCells.map((c) => Math.max(c.gx, c.gy) + 1));
 
     // 顶部大号双层工具栏
     const topActionRow = h(
@@ -453,7 +547,7 @@ export class TemplateEditorView {
           {
             class: `tool-btn lg${this.toolMode === 'select' ? ' active' : ''}`,
             type: 'button',
-            title: '选择格（调整偏移与出入口）',
+            title: locked ? '选择格（修改格子内容）' : '选择格（调整偏移与出入口）',
             onclick: () => {
               this.toolMode = 'select';
               this.renderCenter();
@@ -468,6 +562,7 @@ export class TemplateEditorView {
             class: `tool-btn lg${this.toolMode === 'erase' ? ' active' : ''}`,
             type: 'button',
             title: '擦除格（保留开放通路的连通性，也可右键擦除）',
+            disabled: locked,
             onclick: () => {
               this.toolMode = 'erase';
               this.renderCenter();
@@ -480,6 +575,7 @@ export class TemplateEditorView {
           class: `tool-btn lg${this.toolMode === 'wall' ? ' active' : ''}`,
           type: 'button',
           title: '点击相邻格之间的边来开墙或加墙',
+          disabled: locked,
           onclick: () => { this.toolMode = 'wall'; this.renderCenter(); },
         }, '墙体工具'),
       ),
@@ -489,7 +585,9 @@ export class TemplateEditorView {
           class: 'btn',
           type: 'button',
           title: '顺时针旋转 90°',
+          disabled: locked,
           onclick: () => {
+            if (this.structureLocked) return;
             const rotated = rotateCells(this.draft.cells, 1);
             this.draft.cells = normalizeCells(rotated);
             this.gridCells = centerCellsOnGrid(this.draft.cells);
@@ -507,7 +605,7 @@ export class TemplateEditorView {
           type: 'button',
           onclick: () => this.saveCurrentDraft({ asNew: false }),
         },
-        this.draftIsNew ? '💾 保存为模板' : '💾 保存修改',
+        this.draftIsNew ? (this.draft.parentTemplateId ? '保存为子模板' : '保存为模板') : '保存修改',
       ),
       !this.draftIsNew
         ? h(
@@ -533,6 +631,7 @@ export class TemplateEditorView {
             type: 'button',
             style: { '--brush-color': ct.color },
             title: `${ct.name}（资源 ${ct.resource} / 难度 ${ct.difficulty}）`,
+            disabled: locked && ct.id === 'spawn',
             onclick: () => {
               this.toolMode = 'paint';
               this.brushType = ct.id;
@@ -606,11 +705,11 @@ export class TemplateEditorView {
 
     const gridEl = h('div', {
       class: 'tpl-grid lg',
-      style: { gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` },
+      style: { gridTemplateColumns: `repeat(${gridSize}, 1fr)` },
     });
 
-    for (let gy = 0; gy < GRID_SIZE; gy += 1) {
-      for (let gx = 0; gx < GRID_SIZE; gx += 1) {
+    for (let gy = 0; gy < gridSize; gy += 1) {
+      for (let gx = 0; gx < gridSize; gx += 1) {
         const key = coordKey(gx, gy);
         const existing = cellByKey.get(key);
         const isSelected = this.selectedCellCoord === key;
@@ -638,7 +737,7 @@ export class TemplateEditorView {
                 background: `${def.color}30`,
                 borderColor: isSelected ? 'var(--amber)' : existing.isPortal ? '#4de2d8' : `${def.color}cc`,
               },
-              title: `${def.name}（资 ${def.resource} / 难 ${def.difficulty}）${existing.isPortal ? ' · 出入口格' : ''} · 左键操作 / 右键擦除`,
+              title: `${def.name}（资 ${def.resource} / 难 ${def.difficulty}）${existing.isPortal ? ' · 出入口格' : ''}${locked ? ' · 结构锁定' : ' · 左键操作 / 右键擦除'}`,
               onclick: () => this.onClickCell(gx, gy),
               oncontextmenu: (event) => {
                 event.preventDefault();
@@ -663,7 +762,7 @@ export class TemplateEditorView {
             const open = existing.openDirs?.includes(dir);
             const overlays = open ? [h('span', { class: `tpl-passage tpl-side-${dir}`, 'aria-hidden': 'true' })] : [];
             if (!shared || dir === 'E' || dir === 'S') {
-              const interactive = shared && this.toolMode === 'wall';
+              const interactive = shared && !locked && this.toolMode === 'wall';
               overlays.push(h(interactive ? 'button' : 'span', {
                 class: `tpl-edge tpl-side-${dir}${open ? ' open' : ''}${interactive ? ' editable' : ''}`,
                 ...(interactive ? { type: 'button', title: open ? '添加墙壁' : '拆除墙壁',
@@ -676,16 +775,15 @@ export class TemplateEditorView {
           gridEl.append(h('div', { class: 'tpl-edge-cell' }, tile, ...sides));
         } else {
           // 仅开放能保持「无矩形单链」的相邻空格（明确首尾，绝不会误画出矩形/分叉）
-          const canAdd =
-            this.gridCells.length === 0 ||
-            (this.gridCells.length < STRIP_CELLS_MAX && this.gridCells.some((c) => Math.abs(c.gx - gx) + Math.abs(c.gy - gy) === 1));
+          const canAdd = !locked && (this.gridCells.length === 0
+            || (this.gridCells.length < STRIP_CELLS_MAX && this.gridCells.some((c) => Math.abs(c.gx - gx) + Math.abs(c.gy - gy) === 1)));
           const tile = h(
             'button',
             {
               class: `tpl-cell lg empty-slot${canAdd ? ' addable' : ''}`,
               type: 'button',
               disabled: !canAdd,
-              title: canAdd ? '新格只自动连通放置最晚的邻格' : '新格须与当前条带贴边',
+              title: locked ? '家族结构已锁定' : canAdd ? '新格只自动连通放置最晚的邻格' : '新格须与当前条带贴边',
               onclick: () => this.onAddGridCell(gx, gy),
             },
             canAdd ? h('span', { class: 'tpl-add-plus' }, '+') : null,
@@ -704,7 +802,7 @@ export class TemplateEditorView {
               'span',
               null,
               this.draftIsNew
-                ? '✨ 随机/新建草稿尚未写入模板库 —— 可精修后点击右侧「立即保存」'
+                ? (this.draft.parentTemplateId ? '子模板草稿尚未写入模板库' : '新模板草稿尚未写入模板库')
                 : '● 当前模板有未保存修改',
             ),
             h(
@@ -732,8 +830,10 @@ export class TemplateEditorView {
               'select',
               {
                 class: 'select small-select',
+                disabled: locked && selectedCell.type === 'spawn',
                 onchange: (e) => {
                   const nextType = e.target.value;
+                  if (!this.canChangeGridType(selectedCell, nextType)) return;
                   const nextDef = tMap.get(nextType);
                   selectedCell.type = nextType;
                   selectedCell.difficultyOffset = nextDef?.supportsOffset ? (nextDef.defaultOffset || 0) : 0;
@@ -741,7 +841,7 @@ export class TemplateEditorView {
                   this.renderAll();
                 },
               },
-              ...cellTypes.map((ct) =>
+              ...cellTypes.filter((ct) => ct.id === selectedCell.type || this.canChangeGridType(selectedCell, ct.id)).map((ct) =>
                 h('option', { value: ct.id, selected: ct.id === selectedCell.type }, `${ct.icon} ${ct.name}（资${ct.resource}/难${ct.difficulty}）`),
               ),
             ),
@@ -754,7 +854,9 @@ export class TemplateEditorView {
               h('input', {
                 type: 'checkbox',
                 checked: Boolean(selectedCell.isPortal),
+                disabled: locked,
                 onchange: (e) => {
+                  if (this.structureLocked) return;
                   selectedCell.isPortal = e.target.checked;
                   this.syncGridToDraft();
                   this.renderAll();
@@ -762,6 +864,13 @@ export class TemplateEditorView {
               }),
               h('span', null, '🚪 设为出入口格'),
             ),
+            h('label', { class: 'mini-field' }, '格子标签', h('input', {
+              class: 'input', type: 'text', value: selectedCell.tags.join(', '), placeholder: '逗号分隔',
+              oninput: (e) => {
+                selectedCell.tags = parseTags(e.target.value);
+                this.syncGridToDraft();
+              },
+            })),
             selectedDef.supportsOffset
               ? h(
                   'div',
@@ -811,7 +920,7 @@ export class TemplateEditorView {
         ? h('span', { class: 'status-item' }, h('span', { class: 'status-dot ok' }), '开放通路连通性校验通过')
         : h('span', { class: 'status-item' }, h('span', { class: 'status-dot err' }), check.errors[0]?.message || '校验未通过'),
       h('span', { class: 'spacer' }),
-      h('span', { class: 'status-item' }, '「+」添加相邻格 · 墙体工具编辑共享边 · 右键擦除'),
+      h('span', { class: 'status-item' }, locked ? '家族结构已锁定，可编辑格子内容' : '「+」添加相邻格 · 墙体工具编辑共享边 · 右键擦除'),
     );
 
     mount(
@@ -830,6 +939,7 @@ export class TemplateEditorView {
   }
 
   onAddGridCell(gx, gy) {
+    if (this.structureLocked) return;
     if (this.gridCells.length >= STRIP_CELLS_MAX) {
       toast(`单条条带最多 ${STRIP_CELLS_MAX} 格`, { type: 'warning' });
       return;
@@ -854,6 +964,7 @@ export class TemplateEditorView {
   }
 
   onToggleWall(gx, gy, dir) {
+    if (this.structureLocked) return;
     const next = toggleStripEdge(this.gridCells.map((c) => ({ ...c, rx: c.gx, ry: c.gy })), gx, gy, dir);
     if (!next) {
       toast('这面墙会切断条带，请先开通替代路线。', { type: 'warning' });
@@ -873,7 +984,7 @@ export class TemplateEditorView {
     const cell = this.gridCells.find((c) => coordKey(c.gx, c.gy) === key);
     if (!cell) return;
     this.selectedCellCoord = key;
-    if (this.toolMode === 'paint') {
+    if (this.toolMode === 'paint' && this.canChangeGridType(cell, this.brushType)) {
       const tMap = cellTypeMap(this.store.dungeon.cellTypes);
       const def = tMap.get(this.brushType) || tMap.get('empty');
       cell.type = def.id;
@@ -884,6 +995,7 @@ export class TemplateEditorView {
   }
 
   tryRemoveGridCell(gx, gy) {
+    if (this.structureLocked) return;
     if (this.gridCells.length <= STRIP_CELLS_MIN) {
       toast('条带至少需要保留 1 个格子', { type: 'warning' });
       return;
@@ -909,11 +1021,14 @@ export class TemplateEditorView {
       toast(`保存失败：${check.errors[0]?.message}`, { type: 'error' });
       return false;
     }
-    const saved = this.store.saveStripTemplate(this.draft, { asNew: asNew || this.draftIsNew });
+    const asChild = !asNew && this.draftIsNew && Boolean(this.draft.parentTemplateId);
+    const saved = this.store.saveStripTemplate(this.draft, { asChild, asNew: asNew || this.draftIsNew });
     if (saved) {
       this.loadTemplate(saved, { isNew: false, dirty: false });
       this.renderAll();
       toast(`已保存条带模板「${saved.name}」`, { type: 'success' });
+    } else {
+      toast('保存失败：父模板可能已被删除，或家族锁定结构已改变。草稿仍保留。', { type: 'error' });
     }
     return Boolean(saved);
   }
@@ -924,6 +1039,9 @@ export class TemplateEditorView {
     const { cellTypes } = this.store.dungeon;
     const metrics = computeTemplateMetrics(this.draft, cellTypes);
     const cfg = this.randomConfig;
+    const locked = this.structureLocked;
+    const rootName = this.store.dungeon.stripTemplates.find((t) => t.id === this.draft.parentTemplateId)?.name
+      || this.draft.parentTemplateId;
 
     // 1. 随机生成草稿配置卡片
     const randomCard = h(
@@ -1108,7 +1226,8 @@ export class TemplateEditorView {
             class: 'btn primary full-width',
             type: 'button',
             style: { marginTop: '8px' },
-            onclick: () => {
+            onclick: async () => {
+              if (!(await this.confirmDiscardDraft())) return;
               const draft = generateRandomStripDraft(cfg, cellTypes);
               this.loadTemplate(draft, { isNew: true, dirty: true });
               this.renderAll();
@@ -1126,6 +1245,9 @@ export class TemplateEditorView {
       'div',
       { class: 'section' },
       h('div', { class: 'section-title' }, h('span', null, '当前模板属性')),
+      locked ? h('p', { class: 'field-hint tpl-family-notice' }, this.draft.parentTemplateId
+        ? `子模板 · 父模板：${rootName}。全家共享结构与生成配置。`
+        : '此模板已有子模板，结构与生成配置已锁定。可另存独立模板修改结构。') : null,
       h(
         'div',
         { class: 'kv-form' },
@@ -1140,9 +1262,18 @@ export class TemplateEditorView {
             oninput: (e) => {
               this.draft.name = e.target.value;
               this.dirty = true;
+              this.renderCenter();
             },
           }),
         ),
+        h('label', { class: 'mini-field' }, '模板说明', h('textarea', {
+          class: 'input', rows: 2,
+          oninput: (e) => { this.draft.description = e.target.value; this.dirty = true; },
+        }, this.draft.description)),
+        h('label', { class: 'mini-field' }, '模板标签', h('input', {
+          class: 'input', type: 'text', value: this.draft.tags.join(', '), placeholder: '逗号分隔',
+          oninput: (e) => { this.draft.tags = parseTags(e.target.value); this.dirty = true; },
+        })),
         h(
           'div',
           { class: 'form-row-2' },
@@ -1154,7 +1285,9 @@ export class TemplateEditorView {
               'select',
               {
                 class: 'select',
+                disabled: locked,
                 onchange: (e) => {
+                  if (this.structureLocked) return;
                   this.draft.role = e.target.value;
                   if (this.draft.role === 'bridge') {
                     this.draft.spawnEligible = false;
@@ -1182,7 +1315,9 @@ export class TemplateEditorView {
                 max: '20',
                 title: '生成权重',
                 value: String(this.draft.generation.weight),
+                disabled: locked,
                 onchange: (e) => {
+                  if (this.structureLocked) return;
                   this.draft.generation.weight = Math.max(0.1, Number(e.target.value) || 1);
                   this.dirty = true;
                 },
@@ -1194,7 +1329,9 @@ export class TemplateEditorView {
                 max: '99',
                 title: '单层出现上限',
                 value: String(this.draft.generation.max),
+                disabled: locked,
                 onchange: (e) => {
+                  if (this.structureLocked) return;
                   this.draft.generation.max = clamp(Math.round(Number(e.target.value) || 0), 0, 99);
                   this.dirty = true;
                 },
@@ -1211,7 +1348,9 @@ export class TemplateEditorView {
             h('input', {
               type: 'checkbox',
               checked: this.draft.allowRotate,
+              disabled: locked,
               onchange: (e) => {
+                if (this.structureLocked) return;
                 this.draft.allowRotate = e.target.checked;
                 this.dirty = true;
               },
@@ -1224,8 +1363,9 @@ export class TemplateEditorView {
             h('input', {
               type: 'checkbox',
               checked: this.draft.spawnEligible,
-              disabled: this.draft.role === 'bridge',
+              disabled: locked || this.draft.role === 'bridge',
               onchange: (e) => {
+                if (this.structureLocked) return;
                 this.draft.spawnEligible = e.target.checked;
                 if (this.draft.spawnEligible) this.draft.noLoop = false;
                 this.dirty = true;
@@ -1243,8 +1383,9 @@ export class TemplateEditorView {
             h('input', {
               type: 'checkbox',
               checked: Boolean(this.draft.noLoop),
-              disabled: this.draft.role === 'bridge' || this.draft.spawnEligible,
+              disabled: locked || this.draft.role === 'bridge' || this.draft.spawnEligible,
               onchange: (e) => {
+                if (this.structureLocked) return;
                 this.draft.noLoop = e.target.checked;
                 this.dirty = true;
                 this.renderAll();
@@ -1252,6 +1393,14 @@ export class TemplateEditorView {
             }),
             h('span', null, '非环（仅作端点支路）'),
           ),
+          h('label', { class: 'checkbox-row' }, h('input', {
+            type: 'checkbox', checked: this.draft.generation.unique, disabled: locked,
+            onchange: (e) => {
+              if (this.structureLocked) return;
+              this.draft.generation.unique = e.target.checked;
+              this.dirty = true;
+            },
+          }), h('span', null, '每层最多一次')),
         ),
 
         // 适用区域：城市 / 工厂 / 郊区 / 太空（全不勾 = 四区通用）
@@ -1275,7 +1424,9 @@ export class TemplateEditorView {
                     h('input', {
                       type: 'checkbox',
                       checked,
+                      disabled: locked,
                       onchange: (e) => {
+                        if (this.structureLocked) return;
                         if (e.target.checked) {
                           if (!this.draft.regionIds.includes(r.id)) this.draft.regionIds.push(r.id);
                         } else {
@@ -1556,13 +1707,17 @@ export class TemplateEditorView {
   /* ---------------- 模板库 JSON 导入 / 导出 ---------------- */
 
   exportTemplates() {
-    const json = serializeTemplateLibrary({
-      cellTypes: this.store.dungeon.cellTypes,
-      stripTemplates: this.store.dungeon.stripTemplates,
-    });
-    const name = slugify(this.store.project.meta.name || 'dungeon');
-    downloadText(`${name}-strip-templates.json`, json);
-    toast(`已导出 ${this.store.dungeon.stripTemplates.length} 个条带模板 JSON`, { type: 'success' });
+    try {
+      const json = serializeTemplateLibrary({
+        cellTypes: this.store.dungeon.cellTypes,
+        stripTemplates: this.store.dungeon.stripTemplates,
+      });
+      const name = slugify(this.store.project.meta.name || 'dungeon');
+      downloadText(`${name}-strip-templates.json`, json);
+      toast(`已导出 ${this.store.dungeon.stripTemplates.length} 个已保存条带模板`, { type: 'success' });
+    } catch (error) {
+      toast(`导出失败：${error.message}`, { type: 'error' });
+    }
   }
 
   async importTemplates() {
@@ -1587,11 +1742,14 @@ export class TemplateEditorView {
       cancelText: '取消',
     });
     if (!replace) return;
-    this.store.importTemplateLibrary({
+    if (!this.store.importTemplateLibrary({
       cellTypes: parsed.cellTypes,
       stripTemplates: parsed.stripTemplates,
       replace: true,
-    });
+    })) {
+      toast('导入失败，现有模板库未修改。', { type: 'error' });
+      return;
+    }
     this.loadTemplate(this.store.dungeon.stripTemplates[0] || null);
     this.renderAll();
     toast(`已导入 ${parsed.stripTemplates.length} 个条带模板`, { type: 'success' });

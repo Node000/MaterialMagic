@@ -189,6 +189,8 @@ export function normalizeStripTemplate(raw, cellTypes = DEFAULT_CELL_TYPES, inde
 
   return {
     id: String(source.id || `tpl_${index + 1}`).trim(),
+    ...(Object.hasOwn(source, 'parentTemplateId') ? { parentTemplateId: source.parentTemplateId } : {}),
+    ...(Object.hasOwn(source, 'visualTypeId') ? { visualTypeId: source.visualTypeId } : {}),
     name: String(source.name || `条带模板 ${index + 1}`).trim() || `条带模板 ${index + 1}`,
     description: String(source.description || ''),
     role,
@@ -212,6 +214,68 @@ export function normalizeStripTemplate(raw, cellTypes = DEFAULT_CELL_TYPES, inde
       ? [...new Set(source.tags.map((t) => String(t).trim()).filter(Boolean))]
       : [],
   };
+}
+
+// Family members are complete records. Compare only the fields that affect placement.
+export function stripTemplateStructureKey(template) {
+  return JSON.stringify([
+    template.role, template.noLoop, template.spawnEligible, template.allowRotate,
+    [...template.regionIds].sort(),
+    [template.generation.weight, template.generation.max, template.generation.unique],
+    [...template.cells].sort((a, b) => a.ry - b.ry || a.rx - b.rx).map((cell) => [
+      cell.rx, cell.ry, [...(cell.openDirs || [])].sort(), cell.placedOrder,
+      cell.isPortal, cell.type === 'spawn',
+    ]),
+  ]);
+}
+
+export function validateTemplateFamilies(templates) {
+  const byId = new Map(templates.map((template) => [template.id, template]));
+  const duplicateIds = new Set();
+  const seen = new Set();
+  for (const template of templates) {
+    if (seen.has(template.id)) duplicateIds.add(template.id);
+    seen.add(template.id);
+  }
+  const issues = [];
+  templates.forEach((template, index) => {
+    const add = (code, message, field = 'parentTemplateId') => issues.push({
+      level: 'error', code: `template.family.${code}`, message: `模板「${template.name}」${message}`,
+      path: `dungeon.stripTemplates[${index}].${field}`,
+    });
+    if (Object.hasOwn(template, 'visualTypeId') && (typeof template.visualTypeId !== 'string' || !template.visualTypeId.trim())) {
+      add('visualType', '的 visualTypeId 必须是非空字符串。', 'visualTypeId');
+    }
+    if (!Object.hasOwn(template, 'parentTemplateId')) return;
+    const { parentTemplateId } = template;
+    if (typeof parentTemplateId !== 'string' || !parentTemplateId || parentTemplateId.trim() !== parentTemplateId) {
+      add('parentId', '的 parentTemplateId 必须是非空模板 ID。');
+      return;
+    }
+    if (duplicateIds.has(parentTemplateId) || duplicateIds.has(template.id)) {
+      add('ambiguous', '的家族 ID 重复，无法判定父子关系。');
+      return;
+    }
+    const parent = byId.get(parentTemplateId);
+    if (!parent) add('missing', `的父模板「${parentTemplateId}」不存在。`);
+    else if (Object.hasOwn(parent, 'parentTemplateId')) add('nested', '必须直接引用根模板，不能引用自己或其他子模板。');
+    else if (Object.hasOwn(template, 'visualTypeId') && template.visualTypeId !== (parent.visualTypeId ?? parent.id)) {
+      add('visualType', '的 visualTypeId 必须继承根模板。', 'visualTypeId');
+    } else if (!validateOpenDirs(parent.cells) || !validateOpenDirs(template.cells)
+      || stripTemplateStructureKey(parent) !== stripTemplateStructureKey(template)) {
+      add('structure', `与父模板「${parent.name}」的锁定结构或生成配置不一致。`);
+    }
+  });
+  return issues;
+}
+
+export function createChildStripTemplate(source, name) {
+  const child = clone(source);
+  child.parentTemplateId = source.parentTemplateId ?? source.id;
+  child.name = name || `${source.name} 子模板`;
+  // A variant starts from its actual cell totals, not from the source's manual overrides.
+  child.metrics = { resourceOverride: null, difficultyOverride: null };
+  return child;
 }
 
 /**
@@ -938,13 +1002,17 @@ export function createDefaultStripTemplates(cellTypes = DEFAULT_CELL_TYPES) {
  * ------------------------------------------------------------------ */
 
 export function serializeTemplateLibrary({ cellTypes, stripTemplates }, { pretty = true } = {}) {
+  const types = normalizeCellTypes(cellTypes);
+  const templates = (stripTemplates || []).map((t, i) => normalizeStripTemplate(t, types, i));
+  const [issue] = validateTemplateFamilies(templates);
+  if (issue) throw Error(issue.message);
   const payload = {
     app: APP_ID,
     kind: 'plotweave-strip-templates',
     schemaVersion: 3,
     exportedAt: new Date().toISOString(),
-    cellTypes: normalizeCellTypes(cellTypes),
-    stripTemplates: (stripTemplates || []).map((t, i) => templateToFile(normalizeStripTemplate(t, cellTypes, i))),
+    cellTypes: types,
+    stripTemplates: templates.map(templateToFile),
   };
   return JSON.stringify(payload, null, pretty ? 2 : 0);
 }
@@ -993,23 +1061,24 @@ export function parseTemplateLibrary(text, fallbackCellTypes = DEFAULT_CELL_TYPE
   const cellTypes = normalizeCellTypes(rawCellTypes || fallbackCellTypes);
   const errors = [];
   const warnings = [];
+  const stripTemplates = rawTemplates.map((item, index) => normalizeStripTemplate(item, cellTypes, index));
+  for (const issue of validateTemplateFamilies(stripTemplates)) errors.push(issue.message);
+  const reservedIds = new Set(stripTemplates.map((template) => template.id));
   const seenIds = new Set();
-  const stripTemplates = [];
-
-  rawTemplates.forEach((item, index) => {
-    const normalized = normalizeStripTemplate(item, cellTypes, index);
-    if (seenIds.has(normalized.id)) {
+  for (const template of stripTemplates) {
+    if (seenIds.has(template.id)) {
       let suffix = 2;
-      while (seenIds.has(`${normalized.id}_${suffix}`)) suffix += 1;
-      warnings.push(`模板 id「${normalized.id}」重复，已重命名为「${normalized.id}_${suffix}」。`);
-      normalized.id = `${normalized.id}_${suffix}`;
+      while (reservedIds.has(`${template.id}_${suffix}`)) suffix += 1;
+      const id = `${template.id}_${suffix}`;
+      warnings.push(`模板 id「${template.id}」重复，已重命名为「${id}」。`);
+      template.id = id;
+      reservedIds.add(id);
     }
-    seenIds.add(normalized.id);
-    const check = validateStripTemplate(normalized, cellTypes);
+    seenIds.add(template.id);
+    const check = validateStripTemplate(template, cellTypes);
     for (const issue of check.errors) errors.push(issue.message);
     for (const issue of check.warnings) warnings.push(issue.message);
-    stripTemplates.push(normalized);
-  });
+  }
 
   return {
     ok: errors.length === 0,

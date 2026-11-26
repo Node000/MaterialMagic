@@ -32,8 +32,11 @@ public sealed class SecondFloorPatternLibrary
     public sealed class Template
     {
         public string Id { get; }
+        public string ParentTemplateId { get; }
+        public string FamilyId => ParentTemplateId ?? Id;
         public string Name { get; }
         public string Role { get; }
+        public string VisualTypeId => DeclaredVisualTypeId ?? familyRoot?.VisualTypeId ?? "default";
         public IReadOnlyList<string> RegionIds { get; }
         public bool SpawnEligible { get; }
         public bool NoLoop { get; }
@@ -50,13 +53,20 @@ public sealed class SecondFloorPatternLibrary
         public double Difficulty => DifficultyOverride ?? AutoDifficulty;
         public IReadOnlyList<Variant> Variants { get; }
 
-        internal Template(string id, string name, string role, string[] regionIds, bool spawnEligible, bool noLoop,
-            bool allowRotate, int max, double weight, bool unique, double autoResource, double autoDifficulty,
-            double? resourceOverride, double? difficultyOverride, IReadOnlyList<Variant> variants)
+        internal string DeclaredVisualTypeId { get; }
+        internal IReadOnlyList<Variant> PlacementVariants { get; private set; }
+        internal IReadOnlyList<Template> FamilyVersions { get; private set; }
+        private Template familyRoot;
+
+        internal Template(string id, string parentTemplateId, string name, string role, string visualTypeId, string[] regionIds,
+            bool spawnEligible, bool noLoop, bool allowRotate, int max, double weight, bool unique, double autoResource,
+            double autoDifficulty, double? resourceOverride, double? difficultyOverride, IReadOnlyList<Variant> variants)
         {
             Id = id;
+            ParentTemplateId = parentTemplateId;
             Name = name;
             Role = role;
+            DeclaredVisualTypeId = visualTypeId;
             RegionIds = Array.AsReadOnly(regionIds);
             SpawnEligible = spawnEligible;
             NoLoop = noLoop;
@@ -68,7 +78,24 @@ public sealed class SecondFloorPatternLibrary
             AutoDifficulty = autoDifficulty;
             ResourceOverride = resourceOverride;
             DifficultyOverride = difficultyOverride;
-            Variants = variants;
+            var distinct = new List<Variant>(variants.Count);
+            foreach (Variant rotation in variants)
+                if (!distinct.Exists(existing => SameLayout(existing, rotation.Cells, rotation.Edges)))
+                    distinct.Add(rotation);
+            Variants = distinct.AsReadOnly();
+            PlacementVariants = Variants;
+        }
+
+        internal void SetFamilyVersions(List<Template> versions) => FamilyVersions = versions.AsReadOnly();
+
+        internal void SetFamilyRoot(Template root, IReadOnlyList<Variant> alignedRotations)
+        {
+            familyRoot = root;
+            // Search exactly the root's placements, even when changing content breaks or creates a rotational symmetry.
+            var placements = new Variant[root.Variants.Count];
+            for (int i = 0; i < placements.Length; i++)
+                placements[i] = alignedRotations[root.Variants[i].QuarterTurns];
+            PlacementVariants = Array.AsReadOnly(placements);
         }
 
         public bool MatchesRegion(string regionId)
@@ -121,7 +148,8 @@ public sealed class SecondFloorPatternLibrary
             Tags = tags;
         }
 
-        internal Cell At(Vector2Int position) => new Cell(position, Type, DifficultyOffset, IsPortal, Index, PlacedOrder, Tags);
+        internal Cell At(Vector2Int position, int? index = null) =>
+            new Cell(position, Type, DifficultyOffset, IsPortal, index ?? Index, PlacedOrder, Tags);
     }
 
     public readonly struct Edge
@@ -142,11 +170,13 @@ public sealed class SecondFloorPatternLibrary
 
     public IReadOnlyDictionary<string, CellType> CellTypes { get; }
     public IReadOnlyList<Template> Templates { get; }
+    public IReadOnlyList<Template> FamilyRoots { get; }
 
-    private SecondFloorPatternLibrary(Dictionary<string, CellType> cellTypes, List<Template> templates)
+    private SecondFloorPatternLibrary(Dictionary<string, CellType> cellTypes, List<Template> templates, List<Template> roots)
     {
         CellTypes = new ReadOnlyDictionary<string, CellType>(cellTypes);
         Templates = templates.AsReadOnly();
+        FamilyRoots = roots.AsReadOnly();
     }
 
     /// <exception cref="FormatException">The asset is missing or does not satisfy the v3 export contract.</exception>
@@ -204,20 +234,57 @@ public sealed class SecondFloorPatternLibrary
                 (int)Integer(type, "defaultOffset", -10, 10)));
         }
 
-        var templates = new List<Template>(rawTemplates.Count);
-        var ids = new HashSet<string>(StringComparer.Ordinal);
-        foreach (JToken entry in rawTemplates)
+        var byId = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        var ids = new string[rawTemplates.Count];
+        for (int i = 0; i < rawTemplates.Count; i++)
         {
-            JObject template = Object(entry);
+            JObject template = Object(rawTemplates[i]);
             string id = Identifier(template, "id");
-            if (!ids.Add(id))
+            if (!byId.TryAdd(id, template))
                 throw Invalid(template, $"duplicate strip template id '{id}'.");
-            templates.Add(ReadTemplate(template, id, types));
+            ids[i] = id;
         }
-        return new SecondFloorPatternLibrary(types, templates);
+
+        var templates = new Template[ids.Length];
+        var roots = new List<Template>();
+        var families = new Dictionary<string, List<Template>>(StringComparer.Ordinal);
+        var rootData = new Dictionary<string, (Cell[] Cells, Edge[] Edges)>(StringComparer.Ordinal);
+        for (int i = 0; i < ids.Length; i++)
+        {
+            JObject raw = byId[ids[i]];
+            if (raw["parentTemplateId"] != null) continue;
+            Template rootTemplate = ReadTemplate(raw, ids[i], null, types, out var cells, out var edges, out _);
+            templates[i] = rootTemplate;
+            roots.Add(rootTemplate);
+            families.Add(rootTemplate.Id, new List<Template> { rootTemplate });
+            rootData.Add(rootTemplate.Id, (cells, edges));
+        }
+        for (int i = 0; i < ids.Length; i++)
+        {
+            if (templates[i] != null) continue;
+            JObject raw = byId[ids[i]];
+            string parentId = Identifier(raw, "parentTemplateId");
+            if (parentId == ids[i])
+                throw Invalid(raw["parentTemplateId"], "a subtemplate cannot reference itself.");
+            if (!byId.ContainsKey(parentId))
+                throw Invalid(raw["parentTemplateId"], $"unknown parent template '{parentId}'.");
+            if (!families.TryGetValue(parentId, out var family))
+                throw Invalid(raw["parentTemplateId"], "a subtemplate must directly reference a root template.");
+
+            Template child = ReadTemplate(raw, ids[i], parentId, types, out var cells, out var edges, out var rotations);
+            var topology = rootData[parentId];
+            ValidateFamilyMember(raw, family[0], child, topology.Cells, topology.Edges, cells, edges);
+            child.SetFamilyRoot(family[0], AlignRotations(family[0], rotations));
+            family.Add(child);
+            templates[i] = child;
+        }
+        foreach (var rootTemplate in roots)
+            rootTemplate.SetFamilyVersions(families[rootTemplate.Id]);
+        return new SecondFloorPatternLibrary(types, new List<Template>(templates), roots);
     }
 
-    private static Template ReadTemplate(JObject template, string id, Dictionary<string, CellType> types)
+    private static Template ReadTemplate(JObject template, string id, string parentId, Dictionary<string, CellType> types,
+        out Cell[] cells, out Edge[] edges, out IReadOnlyList<Variant> rotations)
     {
         string role = String(template, "role");
         if (role != "normal" && role != "bridge")
@@ -228,6 +295,7 @@ public sealed class SecondFloorPatternLibrary
             throw Invalid(template, "bridge and spawn eligibility are mutually exclusive; noLoop requires a normal, non-spawn template.");
 
         string name = Identifier(template, "name");
+        string visualTypeId = template["visualTypeId"] == null ? null : Identifier(template, "visualTypeId");
         string[] regions = Identifiers(template, "regionIds");
         bool allowRotate = Boolean(template, "allowRotate");
         JObject metrics = Field<JObject>(template, "metrics", JTokenType.Object);
@@ -241,7 +309,7 @@ public sealed class SecondFloorPatternLibrary
         JArray rawCells = Field<JArray>(template, "cells", JTokenType.Array);
         if (rawCells.Count < 1 || rawCells.Count > 16)
             throw Invalid(rawCells, "the strip must contain 1–16 cells.");
-        var cells = new Cell[rawCells.Count];
+        cells = new Cell[rawCells.Count];
         var byPosition = new Dictionary<Vector2Int, int>(cells.Length);
         double autoResource = 0;
         double autoDifficulty = 0;
@@ -270,10 +338,61 @@ public sealed class SecondFloorPatternLibrary
             throw Invalid(template, "cell resource or difficulty sum is too large.");
 
         JArray rawEdges = Field<JArray>(template, "openEdges", JTokenType.Array);
-        Edge[] edges = ReadOpenEdges(rawEdges, cells, byPosition, role == "bridge");
-        return new Template(id, name, role, regions, spawnEligible, noLoop, allowRotate, max, weight, unique,
+        edges = ReadOpenEdges(rawEdges, cells, byPosition, role == "bridge");
+        rotations = CreateVariants(cells, edges, allowRotate);
+        return new Template(id, parentId, name, role, visualTypeId, regions, spawnEligible, noLoop, allowRotate, max, weight, unique,
             Math.Round(autoResource, 2, MidpointRounding.AwayFromZero), Math.Round(autoDifficulty, 2, MidpointRounding.AwayFromZero),
-            resourceOverride, difficultyOverride, CreateVariants(cells, edges, allowRotate));
+            resourceOverride, difficultyOverride, rotations);
+    }
+
+    private static void ValidateFamilyMember(JObject raw, Template root, Template child, Cell[] rootCells,
+        Edge[] rootEdges, Cell[] childCells, Edge[] childEdges)
+    {
+        if (root.Role != child.Role || root.SpawnEligible != child.SpawnEligible || root.NoLoop != child.NoLoop ||
+            root.AllowRotate != child.AllowRotate || !SameTags(root.RegionIds, child.RegionIds))
+            throw Invalid(raw, $"topology settings must match parent template '{root.Id}'.");
+        if (child.DeclaredVisualTypeId != null && root.VisualTypeId != child.DeclaredVisualTypeId)
+            throw Invalid(raw["visualTypeId"], $"visualTypeId must match parent template '{root.Id}'.");
+        if (root.Max != child.Max || root.Weight != child.Weight || root.Unique != child.Unique)
+            throw Invalid(raw["generation"], $"generation settings must match parent template '{root.Id}'.");
+        if (rootCells.Length != childCells.Length || !SameEdges(rootEdges, childEdges))
+            throw Invalid(raw, $"occupied cells and open edges must match parent template '{root.Id}' exactly.");
+        var rootByPosition = new Dictionary<Vector2Int, Cell>(rootCells.Length);
+        foreach (Cell cell in rootCells)
+            rootByPosition.Add(cell.Position, cell);
+        foreach (Cell cell in childCells)
+        {
+            if (!rootByPosition.TryGetValue(cell.Position, out var rootCell) || cell.IsPortal != rootCell.IsPortal ||
+                cell.PlacedOrder != rootCell.PlacedOrder || (cell.Type == "spawn") != (rootCell.Type == "spawn"))
+                throw Invalid(raw["cells"][cell.Index], $"coordinates, portal flag, placedOrder and spawn cell must match parent template '{root.Id}'.");
+        }
+    }
+
+    private static IReadOnlyList<Variant> AlignRotations(Template root, IReadOnlyList<Variant> childRotations)
+    {
+        // Align position enumeration to keep seeded placement order independent of JSON cell/edge order.
+        var indices = new Dictionary<Vector2Int, int>();
+        foreach (Cell cell in childRotations[0].Cells)
+            indices.Add(cell.Position, cell.Index);
+        var rotations = new Variant[childRotations.Count];
+        foreach (Variant rootVariant in root.Variants)
+        {
+            Variant child = childRotations[rootVariant.QuarterTurns];
+            var cells = new Cell[rootVariant.Cells.Count];
+            var edges = new Edge[rootVariant.Edges.Count];
+            for (int i = 0; i < cells.Length; i++)
+            {
+                Cell cell = child.Cells[indices[root.Variants[0].Cells[i].Position]];
+                cells[i] = cell.At(cell.Position, i);
+            }
+            for (int i = 0; i < edges.Length; i++)
+            {
+                Edge edge = rootVariant.Edges[i];
+                edges[i] = new Edge(cells[edge.AIndex], cells[edge.BIndex]);
+            }
+            rotations[rootVariant.QuarterTurns] = new Variant(rootVariant.QuarterTurns, cells, edges);
+        }
+        return rotations;
     }
 
     private static Edge[] ReadOpenEdges(JArray rawEdges, Cell[] cells, Dictionary<Vector2Int, int> byPosition, bool bridge)
@@ -350,13 +469,12 @@ public sealed class SecondFloorPatternLibrary
             for (int i = 0; i < edges.Length; i++)
                 edges[i] = new Edge(cells[sourceEdges[i].AIndex], cells[sourceEdges[i].BIndex]);
 
-            if (!variants.Exists(existing => SameLayout(existing, cells, edges)))
-                variants.Add(new Variant(turns, cells, edges));
+            variants.Add(new Variant(turns, cells, edges));
         }
         return variants.AsReadOnly();
     }
 
-    private static bool SameLayout(Variant existing, Cell[] cells, Edge[] edges)
+    private static bool SameLayout(Variant existing, IReadOnlyList<Cell> cells, IReadOnlyList<Edge> edges)
     {
         // Identity/order are carried through to the selected variant, but do not change a symmetric layout.
         foreach (Cell cell in cells)
@@ -375,10 +493,17 @@ public sealed class SecondFloorPatternLibrary
             if (!found)
                 return false;
         }
-        foreach (Edge edge in edges)
+        return SameEdges(existing.Edges, edges);
+    }
+
+    private static bool SameEdges(IReadOnlyList<Edge> first, IReadOnlyList<Edge> second)
+    {
+        if (first.Count != second.Count)
+            return false;
+        foreach (Edge edge in first)
         {
             bool found = false;
-            foreach (Edge other in existing.Edges)
+            foreach (Edge other in second)
                 if ((edge.A == other.A && edge.B == other.B) || (edge.A == other.B && edge.B == other.A))
                 {
                     found = true;

@@ -14,7 +14,9 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { smokeDeadline } from './smoke-deadline.mjs';
 
+const deadline = smokeDeadline();
 const args = process.argv.slice(2);
 const argValue = (name, fallback) => {
   const index = args.indexOf(name);
@@ -27,7 +29,7 @@ const outDir = resolve(argValue('--out', '.smoke'));
 mkdirSync(outDir, { recursive: true });
 
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
-const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+const targets = await (await deadline.fetch(`http://127.0.0.1:${port}/json/list`)).json();
 const target = targets.find((item) => item.type === 'page' && item.url.includes(urlPart));
 if (!target) {
   console.error(`找不到匹配 ${urlPart} 的页面，先启动 Chrome 并打开应用。`);
@@ -125,21 +127,22 @@ if (bootError) {
 }
 
 await evaluate("document.querySelector('#btn-generate').click()");
-if (!(await waitFor("Boolean(document.querySelector('#btn-generate-run'))"))) {
-  console.error('生成弹窗没有出现。');
-  process.exit(1);
+if (!(await waitFor("window.PlotWeave.store.mode === 'pools' && Boolean(window.PlotWeave.poolsEditor.previewBtn)"))) {
+  throw Error('地图生成池没有打开。');
 }
+await screenshot('map-pools.png');
 await evaluate(`(() => {
-  const input = document.querySelector('.modal-form input[type="text"]');
-  input.value = 'SMOKE-0001';
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  const { store, floorEditor } = window.PlotWeave;
+  store.setMode('floor');
+  floorEditor.runGenerate('SMOKE-0001');
 })()`);
-await evaluate("document.querySelector('#btn-generate-run').click()");
-if (!(await waitFor('Boolean(window.PlotWeave.store.currentMap)', 8000))) {
-  console.error('生成后没有当前地图。');
-  await screenshot('generate-failure.png');
-  process.exit(1);
+if (!(await waitFor("window.PlotWeave.store.currentFloorMap?.seed === 'SMOKE-0001'", 4000))) {
+  throw Error('旧单层工具没有生成测试地图。');
 }
+await screenshot('floor-generated.png');
+// The former top-level generation modal is now a map-pool shortcut. Keep testing
+// the older plot model below without relying on an unreachable modal.
+await evaluate("window.PlotWeave.store.generate({ seed: 'SMOKE-0001' })");
 await sleep(500);
 
 const summary = await evaluate(`(() => {
@@ -180,13 +183,6 @@ if (await waitFor("Boolean(document.querySelector('.modal'))")) {
   console.log('导出弹窗：', labels);
   await sleep(220);
   await screenshot('export-modal.png');
-  await evaluate("document.querySelector('.modal-close').click()");
-}
-
-await evaluate("document.querySelector('#btn-generate').click()");
-if (await waitFor("Boolean(document.querySelector('#btn-generate-run'))")) {
-  await sleep(220);
-  await screenshot('generate-modal.png');
   await evaluate("document.querySelector('.modal-close').click()");
 }
 
@@ -295,5 +291,5 @@ console.log('本地存储：', storage ? `maps=${storage.maps?.length || 0}` : '
 console.log('console.error：', consoleErrors.length ? consoleErrors : '无');
 console.log('未捕获异常：', exceptions.length ? exceptions : '无');
 
-socket.close();
+deadline.close(socket);
 if (exceptions.length || consoleErrors.length) process.exitCode = 2;

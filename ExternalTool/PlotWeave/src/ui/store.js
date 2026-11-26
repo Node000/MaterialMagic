@@ -32,6 +32,9 @@ import { validateFloorMap } from '../core/floor-validator.js';
 import {
   normalizeCellTypes,
   normalizeStripTemplate,
+  stripTemplateStructureKey,
+  validateStripTemplate,
+  validateTemplateFamilies,
 } from '../core/strip-templates.js';
 
 const STORAGE_KEY = 'plotweave:workspace:v2';
@@ -802,27 +805,40 @@ export class AppStore extends Emitter {
     );
   }
 
-  saveStripTemplate(rawTemplate, { asNew = false } = {}) {
+  saveStripTemplate(rawTemplate, { asNew = false, asChild = false } = {}) {
     let saved = null;
     this.commitProject(
       (project) => {
         const list = project.dungeon.stripTemplates;
-        const normalized = normalizeStripTemplate(rawTemplate, project.dungeon.cellTypes, list.length);
-        const existingIdx = asNew ? -1 : list.findIndex((t) => t.id === normalized.id);
+        const types = project.dungeon.cellTypes;
+        const normalized = normalizeStripTemplate(rawTemplate, types, list.length);
+        const existingIdx = (asNew || asChild) ? -1 : list.findIndex((t) => t.id === normalized.id);
+        const next = [...list];
         if (existingIdx >= 0) {
-          list[existingIdx] = normalized;
+          const existing = list[existingIdx];
+          if (normalized.parentTemplateId !== existing.parentTemplateId) return false;
+          const structureLocked = existing.parentTemplateId || list.some((t) => t.parentTemplateId === existing.id);
+          if (structureLocked && stripTemplateStructureKey(normalized) !== stripTemplateStructureKey(existing)) return false;
+          next[existingIdx] = normalized;
         } else {
+          if (asChild) {
+            if (typeof normalized.parentTemplateId !== 'string' || !normalized.parentTemplateId) return false;
+          } else if (asNew) {
+            delete normalized.parentTemplateId;
+          } else if (Object.hasOwn(normalized, 'parentTemplateId')) return false;
           const ids = new Set(list.map((t) => t.id));
           if (!normalized.id || ids.has(normalized.id) || normalized.id.startsWith('draft_')) {
             let n = list.length + 1;
             while (ids.has(`tpl_${n}`)) n += 1;
             normalized.id = `tpl_${n}`;
           }
-          list.unshift(normalized);
+          next.unshift(normalized);
         }
+        if (!validateStripTemplate(normalized, types).ok || validateTemplateFamilies(next).length) return false;
+        project.dungeon.stripTemplates = next;
         saved = normalized;
       },
-      { label: asNew ? '另存条带模板' : '保存条带模板' },
+      { label: asChild ? '新增子模板' : asNew ? '另存条带模板' : '保存条带模板' },
     );
     return saved;
   }
@@ -831,7 +847,7 @@ export class AppStore extends Emitter {
     return this.commitProject(
       (project) => {
         const list = project.dungeon.stripTemplates;
-        if (list.length <= 1) return false;
+        if (list.length <= 1 || list.some((t) => t.parentTemplateId === id)) return false;
         const idx = list.findIndex((t) => t.id === id);
         if (idx < 0) return false;
         list.splice(idx, 1);
@@ -843,26 +859,40 @@ export class AppStore extends Emitter {
   importTemplateLibrary({ cellTypes = null, stripTemplates = [], replace = false } = {}) {
     return this.commitProject(
       (project) => {
-        if (cellTypes && cellTypes.length) {
-          project.dungeon.cellTypes = normalizeCellTypes(cellTypes);
+        const types = cellTypes?.length ? normalizeCellTypes(cellTypes) : project.dungeon.cellTypes;
+        const incoming = stripTemplates.map((t, i) => normalizeStripTemplate(t, types, i));
+        if (!incoming.length || validateTemplateFamilies(incoming).length
+          || incoming.some((t) => !validateStripTemplate(t, types).ok)) return false;
+        const existing = replace ? [] : project.dungeon.stripTemplates.map((t, i) => normalizeStripTemplate(t, types, i));
+        const occupied = new Set(existing.map((t) => t.id));
+        const reserved = new Set([...occupied, ...incoming.map((t) => t.id)]);
+        const renamed = new Map();
+        for (const template of incoming) {
+          const original = template.id;
+          if (occupied.has(original)) {
+            let suffix = 2;
+            while (reserved.has(`${original}_${suffix}`)) suffix += 1;
+            template.id = `${original}_${suffix}`;
+            reserved.add(template.id);
+          }
+          if (!renamed.has(original)) renamed.set(original, template.id);
+          occupied.add(template.id);
         }
-        const tTypes = project.dungeon.cellTypes;
-        if (replace) {
-          project.dungeon.stripTemplates = stripTemplates.map((t, i) => normalizeStripTemplate(t, tTypes, i));
-        } else {
-          const existing = project.dungeon.stripTemplates;
-          const ids = new Set(existing.map((t) => t.id));
-          for (const raw of stripTemplates) {
-            const norm = normalizeStripTemplate(raw, tTypes, existing.length);
-            if (ids.has(norm.id)) {
-              let k = 2;
-              while (ids.has(`${norm.id}_${k}`)) k += 1;
-              norm.id = `${norm.id}_${k}`;
+        for (const template of incoming) {
+          if (template.parentTemplateId) {
+            const oldParent = template.parentTemplateId;
+            const parent = incoming.find((t) => t.id === renamed.get(oldParent));
+            if (!parent.visualTypeId && template.visualTypeId === oldParent && oldParent !== parent.id) {
+              // Preserve implicit art identity of a root renamed by merge.
+              parent.visualTypeId = oldParent;
             }
-            ids.add(norm.id);
-            existing.push(norm);
+            template.parentTemplateId = parent.id;
           }
         }
+        const combined = [...existing, ...incoming];
+        if (validateTemplateFamilies(combined).length) return false;
+        project.dungeon.cellTypes = types;
+        project.dungeon.stripTemplates = combined;
       },
       { label: replace ? '替换条带模板库' : '合并导入条带模板' },
     );

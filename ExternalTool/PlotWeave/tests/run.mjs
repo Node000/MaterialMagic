@@ -15,3 +15,6 @@ import './polyomino.test.mjs';
 import './strip-templates.test.mjs';
 import './floor-generator.test.mjs';
 import './floor-edges.test.mjs';
+import './floor-exploration.test.mjs';
+import './map-pool-exploration-api.test.mjs';
+import './floor-contacts.test.mjs';

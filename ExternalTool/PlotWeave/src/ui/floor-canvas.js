@@ -1,18 +1,18 @@
 /**
- * 模式二：单层三角地牢 Canvas 2D 渲染器。
+ * 模式二：单层三角地牢 & 地图生成池预览 Canvas 2D 渲染器。
  *
  * 特性：
- * - 多格异形条带（直线/折线/矩形）的连续外墙轮廓与内部格分隔；
- * - 独立跨区桥接条带专属样式 + 跨区门高亮；
- * - 任意格单格交叉双色斜切 + 交叉徽标；
- * - 条带等级 (Lv.X) 与战斗/精英格最终敌人等级标注；
- * - 可切换：格子内容、等级标注、节点图叠层 (BFS 跳数 d)、距离热力着色、区域底色；
- * - 支持滚轮缩放、拖拽平移、点击选中条带、悬停浮卡、双击自适应、2x PNG 导出。
+ * - 多格异形条带的连续外墙轮廓、精确内部墙体与 1px 开放格分隔；
+ * - 独立跨区桥接条带金色虚线专属样式 + 跨区门金色加粗高亮；
+ * - 任意格单格交叉角落金色交叉徽标；
+ * - 条带等级 (Lv.X) 与战斗/精英格最终敌人等级标注 (E{level})；
+ * - 可切换：网格、区域框、格子内容、等级标注、节点图叠层 (BFS 跳数 d)、距离热力着色、贴边墙高亮；
+ * - 支持滚轮缩放、拖拽平移、点击选中条带、悬停高亮与浮卡、双击自适应、2x PNG 导出。
  */
 
 import { buildFloorGrid } from '../core/floor-file.js';
 import { edgeKey } from '../core/strip-edges.js';
-import { DIRECTIONS, DIR_IDS, withAlpha } from '../core/constants.js';
+import { DEFAULT_CELL_TYPES, withAlpha } from '../core/constants.js';
 import { boundsOfCells, centroidOfCells, coordKey } from '../core/polyomino.js';
 import { cellTypeMap } from '../core/strip-templates.js';
 import { clamp, h } from './dom.js';
@@ -40,6 +40,8 @@ const PALETTES = {
     doorStroke: '#f4f8fc',
     bridgeDoor: '#ffd26a',
     crossStroke: '#ffd26a',
+    contactStroke: '#ff5d55',
+    contactGlow: 'rgba(255, 93, 85, 0.35)',
     badgeBg: 'rgba(8, 12, 18, 0.9)',
     badgeText: '#eef4fa',
     enemyBg: 'rgba(14, 18, 26, 0.82)',
@@ -68,6 +70,8 @@ const PALETTES = {
     doorStroke: '#2a251d',
     bridgeDoor: '#b07d1a',
     crossStroke: '#b07d1a',
+    contactStroke: '#cf362d',
+    contactGlow: 'rgba(207, 54, 45, 0.26)',
     badgeBg: 'rgba(255, 251, 243, 0.94)',
     badgeText: '#2a251d',
     enemyBg: 'rgba(255, 251, 243, 0.9)',
@@ -111,11 +115,29 @@ function roundedRect(ctx, x, y, w, h_, r) {
 }
 
 export class FloorCanvas {
-  constructor({ canvas, host, hoverCard, store }) {
+  constructor({
+    canvas,
+    host,
+    hoverCard,
+    store = null,
+    getMap = null,
+    getSelectedStripId = null,
+    onSelectStrip = null,
+    getUi = null,
+    getCellTypes = null,
+    getContactWalls = null,
+  }) {
     this.canvas = canvas;
     this.host = host;
     this.hoverCard = hoverCard;
     this.store = store;
+    this._getMap = getMap;
+    this._getSelectedStripId = getSelectedStripId;
+    this._onSelectStrip = onSelectStrip;
+    this._getUi = getUi;
+    this._getCellTypes = getCellTypes;
+    this._getContactWalls = getContactWalls;
+
     this.ctx = canvas.getContext('2d');
     this.theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
     this.view = { scale: 34, offsetX: 40, offsetY: 40 };
@@ -144,6 +166,40 @@ export class FloorCanvas {
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
     this.resize();
+  }
+
+  getMap() {
+    return this._getMap ? this._getMap() : this.store?.currentFloorMap || null;
+  }
+
+  getSelectedStripId() {
+    return this._getSelectedStripId ? this._getSelectedStripId() : this.store?.selectedStripId || null;
+  }
+
+  selectStrip(stripId) {
+    if (this._onSelectStrip) this._onSelectStrip(stripId);
+    else this.store?.selectFloorStrip(stripId);
+  }
+
+  getUi() {
+    if (this._getUi) return this._getUi();
+    return this.store?.ui || {
+      floorShowGrid: true,
+      floorShowRegions: true,
+      floorShowCells: true,
+      floorShowLevels: true,
+      floorShowGraph: false,
+      floorShowHeatmap: false,
+      floorShowContacts: false,
+    };
+  }
+
+  getCellTypes() {
+    return this._getCellTypes ? this._getCellTypes() : this.store?.dungeon?.cellTypes || DEFAULT_CELL_TYPES;
+  }
+
+  getContactWalls() {
+    return this._getContactWalls ? this._getContactWalls() : null;
   }
 
   setTheme(theme) {
@@ -180,7 +236,7 @@ export class FloorCanvas {
   }
 
   fit() {
-    const map = this.store.currentFloorMap;
+    const map = this.getMap();
     if (!map || !map.strips?.length || !this.cssWidth || !this.cssHeight) return;
     const b = map.stats?.bounds || boundsOfCells(map.strips.flatMap((s) => s.cells));
     const pad = 48;
@@ -207,8 +263,8 @@ export class FloorCanvas {
   }
 
   hitTestStrip(sx, sy) {
-    const map = this.store.currentFloorMap;
-    if (!map) return null;
+    const map = this.getMap();
+    if (!map || !map.strips?.length) return null;
     const w = this.screenToWorld(sx, sy);
     const gx = Math.floor(w.x);
     const gy = Math.floor(w.y);
@@ -219,7 +275,7 @@ export class FloorCanvas {
     }
     if (!hits.length) return null;
     // 如果当前选中的条带在交叉格里，优先返回另一条方便交替点击
-    if (hits.length > 1 && hits[0].strip.id === this.store.selectedStripId) {
+    if (hits.length > 1 && hits[0].strip.id === this.getSelectedStripId()) {
       return hits[1];
     }
     return hits[0];
@@ -273,7 +329,7 @@ export class FloorCanvas {
     const sy = event.clientY - rect.top;
     if (this.dragging && !this.moved) {
       const hit = this.hitTestStrip(sx, sy);
-      this.store.selectFloorStrip(hit?.strip?.id || null);
+      this.selectStrip(hit?.strip?.id || null);
       this.render();
     }
     this.dragging = false;
@@ -304,28 +360,36 @@ export class FloorCanvas {
   showHoverCard(hit, sx, sy) {
     if (!this.hoverCard) return;
     const { strip, cell } = hit;
-    const map = this.store.currentFloorMap;
-    const tMap = cellTypeMap(this.store.dungeon.cellTypes);
-    const def = tMap.get(cell.type) || tMap.get('empty');
+    const map = this.getMap();
+    const tMap = cellTypeMap(this.getCellTypes());
+    const def = tMap.get(cell.type) || tMap.get('empty') || { icon: '·', name: cell.type || '空通道' };
     const region = (map?.regions || []).find((r) => r.id === strip.regionId);
     const regionLabel =
       strip.role === 'bridge'
-        ? `独立跨区桥 (${(strip.bridgeBetween || []).map((id) => map.regions.find((r) => r.id === id)?.shortName || id).join(' ↔ ')})`
-        : region?.name || strip.regionId;
+        ? `独立跨区桥 (${(strip.bridgeBetween || []).map((id) => map.regions.find((r) => r.id === id)?.shortName || id).join(' ↔ ') || '跨区'})`
+        : region?.name || strip.regionId || '区域';
 
-    this.hoverCard.replaceChildren(
-      h('div', { class: 'hover-title' }, `${strip.templateName} (${strip.id})${strip.noLoop ? ' · 非环端点' : ''}`),
-      h('div', { class: 'hover-sub' }, `${regionLabel} · 跳数 d=${strip.distanceFromSpawn} · 条带 Lv.${strip.level}`),
+    const titleText =
+      strip.templateName && strip.templateName !== strip.id
+        ? `${strip.templateName} (${strip.id})`
+        : `条带 ${strip.id}`;
+
+    const rows = [
+      h('div', { class: 'hover-title' }, `${titleText}${strip.noLoop ? ' · 非环端点' : ''}`),
+      h('div', { class: 'hover-sub' }, `${regionLabel} · 跳数 d=${strip.distanceFromSpawn ?? 0} · 条带 Lv.${strip.level ?? 1}`),
       h(
         'div',
         { class: 'hover-sub' },
-        `当前格：${def.icon} ${def.name}${cell.isPortal ? ' [出入口]' : ''}${cell.enemyLevel != null ? ` · 敌人 Lv.${cell.enemyLevel}${cell.difficultyOffset ? ` (偏移 ${cell.difficultyOffset > 0 ? '+' : ''}${cell.difficultyOffset})` : ''}` : ''}`,
+        `当前格：${def.icon} ${def.name} (${cell.x},${cell.y})${cell.isPortal ? ' [出入口]' : ''}${cell.enemyLevel != null ? ` · 敌人 Lv.${cell.enemyLevel}${cell.difficultyOffset ? ` (偏移 ${cell.difficultyOffset > 0 ? '+' : ''}${cell.difficultyOffset})` : ''}` : ''}`,
       ),
-      h('div', { class: 'hover-sub' }, `资源 ${strip.resource} · 难度 ${strip.difficulty}`),
-    );
+    ];
+    if (Number.isFinite(strip.resource) || Number.isFinite(strip.difficulty)) {
+      rows.push(h('div', { class: 'hover-sub' }, `资源 ${strip.resource ?? 0} · 难度 ${strip.difficulty ?? 0}`));
+    }
+    this.hoverCard.replaceChildren(...rows);
     this.hoverCard.hidden = false;
-    const left = clamp(sx + 16, 12, Math.max(12, (this.cssWidth || 400) - 240));
-    const top = clamp(sy + 16, 12, Math.max(12, (this.cssHeight || 300) - 110));
+    const left = clamp(sx + 16, 12, Math.max(12, (this.cssWidth || 400) - 260));
+    const top = clamp(sy + 16, 12, Math.max(12, (this.cssHeight || 300) - 116));
     this.hoverCard.style.left = `${left}px`;
     this.hoverCard.style.top = `${top}px`;
   }
@@ -335,18 +399,21 @@ export class FloorCanvas {
   }
 
   render() {
-    const map = this.store.currentFloorMap;
-    if (map && map.id !== this.lastMapId) {
-      this.lastMapId = map.id;
+    const map = this.getMap();
+    const mapKey = map ? map._renderKey || map.id : null;
+    if (map && mapKey !== this.lastMapId) {
+      this.lastMapId = mapKey;
       if (this.cssWidth > 0 && this.cssHeight > 0) this.fit();
+    } else if (!map) {
+      this.lastMapId = null;
     }
     this.drawScene(this.ctx, this.cssWidth || 600, this.cssHeight || 400, { exportMode: false });
   }
 
   drawScene(ctx, width, height, { exportMode = false, viewOverride = null } = {}) {
     const pal = PALETTES[this.theme === 'light' ? 'light' : 'dark'];
-    const map = this.store.currentFloorMap;
-    const ui = this.store.ui;
+    const map = this.getMap();
+    const ui = this.getUi();
     const view = viewOverride || this.view;
 
     ctx.save();
@@ -390,7 +457,7 @@ export class FloorCanvas {
     }
 
     const regionMap = new Map((map.regions || []).map((r) => [r.id, r]));
-    const tMap = cellTypeMap(this.store.dungeon.cellTypes);
+    const tMap = cellTypeMap(this.getCellTypes());
     const maxDist = Math.max(1, map.stats?.maxDistance || 1);
 
     // 2. 区域背景光晕框（凸显三角形三大区域）
@@ -413,7 +480,7 @@ export class FloorCanvas {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // 区域名称角标（放大清晰）
+        // 区域名称角标
         ctx.fillStyle = withAlpha(region.color, this.theme === 'light' ? 0.95 : 0.92);
         ctx.font = `700 ${clamp(Math.round(scale * 0.44), 13, 18)}px sans-serif`;
         ctx.textAlign = 'left';
@@ -445,7 +512,8 @@ export class FloorCanvas {
       return regionMap.get(strip.regionId)?.color || '#8a9aab';
     };
 
-    const selectedId = exportMode ? null : this.store.selectedStripId;
+    const selectedId = exportMode ? null : this.getSelectedStripId();
+    const hoverId = exportMode ? null : this.hoverStripId;
 
     const fillColorOfCell = (strip, cell, isSelected) => {
       if (ui.floorShowHeatmap) {
@@ -460,7 +528,7 @@ export class FloorCanvas {
       return withAlpha(def.color, isSelected ? pal.cellSelectedAlpha : pal.cellFillAlpha);
     };
 
-    // 3. 满格平铺绘制每个世界格（方案 1：有内容格完整覆盖空通道格，彻底无斜杠）
+    // 3. 满格平铺绘制每个世界格（有内容格完整覆盖空通道格）
     for (const [, owners] of cellOwners) {
       const winner = owners.find((o) => o.cell.type !== 'empty') || owners[0];
       const anySelected = owners.some((o) => o.strip.id === selectedId);
@@ -472,55 +540,190 @@ export class FloorCanvas {
       ctx.fillRect(x, y, scale, scale);
     }
 
-    // Use the same undirected edges as the exported map. Shared walls draw once.
-    const { cells, edges } = buildFloorGrid(map);
+    // 3.5 使用与导出一致的物理边：开放边画 1px 内部格分隔线，封闭边按条带分层绘制防粘连粗外墙与条带内墙
+    const { edges } = buildFloorGrid(map);
     const openEdges = new Map(edges.map((e) => [edgeKey(e.x, e.y, e.dir), e.type]));
-    const drawn = new Set();
-    for (const cell of cells) {
-      const owners = cellOwners.get(coordKey(cell.x, cell.y));
-      const strip = owners.find((o) => o.strip.id === selectedId)?.strip || owners[0].strip;
-      for (const dir of ['N', 'E', 'S', 'W']) {
-        const key = edgeKey(cell.x, cell.y, dir);
-        if (drawn.has(key)) continue;
-        drawn.add(key);
-        const type = openEdges.get(key);
-        if (type === 'door') continue;
-        const x = toX(cell.x + (dir === 'E' ? 1 : 0));
-        const y = toY(cell.y + (dir === 'S' ? 1 : 0));
-        const horizontal = dir === 'N' || dir === 'S';
+    const stripCellSets = new Map(
+      map.strips.map((s) => [s.id, new Set(s.cells.map((c) => coordKey(c.x, c.y)))]),
+    );
+
+    // 开放边 1px 清晰分隔线
+    ctx.save();
+    ctx.strokeStyle = pal.innerLine;
+    ctx.lineWidth = 1;
+    for (const edge of edges) {
+      if (edge.type !== 'open') continue;
+      if (edge.dir === 'E') {
+        const sx = Math.round(toX(edge.x + 1)) + 0.5;
+        const sy = toY(edge.y);
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + (horizontal ? scale : 0), y + (horizontal ? 0 : scale));
-        if (type !== 'open') {
-          ctx.strokeStyle = pal.wallBacker;
-          ctx.lineWidth = 4;
-          ctx.stroke();
-        }
-        ctx.strokeStyle = type === 'open' ? pal.innerLine : strip.id === selectedId ? pal.selected : colorOfStrip(strip);
-        ctx.lineWidth = type === 'open' ? 1 : 2;
+        ctx.moveTo(sx, sy + 1);
+        ctx.lineTo(sx, sy + scale - 1);
+        ctx.stroke();
+      } else if (edge.dir === 'S') {
+        const sx = toX(edge.x);
+        const sy = Math.round(toY(edge.y + 1)) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(sx + 1, sy);
+        ctx.lineTo(sx + scale - 1, sy);
         ctx.stroke();
       }
     }
+    ctx.restore();
 
-    // 4. 绘制门与轻量角落交叉标记
+    // 按层级绘制条带外墙 + 条带内部墙（普通 -> 桥接 -> 悬停 -> 选中）
+    const orderedStrips = [
+      ...map.strips.filter((s) => s.id !== selectedId && s.id !== hoverId && s.role !== 'bridge'),
+      ...map.strips.filter((s) => s.id !== selectedId && s.id !== hoverId && s.role === 'bridge'),
+      ...map.strips.filter((s) => s.id === hoverId && s.id !== selectedId),
+      ...map.strips.filter((s) => s.id === selectedId),
+    ];
+
+    for (const strip of orderedStrips) {
+      const baseColor = colorOfStrip(strip);
+      const isSelected = strip.id === selectedId;
+      const isHover = strip.id === hoverId;
+      const localSet = stripCellSets.get(strip.id);
+
+      // 判定某格某方向是否需要绘制墙面：
+      // - 物理边为 wall（即既不是 open 也不是 door，包含条带外墙和条带内墙）；
+      // - 门边也先画底层墙轮廓，随后步骤 4 在正中盖上门框，视觉更稳重；
+      // - 选中条带时，在交叉格也描出该条带自身完整轮廓，方便辨认范围。
+      const isWallSide = (cell, dir, nx, ny) => {
+        const edgeType = openEdges.get(edgeKey(cell.x, cell.y, dir));
+        if (edgeType !== 'open') return true;
+        if (isSelected && !localSet.has(coordKey(nx, ny))) return true;
+        return false;
+      };
+
+      const traceWalls = () => {
+        ctx.beginPath();
+        const drawnLocal = new Set();
+        for (const cell of strip.cells) {
+          const x = toX(cell.x);
+          const y = toY(cell.y);
+          const checks = [
+            ['N', cell.x, cell.y - 1, x, y, x + scale, y],
+            ['E', cell.x + 1, cell.y, x + scale, y, x + scale, y + scale],
+            ['S', cell.x, cell.y + 1, x, y + scale, x + scale, y + scale],
+            ['W', cell.x - 1, cell.y, x, y, x, y + scale],
+          ];
+          for (const [dir, nx, ny, x1, y1, x2, y2] of checks) {
+            if (!isWallSide(cell, dir, nx, ny)) continue;
+            const k = edgeKey(cell.x, cell.y, dir);
+            if (drawnLocal.has(k)) continue;
+            drawnLocal.add(k);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+          }
+        }
+      };
+
+      ctx.save();
+      ctx.strokeStyle = pal.wallBacker;
+      ctx.lineWidth = isSelected ? 5.2 : 4.2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      traceWalls();
+      ctx.stroke();
+
+      ctx.strokeStyle = isSelected
+        ? pal.selected
+        : isHover
+          ? pal.hover
+          : strip.role === 'bridge'
+            ? pal.bridgeColor
+            : withAlpha(baseColor, 0.96);
+      ctx.lineWidth = isSelected ? 3.2 : isHover ? 2.8 : strip.role === 'bridge' ? 2.6 : 2.3;
+      if (strip.role === 'bridge' && !isSelected) ctx.setLineDash([6, 4]);
+      traceWalls();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // 3.8 可选：未开门的条带间贴边墙高亮（地图生成池环路留白诊断）
+    const contactEdges = ui.floorShowContacts ? this.getContactWalls() : null;
+    if (contactEdges && contactEdges.length) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (const edge of contactEdges) {
+        if (edge.dir === 'E') {
+          const sx = toX(edge.x + 1);
+          const sy = toY(edge.y);
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx, sy + scale);
+        } else {
+          const sx = toX(edge.x);
+          const sy = toY(edge.y + 1);
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + scale, sy);
+        }
+      }
+      ctx.strokeStyle = pal.contactGlow;
+      ctx.lineWidth = 7;
+      ctx.stroke();
+      ctx.strokeStyle = pal.contactStroke;
+      ctx.lineWidth = 3.2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 4. 绘制门（区分普通门与跨区桥门）与轻量角落交叉标记
+    const bridgeDoorKeys = new Set();
+    const stripById = new Map(map.strips.map((s) => [s.id, s]));
+    for (const link of map.links || []) {
+      if (link.type !== 'door') continue;
+      const a = stripById.get(link.a?.stripId);
+      const b = stripById.get(link.b?.stripId);
+      if (!a || !b) continue;
+      const isBridge = Boolean(link.isBridgeLink || a.role === 'bridge' || b.role === 'bridge');
+      if (!isBridge) continue;
+      const ca = a.cells[link.a.cellIndex];
+      const cb = b.cells[link.b.cellIndex];
+      if (!ca || !cb) continue;
+      const x = Math.min(ca.x, cb.x);
+      const y = Math.min(ca.y, cb.y);
+      const dir = ca.x === cb.x ? 'S' : 'E';
+      bridgeDoorKeys.add(edgeKey(x, y, dir));
+    }
+
     for (const edge of edges) {
       if (edge.type !== 'door') continue;
+      const key = edgeKey(edge.x, edge.y, edge.dir);
       const horizontal = edge.dir === 'S';
-      const mx = toX(edge.x + (horizontal ? .5 : 1));
-      const my = toY(edge.y + (horizontal ? 1 : .5));
-      const span = Math.max(6, scale * .34), thick = Math.max(4, scale * .14);
-      const w = horizontal ? span : thick, h = horizontal ? thick : span;
+      const nx = edge.x + (horizontal ? 0 : 1);
+      const ny = edge.y + (horizontal ? 1 : 0);
+      const ownersA = cellOwners.get(coordKey(edge.x, edge.y)) || [];
+      const ownersB = cellOwners.get(coordKey(nx, ny)) || [];
+      const isBridgeLink =
+        bridgeDoorKeys.has(key) ||
+        ownersA.some((o) => o.strip.role === 'bridge') ||
+        ownersB.some((o) => o.strip.role === 'bridge');
+
+      const mx = toX(edge.x + (horizontal ? 0.5 : 1));
+      const my = toY(edge.y + (horizontal ? 1 : 0.5));
+      const span = Math.max(6, scale * 0.34);
+      const thick = isBridgeLink ? Math.max(5, scale * 0.18) : Math.max(4, scale * 0.14);
+      const w = horizontal ? span : thick;
+      const h_ = horizontal ? thick : span;
+
+      ctx.save();
       ctx.fillStyle = pal.doorBg;
-      ctx.strokeStyle = pal.doorStroke;
-      ctx.lineWidth = 1.5;
-      ctx.fillRect(mx - w / 2, my - h / 2, w, h);
-      ctx.strokeRect(mx - w / 2, my - h / 2, w, h);
+      ctx.strokeStyle = isBridgeLink ? pal.bridgeDoor : pal.doorStroke;
+      ctx.lineWidth = isBridgeLink ? 2.2 : 1.5;
+      ctx.fillRect(mx - w / 2, my - h_ / 2, w, h_);
+      ctx.strokeRect(mx - w / 2, my - h_ / 2, w, h_);
+      ctx.restore();
     }
-    for (const link of map.links) {
+
+    for (const link of map.links || []) {
       if (link.type !== 'cross' || !link.cell) continue;
-      const kx = toX(link.cell.x) + Math.max(6, scale * .17);
-      const ky = toY(link.cell.y) + Math.max(6, scale * .17);
-      const r = Math.max(3, scale * .08);
+      const kx = toX(link.cell.x) + Math.max(6, scale * 0.17);
+      const ky = toY(link.cell.y) + Math.max(6, scale * 0.17);
+      const r = Math.max(3, scale * 0.08);
+      ctx.save();
       ctx.strokeStyle = pal.crossStroke;
       ctx.lineWidth = 1.6;
       ctx.beginPath();
@@ -529,6 +732,7 @@ export class FloorCanvas {
       ctx.moveTo(kx + r, ky - r);
       ctx.lineTo(kx - r, ky + r);
       ctx.stroke();
+      ctx.restore();
     }
 
     // 5. 绘制每格高对比图标 + 全称 / 战斗格敌人等级（交叉格由有内容格完整显示）
@@ -548,7 +752,7 @@ export class FloorCanvas {
           ctx.restore();
         }
 
-        const def = tMap.get(cell.type) || tMap.get('empty');
+        const def = tMap.get(cell.type) || tMap.get('empty') || { icon: '·', name: cell.type || '' };
         if (cell.type !== 'empty') {
           const showSub = scale >= 24;
           ctx.save();
@@ -610,10 +814,10 @@ export class FloorCanvas {
         const sy = toY(c.y) - scale * 0.38;
         const text =
           strip.role === 'bridge'
-            ? `桥 Lv.${strip.level}`
+            ? `桥 Lv.${strip.level ?? 1}`
             : strip.noLoop
-              ? `端 Lv.${strip.level}`
-              : `Lv.${strip.level}`;
+              ? `端 Lv.${strip.level ?? 1}`
+              : `Lv.${strip.level ?? 1}`;
         ctx.save();
         ctx.font = `700 ${clamp(Math.round(scale * 0.33), 11, 14)}px var(--mono), monospace`;
         const w_ = ctx.measureText(text).width + 12;
@@ -640,9 +844,9 @@ export class FloorCanvas {
         centers.set(strip.id, { x: toX(c.x), y: toY(c.y) });
       }
       // 边
-      for (const link of map.links) {
-        const pa = centers.get(link.a.stripId);
-        const pb = centers.get(link.b.stripId);
+      for (const link of map.links || []) {
+        const pa = centers.get(link.a?.stripId);
+        const pb = centers.get(link.b?.stripId);
         if (!pa || !pb) continue;
         ctx.save();
         ctx.strokeStyle = link.isBridgeLink ? pal.graphBridge : link.type === 'cross' ? pal.crossStroke : pal.graphEdge;
@@ -673,10 +877,10 @@ export class FloorCanvas {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.font = `700 ${Math.round(r * 0.62)}px var(--mono), monospace`;
-        ctx.fillText(`d${strip.distanceFromSpawn}`, pt.x, pt.y - r * 0.26);
+        ctx.fillText(`d${strip.distanceFromSpawn ?? 0}`, pt.x, pt.y - r * 0.26);
         ctx.font = `600 ${Math.round(r * 0.52)}px var(--mono), monospace`;
         ctx.fillStyle = colorOfStrip(strip);
-        ctx.fillText(`L${strip.level}`, pt.x, pt.y + r * 0.34);
+        ctx.fillText(`L${strip.level ?? 1}`, pt.x, pt.y + r * 0.34);
         ctx.restore();
       }
     }
@@ -691,7 +895,7 @@ export class FloorCanvas {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(
-        `${map.profileName || '单层三角地牢'} · SEED ${map.seed} · 条带 ${map.strips.length} · 资源 ${map.stats?.totalResource} · 难度 ${map.stats?.totalDifficulty}`,
+        `${map.profileName || '单层三角地牢'} · SEED ${map.seed ?? '—'} · 条带 ${map.strips.length} · 资源 ${map.stats?.totalResource ?? '—'} · 难度 ${map.stats?.totalDifficulty ?? '—'}`,
         16,
         height - barH / 2,
       );
@@ -704,7 +908,7 @@ export class FloorCanvas {
   }
 
   async toPngBlob({ scale = 2 } = {}) {
-    const map = this.store.currentFloorMap;
+    const map = this.getMap();
     if (!map || !map.strips?.length) return null;
     const b = map.stats?.bounds || boundsOfCells(map.strips.flatMap((s) => s.cells));
     const cellPx = 40;

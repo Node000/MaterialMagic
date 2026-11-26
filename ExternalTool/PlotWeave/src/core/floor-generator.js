@@ -200,6 +200,13 @@ export function normalizeFloorProfile(raw) {
  * 自动预算区间估算
  * ------------------------------------------------------------------ */
 
+// This legacy preview uses only root templates. Adding variants must not give a family more
+// weight here; variant selection and shared limits are implemented by the Unity generator.
+function legacyRootTemplates(rawTemplates, cellTypes) {
+  return (Array.isArray(rawTemplates) && rawTemplates.length ? rawTemplates : createDefaultStripTemplates(cellTypes))
+    .filter((template) => !Object.hasOwn(template ?? {}, 'parentTemplateId'));
+}
+
 function weightedStats(items, valueFn) {
   if (!items.length) return { mean: 20, min: 0, max: 40 };
   let wSum = 0;
@@ -224,10 +231,7 @@ function weightedStats(items, valueFn) {
 export function estimateFloorBudget(rawProfile, rawTemplates, rawCellTypes = DEFAULT_CELL_TYPES) {
   const profile = normalizeFloorProfile(rawProfile);
   const cellTypes = normalizeCellTypes(rawCellTypes);
-  const templates = (Array.isArray(rawTemplates) && rawTemplates.length
-    ? rawTemplates
-    : createDefaultStripTemplates(cellTypes)
-  ).map((t, i) => {
+  const templates = legacyRootTemplates(rawTemplates, cellTypes).map((t, i) => {
     const normalized = normalizeStripTemplate(t, cellTypes, i);
     const metrics = computeTemplateMetrics(normalized, cellTypes);
     return { template: normalized, metrics };
@@ -305,10 +309,8 @@ function rangeDist(value, min, max) {
  * ------------------------------------------------------------------ */
 
 function prepareTemplates(rawTemplates, cellTypes) {
-  const list = (Array.isArray(rawTemplates) && rawTemplates.length
-    ? rawTemplates
-    : createDefaultStripTemplates(cellTypes)
-  ).map((raw, i) => normalizeStripTemplate(raw, cellTypes, i));
+  const list = legacyRootTemplates(rawTemplates, cellTypes)
+    .map((raw, i) => normalizeStripTemplate(raw, cellTypes, i));
 
   return list.filter(({ cells, role }) => validateOpenDirs(cells) && hasConnectedOpenEdges(cells)
     && (role !== 'bridge' || isOpenChain(cells))).map((template) => {

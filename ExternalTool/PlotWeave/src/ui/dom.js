@@ -170,6 +170,7 @@ const ICONS = {
   ],
   moon: ['M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z'],
   arrow: ['M5 12h14', 'm13 6 6 6-6 6'],
+  alert: ['M12 4 3 19h18L12 4Z', 'M12 10v4', 'M12 17h.01'],
 };
 
 export function icon(name, size = 14) {

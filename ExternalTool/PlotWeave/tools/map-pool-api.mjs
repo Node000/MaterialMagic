@@ -42,6 +42,7 @@ function configForPreview(config) {
   return { kind: config.kind, schemaVersion: config.schemaVersion, pools: config.pools.map(p => ({
     id: p.id, name: p.name, entries: p.entries.map(e => ({
       id: e.id, name: e.name, weight: e.weight, patternLibraryId: e.patternLibraryId,
+      ...(e.ringSpacing !== undefined ? { ringSpacing: e.ringSpacing } : {}),
       regions: e.regions.map(r => ({ regionTypeId: r.regionTypeId, stripMin: r.stripMin, stripMax: r.stripMax, maxNoLoop: r.maxNoLoop })),
       budget: { resourceMin: e.budget.resourceMin, resourceMax: e.budget.resourceMax, difficultyMin: e.budget.difficultyMin, difficultyMax: e.budget.difficultyMax },
       progression: { baseLevel: e.progression.baseLevel, levelPerHop: e.progression.levelPerHop, maxLevel: e.progression.maxLevel },
@@ -123,12 +124,12 @@ export function createMapPoolApi({ projectRoot, host, port }) {
       } else if (request.method === 'GET' && path === `${PREFIX}published`) {
         const bytes = await ignoreMissing(published);
         reply(response, 200, { config: bytes === null ? null : JSON.parse(bytes.toString('utf8')), revision: bytes === null ? null : sha(bytes) });
-      } else if (request.method === 'POST' && (path === `${PREFIX}preview` || path === `${PREFIX}publish`)) {
+      } else if (request.method === 'POST' && ['preview', 'explore', 'publish'].some((route) => path === `${PREFIX}${route}`)) {
         const client = request.headers['x-plotweave-session'];
         if (typeof client !== 'string' || !/^[0-9a-f-]{36}$/.test(client)) throw new ApiError(400, '缺少本页校验会话，请刷新 PlotWeave。');
         const body = await readBody(request);
         const config = configForPreview(body?.config);
-        if (path.endsWith('/preview')) {
+        if (path !== `${PREFIX}publish`) {
           const { poolId, entryId, seed } = body;
           const entry = config.pools.find(p => p.id === poolId)?.entries.find(e => e.id === entryId);
           if (!entry || !Number.isInteger(seed) || seed < -2147483648 || seed > 2147483647) throw new ApiError(422, '配方不存在，或种子不是 32 位整数。');
@@ -138,9 +139,15 @@ export function createMapPoolApi({ projectRoot, host, port }) {
           const data = await generate(config, poolId, entryId, seed, entry.patternLibraryId, hash, response);
           delete entry.patternSha256;
           if (hash !== await patternHash(entry.patternLibraryId)) throw new ApiError(409, '预览期间 Pattern 库变更，请重新预览。');
-          if (approvals.size >= MAX_APPROVALS) approvals.delete(approvals.values().next().value);
-          approvals.add(approved(client, poolId, entry, hash));
-          reply(response, 200, data);
+          // An exploration reroll is not a release preview and cannot authorize a publish.
+          if (path === `${PREFIX}preview`) {
+            if (approvals.size >= MAX_APPROVALS) approvals.delete(approvals.values().next().value);
+            approvals.add(approved(client, poolId, entry, hash));
+            reply(response, 200, data);
+          } else {
+            const { kind, schemaVersion, id, spawn, cells, edges } = data.floor;
+            reply(response, 200, { floor: { kind, schemaVersion, id, spawn, cells, edges } });
+          }
         } else {
           if (publishing) throw new ApiError(409, '已有发布请求运行。');
           publishing = true;

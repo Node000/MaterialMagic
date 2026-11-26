@@ -33,6 +33,7 @@ import {
   defaultCellTypes,
   normalizeCellTypes,
   normalizeStripTemplate,
+  validateTemplateFamilies,
 } from './strip-templates.js';
 import {
   createDefaultFloorProfile,
@@ -486,6 +487,8 @@ export function validateProject(project) {
   if (!grid || grid.height < GRID_MIN || grid.height > GRID_MAX) {
     error('grid.height', `网格高度需要在 ${GRID_MIN}–${GRID_MAX} 之间。`, 'settings.grid.height');
   }
+
+  issues.push(...validateTemplateFamilies(project.dungeon?.stripTemplates || []));
 
   const regionIdSet = new Set();
   project.regions.forEach((region, index) => {

@@ -3,6 +3,7 @@ export const POOL_VERSION = 1;
 export const POOL_ID = /^[A-Za-z0-9_-]{1,64}$/;
 export const PATTERN_HASH = /^[0-9a-f]{64}$/;
 export const BUDGET_FIELDS = ['resourceMin', 'resourceMax', 'difficultyMin', 'difficultyMax'];
+export const RING_SPACING = ['legacy', 'balanced', 'spacious'];
 
 export function defaultMapPools(profile) {
   const p = profile || {};
@@ -43,6 +44,7 @@ export function validateMapPools(config) {
       if (!e) continue;
       if (!finite(e.weight, Number.MIN_VALUE)) errorsAt(el, '权重必须为有限正数。');
       if (!isId(e.patternLibraryId)) errorsAt(el, 'Pattern 库 ID 无效。');
+      if (e.ringSpacing !== undefined && !RING_SPACING.includes(e.ringSpacing)) errorsAt(el, '环路留白设置无效。');
       if (e.patternSha256 !== undefined && (typeof e.patternSha256 !== 'string' || !PATTERN_HASH.test(e.patternSha256))) errorsAt(el, 'Pattern 摘要无效。');
       if (!Array.isArray(e.regions) || e.regions.length !== 3) errorsAt(el, '必须按 A/B/C 指定三个区域槽。');
       else for (const [k, r] of e.regions.entries()) {

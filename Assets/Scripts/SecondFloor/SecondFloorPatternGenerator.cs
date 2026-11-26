@@ -76,7 +76,8 @@ internal static partial class SecondFloorPatternGenerator
     }
 
     internal static Layout Generate(SecondFloorPatternLibrary library, IReadOnlyList<SlotSettings> slots, int seed,
-        int baseLevel, float levelPerHop, int maxLevel, Func<Layout, double> targetDistance = null, string mapId = null)
+        int baseLevel, float levelPerHop, int maxLevel, Func<Layout, double> targetDistance = null, string mapId = null,
+        SecondFloorMapPools.RingSpacing spacing = SecondFloorMapPools.RingSpacing.Legacy)
     {
         if (library == null) throw new ArgumentNullException(nameof(library));
         if (slots == null || slots.Count != 3) throw new ArgumentException("Expected exactly three ordered region slots (A/B/C).", nameof(slots));
@@ -88,7 +89,7 @@ internal static partial class SecondFloorPatternGenerator
             var setting = slots[i];
             if (string.IsNullOrWhiteSpace(setting.RegionTypeId) || setting.StripCount < 3 || setting.StripCount > 20 || setting.MaxNoLoop < 0)
                 throw new ArgumentException($"Invalid settings for region slot {(char)('A' + i)}.", nameof(slots));
-            pools[i] = library.Templates.Where(t => t.Role == "normal" && Capacity(t) > 0 && t.MatchesRegion(setting.RegionTypeId)).ToArray();
+            pools[i] = library.FamilyRoots.Where(t => t.Role == "normal" && Capacity(t) > 0 && t.MatchesRegion(setting.RegionTypeId)).ToArray();
             if (pools[i].Sum(t => t.SpawnEligible || t.NoLoop ? 0 : Capacity(t)) < (i == 0 ? 2 : 3))
                 throw new InvalidOperationException($"Region {setting.RegionTypeId} has insufficient normal patterns to make a ring.");
         }
@@ -97,7 +98,7 @@ internal static partial class SecondFloorPatternGenerator
         foreach (var template in spawns)
             if (template.Variants[0].Cells.Count(c => c.Type == "spawn") != 1)
                 throw new InvalidOperationException($"Spawn pattern '{template.Id}' must contain exactly one spawn cell.");
-        var bridges = library.Templates.Where(t => t.Role == "bridge" && Capacity(t) > 0).ToArray();
+        var bridges = library.FamilyRoots.Where(t => t.Role == "bridge" && Capacity(t) > 0).ToArray();
         for (int i = 0; i < 3; i++)
         {
             var a = slots[i].RegionTypeId;
@@ -107,10 +108,15 @@ internal static partial class SecondFloorPatternGenerator
         }
 
         var random = new Random(seed);
+        // Content choices must not perturb the seeded root ordering or geometry search.
+        var versionRandom = new Random(seed ^ 0x56455253);
         int regionsBuilt = 0;
         int fullLayouts = 0;
         Layout closest = null;
         double closestDistance = double.PositiveInfinity;
+        double closestContact = double.PositiveInfinity;
+        bool improveSpacing = spacing != SecondFloorMapPools.RingSpacing.Legacy;
+        int spacingSamples = 0;
         for (int attempt = 0; attempt < LayoutAttempts; attempt++)
         {
             var regions = new Region[3];
@@ -119,49 +125,58 @@ internal static partial class SecondFloorPatternGenerator
             for (int i = 0; i < 3; i++)
             {
                 for (int retry = 0; retry < RegionAttempts && regions[i] == null; retry++)
-                    regions[i] = TryBuildRegion(slots[i], i, nextIndex, pools[i], spawns, counts, random);
+                    regions[i] = TryBuildRegion(slots[i], i, nextIndex, pools[i], spawns, counts, random, versionRandom,
+                        retry < RegionAttempts - 1 ? spacing : SecondFloorMapPools.RingSpacing.Legacy);
                 if (regions[i] == null) break;
-                foreach (var strip in regions[i].Strips) counts[strip.Template.Id] = Used(counts, strip.Template) + 1;
+                foreach (var strip in regions[i].Strips) RecordUse(counts, strip.Template);
                 nextIndex += regions[i].Strips.Count;
             }
             if (regions[2] == null) continue;
             regionsBuilt++;
-            if (!TryAssemble(regions, bridges, counts, random, out var strips, out var joins)) continue;
+            if (!TryAssemble(regions, bridges, counts, random, versionRandom, out var strips, out var joins)) continue;
             var layout = BuildLayout(mapId ?? $"pattern-preview-{seed}", strips, joins, library, baseLevel, levelPerHop, maxLevel);
-            if (targetDistance == null) return layout;
-            double distance = targetDistance(layout);
-            if (distance == 0) return layout;
-            if (closest == null || distance < closestDistance)
+            double distance = targetDistance?.Invoke(layout) ?? 0;
+            if (!improveSpacing && distance == 0) return layout;
+            double contact = improveSpacing ? FloorContactCost(layout, spacing) : 0;
+            if (closest == null || distance < closestDistance || (distance == closestDistance && contact < closestContact))
             {
                 closest = layout;
                 closestDistance = distance;
+                closestContact = contact;
             }
-            // Keep the slot counts/configuration fixed. Compare only complete valid maps within the existing search budget.
+            // Budget stays the first priority; within it compare a few complete valid layouts.
+            if (improveSpacing && distance == 0 &&
+                (++spacingSamples >= (spacing == SecondFloorMapPools.RingSpacing.Spacious ? 5 : 4) || contact == 0)) break;
             if (++fullLayouts >= 8) break;
         }
         if (closest != null) return closest;
+        if (improveSpacing) return Generate(library, slots, seed, baseLevel, levelPerHop, maxLevel, targetDistance, mapId);
         throw new InvalidOperationException($"Cannot assemble floor for seed {seed}: {regionsBuilt}/{LayoutAttempts} attempts built all three rings, with no valid three-bridge layout. Check region pattern eligibility, limits and shapes.");
     }
 
     private static Region TryBuildRegion(SlotSettings settings, int slot, int startIndex, Template[] templates,
-        Template[] spawnTemplates, Dictionary<string, int> used, Random random)
+        Template[] spawnTemplates, Dictionary<string, int> used, Random random, Random versionRandom,
+        SecondFloorMapPools.RingSpacing spacing)
     {
         var region = new Region(settings.RegionTypeId);
         var count = new Dictionary<string, int>(used);
         var owners = new Dictionary<Vector2Int, (Strip Strip, bool IsPort)>();
         bool ring = false;
         int noLoopCount = 0;
-        var first = WeightedOrder(slot == 0 ? spawnTemplates : templates.Where(t => !t.SpawnEligible && !t.NoLoop), random)
+        var firstRoot = WeightedOrder(slot == 0 ? spawnTemplates : templates.Where(t => !t.SpawnEligible && !t.NoLoop), random)
             .FirstOrDefault(t => Used(count, t) < Capacity(t));
-        if (first == null) return null;
-        Add(new Strip(startIndex, slot, first, first.Variants[random.Next(first.Variants.Count)], Vector2Int.zero));
+        if (firstRoot == null) return null;
+        var first = SelectVersion(firstRoot, versionRandom);
+        var firstVariants = PlacementVariants(first);
+        Add(new Strip(startIndex, slot, first, firstVariants[random.Next(firstVariants.Count)], Vector2Int.zero));
         while (region.Strips.Count < settings.StripCount)
         {
             int left = settings.StripCount - region.Strips.Count;
             // Try to close as early as the third strip; only the final placement requires closure.
             bool tryClose = !ring && region.Strips.Count >= 2;
             var eligible = WeightedOrder(templates.Where(t => !t.SpawnEligible && Used(count, t) < Capacity(t) &&
-                (!t.NoLoop || (ring && noLoopCount < settings.MaxNoLoop))), random).ToArray();
+                (!t.NoLoop || (ring && noLoopCount < settings.MaxNoLoop))), random)
+                .Select(root => SelectVersion(root, versionRandom)).ToArray();
             if (tryClose && TryPlace(eligible, 2)) continue;
             if ((tryClose && left == 1) || !TryPlace(eligible, 1)) return null;
         }
@@ -173,7 +188,7 @@ internal static partial class SecondFloorPatternGenerator
             foreach (var cell in strip.Variant.Cells)
                 owners.Add(strip.Origin + cell.Position, (strip, !restricted || cell.IsPortal));
             region.Strips.Add(strip);
-            count[strip.Template.Id] = Used(count, strip.Template) + 1;
+            RecordUse(count, strip.Template);
             if (strip.Template.NoLoop) noLoopCount++;
         }
 
@@ -183,34 +198,67 @@ internal static partial class SecondFloorPatternGenerator
                 .SelectMany(p => Directions.Where(d => !owners.ContainsKey(p.Key + d)).Select(d => p.Key + d))
                 .Distinct().OrderBy(_ => random.Next()).ToArray();
             int probes = PlacementProbes;
+            bool improve = spacing != SecondFloorMapPools.RingSpacing.Legacy;
+            int index = startIndex + region.Strips.Count;
             foreach (var template in candidates)
-            foreach (var variant in template.Variants.OrderBy(_ => random.Next()))
             {
-                bool restricted = variant.Cells.Any(c => c.IsPortal);
-                var ports = variant.Cells.Where(c => !restricted || c.IsPortal).OrderBy(_ => random.Next()).ToArray();
-                var tried = new HashSet<Vector2Int>();
-                foreach (var target in anchors)
-                foreach (var port in ports)
+                Variant bestVariant = null;
+                Vector2Int bestOrigin = default;
+                Join[] bestJoins = null;
+                double bestScore = double.PositiveInfinity;
+                int sampled = 0;
+                foreach (var variant in PlacementVariants(template).OrderBy(_ => random.Next()))
                 {
-                    var origin = target - port.Position;
-                    if (!tried.Add(origin)) continue;
-                    if (--probes < 0) return false;
-                    if (variant.Cells.Any(c => owners.ContainsKey(origin + c.Position))) continue;
-                    int index = startIndex + region.Strips.Count;
-                    var matches = new Dictionary<int, Join>();
-                    foreach (var entry in ports)
+                    bool restricted = variant.Cells.Any(c => c.IsPortal);
+                    var ports = variant.Cells.Where(c => !restricted || c.IsPortal).OrderBy(_ => random.Next()).ToArray();
+                    var tried = new HashSet<Vector2Int>();
+                    foreach (var target in anchors)
+                    foreach (var port in ports)
                     {
-                        var to = origin + entry.Position;
-                        foreach (var d in Directions)
+                        var origin = target - port.Position;
+                        if (!tried.Add(origin)) continue;
+                        if (--probes < 0) goto ChoosePlacement;
+                        if (variant.Cells.Any(c => owners.ContainsKey(origin + c.Position))) continue;
+                        var matches = new Dictionary<int, Join>();
+                        var alternatives = improve && requiredJoins == 2 ? new List<Join>() : null;
+                        foreach (var entry in ports)
                         {
-                            var from = to + d;
-                            if (owners.TryGetValue(from, out var host) && host.IsPort && !host.Strip.Template.NoLoop)
-                                matches.TryAdd(host.Strip.Index, new Join(host.Strip.Index, index, from, to));
+                            var to = origin + entry.Position;
+                            foreach (var d in Directions)
+                            {
+                                var from = to + d;
+                                if (!owners.TryGetValue(from, out var host) || !host.IsPort || host.Strip.Template.NoLoop) continue;
+                                var join = new Join(host.Strip.Index, index, from, to);
+                                matches.TryAdd(host.Strip.Index, join);
+                                alternatives?.Add(join);
+                            }
                         }
+                        if (matches.Count < requiredJoins) continue;
+                        if (!improve) return Commit(variant, origin, matches.Values.Take(requiredJoins));
+
+                        var contacts = PlacementContacts(variant, origin, owners);
+                        var joins = alternatives == null
+                            ? new[] { matches.Values.First() }
+                            : ChooseClosure(alternatives, contacts, spacing);
+                        double score = ContactCost(contacts, spacing, joins) - ClosureBonus(joins, spacing);
+                        if (score < bestScore)
+                        {
+                            bestScore = score;
+                            bestVariant = variant;
+                            bestOrigin = origin;
+                            bestJoins = joins;
+                        }
+                        if (++sampled >= 48 || (requiredJoins == 1 && score == 0)) goto ChoosePlacement;
                     }
-                    if (matches.Count < requiredJoins) continue;
+                }
+            ChoosePlacement:
+                if (bestVariant != null) return Commit(bestVariant, bestOrigin, bestJoins);
+                if (probes < 0) return false;
+
+                bool Commit(Variant variant, Vector2Int origin, IEnumerable<Join> joins)
+                {
                     Add(new Strip(index, slot, template, variant, origin));
-                    region.Joins.AddRange(matches.Values.Take(requiredJoins));
+                    region.Joins.AddRange(joins);
                     if (requiredJoins == 2) ring = true;
                     return true;
                 }
@@ -262,11 +310,16 @@ internal static partial class SecondFloorPatternGenerator
                 edges.Add((strip.Origin + edge.A, strip.Origin + edge.B, SecondFloorEdgeKind.Open));
         }
         foreach (var join in joins) edges.Add((join.From, join.To, SecondFloorEdgeKind.Door));
-        return new Layout(SecondFloorFloorMap.FromLayout(mapId, spawn, tiles, edges), strips, joins);
+        var visualTypes = strips.Select(strip => ($"s{strip.Index}", strip.Template.VisualTypeId));
+        return new Layout(SecondFloorFloorMap.FromLayout(mapId, spawn, tiles, edges, visualTypes), strips, joins);
     }
 
     private static int Capacity(Template t) => t.InstanceLimit;
-    private static int Used(Dictionary<string, int> counts, Template t) => counts.TryGetValue(t.Id, out int count) ? count : 0;
-    private static IEnumerable<Template> WeightedOrder(IEnumerable<Template> templates, Random random) =>
-        templates.OrderBy(t => -Math.Log(1d - random.NextDouble()) / t.Weight);
+    private static int Used(Dictionary<string, int> counts, Template t) => counts.TryGetValue(t.FamilyId, out int count) ? count : 0;
+    private static void RecordUse(Dictionary<string, int> counts, Template t) => counts[t.FamilyId] = Used(counts, t) + 1;
+    private static IEnumerable<Template> WeightedOrder(IEnumerable<Template> roots, Random random) =>
+        roots.OrderBy(t => -Math.Log(1d - random.NextDouble()) / t.Weight);
+    private static Template SelectVersion(Template root, Random random) => root.FamilyVersions.Count == 1
+        ? root : root.FamilyVersions[random.Next(root.FamilyVersions.Count)];
+    private static IReadOnlyList<Variant> PlacementVariants(Template template) => template.PlacementVariants;
 }

@@ -245,6 +245,17 @@ internal static class SecondFloorMapPoolPreviewBridge
                 height = cells.Max(cell => cell.y) - cells.Min(cell => cell.y) + 1,
                 resourceInRange = generated.ResourceWithinBudget,
                 difficultyInRange = generated.DifficultyWithinBudget
+            },
+            layout = new
+            {
+                seed = generated.Seed,
+                stripCounts = generated.StripCounts,
+                strips = generated.Strips.Select(strip => new
+                {
+                    id = strip.Id,
+                    slot = strip.Slot,
+                    templateId = strip.TemplateId
+                }).ToArray()
             }
         };
     }

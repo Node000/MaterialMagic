@@ -2536,6 +2536,33 @@ html[data-theme="light"] .tree-folder:hover {
   background: var(--amber-soft);
 }
 
+.tpl-card.tpl-card-child {
+  margin-inline-start: 18px;
+  border-inline-start: 2px solid var(--line);
+}
+
+.tpl-card .tpl-card-select {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tpl-family-toggle {
+  flex-shrink: 0;
+}
+
+.tpl-family-toggle.expanded svg {
+  transform: rotate(90deg);
+}
+
+.tpl-family-notice {
+  margin: 0 0 10px;
+}
+
 .tpl-mini-svg {
   flex: 0 0 auto;
   border-radius: 6px;
@@ -3903,18 +3930,19 @@ html[data-theme="light"] .floor-legend-swatch {
 .tpl-edge-cell { position: relative; min-width: 0; }
 .tpl-edge-cell > .tpl-cell { width: 100%; }
 .tpl-edge, .tpl-passage { position: absolute; pointer-events: none; z-index: 2; }
-.tpl-edge { background: var(--text); padding: 0; border: 0; }
+.tpl-edge { background: rgba(235, 242, 250, 0.78); padding: 0; border: 0; border-radius: 2px; }
+html[data-theme="light"] .tpl-edge { background: rgba(42, 37, 29, 0.76); }
 .tpl-edge.open { background: transparent; }
-.tpl-edge.tpl-side-E, .tpl-edge.tpl-side-W { width: 3px; top: 0; bottom: 0; }
-.tpl-edge.tpl-side-S, .tpl-edge.tpl-side-N { height: 3px; left: 0; right: 0; }
-.tpl-edge.tpl-side-E { right: -3px; }
-.tpl-edge.tpl-side-W { left: 0; }
-.tpl-edge.tpl-side-S { bottom: -3px; }
-.tpl-edge.tpl-side-N { top: 0; }
+.tpl-edge.tpl-side-E, .tpl-edge.tpl-side-W { width: 3px; top: 2px; bottom: 2px; }
+.tpl-edge.tpl-side-S, .tpl-edge.tpl-side-N { height: 3px; left: 2px; right: 2px; }
+.tpl-edge.tpl-side-E { right: -4.5px; }
+.tpl-edge.tpl-side-W { left: -1.5px; }
+.tpl-edge.tpl-side-S { bottom: -4.5px; }
+.tpl-edge.tpl-side-N { top: -1.5px; }
 .tpl-edge.editable { pointer-events: auto; cursor: pointer; z-index: 3; }
 .tpl-edge.editable::after { content: ''; position: absolute; inset: -5px; }
 .tpl-edge.editable:hover, .tpl-edge.editable:focus-visible { background: var(--amber); }
-.tpl-passage { background: var(--text); opacity: .35; }
+.tpl-passage { background: var(--text); opacity: .32; border-radius: 1px; }
 .tpl-passage.tpl-side-E, .tpl-passage.tpl-side-W { top: calc(50% - 1px); height: 2px; width: calc(50% + 4px); }
 .tpl-passage.tpl-side-E { left: 50%; width: calc(50% + 6px); }
 .tpl-passage.tpl-side-W { right: 50%; width: 50%; }

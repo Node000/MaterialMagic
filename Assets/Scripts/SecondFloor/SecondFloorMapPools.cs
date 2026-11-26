@@ -41,6 +41,8 @@ public sealed class SecondFloorMapPools
         }
     }
 
+    public enum RingSpacing { Legacy, Balanced, Spacious }
+
     public sealed class Entry
     {
         public string Id { get; }
@@ -52,9 +54,10 @@ public sealed class SecondFloorMapPools
         public IReadOnlyList<RegionSlot> Regions { get; }
         public BudgetTargets Budget { get; }
         public LevelProgression Progression { get; }
+        public RingSpacing Spacing { get; }
 
         internal Entry(string id, string name, double weight, string patternLibraryId, string patternSha256,
-            RegionSlot[] regions, BudgetTargets budget, LevelProgression progression)
+            RegionSlot[] regions, BudgetTargets budget, LevelProgression progression, RingSpacing spacing)
         {
             Id = id;
             Name = name;
@@ -64,6 +67,7 @@ public sealed class SecondFloorMapPools
             Regions = Array.AsReadOnly(regions);
             Budget = budget;
             Progression = progression;
+            Spacing = spacing;
         }
     }
 
@@ -307,7 +311,7 @@ public sealed class SecondFloorMapPools
         if (budget.HasBounds) targetDistance = layout => budget.GetDistance(layout.Resource, layout.Difficulty);
         string mapId = $"map-pool/{poolId}/{entry.Id}/{seed.ToString(CultureInfo.InvariantCulture)}";
         var result = SecondFloorPatternGenerator.Generate(library, slots, seed, progression.BaseLevel,
-            progression.LevelPerHop, progression.MaxLevel, targetDistance, mapId);
+            progression.LevelPerHop, progression.MaxLevel, targetDistance, mapId, entry.Spacing);
         if (double.IsInfinity(result.Resource) || double.IsNaN(result.Resource) ||
             double.IsInfinity(result.Difficulty) || double.IsNaN(result.Difficulty))
             throw new InvalidOperationException($"Map pool '{poolId}' entry '{entry.Id}' produced non-finite metrics. Check pattern weights and metrics.");
@@ -344,7 +348,7 @@ public sealed class SecondFloorMapPools
 
     private static Entry ReadEntry(JObject entry)
     {
-        CheckFields(entry, "id", "name", "weight", "patternLibraryId", "patternSha256", "regions", "budget", "progression");
+        CheckFields(entry, "id", "name", "weight", "patternLibraryId", "patternSha256", "regions", "budget", "progression", "ringSpacing");
         string id = Id(entry, "id");
         string patternId = Id(entry, "patternLibraryId");
         string hash = null;
@@ -380,9 +384,16 @@ public sealed class SecondFloorMapPools
         double levelPerHop = Number(progression, "levelPerHop", 0);
         if (levelPerHop > 3.4028234e38) throw Invalid(progression["levelPerHop"], "value exceeds the supported range.");
         int maxLevel = Integer(progression, "maxLevel", baseLevel, int.MaxValue);
+        var spacing = entry.Property("ringSpacing") == null ? RingSpacing.Legacy : Text(entry, "ringSpacing") switch
+        {
+            "legacy" => RingSpacing.Legacy,
+            "balanced" => RingSpacing.Balanced,
+            "spacious" => RingSpacing.Spacious,
+            _ => throw Invalid(entry["ringSpacing"], "expected legacy, balanced or spacious.")
+        };
         return new Entry(id, Text(entry, "name"), Number(entry, "weight", double.Epsilon), patternId, hash, regions,
             new BudgetTargets(resourceMin, resourceMax, difficultyMin, difficultyMax),
-            new LevelProgression(baseLevel, (float)levelPerHop, maxLevel));
+            new LevelProgression(baseLevel, (float)levelPerHop, maxLevel), spacing);
     }
 
     private static void CheckFields(JObject obj, params string[] names)
