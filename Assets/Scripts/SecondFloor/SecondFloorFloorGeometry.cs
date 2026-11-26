@@ -10,6 +10,12 @@ public sealed class SecondFloorFloorGeometry : MonoBehaviour
     [SerializeField] private GeneralThemeGenConfig generationConfig;
     [SerializeField, Min(0.01f)] private float floorThickness = 0.2f;
     [SerializeField, Min(0.01f)] private float wallThickness = 0.15f;
+    [SerializeField] private Material floorMaterialOverride;
+    [SerializeField] private Material wallMaterialOverride;
+    [SerializeField] private Material ceilingMaterialOverride;
+
+    public float WallThickness => wallThickness;
+    public float CeilingHeight => generationConfig.GetCeilingHeight(theme.UniqueGenConfig);
 
     [Header("门框（仅显示，无碰撞）")]
     [SerializeField] private Material doorFrameMaterial;
@@ -43,9 +49,9 @@ public sealed class SecondFloorFloorGeometry : MonoBehaviour
             doorFrameWidth * 2f >= cellWorldSize || doorFrameDepth >= cellWorldSize || doorOpeningHeight + doorFrameWidth > ceilingHeight)
             throw new InvalidOperationException("SecondFloorFloorGeometry door frame must fit inside a cell with a clear opening.");
 
-        BlockArt floorArt = GetBlockArt(theme.FloorPrefabs, "floor");
-        BlockArt wallArt = GetBlockArt(theme.WallPrefabs, "wall");
-        BlockArt ceilingArt = GetBlockArt(generationConfig.GetCeilingPrefabs(theme.UniqueGenConfig), "ceiling");
+        BlockArt floorArt = GetBlockArt(theme.FloorPrefabs, "floor", floorMaterialOverride);
+        BlockArt wallArt = GetBlockArt(theme.WallPrefabs, "wall", wallMaterialOverride);
+        BlockArt ceilingArt = GetBlockArt(generationConfig.GetCeilingPrefabs(theme.UniqueGenConfig), "ceiling", ceilingMaterialOverride);
 
         if (generatedRoot != null)
         {
@@ -133,7 +139,7 @@ public sealed class SecondFloorFloorGeometry : MonoBehaviour
         return child.transform;
     }
 
-    private static BlockArt GetBlockArt(GameObject[] prefabs, string purpose)
+    private static BlockArt GetBlockArt(GameObject[] prefabs, string purpose, Material materialOverride)
     {
         // Use the bound theme's primary structural mesh, not its positioned Scribble/decorative children.
         if (prefabs == null || prefabs.Length == 0 || prefabs[0] == null)
@@ -148,7 +154,7 @@ public sealed class SecondFloorFloorGeometry : MonoBehaviour
         Vector3 size = mesh.bounds.size;
         if (!IsPositiveFinite(size.x) || !IsPositiveFinite(size.y) || !IsPositiveFinite(size.z))
             throw new InvalidOperationException($"Primary {purpose} prefab '{prefab.name}' requires a solid 3D mesh.");
-        return new BlockArt(mesh, material);
+        return new BlockArt(mesh, materialOverride != null ? materialOverride : material);
     }
 
     private static bool IsPositiveFinite(float value) => value > 0f && !float.IsInfinity(value);

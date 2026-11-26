@@ -35,6 +35,7 @@ public sealed class SecondFloorFloorPreview : MonoBehaviour
     [SerializeField] private Button nextSeedButton;
     [SerializeField] private TMP_Text seedLabel;
     [SerializeField] private SecondFloorFloorGeometry geometry;
+    [SerializeField] private SecondFloorStripArtView stripArt;
     [SerializeField] private SecondFloorFloorMinimapView minimap;
     [SerializeField] private Transform playerRoot;
     [SerializeField] private EventSystem eventSystem;
@@ -94,6 +95,9 @@ public sealed class SecondFloorFloorPreview : MonoBehaviour
         encounterFlow?.Rebuild(map, currentSeed, cellWorldSize, playerEyeHeight);
         floor = map;
         geometry.Rebuild(map, cellWorldSize);
+        // This may run in Awake, before the bound view has received its own enable callback.
+        if (stripArt != null && stripArt.enabled && stripArt.gameObject.activeInHierarchy)
+            stripArt.Rebuild(map, currentSeed, cellWorldSize, geometry.WallThickness, geometry.CeilingHeight);
         minimap.Rebuild(map);
         exploration = next;
         discovered.Clear();

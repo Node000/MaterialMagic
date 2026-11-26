@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 122750fe9a706ff4ab4ee8c8f06c7463, type: 3}
+  m_Name: ArtKit_ArtLab_Default
+  m_EditorClassIdentifier: 
+  visualTypeId: default
+  floorPatches:
+  - {fileID: 2290714208550507066, guid: e102c53aa81745d4c855f66ad7b40503, type: 3}
+  - {fileID: 1310564401721104060, guid: 98051163d795a5c46ab545e46bd9c1b8, type: 3}
+  - {fileID: 162234760402482641, guid: 1eeab70f5ea592a43896df2faefee431, type: 3}
+  wallBands:
+  - {fileID: 2542530605120799913, guid: 44fb5c9b86f49384989a0b050050d0f2, type: 3}
+  - {fileID: 6567498085695194233, guid: a9553782ce2a7b64aa494c71da69cc2f, type: 3}
+  - {fileID: 5870134770420973770, guid: 915328511afcae94e84f45f9ca73e9f7, type: 3}
+  wallAccent: {fileID: 2584357872072884933, guid: 335c4ba4ff2ec2d4f84ab078b9babc52, type: 3}
+  accentMinWallCells: 2
+  decorations:
+  - prefab: {fileID: 5782078196055036953, guid: ab98fd2ccd2a469489b6d81ec4dad7f5, type: 3}
+    size: {x: 0.86, y: 2.73, z: 1.16}
+    preferAtSpawn: 1
+  - prefab: {fileID: 2003946120663629605, guid: 560abfe4a70f77b4e89a3ddb0280c6e1, type: 3}
+    size: {x: 2.22, y: 1.21, z: 1.03}
+    preferAtSpawn: 0

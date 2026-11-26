@@ -99,6 +99,7 @@ public class ScribblePlane3D : MonoBehaviour
     public Rect FillArea => GetNormalizedFillArea();
     public int FillLineCount => fillLineCount;
     public int FillSamplesPerLine => fillSamplesPerLine;
+    public float FillAngleDegrees => fillAngleDegrees;
 
     public Vector2 GetGuidePoint(int index)
     {
