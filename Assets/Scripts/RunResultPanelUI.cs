@@ -20,6 +20,7 @@ public class RunResultPanelUI : MonoBehaviour
     private TMP_Text bodyText;
     private TMP_Text buttonText;
     private Button returnButton;
+    private HandSystemUI owner;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
     private Vector3 shownScale = Vector3.one;
@@ -27,6 +28,7 @@ public class RunResultPanelUI : MonoBehaviour
 
     public void Initialize(HandSystemUI owner)
     {
+        this.owner = owner;
         CacheReferences();
         if (rectTransform != null)
             rectTransform.localScale = shownScale;
@@ -204,6 +206,12 @@ public class RunResultPanelUI : MonoBehaviour
 
     private void ReturnToStartMenu()
     {
+        if (owner != null && owner.IsExternalSecondFloorBattleHost)
+        {
+            owner.SaveCurrentRunAndReturnToStart(startSceneName);
+            return;
+        }
+
         if (RunSaveSystem.IsTutorialRunActive())
             RunSaveSystem.EndTutorialRun();
         else

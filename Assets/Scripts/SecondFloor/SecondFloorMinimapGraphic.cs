@@ -33,9 +33,12 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
     private SecondFloorFloorMap floor;
     private readonly HashSet<Vector2Int> discoveredFloor = new HashSet<Vector2Int>();
     private readonly HashSet<Vector2Int> visibleFloor = new HashSet<Vector2Int>();
+    // A quad clipped by the four sides of the window has at most eight vertices.
+    private readonly Vector2[] floorClipA = new Vector2[8];
+    private readonly Vector2[] floorClipB = new Vector2[8];
     private Image floorPlayerMarker;
     private Vector2Int floorPlayer;
-    private Vector2Int floorFacing;
+    private Vector2 floorFacing = Vector2.up;
     private bool hasFloorPlayer;
     private bool showFloorAll;
     private Vector2 min;
@@ -79,7 +82,7 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         drawnBoard = null;
         showFloorAll = showAll;
         hasFloorPlayer = false;
-        floorFacing = Vector2Int.up;
+        floorFacing = Vector2.up;
         discoveredFloor.Clear();
         visibleFloor.Clear();
         LayoutFloorPlayerMarker();
@@ -107,6 +110,13 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         SetVerticesDirty();
     }
 
+    internal void SetFloorVisualHeading(float clockwiseDegrees)
+    {
+        float radians = clockwiseDegrees * Mathf.Deg2Rad;
+        floorFacing = new Vector2(Mathf.Sin(radians), Mathf.Cos(radians));
+        SetVerticesDirty();
+    }
+
     internal void SetShowFloorAll(bool value)
     {
         showFloorAll = value;
@@ -116,7 +126,7 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
     private Vector2 Project(Vector2Int point) => new Vector2(point.x,
         point.y * (session.Part == SecondFloorPart.Lower ? session.Map.LowerYScale : 1f));
 
-    // Cardinal basis: the player's world-facing direction is exactly UI up; no angle interpolation.
+    // Inverse world heading: the camera's forward vector maps to UI up.
     private Vector2 RotateFloor(Vector2 point) => new Vector2(
         point.x * floorFacing.y - point.y * floorFacing.x,
         point.x * floorFacing.x + point.y * floorFacing.y);
@@ -215,17 +225,18 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         Vector2 halfWindow = Vector2.one * (scale * FloorWindowRadius);
         Rect window = Rect.MinMaxRect(mapCenter.x - halfWindow.x, mapCenter.y - halfWindow.y,
             mapCenter.x + halfWindow.x, mapCenter.y + halfWindow.y);
-        Vector2 tileSize = Vector2.one * (scale * FloorTileSize);
-        // A square around the player covers the same world cells for all cardinal headings.
-        for (int y = -FloorWindowRadius; y <= FloorWindowRadius; y++)
-        for (int x = -FloorWindowRadius; x <= FloorWindowRadius; x++)
+        Vector2 tileHalf = Vector2.one * (scale * FloorTileSize * 0.5f);
+        // Bound the inverse-rotated window in world cells, including tiles intersecting its edges.
+        int radius = Mathf.FloorToInt(FloorWindowRadius * (Mathf.Abs(floorFacing.x) + Mathf.Abs(floorFacing.y)) + FloorTileSize * 0.5f);
+        for (int y = -radius; y <= radius; y++)
+        for (int x = -radius; x <= radius; x++)
         {
             var offset = new Vector2Int(x, y);
             var cell = floorPlayer + offset;
             float opacity = FloorOpacity(cell);
             if (opacity <= 0f || !floor.HasTile(cell)) continue;
             Vector2 center = mapCenter + RotateFloor(offset) * scale;
-            AddClippedRect(mesh, window, center, tileSize, WithOpacity(color, opacity));
+            AddClippedFloorRect(mesh, window, center, tileHalf, WithOpacity(color, opacity));
             foreach (var direction in FloorDirections)
                 DrawFloorEdge(mesh, window, cell, center, direction, scale, opacity);
         }
@@ -244,22 +255,55 @@ public sealed class SecondFloorMinimapGraphic : MaskableGraphic
         if (opacity <= 0f) return;
 
         // Wall and door strips sit just inside the cell edge. Nothing spans the grid gap.
-        Vector2 normal = RotateFloor(direction);
         float length = edge == SecondFloorEdgeKind.Wall ? 0.84f : 0.48f;
-        Vector2 size = normal.x != 0f ? new Vector2(FloorEdgeThickness, length) : new Vector2(length, FloorEdgeThickness);
-        Vector2 inset = normal * ((FloorTileSize - FloorEdgeThickness) * 0.5f * scale);
+        Vector2 size = direction.x != 0 ? new Vector2(FloorEdgeThickness, length) : new Vector2(length, FloorEdgeThickness);
+        Vector2 inset = RotateFloor(direction) * ((FloorTileSize - FloorEdgeThickness) * 0.5f * scale);
         Color tint = edge == SecondFloorEdgeKind.Wall ? wallColor : connectorColor;
-        AddClippedRect(mesh, window, center + inset, size * scale, WithOpacity(tint, opacity));
+        AddClippedFloorRect(mesh, window, center + inset, size * (scale * 0.5f), WithOpacity(tint, opacity));
     }
 
-    private static void AddClippedRect(VertexHelper mesh, Rect window, Vector2 center, Vector2 size, Color tint)
+    private void AddClippedFloorRect(VertexHelper mesh, Rect window, Vector2 center, Vector2 halfSize, Color tint)
     {
-        Vector2 half = size * 0.5f;
-        Vector2 bottomLeft = Vector2.Max(center - half, window.min);
-        Vector2 topRight = Vector2.Min(center + half, window.max);
-        Vector2 clippedSize = topRight - bottomLeft;
-        if (clippedSize.x > 0f && clippedSize.y > 0f)
-            AddRect(mesh, (bottomLeft + topRight) * 0.5f, clippedSize, tint);
+        Vector2 right = RotateFloor(new Vector2(halfSize.x, 0f));
+        Vector2 up = RotateFloor(new Vector2(0f, halfSize.y));
+        floorClipA[0] = center - right - up;
+        floorClipA[1] = center - right + up;
+        floorClipA[2] = center + right + up;
+        floorClipA[3] = center + right - up;
+
+        // Clip the rotated polygon against the fixed UI window, preserving its triangle winding.
+        int count = ClipFloorPolygon(floorClipA, floorClipB, 4, 0, window.xMin, true);
+        count = ClipFloorPolygon(floorClipB, floorClipA, count, 0, window.xMax, false);
+        count = ClipFloorPolygon(floorClipA, floorClipB, count, 1, window.yMin, true);
+        count = ClipFloorPolygon(floorClipB, floorClipA, count, 1, window.yMax, false);
+        if (count < 3) return;
+
+        int index = mesh.currentVertCount;
+        for (int i = 0; i < count; i++) mesh.AddVert(floorClipA[i], tint, Vector2.zero);
+        for (int i = 1; i < count - 1; i++) mesh.AddTriangle(index, index + i, index + i + 1);
+    }
+
+    private static int ClipFloorPolygon(Vector2[] input, Vector2[] output, int count, int axis, float edge, bool keepAbove)
+    {
+        if (count == 0) return 0;
+        int outputCount = 0;
+        Vector2 previous = input[count - 1];
+        float previousDistance = keepAbove ? previous[axis] - edge : edge - previous[axis];
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 current = input[i];
+            float distance = keepAbove ? current[axis] - edge : edge - current[axis];
+            if ((previousDistance < 0f && distance > 0f) || (previousDistance > 0f && distance < 0f))
+            {
+                Vector2 intersection = Vector2.LerpUnclamped(previous, current, previousDistance / (previousDistance - distance));
+                intersection[axis] = edge;
+                output[outputCount++] = intersection;
+            }
+            if (distance >= 0f) output[outputCount++] = current;
+            previous = current;
+            previousDistance = distance;
+        }
+        return outputCount;
     }
 
     private static Color WithOpacity(Color tint, float opacity)

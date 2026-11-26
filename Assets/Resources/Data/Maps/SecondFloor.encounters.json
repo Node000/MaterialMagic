@@ -1,0 +1,36 @@
+{
+  "kind": "second-floor-encounters",
+  "schemaVersion": 1,
+  "entries": [
+    { "levelId": 1, "groupIndex": -1, "displayEnemyId": 1 },
+    { "levelId": 2, "groupIndex": -1, "displayEnemyId": 2 },
+    { "levelId": 8, "groupIndex": -1, "displayEnemyId": 13 },
+
+    { "levelId": 4, "groupIndex": -1, "displayEnemyId": 6 },
+    { "levelId": 6, "groupIndex": -1, "displayEnemyId": 9 },
+    { "levelId": 7, "groupIndex": -1, "displayEnemyId": 12 },
+    { "levelId": 3, "groupIndex": -1, "displayEnemyId": 3 },
+
+    { "levelId": 5, "groupIndex": -1, "displayEnemyId": 3 },
+    { "levelId": 9, "groupIndex": -1, "displayEnemyId": 8 },
+    { "levelId": 10, "groupIndex": -1, "displayEnemyId": 12 },
+    { "levelId": 11, "groupIndex": 0, "displayEnemyId": 2 },
+    { "levelId": 11, "groupIndex": 1, "displayEnemyId": 1 },
+    { "levelId": 12, "groupIndex": -1, "displayEnemyId": 7 },
+    { "levelId": 13, "groupIndex": -1, "displayEnemyId": 8 },
+    { "levelId": 14, "groupIndex": 0, "displayEnemyId": 9 },
+    { "levelId": 14, "groupIndex": 1, "displayEnemyId": 9 },
+    { "levelId": 14, "groupIndex": 2, "displayEnemyId": 9 },
+    { "levelId": 15, "groupIndex": -1, "displayEnemyId": 10 },
+    { "levelId": 16, "groupIndex": -1, "displayEnemyId": 11 },
+
+    { "levelId": 19, "groupIndex": -1, "displayEnemyId": 16 },
+    { "levelId": 20, "groupIndex": -1, "displayEnemyId": 17 },
+    { "levelId": 21, "groupIndex": -1, "displayEnemyId": 18 },
+    { "levelId": 22, "groupIndex": -1, "displayEnemyId": 19 },
+
+    { "levelId": 23, "groupIndex": 0, "displayEnemyId": 21 },
+    { "levelId": 23, "groupIndex": 1, "displayEnemyId": 23 },
+    { "levelId": 23, "groupIndex": 2, "displayEnemyId": 24 }
+  ]
+}

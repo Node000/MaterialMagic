@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /// <summary>Camera and input for the standalone second-floor encounter test, not the production battle flow.</summary>
 public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
 {
-    private enum Phase { Explore, Entering, Battle, Returning }
+    private enum Phase { Explore, Entering, Battle, Returning, Advancing }
 
     [Header("Exploration grid")]
     [SerializeField] private Camera viewCamera;
@@ -26,6 +26,9 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     [SerializeField] private Transform playerBillboard;
     [SerializeField] private Transform enemyBillboard;
     [SerializeField] private GameObject playerVisual;
+    [SerializeField] private GameObject enemyOnTile;
+    [SerializeField] private Renderer[] battleCutaway = System.Array.Empty<Renderer>();
+    [SerializeField, Min(0.05f)] private float victoryStepSeconds = 0.18f;
 
     [Header("Scene UI")]
     [SerializeField] private GameObject explorationControls;
@@ -40,8 +43,8 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     [SerializeField] private string returningStatus;
     [SerializeField] private string returnedStatus;
 
-    // Fixed whitebox: one column of corridor, then three columns of encounter room.
-    private const int CenterColumn = 1;
+    // Fixed whitebox: all five cells belong to the same straight strip.
+    private const int StripLength = 5;
     private const int EncounterRow = 3;
     private FirstPersonGridExplorationSession exploration;
     private Phase phase;
@@ -49,9 +52,18 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     private Vector3 returnPosition;
     private Quaternion returnRotation;
     private float returnFov;
-    private bool encounterArmed;
+    private bool enemyPresent;
+    private bool cutawayOpen;
+    private bool[] initialRendererStates;
+    private Vector3 victoryStepEnd;
 
-    private void Awake() => ResetPrototype();
+    private void Awake()
+    {
+        initialRendererStates = new bool[battleCutaway.Length];
+        for (int i = 0; i < battleCutaway.Length; i++)
+            initialRendererStates[i] = battleCutaway[i] != null && battleCutaway[i].enabled;
+        ResetPrototype();
+    }
 
     private void Update()
     {
@@ -65,7 +77,23 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
             if (entering && shotTime >= 1f)
                 SetPhase(Phase.Battle, battleStatus);
             else if (!entering && shotTime <= 0f)
+            {
+                victoryStepEnd = GetEyePosition(exploration.X + exploration.FacingX, exploration.Y + exploration.FacingY);
+                SetPhase(Phase.Advancing, returningStatus);
+            }
+            return;
+        }
+
+        if (phase == Phase.Advancing)
+        {
+            shotTime = Mathf.Clamp01(shotTime + Time.unscaledDeltaTime / Mathf.Max(0.05f, victoryStepSeconds));
+            viewCamera.transform.position = Vector3.Lerp(returnPosition, victoryStepEnd, Mathf.SmoothStep(0f, 1f, shotTime));
+            if (shotTime >= 1f)
+            {
+                exploration.MoveForward();
+                ApplyExplorationPose();
                 SetPhase(Phase.Explore, returnedStatus);
+            }
             return;
         }
 
@@ -78,7 +106,7 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     private void LateUpdate()
     {
         if (playerVisual.activeSelf) FaceCamera(playerBillboard);
-        FaceCamera(enemyBillboard);
+        if (enemyPresent) FaceCamera(enemyBillboard);
     }
 
     private void FaceCamera(Transform billboard)
@@ -93,7 +121,8 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     public void ResetPrototype()
     {
         exploration = CreateExploration(0);
-        encounterArmed = true;
+        SetEnemyPresent(true);
+        SetCutaway(false);
         shotTime = 0f;
         playerVisual.SetActive(false);
         ApplyExplorationPose();
@@ -114,27 +143,27 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     public void MoveForward()
     {
         if (phase != Phase.Explore) return;
+        int nextX = exploration.X + exploration.FacingX;
+        int nextRow = exploration.Y + exploration.FacingY;
+        if (enemyPresent && nextX == 0 && nextRow == EncounterRow)
+        {
+            BeginEncounter();
+            return;
+        }
         if (!exploration.MoveForward())
         {
             status.text = wallStatus;
             return;
         }
-
         ApplyExplorationPose();
-        if (exploration.X != CenterColumn || exploration.Y != EncounterRow)
-            encounterArmed = true;
-        else if (encounterArmed && exploration.FacingY == 1)
-        {
-            BeginEncounter();
-            return;
-        }
         status.text = explorationStatus;
     }
 
     public void ReplayEncounter()
     {
-        if (phase == Phase.Entering || phase == Phase.Returning) return;
-        exploration = CreateExploration(EncounterRow);
+        if (phase != Phase.Explore && phase != Phase.Battle) return;
+        SetEnemyPresent(true);
+        exploration = CreateExploration(EncounterRow - 1);
         ApplyExplorationPose();
         BeginEncounter();
     }
@@ -142,28 +171,26 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
     public void FinishEncounter()
     {
         if (phase != Phase.Battle) return;
+        SetEnemyPresent(false);
         SetPhase(Phase.Returning, returningStatus);
     }
 
     private static FirstPersonGridExplorationSession CreateExploration(int startRow) =>
-        new FirstPersonGridExplorationSession(3, 5, CenterColumn, startRow, -1, -1, false,
-            IsWalkable, (_, __) => false);
+        new FirstPersonGridExplorationSession(1, StripLength, 0, startRow, -1, -1, false,
+            (x, row) => x == 0 && row >= 0 && row < StripLength, (_, __) => false);
 
-    private static bool IsWalkable(int x, int row) => x >= 0 && x < 3 && row >= 0 && row < 5
-        && (row >= 2 || x == CenterColumn) && (x != 2 || row != 4); // Enemy occupies the last tile.
+    private Vector3 GetEyePosition(int x, int row) => gridOrigin.TransformPoint(new Vector3(x * cellSize, eyeHeight, row * cellSize));
 
     private void ApplyExplorationPose()
     {
-        Vector3 localPosition = new Vector3((exploration.X - CenterColumn) * cellSize, eyeHeight, exploration.Y * cellSize);
         Vector3 localFacing = new Vector3(exploration.FacingX, 0f, exploration.FacingY);
-        viewCamera.transform.SetPositionAndRotation(gridOrigin.TransformPoint(localPosition),
+        viewCamera.transform.SetPositionAndRotation(GetEyePosition(exploration.X, exploration.Y),
             Quaternion.LookRotation(gridOrigin.TransformDirection(localFacing), gridOrigin.up));
         viewCamera.fieldOfView = explorationFov;
     }
 
     private void BeginEncounter()
     {
-        encounterArmed = false;
         returnPosition = viewCamera.transform.position;
         returnRotation = viewCamera.transform.rotation;
         returnFov = viewCamera.fieldOfView;
@@ -174,15 +201,31 @@ public sealed class SecondFloorBattleCameraPrototype : MonoBehaviour
 
     private void ApplyBattleShot(float time)
     {
-        // Both legs evaluate the same curve, so the return retraces the shot exactly.
+        // Retrace the cutaway shot to the original pose before taking the pending step.
         float t = time <= 0f ? 0f : time >= 1f ? 1f : Mathf.Clamp01(ease.Evaluate(time));
         Vector3 position = Vector3.Lerp(returnPosition, cameraEnd.position, t)
             + gridOrigin.TransformVector(arcOffset) * (4f * t * (1f - t));
         Quaternion battleRotation = Quaternion.LookRotation(battleAim.position - cameraEnd.position, gridOrigin.up);
         viewCamera.transform.SetPositionAndRotation(position, Quaternion.Slerp(returnRotation, battleRotation, t));
         viewCamera.fieldOfView = Mathf.Lerp(returnFov, battleFov, t);
-        // Bring in the foreground only once the camera has cleared its start at the player's feet.
+        // Open the near side before the camera leaves the strip; restore it once inside.
+        SetCutaway(t > 0f);
         playerVisual.SetActive(t > 0f && t >= playerRevealAt);
+    }
+
+    private void SetEnemyPresent(bool present)
+    {
+        enemyPresent = present;
+        enemyOnTile.SetActive(present);
+    }
+
+    private void SetCutaway(bool open)
+    {
+        if (cutawayOpen == open) return;
+        cutawayOpen = open;
+        for (int i = 0; i < battleCutaway.Length; i++)
+            if (battleCutaway[i] != null)
+                battleCutaway[i].enabled = !open && initialRendererStates[i];
     }
 
     private void SetPhase(Phase next, string message)

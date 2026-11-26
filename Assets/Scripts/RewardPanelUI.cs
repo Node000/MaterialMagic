@@ -87,6 +87,7 @@ public class RewardPanelUI : MonoBehaviour
     // 结算三选一（战斗胜利）。
     private IChoiceSession boundSession;
     public IChoiceSession Session => boundSession;
+    private bool UseProductionAnalytics => owner == null || !owner.IsExternalSecondFloorBattleHost;
     public bool IsPresentationInProgress => claimInProgress;
     private BattleRewardChoices currentChoices;
     private bool settlementClaimed;
@@ -149,7 +150,7 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>结算三选一面板打开（reward_enter）。</summary>
     private void EmitRewardEnter()
     {
-        if (owner == null || currentChoices == null)
+        if (!UseProductionAnalytics || owner == null || currentChoices == null)
             return;
 
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -182,7 +183,7 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>候选道具展示（magic_offer）。</summary>
     private void EmitMagicOffer(IReadOnlyList<MagicData> offers, string source)
     {
-        if (offers == null || offers.Count == 0)
+        if (!UseProductionAnalytics || offers == null || offers.Count == 0)
             return;
 
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -200,6 +201,8 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>奖励选择（reward_choice）：金币 / 道具 / 箭头。</summary>
     private void EmitRewardChoice(string choice, int index, int amount)
     {
+        if (!UseProductionAnalytics)
+            return;
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
         payload[AnalyticsProperty.Choice] = choice;
         if (index >= 0)
@@ -212,7 +215,7 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>跳过奖励直接进商店（reward_skip）；事件道具奖励没有“跳过”语义，不算。</summary>
     private void EmitRewardSkip()
     {
-        if (magicOnlyMode)
+        if (!UseProductionAnalytics || magicOnlyMode)
             return;
 
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -606,7 +609,8 @@ public class RewardPanelUI : MonoBehaviour
     /// <summary>结算道具选项：从选项卡飞入道具栏空槽，落地时 <see cref="HandSystemUI.SetRewardMagicAtSlot"/> 会回调完成领奖。</summary>
     private IEnumerator ClaimItemChoiceRoutine(MagicData data, ChoiceResult receipt)
     {
-        RunAnalyticsLedger.SetAcquireContext("reward_choice", 0, data != null ? data.id : string.Empty, 0);
+        if (UseProductionAnalytics)
+            RunAnalyticsLedger.SetAcquireContext("reward_choice", 0, data != null ? data.id : string.Empty, 0);
         EmitRewardChoice("magic", 0, 0);
         RectTransform sourceRect = itemChoiceCard != null ? itemChoiceCard.transform as RectTransform : itemChoiceSlot;
         yield return owner.PresentCommittedChoiceResult(receipt, sourceRect);
@@ -988,7 +992,8 @@ public class RewardPanelUI : MonoBehaviour
     private IEnumerator ClaimMagicOnlyRewardRoutine(MagicData data, MagicItemView view, ChoiceResult receipt)
     {
         RectTransform sourceRect = view != null ? view.transform as RectTransform : null;
-        RunAnalyticsLedger.SetAcquireContext("event", 0, AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(currentMagicChoices)), RunAnalyticsLedger.IndexOfMagic(currentMagicChoices, data));
+        if (UseProductionAnalytics)
+            RunAnalyticsLedger.SetAcquireContext("event", 0, AnalyticsService.JoinList(RunAnalyticsLedger.MagicIdList(currentMagicChoices)), RunAnalyticsLedger.IndexOfMagic(currentMagicChoices, data));
         yield return owner.PresentCommittedChoiceResult(receipt, sourceRect);
         claimInProgress = false;
         CompleteMagicRewardSelection();

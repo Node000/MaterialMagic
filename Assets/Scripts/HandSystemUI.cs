@@ -654,7 +654,7 @@ public partial class HandSystemUI : MonoBehaviour
 	{
 		get
 		{
-			TutorialManagerUI manager = GetUIManager().TutorialManager;
+				TutorialManagerUI manager = externalSecondFloorBattleHost ? null : GetUIManager().TutorialManager;
 			if (manager != tutorialManagerCache)
 			{
 				if (tutorialManagerCache != null)
@@ -962,7 +962,8 @@ public partial class HandSystemUI : MonoBehaviour
             CreateMagicViews();
             RefreshStaticUI();
             // 埋点：Debug 面板加道具（source=debug，报表可按 run_start.is_debug_run 过滤）
-            RunAnalyticsLedger.SetAcquireContext("debug", 0, magicData.id, 0);
+            if (!externalSecondFloorBattleHost)
+                RunAnalyticsLedger.SetAcquireContext("debug", 0, magicData.id, 0);
             EmitMagicAcquire(magicData, slotIndex, null);
             return;
         }
@@ -1271,6 +1272,8 @@ public partial class HandSystemUI : MonoBehaviour
 
     private void ShowLevelSelect()
     {
+        if (externalSecondFloorBattleHost)
+            return;
         chapterMapMoveInProgress = false;
         busy = true;
         SetButtonsInteractable(interactable: false);
@@ -1434,6 +1437,8 @@ public partial class HandSystemUI : MonoBehaviour
 
 	public void StartLevel(LevelData level)
 	{
+        if (externalSecondFloorBattleHost)
+            return;
         StartResolvedLevel(level, ResolveSelectedMapLevel(level, false), false);
     }
 
@@ -1587,15 +1592,15 @@ public partial class HandSystemUI : MonoBehaviour
 			}
 
 
-						private void StartBattleLevel(LevelData level, BattleNodeSaveData savedBattle = null, Tween mapHideTween = null, Func<bool> isLevelSelectHidden = null)
+						private void StartBattleLevel(LevelData level, BattleNodeSaveData savedBattle = null, Tween mapHideTween = null, Func<bool> isLevelSelectHidden = null, Func<bool> isPresentationReady = null)
 						{
 							if (battleStartRoutine != null)
 								StopCoroutine(battleStartRoutine);
 							deferEnemyViewCreation = false;
-							battleStartRoutine = StartCoroutine(StartBattleLevelRoutine(level, savedBattle, mapHideTween, isLevelSelectHidden));
+							battleStartRoutine = StartCoroutine(StartBattleLevelRoutine(level, savedBattle, mapHideTween, isLevelSelectHidden, isPresentationReady));
 						}
 
-					private IEnumerator StartBattleLevelRoutine(LevelData level, BattleNodeSaveData savedBattle, Tween mapHideTween, Func<bool> isLevelSelectHidden)
+					private IEnumerator StartBattleLevelRoutine(LevelData level, BattleNodeSaveData savedBattle, Tween mapHideTween, Func<bool> isLevelSelectHidden, Func<bool> isPresentationReady)
 					{
 			//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 			//IL_0056: Expected O, but got Unknown
@@ -1667,6 +1672,8 @@ public partial class HandSystemUI : MonoBehaviour
 					BeginPlayerTurn(playerState.DrawCount);
 			        SaveRunProgress();
 					ResetMagicHighlights();
+                    if (isPresentationReady != null)
+                        yield return WaitForCondition(isPresentationReady);
 					busy = false;
 
 				SetButtonsInteractable(interactable: true);
@@ -2478,7 +2485,7 @@ public partial class HandSystemUI : MonoBehaviour
 
     public void EnterSecondFloor()
     {
-        if (directSampleDebugRun || runEnded || playerState == null || currentLevel != null || runManager == null)
+        if (externalSecondFloorBattleHost || directSampleDebugRun || runEnded || playerState == null || currentLevel != null || runManager == null)
             return;
 
         BuildSecondFloorMap(activeChapter ?? GetActiveChapter());
@@ -2770,7 +2777,7 @@ public partial class HandSystemUI : MonoBehaviour
 
     public void OnChapterMapDirectionClicked(MaterialEnum material)
     {
-        if (runManager == null || chapterMapMoveInProgress || currentLevel != null || runManager.State != RunFlowState.MapSelection || TutorialManager != null && TutorialManager.IsMapTutorialBlockingInput)
+        if (externalSecondFloorBattleHost || runManager == null || chapterMapMoveInProgress || currentLevel != null || runManager.State != RunFlowState.MapSelection || TutorialManager != null && TutorialManager.IsMapTutorialBlockingInput)
             return;
 
         StartCoroutine(ChapterMapMoveRoutine(material));
@@ -3178,38 +3185,50 @@ public partial class HandSystemUI : MonoBehaviour
 		//IL_0084: Expected O, but got Unknown
         RunSaveData saveData = null;
         string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        bool gameSceneEntryRequested = PlayerState.ConsumeGameSceneEntryRequested();
-        if (!gameSceneEntryRequested && SceneTransitionManager.Instance != null)
-            gameSceneEntryRequested = SceneTransitionManager.Instance.ConsumeSceneEntry(sceneName);
-        secondFloorRun = sceneName == SecondFloorSceneName;
-        directSampleDebugRun = !gameSceneEntryRequested && !secondFloorRun;
-        bool forceNewRun = RunSaveSystem.ConsumeForceNewRun();
-        bool continueSavedRun = PlayerState.ContinueSavedRun && !forceNewRun;
-        if (continueSavedRun)
-            saveData = RunSaveSystem.LoadCurrentRun();
-        PlayerState.ContinueSavedRun = false;
-        loadedRunPlaySeconds = saveData != null ? Mathf.Max(0f, saveData.totalPlaySeconds) : 0f;
-        runStartRealtime = Time.realtimeSinceStartup;
-
-        bool startingTutorialRun = !continueSavedRun && RunSaveSystem.ConsumeStartingTutorialRun();
-        if (startingTutorialRun && GameDataDatabase.TryGetChapterData(TutorialManagerUI.TutorialChapterNumericId, out ChapterData tutorialChapter))
-            activeChapter = tutorialChapter;
-        if (saveData != null)
-            DifficultyUpgradeSystem.InitializeFromSave(saveData);
-        else
-            DifficultyUpgradeSystem.InitializeNewRun(startingTutorialRun);
-
-        PlayerStatus playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
-        if (saveData == null)
+        bool startingTutorialRun = false;
+        PlayerStatus playerStatus;
+        if (externalSecondFloorBattleHost)
         {
-            int requestedSeed = RunSaveSystem.ConsumeNewRunSeed();
-            if (requestedSeed != 0) playerStatus.SetRunRandomState(requestedSeed, 0);
-            if (!startingTutorialRun) playerStatus.DrawOrderVersion = 1;
-            DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
+            secondFloorRun = true;
+            runStartRealtime = Time.realtimeSinceStartup;
+            GameDataDatabase.TryGetChapterData(1, out activeChapter);
+            playerStatus = CreateSecondFloorSandboxPlayer();
         }
-        // 教程开局固定 10 金币（覆盖“均衡”配置的初始值，不走进阶金币倍率，也不影响普通新局）。
-        if (saveData == null && startingTutorialRun)
-            playerStatus.SetStartingGold(TutorialManagerUI.TutorialStartGold);
+        else
+        {
+            bool gameSceneEntryRequested = PlayerState.ConsumeGameSceneEntryRequested();
+            if (!gameSceneEntryRequested && SceneTransitionManager.Instance != null)
+                gameSceneEntryRequested = SceneTransitionManager.Instance.ConsumeSceneEntry(sceneName);
+            secondFloorRun = sceneName == SecondFloorSceneName;
+            directSampleDebugRun = !gameSceneEntryRequested && !secondFloorRun;
+            bool forceNewRun = RunSaveSystem.ConsumeForceNewRun();
+            bool continueSavedRun = PlayerState.ContinueSavedRun && !forceNewRun;
+            if (continueSavedRun)
+                saveData = RunSaveSystem.LoadCurrentRun();
+            PlayerState.ContinueSavedRun = false;
+            loadedRunPlaySeconds = saveData != null ? Mathf.Max(0f, saveData.totalPlaySeconds) : 0f;
+            runStartRealtime = Time.realtimeSinceStartup;
+
+            startingTutorialRun = !continueSavedRun && RunSaveSystem.ConsumeStartingTutorialRun();
+            if (startingTutorialRun && GameDataDatabase.TryGetChapterData(TutorialManagerUI.TutorialChapterNumericId, out ChapterData tutorialChapter))
+                activeChapter = tutorialChapter;
+            if (saveData != null)
+                DifficultyUpgradeSystem.InitializeFromSave(saveData);
+            else
+                DifficultyUpgradeSystem.InitializeNewRun(startingTutorialRun);
+
+            playerStatus = saveData != null ? RunSaveSystem.CreatePlayerStatus(saveData) : PlayerStatus.CreateDefaultStatus();
+            if (saveData == null)
+            {
+                int requestedSeed = RunSaveSystem.ConsumeNewRunSeed();
+                if (requestedSeed != 0) playerStatus.SetRunRandomState(requestedSeed, 0);
+                if (!startingTutorialRun) playerStatus.DrawOrderVersion = 1;
+                DifficultyUpgradeSystem.ApplyPlayerUpgrades(playerStatus);
+            }
+            // 教程开局固定 10 金币（覆盖“均衡”配置的初始值，不走进阶金币倍率，也不影响普通新局）。
+            if (saveData == null && startingTutorialRun)
+                playerStatus.SetStartingGold(TutorialManagerUI.TutorialStartGold);
+        }
 			playerState = playerStatus;
         runManager = RunManager.Create(playerStatus);
         runManager.AttachMapNodes(mapNodes);
@@ -3229,7 +3248,12 @@ public partial class HandSystemUI : MonoBehaviour
 			EnsurePileButtons();
 
 			CreateTopBar();
-        if (saveData != null)
+        if (externalSecondFloorBattleHost)
+        {
+            runManager.SetActiveChapter(activeChapter);
+            PrimeSecondFloorExploration();
+        }
+        else if (saveData != null)
         {
             activeChapter = null;
             if (saveData.chapterNumericId > 0)
@@ -3252,15 +3276,16 @@ public partial class HandSystemUI : MonoBehaviour
         }
 
         // ── 埋点：对局开始 / 续玩（此处 mapNodes、playerState、章节都已就绪）──
-        RunAnalyticsLedger.BeginRun(
-            saveData != null ? saveData.runId : null,
-            activeChapter ?? GetActiveChapter(),
-            mapNodes != null ? mapNodes.Count : 0,
-            currentMapNodeIndex + 1,
-            startingTutorialRun || RunSaveSystem.IsTutorialRunActive(),
-            directSampleDebugRun || debugLevelActive,
-            GetCurrentRunPlaySeconds,
-            () => playerState);
+        if (!externalSecondFloorBattleHost)
+            RunAnalyticsLedger.BeginRun(
+                saveData != null ? saveData.runId : null,
+                activeChapter ?? GetActiveChapter(),
+                mapNodes != null ? mapNodes.Count : 0,
+                currentMapNodeIndex + 1,
+                startingTutorialRun || RunSaveSystem.IsTutorialRunActive(),
+                directSampleDebugRun || debugLevelActive,
+                GetCurrentRunPlaySeconds,
+                () => playerState);
         if (!secondFloorRun)
         {
             AnalyticsService.Track(saveData != null ? AnalyticsEvent.RunResume : AnalyticsEvent.RunStart, RunAnalyticsLedger.RunStartPayload(playerState, saveData != null));
@@ -3275,6 +3300,8 @@ public partial class HandSystemUI : MonoBehaviour
 		CreatePlayerCastAnimator();
 		InitializePlayerUiComponents();
 		RebuildCards(animateFromCurrent: true);
+        if (externalSecondFloorBattleHost)
+            return;
         bool autoStartSavedNode = RunSaveSystem.ShouldAutoStartSavedNode(saveData);
         if (!autoStartSavedNode)
             SaveRunProgress();
@@ -3314,7 +3341,7 @@ public partial class HandSystemUI : MonoBehaviour
 				ToggleSettingsPanel();
 			}
 
-			if (!tutorialClickConsumedThisFrame && runManager != null && runManager.State == RunFlowState.MapSelection)
+			if (!externalSecondFloorBattleHost && !tutorialClickConsumedThisFrame && runManager != null && runManager.State == RunFlowState.MapSelection)
 			{
 				if (Input.GetKeyDown(KeyCode.W))
 					OnChapterMapDirectionClicked(MaterialEnum.Fire);
@@ -4050,7 +4077,8 @@ public bool IsCardDragActive => cardDragActive;
         if (runEnded)
             return;
 
-        RunAnalyticsLedger.CountBattleTurn();
+        if (!externalSecondFloorBattleHost)
+            RunAnalyticsLedger.CountBattleTurn();
 
         if (choosingEventCard)
         {
@@ -6270,7 +6298,7 @@ public bool IsCardDragActive => cardDragActive;
 		if (componentsInChildren.Length == 0)
 			return;
 
-		int slotLimit = DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
+			int slotLimit = externalSecondFloorBattleHost ? baseMagicSlotCount : DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount);
 		EnsureMagicSlotCapacity(slotLimit);
 		HideLegacyMagicSlotShells();
 		bool fixedSlots = UsesFixedMagicSlots;
@@ -7075,7 +7103,7 @@ public bool IsCardDragActive => cardDragActive;
             ? new List<MaterialModel>(committedTurn.RemovedTemporaryCards) : new List<MaterialModel>();
         if (committedTurn == null) battleManager?.FinishBattleRules(battleEndRemovedTemporaryCards);
         // 埋点：战斗结束（胜利分支；玩家已倒下时战斗失败由 ShowRunResultPanel 负责）
-        if (playerState != null && playerState.CurrentHealth > 0)
+        if (!externalSecondFloorBattleHost && playerState != null && playerState.CurrentHealth > 0)
         {
             RunAnalyticsLedger.SetNodeResult("battle_win");
             EmitBattleEnd("win");
@@ -7121,7 +7149,7 @@ public bool IsCardDragActive => cardDragActive;
 
     private bool ShouldCompleteRunAfterCurrentBattle()
     {
-        if (!currentChapterMapBossLevel)
+        if (externalSecondFloorBattleHost || !currentChapterMapBossLevel)
             return false;
 
         RunMapGridModel grid = ChapterMapGrid;
@@ -7155,8 +7183,9 @@ public bool IsCardDragActive => cardDragActive;
 		busy = true;
 		currentEvent = null;
 		SetButtonsInteractable(interactable: false);
-        pendingBattleRewardShop = true;
-        RunAnalyticsLedger.MarkBattleShopPending();
+        pendingBattleRewardShop = !externalSecondFloorBattleHost;
+        if (pendingBattleRewardShop)
+            RunAnalyticsLedger.MarkBattleShopPending();
         SaveRunProgress();
 
         // 结算基础金币改为战斗结束后自动获取（统一固定值），不再由玩家点击领取。
@@ -7178,7 +7207,7 @@ public bool IsCardDragActive => cardDragActive;
 
     private void SaveRunProgress()
     {
-        if (recordingBattleResolution || committedTurn != null || HasUnpersistedChoiceSession) return;
+        if (externalSecondFloorBattleHost || recordingBattleResolution || committedTurn != null || HasUnpersistedChoiceSession) return;
         if (directSampleDebugRun || runEnded || !TryBuildRunCheckpointKey(out string checkpointKey) || checkpointKey == lastRunCheckpointKey)
             return;
 
@@ -7375,9 +7404,9 @@ public bool IsCardDragActive => cardDragActive;
     private const int FallbackBattleGoldReward = 2;
 
     /// <summary>自动发放的基础金币仍走进阶金币倍率管线（当前 0.8 / 1.25 倍率下取整后仍为 2）。</summary>
-    private static int RollBaseBattleGoldReward()
+    private int RollBaseBattleGoldReward()
     {
-        return DifficultyUpgradeSystem.ModifyGoldGain(BaseBattleGoldReward);
+        return externalSecondFloorBattleHost ? BaseBattleGoldReward : DifficultyUpgradeSystem.ModifyGoldGain(BaseBattleGoldReward);
     }
 
     public int RollBattleGoldReward()
@@ -7459,7 +7488,7 @@ public bool IsCardDragActive => cardDragActive;
 
     public bool TrySaveRunProgressForce()
     {
-        if (directSampleDebugRun || RunSaveSystem.IsTutorialRunActive()) return true; // No resumable run to commit.
+        if (externalSecondFloorBattleHost || directSampleDebugRun || RunSaveSystem.IsTutorialRunActive()) return true; // No resumable run to commit.
         if (recordingBattleResolution || committedTurn != null || HasUnpersistedChoiceSession || runEnded || playerState == null)
             return false;
 
@@ -7568,7 +7597,7 @@ public bool IsCardDragActive => cardDragActive;
 
     public bool HasPendingMaterialModifier => pendingMaterialModifier != null;
 
-    public int MagicSlotCapacity => Mathf.Max(0, DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount));
+    public int MagicSlotCapacity => Mathf.Max(0, externalSecondFloorBattleHost ? baseMagicSlotCount : DifficultyUpgradeSystem.ModifyMagicSlotCount(baseMagicSlotCount));
 
     public int GetFreeMagicSlotIndex()
     {
@@ -7642,14 +7671,17 @@ public bool IsCardDragActive => cardDragActive;
         playerState.AddGold(sellPrice, false);
         CreateMagicViews();
 
-        Dictionary<string, object> sellPayload = RunAnalyticsLedger.Context();
-        sellPayload[AnalyticsProperty.MagicId] = magic.Id;
-        sellPayload[AnalyticsProperty.Rarity] = (int)magic.Data.rarity;
-        sellPayload[AnalyticsProperty.Price] = sellPrice;
-        sellPayload[AnalyticsProperty.GoldBefore] = playerState.Gold - sellPrice;
-        sellPayload[AnalyticsProperty.GoldAfter] = playerState.Gold;
-        sellPayload[AnalyticsProperty.Source] = "shop_sell";
-        AnalyticsService.Track(AnalyticsEvent.MagicSell, sellPayload);
+        if (!externalSecondFloorBattleHost)
+        {
+            Dictionary<string, object> sellPayload = RunAnalyticsLedger.Context();
+            sellPayload[AnalyticsProperty.MagicId] = magic.Id;
+            sellPayload[AnalyticsProperty.Rarity] = (int)magic.Data.rarity;
+            sellPayload[AnalyticsProperty.Price] = sellPrice;
+            sellPayload[AnalyticsProperty.GoldBefore] = playerState.Gold - sellPrice;
+            sellPayload[AnalyticsProperty.GoldAfter] = playerState.Gold;
+            sellPayload[AnalyticsProperty.Source] = "shop_sell";
+            AnalyticsService.Track(AnalyticsEvent.MagicSell, sellPayload);
+        }
 
         RefreshStaticUI();
         // 卖出会腾出道具槽：商店开着时立刻刷新道具商品的可购买状态。
@@ -7953,7 +7985,7 @@ public bool IsCardDragActive => cardDragActive;
     /// </summary>
     private void EmitMagicAcquire(MagicData data, int slotIndex, MagicModel replacedMagic)
     {
-        if (data == null || playerState == null)
+        if (externalSecondFloorBattleHost || data == null || playerState == null)
             return;
 
         int price = RunAnalyticsLedger.AcquirePrice;
@@ -8002,7 +8034,7 @@ public bool IsCardDragActive => cardDragActive;
     /// <summary>节点结束（node_exit）；事件节点额外发 event_end。同一节点只发一次。</summary>
     private void EmitNodeExit()
     {
-        if (!RunAnalyticsLedger.HasRun || !RunAnalyticsLedger.MarkNodeExitEmitted())
+        if (externalSecondFloorBattleHost || !RunAnalyticsLedger.HasRun || !RunAnalyticsLedger.MarkNodeExitEmitted())
             return;
 
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -8029,6 +8061,8 @@ public bool IsCardDragActive => cardDragActive;
     /// <summary>战斗开始（battle_start）：敌人实例已全部生成。</summary>
     private void EmitBattleStart(LevelData level)
     {
+        if (externalSecondFloorBattleHost)
+            return;
         RunAnalyticsLedger.MarkBattleStart();
         IReadOnlyList<EnemyModel> enemies = battleManager != null ? battleManager.Enemies : null;
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -8233,7 +8267,7 @@ public bool IsCardDragActive => cardDragActive;
     /// <summary>道具被移除（magic_remove）：reason = replace / shop_remove / debug。</summary>
     private void EmitMagicRemoved(MagicModel magic, string reason)
     {
-        if (magic == null || magic.Data == null)
+        if (externalSecondFloorBattleHost || magic == null || magic.Data == null)
             return;
 
         Dictionary<string, object> payload = RunAnalyticsLedger.Context();
@@ -8297,7 +8331,7 @@ public bool IsCardDragActive => cardDragActive;
 
     public IEnumerator GainGoldAnimated(int amount, RectTransform sourceRect, bool applyDifficulty)
     {
-        if (applyDifficulty)
+        if (applyDifficulty && !externalSecondFloorBattleHost)
             amount = DifficultyUpgradeSystem.ModifyGoldGain(amount);
         if (amount <= 0 || playerState == null)
             yield break;
@@ -8477,6 +8511,10 @@ public bool IsCardDragActive => cardDragActive;
 
 	public void FinishReward()
 	{
+        if (externalSecondFloorBattleHost && (secondFloorEncounterFinished == null ||
+            runManager.State != RunFlowState.Reward || BattleRewardSession?.IsComplete != true))
+            return;
+
         ClearNodeChoiceSessions();
         EmitNodeExit();
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
@@ -8514,6 +8552,15 @@ public bool IsCardDragActive => cardDragActive;
 		currentEvent = null;
 		currentLevel = null;
 			currentChapterMapBossLevel = false;
+        if (externalSecondFloorBattleHost)
+        {
+            PrimeSecondFloorExploration();
+            ResetContinuousCastCounterUI();
+            RefreshStaticUI();
+            RefreshMaterialListPanel();
+            NotifySecondFloorEncounterFinished(true);
+            return;
+        }
         if (debugLevel)
         {
             busy = false;
@@ -9033,12 +9080,18 @@ public bool IsCardDragActive => cardDragActive;
         if (!victory && currentLevel != null && (currentLevel.levelType == LevelType.Battle || currentLevel.levelType == LevelType.Elite))
         {
             playerState?.Relics.EndBattle(false);
-            RunAnalyticsLedger.SetNodeResult("battle_lose");
-            EmitBattleEnd("defeat");
+            if (!externalSecondFloorBattleHost)
+            {
+                RunAnalyticsLedger.SetNodeResult("battle_lose");
+                EmitBattleEnd("defeat");
+            }
         }
-        AnalyticsService.Track(AnalyticsEvent.RunEnd, RunAnalyticsLedger.RunEndPayload(playerState, victory ? "Victory" : "Defeat"));
-        RunSaveSystem.RecordRunEndAndClearCurrentRun(victory ? RunHistoryResultType.Victory : RunHistoryResultType.Defeat, playerState, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
-        RunAnalyticsLedger.Reset();
+        if (!externalSecondFloorBattleHost)
+        {
+            AnalyticsService.Track(AnalyticsEvent.RunEnd, RunAnalyticsLedger.RunEndPayload(playerState, victory ? "Victory" : "Defeat"));
+            RunSaveSystem.RecordRunEndAndClearCurrentRun(victory ? RunHistoryResultType.Victory : RunHistoryResultType.Defeat, playerState, mapNodes, currentMapNodeIndex, chapter, currentLevel, playSeconds);
+            RunAnalyticsLedger.Reset();
+        }
 		runEnded = true;
 		busy = true;
 		SetButtonsInteractable(interactable: false);
@@ -9053,12 +9106,16 @@ public bool IsCardDragActive => cardDragActive;
 		if (victory)
             GetUIManager().ShowVictoryPanel(playSeconds, magicNames, tutorialVictory);
 		else
+        {
 			GetUIManager().ShowDefeatPanel(playerState?.LastDamageSourceEnemy?.Name);
+            if (externalSecondFloorBattleHost)
+                NotifySecondFloorEncounterFinished(false);
+        }
 	}
 
     public void SaveCurrentRunAndReturnToStart(string startSceneName)
     {
-        if (RunSaveSystem.IsTutorialRunActive())
+        if (!externalSecondFloorBattleHost && RunSaveSystem.IsTutorialRunActive())
             RunSaveSystem.EndTutorialRun();
         else
             SaveRunProgress();

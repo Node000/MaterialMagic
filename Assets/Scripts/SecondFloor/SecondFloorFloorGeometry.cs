@@ -153,6 +153,11 @@ public sealed class SecondFloorFloorGeometry : MonoBehaviour
 
     private static bool IsPositiveFinite(float value) => value > 0f && !float.IsInfinity(value);
 
+    internal void SetExplorationVisible(bool visible)
+    {
+        if (generatedRoot != null) generatedRoot.gameObject.SetActive(visible);
+    }
+
     private void OnDestroy() => DestroyGeneratedRoot();
 
     private void DestroyGeneratedRoot()

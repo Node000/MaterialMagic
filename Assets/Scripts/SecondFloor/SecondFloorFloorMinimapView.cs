@@ -27,6 +27,9 @@ public sealed class SecondFloorFloorMinimapView : MonoBehaviour
         IReadOnlyCollection<Vector2Int> discovered, IReadOnlyCollection<Vector2Int> visible) =>
         Graphic.RefreshFloor(playerCell, facingDirection, discovered, visible);
 
+    /// <summary>Rotates the map presentation without changing floor visibility or the player marker.</summary>
+    public void SetVisualHeading(float clockwiseDegrees) => Graphic.SetFloorVisualHeading(clockwiseDegrees);
+
     public void SetShowAll(bool value)
     {
         Graphic.SetShowFloorAll(value);

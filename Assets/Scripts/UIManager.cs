@@ -11,6 +11,7 @@ using TMPro;
 public class UIManager : MonoBehaviour
 {
     private static TMP_FontAsset cachedDefaultTMPFont;
+    private HandSystemUI owner;
 
     [SerializeField] private MapPanelUI mapPanelUI;
     [SerializeField] private ChapterGridPanelUI chapterGridPanelUI;
@@ -62,6 +63,7 @@ public class UIManager : MonoBehaviour
 
     public void Initialize(HandSystemUI owner, Transform root)
     {
+        this.owner = owner;
         mapPanelUI = GetOrAddPanel<MapPanelUI>(root, "MapPanel", mapPanelUI);
         chapterGridPanelUI = GetOrAddPanel<ChapterGridPanelUI>(root, "MapPanel", chapterGridPanelUI);
         levelSelectPanelUI = GetOrAddPanel<LevelSelectPanelUI>(root, "LevelSelectPanel", levelSelectPanelUI);
@@ -194,6 +196,12 @@ public class UIManager : MonoBehaviour
 
     public void ToggleMapPanel()
     {
+        if (owner != null && owner.IsExternalSecondFloorBattleHost)
+        {
+            owner.ShowSecondFloorMapFromTopBar();
+            return;
+        }
+
         RunManager currentRun = RunManager.Current;
         if (currentRun != null && currentRun.State == RunFlowState.MapSelection)
             return;
