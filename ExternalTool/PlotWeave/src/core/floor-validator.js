@@ -55,6 +55,44 @@ function countComponents(nodeIds, adj) {
   return components;
 }
 
+function shortestCycleLengthInSubgraph(nodeIds, adj) {
+  const allowed = new Set(nodeIds);
+  const edges = [];
+  const seen = new Set();
+  for (const u of nodeIds) {
+    for (const v of adj.get(u) || []) {
+      if (!allowed.has(v) || u === v) continue;
+      const pk = pairKey(u, v);
+      if (seen.has(pk)) continue;
+      seen.add(pk);
+      edges.push([u, v]);
+    }
+  }
+  let best = Infinity;
+  for (const [u, v] of edges) {
+    const dist = new Map([[u, 0]]);
+    const queue = [u];
+    for (let i = 0; i < queue.length; i += 1) {
+      const cur = queue[i];
+      const d = dist.get(cur);
+      if (d + 1 >= best) break;
+      for (const nxt of adj.get(cur) || []) {
+        if (!allowed.has(nxt)) continue;
+        if ((cur === u && nxt === v) || (cur === v && nxt === u)) continue;
+        if (nxt === v) {
+          best = Math.min(best, d + 2);
+          break;
+        }
+        if (!dist.has(nxt)) {
+          dist.set(nxt, d + 1);
+          queue.push(nxt);
+        }
+      }
+    }
+  }
+  return Number.isFinite(best) ? best : null;
+}
+
 export function computeFloorStats(map) {
   const strips = Array.isArray(map?.strips) ? map.strips : [];
   const links = Array.isArray(map?.links) ? map.links : [];
@@ -129,11 +167,21 @@ export function computeFloorStats(map) {
     }
     const components = countComponents(rIds, adj);
     const cycles = rIds.length > 0 ? Math.max(0, edgePairs.size - rIds.length + components) : 0;
+    const minCycleLength = cycles > 0 ? shortestCycleLengthInSubgraph(rIds, adj) : null;
+    let maxDegree = 0;
+    for (const id of rIds) {
+      let deg = 0;
+      for (const nxt of adj.get(id) || []) {
+        if (rIdSet.has(nxt)) deg += 1;
+      }
+      if (deg > maxDegree) maxDegree = deg;
+    }
     const rResource = Math.round(rStrips.reduce((sum, s) => sum + (Number(s.resource) || 0), 0) * 100) / 100;
     const rDifficulty = Math.round(rStrips.reduce((sum, s) => sum + (Number(s.difficulty) || 0), 0) * 100) / 100;
     const noLoopCount = rStrips.filter((s) => s.noLoop).length;
     return {
       regionId: region.id,
+      regionTypeId: region.regionTypeId || region.id,
       name: region.name,
       color: region.color,
       strips: rStrips.length,
@@ -142,6 +190,8 @@ export function computeFloorStats(map) {
       components,
       connected: rIds.length > 0 && components === 1,
       cycles,
+      minCycleLength,
+      maxDegree,
       noLoopCount,
       maxNoLoop: Number.isFinite(region.maxNoLoop) ? region.maxNoLoop : null,
       resource: rResource,
@@ -209,6 +259,8 @@ export function computeFloorStats(map) {
   const allRegionsHaveCycle =
     regionStats.length === 3 &&
     regionStats.every((r) => r.connected && r.cycles >= 1);
+  const regionMinCycles = regionStats.map((r) => r.minCycleLength).filter((n) => Number.isFinite(n));
+  const minCycleLength = regionMinCycles.length ? Math.min(...regionMinCycles) : null;
 
   return {
     strips: strips.length,
@@ -234,6 +286,7 @@ export function computeFloorStats(map) {
     regions: regionStats,
     triangleValid: allPairsBridgedOnce,
     allRegionsHaveCycle,
+    minCycleLength,
     maxCellStack: Math.max(0, ...[...cellOwners.values()].map((list) => list.length)),
     avgConnectionEndFactor,
     totalNoLoopCount,
@@ -262,6 +315,7 @@ export function validateFloorMap(map) {
   }
 
   // 1. 区域内部连通性与环路检查
+  const requiredMinCycle = Math.max(3, Math.round(Number(map?.topology?.minCycleLength ?? 3) || 3));
   for (const r of stats.regions) {
     if (r.strips === 0) {
       issues.push(issue('error', 'floor.region.empty', `区域「${r.name}」没有任何条带。`));
@@ -270,6 +324,17 @@ export function validateFloorMap(map) {
     }
     if (r.cycles < 1) {
       issues.push(issue('error', 'floor.region.noCycle', `区域「${r.name}」内部未形成环路（当前环数 ${r.cycles}）。`));
+    } else {
+      const effectiveMin = Math.min(requiredMinCycle, r.strips);
+      if (effectiveMin > 3 && Number.isFinite(r.minCycleLength) && r.minCycleLength < effectiveMin) {
+        issues.push(
+          issue(
+            'error',
+            'floor.region.shortCycle',
+            `区域「${r.name}」存在长度 ${r.minCycleLength} 的短环，低于最小环长度要求 ${effectiveMin}。`,
+          ),
+        );
+      }
     }
   }
 

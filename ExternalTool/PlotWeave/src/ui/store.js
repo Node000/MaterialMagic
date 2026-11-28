@@ -28,6 +28,7 @@ import {
   recomputeFloorMetrics,
   recomputeFloorProgression,
 } from '../core/floor-generator.js';
+import { normalizeWorldPools } from '../core/world-pools.js';
 import { validateFloorMap } from '../core/floor-validator.js';
 import {
   normalizeCellTypes,
@@ -162,6 +163,21 @@ export class AppStore extends Emitter {
 
   get activeFloorProfile() {
     return this.dungeon.floorProfiles[0];
+  }
+
+  get worldPools() {
+    return this.dungeon.world;
+  }
+
+  updateWorldPools(mutator, label = '编辑完整地图池') {
+    return this.commitProject(
+      (project) => {
+        const current = normalizeWorldPools(project.dungeon.world);
+        mutator(current);
+        project.dungeon.world = normalizeWorldPools(current);
+      },
+      { label },
+    );
   }
 
   get mode() {

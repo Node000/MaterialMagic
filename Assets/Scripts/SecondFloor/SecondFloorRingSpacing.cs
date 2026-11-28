@@ -44,10 +44,11 @@ internal static partial class SecondFloorPatternGenerator
         return contacts;
     }
 
-    private static Join[] ChooseClosure(List<Join> matches, List<SharedWall> contacts, Spacing spacing)
+    private static Join[] ChooseClosure(List<Join> matches, List<SharedWall> contacts, Spacing spacing,
+        Func<int, int, bool> isPairValid = null)
     {
         // Prefer opening a long shared wall rather than leaving it intact for slightly more door separation.
-        var chosen = new Join[2];
+        Join[] chosen = null;
         double best = double.PositiveInfinity;
         int probes = 96;
         for (int i = 0; i < matches.Count; i++)
@@ -56,6 +57,7 @@ internal static partial class SecondFloorPatternGenerator
             var a = matches[i];
             var b = matches[j];
             if (a.Left == b.Left) continue;
+            if (isPairValid != null && !isPairValid(a.Left, b.Left)) continue;
             var pair = new[] { a, b };
             double score = ContactCost(contacts, spacing, pair) - DoorSeparation(a, b, spacing);
             if (score < best)

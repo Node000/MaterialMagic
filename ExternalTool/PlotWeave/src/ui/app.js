@@ -21,7 +21,8 @@ import { MobileShell } from './mobile.js';
 import { TemplateEditorView } from './template-editor.js';
 import { FloorEditorView } from './floor-editor.js';
 import { MapPoolsEditor } from './map-pools-editor.js';
-import { WorldPlaceholderView } from './world-view.js';
+import { WorldView } from './world-view.js';
+import { parseWorldPools, serializeWorldPools } from '../core/world-pools.js';
 import { parseTemplateLibrary, serializeTemplateLibrary, validateStripTemplate } from '../core/strip-templates.js';
 import { recomputeFloorMetrics, recomputeFloorProgression } from '../core/floor-generator.js';
 import {
@@ -233,7 +234,7 @@ function boot() {
 
   const templateEditor = new TemplateEditorView({ root: wsTemplates, store });
   const floorEditor = new FloorEditorView({ root: wsFloor, store });
-  const worldView = new WorldPlaceholderView({ root: wsWorld, store });
+  const worldView = new WorldView({ root: wsWorld, store });
 
   const MODE_TABS = [
     { id: 'templates', label: '条带模板' },
@@ -286,6 +287,10 @@ function boot() {
     } else if (mode === 'pools') {
       window.requestAnimationFrame(() => {
         poolsEditor.resize();
+      });
+    } else if (mode === 'world') {
+      window.requestAnimationFrame(() => {
+        worldView.resize();
       });
     }
   }
@@ -474,6 +479,7 @@ function boot() {
       canvas.setTheme(theme);
       floorEditor.setTheme(theme);
       poolsEditor.setTheme(theme);
+      worldView.setTheme(theme);
       syncThemeButton(theme);
       toast(`已切换到${theme === 'light' ? '亮色' : '暗色'}主题`, { type: 'info' });
     },
@@ -859,6 +865,26 @@ function boot() {
         toast(`已导入 ${parsedTpl.stripTemplates.length} 个条带模板`, { type: 'success' });
         return;
       }
+      if (peek?.kind === 'plotweave-map-pools') {
+        const parsedPools = parseWorldPools(text);
+        if (!parsedPools.ok) {
+          toast(`导入地图池失败：${parsedPools.errors[0]}`, { type: 'error' });
+          return;
+        }
+        const total = parsedPools.worldPools.pools.reduce((sum, p) => sum + p.entries.length, 0);
+        const ok = await confirmDialog({
+          title: '导入完整地图四等级配置',
+          message: `识别到包含 4 个等级共 ${total} 条配置的地图池 JSON，是否导入到「完整地图」？（可撤销）`,
+          confirmText: '导入替换',
+        });
+        if (!ok) return;
+        store.updateWorldPools((draft) => {
+          draft.pools = parsedPools.worldPools.pools;
+        }, '导入完整地图配置 JSON');
+        store.setMode('world');
+        toast(`已导入 ${total} 条完整地图配置`, { type: 'success' });
+        return;
+      }
       if (peek?.kind === 'plotweave-floor-map') {
         try {
           const map = peek.schemaVersion !== undefined ? applyFloorFile(peek) : peek;
@@ -972,6 +998,14 @@ function boot() {
           }
           downloadBlob(`${slugify(floorMap.seed)}-floor-map.png`, blob);
           toast('单层地图 PNG 已导出', { type: 'success' });
+        },
+      },
+      {
+        title: '完整地图四等级配置 JSON',
+        hint: '包含等级 1 至 等级 4 全部地图池配置（含出生点区域、最小环长度等），单份文件可直接导入或供游戏读取。',
+        run: () => {
+          downloadText(`${name}-world-map-pools.json`, serializeWorldPools(store.worldPools));
+          toast('完整地图配置 JSON 已导出', { type: 'success' });
         },
       },
       {
@@ -1124,11 +1158,12 @@ function boot() {
     if (key === 'f') {
       if (store.mode === 'floor') floorEditor.fit();
       else if (store.mode === 'pools') poolsEditor.fit();
+      else if (store.mode === 'world') worldView.fitAll();
       else canvas.fit();
       return;
     }
     if (key === 'g') {
-      if (store.mode === 'floor' || store.mode === 'pools') store.toggleUi('floorShowGrid');
+      if (store.mode === 'floor' || store.mode === 'pools' || store.mode === 'world') store.toggleUi('floorShowGrid');
       else store.toggleUi('showGrid');
       return;
     }
@@ -1138,6 +1173,7 @@ function boot() {
     else if (key === '3') store.setMode('world');
     else if (key === 'escape') {
       if (store.mode === 'floor') store.selectFloorStrip(null);
+      else if (store.mode === 'world') worldView.closeZoom();
       else if (store.mode === 'pools') {
         if (poolsEditor.exploration) poolsEditor.leave({ focus: true });
         else if (poolsEditor.selectedStripId) {

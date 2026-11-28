@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlotWeave 地图结构升级与完整地图生成 Review 稿</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #FBFBF9; --card: #FFFFFF; --ink: #22262C; --muted: #5A6470; --line: #DFE3E1;
+    --accent: #0E7C6F; --accent-soft: #E7F1EF; --nut-bg: #EFF5F3; --nut-line: #C9DAD6;
+    --ok: #2E7D4F; --warn: #9A6B15; --bad: #A8443A;
+    --ok-bg: #E8F3EC; --warn-bg: #F7EFDD; --bad-bg: #F7E7E4;
+    --code-bg: #F3F4F2; --flow-bg: #F6F7F5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #14171A; --card: #1B1F23; --ink: #E6E9EA; --muted: #99A3AC; --line: #2D3337;
+      --accent: #43BFAD; --accent-soft: #1C2B29; --nut-bg: #1D2926; --nut-line: #2E4440;
+      --ok: #57C289; --warn: #DDB25A; --bad: #DF8177;
+      --ok-bg: #1B2B21; --warn-bg: #2C2517; --bad-bg: #2E1D1A;
+      --code-bg: #21262B; --flow-bg: #1E2327;
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #FBFBF9; --card: #FFFFFF; --ink: #22262C; --muted: #5A6470; --line: #DFE3E1;
+    --accent: #0E7C6F; --accent-soft: #E7F1EF; --nut-bg: #EFF5F3; --nut-line: #C9DAD6;
+    --ok: #2E7D4F; --warn: #9A6B15; --bad: #A8443A;
+    --ok-bg: #E8F3EC; --warn-bg: #F7EFDD; --bad-bg: #F7E7E4;
+    --code-bg: #F3F4F2; --flow-bg: #F6F7F5;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #14171A; --card: #1B1F23; --ink: #E6E9EA; --muted: #99A3AC; --line: #2D3337;
+    --accent: #43BFAD; --accent-soft: #1C2B29; --nut-bg: #1D2926; --nut-line: #2E4440;
+    --ok: #57C289; --warn: #DDB25A; --bad: #DF8177;
+    --ok-bg: #1B2B21; --warn-bg: #2C2517; --bad-bg: #2E1D1A;
+    --code-bg: #21262B; --flow-bg: #1E2327;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+    font-size: 16px; line-height: 1.85; }
+  h1, h2, h3 { font-family: "Songti SC", "Noto Serif CJK SC", "SimSun", serif; text-wrap: balance; line-height: 1.4; }
+  .wrap { max-width: 50rem; margin: 0 auto; padding: 0 1.25rem 6rem; }
+  .topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 50rem; margin: 0 auto; padding: 0.6rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .topbar .doc-tag { font-size: 0.8rem; letter-spacing: 0.08em; color: var(--muted); }
+  .copy-btn { font: inherit; font-size: 0.85rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 0.35rem 0.9rem; cursor: pointer; }
+  .copy-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .copy-btn.copied { background: var(--ok); }
+  header.doc-head { padding-top: 3rem; }
+  header.doc-head h1 { font-size: 1.75rem; margin: 0.2rem 0 0.8rem; }
+  .doc-date { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .howto { background: var(--accent-soft); border-radius: 10px; padding: 0.8rem 1.2rem; font-size: 0.92rem; }
+  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.4rem; margin: 1.6rem 0; font-size: 0.92rem; }
+  nav.toc ol { margin: 0.3rem 0 0; padding-left: 1.4em; columns: 2; column-gap: 2rem; }
+  nav.toc li { margin: 0.15rem 0; break-inside: avoid; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  @media (max-width: 600px) { nav.toc ol { columns: 1; } }
+  section.block { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1.6rem 1.8rem 1.4rem; margin: 2.2rem 0; scroll-margin-top: 4rem; }
+  section.block h2 { font-size: 1.32rem; margin: 0 0 0.6rem; }
+  section.block h3 { font-size: 1.06rem; margin: 1.6rem 0 0.4rem; }
+  section.block p { margin: 0.45rem 0; }
+  section.block ul, section.block ol { margin: 0.45rem 0; padding-left: 1.4em; }
+  section.block li { margin: 0.3rem 0; }
+  .secnum { color: var(--muted); font-weight: 400; margin-right: 0.55em; font-variant-numeric: tabular-nums; }
+  .chip { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; border-radius: 999px; padding: 0.05rem 0.6rem; vertical-align: 0.15em; margin-left: 0.4rem; font-family: -apple-system, "PingFang SC", sans-serif; }
+  .chip.decided { background: var(--ok-bg); color: var(--ok); }
+  .chip.proposed { background: var(--accent-soft); color: var(--accent); }
+  .chip.open { background: var(--warn-bg); color: var(--warn); }
+  table { border-collapse: collapse; margin: 0.8rem 0; width: 100%; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--line); padding: 0.4rem 0.65rem; text-align: left; vertical-align: top; }
+  th { background: var(--accent-soft); font-weight: 600; }
+  td.num, th.num { font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+  pre.flow, pre.ir { background: var(--flow-bg); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1.1rem; overflow-x: auto; font-size: 0.86rem; line-height: 1.7; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  pre.ir { background: var(--code-bg); }
+  .nut { font: inherit; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer; border-bottom: 1.5px dotted var(--accent); }
+  .nut:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .nut.open { border-bottom-style: solid; }
+  .nut-body { display: block; background: var(--nut-bg); border-left: 3px solid var(--nut-line); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; margin: 0.5rem 0; font-size: 0.92rem; }
+  .nut-body .nut-body { margin-left: 0.9rem; background: color-mix(in srgb, var(--nut-bg) 60%, var(--card)); }
+  .nut-dead { color: var(--muted); border-bottom: 1.5px dotted var(--muted); }
+  dl#glossary-list { margin: 0.8rem 0 0; }
+  dl#glossary-list dt { font-weight: 600; margin-top: 0.9rem; color: var(--accent); }
+  dl#glossary-list dd { margin: 0.15rem 0 0; font-size: 0.95rem; }
+  section.block .cost { border-top: 1px dashed var(--line); margin-top: 1.4rem; padding-top: 0.7rem; font-size: 0.92rem; }
+  section.block .cost strong { color: var(--warn); }
+  .note-box { margin-top: 1rem; border-top: 1px dashed var(--line); padding-top: 1rem; }
+  .note-box .note-title { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem; }
+  .verdicts { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .v-btn { font: inherit; font-size: 0.85rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--muted); padding: 0.25rem 0.95rem; cursor: pointer; }
+  .v-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .v-btn[data-v="accept"].on { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .v-btn[data-v="revise"].on { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+  .v-btn[data-v="reject"].on { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .note-box textarea { width: 100%; min-height: 3rem; font: inherit; font-size: 0.92rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem 0.7rem; resize: vertical; }
+  .note-box textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  footer.doc-foot { color: var(--muted); font-size: 0.88rem; margin-top: 3rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .nut-body { animation: nutin 0.15s ease-out; }
+    @keyframes nutin { from { opacity: 0; } to { opacity: 1; } }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="doc-tag">MaterialMagic / PlotWeave 地图结构与完整地图规划</span>
+    <button class="copy-btn" id="copyJson">复制批注 JSON</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="doc-head">
+  <div class="doc-date">2026-11-28　Review 稿 v2（已记录拍板）</div>
+  <h1>PlotWeave 地图结构升级与「完整地图」生成方案</h1>
+  <p>这份方案针对两件事供你逐条拍板：一是让单层地图在<button class="nut" data-term="条带" aria-expanded="false">条带</button>排布上形成更多有意义的回环、局部紧密堆积与可控的<button class="nut" data-term="最小环长度" aria-expanded="false">最小环长度</button>；二是把顶栏留空的「完整地图」工作区做实，用四个等级的<button class="nut" data-term="地图生成池" aria-expanded="false">地图生成池</button>管理配置、四框同屏抽样预览，并导出单份 JSON 供游戏读取。</p>
+  <p class="howto">阅读方式：带虚线下划线的词都能点，解释就地展开，展开里的词还能继续点（灰色虚线词是已经展开过的，防止绕圈）。每节标题后的角标：绿色是已拍板，青色是待拍板的提议，黄色是开放问题。每个决策单元末尾有批注栏，圈一个态度、写几句话，批注即时保存在本机，读完点右上角「复制批注 JSON」一次带走。</p>
+</header>
+
+<nav class="toc">
+  目录
+  <ol>
+    <li><a href="#sec-green-links">绿线效果：支路与邻近条带的闭合连接</a></li>
+    <li><a href="#sec-red-cluster">红区效果：局部堆积与疏密对比</a></li>
+    <li><a href="#sec-min-cycle">最小环长度限制</a></li>
+    <li><a href="#sec-four-tiers">完整地图左栏：四等级分栏列表</a></li>
+    <li><a href="#sec-spawn-region">单张地图配置：指定出生点区域</a></li>
+    <li><a href="#sec-four-boxes">完整地图右栏：四框预览与一键生成</a></li>
+    <li><a href="#sec-json-export">保存与导出：单份完整配置 JSON</a></li>
+    <li><a href="#sec-open">开放问题</a></li>
+    <li><a href="#sec-decisions">决策索引</a></li>
+    <li><a href="#sec-glossary">术语表</a></li>
+  </ol>
+</nav>
+
+<section class="block" id="sec-green-links">
+  <h2><span class="secnum">1</span>绿线效果：支路与邻近条带的闭合连接<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>目前游戏与「地图生成池」调用的 Unity 端生成器，在每个区域里只要凑出第一条环（往往放到第 3 条条带时就闭合了），后面放的所有条带就只允许开 1 扇门。结果一个区域里永远只有 1 个小环，其余条带全长成单线死胡同。即使两条支路只隔一面墙或隔着 1 到 2 格空地（你发来的标注参考图里绿线标出的位置），也不会再彼此接通。（注：工程菜单里的旧网页单层工具虽然放条带时会顺带多开一扇门，但它和游戏地图池脱节，且不做后置补门与隔空连接。）</p>
+  <p><strong>为什么这是问题：</strong>玩家探索时经常走到死胡同尽头再原路折返，路线选择单一。肉眼看小地图明明两段通道近在咫尺却完全不通，缺少类银河城地图「绕一圈发现捷径相通」的探索乐趣。</p>
+  <p><strong>改成什么：</strong>取消「每区只闭一次环」的硬上限，分两步建立额外回环：</p>
+  <ol>
+    <li><strong>贴墙补门（0 格间距）：</strong>同区域所有条带摆完后，找出彼此<button class="nut" data-term="贴边" aria-expanded="false">贴边</button>却没有开门的条带对（跳过<button class="nut" data-term="非环条带" aria-expanded="false">非环条带</button>，并严格遵守<button class="nut" data-term="出入口格" aria-expanded="false">出入口格</button>限制）。只要补开这扇门后形成的新环满足<button class="nut" data-term="最小环长度" aria-expanded="false">最小环长度</button>（见 §3），就按固定默认概率（建议先设为 0.35，若你需要按地图单独调再做成可填项）直接开门连通。</li>
+    <li><strong>隔空搭桥（1 到 2 格间距）：</strong>在区域铺到后半段（已成首环之后），放置新条带时如果某条普通条带刚好能同时把两段原本相距较远的通道接起来（闭合一个符合最小环长度的新环），就优先选这个位置，让普通条带自然充当回环连接段，无需发明新条带类型。</li>
+    <li><strong>边界不变：</strong>跨区域依然严守「每对区域之间有且仅有 1 条独立跨区桥」，上述额外连接只在单个区域内部生效，不会把不同区域粘在一起。</li>
+  </ol>
+  <p><strong>玩家会感觉到什么变化：</strong>单个区域不再是「一个小圈挂满死路」，而是多条路线互相交汇的网状结构。玩家往外探索一段后，经常能从另一侧绕回主干道，减少枯燥的折返跑。</p>
+  <p class="cost"><strong>代价：</strong>多开捷径门会略微缩短出生点到远端条带的跳数，敌人等级曲线的最高值可能比以前低 1 级左右，可在预览界面看最大跳数微调每跳增幅。如果不需要按单图单独调概率，界面可以零新增输入项；如需单图可调，则新增 1 个数值项「额外连通概率」。改哪儿：优先改 Unity 端生成器（<code>SecondFloorPatternGenerator.cs</code>），旧网页生成器是否同步见开放问题 4。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="extra-loop-links"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：额外连通概率是直接内置默认值，还是做成界面可调项？"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-red-cluster">
+  <h2><span class="secnum">2</span>红区效果：局部堆积与疏密对比<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>现在的<button class="nut" data-term="环路留白" aria-expanded="false">环路留白</button>策略（现有 / 均衡 / 舒展）是全图一刀切。「现有」完全不管贴边，容易随机挤成一团；「均衡」和「舒展」则在整张图的每个角落都惩罚条带贴边，强行把所有条带均匀推开。</p>
+  <p><strong>为什么这是问题：</strong>整张图如果每一处都同样松散，空间节奏就会发平，缺少「穿过细长走廊后撞进一片密集复合区」的层次变化；反过来如果全图放任挤在一起，又会失去清晰的主环轮廓。你发来的标注参考图里红框标出的几处，正是由几条条带局部紧密贴合形成的密集块，与外围舒展的环道形成了疏密对比。</p>
+  <p><strong>改成什么：</strong>在区域内部引入轻量的<button class="nut" data-term="局部堆积" aria-expanded="false">局部堆积</button>规则，只在局部聚拢，不破坏全图轮廓：</p>
+  <ol>
+    <li><strong>每区留 1 处局部密集块：</strong>每个区域在铺到第 2 条非出生条带附近时，把这一带记作局部密集区，让紧接着放下的 2 到 3 条条带可以并排紧贴，形成参考图红框那种 3 到 4 条带紧挨的紧凑片区。</li>
+    <li><strong>密集区之外保持舒展：</strong>其余条带依然沿用留白策略向外拉开长廊与大环，确保每区同时拥有「密集片区」和「开阔外环」两种节奏。</li>
+    <li><strong>最小化配置负担：</strong>可以直接把这个行为做进现有的「环路留白：均衡」模式里（或只加 1 个勾选开关「允许局部堆积」，默认开启），不把复杂内部数值摆到界面上。</li>
+  </ol>
+  <p><strong>玩家会感觉到什么变化：</strong>走在同一个区域里会有明显松紧变化——有时是连续紧挨的密集房间群，转出去又是开阔的长回廊，地图轮廓更有记忆点。</p>
+  <p class="cost"><strong>代价：</strong>允许局部紧贴后，区域内「贴边」计数会比纯舒展模式更高（这是预期效果）；若同时开启 §1 贴墙补门，堆积区里的相邻墙面仍然受 §3 最小环长度限制，不会全被打穿成毫无结构的方格网。改哪儿：调整 <code>SecondFloorRingSpacing.cs</code> 的贴边计分范围，并补生成稳定性测试确保不影响三区三角拼装成功率。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="local-clustering"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="如果红框本意不是这种紧凑堆积，请在开放问题 3 或这里直接说明……"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-min-cycle">
+  <h2><span class="secnum">3</span>最小环长度限制<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>生成器目前只保证「每区至少有 1 条环（至少 3 条条带）」，没有任何参数控制环的最小大小。实际上，游戏生成器从第 3 条条带开始就会立刻尝试闭合，经常在第 1、2、3 条条带间直接圈出一个极短的 3 条带三角环。</p>
+  <p><strong>为什么这是问题：</strong>环太短时，玩家刚拐两个弯走几步就回到原点，感受不到绕路探索的价值；更重要的是，开启 §1 的额外闭合连接后，如果没有最小环长度设下限，贴墙补门会瞬间制造出大量 3 条带小圈，把地图走成一团杂乱网格。</p>
+  <p><strong>改成什么：</strong>在单张地图配置里增加「最小环长度」整数输入（新配置默认 <code>4</code>，旧配置未填该项时按 <code>3</code> 处理，允许范围 <code>3</code> 到区域最少条带数）：</p>
+  <ol>
+    <li><strong>闭合前检查绕环长度：</strong>每当新条带准备同时接上两条已有条带 A 和 B，或者后置补门准备在 A 和 B 之间开门时，先数一遍沿着已有通道从 A 走到 B 最少要经过几条条带，确保兜回来的新环总条带数不少于设定值，才允许闭合。</li>
+    <li><strong>矛盾配置提前提示：</strong>如果某个区域的「最少条带数」小于设定的最小环长度（例如区域最少 4 条带，却把最小环长设为 5），编辑器检查直接标红提示。</li>
+    <li><strong>预览严守、局内兜底：</strong>编辑器预览时，若某个<button class="nut" data-term="种子" aria-expanded="false">种子</button>在限定尝试次数内拼不出满足最小环长度的布局，直接提示失败，不偷偷缩小环路；游戏正式局内生成如果极端种子碰壁，则按顺序尝试下一个派生种子，避免卡死进不去关卡。</li>
+  </ol>
+  <p><strong>玩家会感觉到什么变化：</strong>玩家走过的每一条回环都有足够的探索纵深，不会两三步就绕回原地；同时整张图即使开了额外连通门，依然保持清晰的大环骨架。</p>
+  <p class="cost"><strong>代价：</strong>最小环长度越接近区域条带总数，生成搜索的耗时越长（例如 5 条带里硬要闭合 5 条带大环，可选拼法较少）。需要在配置格式里增加 1 个可选整数字段 <code>minCycleLength</code>，并在生成器与检查逻辑中新增环长判断。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="min-cycle-length"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：新配置默认最小环长想要 4 还是 5？度量单位请在开放问题 2 顺手圈一下……"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-four-tiers">
+  <h2><span class="secnum">4</span>完整地图左栏：四等级分栏列表<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>顶栏的「完整地图」页目前只是一张留空占位卡片。现有的「地图生成池」页虽然有池子和条目，但两者都被塞进两个下拉框里，一次只能看一条配置，没法一眼看清不同等级分别配了哪些图；另外当前项目里的 <code>SecondFloor.map-pools.json</code> 只有 <code>level-1</code> 一个池，且游戏正式局内尚未接入按玩家进度分 4 级抽取的流程。</p>
+  <p><strong>为什么这是问题：</strong>按你的设计，游戏局内将按玩家当前进度，从 4 个等级的地图池里分级抽取单层地图。如果编辑器不按 4 个等级展开列表，设计师很难把控四个阶段的地图数量、抽取权重与主题分布。</p>
+  <p><strong>改成什么：</strong>在「完整地图」工作区左侧直接做成四等级分栏列表：</p>
+  <pre class="flow">
+左侧栏：四等级地图池列表
+├─ ▼ 等级 1（初期）                [+ 新增配置]
+│   ├─ 城市标准图      权重 2 | 城/工/郊 | 出生: 随机
+│   └─ 郊区开局图      权重 1 | 郊/城/工 | 出生: A(郊区)
+├─ ▼ 等级 2（中期）                [+ 新增配置]
+│   └─ 工厂密集图      权重 1 | 工/城/太 | 出生: 随机
+├─ ▼ 等级 3（中后期）              [+ 新增配置]
+│   └─ 太空双环图      权重 1 | 太/工/郊 | 出生: B(工厂)
+└─ ▼ 等级 4（终局）                [+ 新增配置]
+    └─ 全区高难图      权重 1 | 太/城/工 | 出生: 随机</pre>
+  <ul>
+    <li><strong>固定四个等级栏：</strong>等级 1 到等级 4 各自独立成栏（支持折叠展开），新建空白方案时默认给每级预置 1 条基础配置（避免空池导致整份配置无法通过检查、阻塞预览）。每栏右上角有「+ 新增配置」。</li>
+    <li><strong>基础条目操作：</strong>每张地图配置支持点击选中编辑、复制、删除（顺手补齐调整所属等级，方便把一张图从等级 2 挪到等级 3）。</li>
+    <li><strong>编辑区沿用同一套单层设置：</strong>点击左侧某一条配置后，以独立弹层或紧邻左栏的编辑抽屉展开它的完整设置（不把长表单硬塞在左栏底部导致反复长滚屏），包含单层地图的全部设置（名称、自动生成且可改的条目 ID、权重、<button class="nut" data-term="模板库" aria-expanded="false">模板库</button>、A/B/C 三区域类型与条带数范围、最多非环、总资源/总难度预算、敌人等级曲线、环路留白、§1 至 §3 的新增参数，以及 §5 的<button class="nut" data-term="出生点区域" aria-expanded="false">出生点区域</button>）。</li>
+  </ul>
+  <p><strong>玩家会感觉到什么变化：</strong>这项主要面向设计师配图；玩家在局内按进度推进（后续接入局内进度读取后）会感受到四个阶段地图体量、主题组合和强度的清晰递进，不会出现某一级地图池发空的问题。</p>
+  <p class="cost"><strong>代价：</strong>现有检查规则不允许任何等级池为空（<code>SecondFloorMapPools.cs</code> 与 <code>map-pools.js</code> 均要求每池 1 到 64 条），因此新建四等级时每级需默认带 1 条初始配置，删到 0 条时给出明确提示（且不阻塞其他已有配置的单框预览）。另需与现有「地图生成池」页签明确分工（见开放问题 1）；本阶段只做编辑器与配置文件，游戏正式局内按进度读 4 级池的逻辑另行接入。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="world-four-tiers"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：点击条目编辑偏好「侧滑抽屉 / 弹窗」还是常驻面板？能否接受四级默认各带 1 条初始配置？"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-spawn-region">
+  <h2><span class="secnum">5</span>单张地图配置：指定出生点区域<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>无论在编辑器还是游戏里，出生点永远写死在区域槽 A（第一个区域），B 区和 C 区永远不会成为出生区。</p>
+  <p><strong>为什么这是问题：</strong>同一张三角地图配置如果每次都从固定区域开局，玩家前期走过的主题和路线变化有限；而对于想固定某种开局体验的特殊地图，又需要能把出生点明确锁到指定区域。</p>
+  <p><strong>改成什么：</strong>在每张地图配置的设置中新增「出生点区域」下拉选项：</p>
+  <ul>
+    <li><strong>四个选项：</strong>「留空（全部区域随机）」、区域 A、区域 B、区域 C。</li>
+    <li><strong>随机规则：</strong>留空时，按当前种子从该配置拥有合法出生模板的区域槽里，以相等的概率随机抽取 1 个作为出生区，并从该区的出生格重新计算全图跳数与敌人等级。</li>
+    <li><strong>缺模板保护：</strong>如果指定了某个区域，但所选模板库里该区域没有任何标记为「可出生」的条带模板，编辑检查直接标红提示，不让无效配置蒙混过关。</li>
+  </ul>
+  <p><strong>玩家会感觉到什么变化：</strong>同一张地图配置在随机出生区下能衍生出三种截然不同的开局视角和难度坡度，重玩新鲜感明显提高；需要固定开局节奏的关卡又能精确锁定出生区。</p>
+  <p class="cost"><strong>代价：</strong>需要修改 <code>SecondFloorPatternGenerator.cs</code> 中槽 0 必为出生区的硬编码（包括普通条带容量门槛和出生条带唯一性检查）。配置文件里显式使用字符串 <code>"random"</code> / <code>"A"</code> / <code>"B"</code> / <code>"C"</code>（老配置缺失该字段时按 <code>"A"</code> 处理，避免留空被序列化省略后与老配置语义打架）。另外为了让前端实时提示「某区缺少出生模板」，需要让本机模板目录接口（<code>tools/map-pool-api.mjs</code> 的 <code>GET /api/map-pools/patterns</code>）额外返回每个模板库里有出生模板的区域清单。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="spawn-region-setting"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：出生点区域按槽位 A/B/C 选是否顺手？（因为三个槽位允许填相同的区域类型）"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-four-boxes">
+  <h2><span class="secnum">6</span>完整地图右栏：四框预览与一键生成<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>现有编辑器一次只能显示一张地图。想检查一局完整流程里等级 1 到等级 4 连续四张图的视觉差异与数值阶梯，必须切四次菜单、点四次生成，全靠脑子对比。</p>
+  <p><strong>为什么这是问题：</strong>四级地图的尺寸递增、环路复杂度变化和资源难度爬升，必须摆在同一屏里横向对照才能看出毛病。</p>
+  <p><strong>改成什么：</strong>右侧主区域改为 2×2 四个预览框，分别固定对应等级 1、等级 2、等级 3、等级 4：</p>
+  <pre class="flow">
+右侧栏顶部工具栏：
+[ 一键生成四张 ]   [ 显示开关: 格子 / 区域框 / 等级 / 贴边 ]   [ 导出完整 JSON ]
+┌───────────────────────────────────┬───────────────────────────────────┐
+│ 等级 1  [下拉: 全部随机 ▼] [生成] │ 等级 2  [下拉: 全部随机 ▼] [生成] │
+│                                   │                                   │
+│          (地图画布缩略预览)        │          (地图画布缩略预览)        │
+│                                   │                                   │
+│ 抽中: 城市标准图 | 出生: B | 资/难 │ 抽中: 工厂密集图 | 出生: A | 资/难 │
+├───────────────────────────────────┼───────────────────────────────────┤
+│ 等级 3  [下拉: 全部随机 ▼] [生成] │ 等级 4  [下拉: 全部随机 ▼] [生成] │
+│                                   │                                   │
+│          (地图画布缩略预览)        │          (地图画布缩略预览)        │
+│                                   │                                   │
+│ 抽中: 太空双环图 | 出生: C | 资/难 │ 抽中: 全区高难图 | 出生: B | 资/难 │
+└───────────────────────────────────┴───────────────────────────────────┘</pre>
+  <ul>
+    <li><strong>每个框的下拉栏：</strong>列出对应等级池里的全部地图配置，首项为「留空（全部随机）」。留空时按该等级内各配置的权重随机抽选一张；选中具体某一项时锁定生成那张配置。</li>
+    <li><strong>单框生成按钮：</strong>只用新种子重新生成这一框的单张地图，另外三框保持不变；框底紧凑展示本次抽中的配置名、出生区、种子号、总资源与总难度。</li>
+    <li><strong>一键生成四张按钮：</strong>位于右侧顶部工具栏最左侧，点击后依次为四个框全部生成地图，各框分别遵守自己下拉栏的指定或随机设置。</li>
+    <li><strong>画布交互保持克制：</strong>每个框支持滚轮缩放与拖拽查看，双击画布可临时大图查看整张图（不做重复的内嵌迷雾探索模式，避免把四框页做得过重）。</li>
+  </ul>
+  <p><strong>玩家会感觉到什么变化：</strong>设计师点一次按钮就能模拟一整局 1 到 4 级的完整跑图体验，立刻发现某一级地图过小、死路太多或难度断层，出图质量更稳。</p>
+  <p class="cost"><strong>代价：</strong>右侧同时管理 4 个画布实例。由于本机预览桥一次只能跑 1 个生成请求，一键生成四张会按顺序依次生成，耗时约 1 到 3 秒（按钮实时显示 1/4 到 4/4 进度）。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="four-slot-preview"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：随机抽取是按权重抽还是相等的概率抽？是否需要点击某框后看条带明细？"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-json-export">
+  <h2><span class="secnum">7</span>保存与导出：单份完整配置 JSON<span class="chip proposed">提议</span></h2>
+  <p><strong>现在是什么样：</strong>目前草稿保存在浏览器本地或工作目录的 <code>project.json</code>，真正给游戏读的地图池文件 <code>SecondFloor.map-pools.json</code> 只能通过发布按钮由本机服务写入，没有直接一键导出单份整套四等级 JSON 文件的操作。</p>
+  <p><strong>为什么这是问题：</strong>策划调完四级地图池后，想单独备份、发给同事审核或换一份配置测试，都缺少直接保存出一份完整 JSON 文件的入口。</p>
+  <p><strong>改成什么：</strong>在「完整地图」顶部工具栏提供「保存 / 导出完整 JSON」（同时顺手配一个「导入 JSON」方便回读已保存的文件）：</p>
+  <ul>
+    <li><strong>单份文件包含全部配置：</strong>导出为 1 份可读 JSON 文件，按顺序包含等级 1 到等级 4 四个等级池，以及每个等级下所有地图配置的完整参数。</li>
+    <li><strong>沿用游戏现有的地图池文件格式：</strong>直接沿用当前游戏读取的地图池格式，把四个等级分别作为四个等级池写入，只在每张地图配置里补充新增的可选参数（出生点区域、最小环长度等）。这样导出的文件既能随时导回编辑器，也能直接交给游戏读取，不需要两套格式来回转换。</li>
+  </ul>
+  <p><strong>玩家会感觉到什么变化：</strong>此项面向制作与交接，玩家无直接感知；但它保证编辑器里调好的四级地图与游戏里读出来跑的地图始终出自同一份数据。</p>
+  <p class="cost"><strong>代价：</strong>需要同步放行新增可选字段的配置读取检查，涉及四处：<code>SecondFloorMapPools.cs</code>（<code>CheckFields</code> 与读取）、<code>src/core/map-pools.js</code>（校验）、<code>tools/map-pool-api.mjs</code>（<code>configForPreview</code> 字段透传）以及 <code>src/ui/map-pools-editor.js</code>（<code>effectiveEntry</code>）。老版本 JSON 文件无需修改即可继续读取；若有等级池为空，导出时会先提醒补齐至少 1 条配置，以免游戏读取报错。</p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="single-json-export"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="例如：除了下载 JSON 文件，是否还需要保留一键直接发布写入游戏目录的按钮？"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-open">
+  <h2><span class="secnum">8</span>开放问题<span class="chip decided">已拍板</span></h2>
+
+  <h3>开放问题 1：「完整地图」和现有「地图生成池」标签页怎么分工？</h3>
+  <p>现在顶栏同时有「条带模板」「地图生成池」「完整地图」三个页签，其中「地图生成池」已经在编辑多等级池并发布到游戏。如果两个页签各自编辑一份地图池，既冗余又容易改乱。</p>
+  <ul>
+    <li><s><strong>方案 A（推荐）：合并为一个主力工作区</strong>——把四等级分栏列表、四框预览、JSON 导出以及发布能力统一放进「完整地图」页签；原「地图生成池」的单图预览与探索测试按需保留入口（例如单框放大或工程菜单），顶栏不再出现两个重叠的池编辑页。</s></li>
+    <li><strong>方案 B：两页并存</strong>——保持「地图生成池」原样不动，「完整地图」独立只做四等级编辑、四框预览与单份 JSON 导出。<strong>2026-11-28 拍板采纳两页并存。</strong></li>
+  </ul>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="open-tab-relation"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="同意合并（方案 A）直接点采纳；如果仍想两页分开请说明……"></textarea>
+  </div>
+
+  <h3>开放问题 2：「最小环长度」按条带数算，还是按走路格数算？</h3>
+  <ul>
+    <li><strong>方案 A（推荐）：按条带数量计算</strong>（例如最小环长 = 4 表示一条环至少由 4 条不同条带首尾相接而成）。数字直观，和每个区域的「最少条带数」直接对应，换不同模板库也不用重调。<strong>2026-11-28 拍板采纳按条带数计算。</strong></li>
+    <li><s><strong>方案 B：按实际步行格数计算</strong>（例如绕环一圈至少走 16 格）。更接近玩家真实步数，但不同模板库里条带长短不一，阈值较难通用。</s></li>
+  </ul>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="open-cycle-unit"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="选按条带数（方案 A），还是按步行格数（方案 B），还是两者都要？"></textarea>
+  </div>
+
+  <h3>开放问题 3：参考图红框「局部堆积」的原意复核</h3>
+  <p>§2 将红框理解为：在区域局部刻意让 3 到 4 条条带紧贴并排聚拢成密集区块，与外围舒展的环道形成疏密对比（彼此隔墙或仅按最小环长条件开门）。<strong>2026-11-28 拍板确认：核心目标是区域内存在一片有密集多个条带连接的局部区域。</strong></p>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="open-red-clustering"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="确认理解正确直接点采纳；如有偏差请描述红框想要的具体效果……"></textarea>
+  </div>
+
+  <h3>开放问题 4：旧网页单层生成器是否需要同步改动？</h3>
+  <p>PlotWeave 里目前有两套差异很大的单层生成器：一是「地图生成池」调用的 Unity 端生成器（纯门连接、有环路留白、与游戏运行时完全一致，需要开着 Unity Edit Mode）；二是工程菜单里的网页生成器。</p>
+  <ul>
+    <li><s><strong>方案 A（推荐）：只升级 Unity 端生成器并接入「完整地图」四框预览</strong>，保证编辑器预览与游戏真机 100% 一致，不花双倍工期去重写旧网页生成器。</s></li>
+    <li><strong>2026-11-28 拍板：先完成网页生成器（网页端才是地图编辑器），完成网页地图编辑器之后再同步调整 Unity 内的地图生成逻辑（用于实际游戏运行时）。</strong></li>
+  </ul>
+  <div class="note-box">
+    <div class="note-title">批注</div>
+    <div class="verdicts" data-id="open-generator-engine"><button class="v-btn" data-v="accept">采纳</button><button class="v-btn" data-v="revise">要改</button><button class="v-btn" data-v="reject">否决</button></div>
+    <textarea aria-label="批注" placeholder="选方案 A（只维护 Unity 同款生成器，所见即所得）还是方案 B（需要离线无 Unity 也能预览）？"></textarea>
+  </div>
+</section>
+
+<section class="block" id="sec-decisions">
+  <h2><span class="secnum">9</span>决策索引<span class="chip decided">已拍板</span></h2>
+  <p>本页涉及的既有定案与本次对话中已明确的骨架要求，逐条列出对应章节与依据出处。</p>
+  <div class="table-scroll">
+    <table>
+      <tr><th>决策</th><th>对应章节</th><th>依据出处</th></tr>
+      <tr><td>地图分为 4 个等级存放于地图池，局内按玩家进度确定等级抽取</td><td>§4、§6、§7</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>每张地图配置沿用单层地图设置，并新增指定出生点区域（留空则全区随机）</td><td>§4、§5</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>完整地图左侧列表按 4 个等级分栏</td><td>§4</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>完整地图右侧提供 4 个预览框（各带配置下拉栏与单张生成按钮）及一键四张生成按钮</td><td>§6</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>保存时导出包含全部地图配置的单份 JSON 文件</td><td>§7</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>单层生成增加最小环长度设置，并改善绿线连接与红区局部堆积</td><td>§1、§2、§3</td><td>口头拍板（2026-11-28 对话），请复核</td></tr>
+      <tr><td>单层地图维持三区域三角形排布，区域间有且仅有 1 条独立跨区桥</td><td>§1、§5</td><td><code>ExternalTool/PlotWeave/docs/DUNGEON_EDITOR_DESIGN.md</code> §3.2、<code>SecondFloorTriangleAssembly.cs</code></td></tr>
+      <tr><td>条带模板库采用 v3 格式，支持子模板家族与单格模糊类型池</td><td>§4、§7</td><td><code>ExternalTool/PlotWeave/README.md</code>、<code>SecondFloorPatternLibrary.cs</code></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="block" id="sec-glossary">
+  <h2><span class="secnum">10</span>术语表</h2>
+  <p>由中央词典自动生成，与正文点开的解释同源。</p>
+  <dl id="glossary-list"></dl>
+</section>
+
+<footer class="doc-foot">
+  <p>本稿依据：用户 2026-11-28 需求描述与标注参考图，以及代码现场核查（<code>ExternalTool/PlotWeave/src/core/floor-generator.js</code>、<code>map-pools.js</code>、<code>src/ui/map-pools-editor.js</code>、<code>world-view.js</code>、<code>tools/map-pool-api.mjs</code>，及 Unity 端 <code>SecondFloorPatternGenerator.cs</code>、<code>SecondFloorRingSpacing.cs</code>、<code>SecondFloorMapPools.cs</code>、<code>SecondFloorFloorPreview.cs</code>）。批注完成后点右上角「复制批注 JSON」发回对话，我们将按你的裁决更新定案并开始实施。</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  // ── 中央词典：所有就地解释集中于此，[[概念]] 为递归引用，[[概念|别名]] 支持别名 ──
+  var NUTS = {
+    '条带': '地牢地图的最小结构单位，由若干相连格子组成的走廊或异形房间片段。多条条带通过门拼成一个区域，三个区域再由三条独立跨区桥拼成一张单层地图。（既有概念）',
+    '非环条带': '在[[模板库]]里被标记为不参与环路的[[条带]]，只作为单门进出的死胡同支路，不会继续向外延伸，也不会被补门连成环路。（既有概念）',
+    '出入口格': '[[条带]]内部被手工指定的连接格子。只要一条条带标了出入口格，它和其他条带之间所有的门都只能开在这些格子上；没标则任意外侧格都能开门。（既有概念）',
+    '贴边': '两条不同[[条带]]的格子紧挨在一起，但中间是一堵实墙、没有开门的共边。在编辑器预览工具栏里可以一键高亮查看。（既有概念）',
+    '环路留白': '控制[[条带]]之间尽量减少长段[[贴边]]的生成策略，目前有「现有」「均衡」「舒展」三档。均衡和舒展会在整张图里压低贴边数量。（既有概念）',
+    '最小环长度': '单层地图里任何一条闭合环路至少需要包含的[[条带]]数（或步行格数，待开放问题 2 拍板）。用来防止刚走两步就绕回原点的微型小圈，并给贴墙补门设下限。（提议中）',
+    '局部堆积': '在区域内保留 1 处紧凑片区，让 2 到 3 条[[条带]]紧贴并排聚拢，同时让片区以外的条带保持[[环路留白]]，形成疏密节奏对比。（提议中）',
+    '地图生成池': '按等级分组存放的地图配置集合，每条配置带有抽取权重。目前编辑器和 Unity 预览组件已支持读写单份地图池文件；按玩家进度从 4 个等级池分级抽取是本次规划的完整地图逻辑。（结构既有，4 级局内抽取待接入）',
+    '模板库': '从「条带模板」页导出的 v3 格式 <code>.patterns.json</code> 文件，存放可供生成抽取的全部[[条带]]形状、格子类型与子模板家族。（既有概念）',
+    '出生点区域': '单张地图配置里指定玩家出生点落在 A、B、C 三个区域中哪一个的设置；留空时按[[种子]]在拥有合法出生模板的区域里以相等的概率随机选定。（提议中）',
+    '种子': '驱动随机生成的整数。同一份配置、同一份[[模板库]]加上同一个种子，永远生成完全相同的地图。（既有概念）'
+  };
+  function nutExpandHtml(def) {
+    return def.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, function (m, t, d) {
+      d = d || t;
+      if (!NUTS[t]) { console.warn('[nut] 未注册术语:', t); return d; }
+      return '<button class="nut" data-term="' + t + '" aria-expanded="false">' + d + '</button>';
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nut');
+    if (!btn) return;
+    if (btn.classList.contains('open')) {
+      var body = btn.nextElementSibling;
+      if (body && body.classList.contains('nut-body')) body.remove();
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    var term = btn.getAttribute('data-term');
+    var def = NUTS[term];
+    if (!def) return;
+    var seen = {};
+    seen[term] = true;
+    var p = btn.parentElement;
+    while (p) {
+      if (p.classList && p.classList.contains('nut-body') && p.getAttribute('data-term')) {
+        seen[p.getAttribute('data-term')] = true;
+      }
+      p = p.parentElement;
+    }
+    var span = document.createElement('span');
+    span.className = 'nut-body';
+    span.setAttribute('data-term', term);
+    span.innerHTML = nutExpandHtml(def);
+    span.querySelectorAll('.nut').forEach(function (b) {
+      if (seen[b.getAttribute('data-term')]) {
+        var s = document.createElement('span');
+        s.className = 'nut-dead';
+        s.textContent = b.textContent;
+        b.replaceWith(s);
+      }
+    });
+    btn.after(span);
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+  });
+  // ── 术语表：从中央词典自动生成 ──
+  (function buildGlossary() {
+    var dl = document.getElementById('glossary-list');
+    if (!dl) return;
+    Object.keys(NUTS).forEach(function (term) {
+      var dt = document.createElement('dt');
+      dt.textContent = term;
+      var dd = document.createElement('dd');
+      dd.innerHTML = nutExpandHtml(NUTS[term]);
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+  })();
+  // ── 批注：按批注位（.note-box）遍历，id 取 .verdicts 的 data-id；即时存 localStorage，刷新不丢 ──
+  var STORE_KEY = location.pathname + '#notes';
+  function loadStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; } }
+  function saveStore(s) { try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {} }
+  var store = loadStore();
+  function noteBoxes() { return Array.prototype.slice.call(document.querySelectorAll('.note-box')); }
+  function boxId(box) {
+    var g = box.querySelector('.verdicts');
+    if (g && g.getAttribute('data-id')) return g.getAttribute('data-id');
+    var sec = box.closest('section');
+    return sec && sec.id ? sec.id : '';
+  }
+  function headingText(h) {
+    var clone = h.cloneNode(true);
+    clone.querySelectorAll('.chip, .secnum').forEach(function (c) { c.remove(); });
+    return clone.textContent.trim();
+  }
+  function boxTitle(box) {
+    var el = box;
+    while (el && !(el.classList && el.classList.contains('wrap'))) {
+      var sib = el.previousElementSibling;
+      while (sib) {
+        if (/^H[234]$/.test(sib.tagName)) return headingText(sib);
+        if (sib.querySelectorAll) {
+          var inner = sib.querySelectorAll('h2, h3, h4');
+          if (inner.length) return headingText(inner[inner.length - 1]);
+        }
+        sib = sib.previousElementSibling;
+      }
+      el = el.parentElement;
+    }
+    return boxId(box);
+  }
+  noteBoxes().forEach(function (box) {
+    var id = boxId(box);
+    var saved = store[id] || {};
+    var ta = box.querySelector('textarea');
+    if (ta) {
+      if (saved.note) ta.value = saved.note;
+      ta.addEventListener('input', function () {
+        store[id] = store[id] || {};
+        store[id].note = ta.value;
+        saveStore(store);
+      });
+    }
+    var group = box.querySelector('.verdicts');
+    if (group) {
+      group.querySelectorAll('.v-btn').forEach(function (btn) {
+        var isSaved = saved.verdict === btn.getAttribute('data-v');
+        btn.setAttribute('aria-pressed', isSaved ? 'true' : 'false');
+        if (isSaved) btn.classList.add('on');
+        btn.addEventListener('click', function () {
+          var wasOn = btn.classList.contains('on');
+          group.querySelectorAll('.v-btn').forEach(function (b) { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
+          if (!wasOn) { btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true'); }
+          store[id] = store[id] || {};
+          store[id].verdict = wasOn ? '' : btn.getAttribute('data-v');
+          saveStore(store);
+        });
+      });
+    }
+  });
+  // ── 导出批注 JSON：标题自动取最近的标题元素（去编号与角标），不另外维护映射 ──
+  document.getElementById('copyJson').addEventListener('click', function () {
+    var notes = noteBoxes().map(function (box) {
+      var group = box.querySelector('.verdicts');
+      var on = group ? group.querySelector('.v-btn.on') : null;
+      var ta = box.querySelector('textarea');
+      return { id: boxId(box), title: boxTitle(box), verdict: on ? on.getAttribute('data-v') : '', note: ta ? ta.value.trim() : '' };
+    });
+    var payload = JSON.stringify({ notes: notes }, null, 2);
+    var btn = document.getElementById('copyJson');
+    function done() { btn.classList.add('copied'); btn.textContent = '已复制'; setTimeout(function () { btn.classList.remove('copied'); btn.textContent = '复制批注 JSON'; }, 1600); }
+    function showManual() {
+      var v = document.createElement('textarea');
+      v.value = payload;
+      v.setAttribute('aria-label', '批注 JSON，请手动复制');
+      v.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;height:8rem;z-index:99;background:var(--card);color:var(--ink);border:2px solid var(--accent);border-radius:8px;padding:0.6rem;font:inherit;font-size:0.85rem;';
+      document.body.appendChild(v);
+      v.focus(); v.select();
+      btn.textContent = '自动复制失败，请在下方手动复制';
+      v.addEventListener('blur', function () { v.remove(); btn.textContent = '复制批注 JSON'; });
+    }
+    function fallback() {
+      var t = document.createElement('textarea');
+      t.value = payload;
+      t.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(t);
+      t.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(t);
+      if (ok) { done(); } else { showManual(); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(done, function () { fallback(); });
+    } else { fallback(); }
+  });
+})();
+</script>
+
+</body>
+</html>

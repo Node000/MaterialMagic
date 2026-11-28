@@ -208,11 +208,31 @@ export class FloorEditorView {
       ),
     );
 
-    // 2. 三区域配置（从 城市/工厂/郊区/太空 选择 3 个呈三角形）
+    // 2. 三区域配置（从 城市/工厂/郊区/太空 选择 3 个呈三角形） + 指定出生点区域
+    const spawnSlotVal = profile.spawnRegionSlot === 'random' ? 'random' : String(profile.spawnRegionSlot ?? 0);
     const regionsSection = h(
       'div',
       { class: 'section' },
       h('div', { class: 'section-title' }, h('span', null, '三区域配置（城市/工厂/郊区/太空）')),
+      h(
+        'label',
+        { class: 'mini-field', style: { marginBottom: '8px' } },
+        h('span', null, '出生点区域（留空则全区随机）'),
+        h(
+          'select',
+          {
+            class: 'select',
+            onchange: (e) =>
+              this.store.updateFloorProfile((p) => {
+                p.spawnRegionSlot = e.target.value === 'random' ? 'random' : Number(e.target.value);
+              }, '修改出生点区域'),
+          },
+          h('option', { value: 'random', selected: spawnSlotVal === 'random' }, '随机（全部区域）'),
+          ...profile.regions.map((r, i) =>
+            h('option', { value: String(i), selected: spawnSlotVal === String(i) }, `${'ABC'[i]} · ${r.name}`),
+          ),
+        ),
+      ),
       ...profile.regions.map((region, idx) =>
         h(
           'div',
@@ -238,17 +258,7 @@ export class FloorEditorView {
                   const preset = DUNGEON_REGION_PRESETS.find((p) => p.id === nextId);
                   if (!preset) return;
                   this.store.updateFloorProfile((p) => {
-                    const dupIdx = p.regions.findIndex((r, i) => i !== idx && r.id === nextId);
-                    if (dupIdx >= 0) {
-                      // 与另一个槽位互换区域类型，避免重复
-                      const prevPreset = DUNGEON_REGION_PRESETS.find((pr) => pr.id === p.regions[idx].id);
-                      if (prevPreset) {
-                        p.regions[dupIdx].id = prevPreset.id;
-                        p.regions[dupIdx].name = prevPreset.name;
-                        p.regions[dupIdx].shortName = prevPreset.shortName;
-                        p.regions[dupIdx].color = prevPreset.color;
-                      }
-                    }
+                    p.regions[idx].regionTypeId = preset.id;
                     p.regions[idx].id = preset.id;
                     p.regions[idx].name = preset.name;
                     p.regions[idx].shortName = preset.shortName;
@@ -257,10 +267,14 @@ export class FloorEditorView {
                 },
               },
               ...DUNGEON_REGION_PRESETS.map((pr) =>
-                h('option', { value: pr.id, selected: pr.id === region.id }, pr.name),
+                h('option', { value: pr.id, selected: pr.id === (region.regionTypeId || region.id) }, pr.name),
               ),
             ),
-            idx === 0 ? h('span', { class: 'pill spawn' }, '出生区') : h('span', { class: 'pill' }, `翼区 ${idx}`),
+            profile.spawnRegionSlot === 'random'
+              ? h('span', { class: 'pill' }, `${'ABC'[idx]} · 随机出生`)
+              : idx === (profile.spawnRegionSlot ?? 0)
+                ? h('span', { class: 'pill spawn' }, `${'ABC'[idx]} · 出生区`)
+                : h('span', { class: 'pill' }, `${'ABC'[idx]} · 翼区`),
           ),
           h(
             'div',
@@ -474,7 +488,7 @@ export class FloorEditorView {
       ),
       h(
         'div',
-        { class: 'form-row-2', style: { marginTop: '8px' } },
+        { class: 'form-row-3', style: { marginTop: '8px' } },
         h(
           'label',
           { class: 'mini-field' },
@@ -493,7 +507,23 @@ export class FloorEditorView {
         ),
         h(
           'label',
-          { class: 'mini-field' },
+          { class: 'mini-field', title: '任意闭合环路至少包含的条带数量（按条带数计）' },
+          h('span', null, '最小环长度'),
+          h('input', {
+            class: 'input mono-input',
+            type: 'number',
+            min: '3',
+            max: '20',
+            value: String(profile.topology.minCycleLength ?? 3),
+            onchange: (e) =>
+              this.store.updateFloorProfile((p) => {
+                p.topology.minCycleLength = clamp(Math.round(Number(e.target.value) || 3), 3, 20);
+              }, '修改最小环长度'),
+          }),
+        ),
+        h(
+          'label',
+          { class: 'mini-field', title: '绿线闭合连接概率：已成首环后，允许支路与邻近条带补门成环' },
           h('span', null, '额外成环概率'),
           h('input', {
             class: 'input mono-input',
@@ -508,6 +538,19 @@ export class FloorEditorView {
               }, '修改成环概率'),
           }),
         ),
+      ),
+      h(
+        'label',
+        { class: 'checkbox-row', style: { marginTop: '6px' }, title: '红区效果：区域内保留一片多条带密集连接聚拢区，与外围舒展环道形成疏密对比' },
+        h('input', {
+          type: 'checkbox',
+          checked: Boolean(profile.topology.localClustering),
+          onchange: (e) =>
+            this.store.updateFloorProfile((p) => {
+              p.topology.localClustering = e.target.checked;
+            }, '切换局部密集堆积'),
+        }),
+        h('span', null, '启用局部密集堆积（红区多条带聚拢）'),
       ),
       h(
         'div',

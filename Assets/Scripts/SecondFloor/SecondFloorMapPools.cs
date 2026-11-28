@@ -24,12 +24,14 @@ public sealed class SecondFloorMapPools
         private readonly Dictionary<string, Entry> entriesById;
         public string Id { get; }
         public string Name { get; }
+        public int Tier { get; }
         public IReadOnlyList<Entry> Entries { get; }
 
-        internal Pool(string id, string name, List<Entry> entries)
+        internal Pool(string id, string name, List<Entry> entries, int tier = 0)
         {
             Id = id;
             Name = name;
+            Tier = tier;
             Entries = entries.AsReadOnly();
             entriesById = entries.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
         }
@@ -55,9 +57,15 @@ public sealed class SecondFloorMapPools
         public BudgetTargets Budget { get; }
         public LevelProgression Progression { get; }
         public RingSpacing Spacing { get; }
+        /// <summary>Null means random across eligible region slots; 0/1/2 pins spawn to A/B/C.</summary>
+        public int? SpawnRegionSlot { get; }
+        public int MinCycleLength { get; }
+        public double ExtraLoopChance { get; }
+        public bool LocalClustering { get; }
 
         internal Entry(string id, string name, double weight, string patternLibraryId, string patternSha256,
-            RegionSlot[] regions, BudgetTargets budget, LevelProgression progression, RingSpacing spacing)
+            RegionSlot[] regions, BudgetTargets budget, LevelProgression progression, RingSpacing spacing,
+            int? spawnRegionSlot = 0, int minCycleLength = 3, double extraLoopChance = 0d, bool localClustering = false)
         {
             Id = id;
             Name = name;
@@ -68,6 +76,10 @@ public sealed class SecondFloorMapPools
             Budget = budget;
             Progression = progression;
             Spacing = spacing;
+            SpawnRegionSlot = spawnRegionSlot;
+            MinCycleLength = Math.Max(3, minCycleLength);
+            ExtraLoopChance = Math.Max(0d, Math.Min(1d, extraLoopChance));
+            LocalClustering = localClustering;
         }
     }
 
@@ -143,6 +155,7 @@ public sealed class SecondFloorMapPools
         public string EntryId { get; }
         public string PatternLibraryId { get; }
         public int Seed { get; }
+        public int SpawnRegionSlot { get; }
         public double Resource { get; }
         public double Difficulty { get; }
         public BudgetTargets Budget { get; }
@@ -161,6 +174,7 @@ public sealed class SecondFloorMapPools
             EntryId = entry.Id;
             PatternLibraryId = entry.PatternLibraryId;
             Seed = seed;
+            SpawnRegionSlot = layout.SpawnRegionSlot;
             Resource = layout.Resource;
             Difficulty = layout.Difficulty;
             Budget = entry.Budget;
@@ -245,6 +259,29 @@ public sealed class SecondFloorMapPools
         throw new ArgumentException($"Unknown map pool '{poolId}'.", nameof(poolId));
     }
 
+    /// <summary>Resolve a tier pool (1..4) by explicit tier field, 'level-{tier}' id, or ordered index.</summary>
+    public Pool GetPoolForTier(int tier)
+    {
+        if (tier < 1) throw new ArgumentOutOfRangeException(nameof(tier), "Tier must be >= 1.");
+        var byTier = Pools.FirstOrDefault(p => p.Tier == tier);
+        if (byTier != null) return byTier;
+        if (poolsById.TryGetValue($"level-{tier.ToString(CultureInfo.InvariantCulture)}", out var byId)) return byId;
+        if (tier <= Pools.Count) return Pools[tier - 1];
+        throw new ArgumentException($"No map pool found for tier {tier}.", nameof(tier));
+    }
+
+    public GeneratedMap GenerateForTier(int tier, int seed)
+    {
+        var pool = GetPoolForTier(tier);
+        return Generate(pool.Id, seed);
+    }
+
+    public GeneratedMap GenerateForTier(int tier, int seed, TextAsset patterns)
+    {
+        var pool = GetPoolForTier(tier);
+        return Generate(pool.Id, SelectEntry(pool.Id, seed).Id, seed, patterns);
+    }
+
     public Entry GetEntry(string poolId, string entryId) => GetPool(poolId).GetEntry(entryId);
 
     /// <summary>Deterministic weighted choice among the ordered entries of the requested pool.</summary>
@@ -310,8 +347,13 @@ public sealed class SecondFloorMapPools
         Func<SecondFloorPatternGenerator.Layout, double> targetDistance = null;
         if (budget.HasBounds) targetDistance = layout => budget.GetDistance(layout.Resource, layout.Difficulty);
         string mapId = $"map-pool/{poolId}/{entry.Id}/{seed.ToString(CultureInfo.InvariantCulture)}";
+        var topology = new SecondFloorPatternGenerator.TopologyOptions(
+            entry.SpawnRegionSlot,
+            entry.MinCycleLength,
+            entry.ExtraLoopChance,
+            entry.LocalClustering);
         var result = SecondFloorPatternGenerator.Generate(library, slots, seed, progression.BaseLevel,
-            progression.LevelPerHop, progression.MaxLevel, targetDistance, mapId, entry.Spacing);
+            progression.LevelPerHop, progression.MaxLevel, targetDistance, mapId, entry.Spacing, topology);
         if (double.IsInfinity(result.Resource) || double.IsNaN(result.Resource) ||
             double.IsInfinity(result.Difficulty) || double.IsNaN(result.Difficulty))
             throw new InvalidOperationException($"Map pool '{poolId}' entry '{entry.Id}' produced non-finite metrics. Check pattern weights and metrics.");
@@ -329,9 +371,10 @@ public sealed class SecondFloorMapPools
         foreach (var rawPool in rawPools)
         {
             var pool = Object(rawPool);
-            CheckFields(pool, "id", "name", "entries");
+            CheckFields(pool, "id", "name", "tier", "entries");
             string id = Id(pool, "id");
             if (!poolIds.Add(id)) throw Invalid(pool, $"duplicate pool ID '{id}'.");
+            int tier = pool.Property("tier") == null ? 0 : Integer(pool, "tier", 1, 64);
             var rawEntries = ArrayField(pool, "entries", 1, 64);
             var entries = new List<Entry>(rawEntries.Count);
             var entryIds = new HashSet<string>(StringComparer.Ordinal);
@@ -341,14 +384,15 @@ public sealed class SecondFloorMapPools
                 if (!entryIds.Add(entry.Id)) throw Invalid(rawEntry, $"duplicate entry ID '{entry.Id}' in pool '{id}'.");
                 entries.Add(entry);
             }
-            pools.Add(new Pool(id, Text(pool, "name"), entries));
+            pools.Add(new Pool(id, Text(pool, "name"), entries, tier));
         }
         return new SecondFloorMapPools(pools);
     }
 
     private static Entry ReadEntry(JObject entry)
     {
-        CheckFields(entry, "id", "name", "weight", "patternLibraryId", "patternSha256", "regions", "budget", "progression", "ringSpacing");
+        CheckFields(entry, "id", "name", "weight", "patternLibraryId", "patternSha256", "regions", "budget", "progression",
+            "ringSpacing", "spawnRegionSlot", "minCycleLength", "extraLoopChance", "localClustering", "topology");
         string id = Id(entry, "id");
         string patternId = Id(entry, "patternLibraryId");
         string hash = null;
@@ -391,9 +435,61 @@ public sealed class SecondFloorMapPools
             "spacious" => RingSpacing.Spacious,
             _ => throw Invalid(entry["ringSpacing"], "expected legacy, balanced or spacious.")
         };
+
+        var topology = entry.Property("topology") != null ? ObjectField(entry, "topology") : null;
+        int? spawnRegionSlot = ReadSpawnRegionSlot(entry);
+        int minCycleLength = entry.Property("minCycleLength") != null
+            ? Integer(entry, "minCycleLength", 3, 20)
+            : (topology?.Property("minCycleLength") != null ? Integer(topology, "minCycleLength", 3, 20) : 3);
+        double extraLoopChance = entry.Property("extraLoopChance") != null
+            ? UnitInterval(entry, "extraLoopChance")
+            : (topology?.Property("extraLoopChance") != null ? UnitInterval(topology, "extraLoopChance") : 0d);
+        bool localClustering = entry.Property("localClustering") != null
+            ? BooleanField(entry, "localClustering")
+            : (topology?.Property("localClustering") != null && BooleanField(topology, "localClustering"));
+
         return new Entry(id, Text(entry, "name"), Number(entry, "weight", double.Epsilon), patternId, hash, regions,
             new BudgetTargets(resourceMin, resourceMax, difficultyMin, difficultyMax),
-            new LevelProgression(baseLevel, (float)levelPerHop, maxLevel), spacing);
+            new LevelProgression(baseLevel, (float)levelPerHop, maxLevel), spacing,
+            spawnRegionSlot, minCycleLength, extraLoopChance, localClustering);
+    }
+
+    private static int? ReadSpawnRegionSlot(JObject entry)
+    {
+        var prop = entry.Property("spawnRegionSlot");
+        if (prop == null) return 0; // Legacy configs without this field keep slot A as spawn.
+        var token = prop.Value;
+        if (token.Type == JTokenType.Null) return null;
+        if (token.Type == JTokenType.Integer)
+        {
+            int slot = Integer(entry, "spawnRegionSlot", 0, 2);
+            return slot;
+        }
+        if (token.Type == JTokenType.String)
+        {
+            string value = ((string)token)?.Trim();
+            if (string.IsNullOrEmpty(value) || string.Equals(value, "random", StringComparison.OrdinalIgnoreCase))
+                return null;
+            if (string.Equals(value, "A", StringComparison.OrdinalIgnoreCase) || value == "0") return 0;
+            if (string.Equals(value, "B", StringComparison.OrdinalIgnoreCase) || value == "1") return 1;
+            if (string.Equals(value, "C", StringComparison.OrdinalIgnoreCase) || value == "2") return 2;
+        }
+        throw Invalid(token, "expected 'random', 'A', 'B', 'C', 0, 1, 2, or null.");
+    }
+
+    private static double UnitInterval(JObject obj, string field)
+    {
+        double value = Number(obj, field, 0);
+        if (value > 1d) throw Invalid(obj[field], "expected a number in [0, 1].");
+        return value;
+    }
+
+    private static bool BooleanField(JObject obj, string field)
+    {
+        var token = obj[field];
+        if (token?.Type != JTokenType.Boolean)
+            throw Invalid(obj, $"'{field}' must be a JSON boolean.");
+        return (bool)token;
     }
 
     private static void CheckFields(JObject obj, params string[] names)

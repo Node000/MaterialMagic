@@ -40,9 +40,13 @@ function configForPreview(config) {
   if (issues.length) throw new ApiError(422, '地图池配置未通过校验。', issues);
   // A saved configuration may already be pinned. A fresh preview authorizes the current bytes instead.
   return { kind: config.kind, schemaVersion: config.schemaVersion, pools: config.pools.map(p => ({
-    id: p.id, name: p.name, entries: p.entries.map(e => ({
+    id: p.id, name: p.name, ...(p.tier !== undefined ? { tier: p.tier } : {}), entries: p.entries.map(e => ({
       id: e.id, name: e.name, weight: e.weight, patternLibraryId: e.patternLibraryId,
       ...(e.ringSpacing !== undefined ? { ringSpacing: e.ringSpacing } : {}),
+      ...(e.spawnRegionSlot !== undefined ? { spawnRegionSlot: e.spawnRegionSlot } : {}),
+      ...(e.minCycleLength !== undefined ? { minCycleLength: e.minCycleLength } : {}),
+      ...(e.extraLoopChance !== undefined ? { extraLoopChance: e.extraLoopChance } : {}),
+      ...(e.localClustering !== undefined ? { localClustering: e.localClustering } : {}),
       regions: e.regions.map(r => ({ regionTypeId: r.regionTypeId, stripMin: r.stripMin, stripMax: r.stripMax, maxNoLoop: r.maxNoLoop })),
       budget: { resourceMin: e.budget.resourceMin, resourceMax: e.budget.resourceMax, difficultyMin: e.budget.difficultyMin, difficultyMax: e.budget.difficultyMax },
       progression: { baseLevel: e.progression.baseLevel, levelPerHop: e.progression.levelPerHop, maxLevel: e.progression.maxLevel },

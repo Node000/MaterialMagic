@@ -88,22 +88,34 @@ const LEGACY_REGION_MAP = {
   region_c: 'suburb',
 };
 
+export function normalizeSpawnRegionSlot(raw, { defaultToRandom = false } = {}) {
+  if (raw === 'random' || raw === null || raw === '') return 'random';
+  if (raw === undefined) return defaultToRandom ? 'random' : 0;
+  if (raw === 'A' || raw === 'a' || raw === 0 || raw === '0') return 0;
+  if (raw === 'B' || raw === 'b' || raw === 1 || raw === '1') return 1;
+  if (raw === 'C' || raw === 'c' || raw === 2 || raw === '2') return 2;
+  return defaultToRandom ? 'random' : 0;
+}
+
 export function createDefaultFloorProfile() {
   return normalizeFloorProfile({
     id: 'floor_standard',
     name: '标准三角地牢层',
     description: '从城市/工厂/郊区/太空中选三个区域呈三角形排布，每区至少一环，区域间由唯一独立桥接条带以门相连。',
+    spawnRegionSlot: 0,
     regions: [
-      { id: 'city', name: '城市', shortName: '城市', color: '#d9a441', role: 'start', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
-      { id: 'factory', name: '工厂', shortName: '工厂', color: '#d97b6c', role: 'wing', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
-      { id: 'suburb', name: '郊区', shortName: '郊区', color: '#7fb685', role: 'wing', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
+      { id: 'city', regionTypeId: 'city', name: '城市', shortName: '城市', color: '#d9a441', role: 'start', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
+      { id: 'factory', regionTypeId: 'factory', name: '工厂', shortName: '工厂', color: '#d97b6c', role: 'wing', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
+      { id: 'suburb', regionTypeId: 'suburb', name: '郊区', shortName: '郊区', color: '#7fb685', role: 'wing', stripMin: 5, stripMax: 6, maxNoLoop: 1 },
     ],
     topology: {
       minLoopsPerRegion: 1,
+      minCycleLength: 3,
       extraLoopChance: 0.35,
       allowCrossing: true,
       crossChance: 0.3,
       looseness: 0.55,
+      localClustering: false,
     },
     budget: {
       resourceMin: null,
@@ -119,37 +131,54 @@ export function createDefaultFloorProfile() {
   });
 }
 
+const SLOT_FALLBACK_COLORS = ['#d9a441', '#d97b6c', '#7fb685', '#7c8ce0'];
+
 export function normalizeFloorProfile(raw) {
   const source = isObject(raw) ? raw : {};
   const defaultIds = ['city', 'factory', 'suburb'];
   const rawRegions = Array.isArray(source.regions) ? source.regions : [];
-  const usedIds = new Set();
+  const usedSlotIds = new Set();
+  const usedColors = new Set();
+  const spawnRegionSlot = normalizeSpawnRegionSlot(source.spawnRegionSlot, { defaultToRandom: false });
 
   const regions = [0, 1, 2].map((index) => {
     const r = isObject(rawRegions[index]) ? rawRegions[index] : {};
-    let candidateId = String(r.id || defaultIds[index]).trim();
-    if (LEGACY_REGION_MAP[candidateId]) candidateId = LEGACY_REGION_MAP[candidateId];
-    if (!PRESET_BY_ID.has(candidateId) || usedIds.has(candidateId)) {
-      candidateId = DUNGEON_REGION_PRESETS.find((p) => !usedIds.has(p.id))?.id || defaultIds[index];
-    }
-    usedIds.add(candidateId);
-    const preset = PRESET_BY_ID.get(candidateId) || DUNGEON_REGION_PRESETS[index];
+    let typeId = String(r.regionTypeId || r.id || defaultIds[index]).trim();
+    if (LEGACY_REGION_MAP[typeId]) typeId = LEGACY_REGION_MAP[typeId];
+    if (!typeId) typeId = defaultIds[index];
+    const preset = PRESET_BY_ID.get(typeId) || null;
 
-    const stripMin = clamp(Math.round(Number(r.stripMin ?? 5) || 3), 3, 18);
+    let slotId = typeId;
+    if (usedSlotIds.has(slotId)) {
+      let suffix = 2;
+      while (usedSlotIds.has(`${typeId}_${suffix}`)) suffix += 1;
+      slotId = `${typeId}_${suffix}`;
+    }
+    usedSlotIds.add(slotId);
+
+    const stripMin = clamp(Math.round(Number(r.stripMin ?? 5) || 3), 3, 20);
     const stripMax = clamp(Math.round(Number(r.stripMax ?? Math.max(stripMin, 6)) || stripMin), stripMin, 20);
-    const maxNoLoop = clamp(Math.round(Number(r.maxNoLoop ?? 1)), 0, 10);
-    // 如果是旧版 region_a 迁移而来，同步改用新预设名和色
+    const maxNoLoop = clamp(Math.round(Number(r.maxNoLoop ?? 1)), 0, 20);
     const migratedLegacy = Boolean(LEGACY_REGION_MAP[String(r.id || '')]);
-    const name = migratedLegacy ? preset.name : (String(r.name || preset.name).trim() || preset.name);
-    const shortName = migratedLegacy ? preset.shortName : (String(r.shortName || name).trim() || preset.shortName);
-    const color = !migratedLegacy && isHexColor(r.color) ? r.color.toLowerCase() : preset.color;
+    const baseName = preset ? preset.name : typeId;
+    const baseShort = preset ? preset.shortName : typeId;
+    const name = migratedLegacy ? baseName : (String(r.name || baseName).trim() || baseName);
+    const shortName = migratedLegacy ? baseShort : (String(r.shortName || name).trim() || baseShort);
+    let color = !migratedLegacy && isHexColor(r.color)
+      ? r.color.toLowerCase()
+      : (preset?.color || SLOT_FALLBACK_COLORS[index % SLOT_FALLBACK_COLORS.length]);
+    if (usedColors.has(color)) {
+      color = SLOT_FALLBACK_COLORS.find((c) => !usedColors.has(c)) || color;
+    }
+    usedColors.add(color);
 
     return {
-      id: candidateId,
+      id: slotId,
+      regionTypeId: typeId,
       name,
       shortName,
       color,
-      role: index === 0 ? 'start' : 'wing',
+      role: spawnRegionSlot === index ? 'start' : 'wing',
       stripMin,
       stripMax,
       maxNoLoop: Number.isFinite(maxNoLoop) ? maxNoLoop : 1,
@@ -175,13 +204,16 @@ export function normalizeFloorProfile(raw) {
     id: String(source.id || 'floor_standard').trim() || 'floor_standard',
     name: String(source.name || '单层三角方案').trim() || '单层三角方案',
     description: String(source.description || ''),
+    spawnRegionSlot,
     regions,
     topology: {
       minLoopsPerRegion: clamp(Math.round(Number(topo.minLoopsPerRegion ?? 1) || 1), 1, 4),
+      minCycleLength: clamp(Math.round(Number(topo.minCycleLength ?? 3) || 3), 3, 20),
       extraLoopChance: clamp(Number(topo.extraLoopChance ?? 0.35), 0, 1),
       allowCrossing: topo.allowCrossing !== false,
       crossChance: clamp(Number(topo.crossChance ?? 0.3), 0, 1),
       looseness: clamp(Number(topo.looseness ?? 0.55), 0, 1),
+      localClustering: Boolean(topo.localClustering),
     },
     budget: {
       resourceMin,
@@ -507,6 +539,23 @@ function crossCellPenalty(typeA, typeB) {
   return 12;
 }
 
+function shortestStripPath(adj, fromId, toId) {
+  if (fromId === toId) return 0;
+  const visited = new Set([fromId]);
+  const queue = [[fromId, 0]];
+  for (let i = 0; i < queue.length; i += 1) {
+    const [cur, d] = queue[i];
+    for (const nxt of adj.get(cur) || []) {
+      if (nxt === toId) return d + 1;
+      if (!visited.has(nxt)) {
+        visited.add(nxt);
+        queue.push([nxt, d + 1]);
+      }
+    }
+  }
+  return Infinity;
+}
+
 function generateLocalRegion({
   region,
   targetCount,
@@ -519,6 +568,7 @@ function generateLocalRegion({
   typeRng,
   idPrefix,
 }) {
+  const regionTypeId = region.regionTypeId || region.id;
   const localCounts = new Map(globalCounts);
   const strips = [];
   const stripById = new Map();
@@ -526,6 +576,12 @@ function generateLocalRegion({
   const adj = new Map();
   const cellOwners = new Map(); // coordKey -> [{ stripId, cellIndex, type, endFactor, isPortal }]
   const looseness = clamp(Number(topology.looseness ?? 0.55), 0, 1);
+  const effectiveMinCycle = clamp(Math.round(Number(topology.minCycleLength ?? 3) || 3), 3, Math.max(3, targetCount));
+  const useLocalClustering = Boolean(topology.localClustering) && targetCount >= 5;
+  const clusterQuota = useLocalClustering ? Math.min(3, Math.max(2, Math.floor(targetCount * 0.4))) : 0;
+  const clusterAnchorIds = new Set();
+  let clusterCenter = null;
+  let clusterPlaced = 0;
   const maxNoLoop = Math.max(0, Number(region.maxNoLoop ?? 0));
   let noLoopPlaced = 0;
 
@@ -564,13 +620,13 @@ function generateLocalRegion({
 
   // 1. 放置区域起始条带（不选非环条带作为第一条）
   let startPool = isStartRegion
-    ? eligiblePoolForRegion(prepared, region.id, 'normal', localCounts, { spawnOnly: true, allowNoLoop: false })
+    ? eligiblePoolForRegion(prepared, regionTypeId, 'normal', localCounts, { spawnOnly: true, allowNoLoop: false })
     : [];
   if (!startPool.length) {
-    startPool = eligiblePoolForRegion(prepared, region.id, 'normal', localCounts, { allowNoLoop: false });
+    startPool = eligiblePoolForRegion(prepared, regionTypeId, 'normal', localCounts, { allowNoLoop: false });
   }
   if (!startPool.length) {
-    startPool = eligiblePoolForRegion(prepared, region.id, 'normal', localCounts, { relaxMax: true, allowNoLoop: false });
+    startPool = eligiblePoolForRegion(prepared, regionTypeId, 'normal', localCounts, { relaxMax: true, allowNoLoop: false });
   }
   if (!startPool.length) {
     startPool = prepared.filter((e) => !e.template.noLoop);
@@ -596,17 +652,24 @@ function generateLocalRegion({
   // 2. 逐步生长其余条带
   for (let step = 1; step < targetCount; step += 1) {
     const cycleCount = links.length - strips.length + 1;
+    const canCloseMinCycle = strips.length >= effectiveMinCycle - 1;
     const needCycleNow =
       cycleCount < topology.minLoopsPerRegion &&
-      (strips.length >= targetCount - 2 || strips.length >= 2);
+      canCloseMinCycle &&
+      (strips.length >= targetCount - 2 || strips.length >= effectiveMinCycle - 1);
+    const inClusterPhase =
+      useLocalClustering &&
+      clusterAnchorIds.size > 0 &&
+      clusterPlaced < clusterQuota &&
+      !(needCycleNow && strips.length >= targetCount - 1);
     // 只有成环后且未达该区 maxNoLoop 上限时，才允许抽取非环模板
     const allowNoLoopNow = cycleCount >= topology.minLoopsPerRegion && noLoopPlaced < maxNoLoop;
 
-    let pool = eligiblePoolForRegion(prepared, region.id, 'normal', localCounts, {
+    let pool = eligiblePoolForRegion(prepared, regionTypeId, 'normal', localCounts, {
       allowNoLoop: allowNoLoopNow,
     });
     if (!pool.length) {
-      pool = eligiblePoolForRegion(prepared, region.id, 'normal', localCounts, {
+      pool = eligiblePoolForRegion(prepared, regionTypeId, 'normal', localCounts, {
         relaxMax: true,
         allowNoLoop: allowNoLoopNow,
       });
@@ -651,6 +714,7 @@ function generateLocalRegion({
 
     const candidates = [];
     const seenPlacements = new Set();
+    let hasClosingCandidate = false;
 
     const evaluatePlacement = (entry, variant, ox, oy) => {
       const pKey = `${entry.template.id}:${variant.rotation}:${ox}:${oy}`;
@@ -701,14 +765,17 @@ function generateLocalRegion({
 
       // 收集可开门的相邻已有条带（过滤掉非环宿主与非出入口格）
       const doorTargets = new Map();
+      let clusterWallContacts = 0;
       for (const cell of placedCells) {
-        if (!cellAllowsConnection(placedCells, cell.index)) continue;
+        const canConnectHere = cellAllowsConnection(placedCells, cell.index);
         for (const dirId of DIR_IDS) {
           const d = DIRECTIONS[dirId];
           const nk = coordKey(cell.x + d.dx, cell.y + d.dy);
           const owners = cellOwners.get(nk);
           if (!owners) continue;
           for (const owner of owners) {
+            if (clusterAnchorIds.has(owner.stripId)) clusterWallContacts += 1;
+            if (!canConnectHere) continue;
             if (overlapByStrip.has(owner.stripId)) continue;
             const ownerStrip = stripById.get(owner.stripId);
             if (!ownerStrip || ownerStrip.noLoop) continue;
@@ -729,6 +796,15 @@ function generateLocalRegion({
       const crossIds = [...overlapByStrip.keys()];
       const doorIds = [...doorTargets.keys()];
       if (crossIds.length === 0 && doorIds.length === 0) return;
+
+      // 校验交叉组合本身是否形成违背最小环长度的短环
+      if (crossIds.length >= 2 && effectiveMinCycle > 3) {
+        for (let i = 0; i < crossIds.length; i += 1) {
+          for (let j = i + 1; j < crossIds.length; j += 1) {
+            if (shortestStripPath(adj, crossIds[i], crossIds[j]) + 2 < effectiveMinCycle) return;
+          }
+        }
+      }
 
       // 按松散度偏好在同对条带的多个可选门中择优
       const pickBestDoor = (list) => {
@@ -756,22 +832,38 @@ function generateLocalRegion({
         penalty += crossCellPenalty(hit.newType, hit.oldType);
       }
 
-      // 将候选门按松散度匹配度排序（带少量随机扰动）
+      // 将候选门按松散度匹配度与局部堆积偏好排序
       const rankedDoorIds = doorIds
         .map((sid) => {
           const bestChoice = pickBestDoor(doorTargets.get(sid));
           const avgEnd = (bestChoice.newEnd + bestChoice.oldEnd) / 2;
+          const clusterBonus = inClusterPhase && clusterAnchorIds.has(sid) ? 0.8 : 0;
           return {
             sid,
             choice: bestChoice,
             avgEnd,
-            fit: 1 - Math.abs(avgEnd - looseness) + rng.float(0, 0.12),
+            fit: 1 - Math.abs(avgEnd - looseness) + clusterBonus + rng.float(0, 0.12),
           };
         })
         .sort((a, b) => b.fit - a.fit);
 
+      const canCloseWith = (sid) =>
+        chosenLinks.every((lk) => shortestStripPath(adj, lk.targetStripId, sid) + 2 >= effectiveMinCycle);
+
       if (chosenLinks.length === 0 && rankedDoorIds.length > 0) {
-        const picked = rankedDoorIds.shift();
+        // 如果急需闭合大环，优先选能配对形成合法最小环的第一条门
+        let firstIdx = 0;
+        if (!isNoLoopTemplate && (needCycleNow || topology.extraLoopChance > 0) && rankedDoorIds.length >= 2) {
+          outerPair: for (let i = 0; i < rankedDoorIds.length; i += 1) {
+            for (let j = i + 1; j < rankedDoorIds.length; j += 1) {
+              if (shortestStripPath(adj, rankedDoorIds[i].sid, rankedDoorIds[j].sid) + 2 >= effectiveMinCycle) {
+                firstIdx = i;
+                break outerPair;
+              }
+            }
+          }
+        }
+        const [picked] = rankedDoorIds.splice(firstIdx, 1);
         chosenLinks.push({
           type: 'door',
           targetStripId: picked.sid,
@@ -782,10 +874,26 @@ function generateLocalRegion({
         });
       }
 
-      // 非环条带严格保持度数 = 1，绝不补第二条门！
+      // 非环条带严格保持度数 = 1，绝不补第二条门；且第二条门必须满足最小环长度
+      let closedCycleLen = 0;
+      let closedLeafCount = 0;
       if (!isNoLoopTemplate && chosenLinks.length === 1 && rankedDoorIds.length > 0) {
-        if (needCycleNow || rng.chance(topology.extraLoopChance)) {
-          const picked = rankedDoorIds.shift();
+        const validClosures = rankedDoorIds.filter((cand) => canCloseWith(cand.sid));
+        if (validClosures.length > 0 && (needCycleNow || rng.chance(topology.extraLoopChance))) {
+          // 优先连接末端支路或更远条带以形成有趣的绿线回环
+          validClosures.sort((a, b) => {
+            const leafA = (adj.get(a.sid)?.size || 0) <= 1 ? 1 : 0;
+            const leafB = (adj.get(b.sid)?.size || 0) <= 1 ? 1 : 0;
+            if (leafA !== leafB) return leafB - leafA;
+            const dA = shortestStripPath(adj, chosenLinks[0].targetStripId, a.sid);
+            const dB = shortestStripPath(adj, chosenLinks[0].targetStripId, b.sid);
+            return dB - dA;
+          });
+          const picked = validClosures[0];
+          closedCycleLen = shortestStripPath(adj, chosenLinks[0].targetStripId, picked.sid) + 2;
+          closedLeafCount =
+            ((adj.get(chosenLinks[0].targetStripId)?.size || 0) <= 1 ? 1 : 0) +
+            ((adj.get(picked.sid)?.size || 0) <= 1 ? 1 : 0);
           chosenLinks.push({
             type: 'door',
             targetStripId: picked.sid,
@@ -800,6 +908,7 @@ function generateLocalRegion({
       if (isNoLoopTemplate && chosenLinks.length !== 1) return;
 
       const closesLoop = chosenLinks.length >= 2;
+      if (closesLoop) hasClosingCandidate = true;
       const meanEndFactor =
         chosenLinks.reduce((sum, lk) => sum + (lk.avgEnd ?? 0.5), 0) / Math.max(1, chosenLinks.length);
       const loosenessScore = (1 - Math.abs(meanEndFactor - looseness)) * 88;
@@ -807,8 +916,21 @@ function generateLocalRegion({
       const distCenter = Math.hypot(cCenter.x - regionCenter.x, cCenter.y - regionCenter.y);
 
       let score = loosenessScore;
-      if (needCycleNow && closesLoop) score += 1000;
-      else if (closesLoop) score += 35;
+      if (needCycleNow && closesLoop) score += 1000 + closedCycleLen * 12;
+      else if (closesLoop) score += 42 + closedLeafCount * 18 + Math.min(closedCycleLen, 8) * 4;
+
+      // 局部密集堆积（红区效果）：在聚集阶段把多条带拉到聚集核心附近紧密相连，外围阶段则适度舒展
+      if (useLocalClustering && clusterCenter) {
+        const distCluster = Math.hypot(cCenter.x - clusterCenter.x, cCenter.y - clusterCenter.y);
+        const connectsToCluster = chosenLinks.some((lk) => clusterAnchorIds.has(lk.targetStripId));
+        if (inClusterPhase) {
+          if (connectsToCluster) score += 68;
+          score += Math.min(clusterWallContacts, 5) * 8;
+          score -= distCluster * 4.2;
+        } else if (!needCycleNow) {
+          score += Math.min(distCluster, 10) * 1.6;
+        }
+      }
 
       const hasCross = crossIds.length > 0;
       if (hasCross === preferCross) score += 14;
@@ -824,12 +946,17 @@ function generateLocalRegion({
         oy,
         chosenLinks,
         closesLoop,
+        connectsToCluster: chosenLinks.some((lk) => clusterAnchorIds.has(lk.targetStripId)),
         score,
       });
     };
 
     // 仅从非 noLoop 的已有条带向外生长
     const growableHosts = rng.shuffle(strips.filter((s) => !s.noLoop));
+    if (inClusterPhase) {
+      growableHosts.sort((a, b) => Number(clusterAnchorIds.has(b.id)) - Number(clusterAnchorIds.has(a.id)));
+    }
+    const candCap = needCycleNow ? 360 : 160;
     for (const entry of sampleEntries) {
       for (const variant of rng.shuffle([...entry.rotations])) {
         // 预先筛选并按松散度排序新条带的可连接格
@@ -839,7 +966,7 @@ function generateLocalRegion({
           .sort((a, b) => Math.abs(a.end - looseness) - Math.abs(b.end - looseness));
 
         for (const host of growableHosts) {
-          if (candidates.length >= 160) break;
+          if (candidates.length >= candCap && (!needCycleNow || hasClosingCandidate)) break;
           // 宿主可开门端口（过滤出入口格 + 按松散度优先排序）
           const hostPorts = exteriorDoorPorts(host.cells, cellOwners)
             .filter((p) => cellAllowsConnection(host.cells, p.cellIndex))
@@ -920,34 +1047,83 @@ function generateLocalRegion({
         });
       }
     }
+
+    // 局部密集堆积锚点初始化与推进
+    if (useLocalClustering && !newStrip.noLoop) {
+      if (clusterAnchorIds.size === 0 && strips.length >= 2) {
+        clusterAnchorIds.add(newStrip.id);
+        clusterCenter = centroidOfCells(newStrip.cells);
+      } else if (inClusterPhase && best.connectsToCluster) {
+        clusterAnchorIds.add(newStrip.id);
+        clusterPlaced += 1;
+        const clusterCells = strips.filter((s) => clusterAnchorIds.has(s.id)).flatMap((s) => s.cells);
+        clusterCenter = centroidOfCells(clusterCells);
+      }
+    }
   }
 
-  // 3. 后置兜底补门成环（跳过非环条带，并严格尊重出入口格）
+  // 3. 后置贴墙补门成环（绿线效果：先满足最少环数，再按 extraLoopChance 补连邻近支路，严格遵守最小环长度、非环与出入口格）
   let cycleCount = links.length - strips.length + 1;
-  if (cycleCount < topology.minLoopsPerRegion) {
-    for (let i = 0; i < strips.length && cycleCount < topology.minLoopsPerRegion; i += 1) {
+  const collectAdjacentDoorCandidates = () => {
+    const pairs = [];
+    for (let i = 0; i < strips.length; i += 1) {
       const a = strips[i];
       if (a.noLoop) continue;
-      for (let j = i + 1; j < strips.length && cycleCount < topology.minLoopsPerRegion; j += 1) {
+      for (let j = i + 1; j < strips.length; j += 1) {
         const b = strips[j];
         if (b.noLoop || adj.get(a.id).has(b.id)) continue;
-        const pairs = adjacentCellPairs(a.cells, b.cells).filter(
+        const cellPairs = adjacentCellPairs(a.cells, b.cells).filter(
           (p) => cellAllowsConnection(a.cells, p.aIndex) && cellAllowsConnection(b.cells, p.bIndex),
         );
-        if (!pairs.length) continue;
-        const pick = rng.pick(pairs);
-        if (
-          addLinkState({
-            id: `${idPrefix}_l${links.length + 1}`,
-            type: 'door',
-            a: { stripId: a.id, cellIndex: pick.aIndex },
-            b: { stripId: b.id, cellIndex: pick.bIndex },
-            dir: pick.dir,
-            isBridgeLink: false,
-          })
-        ) {
-          cycleCount += 1;
-        }
+        if (!cellPairs.length) continue;
+        const d = shortestStripPath(adj, a.id, b.id);
+        if (d + 1 < effectiveMinCycle) continue;
+        const leafBonus = ((adj.get(a.id)?.size || 0) <= 1 ? 1 : 0) + ((adj.get(b.id)?.size || 0) <= 1 ? 1 : 0);
+        pairs.push({ a, b, cellPairs, dist: d, leafBonus });
+      }
+    }
+    pairs.sort((p1, p2) => p2.leafBonus - p1.leafBonus || p2.dist - p1.dist);
+    return pairs;
+  };
+
+  if (cycleCount < topology.minLoopsPerRegion) {
+    for (const cand of collectAdjacentDoorCandidates()) {
+      if (cycleCount >= topology.minLoopsPerRegion) break;
+      if (adj.get(cand.a.id).has(cand.b.id)) continue;
+      if (shortestStripPath(adj, cand.a.id, cand.b.id) + 1 < effectiveMinCycle) continue;
+      const pick = rng.pick(cand.cellPairs);
+      if (
+        addLinkState({
+          id: `${idPrefix}_l${links.length + 1}`,
+          type: 'door',
+          a: { stripId: cand.a.id, cellIndex: pick.aIndex },
+          b: { stripId: cand.b.id, cellIndex: pick.bIndex },
+          dir: pick.dir,
+          isBridgeLink: false,
+        })
+      ) {
+        cycleCount += 1;
+      }
+    }
+  }
+
+  if (topology.extraLoopChance > 0) {
+    for (const cand of collectAdjacentDoorCandidates()) {
+      if (adj.get(cand.a.id).has(cand.b.id)) continue;
+      if (shortestStripPath(adj, cand.a.id, cand.b.id) + 1 < effectiveMinCycle) continue;
+      if (!rng.chance(topology.extraLoopChance)) continue;
+      const pick = rng.pick(cand.cellPairs);
+      if (
+        addLinkState({
+          id: `${idPrefix}_l${links.length + 1}`,
+          type: 'door',
+          a: { stripId: cand.a.id, cellIndex: pick.aIndex },
+          b: { stripId: cand.b.id, cellIndex: pick.bIndex },
+          dir: pick.dir,
+          isBridgeLink: false,
+        })
+      ) {
+        cycleCount += 1;
       }
     }
   }
@@ -1524,7 +1700,8 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng, typeRng)
       for (const entry of prepared) {
         if (entry.familyId === strip.familyId) continue;
         if (entry.template.role !== role) continue;
-        if (role === 'normal' && !templateMatchesRegion(entry.template, strip.regionId)) continue;
+        const stripRegionType = regionMap.get(strip.regionId)?.regionTypeId || strip.regionId;
+        if (role === 'normal' && !templateMatchesRegion(entry.template, stripRegionType)) continue;
         if (mustSpawn && !entry.template.spawnEligible) continue;
         if (entry.signature !== strip.shapeSignature) continue;
         // 非环硬约束检查
@@ -1601,7 +1778,8 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng, typeRng)
         .filter((entry) => {
           if (entry.familyId === leaf.familyId) return false;
           if (entry.template.role !== 'normal') return false;
-          if (!templateMatchesRegion(entry.template, leaf.regionId)) return false;
+          const leafRegionType = regionMap.get(leaf.regionId)?.regionTypeId || leaf.regionId;
+          if (!templateMatchesRegion(entry.template, leafRegionType)) return false;
           if (entry.template.noLoop) {
             const nextNoLoop = (noLoopByRegion.get(leaf.regionId) || 0) + (leaf.noLoop ? 0 : 1);
             if (nextNoLoop > regionMaxNoLoop) return false;
@@ -1838,11 +2016,23 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
   };
 
   const globalCounts = new Map();
-  const localA = makeRegionWithCycle(rA, countA, true, 'ra', globalCounts);
+  let resolvedSpawnSlot = 0;
+  if (profile.spawnRegionSlot === 'random') {
+    const eligibleSlots = [0, 1, 2].filter((idx) => {
+      const rType = profile.regions[idx].regionTypeId || profile.regions[idx].id;
+      return prepared.some((e) => e.template.role === 'normal' && e.template.spawnEligible && templateMatchesRegion(e.template, rType));
+    });
+    const pool = eligibleSlots.length ? eligibleSlots : [0, 1, 2];
+    resolvedSpawnSlot = rng.pick(pool) ?? 0;
+  } else {
+    resolvedSpawnSlot = clamp(Math.round(Number(profile.spawnRegionSlot) || 0), 0, 2);
+  }
+
+  const localA = makeRegionWithCycle(rA, countA, resolvedSpawnSlot === 0, 'ra', globalCounts);
   for (const s of localA.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
-  const localB = makeRegionWithCycle(rB, countB, false, 'rb', globalCounts);
+  const localB = makeRegionWithCycle(rB, countB, resolvedSpawnSlot === 1, 'rb', globalCounts);
   for (const s of localB.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
-  const localC = makeRegionWithCycle(rC, countC, false, 'rc', globalCounts);
+  const localC = makeRegionWithCycle(rC, countC, resolvedSpawnSlot === 2, 'rc', globalCounts);
   for (const s of localC.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
 
   let bridgePool = prepared.filter((e) => e.template.role === 'bridge' && e.template.generation.max > 0);
@@ -1985,6 +2175,11 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
   const spawnCellIdx = Math.max(0, spawnStrip.cells.findIndex((c) => c.type === 'spawn'));
   const spawnCell = spawnStrip.cells[spawnCellIdx];
 
+  const resolvedRegions = clone(profile.regions).map((r, idx) => ({
+    ...r,
+    role: idx === resolvedSpawnSlot ? 'start' : 'wing',
+  }));
+
   const map = {
     id: '',
     kind: 'plotweave-floor-map',
@@ -1995,13 +2190,15 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
     generatorVersion: FLOOR_GENERATOR_VERSION,
     createdAt: createdAt || new Date().toISOString(),
     attempt,
-    regions: clone(profile.regions),
+    spawnRegionSlot: resolvedSpawnSlot,
+    regions: resolvedRegions,
     topology: clone(profile.topology),
     progression: clone(profile.progression),
     strips,
     links,
     spawn: {
       stripId: spawnStrip.id,
+      regionId: spawnStrip.regionId,
       cellIndex: spawnCellIdx,
       x: spawnCell.x,
       y: spawnCell.y,

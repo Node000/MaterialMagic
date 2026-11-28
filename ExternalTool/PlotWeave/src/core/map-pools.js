@@ -45,6 +45,11 @@ export function validateMapPools(config) {
       if (!finite(e.weight, Number.MIN_VALUE)) errorsAt(el, '权重必须为有限正数。');
       if (!isId(e.patternLibraryId)) errorsAt(el, 'Pattern 库 ID 无效。');
       if (e.ringSpacing !== undefined && !RING_SPACING.includes(e.ringSpacing)) errorsAt(el, '环路留白设置无效。');
+      if (e.spawnRegionSlot !== undefined && e.spawnRegionSlot !== null &&
+        !['random', 'A', 'B', 'C', 0, 1, 2].includes(e.spawnRegionSlot)) errorsAt(el, '出生点区域设置无效。');
+      if (e.minCycleLength !== undefined && !integer(e.minCycleLength, 3, 20)) errorsAt(el, '最小环长度必须为 3–20 的整数。');
+      if (e.extraLoopChance !== undefined && (!finite(e.extraLoopChance, 0) || e.extraLoopChance > 1)) errorsAt(el, '额外成环概率必须在 0–1 之间。');
+      if (e.localClustering !== undefined && typeof e.localClustering !== 'boolean') errorsAt(el, '局部密集堆积必须为布尔值。');
       if (e.patternSha256 !== undefined && (typeof e.patternSha256 !== 'string' || !PATTERN_HASH.test(e.patternSha256))) errorsAt(el, 'Pattern 摘要无效。');
       if (!Array.isArray(e.regions) || e.regions.length !== 3) errorsAt(el, '必须按 A/B/C 指定三个区域槽。');
       else for (const [k, r] of e.regions.entries()) {

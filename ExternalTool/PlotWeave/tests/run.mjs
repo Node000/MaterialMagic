@@ -18,3 +18,4 @@ import './floor-edges.test.mjs';
 import './floor-exploration.test.mjs';
 import './map-pool-exploration-api.test.mjs';
 import './floor-contacts.test.mjs';
+import './world-pools.test.mjs';
