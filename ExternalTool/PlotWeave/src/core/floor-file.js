@@ -90,7 +90,11 @@ export function applyFloorFile(file) {
   validateFloorFile(file);
   const { cells, edges, schemaVersion, ...map } = JSON.parse(JSON.stringify(file));
   map.physicalEdges = edges;
-  const strips = new Map((map.strips || []).map((s) => [s.id, { ...s, cells: [] }]));
+  const strips = new Map((map.strips || []).map((s) => [s.id, {
+    ...s,
+    familyId: s.familyId || s.templateId || s.id,
+    cells: [],
+  }]));
   const oldOwners = new Map();
   for (const strip of map.strips || []) for (const cell of strip.cells) {
     const key = positionKey(cell.x, cell.y);
@@ -107,7 +111,7 @@ export function applyFloorFile(file) {
     const contentOwner = old.find((o) => o.cell.type !== 'empty' && ids.includes(o.id))?.id || ids[0];
     for (const id of ids) {
       if (typeof id !== 'string' || !id) throw Error(`格 ${key} 的条带 ID 无效。`);
-      if (!strips.has(id)) strips.set(id, { id, templateId: id, templateName: id, role: 'normal', resource: 0, difficulty: 0, cells: [] });
+      if (!strips.has(id)) strips.set(id, { id, familyId: id, templateId: id, templateName: id, role: 'normal', resource: 0, difficulty: 0, cells: [] });
       const strip = strips.get(id);
       const previous = old.find((o) => o.id === id)?.cell;
       const type = id === contentOwner ? (cell.type || 'empty') : 'empty';

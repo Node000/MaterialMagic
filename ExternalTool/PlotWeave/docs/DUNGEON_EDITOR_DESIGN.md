@@ -70,7 +70,8 @@
   "allowRotate": true,
   "cells": [
     { "rx": 0, "ry": 0, "type": "empty",  "difficultyOffset": 0, "isPortal": true },
-    { "rx": 1, "ry": 0, "type": "combat", "difficultyOffset": 0, "isPortal": false },
+    { "rx": 1, "ry": 0, "type": "combat", "difficultyOffset": 0, "isPortal": false,
+      "typePool": [{ "type": "combat", "weight": 2 }, { "type": "elite", "weight": 1 }] },
     { "rx": 2, "ry": 0, "type": "combat", "difficultyOffset": 1, "isPortal": false },
     { "rx": 2, "ry": 1, "type": "event",  "difficultyOffset": 0, "isPortal": false },
     { "rx": 2, "ry": 2, "type": "reward", "difficultyOffset": 0, "isPortal": false }
@@ -84,21 +85,32 @@
     "max": 4,
     "unique": false
   },
-  "tags": ["折线", "战斗"]
+  "tags": ["折线", "战斗"],
+  "folderId": "template_group_city"
 }
 ```
+
+`folderId` 是编辑器左侧文件夹的 UI 归类，可为空；它不参与结构签名、家族兼容判断、生成或 Unity 运行时。模板库 JSON 顶层额外保存 `templateGroups: [{ id, name, parentGroupId, order }]`，支持无限嵌套；删除文件夹只移动模板与子文件夹，不删除模板。
+
+模板可选 `uiOrder` 只控制编辑器左侧显示顺序；它不进入结构签名，也不改变 `stripTemplates` 数组顺序和生成结果。
 
 关键规则：
 1. **单链无矩形（明确首尾）**：`cells` 必须四连通、无任意 2×2 实心块、且无分叉（当格数 $\ge 2$ 时恰有 2 个度为 1 的首尾端点格，其余格度为 2）。
 2. **数值求和与手动覆写**：
-   - 自动求和：`autoResource = Σ cellType(cell.type).resource`，`autoDifficulty = Σ cellType(cell.type).difficulty`；
+   - 自动求和：固定格用 `cellType(cell.type)`；带 `typePool` 的格用各类型资源/难度的加权期望。`autoDifficulty` 同理；
    - 若 `resourceOverride !== null`（或 `difficultyOverride !== null`），则使用手动覆写值；
-   - **战斗格 `difficultyOffset` 不改变条带总难度值**，仅用于地图生成后的最终敌人等级计算。
+   - **战斗格 `difficultyOffset` 不改变条带总难度值**，仅用于地图生成后的最终敌人等级计算；
+   - 地图实例的实际资源/难度按最终抽中的类型重新计算，不等于模板卡片上的期望值。
 3. **非环属性（`noLoop`）**：标记为 `noLoop: true` 的条带不参与任何环路，仅作为端点支路（度数严格为 1，不向外再生长、不补门、不挂载跨区桥）；每个区域独立配置 `maxNoLoop` 上限（设为 `0` 则该区不生成非环条带）。
 4. **出入口格子（`isPortal`）**：
    - 大多数条带不设置出入口格（全格皆可随机开门或单格交叉，受结构松散度调节）；
    - 一旦某条带存在 $\ge 1$ 个 `isPortal: true` 的格子，则它与其它条带的**所有门连接和单格交叉**都严格限制在这些出入口格上。
-5. **四种区域类型与归属**：内置区域类型为 **城市（`city`）、工厂（`factory`）、郊区（`suburb`）、太空（`space`）**；模板 `regionIds: []` 表示四区通用，也可勾选限定区域。
+5. **单格模糊类型池（`typePool`）**：
+   - 可选字段，格式 `[{ type, weight }]`；`type` 仍是主类型和固定回退，池长度 >=2 才启用。
+   - 生成每个条带实例时，逐格用独立的内容随机流按权重抽一个实际类型；几何、旋转、版本选择不受影响。
+   - 若任一项支持 `difficultyOffset`，该格保留偏移；最终敌人等级按实际抽中的类型判断是否支持。
+   - `spawn` 不能进入池；权重必须为正。浏览器编辑器、浏览器生成器和 Unity 运行时均支持该字段。
+6. **四种区域类型与归属**：内置区域类型为 **城市（`city`）、工厂（`factory`）、郊区（`suburb`）、太空（`space`）**；模板 `regionIds: []` 表示四区通用，也可勾选限定区域。
 
 ### 2.3 单层生成方案（`FloorProfile`）
 

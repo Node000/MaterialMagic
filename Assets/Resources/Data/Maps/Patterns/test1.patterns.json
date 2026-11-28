@@ -1,0 +1,4369 @@
+{
+  "app": "plotweave",
+  "kind": "plotweave-strip-templates",
+  "schemaVersion": 3,
+  "exportedAt": "2026-11-28T02:54:27.568Z",
+  "cellTypes": [
+    {
+      "id": "empty",
+      "name": "通道 / 空",
+      "short": "空",
+      "icon": "·",
+      "color": "#6e7f91",
+      "resource": 0,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "combat",
+      "name": "战斗",
+      "short": "战",
+      "icon": "🗡",
+      "color": "#d97b6c",
+      "resource": 5,
+      "difficulty": 10,
+      "supportsOffset": true,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "elite",
+      "name": "精英",
+      "short": "精",
+      "icon": "⚔",
+      "color": "#c95c78",
+      "resource": 15,
+      "difficulty": 25,
+      "supportsOffset": true,
+      "defaultOffset": 2,
+      "builtin": true
+    },
+    {
+      "id": "shop",
+      "name": "商店",
+      "short": "商",
+      "icon": "⚖",
+      "color": "#d9a441",
+      "resource": 20,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "reward",
+      "name": "奖励",
+      "short": "奖",
+      "icon": "◆",
+      "color": "#7fb685",
+      "resource": 25,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "event",
+      "name": "事件",
+      "short": "事",
+      "icon": "?",
+      "color": "#6aa9c9",
+      "resource": 10,
+      "difficulty": 5,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "spawn",
+      "name": "出生点",
+      "short": "起",
+      "icon": "⚑",
+      "color": "#f4c568",
+      "resource": 0,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    },
+    {
+      "id": "rest",
+      "name": "休整",
+      "short": "休",
+      "icon": "✚",
+      "color": "#89b8a5",
+      "resource": 15,
+      "difficulty": 0,
+      "supportsOffset": false,
+      "defaultOffset": 0,
+      "builtin": true
+    }
+  ],
+  "templateGroups": [
+    {
+      "id": "template_group_1",
+      "name": "条带1-3",
+      "parentGroupId": "",
+      "order": 0
+    },
+    {
+      "id": "template_group_2",
+      "name": "条带1-4",
+      "parentGroupId": "",
+      "order": 1
+    },
+    {
+      "id": "template_group_3",
+      "name": "条带1-5",
+      "parentGroupId": "",
+      "order": 2
+    },
+    {
+      "id": "template_group_4",
+      "name": "方块2-2",
+      "parentGroupId": "",
+      "order": 3
+    },
+    {
+      "id": "template_group_5",
+      "name": "方块3-3",
+      "parentGroupId": "",
+      "order": 4
+    },
+    {
+      "id": "template_group_6",
+      "name": "长方形2-3",
+      "parentGroupId": "",
+      "order": 5
+    }
+  ],
+  "stripTemplates": [
+    {
+      "id": "tpl_72",
+      "name": "条带1-2",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.3,
+        "max": 10,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_71",
+      "name": "方块1-1",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.3,
+        "max": 10,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": []
+    },
+    {
+      "id": "tpl_70",
+      "folderId": "template_group_6",
+      "name": "回廊2-3",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_69",
+      "folderId": "template_group_6",
+      "name": "回廊2-3 同边双出口-长边",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_66",
+      "folderId": "template_group_6",
+      "name": "回廊2-3 同边双出口-短边",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_45",
+      "folderId": "template_group_6",
+      "name": "回廊2-3 对短边出入",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_44",
+      "folderId": "template_group_6",
+      "name": "回廊2-3 对长边出入",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_34",
+      "folderId": "template_group_6",
+      "name": "回廊2-3 对角出入",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 3,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 4,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.2,
+        "max": 3,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_68",
+      "folderId": "template_group_3",
+      "uiOrder": 0,
+      "name": "条带-1-5 巷道",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_67",
+      "folderId": "template_group_3",
+      "uiOrder": 1,
+      "name": "条带-1-5 3出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_65",
+      "folderId": "template_group_1",
+      "uiOrder": 2,
+      "name": "条带-1-3 3入口",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_64",
+      "folderId": "template_group_3",
+      "uiOrder": 3,
+      "name": "条带-1-5 枢纽",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_63",
+      "folderId": "template_group_4",
+      "uiOrder": 4,
+      "name": "方块-2-2 4出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 7,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.7,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_62",
+      "folderId": "template_group_2",
+      "uiOrder": 5,
+      "name": "条带-1-4 四出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_61",
+      "folderId": "template_group_5",
+      "uiOrder": 6,
+      "name": "空心方块-3-3 双边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.6,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_60",
+      "folderId": "template_group_5",
+      "uiOrder": 7,
+      "name": "方块-3-3 双边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.6,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_59",
+      "folderId": "template_group_5",
+      "uiOrder": 8,
+      "name": "空心方块-3-3 单边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_58",
+      "folderId": "template_group_5",
+      "uiOrder": 9,
+      "name": "空心方块-3-3 单角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_57",
+      "folderId": "template_group_5",
+      "uiOrder": 10,
+      "name": "空心方块-3-3 对角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.7,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_56",
+      "folderId": "template_group_5",
+      "uiOrder": 11,
+      "name": "空心方块-3-3 对边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_55",
+      "folderId": "template_group_5",
+      "uiOrder": 12,
+      "name": "空心方块-3-3 四边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_54",
+      "folderId": "template_group_2",
+      "uiOrder": 13,
+      "name": "条带-1-4 双出口 双单边",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_53",
+      "folderId": "template_group_2",
+      "uiOrder": 14,
+      "name": "条带-1-4 单出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_52",
+      "folderId": "template_group_5",
+      "uiOrder": 15,
+      "name": "方块-3-3 单角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_51",
+      "folderId": "template_group_5",
+      "uiOrder": 16,
+      "name": "方块-3-3 对角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_50",
+      "folderId": "template_group_5",
+      "uiOrder": 17,
+      "name": "方块-3-3 对边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_49",
+      "folderId": "template_group_5",
+      "uiOrder": 18,
+      "name": "方块-3-3 单边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.5,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_48",
+      "folderId": "template_group_5",
+      "uiOrder": 19,
+      "name": "方块-3-3 四边出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 9,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 10,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 13,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 12,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 2,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 11,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.7,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_47",
+      "folderId": "template_group_2",
+      "uiOrder": 20,
+      "name": "条带-1-4 中段双入口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_46",
+      "folderId": "template_group_3",
+      "uiOrder": 21,
+      "name": "条带-1-5 中间入口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_43",
+      "folderId": "template_group_1",
+      "uiOrder": 22,
+      "name": "条带-1-3 通道 中间入口",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_42",
+      "folderId": "template_group_1",
+      "uiOrder": 23,
+      "name": "条带-1-3 通道",
+      "description": "",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_41",
+      "folderId": "template_group_4",
+      "uiOrder": 24,
+      "name": "方块-2-2 拐弯出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 7,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.7,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        }
+      ]
+    },
+    {
+      "id": "tpl_40",
+      "folderId": "template_group_4",
+      "uiOrder": 25,
+      "name": "方块-2-2 单角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.4,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_39",
+      "folderId": "template_group_4",
+      "uiOrder": 26,
+      "name": "方块-2-2 对角出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 8,
+          "tags": []
+        },
+        {
+          "rx": 0,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 1,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 7,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 0.7,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "S"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_38",
+      "folderId": "template_group_3",
+      "uiOrder": 27,
+      "name": "条带-1-5 中间出口-通道",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_37",
+      "folderId": "template_group_3",
+      "uiOrder": 28,
+      "name": "条带-1-5 通道",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 6,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 4,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_36",
+      "folderId": "template_group_2",
+      "uiOrder": 29,
+      "name": "条带-1-4 通道",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_35",
+      "folderId": "template_group_2",
+      "uiOrder": 30,
+      "name": "条带-1-4 双出口",
+      "description": "条带4格长双出口母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_17",
+      "folderId": "template_group_2",
+      "uiOrder": 31,
+      "name": "条带-1-4",
+      "description": "条带4格长母板",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 0,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 1,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 3,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 5,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 6,
+        "unique": false
+      },
+      "tags": [],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    },
+    {
+      "id": "tpl_4",
+      "folderId": "template_group_1",
+      "uiOrder": 32,
+      "name": "条带-1-3",
+      "description": "基础空条带-1-3母版",
+      "role": "normal",
+      "noLoop": false,
+      "spawnEligible": false,
+      "regionIds": [],
+      "allowRotate": true,
+      "cells": [
+        {
+          "rx": 0,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": true,
+          "placedOrder": 5,
+          "tags": []
+        },
+        {
+          "rx": 1,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 2,
+          "tags": []
+        },
+        {
+          "rx": 2,
+          "ry": 0,
+          "type": "empty",
+          "difficultyOffset": 0,
+          "isPortal": false,
+          "placedOrder": 6,
+          "tags": []
+        }
+      ],
+      "metrics": {
+        "resourceOverride": null,
+        "difficultyOverride": null
+      },
+      "generation": {
+        "weight": 1,
+        "max": 5,
+        "unique": false
+      },
+      "tags": [
+        "末端条带"
+      ],
+      "openEdges": [
+        {
+          "x": 0,
+          "y": 0,
+          "dir": "E"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "dir": "E"
+        }
+      ]
+    }
+  ]
+}

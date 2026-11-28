@@ -45,6 +45,7 @@ import {
   createDefaultStripTemplates,
   normalizeCellTypes,
   normalizeStripTemplate,
+  stripTemplateStructureKey,
   templateMatchesRegion,
 } from './strip-templates.js';
 import { validateFloorMap } from './floor-validator.js';
@@ -200,11 +201,17 @@ export function normalizeFloorProfile(raw) {
  * 自动预算区间估算
  * ------------------------------------------------------------------ */
 
-// This legacy preview uses only root templates. Adding variants must not give a family more
-// weight here; variant selection and shared limits are implemented by the Unity generator.
-function legacyRootTemplates(rawTemplates, cellTypes) {
-  return (Array.isArray(rawTemplates) && rawTemplates.length ? rawTemplates : createDefaultStripTemplates(cellTypes))
-    .filter((template) => !Object.hasOwn(template ?? {}, 'parentTemplateId'));
+// 与 Unity 一致：一个根模板 + 直接子模板组成家族；家族共享权重/数量上限，
+// 每个条带实例从家族版本里等概率选一个。这里把版本展开为独立候选，并把家族权重
+// 平均分给各版本，使“先按家族权重选、再等概率选版本”与扁平池采样等价。
+function sourceStripTemplates(rawTemplates, cellTypes) {
+  return Array.isArray(rawTemplates) && rawTemplates.length ? rawTemplates : createDefaultStripTemplates(cellTypes);
+}
+
+function familyMemberCompatible(root, child) {
+  if (child.parentTemplateId !== root.id) return false;
+  if (child.visualTypeId && child.visualTypeId !== (root.visualTypeId ?? root.id)) return false;
+  return stripTemplateStructureKey(root) === stripTemplateStructureKey(child);
 }
 
 function weightedStats(items, valueFn) {
@@ -231,11 +238,7 @@ function weightedStats(items, valueFn) {
 export function estimateFloorBudget(rawProfile, rawTemplates, rawCellTypes = DEFAULT_CELL_TYPES) {
   const profile = normalizeFloorProfile(rawProfile);
   const cellTypes = normalizeCellTypes(rawCellTypes);
-  const templates = legacyRootTemplates(rawTemplates, cellTypes).map((t, i) => {
-    const normalized = normalizeStripTemplate(t, cellTypes, i);
-    const metrics = computeTemplateMetrics(normalized, cellTypes);
-    return { template: normalized, metrics };
-  });
+  const templates = prepareTemplates(rawTemplates, cellTypes);
 
   const normalPool = templates.filter((x) => x.template.role !== 'bridge' && x.template.generation.max > 0);
   const bridgePool = templates.filter((x) => x.template.role === 'bridge' && x.template.generation.max > 0);
@@ -308,45 +311,96 @@ function rangeDist(value, min, max) {
  * 模板预处理缓存（含链序端点系数 endFactors 与出入口标记）
  * ------------------------------------------------------------------ */
 
-function prepareTemplates(rawTemplates, cellTypes) {
-  const list = legacyRootTemplates(rawTemplates, cellTypes)
-    .map((raw, i) => normalizeStripTemplate(raw, cellTypes, i));
-
-  return list.filter(({ cells, role }) => validateOpenDirs(cells) && hasConnectedOpenEdges(cells)
-    && (role !== 'bridge' || isOpenChain(cells))).map((template) => {
-    const metrics = computeTemplateMetrics(template, cellTypes);
-    const rotations = uniqueRotations(template.cells, template.allowRotate, {
-      preserveContentOrientation: false,
-    }).map((variant) => {
-      const orderMap = computeChainOrderMap(variant.cells);
-      const neighbors = stripNeighbors(variant.cells);
-      const strictCross = needsStrictCross(variant.cells);
-      const axes = variant.cells.map((_, i) => straightAxis(variant.cells, i, neighbors));
-      const endFactors = variant.cells.map((_, idx) => orderMap.get(idx)?.endFactor ?? 0.5);
-      const hasPortals = variant.cells.some((c) => Boolean(c.isPortal));
-      let headIdx = 0;
-      let tailIdx = Math.max(0, variant.cells.length - 1);
-      for (const [idx, info] of orderMap) {
-        if (info.isHead) headIdx = idx;
-        if (info.isTail) tailIdx = idx;
-      }
-      return {
-        ...variant,
-        endFactors,
-        strictCross,
-        axes,
-        hasPortals,
-        headIdx,
-        tailIdx,
-      };
-    });
+function prepareTemplateVersion(template, cellTypes, familyId, familyVersionCount) {
+  const metrics = computeTemplateMetrics(template, cellTypes);
+  const rotations = uniqueRotations(template.cells, template.allowRotate, {
+    preserveContentOrientation: false,
+  }).map((variant) => {
+    const orderMap = computeChainOrderMap(variant.cells);
+    const neighbors = stripNeighbors(variant.cells);
+    const strictCross = needsStrictCross(variant.cells);
+    const axes = variant.cells.map((_, i) => straightAxis(variant.cells, i, neighbors));
+    const endFactors = variant.cells.map((_, idx) => orderMap.get(idx)?.endFactor ?? 0.5);
+    const hasPortals = variant.cells.some((c) => Boolean(c.isPortal));
+    let headIdx = 0;
+    let tailIdx = Math.max(0, variant.cells.length - 1);
+    for (const [idx, info] of orderMap) {
+      if (info.isHead) headIdx = idx;
+      if (info.isTail) tailIdx = idx;
+    }
     return {
-      template,
-      metrics,
-      rotations,
-      signature: metrics.shapeSignature,
+      ...variant,
+      endFactors,
+      strictCross,
+      axes,
+      hasPortals,
+      headIdx,
+      tailIdx,
     };
   });
+
+  return {
+    familyId,
+    familyVersionCount,
+    typeMap: cellTypeMap(cellTypes),
+    template,
+    metrics,
+    rotations,
+    signature: metrics.shapeSignature,
+  };
+}
+
+function prepareTemplates(rawTemplates, cellTypes) {
+  const normalized = sourceStripTemplates(rawTemplates, cellTypes)
+    .map((raw, i) => normalizeStripTemplate(raw, cellTypes, i));
+
+  const byId = new Map();
+  for (const template of normalized) {
+    if (!byId.has(template.id)) byId.set(template.id, template);
+  }
+
+  const roots = normalized.filter(
+    (template) => !template.parentTemplateId && byId.get(template.id) === template,
+  );
+  const childrenByParent = new Map();
+  for (const template of normalized) {
+    if (!template.parentTemplateId || byId.get(template.id) !== template) continue;
+    const parent = byId.get(template.parentTemplateId);
+    if (!parent || parent.parentTemplateId) continue;
+    const list = childrenByParent.get(parent.id) || [];
+    list.push(template);
+    childrenByParent.set(parent.id, list);
+  }
+
+  const prepared = [];
+  for (const root of roots) {
+    const usable = (template) => validateOpenDirs(template.cells) && hasConnectedOpenEdges(template.cells)
+      && (template.role !== 'bridge' || isOpenChain(template.cells));
+    if (!usable(root)) continue;
+
+    const versions = [root];
+    for (const child of childrenByParent.get(root.id) || []) {
+      if (!usable(child)) continue;
+      if (!familyMemberCompatible(root, child)) continue;
+      versions.push(child);
+    }
+
+    // Unity 先按家族根权重选家族，再在 FamilyVersions 里等概率选内容版本。
+    // 展开成扁平池时把根权重平均分给版本，就能保持同样的家族总权重。
+    const familyWeight = root.generation.weight;
+    for (const template of versions) {
+      template.generation = {
+        ...template.generation,
+        weight: familyWeight / versions.length,
+      };
+    }
+
+    for (const template of versions) {
+      prepared.push(prepareTemplateVersion(template, cellTypes, root.id, versions.length));
+    }
+  }
+
+  return prepared;
 }
 
 function eligiblePoolForRegion(
@@ -366,28 +420,62 @@ function eligiblePoolForRegion(
         ? Math.min(1, entry.template.generation.max)
         : entry.template.generation.max;
       if (cap <= 0) return false;
-      if ((usedCounts.get(entry.template.id) || 0) >= cap) return false;
+      if ((usedCounts.get(entry.familyId) || 0) >= cap) return false;
     }
     return true;
   });
 }
 
-function buildStripInstance({ id, entry, variant, origin, regionId, role, bridgeBetween = null }) {
-  const cells = placeCellsAt(variant.cells, origin.x, origin.y).map((cell, idx) => ({
-    index: cell.index,
-    rx: cell.rx,
-    ry: cell.ry,
-    x: cell.x,
-    y: cell.y,
-    type: cell.type,
-    difficultyOffset: cell.difficultyOffset || 0,
-    isPortal: Boolean(cell.isPortal),
-    openDirs: cell.openDirs,
-    endFactor: variant.endFactors?.[idx] ?? 0.5,
-    enemyLevel: null,
-  }));
+function pickCellType(cell, typeMap, typeRng) {
+  const pool = Array.isArray(cell?.typePool) ? cell.typePool : [];
+  if (pool.length < 2 || !typeRng) return cell?.type;
+  const picked = typeRng.weighted(pool, (entry) => Math.max(0, Number(entry.weight) || 0));
+  return picked?.type || cell.type;
+}
+
+function resolvedStripMetrics(cells, entry) {
+  if (entry.metrics.isResourceOverridden && entry.metrics.isDifficultyOverridden) {
+    return { resource: entry.metrics.resource, difficulty: entry.metrics.difficulty };
+  }
+  let autoResource = 0;
+  let autoDifficulty = 0;
+  for (const cell of cells) {
+    const def = entry.typeMap.get(cell.type) || entry.typeMap.get('empty');
+    autoResource += Number(def?.resource) || 0;
+    autoDifficulty += Number(def?.difficulty) || 0;
+  }
+  return {
+    resource: entry.metrics.isResourceOverridden
+      ? entry.metrics.resource
+      : Math.round(autoResource * 100) / 100,
+    difficulty: entry.metrics.isDifficultyOverridden
+      ? entry.metrics.difficulty
+      : Math.round(autoDifficulty * 100) / 100,
+  };
+}
+
+function buildStripInstance({ id, entry, variant, origin, regionId, role, bridgeBetween = null, typeRng }) {
+  const cells = placeCellsAt(variant.cells, origin.x, origin.y).map((cell, idx) => {
+    const type = pickCellType(cell, entry.typeMap, typeRng);
+    const def = entry.typeMap.get(type) || entry.typeMap.get('empty');
+    return {
+      index: cell.index,
+      rx: cell.rx,
+      ry: cell.ry,
+      x: cell.x,
+      y: cell.y,
+      type,
+      difficultyOffset: def?.supportsOffset ? (cell.difficultyOffset || 0) : 0,
+      isPortal: Boolean(cell.isPortal),
+      openDirs: cell.openDirs,
+      endFactor: variant.endFactors?.[idx] ?? 0.5,
+      enemyLevel: null,
+    };
+  });
+  const resolved = resolvedStripMetrics(cells, entry);
   return {
     id,
+    familyId: entry.familyId,
     templateId: entry.template.id,
     templateName: entry.template.name,
     role,
@@ -397,8 +485,8 @@ function buildStripInstance({ id, entry, variant, origin, regionId, role, bridge
     origin: { x: origin.x, y: origin.y },
     rotation: variant.rotation,
     shapeSignature: entry.signature,
-    resource: entry.metrics.resource,
-    difficulty: entry.metrics.difficulty,
+    resource: resolved.resource,
+    difficulty: resolved.difficulty,
     distanceFromSpawn: 0,
     level: 1,
     cells,
@@ -428,6 +516,7 @@ function generateLocalRegion({
   budgetHint,
   globalCounts,
   rng,
+  typeRng,
   idPrefix,
 }) {
   const localCounts = new Map(globalCounts);
@@ -460,7 +549,7 @@ function generateLocalRegion({
       });
       cellOwners.set(k, list);
     }
-    localCounts.set(strip.templateId, (localCounts.get(strip.templateId) || 0) + 1);
+    localCounts.set(strip.familyId, (localCounts.get(strip.familyId) || 0) + 1);
   };
 
   const addLinkState = (link) => {
@@ -497,6 +586,7 @@ function generateLocalRegion({
     origin: { x: 0, y: 0 },
     regionId: region.id,
     role: isStartRegion ? 'spawn' : 'normal',
+    typeRng,
   });
   addStripState(firstStrip);
 
@@ -803,6 +893,7 @@ function generateLocalRegion({
       origin: { x: best.ox, y: best.oy },
       regionId: region.id,
       role: 'normal',
+      typeRng,
     });
     addStripState(newStrip);
     curR += newStrip.resource;
@@ -1351,35 +1442,39 @@ function variantCompatibleWithLinks(strip, variant, links, allStrips) {
   return true;
 }
 
-function applyTemplateToStripSameShape(strip, entry, variant) {
+function applyTemplateToStripSameShape(strip, entry, variant, typeRng) {
   const b = boundsOfCells(strip.cells);
   const newPlaced = placeCellsAt(variant.cells, b.minX, b.minY);
   const byCoord = new Map(newPlaced.map((c) => [coordKey(c.x, c.y), c]));
   const remappedCells = strip.cells.map((oldCell, idx) => {
     const hit = byCoord.get(coordKey(oldCell.x, oldCell.y));
+    const type = hit ? pickCellType(hit, entry.typeMap, typeRng) : oldCell.type;
+    const def = entry.typeMap.get(type) || entry.typeMap.get('empty');
     return {
       ...oldCell,
       index: idx,
       rx: hit ? hit.rx : oldCell.rx,
       ry: hit ? hit.ry : oldCell.ry,
-      type: hit ? hit.type : oldCell.type,
-      difficultyOffset: hit ? (hit.difficultyOffset || 0) : 0,
+      type,
+      difficultyOffset: hit && def?.supportsOffset ? (hit.difficultyOffset || 0) : 0,
       isPortal: hit ? Boolean(hit.isPortal) : false,
       openDirs: hit?.openDirs ?? oldCell.openDirs,
       endFactor: hit ? (variant.endFactors?.[hit.index] ?? oldCell.endFactor ?? 0.5) : (oldCell.endFactor ?? 0.5),
       enemyLevel: null,
     };
   });
+  const resolved = resolvedStripMetrics(remappedCells, entry);
+  strip.familyId = entry.familyId;
   strip.templateId = entry.template.id;
   strip.templateName = entry.template.name;
   strip.noLoop = Boolean(entry.template.noLoop) && strip.role === 'normal';
   strip.rotation = variant.rotation;
-  strip.resource = entry.metrics.resource;
-  strip.difficulty = entry.metrics.difficulty;
+  strip.resource = resolved.resource;
+  strip.difficulty = resolved.difficulty;
   strip.cells = remappedCells;
 }
 
-function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
+function convergeFloorBudget(map, targetBudget, prepared, profile, rng, typeRng) {
   const { resourceMin, resourceMax, difficultyMin, difficultyMax } = targetBudget;
   const regionMap = new Map(profile.regions.map((r) => [r.id, r]));
 
@@ -1403,7 +1498,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
   const counts = new Map();
   const noLoopByRegion = new Map();
   for (const s of map.strips) {
-    counts.set(s.templateId, (counts.get(s.templateId) || 0) + 1);
+    counts.set(s.familyId, (counts.get(s.familyId) || 0) + 1);
     if (s.noLoop) noLoopByRegion.set(s.regionId, (noLoopByRegion.get(s.regionId) || 0) + 1);
   }
 
@@ -1427,7 +1522,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
       const regionMaxNoLoop = regionMap.get(strip.regionId)?.maxNoLoop ?? 0;
 
       for (const entry of prepared) {
-        if (entry.template.id === strip.templateId) continue;
+        if (entry.familyId === strip.familyId) continue;
         if (entry.template.role !== role) continue;
         if (role === 'normal' && !templateMatchesRegion(entry.template, strip.regionId)) continue;
         if (mustSpawn && !entry.template.spawnEligible) continue;
@@ -1441,7 +1536,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
         const cap = entry.template.generation.unique
           ? Math.min(1, entry.template.generation.max)
           : entry.template.generation.max;
-        if ((counts.get(entry.template.id) || 0) >= cap) continue;
+        if ((counts.get(entry.familyId) || 0) >= cap) continue;
 
         const variant = findMatchingRotation(entry, strip.cells);
         if (!variant) continue;
@@ -1459,10 +1554,10 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
     }
     if (!bestMove) break;
     const { strip, entry, variant } = bestMove;
-    counts.set(strip.templateId, Math.max(0, (counts.get(strip.templateId) || 1) - 1));
+    counts.set(strip.familyId, Math.max(0, (counts.get(strip.familyId) || 1) - 1));
     if (strip.noLoop) noLoopByRegion.set(strip.regionId, Math.max(0, (noLoopByRegion.get(strip.regionId) || 1) - 1));
-    applyTemplateToStripSameShape(strip, entry, variant);
-    counts.set(strip.templateId, (counts.get(strip.templateId) || 0) + 1);
+    applyTemplateToStripSameShape(strip, entry, variant, typeRng);
+    counts.set(strip.familyId, (counts.get(strip.familyId) || 0) + 1);
     if (strip.noLoop) noLoopByRegion.set(strip.regionId, (noLoopByRegion.get(strip.regionId) || 0) + 1);
     if (strip.id === map.spawn?.stripId) {
       const spIdx = Math.max(0, strip.cells.findIndex((c) => c.type === 'spawn'));
@@ -1504,7 +1599,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
 
       const betterTemplates = prepared
         .filter((entry) => {
-          if (entry.template.id === leaf.templateId) return false;
+          if (entry.familyId === leaf.familyId) return false;
           if (entry.template.role !== 'normal') return false;
           if (!templateMatchesRegion(entry.template, leaf.regionId)) return false;
           if (entry.template.noLoop) {
@@ -1514,7 +1609,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
           const cap = entry.template.generation.unique
             ? Math.min(1, entry.template.generation.max)
             : entry.template.generation.max;
-          if ((counts.get(entry.template.id) || 0) >= cap) return false;
+          if ((counts.get(entry.familyId) || 0) >= cap) return false;
           const nr = cur.r - leaf.resource + entry.metrics.resource;
           const nd = cur.d - leaf.difficulty + entry.metrics.difficulty;
           const ne = rangeDist(nr, resourceMin, resourceMax) + rangeDist(nd, difficultyMin, difficultyMax);
@@ -1554,29 +1649,35 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
               }
               if (!ok) continue;
 
-              counts.set(leaf.templateId, Math.max(0, (counts.get(leaf.templateId) || 1) - 1));
+              counts.set(leaf.familyId, Math.max(0, (counts.get(leaf.familyId) || 1) - 1));
               if (leaf.noLoop) noLoopByRegion.set(leaf.regionId, Math.max(0, (noLoopByRegion.get(leaf.regionId) || 1) - 1));
+              leaf.familyId = entry.familyId;
               leaf.templateId = entry.template.id;
               leaf.templateName = entry.template.name;
               leaf.noLoop = Boolean(entry.template.noLoop);
               leaf.rotation = variant.rotation;
               leaf.shapeSignature = entry.signature;
               leaf.origin = { x: ox, y: oy };
-              leaf.resource = entry.metrics.resource;
-              leaf.difficulty = entry.metrics.difficulty;
-              leaf.cells = placed.map((pc, pi) => ({
-                index: pc.index,
-                rx: pc.rx,
-                ry: pc.ry,
-                x: pc.x,
-                y: pc.y,
-                type: pc.type,
-                difficultyOffset: pc.difficultyOffset || 0,
-                isPortal: Boolean(pc.isPortal),
-            openDirs: pc.openDirs,
-                endFactor: variant.endFactors?.[pi] ?? 0.5,
-                enemyLevel: null,
-              }));
+              leaf.cells = placed.map((pc, pi) => {
+                const type = pickCellType(pc, entry.typeMap, typeRng);
+                const def = entry.typeMap.get(type) || entry.typeMap.get('empty');
+                return {
+                  index: pc.index,
+                  rx: pc.rx,
+                  ry: pc.ry,
+                  x: pc.x,
+                  y: pc.y,
+                  type,
+                  difficultyOffset: def?.supportsOffset ? (pc.difficultyOffset || 0) : 0,
+                  isPortal: Boolean(pc.isPortal),
+                  openDirs: pc.openDirs,
+                  endFactor: variant.endFactors?.[pi] ?? 0.5,
+                  enemyLevel: null,
+                };
+              });
+              const leafMetrics = resolvedStripMetrics(leaf.cells, entry);
+              leaf.resource = leafMetrics.resource;
+              leaf.difficulty = leafMetrics.difficulty;
               map.links[linkIdx] = {
                 id: oldLink.id,
                 type: 'door',
@@ -1585,7 +1686,7 @@ function convergeFloorBudget(map, targetBudget, prepared, profile, rng) {
                 dir: port.dir,
                 isBridgeLink: false,
               };
-              counts.set(leaf.templateId, (counts.get(leaf.templateId) || 0) + 1);
+              counts.set(leaf.familyId, (counts.get(leaf.familyId) || 0) + 1);
               if (leaf.noLoop) noLoopByRegion.set(leaf.regionId, (noLoopByRegion.get(leaf.regionId) || 0) + 1);
               cur = totalError();
               replaced = true;
@@ -1695,6 +1796,7 @@ export function recomputeFloorMetrics(map, cellTypes = DEFAULT_CELL_TYPES) {
 
 function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, attempt, createdAt }) {
   const rng = new RNG(seed);
+  const typeRng = new RNG(`${seed}:types:${attempt}`);
   const [rA, rB, rC] = profile.regions;
   const countA = rng.int(rA.stripMin, rA.stripMax);
   const countB = rng.int(rB.stripMin, rB.stripMax);
@@ -1720,6 +1822,7 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
         },
         globalCounts,
         rng: subRng,
+        typeRng,
         idPrefix: prefix,
       });
       if (
@@ -1736,11 +1839,11 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
 
   const globalCounts = new Map();
   const localA = makeRegionWithCycle(rA, countA, true, 'ra', globalCounts);
-  for (const s of localA.strips) globalCounts.set(s.templateId, (globalCounts.get(s.templateId) || 0) + 1);
+  for (const s of localA.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
   const localB = makeRegionWithCycle(rB, countB, false, 'rb', globalCounts);
-  for (const s of localB.strips) globalCounts.set(s.templateId, (globalCounts.get(s.templateId) || 0) + 1);
+  for (const s of localB.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
   const localC = makeRegionWithCycle(rC, countC, false, 'rc', globalCounts);
-  for (const s of localC.strips) globalCounts.set(s.templateId, (globalCounts.get(s.templateId) || 0) + 1);
+  for (const s of localC.strips) globalCounts.set(s.familyId, (globalCounts.get(s.familyId) || 0) + 1);
 
   let bridgePool = prepared.filter((e) => e.template.role === 'bridge' && e.template.generation.max > 0);
   if (!bridgePool.length) bridgePool = prepared.filter((e) => e.template.role === 'bridge');
@@ -1750,11 +1853,11 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
   const pickBridge = (usedMap) => {
     const avail = bridgePool.filter((e) => {
       const cap = e.template.generation.unique ? Math.min(1, e.template.generation.max) : e.template.generation.max;
-      return (usedMap.get(e.template.id) || 0) < Math.max(1, cap);
+      return (usedMap.get(e.familyId) || 0) < Math.max(1, cap);
     });
     const pool = avail.length ? avail : bridgePool;
     const picked = rng.weighted(pool, (e) => e.template.generation.weight) || pool[0];
-    usedMap.set(picked.template.id, (usedMap.get(picked.template.id) || 0) + 1);
+    usedMap.set(picked.familyId, (usedMap.get(picked.familyId) || 0) + 1);
     return picked;
   };
   const bridgeUsed = new Map();
@@ -1783,6 +1886,7 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
       regionId: 'bridge',
       role: 'bridge',
       bridgeBetween: pairRegions,
+      typeRng,
     });
 
   const bridgeAB = makeBridgeStrip('br_ab', assembly.bAB, [rA.id, rB.id]);
@@ -1912,7 +2016,7 @@ function generateFloorOnce({ profile, prepared, cellTypes, targetBudget, seed, a
     errors: [],
   };
 
-  convergeFloorBudget(map, targetBudget, prepared, profile, rng);
+  convergeFloorBudget(map, targetBudget, prepared, profile, rng, typeRng);
   recomputeFloorProgression(map, profile.progression, cellTypes);
   recomputeFloorMetrics(map, cellTypes);
 

@@ -32,6 +32,7 @@ import { validateFloorMap } from '../core/floor-validator.js';
 import {
   normalizeCellTypes,
   normalizeStripTemplate,
+  normalizeTemplateGroups,
   stripTemplateStructureKey,
   validateStripTemplate,
   validateTemplateFamilies,
@@ -856,7 +857,108 @@ export class AppStore extends Emitter {
     );
   }
 
-  importTemplateLibrary({ cellTypes = null, stripTemplates = [], replace = false } = {}) {
+  addTemplateGroup({ name = '新文件夹', parentGroupId = '' } = {}) {
+    let created = null;
+    const ok = this.commitProject(
+      (project) => {
+        const groups = project.dungeon.templateGroups || (project.dungeon.templateGroups = []);
+        if (parentGroupId && !groups.some((group) => group.id === parentGroupId)) return false;
+        const ids = new Set(groups.map((group) => group.id));
+        let n = 1;
+        while (ids.has(`template_group_${n}`)) n += 1;
+        const siblings = groups.filter((group) => group.parentGroupId === parentGroupId);
+        const order = siblings.reduce((max, group) => Math.max(max, group.order), -1) + 1;
+        created = {
+          id: `template_group_${n}`,
+          name: String(name || '新文件夹').trim() || '新文件夹',
+          parentGroupId: parentGroupId || '',
+          order,
+        };
+        groups.push(created);
+      },
+      { label: '新建模板文件夹' },
+    );
+    return ok ? created : null;
+  }
+
+  renameTemplateGroup(id, name) {
+    const clean = String(name || '').trim();
+    if (!clean) return false;
+    return this.commitProject(
+      (project) => {
+        const group = (project.dungeon.templateGroups || []).find((item) => item.id === id);
+        if (!group) return false;
+        group.name = clean;
+      },
+      { label: '重命名模板文件夹' },
+    );
+  }
+
+  deleteTemplateGroup(id) {
+    return this.commitProject(
+      (project) => {
+        const groups = project.dungeon.templateGroups || [];
+        const group = groups.find((item) => item.id === id);
+        if (!group) return false;
+        const parentGroupId = group.parentGroupId || '';
+        for (const template of project.dungeon.stripTemplates || []) {
+          if (template.folderId === id) {
+            if (parentGroupId) template.folderId = parentGroupId;
+            else delete template.folderId;
+          }
+        }
+        for (const child of groups) {
+          if (child.parentGroupId === id) child.parentGroupId = parentGroupId;
+        }
+        project.dungeon.templateGroups = groups.filter((item) => item.id !== id);
+      },
+      { label: '删除模板文件夹' },
+    );
+  }
+
+  moveStripTemplate(id, direction = 0) {
+    return this.commitProject(
+      (project) => {
+        const list = project.dungeon.stripTemplates || [];
+        const template = list.find((item) => item.id === id);
+        if (!template) return false;
+        const isChild = Boolean(template.parentTemplateId);
+        const siblings = list.filter((item) => (
+          isChild
+            ? item.parentTemplateId === template.parentTemplateId
+            : !item.parentTemplateId && (item.folderId || '') === (template.folderId || '')
+        ));
+        if (siblings.length < 2) return false;
+        const fallback = new Map(list.map((item, index) => [item.id, index]));
+        const orderOf = (item) => (item.uiOrder !== null && item.uiOrder !== '' && Number.isFinite(Number(item.uiOrder)) ? Number(item.uiOrder) : fallback.get(item.id));
+        siblings.sort((a, b) => orderOf(a) - orderOf(b) || fallback.get(a.id) - fallback.get(b.id));
+        const from = siblings.indexOf(template);
+        const to = from + Math.sign(direction);
+        if (from < 0 || to < 0 || to >= siblings.length) return false;
+        const slots = siblings.map((_, index) => index);
+        [slots[from], slots[to]] = [slots[to], slots[from]];
+        siblings.forEach((item, index) => { item.uiOrder = slots[index]; });
+        return true;
+      },
+      { label: '调整模板排序' },
+    );
+  }
+
+  setTemplateFolder(templateId, folderId = '') {
+    return this.commitProject(
+      (project) => {
+        const groups = project.dungeon.templateGroups || [];
+        if (folderId && !groups.some((group) => group.id === folderId)) return false;
+        const template = (project.dungeon.stripTemplates || []).find((item) => item.id === templateId);
+        if (!template) return false;
+        if (folderId) template.folderId = folderId;
+        else delete template.folderId;
+      },
+      { label: '移动模板到文件夹' },
+    );
+  }
+
+  importTemplateLibrary({ cellTypes = null, stripTemplates = [], templateGroups = [], replace = false } = {}) {
     return this.commitProject(
       (project) => {
         const types = cellTypes?.length ? normalizeCellTypes(cellTypes) : project.dungeon.cellTypes;
@@ -864,6 +966,33 @@ export class AppStore extends Emitter {
         if (!incoming.length || validateTemplateFamilies(incoming).length
           || incoming.some((t) => !validateStripTemplate(t, types).ok)) return false;
         const existing = replace ? [] : project.dungeon.stripTemplates.map((t, i) => normalizeStripTemplate(t, types, i));
+        const incomingGroups = normalizeTemplateGroups(templateGroups);
+        const existingGroups = replace ? [] : normalizeTemplateGroups(project.dungeon.templateGroups || []);
+        const usedGroupIds = new Set(existingGroups.map((group) => group.id));
+        const groupRenamed = new Map();
+        const mappedGroups = incomingGroups.map((group) => {
+          let id = group.id;
+          if (usedGroupIds.has(id)) {
+            let suffix = 2;
+            while (usedGroupIds.has(`${id}_${suffix}`)) suffix += 1;
+            id = `${id}_${suffix}`;
+          }
+          usedGroupIds.add(id);
+          groupRenamed.set(group.id, id);
+          return { ...group, id };
+        });
+        for (const group of mappedGroups) {
+          group.parentGroupId = group.parentGroupId
+            ? (groupRenamed.get(group.parentGroupId) || '')
+            : '';
+        }
+        for (const template of incoming) {
+          if (template.folderId && groupRenamed.has(template.folderId)) {
+            template.folderId = groupRenamed.get(template.folderId);
+          } else {
+            delete template.folderId;
+          }
+        }
         const occupied = new Set(existing.map((t) => t.id));
         const reserved = new Set([...occupied, ...incoming.map((t) => t.id)]);
         const renamed = new Map();
@@ -893,6 +1022,7 @@ export class AppStore extends Emitter {
         if (validateTemplateFamilies(combined).length) return false;
         project.dungeon.cellTypes = types;
         project.dungeon.stripTemplates = combined;
+        project.dungeon.templateGroups = [...existingGroups, ...mappedGroups];
       },
       { label: replace ? '替换条带模板库' : '合并导入条带模板' },
     );

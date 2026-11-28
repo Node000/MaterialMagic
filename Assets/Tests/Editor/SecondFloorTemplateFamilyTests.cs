@@ -39,6 +39,24 @@ public class SecondFloorTemplateFamilyTests
         Assert.That(cell.Tags, Is.EqualTo(new[] { "alternate" }));
     }
 
+    [Test]
+    public void ReadsWeightedTypePoolAndUsesExpectedMetrics()
+    {
+        var root = FixtureTemplate();
+        JObject cell = (JObject)root["cells"][1];
+        cell["typePool"] = JArray.Parse(@"[{""type"":""empty"",""weight"":1},{""type"":""combat"",""weight"":3}]");
+        cell["difficultyOffset"] = 1;
+
+        var library = Read(FixtureDocument(root));
+        var template = library.Templates.Single(t => t.Id == "root");
+        var parsed = template.Variants[0].Cells.Single(c => c.Position == Vector2Int.right);
+        Assert.That(parsed.TypePool.Select(o => (o.Type, o.Weight)),
+            Is.EqualTo(new[] { ("empty", 1d), ("combat", 3d) }));
+        Assert.That(parsed.DifficultyOffset, Is.EqualTo(1));
+        Assert.That(template.AutoResource, Is.EqualTo(1.5));
+        Assert.That(template.AutoDifficulty, Is.EqualTo(3.75));
+    }
+
     [TestCase("missing", "unknown parent")]
     [TestCase("self", "reference itself")]
     [TestCase("nested", "directly reference a root")]

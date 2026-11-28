@@ -33,11 +33,11 @@ internal static partial class SecondFloorPatternGenerator
         internal IReadOnlyList<Strip> Strips { get; }
         internal IReadOnlyList<Join> Joins { get; }
 
-        internal Layout(SecondFloorFloorMap map, List<Strip> strips, List<Join> joins)
+        internal Layout(SecondFloorFloorMap map, List<Strip> strips, List<Join> joins, double resource, double difficulty)
         {
             Map = map; Strips = strips.AsReadOnly(); Joins = joins.AsReadOnly();
-            Resource = strips.Sum(s => s.Template.Resource);
-            Difficulty = strips.Sum(s => s.Template.Difficulty);
+            Resource = resource;
+            Difficulty = difficulty;
         }
     }
 
@@ -134,7 +134,10 @@ internal static partial class SecondFloorPatternGenerator
             if (regions[2] == null) continue;
             regionsBuilt++;
             if (!TryAssemble(regions, bridges, counts, random, versionRandom, out var strips, out var joins)) continue;
-            var layout = BuildLayout(mapId ?? $"pattern-preview-{seed}", strips, joins, library, baseLevel, levelPerHop, maxLevel);
+            // Per-attempt content stream: retries must not change which types a successful layout draws.
+            var contentRandom = new Random(seed ^ 0x54595045 ^ attempt);
+            var layout = BuildLayout(mapId ?? $"pattern-preview-{seed}", strips, joins, library, baseLevel, levelPerHop,
+                maxLevel, contentRandom);
             double distance = targetDistance?.Invoke(layout) ?? 0;
             if (!improveSpacing && distance == 0) return layout;
             double contact = improveSpacing ? FloorContactCost(layout, spacing) : 0;
@@ -268,7 +271,7 @@ internal static partial class SecondFloorPatternGenerator
     }
 
     private static Layout BuildLayout(string mapId, List<Strip> strips, List<Join> joins, SecondFloorPatternLibrary library,
-        int baseLevel, float levelPerHop, int maxLevel)
+        int baseLevel, float levelPerHop, int maxLevel, Random contentRandom)
     {
         var spawnStrip = strips.Single(s => s.Template.SpawnEligible);
         var spawn = spawnStrip.Origin + spawnStrip.Variant.Cells.Single(c => c.Type == "spawn").Position;
@@ -296,22 +299,52 @@ internal static partial class SecondFloorPatternGenerator
         if (distance.Contains(-1)) throw new InvalidOperationException("Generated strip graph is disconnected.");
         var tiles = new List<SecondFloorFloorMap.Tile>();
         var edges = new List<(Vector2Int From, Vector2Int To, SecondFloorEdgeKind Kind)>();
+        double totalResource = 0;
+        double totalDifficulty = 0;
         foreach (var strip in strips)
         {
             var stripId = $"s{strip.Index}";
             int level = (int)Math.Min(maxLevel, Math.Floor(baseLevel + (double)levelPerHop * distance[strip.Index] + 0.5));
+            double stripResource = 0;
+            double stripDifficulty = 0;
             foreach (var cell in strip.Variant.Cells)
             {
-                int? enemyLevel = library.CellTypes[cell.Type].SupportsOffset
+                string actualType = PickCellType(cell, library, contentRandom);
+                var type = library.CellTypes[actualType];
+                stripResource += type.Resource;
+                stripDifficulty += type.Difficulty;
+                int? enemyLevel = type.SupportsOffset
                     ? (int)Math.Min(maxLevel, Math.Max(1L, (long)level + cell.DifficultyOffset)) : (int?)null;
-                tiles.Add(new SecondFloorFloorMap.Tile(strip.Origin + cell.Position, cell.Type, enemyLevel, new[] { stripId }));
+                tiles.Add(new SecondFloorFloorMap.Tile(strip.Origin + cell.Position, actualType, enemyLevel, new[] { stripId }));
             }
+            totalResource += strip.Template.ResourceOverride ?? stripResource;
+            totalDifficulty += strip.Template.DifficultyOverride ?? stripDifficulty;
             foreach (var edge in strip.Variant.Edges)
                 edges.Add((strip.Origin + edge.A, strip.Origin + edge.B, SecondFloorEdgeKind.Open));
         }
         foreach (var join in joins) edges.Add((join.From, join.To, SecondFloorEdgeKind.Door));
         var visualTypes = strips.Select(strip => ($"s{strip.Index}", strip.Template.VisualTypeId));
-        return new Layout(SecondFloorFloorMap.FromLayout(mapId, spawn, tiles, edges, visualTypes), strips, joins);
+        return new Layout(SecondFloorFloorMap.FromLayout(mapId, spawn, tiles, edges, visualTypes), strips, joins,
+            totalResource, totalDifficulty);
+    }
+
+    private static string PickCellType(SecondFloorPatternLibrary.Cell cell, SecondFloorPatternLibrary library, Random random)
+    {
+        if (cell.TypePool == null || cell.TypePool.Count < 2)
+            return cell.Type;
+        double total = 0;
+        foreach (var option in cell.TypePool)
+            total += option.Weight;
+        if (!(total > 0))
+            return cell.Type;
+        double roll = random.NextDouble() * total;
+        foreach (var option in cell.TypePool)
+        {
+            roll -= option.Weight;
+            if (roll < 0)
+                return option.Type;
+        }
+        return cell.TypePool[cell.TypePool.Count - 1].Type;
     }
 
     private static int Capacity(Template t) => t.InstanceLimit;

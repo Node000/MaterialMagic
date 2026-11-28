@@ -850,6 +850,7 @@ function boot() {
         store.importTemplateLibrary({
           cellTypes: parsedTpl.cellTypes,
           stripTemplates: parsedTpl.stripTemplates,
+          templateGroups: parsedTpl.templateGroups,
           replace: true,
         });
         store.setMode('templates');
@@ -942,6 +943,7 @@ function boot() {
             serializeTemplateLibrary({
               cellTypes: store.dungeon.cellTypes,
               stripTemplates: store.dungeon.stripTemplates,
+              templateGroups: store.dungeon.templateGroups,
             }),
           );
           toast('条带模板库 JSON 已导出', { type: 'success' });

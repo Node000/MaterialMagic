@@ -134,6 +134,7 @@ export function adaptPoolPreviewToFloorMap({
         const tpl = meta?.templateId ? tplById.get(meta.templateId) : null;
         stripMap.set(sid, {
           id: sid,
+          familyId: tpl?.parentTemplateId || meta?.templateId || sid,
           templateId: meta?.templateId || sid,
           templateName: tpl?.name || meta?.templateId || sid,
           role: meta ? (meta.slot === -1 ? 'bridge' : 'normal') : 'normal',

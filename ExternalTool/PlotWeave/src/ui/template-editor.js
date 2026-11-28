@@ -31,7 +31,9 @@ import {
   createChildStripTemplate,
   defaultRandomDraftConfig,
   generateRandomStripDraft,
+  normalizeCellTypePool,
   normalizeStripTemplate,
+  normalizeTemplateGroups,
   parseTemplateLibrary,
   serializeTemplateLibrary,
   validateStripTemplate,
@@ -46,11 +48,30 @@ import {
   readFileText,
   slugify,
 } from './dom.js';
-import { confirmDialog, openModal, toast } from './modals.js';
+import { confirmDialog, openFormModal, openModal, toast } from './modals.js';
 
 const GRID_SIZE = 9;
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const parseTags = (text) => [...new Set(text.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean))];
+
+const FOLDER_COLLAPSE_KEY = 'plotweave:template-folder-collapsed:v1';
+
+function loadCollapsedFolders() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FOLDER_COLLAPSE_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.filter((id) => typeof id === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCollapsedFolders(collapsed) {
+  try {
+    localStorage.setItem(FOLDER_COLLAPSE_KEY, JSON.stringify([...collapsed]));
+  } catch {
+    /* 收藏夹折叠状态只是本地视图偏好，写失败不影响编辑。 */
+  }
+}
 
 const PORTAL_MODES = [
   { id: 'none', label: '无（全格随机相连）' },
@@ -117,6 +138,8 @@ export class TemplateEditorView {
     this.selectedCellCoord = null;
     this.draft = null;
     this.draftIsNew = false;
+    this.leftScrollTop = 0;
+    this.collapsedFolders = loadCollapsedFolders();
     this.dirty = false;
     this.gridCells = [];
     this.randomConfig = defaultRandomDraftConfig(store.dungeon.cellTypes);
@@ -126,10 +149,13 @@ export class TemplateEditorView {
     this.renderAll();
 
     store.on('change', () => {
-      if (this.draft && !this.draftIsNew && !this.dirty) {
+      if (this.draft && !this.draftIsNew) {
         const latest = this.store.dungeon.stripTemplates.find((t) => t.id === this.draft.id);
-        if (latest) this.loadTemplate(latest);
-        else this.loadTemplate(this.store.dungeon.stripTemplates[0] || null);
+        if (latest && this.dirty) this.draft.folderId = latest.folderId || '';
+        if (!this.dirty) {
+          if (latest) this.loadTemplate(latest);
+          else this.loadTemplate(this.store.dungeon.stripTemplates[0] || null);
+        }
       }
       this.renderAll();
     });
@@ -137,8 +163,18 @@ export class TemplateEditorView {
 
   buildShell() {
     this.leftEl = h('aside', { class: 'panel tpl-sidebar' });
+    this.leftHeadEl = h('div', { class: 'tpl-left-head' });
+    // Keep the scroll container stable across re-renders. Replacing it on every
+    // store change was what made the template list jump back to the top.
+    this.leftListEl = h('div', { class: 'panel-body tpl-list' });
+    this.leftListEl.addEventListener('scroll', () => {
+      this.leftScrollTop = this.leftListEl.scrollTop;
+    });
+    mount(this.leftEl, this.leftHeadEl, this.leftListEl);
     this.centerEl = h('section', { class: 'stage tpl-stage' });
     this.rightEl = h('aside', { class: 'panel tpl-inspector' });
+    this.rightBodyEl = h('div', { class: 'panel-body' });
+    mount(this.rightEl, this.rightBodyEl);
     mount(this.root, this.leftEl, this.centerEl, this.rightEl);
   }
 
@@ -215,6 +251,7 @@ export class TemplateEditorView {
         rx: c.gx,
         ry: c.gy,
         type: c.type,
+        typePool: Array.isArray(c.typePool) ? c.typePool.map((entry) => ({ ...entry })) : undefined,
         difficultyOffset: c.difficultyOffset || 0,
         isPortal: Boolean(c.isPortal),
         tags: c.tags || [],
@@ -230,6 +267,120 @@ export class TemplateEditorView {
     this.dirty = true;
   }
 
+  openTypePoolEditor(cell) {
+    const tMap = cellTypeMap(this.store.dungeon.cellTypes);
+    const choices = this.store.dungeon.cellTypes.filter((ct) => ct.id !== 'spawn');
+    let rows = (Array.isArray(cell.typePool) && cell.typePool.length
+      ? cell.typePool
+      : [{ type: cell.type === 'spawn' ? 'empty' : cell.type, weight: 1 }, { type: 'empty', weight: 1 }]
+    ).map((entry) => ({ type: entry.type, weight: Number(entry.weight) || 1 }));
+    if (rows.every((row) => row.type === rows[0]?.type)) rows = [{ type: rows[0]?.type || 'empty', weight: 1 }, { type: 'empty', weight: 1 }];
+
+    const list = h('div', { class: 'pool-list' });
+    const renderRows = () => {
+      clear(list);
+      rows.forEach((row, index) => {
+        list.append(
+          h(
+            'div',
+            { class: 'pool-row' },
+            h('span', { class: 'pool-index' }, index === 0 ? '主' : String(index + 1)),
+            h(
+              'select',
+              {
+                class: 'select',
+                onchange: (e) => { row.type = e.target.value; },
+              },
+              ...choices.map((ct) => h('option', { value: ct.id, selected: ct.id === row.type }, `${ct.icon} ${ct.name}（资${ct.resource}/难${ct.difficulty}）`)),
+            ),
+            h('input', {
+              class: 'input pool-weight',
+              type: 'number',
+              min: '0.1',
+              step: '0.1',
+              value: row.weight,
+              title: '权重（相对值，必须大于 0）',
+              oninput: (e) => { row.weight = Number(e.target.value); },
+            }),
+            h(
+              'button',
+              {
+                class: 'btn icon ghost small',
+                type: 'button',
+                title: '移除这个类型',
+                disabled: rows.length <= 2,
+                onclick: () => { rows.splice(index, 1); renderRows(); },
+              },
+              icon('trash', 12),
+            ),
+          ),
+        );
+      });
+    };
+    renderRows();
+
+    const addRow = () => {
+      const used = new Set(rows.map((row) => row.type));
+      const next = choices.find((ct) => !used.has(ct.id))?.id || 'empty';
+      rows.push({ type: next, weight: 1 });
+      renderRows();
+    };
+
+    const body = h(
+      'div',
+      { class: 'pool-editor' },
+      h('p', { class: 'field-hint', style: { margin: '0 0 10px' } },
+        '启用后，生成单层地图时每个条带实例会按权重重新抽取每格类型。第一项同时作为主类型与固定回退。'),
+      h('div', { class: 'pool-head' }, h('span', null, '类型'), h('span', null, '权重')),
+      list,
+      h(
+        'div',
+        { class: 'pool-actions' },
+        h('button', { class: 'btn small', type: 'button', onclick: addRow }, '+ 添加类型'),
+        h('button', {
+          class: 'btn small ghost',
+          type: 'button',
+          onclick: () => {
+            delete cell.typePool;
+            this.syncGridToDraft();
+            this.renderAll();
+            dialog.close();
+          },
+        }, '恢复固定类型'),
+      ),
+    );
+
+    const dialog = openModal({
+      title: `单格模糊类型池 · (${cell.gx},${cell.gy})`,
+      subtitle: '只在当前格生效；出生格与桥接结构约束不受影响',
+      size: 'wide',
+      body,
+      footer: [
+        h('div', { class: 'spacer' }),
+        h('button', { class: 'btn', type: 'button', onclick: () => dialog.close() }, '取消'),
+        h('button', {
+          class: 'btn primary',
+          type: 'button',
+          onclick: () => {
+            const normalized = normalizeCellTypePool(rows, tMap);
+            if (normalized.length < 2) {
+              delete cell.typePool;
+              if (normalized.length === 1) cell.type = normalized[0].type;
+              toast('至少保留两种类型才会启用模糊池，已恢复固定类型。', { type: 'warning' });
+            } else {
+              cell.typePool = normalized;
+              cell.type = normalized[0].type;
+              if (!tMap.get(cell.type)?.supportsOffset) cell.difficultyOffset = 0;
+            }
+            this.syncGridToDraft();
+            this.renderAll();
+            dialog.close();
+          },
+        }, '保存类型池'),
+      ],
+    });
+  }
+
   getSelectedGridCell() {
     if (!this.selectedCellCoord) return null;
     return this.gridCells.find((c) => coordKey(c.gx, c.gy) === this.selectedCellCoord) || null;
@@ -241,9 +392,131 @@ export class TemplateEditorView {
     this.renderRight();
   }
 
+  templateGroups() {
+    return normalizeTemplateGroups(this.store.dungeon.templateGroups || []);
+  }
+
+  folderChildren(groups, parentGroupId = '') {
+    return groups
+      .filter((group) => (group.parentGroupId || '') === parentGroupId)
+      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+  }
+
+  folderOptions(groups, excludeIds = new Set()) {
+    const options = [{ id: '', label: '未归类' }];
+    const visit = (parentGroupId, depth, ancestors) => {
+      for (const group of this.folderChildren(groups, parentGroupId)) {
+        if (excludeIds.has(group.id) || ancestors.has(group.id)) continue;
+        options.push({
+          id: group.id,
+          label: `${'　'.repeat(depth)}${depth > 0 ? '└ ' : ''}${group.name}`,
+        });
+        const next = new Set(ancestors).add(group.id);
+        visit(group.id, depth + 1, next);
+      }
+    };
+    visit('', 0, new Set());
+    return options;
+  }
+
+  isFolderOpen(id, q = '') {
+    return Boolean(q) || !this.collapsedFolders.has(id);
+  }
+
+  toggleFolder(id) {
+    if (this.collapsedFolders.has(id)) this.collapsedFolders.delete(id);
+    else this.collapsedFolders.add(id);
+    saveCollapsedFolders(this.collapsedFolders);
+  }
+
+  createFolder(parentGroupId = '') {
+    const parent = this.templateGroups().find((group) => group.id === parentGroupId);
+    openFormModal({
+      title: parent ? '新建子文件夹' : '新建文件夹',
+      subtitle: parent ? `归入「${parent.name}」` : '把左侧条带模板按项目结构归类；不参与生成。',
+      fields: [
+        h('label', { class: 'mini-field' },
+          h('span', null, '文件夹名称'),
+          h('input', { class: 'input', name: 'name', autofocus: true, placeholder: '例如：城市 / 战斗向' })),
+      ],
+      submitText: '创建',
+      onSubmit: ({ name }) => {
+        const clean = String(name || '').trim();
+        if (!clean) {
+          toast('请填写文件夹名称', { type: 'warning' });
+          return false;
+        }
+        const created = this.store.addTemplateGroup({ name: clean, parentGroupId });
+        if (!created) {
+          toast('创建文件夹失败', { type: 'error' });
+          return false;
+        }
+        this.collapsedFolders.delete(created.id);
+        saveCollapsedFolders(this.collapsedFolders);
+        this.renderAll();
+        toast(`已创建文件夹「${created.name}」`, { type: 'success' });
+      },
+    });
+  }
+
+  renameFolder(group) {
+    openFormModal({
+      title: '重命名文件夹',
+      subtitle: group.name,
+      fields: [
+        h('label', { class: 'mini-field' },
+          h('span', null, '文件夹名称'),
+          h('input', { class: 'input', name: 'name', autofocus: true, value: group.name })),
+      ],
+      submitText: '保存',
+      onSubmit: ({ name }) => {
+        const clean = String(name || '').trim();
+        if (!clean) {
+          toast('名称不能为空', { type: 'warning' });
+          return false;
+        }
+        if (!this.store.renameTemplateGroup(group.id, clean)) {
+          toast('重命名失败', { type: 'error' });
+          return false;
+        }
+        this.renderAll();
+        toast('文件夹已重命名', { type: 'success' });
+      },
+    });
+  }
+
+  async deleteFolder(group) {
+    const ok = await confirmDialog({
+      title: '删除文件夹',
+      message: `删除「${group.name}」？里面的模板会移到${group.parentGroupId ? '上级文件夹' : '未归类'}，子文件夹会升一级；模板本身不会被删除。`,
+      confirmText: '删除文件夹',
+      danger: true,
+    });
+    if (!ok) return;
+    if (!this.store.deleteTemplateGroup(group.id)) {
+      toast('删除文件夹失败', { type: 'error' });
+      return;
+    }
+    if (this.draft?.folderId === group.id) this.draft.folderId = group.parentGroupId || '';
+    this.collapsedFolders.delete(group.id);
+    saveCollapsedFolders(this.collapsedFolders);
+    this.renderAll();
+    toast('文件夹已删除，模板已移出', { type: 'success' });
+  }
+
+  setDraftFolder(folderId = '') {
+    this.draft.folderId = folderId;
+    this.dirty = true;
+    if (!this.draftIsNew && this.draft.id) {
+      this.store.setTemplateFolder(this.draft.id, folderId);
+    }
+    this.renderAll();
+  }
+
   /* ---------------- 左侧：模板库与全局配置 ---------------- */
 
   renderLeft() {
+    const previousScroll = this.leftListEl?.scrollTop ?? this.leftScrollTop ?? 0;
     const { cellTypes, stripTemplates } = this.store.dungeon;
     const tMap = cellTypeMap(cellTypes);
     const regionName = new Map(DUNGEON_REGION_PRESETS.map((r) => [r.id, r.shortName || r.name]));
@@ -307,6 +580,17 @@ export class TemplateEditorView {
         {
           class: 'btn',
           type: 'button',
+          title: '新建一个可嵌套的模板文件夹',
+          onclick: () => this.createFolder(''),
+        },
+        icon('folder-plus', 14),
+        h('span', null, '新建文件夹'),
+      ),
+      h(
+        'button',
+        {
+          class: 'btn',
+          type: 'button',
           onclick: () => this.openCellConfigModal(),
         },
         icon('sliders', 14),
@@ -336,54 +620,120 @@ export class TemplateEditorView {
       ),
     );
 
-    this.leftListEl = h('div', { class: 'panel-body tpl-list' });
-    mount(
-      this.leftEl,
-      h('div', { class: 'tpl-left-head' }, actions, searchInput, roleTabs),
-      this.leftListEl,
-    );
+    mount(this.leftHeadEl, actions, searchInput, roleTabs);
     this.renderLeftList(tMap, regionName);
+    this.leftListEl.scrollTop = previousScroll;
+    this.leftScrollTop = this.leftListEl.scrollTop;
   }
 
   renderLeftList(tMapArg = null, regionNameArg = null) {
     if (!this.leftListEl) return;
+    const previousScroll = this.leftListEl.scrollTop;
     const { cellTypes, stripTemplates } = this.store.dungeon;
     const tMap = tMapArg || cellTypeMap(cellTypes);
     const regionName = regionNameArg || new Map(DUNGEON_REGION_PRESETS.map((r) => [r.id, r.shortName || r.name]));
     const q = this.filterText.trim().toLowerCase();
+    const groups = this.templateGroups();
+    const groupById = new Map(groups.map((group) => [group.id, group]));
 
-    const matches = (tpl) => {
+    const inFolder = (tpl) => (tpl.folderId && groupById.has(tpl.folderId) ? tpl.folderId : '');
+    const groupNameMatches = (folderId) => {
+      if (!q) return false;
+      let group = groupById.get(folderId);
+      const seen = new Set();
+      while (group && !seen.has(group.id)) {
+        if (group.name.toLowerCase().includes(q)) return true;
+        seen.add(group.id);
+        group = groupById.get(group.parentGroupId || '');
+      }
+      return false;
+    };
+
+    const matches = (tpl, ignoreText = false) => {
       if (this.filterRole === 'normal' && tpl.role !== 'normal') return false;
       if (this.filterRole === 'bridge' && tpl.role !== 'bridge') return false;
       if (this.filterRole === 'noloop' && !tpl.noLoop) return false;
       if (this.filterRole === 'portal' && !tpl.cells.some((c) => c.isPortal)) return false;
-      if (q) {
+      if (q && !ignoreText) {
         const hay = `${tpl.name} ${tpl.id} ${tpl.description} ${(tpl.tags || []).join(' ')}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     };
 
+    const originalIndex = new Map(stripTemplates.map((tpl, index) => [tpl.id, index]));
+    const uiOrderOf = (tpl) => (tpl.uiOrder !== null && tpl.uiOrder !== '' && Number.isFinite(Number(tpl.uiOrder)) ? Number(tpl.uiOrder) : originalIndex.get(tpl.id));
+    const orderedTemplates = [...stripTemplates].sort((a, b) => uiOrderOf(a) - uiOrderOf(b)
+      || originalIndex.get(a.id) - originalIndex.get(b.id));
+
     const childrenByParent = new Map();
-    for (const tpl of stripTemplates) {
+    for (const tpl of orderedTemplates) {
       if (!tpl.parentTemplateId) continue;
       if (!childrenByParent.has(tpl.parentTemplateId)) childrenByParent.set(tpl.parentTemplateId, []);
       childrenByParent.get(tpl.parentTemplateId).push(tpl);
     }
-    const filtered = stripTemplates.filter((tpl) => !tpl.parentTemplateId)
+
+    const rows = orderedTemplates
+      .filter((tpl) => !tpl.parentTemplateId)
       .map((tpl) => {
         const children = childrenByParent.get(tpl.id) || [];
-        const rootMatches = matches(tpl);
-        const matchingChildren = q && rootMatches ? children : children.filter(matches);
-        return { tpl, children, rootMatches, matchingChildren };
+        const folderId = inFolder(tpl);
+        const forceAll = q && groupNameMatches(folderId);
+        const rootMatches = matches(tpl, forceAll);
+        const matchingChildren = forceAll
+          ? children.filter((child) => matches(child, true))
+          : children.filter(matches);
+        return {
+          tpl,
+          children,
+          folderId,
+          rootMatches,
+          matchingChildren,
+          visible: rootMatches || matchingChildren.length > 0,
+        };
       })
-      .filter(({ rootMatches, matchingChildren }) => rootMatches || matchingChildren.length > 0);
+      .filter((row) => row.visible);
 
-    clear(this.leftListEl);
-    if (!filtered.length) {
+    const hasFolderMatch = Boolean(q) && groups.some((group) => groupNameMatches(group.id));
+    if (!rows.length && !hasFolderMatch) {
+      clear(this.leftListEl);
       this.leftListEl.append(h('div', { class: 'field-hint', style: { padding: '16px' } }, '没有匹配的条带模板。'));
+      this.leftListEl.scrollTop = previousScroll;
+      this.leftScrollTop = this.leftListEl.scrollTop;
       return;
     }
+
+    const rowsByFolder = new Map();
+    for (const row of rows) {
+      if (!rowsByFolder.has(row.folderId)) rowsByFolder.set(row.folderId, []);
+      rowsByFolder.get(row.folderId).push(row);
+    }
+    const childrenOfFolder = (folderId) => this.folderChildren(groups, folderId);
+    const filtering = Boolean(q) || this.filterRole !== 'all';
+    const folderVisibleCache = new Map();
+    const folderVisible = (folderId, ancestors = new Set()) => {
+      if (folderVisibleCache.has(folderId)) return folderVisibleCache.get(folderId);
+      if (ancestors.has(folderId)) return false;
+      const nextAncestors = new Set(ancestors).add(folderId);
+      const own = (rowsByFolder.get(folderId) || []).length;
+      const childVisible = childrenOfFolder(folderId).some((child) => folderVisible(child.id, nextAncestors));
+      const visible = !filtering || own > 0 || childVisible || groupNameMatches(folderId);
+      folderVisibleCache.set(folderId, visible);
+      return visible;
+    };
+    const familySize = (row) => 1 + row.children.length;
+    const siblingsOf = (tpl) => {
+      if (tpl.parentTemplateId) {
+        return orderedTemplates.filter((item) => item.parentTemplateId === tpl.parentTemplateId);
+      }
+      return orderedTemplates.filter((item) => !item.parentTemplateId
+        && (item.folderId || '') === (tpl.folderId || ''));
+    };
+    const folderCount = (folderId) => {
+      let count = (rowsByFolder.get(folderId) || []).reduce((sum, row) => sum + familySize(row), 0);
+      for (const child of childrenOfFolder(folderId)) count += folderCount(child.id);
+      return count;
+    };
 
     const renderCard = (tpl, { childCount = 0, expanded = false } = {}) => {
       const m = computeTemplateMetrics(tpl, cellTypes);
@@ -394,6 +744,15 @@ export class TemplateEditorView {
           : tpl.regionIds.length === 0
             ? '四区通用'
             : tpl.regionIds.map((id) => regionName.get(id) || id).join('/');
+
+      const siblings = siblingsOf(tpl);
+      const position = siblings.findIndex((item) => item.id === tpl.id);
+      const canMoveUp = position > 0;
+      const canMoveDown = position >= 0 && position < siblings.length - 1;
+      const move = (event, direction) => {
+        event.stopPropagation();
+        this.store.moveStripTemplate(tpl.id, direction);
+      };
 
       const select = async () => {
         if (!isActive && !(await this.confirmDiscardDraft())) return;
@@ -419,9 +778,9 @@ export class TemplateEditorView {
             if (expanded && !q) this.expandedFamilies.delete(tpl.id);
             else this.expandedFamilies.add(tpl.id);
             this.renderLeftList();
-            this.leftListEl.querySelector(`.tpl-family-toggle[data-family-index="${filtered.findIndex((row) => row.tpl.id === tpl.id)}"]`)?.focus();
+            this.leftListEl.querySelector(`.tpl-family-toggle[data-family-id="${tpl.id}"]`)?.focus();
           },
-          dataset: { familyIndex: filtered.findIndex((row) => row.tpl.id === tpl.id) },
+          dataset: { familyId: tpl.id },
           disabled: Boolean(q),
         }, icon('chevron', 13)) : null,
         renderMiniPolyominoSvg(tpl.cells, tMap, tpl.parentTemplateId ? 34 : 40),
@@ -449,6 +808,16 @@ export class TemplateEditorView {
         h(
           'div',
           { class: 'tpl-card-ops' },
+          h('button', {
+            class: 'tree-action tpl-move-up', type: 'button', title: '上移模板', 'aria-label': `上移${tpl.name}`,
+            disabled: !canMoveUp,
+            onclick: (event) => move(event, -1),
+          }, icon('chevron', 12)),
+          h('button', {
+            class: 'tree-action tpl-move-down', type: 'button', title: '下移模板', 'aria-label': `下移${tpl.name}`,
+            disabled: !canMoveDown,
+            onclick: (event) => move(event, 1),
+          }, icon('chevron', 12)),
           h('button', {
             class: 'tree-action', type: 'button', title: '创建子模板', 'aria-label': `从${tpl.name}创建子模板`,
             onclick: (event) => {
@@ -518,11 +887,86 @@ export class TemplateEditorView {
       );
     };
 
-    for (const { tpl, children, matchingChildren } of filtered) {
-      const expanded = Boolean(q) || this.expandedFamilies.has(tpl.id);
-      this.leftListEl.append(renderCard(tpl, { childCount: children.length, expanded }));
-      if (expanded) for (const child of matchingChildren) this.leftListEl.append(renderCard(child));
+    const renderFamily = (row, depth) => {
+      const expanded = Boolean(q) || this.expandedFamilies.has(row.tpl.id);
+      const wrapper = h('div', {
+        class: 'tpl-folder-family',
+        style: { paddingLeft: `${depth * 12}px` },
+      });
+      wrapper.append(renderCard(row.tpl, { childCount: row.children.length, expanded }));
+      if (expanded) {
+        for (const child of row.matchingChildren) wrapper.append(renderCard(child));
+      }
+      return wrapper;
+    };
+
+    const renderFolder = (group, depth) => {
+      const open = this.isFolderOpen(group.id, q);
+      const childGroups = childrenOfFolder(group.id).filter((child) => folderVisible(child.id));
+      const folderRows = rowsByFolder.get(group.id) || [];
+      const count = folderCount(group.id);
+      const row = h(
+        'div',
+        {
+          class: 'tree-folder tpl-folder-row',
+          style: { paddingLeft: `${10 + depth * 14}px` },
+          onclick: () => {
+            this.toggleFolder(group.id);
+            this.renderLeftList();
+          },
+        },
+        h('button', {
+          class: `tree-caret${open ? ' open' : ''}`,
+          type: 'button',
+          title: open ? '折叠文件夹' : '展开文件夹',
+          'aria-expanded': String(open),
+          onclick: (event) => {
+            event.stopPropagation();
+            this.toggleFolder(group.id);
+            this.renderLeftList();
+          },
+        }, icon('chevron', 12)),
+        h('span', { class: 'tree-folder-icon' }, icon('folder', 13)),
+        h('span', { class: 'tree-folder-name' }, group.name),
+        h('span', { class: 'tree-count' }, String(count)),
+        h('span', { class: 'spacer' }),
+        h('button', {
+          class: 'tree-action', type: 'button', title: '在文件夹内新建子文件夹',
+          onclick: (event) => { event.stopPropagation(); this.createFolder(group.id); },
+        }, icon('folder-plus', 12)),
+        h('button', {
+          class: 'tree-action', type: 'button', title: '重命名文件夹',
+          onclick: (event) => { event.stopPropagation(); this.renameFolder(group); },
+        }, icon('edit', 12)),
+        h('button', {
+          class: 'tree-action', type: 'button', title: '删除文件夹（不删除模板）',
+          onclick: (event) => { event.stopPropagation(); this.deleteFolder(group); },
+        }, icon('trash', 12)),
+      );
+      const body = h('div', { class: 'tpl-folder-body' });
+      if (open) {
+        for (const child of childGroups) body.append(renderFolder(child, depth + 1));
+        for (const family of folderRows) body.append(renderFamily(family, depth + 1));
+        if (!childGroups.length && !folderRows.length) {
+          body.append(h('div', { class: 'field-hint tpl-folder-empty' }, '空文件夹'));
+        }
+      }
+      return h('div', { class: 'tpl-folder' }, row, open ? body : null);
+    };
+
+    clear(this.leftListEl);
+    const rootGroups = childrenOfFolder('').filter((group) => folderVisible(group.id));
+    for (const group of rootGroups) this.leftListEl.append(renderFolder(group, 0));
+    const unfiled = rowsByFolder.get('') || [];
+    if (rootGroups.length && unfiled.length) {
+      this.leftListEl.append(h('div', { class: 'tree-subhead tpl-unfiled-head' }, `未归类（${unfiled.length}）`));
     }
+    for (const family of unfiled) this.leftListEl.append(renderFamily(family, 0));
+    if (!rootGroups.length && !unfiled.length) {
+      this.leftListEl.append(h('div', { class: 'field-hint', style: { padding: '16px' } }, '没有匹配的条带模板。'));
+    }
+    this.leftListEl.scrollTop = previousScroll;
+    this.leftScrollTop = this.leftListEl.scrollTop;
   }
 
   /* ---------------- 中央：大号双层工具栏 + 醒目资源/难度卡 + 9×9 单链画布 ---------------- */
@@ -737,7 +1181,7 @@ export class TemplateEditorView {
                 background: `${def.color}30`,
                 borderColor: isSelected ? 'var(--amber)' : existing.isPortal ? '#4de2d8' : `${def.color}cc`,
               },
-              title: `${def.name}（资 ${def.resource} / 难 ${def.difficulty}）${existing.isPortal ? ' · 出入口格' : ''}${locked ? ' · 结构锁定' : ' · 左键操作 / 右键擦除'}`,
+              title: `${def.name}（资 ${def.resource} / 难 ${def.difficulty}）${existing.typePool?.length > 1 ? ` · 模糊类型池 ${existing.typePool.length} 项` : ''}${existing.isPortal ? ' · 出入口格' : ''}${locked ? ' · 结构锁定' : ' · 左键操作 / 右键擦除'}`,
               onclick: () => this.onClickCell(gx, gy),
               oncontextmenu: (event) => {
                 event.preventDefault();
@@ -746,6 +1190,7 @@ export class TemplateEditorView {
             },
             endBadge ? h('span', { class: 'tpl-cell-end' }, endBadge) : null,
             existing.isPortal ? h('span', { class: 'tpl-cell-portal', title: '出入口格' }, '口') : null,
+            existing.typePool?.length > 1 ? h('span', { class: 'tpl-cell-pool', title: '生成时按权重随机类型' }, '?') : null,
             h('span', { class: 'tpl-cell-icon lg', style: { color: def.color } }, def.icon),
             h('span', { class: 'tpl-cell-label lg' }, def.id === 'empty' ? '通道' : def.name),
             def.supportsOffset && offset !== 0
@@ -836,7 +1281,10 @@ export class TemplateEditorView {
                   if (!this.canChangeGridType(selectedCell, nextType)) return;
                   const nextDef = tMap.get(nextType);
                   selectedCell.type = nextType;
-                  selectedCell.difficultyOffset = nextDef?.supportsOffset ? (nextDef.defaultOffset || 0) : 0;
+                  if (Array.isArray(selectedCell.typePool) && selectedCell.typePool.length) {
+                    selectedCell.typePool[0] = { ...selectedCell.typePool[0], type: nextType };
+                  }
+                  selectedCell.difficultyOffset = nextDef?.supportsOffset ? (selectedCell.difficultyOffset || 0) : 0;
                   this.syncGridToDraft();
                   this.renderAll();
                 },
@@ -844,6 +1292,17 @@ export class TemplateEditorView {
               ...cellTypes.filter((ct) => ct.id === selectedCell.type || this.canChangeGridType(selectedCell, ct.id)).map((ct) =>
                 h('option', { value: ct.id, selected: ct.id === selectedCell.type }, `${ct.icon} ${ct.name}（资${ct.resource}/难${ct.difficulty}）`),
               ),
+            ),
+            h(
+              'button',
+              {
+                class: 'btn small',
+                type: 'button',
+                disabled: selectedCell.type === 'spawn',
+                title: selectedCell.type === 'spawn' ? '出生格必须是固定类型' : '为这一格设置按权重随机抽取的类型池',
+                onclick: () => this.openTypePoolEditor(selectedCell),
+              },
+              selectedCell.typePool?.length > 1 ? `🎲 编辑模糊池（${selectedCell.typePool.length}）` : '🎲 设为模糊类型',
             ),
             h(
               'label',
@@ -1036,6 +1495,7 @@ export class TemplateEditorView {
   /* ---------------- 右侧：随机草稿生成器 + 模板属性 ---------------- */
 
   renderRight() {
+    const previousScroll = this.rightBodyEl?.scrollTop ?? 0;
     const { cellTypes } = this.store.dungeon;
     const metrics = computeTemplateMetrics(this.draft, cellTypes);
     const cfg = this.randomConfig;
@@ -1266,6 +1726,35 @@ export class TemplateEditorView {
             },
           }),
         ),
+        (() => {
+          const folderGroups = this.templateGroups();
+          const parentTemplate = this.draft.parentTemplateId
+            ? this.store.dungeon.stripTemplates.find((tpl) => tpl.id === this.draft.parentTemplateId)
+            : null;
+          const currentFolderId = parentTemplate ? (parentTemplate.folderId || '') : (this.draft.folderId || '');
+          return h(
+            'label',
+            { class: 'mini-field' },
+            h('span', null, '归类文件夹'),
+            h(
+              'select',
+              {
+                class: 'select',
+                disabled: Boolean(this.draft.parentTemplateId),
+                title: this.draft.parentTemplateId ? '子模板跟随父模板所在文件夹' : '只影响左侧结构树，不参与生成',
+                onchange: (e) => {
+                  if (this.draft.parentTemplateId) return;
+                  this.setDraftFolder(e.target.value);
+                },
+              },
+              ...this.folderOptions(folderGroups).map((option) => h(
+                'option',
+                { value: option.id, selected: currentFolderId === option.id },
+                option.label,
+              )),
+            ),
+          );
+        })(),
         h('label', { class: 'mini-field' }, '模板说明', h('textarea', {
           class: 'input', rows: 2,
           oninput: (e) => { this.draft.description = e.target.value; this.dirty = true; },
@@ -1517,7 +2006,8 @@ export class TemplateEditorView {
       ),
     );
 
-    mount(this.rightEl, h('div', { class: 'panel-body' }, randomCard, propCard));
+    mount(this.rightBodyEl, randomCard, propCard);
+    this.rightBodyEl.scrollTop = previousScroll;
   }
 
   /* ---------------- 全局格子类型配置弹窗 ---------------- */
@@ -1711,6 +2201,7 @@ export class TemplateEditorView {
       const json = serializeTemplateLibrary({
         cellTypes: this.store.dungeon.cellTypes,
         stripTemplates: this.store.dungeon.stripTemplates,
+        templateGroups: this.store.dungeon.templateGroups,
       });
       const name = slugify(this.store.project.meta.name || 'dungeon');
       downloadText(`${name}-strip-templates.json`, json);
@@ -1737,7 +2228,7 @@ export class TemplateEditorView {
     }
     const replace = await confirmDialog({
       title: '导入条带模板库',
-      message: `解析到 ${parsed.stripTemplates.length} 个条带模板${parsed.cellTypes ? '（含全局格子配置）' : ''}。是否替换现有模板库？（可随时 Ctrl+Z 撤销）`,
+      message: `解析到 ${parsed.stripTemplates.length} 个条带模板${parsed.cellTypes ? '（含全局格子配置）' : ''}${parsed.templateGroups?.length ? `、${parsed.templateGroups.length} 个文件夹` : ''}。是否替换现有模板库？（可随时 Ctrl+Z 撤销）`,
       confirmText: '导入并替换',
       cancelText: '取消',
     });

@@ -33,6 +33,7 @@ import {
   defaultCellTypes,
   normalizeCellTypes,
   normalizeStripTemplate,
+  normalizeTemplateGroups,
   validateTemplateFamilies,
 } from './strip-templates.js';
 import {
@@ -249,6 +250,7 @@ export function createDefaultDungeon() {
   return {
     cellTypes,
     stripTemplates: createDefaultStripTemplates(cellTypes),
+    templateGroups: [],
     floorProfiles: [createDefaultFloorProfile()],
     mapPools: defaultMapPools(),
     world: createEmptyWorldConfig(),
@@ -266,9 +268,15 @@ export function normalizeDungeon(raw) {
       ? source.floorProfiles.filter(isObject).map(normalizeFloorProfile)
       : [createDefaultFloorProfile()];
   const world = normalizeWorldConfig(source.world);
+  const templateGroups = normalizeTemplateGroups(source.templateGroups);
+  const groupIds = new Set(templateGroups.map((group) => group.id));
+  for (const template of stripTemplates) {
+    if (template.folderId && !groupIds.has(template.folderId)) delete template.folderId;
+  }
   return {
     cellTypes,
     stripTemplates,
+    templateGroups,
     floorProfiles,
     mapPools: source.mapPools === undefined ? defaultMapPools(floorProfiles[0]) : clone(source.mapPools),
     world,

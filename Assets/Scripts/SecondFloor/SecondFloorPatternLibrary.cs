@@ -29,6 +29,18 @@ public sealed class SecondFloorPatternLibrary
         }
     }
 
+    public sealed class CellTypeOption
+    {
+        public string Type { get; }
+        public double Weight { get; }
+
+        internal CellTypeOption(string type, double weight)
+        {
+            Type = type;
+            Weight = weight;
+        }
+    }
+
     public sealed class Template
     {
         public string Id { get; }
@@ -135,9 +147,11 @@ public sealed class SecondFloorPatternLibrary
         public int Index { get; }
         public long PlacedOrder { get; }
         public IReadOnlyList<string> Tags { get; }
+        /// <summary>Weighted alternative types; empty means the cell is fixed to <see cref="Type"/>.</summary>
+        public IReadOnlyList<CellTypeOption> TypePool { get; }
 
         internal Cell(Vector2Int position, string type, int difficultyOffset, bool isPortal, int index, long placedOrder,
-            IReadOnlyList<string> tags)
+            IReadOnlyList<string> tags, IReadOnlyList<CellTypeOption> typePool)
         {
             Position = position;
             Type = type;
@@ -146,10 +160,11 @@ public sealed class SecondFloorPatternLibrary
             Index = index;
             PlacedOrder = placedOrder;
             Tags = tags;
+            TypePool = typePool;
         }
 
         internal Cell At(Vector2Int position, int? index = null) =>
-            new Cell(position, Type, DifficultyOffset, IsPortal, index ?? Index, PlacedOrder, Tags);
+            new Cell(position, Type, DifficultyOffset, IsPortal, index ?? Index, PlacedOrder, Tags, TypePool);
     }
 
     public readonly struct Edge
@@ -323,16 +338,20 @@ public sealed class SecondFloorPatternLibrary
             string typeId = Identifier(rawCell, "type");
             if (!types.TryGetValue(typeId, out CellType type))
                 throw Invalid(rawCell, $"unknown cell type '{typeId}'.");
+            IReadOnlyList<CellTypeOption> typePool = ReadTypePool(rawCell, typeId, types);
+            bool supportsOffset = type.SupportsOffset;
+            foreach (CellTypeOption option in typePool)
+                supportsOffset |= types[option.Type].SupportsOffset;
             int offset = (int)Integer(rawCell, "difficultyOffset", -10, 10);
-            if (!type.SupportsOffset && offset != 0)
+            if (!supportsOffset && offset != 0)
                 throw Invalid(rawCell, $"cell type '{typeId}' does not support difficulty offsets.");
 
             const long maxSafeInteger = 9007199254740991L;
             long order = rawCell["placedOrder"] == null ? i : Integer(rawCell, "placedOrder", -maxSafeInteger, maxSafeInteger);
             string[] tags = rawCell["tags"] == null ? Array.Empty<string>() : Identifiers(rawCell, "tags");
-            cells[i] = new Cell(position, typeId, offset, Boolean(rawCell, "isPortal"), i, order, Array.AsReadOnly(tags));
-            autoResource += type.Resource;
-            autoDifficulty += type.Difficulty;
+            cells[i] = new Cell(position, typeId, offset, Boolean(rawCell, "isPortal"), i, order, Array.AsReadOnly(tags), typePool);
+            autoResource += typePool.Count == 0 ? type.Resource : ExpectedMetric(typePool, types, option => option.Resource);
+            autoDifficulty += typePool.Count == 0 ? type.Difficulty : ExpectedMetric(typePool, types, option => option.Difficulty);
         }
         if (double.IsInfinity(autoResource) || double.IsInfinity(autoDifficulty))
             throw Invalid(template, "cell resource or difficulty sum is too large.");
@@ -343,6 +362,67 @@ public sealed class SecondFloorPatternLibrary
         return new Template(id, parentId, name, role, visualTypeId, regions, spawnEligible, noLoop, allowRotate, max, weight, unique,
             Math.Round(autoResource, 2, MidpointRounding.AwayFromZero), Math.Round(autoDifficulty, 2, MidpointRounding.AwayFromZero),
             resourceOverride, difficultyOverride, rotations);
+    }
+
+    private static IReadOnlyList<CellTypeOption> ReadTypePool(JObject rawCell, string primaryType,
+        Dictionary<string, CellType> types)
+    {
+        JToken token = rawCell["typePool"];
+        if (token == null || token.Type == JTokenType.Null)
+            return Array.Empty<CellTypeOption>();
+        if (token.Type != JTokenType.Array)
+            throw Invalid(rawCell["typePool"], "typePool must be an array.");
+        JArray rawPool = (JArray)token;
+        if (rawPool.Count > 32)
+            throw Invalid(rawPool, "typePool cannot contain more than 32 entries.");
+        var options = new List<CellTypeOption>(rawPool.Count);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        bool primaryPresent = false;
+        foreach (JToken entry in rawPool)
+        {
+            JObject item = Object(entry);
+            string typeId = Identifier(item, "type");
+            if (!types.ContainsKey(typeId))
+                throw Invalid(item["type"], $"unknown cell type '{typeId}' in typePool.");
+            if (typeId == "spawn")
+                throw Invalid(item["type"], "spawn cannot be used in a typePool.");
+            if (!seen.Add(typeId))
+                throw Invalid(item["type"], $"duplicate cell type '{typeId}' in typePool.");
+            double weight = Number(item, "weight", 0);
+            if (double.IsNaN(weight) || double.IsInfinity(weight) || weight <= 0)
+                throw Invalid(item["weight"], "typePool weights must be finite positive numbers.");
+            options.Add(new CellTypeOption(typeId, weight));
+            primaryPresent |= typeId == primaryType;
+        }
+        if (options.Count > 0 && !primaryPresent)
+            throw Invalid(rawCell["type"], "typePool must contain the cell's primary type.");
+        return options.AsReadOnly();
+    }
+
+    private static double ExpectedMetric(IReadOnlyList<CellTypeOption> pool, Dictionary<string, CellType> types,
+        Func<CellType, double> selector)
+    {
+        if (pool.Count == 0)
+            return 0;
+        double total = 0;
+        foreach (CellTypeOption option in pool)
+            total += option.Weight;
+        if (!(total > 0))
+            return 0;
+        double value = 0;
+        foreach (CellTypeOption option in pool)
+            value += selector(types[option.Type]) * (option.Weight / total);
+        return value;
+    }
+
+    private static bool SameTypePool(IReadOnlyList<CellTypeOption> first, IReadOnlyList<CellTypeOption> second)
+    {
+        if (first.Count != second.Count)
+            return false;
+        for (int i = 0; i < first.Count; i++)
+            if (first[i].Type != second[i].Type || first[i].Weight != second[i].Weight)
+                return false;
+        return true;
     }
 
     private static void ValidateFamilyMember(JObject raw, Template root, Template child, Cell[] rootCells,
@@ -485,7 +565,7 @@ public sealed class SecondFloorPatternLibrary
                 if (cell.Position != other.Position)
                     continue;
                 if (cell.Type != other.Type || cell.DifficultyOffset != other.DifficultyOffset || cell.IsPortal != other.IsPortal
-                    || !SameTags(cell.Tags, other.Tags))
+                    || !SameTags(cell.Tags, other.Tags) || !SameTypePool(cell.TypePool, other.TypePool))
                     return false;
                 found = true;
                 break;

@@ -3949,3 +3949,125 @@ html[data-theme="light"] .tpl-edge { background: rgba(42, 37, 29, 0.76); }
 .tpl-passage.tpl-side-N, .tpl-passage.tpl-side-S { left: calc(50% - 1px); width: 2px; height: calc(50% + 4px); }
 .tpl-passage.tpl-side-S { top: 50%; height: calc(50% + 6px); }
 .tpl-passage.tpl-side-N { bottom: 50%; height: 50%; }
+
+/* 单格模糊类型池 */
+.tpl-cell-pool {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #a78bfa;
+  color: #0b0e14;
+  font: 700 11px/1 ui-monospace, monospace;
+  z-index: 3;
+}
+
+.pool-editor { min-width: 0; }
+.pool-head, .pool-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 90px 32px;
+  gap: 8px;
+  align-items: center;
+}
+.pool-head {
+  padding: 0 4px 6px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.pool-list { display: flex; flex-direction: column; gap: 8px; }
+.pool-row {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2, rgba(255,255,255,.025));
+}
+.pool-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--amber-soft, rgba(217,164,65,.15));
+  color: var(--amber);
+  font: 700 11px/1 ui-monospace, monospace;
+}
+.pool-weight { text-align: right; }
+.pool-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* 条带模板左侧：可嵌套文件夹树。仅组织视图，不参与生成。 */
+.tpl-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tpl-folder-row {
+  min-height: 30px;
+  margin: 0;
+  padding: 4px 6px 4px 10px;
+  border-radius: 8px;
+}
+
+.tpl-folder-row .tree-folder-icon {
+  opacity: 0.9;
+}
+
+.tpl-folder-row .tree-folder-name {
+  font-size: 12px;
+}
+
+.tpl-folder-row .tree-action {
+  width: 19px;
+  height: 19px;
+}
+
+.tpl-folder-body,
+.tpl-folder-family {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tpl-folder-empty {
+  padding: 7px 12px 9px 30px;
+  font-size: 10px;
+}
+
+.tpl-unfiled-head {
+  margin: 8px 8px 1px 10px;
+}
+
+/* 模板卡片的上下排序按钮 */
+.tpl-card-ops {
+  display: grid;
+  grid-template-columns: repeat(2, 18px);
+  gap: 2px;
+  align-content: center;
+}
+
+.tpl-card-ops .tree-action {
+  width: 18px;
+  height: 18px;
+}
+
+.tpl-card-ops .tree-action:disabled {
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.tpl-move-up svg {
+  transform: rotate(180deg);
+}
+
+/* 模板库 ID 选择：下拉占满，刷新按钮只占内容宽度 */
+.library-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}

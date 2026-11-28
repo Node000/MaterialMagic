@@ -109,11 +109,55 @@ export function cellTypeMap(cellTypes) {
  * 条带模板规范化、指标求和与校验
  * ------------------------------------------------------------------ */
 
+/**
+ * 规范化单格「模糊类型池」。
+ * 池内类型必须是已注册格子类型；spawn 是结构标记，禁止进入随机池。
+ * 同一类型重复出现时合并权重，保持首次出现顺序。
+ */
+export function normalizeCellTypePool(rawPool, typeMap) {
+  if (!Array.isArray(rawPool)) return [];
+  const merged = new Map();
+  for (const raw of rawPool) {
+    if (!isObject(raw)) continue;
+    const type = String(raw.type || '').trim();
+    if (!type || type === 'spawn' || !typeMap.has(type)) continue;
+    const weight = Math.max(0.01, Math.round(asNum(raw.weight, 1) * 100) / 100);
+    const previous = merged.get(type);
+    if (previous) previous.weight = Math.round((previous.weight + weight) * 100) / 100;
+    else merged.set(type, { type, weight });
+  }
+  return [...merged.values()];
+}
+
+/** 返回格子的随机类型池；固定类型格返回空数组。 */
+export function cellTypePool(cell) {
+  return Array.isArray(cell?.typePool) ? cell.typePool : [];
+}
+
+/** 将池内权重归一化后的期望值用于预算估算。 */
+export function expectedCellMetric(cell, typeMap, key) {
+  const pool = cellTypePool(cell);
+  if (!pool.length) return Number(typeMap.get(cell?.type)?.[key] || 0);
+  const total = pool.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight) || 0), 0);
+  if (total <= 0) return 0;
+  let value = 0;
+  for (const entry of pool) {
+    const def = typeMap.get(entry.type);
+    if (!def) continue;
+    value += (Number(def[key]) || 0) * (Math.max(0, Number(entry.weight) || 0) / total);
+  }
+  return value;
+}
+
 export function normalizeStripCell(raw, typeMap) {
   const source = isObject(raw) ? raw : {};
   const rawType = String(source.type || 'empty').trim();
-  const typeDef = typeMap.get(rawType) || typeMap.get('empty') || DEFAULT_CELL_TYPES[0];
-  const offset = typeDef.supportsOffset
+  let typeDef = typeMap.get(rawType) || typeMap.get('empty') || DEFAULT_CELL_TYPES[0];
+  const pool = typeDef.id === 'spawn' ? [] : normalizeCellTypePool(source.typePool, typeMap);
+  const primary = pool.find((entry) => entry.type === typeDef.id) || pool[0];
+  if (primary) typeDef = typeMap.get(primary.type) || typeDef;
+  const supportsOffset = typeDef.supportsOffset || pool.some((entry) => typeMap.get(entry.type)?.supportsOffset);
+  const offset = supportsOffset
     ? clamp(Math.round(asNum(source.difficultyOffset, typeDef.defaultOffset ?? 0)), -10, 10)
     : 0;
   return {
@@ -122,6 +166,7 @@ export function normalizeStripCell(raw, typeMap) {
     type: typeDef.id,
     difficultyOffset: offset,
     isPortal: Boolean(source.isPortal),
+    ...(pool.length >= 2 ? { typePool: pool } : {}),
     ...(Object.hasOwn(source, 'openDirs') ? { openDirs: source.openDirs } : {}),
     ...(Number.isSafeInteger(source.placedOrder) ? { placedOrder: source.placedOrder } : {}),
     tags: Array.isArray(source.tags)
@@ -162,6 +207,29 @@ export function templateToFile(template) {
   };
 }
 
+export function normalizeTemplateGroup(raw, index = 0) {
+  const source = isObject(raw) ? raw : {};
+  const name = String(source.name || `文件夹 ${index + 1}`).trim() || `文件夹 ${index + 1}`;
+  return {
+    id: String(source.id || `template_group_${index + 1}`).trim(),
+    name,
+    parentGroupId: typeof source.parentGroupId === 'string' ? source.parentGroupId.trim() : '',
+    order: Math.max(0, Math.round(asNum(source.order, index))),
+  };
+}
+
+export function normalizeTemplateGroups(rawGroups) {
+  const seen = new Set();
+  return (Array.isArray(rawGroups) ? rawGroups : [])
+    .filter(isObject)
+    .map((group, index) => normalizeTemplateGroup(group, index))
+    .filter((group) => {
+      if (!group.id || seen.has(group.id)) return false;
+      seen.add(group.id);
+      return true;
+    });
+}
+
 export function normalizeStripTemplate(raw, cellTypes = DEFAULT_CELL_TYPES, index = 0) {
   const source = isObject(raw) ? raw : {};
   const tMap = cellTypeMap(cellTypes);
@@ -191,6 +259,8 @@ export function normalizeStripTemplate(raw, cellTypes = DEFAULT_CELL_TYPES, inde
     id: String(source.id || `tpl_${index + 1}`).trim(),
     ...(Object.hasOwn(source, 'parentTemplateId') ? { parentTemplateId: source.parentTemplateId } : {}),
     ...(Object.hasOwn(source, 'visualTypeId') ? { visualTypeId: source.visualTypeId } : {}),
+    ...(typeof source.folderId === 'string' && source.folderId.trim() ? { folderId: source.folderId.trim() } : {}),
+    ...(source.uiOrder !== null && source.uiOrder !== '' && Number.isFinite(Number(source.uiOrder)) ? { uiOrder: Math.round(Number(source.uiOrder)) } : {}),
     name: String(source.name || `条带模板 ${index + 1}`).trim() || `条带模板 ${index + 1}`,
     description: String(source.description || ''),
     role,
@@ -292,10 +362,8 @@ export function computeTemplateMetrics(template, cellTypes = DEFAULT_CELL_TYPES)
   let portalCount = 0;
   for (const cell of cells) {
     if (cell.isPortal) portalCount += 1;
-    const def = tMap.get(cell.type) || tMap.get('empty');
-    if (!def) continue;
-    autoResource += Number(def.resource) || 0;
-    autoDifficulty += Number(def.difficulty) || 0;
+    autoResource += expectedCellMetric(cell, tMap, 'resource');
+    autoDifficulty += expectedCellMetric(cell, tMap, 'difficulty');
   }
   autoResource = Math.round(autoResource * 100) / 100;
   autoDifficulty = Math.round(autoDifficulty * 100) / 100;
@@ -361,6 +429,30 @@ export function validateStripTemplate(template, cellTypes = DEFAULT_CELL_TYPES, 
     coordSeen.add(key);
     if (!tMap.has(cell.type)) {
       warn('template.cell.type', `条带「${template.name}」引用了未知格子类型「${cell.type}」。`);
+    }
+    const rawPool = Array.isArray(cell.typePool) ? cell.typePool : [];
+    if (cell.type === 'spawn' && rawPool.length) {
+      err('template.cells.spawnPool', `条带「${template.name}」的出生格不能设置随机类型池。`);
+    }
+    if (rawPool.length) {
+      if (rawPool.length < 2) {
+        warn('template.cells.poolSmall', `条带「${template.name}」的 (${cell.rx},${cell.ry}) 随机池少于 2 项，将按固定类型处理。`);
+      }
+      for (const entry of rawPool) {
+        if (!isObject(entry)) {
+          err('template.cells.poolEntry', `条带「${template.name}」的随机池包含无效项。`);
+          continue;
+        }
+        if (entry.type === 'spawn') {
+          err('template.cells.spawnPool', `条带「${template.name}」的随机池不能包含出生格类型。`);
+        } else if (!tMap.has(entry.type)) {
+          warn('template.cells.poolType', `条带「${template.name}」的随机池引用了未知类型「${entry.type}」。`);
+        }
+        const weight = Number(entry.weight);
+        if (!Number.isFinite(weight) || weight <= 0) {
+          err('template.cells.poolWeight', `条带「${template.name}」的随机池权重必须大于 0。`);
+        }
+      }
     }
   }
   if (validRegionIds instanceof Set && Array.isArray(template.regionIds)) {
@@ -1001,7 +1093,7 @@ export function createDefaultStripTemplates(cellTypes = DEFAULT_CELL_TYPES) {
  * 模板库 JSON 独立序列化 / 反序列化
  * ------------------------------------------------------------------ */
 
-export function serializeTemplateLibrary({ cellTypes, stripTemplates }, { pretty = true } = {}) {
+export function serializeTemplateLibrary({ cellTypes, stripTemplates, templateGroups = [] }, { pretty = true } = {}) {
   const types = normalizeCellTypes(cellTypes);
   const templates = (stripTemplates || []).map((t, i) => normalizeStripTemplate(t, types, i));
   const [issue] = validateTemplateFamilies(templates);
@@ -1012,6 +1104,7 @@ export function serializeTemplateLibrary({ cellTypes, stripTemplates }, { pretty
     schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     cellTypes: types,
+    templateGroups: normalizeTemplateGroups(templateGroups),
     stripTemplates: templates.map(templateToFile),
   };
   return JSON.stringify(payload, null, pretty ? 2 : 0);
@@ -1033,18 +1126,22 @@ export function parseTemplateLibrary(text, fallbackCellTypes = DEFAULT_CELL_TYPE
 
   let rawCellTypes = null;
   let rawTemplates = null;
+  let rawTemplateGroups = [];
   if (Array.isArray(raw)) {
     rawTemplates = raw;
   } else if (isObject(raw)) {
     if (Array.isArray(raw.stripTemplates)) {
       rawTemplates = raw.stripTemplates;
       rawCellTypes = raw.cellTypes || null;
+      rawTemplateGroups = raw.templateGroups || [];
     } else if (isObject(raw.dungeon) && Array.isArray(raw.dungeon.stripTemplates)) {
       rawTemplates = raw.dungeon.stripTemplates;
       rawCellTypes = raw.dungeon.cellTypes || null;
+      rawTemplateGroups = raw.dungeon.templateGroups || [];
     } else if (isObject(raw.project?.dungeon) && Array.isArray(raw.project.dungeon.stripTemplates)) {
       rawTemplates = raw.project.dungeon.stripTemplates;
       rawCellTypes = raw.project.dungeon.cellTypes || null;
+      rawTemplateGroups = raw.project.dungeon.templateGroups || [];
     }
   }
 
@@ -1084,6 +1181,7 @@ export function parseTemplateLibrary(text, fallbackCellTypes = DEFAULT_CELL_TYPE
     ok: errors.length === 0,
     cellTypes: rawCellTypes ? cellTypes : null,
     stripTemplates,
+    templateGroups: normalizeTemplateGroups(rawTemplateGroups),
     errors,
     warnings,
   };

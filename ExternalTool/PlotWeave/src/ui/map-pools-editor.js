@@ -1160,10 +1160,47 @@ export class MapPoolsEditor {
             'div',
             { class: 'form-row-2' },
             numeric('抽取权重', ['weight'], { step: 'any' }),
-            fieldAt('模板库 ID', ['patternLibraryId'], {
-              list: 'map-pool-pattern-options',
-              placeholder: '如 Sample',
-            }, { mono: true }),
+            (() => {
+              const current = entry.patternLibraryId || '';
+              const known = new Set(this.patterns.map((item) => item.id));
+              const ids = [...known];
+              if (current && !known.has(current)) ids.push(current);
+              const select = h(
+                'select',
+                {
+                  class: 'input',
+                  title: '模板库 ID（来自 Patterns 目录）',
+                  disabled: Boolean(this.busy) || ids.length === 0,
+                  onchange: (event) => this.modify((_config, _pool, item) => {
+                    item.patternLibraryId = event.target.value;
+                  }),
+                },
+                ids.length
+                  ? ids.map((id) => h('option', { value: id }, known.has(id) ? id : `${id}（未找到）`))
+                  : h('option', { value: '' }, '未找到模板库'),
+              );
+              if (ids.includes(current)) select.value = current;
+              const refresh = h(
+                'button',
+                {
+                  class: 'btn ghost compact',
+                  type: 'button',
+                  title: '重新扫描 Patterns 目录',
+                  disabled: Boolean(this.busy),
+                  onclick: async () => {
+                    await this.refresh();
+                    this.render();
+                  },
+                },
+                '刷新',
+              );
+              return h(
+                'label',
+                { class: 'mini-field' },
+                h('span', null, '模板库 ID'),
+                h('div', { class: 'form-row-2 library-row' }, select, refresh),
+              );
+            })(),
           ),
           h(
             'label',

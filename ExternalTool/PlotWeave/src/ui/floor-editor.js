@@ -1086,6 +1086,7 @@ export class FloorEditorView {
         }
         const placed = placeCellsAt(match.cells, minX, minY);
         const byCoord = new Map(placed.map((c) => [`${c.x},${c.y}`, c]));
+        strip.familyId = nextTpl.parentTemplateId || nextTpl.id;
         strip.templateId = nextTpl.id;
         strip.templateName = nextTpl.name;
         strip.rotation = match.rotation;
